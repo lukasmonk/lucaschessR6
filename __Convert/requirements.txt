@@ -1,0 +1,8 @@
+chardet>=5.2.0
+sortedcontainers>=2.4.0
+python-chess>=1.999
+pillow>=10.3.0
+pyside6>=6.7.0
+cython==3.0.10
+psutil>=5.9.8
+polib>=1.2.0
