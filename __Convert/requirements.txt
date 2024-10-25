@@ -5,5 +5,5 @@ pillow
 pyside6
 cython
 psutil
-polib>
+polib
 deep_translator

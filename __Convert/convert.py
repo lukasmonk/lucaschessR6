@@ -263,7 +263,8 @@ def desktop_size():
             path_fastercode37 = os.path.join(path_ori, "FasterCode.cpython-38-x86_64-linux-gnu.so")
             path_fastercode312_ori = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
                                                   "FasterCode.cpython-312-x86_64-linux-gnu.so")
-        os.remove(path_fastercode37)
+        if os.path.isfile(path_fastercode37):
+            os.remove(path_fastercode37)
 
         shutil.copy2(path_fastercode312_ori, path_dest)
 
