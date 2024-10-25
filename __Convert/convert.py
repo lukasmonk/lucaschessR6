@@ -5,8 +5,8 @@ import shutil
 
 class Work:
     def __init__(self):
-        self.path_r2 = os.path.abspath(os.path.join("..", "..", "pyLCR2"))
-        self.path_r6 = os.path.abspath(os.path.join("..", "..", "pyLCR6"))
+        self.path_r2 = os.path.abspath(os.path.join("..", "..", "lucaschessR2"))
+        self.path_r6 = os.path.abspath(os.path.join("..", "..", "lucaschessR6"))
         self.pathcode_2 = os.path.join(self.path_r2, "bin", "Code")
         self.pathcode_6 = os.path.join(self.path_r6, "bin", "Code")
 
@@ -193,7 +193,7 @@ def desktop_size():
             q6.write(linea)
 
     def copy_code_file(self, path2):
-        path6 = path2.replace("pyLCR2", "pyLCR6")
+        path6 = path2.replace("lucaschessR2", "lucaschessR6")
 
         with (open(path2, "rt", encoding="utf-8") as f2, open(path6, "wt", encoding="utf-8") as q6):
             basename = os.path.basename(path2)
@@ -216,7 +216,7 @@ def desktop_size():
 
     def copy_code_folder(self, path2):
         print(path2)
-        os.mkdir(path2.replace("pyLCR2", "pyLCR6"))
+        os.mkdir(path2.replace("lucaschessR2", "lucaschessR6"))
         entry: os.DirEntry
         for entry in os.scandir(path2):
             if entry.is_dir():
