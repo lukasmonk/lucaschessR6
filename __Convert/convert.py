@@ -1,11 +1,12 @@
 import os
+import sys
 import shutil
 
 
 class Work:
     def __init__(self):
-        self.path_r2 = os.path.abspath(os.path.join("..", "..", "lucaschessR2"))
-        self.path_r6 = os.path.abspath(os.path.join("..", "..", "lucaschessR6"))
+        self.path_r2 = os.path.abspath(os.path.join("..", "..", "pyLCR2"))
+        self.path_r6 = os.path.abspath(os.path.join("..", "..", "pyLCR6"))
         self.pathcode_2 = os.path.join(self.path_r2, "bin", "Code")
         self.pathcode_6 = os.path.join(self.path_r6, "bin", "Code")
 
@@ -243,17 +244,23 @@ def desktop_size():
         shutil.copytree(path_ori, path_dest)
 
     def copy_os(self):
-        folder = "OS"
-        path_ori = os.path.abspath(os.path.join(self.path_r2, "bin", folder))
-        path_dest = os.path.abspath(os.path.join(self.path_r6, "bin", folder))
+        platform = sys.platform
+        path_ori = os.path.abspath(os.path.join(self.path_r2, "bin", "OS", platform))
+        path_dest = os.path.abspath(os.path.join(self.path_r6, "bin", "OS", platform))
+        os.makedirs(path_dest, exist_ok=True)
         shutil.copytree(path_ori, path_dest)
 
-        path_fastercode37 = os.path.join(path_dest, "win32", "FasterCode.cp37-win32.pyd")
+        if platform == "win32":
+            path_fastercode37 = os.path.join(path_ori, "FasterCode.cp37-win32.pyd")
+            path_fastercode312_ori = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
+                                                  "FasterCode.cp312-win_amd64.pyd")
+        else:
+            path_fastercode37 = os.path.join(path_ori, "FasterCode.cpython-38-x86_64-linux-gnu.so")
+            path_fastercode312_ori = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
+                                                  "FasterCode.cpython-312-x86_64-linux-gnu.so")
         os.remove(path_fastercode37)
-        path_fastercode312_ori = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
-                                              "FasterCode.cp312-win_amd64.pyd")
-        path_fastercode312_dest = os.path.join(path_dest, "win32")
-        shutil.copy2(path_fastercode312_ori, path_fastercode312_dest)
+
+        shutil.copy2(path_fastercode312_ori, path_dest)
 
     def copy_lucas(self):
         file = "LucasR.py"
