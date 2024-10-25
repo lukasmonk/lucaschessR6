@@ -34,16 +34,25 @@ Lucas Chess is an open-source chess program designed for training, playing, and 
     ```
 
 ## Usage
-1. Run the conversion script:
+1. Run the conversion script, the script will copy all source files and convert them to use PySide6:
     ```sh
     python convert.py
     ```
 
-2. The script will copy all source files and convert them to use PySide6.
-
-3. Navigate back to the main directory and run Lucas Chess:
+2. Navigate back to the main directory:
     ```sh
-    cd ..
+    cd ../bin
+    ```
+
+3. If the OS is Linux:
+    ```sh
+    cd OS/linux
+    sh ./RunEngines
+    cd ../..
+    ```
+
+4. Launch of the programme:
+    ```sh
     python LucasR.py
     ```
 
