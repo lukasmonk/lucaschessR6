@@ -247,7 +247,12 @@ def desktop_size():
         platform = sys.platform
         path_ori = os.path.abspath(os.path.join(self.path_r2, "bin", "OS", platform))
         path_dest = os.path.abspath(os.path.join(self.path_r6, "bin", "OS", platform))
-        os.makedirs(path_dest, exist_ok=True)
+        if os.path.exists(path_dest):
+            try:
+                shutil.rmtree(path_dest)
+            except Exception as e:
+                print(f"Error al intentar eliminar la carpeta: {str(e)}")
+
         shutil.copytree(path_ori, path_dest)
 
         if platform == "win32":
