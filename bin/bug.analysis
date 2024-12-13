@@ -1,0 +1,13 @@
+2024-12-11 23:46:13.704690
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 60, in <module>
+    Code.Analysis.RunAnalysis.run(sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Analysis\RunAnalysis.py", line 172, in run
+    cpu.xreceive()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Analysis\RunAnalysis.py", line 51, in xreceive
+    dv = self.ipc_receive.pop()
+         ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\SQL\UtilSQL.py", line 555, in pop
+    cursor = self._conexion.execute(sql)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: DATOS

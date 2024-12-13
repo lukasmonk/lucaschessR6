@@ -17,7 +17,7 @@ extensions = [
         "FasterCode",
         ["FasterCode.pyx"],
         library_dirs=["."],      # Directorios de la biblioteca
-        libraries=["irina"],              # Nombre de la biblioteca (sin 'lib' y sin extensin)
+        libraries=["irina"],     # Nombre de la biblioteca (sin 'lib' y sin extension)
         extra_compile_args=["-O3"],
         extra_link_args=[],
     )

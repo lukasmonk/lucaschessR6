@@ -7,3 +7,4 @@ cython
 psutil
 polib
 deep_translator
+setuptools

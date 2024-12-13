@@ -1,0 +1,80 @@
+2024-12-11 23:55:08.140981
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 55, in <module>
+    Code.Swiss.RunSwiss.run(user, sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\RunSwiss.py", line 28, in run
+    w = WSwissWorker.WSwissWorker(file_swiss_work)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\WSwissWorker.py", line 96, in __init__
+    ly_pgn = self.crea_bloque_informacion()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\WSwissWorker.py", line 198, in crea_bloque_informacion
+    lyAbajo.setSizeConstraint(lyAbajo.SetFixedSize)
+                              ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'V' object has no attribute 'SetFixedSize'
+2024-12-11 23:55:39.086069
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 55, in <module>
+    Code.Swiss.RunSwiss.run(user, sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\RunSwiss.py", line 20, in run
+    configuration = Configuration.Configuration(user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Config\Configuration.py", line 98, in __init__
+    self.carpeta = Util.opj(self.carpetaUsers, str(user.number))
+                                                   ^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'number'
+2024-12-12 00:13:51.488255
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 55, in <module>
+    Code.Swiss.RunSwiss.run(user, sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\RunSwiss.py", line 23, in run
+    configuration = Configuration.Configuration(user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Config\Configuration.py", line 98, in __init__
+    self.carpeta = Util.opj(self.carpetaUsers, str(user.number))
+                                                   ^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'number'
+2024-12-12 00:17:16.858581
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 55, in <module>
+    Code.Swiss.RunSwiss.run(user, sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\RunSwiss.py", line 23, in run
+    configuration = Configuration.Configuration(user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Config\Configuration.py", line 98, in __init__
+    self.carpeta = Util.opj(self.carpetaUsers, str(user.number))
+                                                   ^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'number'
+2024-12-12 00:19:53.795993
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 55, in <module>
+    Code.Swiss.RunSwiss.run(user, sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\RunSwiss.py", line 23, in run
+    configuration = Configuration.Configuration(user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Config\Configuration.py", line 98, in __init__
+    self.carpeta = Util.opj(self.carpetaUsers, str(user.number))
+                                                   ^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'number'
+2024-12-12 00:21:18.731471
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 55, in <module>
+    Code.Swiss.RunSwiss.run(user, sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\RunSwiss.py", line 23, in run
+    configuration = Configuration.Configuration(user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Config\Configuration.py", line 98, in __init__
+    self.carpeta = Util.opj(self.carpetaUsers, str(user.number))
+                                                   ^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'number'
+2024-12-12 00:24:38.438317
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 55, in <module>
+    Code.Swiss.RunSwiss.run(user, sys.argv[1])
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Swiss\RunSwiss.py", line 23, in run
+    configuration = Configuration.Configuration(user)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Config\Configuration.py", line 98, in __init__
+    self.carpeta = Util.opj(self.carpetaUsers, str(user.number))
+                                                   ^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'number'

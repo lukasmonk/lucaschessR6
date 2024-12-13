@@ -29,7 +29,7 @@ int num_base_move( void );
 int search_move( char *desde, char *hasta, char * promotion );
 void get_move_ex( int num, char * info );
 char * to_san(int num, char *sanMove);
-char incheck(void);
+//char incheck(void);
 void set_level(int lv);
 
 void pgn_start(int depth);

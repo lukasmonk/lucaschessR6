@@ -1,0 +1,68 @@
+2024-12-11 23:54:01.838260
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 20, in <module>
+    Code.Base.Init.init()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Base\Init.py", line 18, in init
+    resp = LucasChessGui.run_gui(main_procesador)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\LucasChessGui.py", line 133, in run_gui
+    procesador.iniciar_gui()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Procesador.py", line 181, in iniciar_gui
+    self.main_window = MainWindow.MainWindow(self)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\MainWindow.py", line 28, in __init__
+    self.base = WBase.WBase(self, manager)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\WBase.py", line 85, in __init__
+    self.create_toolbar()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\WBase.py", line 138, in create_toolbar
+    action = QtGui.QAction(titulo, self.tb)
+             ^^^^^
+NameError: name 'QtGui' is not defined
+2024-12-12 00:15:57.351346
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\AppData\Local\Programs\PyCharm Community\plugins\python-ce\helpers\pydev\pydevd.py", line 1570, in _exec
+    pydev_imports.execfile(file, globals, locals)  # execute the script
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\AppData\Local\Programs\PyCharm Community\plugins\python-ce\helpers\pydev\_pydev_imps\_pydev_execfile.py", line 18, in execfile
+    exec(compile(contents+"\n", file, 'exec'), glob, loc)
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 20, in <module>
+    Code.Base.Init.init()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Base\Init.py", line 18, in init
+    resp = LucasChessGui.run_gui(main_procesador)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\LucasChessGui.py", line 133, in run_gui
+    procesador.iniciar_gui()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Procesador.py", line 181, in iniciar_gui
+    self.main_window = MainWindow.MainWindow(self)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\MainWindow.py", line 28, in __init__
+    self.base = WBase.WBase(self, manager)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\WBase.py", line 85, in __init__
+    self.create_toolbar()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\WBase.py", line 138, in create_toolbar
+    action = QtGui.QAction(titulo, self.tb)
+             ^^^^^
+NameError: name 'QtGui' is not defined
+2024-12-12 00:17:08.511907
+Traceback (most recent call last):
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\LucasR.py", line 20, in <module>
+    Code.Base.Init.init()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Base\Init.py", line 18, in init
+    resp = LucasChessGui.run_gui(main_procesador)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\LucasChessGui.py", line 133, in run_gui
+    procesador.iniciar_gui()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\Procesador.py", line 181, in iniciar_gui
+    self.main_window = MainWindow.MainWindow(self)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\MainWindow.py", line 28, in __init__
+    self.base = WBase.WBase(self, manager)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\WBase.py", line 85, in __init__
+    self.create_toolbar()
+  File "C:\Users\CFO Tech\source\repos\lucaschess\lucaschessR6\bin\Code\MainWindow\WBase.py", line 138, in create_toolbar
+    action = QtGui.QAction(titulo, self.tb)
+             ^^^^^
+NameError: name 'QtGui' is not defined
