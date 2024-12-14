@@ -2157,6 +2157,12 @@ def pmMiniatura():
 def Miniatura():
     return iget("Miniatura")
 
+def ChessDotCom():
+    return iget("chessDotCom")
+
+def pmChessDotCom():
+    return iget("pmChessDotCom")
+
 def pmLocomotora():
     return iget("pmLocomotora")
 
@@ -3242,3 +3248,9 @@ def pmCircles():
 
 def Circles():
     return iget("Circles")
+
+def pmchessDotCom():
+    return iget("pmchessDotCom")
+
+def chessDotCom():
+    return iget("chessDotCom")

@@ -76,6 +76,7 @@ def menu_tools_savemenu(procesador, dic_data=None):
     menu1.opcion("manual_save", _("Edit and save positions to PGN or FNS"), Iconos.ManualSave())
     menu1.separador()
     menu1.opcion("miniatura", _("Miniature of the day"), Iconos.Miniatura())
+    menu1.opcion("chessDotCom", _("Remote PGN from chess.com"), Iconos.ChessDotCom())
     menu1.separador()
     savemenu.separador()
 

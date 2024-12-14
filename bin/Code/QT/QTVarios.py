@@ -746,6 +746,13 @@ class ImportarFicheroPGN(ImportarFichero):
         ImportarFichero.__init__(
             self, parent, _("A PGN file"), True, True, Iconos.PGN()
         )
+        
+        
+class ImportPGNFromChessDotCom(ImportarFichero):
+    def __init__(self, parent):
+        ImportarFichero.__init__(
+            self, parent, _("A PGN file"), True, True, Iconos.ChessDotCom()
+        )
 
 
 class ImportarFicheroFNS(ImportarFichero):
