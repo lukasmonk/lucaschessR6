@@ -1,11 +1,11 @@
 import os
-import sys
 import shutil
+import sys
 
 
 class Work:
-    def __init__(self):
-        self.path_r2 = os.path.abspath(os.path.join("..", "..", "lucaschessR2"))
+    def __init__(self, path_lcr2):
+        self.path_r2 = path_lcr2
         self.path_r6 = os.path.abspath(os.path.join("..", "..", "lucaschessR6"))
         self.pathcode_2 = os.path.join(self.path_r2, "bin", "Code")
         self.pathcode_6 = os.path.join(self.path_r6, "bin", "Code")
@@ -15,14 +15,16 @@ class Work:
 
         self.li_changes = self.set_changes()
 
+        self.python_version = f"{sys.version_info.major}{sys.version_info.minor}"
+
     @staticmethod
     def read_qtcore():
         li = []
         with open("QtCore.pyi", "rt") as f:
-            for linea in f:
-                if "Qt." in linea and " : " in linea and "..." in linea and "#" in linea:
-                    linea = linea.strip()
-                    x, y = linea.split(":")
+            for line in f:
+                if "Qt." in line and " : " in line and "..." in line and "#" in line:
+                    line = line.strip()
+                    x, y = line.split(":")
                     x = x.strip()
                     y = y.strip().split("=")[0].strip()
                     li.append((f"Qt.{x}", f"{y}.{x}"))
@@ -70,6 +72,7 @@ class Work:
         add("self.AdjustToMinimumContentsLengthWithIcon", "self.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon")
         add("QtGui.QTextOption.WordWrap", "QtGui.QTextOption.WrapMode.WordWrap")
         add("QtGui.QTextOption.NoWrap", "QtGui.QTextOption.WrapMode.NoWrap")
+        add("self.taller.mic_start(self)", "self.taller.mic_start()")
 
         liqt = self.read_qtcore()
 
@@ -77,28 +80,28 @@ class Work:
 
         return li_changes
 
-    def general_replace(self, basename, linea):
-        if "PySide2" in linea:
-            linea = linea.replace("PySide2", "PySide6")
+    def general_replace(self, basename, line_py):
+        if "PySide2" in line_py:
+            line_py = line_py.replace("PySide2", "PySide6")
             if basename in self.st_add_gui:
-                if "QtGui" not in linea:
-                    linea = linea.strip() + ", QtGui\n"
-            return linea
-        elif linea.startswith("VERSION ="):
+                if "QtGui" not in line_py:
+                    line_py = line_py.strip() + ", QtGui\n"
+            return line_py
+        elif line_py.startswith("VERSION ="):
             return "VERSION = \"R 6.0\"\n"
 
         for xfrom, xto in self.li_changes:
-            if xfrom in linea:
-                n = linea.index(xfrom)
-                if not xfrom[-1].isalpha() or not linea[n + len(xfrom)].isalpha():
-                    linea = linea.replace(xfrom, xto)
+            if xfrom in line_py:
+                n = line_py.index(xfrom)
+                if not xfrom[-1].isalpha() or not line_py[n + len(xfrom)].isalpha():
+                    line_py = line_py.replace(xfrom, xto)
 
-        return linea
+        return line_py
 
-    def copy_configuration(self, f2, q6):
+    def copy_configuration(self, lines_py, q6):
         toolbutton = False
-        for linea in f2:
-            if linea.startswith("def int_toolbutton"):
+        for line in lines_py:
+            if line.startswith("def int_toolbutton"):
                 toolbutton = True
 
                 q6.write("""def int_toolbutton(xint):
@@ -116,56 +119,39 @@ def toolbutton_int(qt_tbi):
     return Qt.ToolButtonStyle.ToolButtonTextUnderIcon.value
 """)
 
-            elif linea.startswith("def active_folder"):
+            elif line.startswith("def active_folder"):
                 toolbutton = False
             if toolbutton:
                 continue
-            linea = self.general_replace("Configuration.py", linea)
-            q6.write(linea)
+            line = self.general_replace("Configuration.py", line)
+            q6.write(line)
 
-    def copy_lcdialog(self, f2, q6):
+    def copy_lcdialog(self, lines_py, q6):
         remove = False
-        for linea in f2:
-            if "if QtWidgets.QDesktopWidget().screenCount() > 1:" in linea:
+        for line in lines_py:
+            if "if QtWidgets.QDesktopWidget().screenCount() > 1:" in line:
                 remove = True
                 continue
             if remove:
-                if " QTUtil.desktop_size()" in linea:
+                if " QTUtil.desktop_size()" in line:
                     remove = False
-                    linea = linea[4:]
-                    q6.write(linea)
+                    line = line[4:]
+                    q6.write(line)
                 continue
-            linea = self.general_replace("LCDialog.py", linea)
-            q6.write(linea)
+            line = self.general_replace("LCDialog.py", line)
+            q6.write(line)
 
-    def copy_sound(self, f2, q6):
-        for linea in f2:
-            if "QAudioDeviceInfo" in linea:
-                if " import " in linea:
-                    linea = linea.replace("QAudioDeviceInfo", "QMediaDevices")
-                else:
-                    linea = """        media_devices = QMediaDevices()
-        device = media_devices.defaultAudioInput()\n"""
-            if "QSound" in linea:
-                if " import " in linea:
-                    linea = linea.replace("QSound", "QSoundEffect")
-                elif "self.qsound" in linea:
-                    linea = "        self.qsound = QtMultimedia.QSoundEffect()\n" + \
-                            "        self.qsound.setSource(QtCore.QUrl.fromLocalFile(path_wav))\n"
-                else:
-                    linea = "                qsound = QtMultimedia.QSoundEffect()\n" + \
-                            "                qsound.setSource(QtCore.QUrl.fromLocalFile(path_wav))\n"
-            if "not self.current.isFinished()" in linea:
-                linea = linea.replace("not self.current.isFinished()", "self.current.isPlaying()")
-            linea = self.general_replace("Sound.py", linea)
-            q6.write(linea)
+    @staticmethod
+    def copy_sound(q6):
+        with open("Sound.py", "rt", encoding="utf-8") as f:
+            q6.write(f.read())
 
-    def copy_qtutil(self, f2, q6):
-        for linea in f2:
-            if "PySide2" in linea:
-                linea = linea.replace("PySide2", "PySide6")
-            if linea.startswith("def desktop_size"):
-                linea = """def primary_screen():
+    def copy_qtutil(self, lines_py, q6):
+        for line in lines_py:
+            if "PySide2" in line:
+                line = line.replace("PySide2", "PySide6")
+            if line.startswith("def desktop_size"):
+                line = """def primary_screen():
     app = QtWidgets.QApplication.instance()  # Get the QApplication instance
     if app is None:  # If there's no QApplication instance, create one
         app = QtWidgets.QApplication([])
@@ -175,60 +161,76 @@ def toolbutton_int(qt_tbi):
 
 def desktop_size():
 """
-            elif "QtWidgets.QDesktopWidget().screenGeometry()" in linea:
-                linea = linea.replace("QtWidgets.QDesktopWidget().screenGeometry()",
-                                      "primary_screen().availableGeometry()")
-            elif "QtWidgets.QDesktopWidget()" in linea:
-                linea = linea.replace("QtWidgets.QDesktopWidget()", "primary_screen()")
+            elif "QtWidgets.QDesktopWidget().screenGeometry()" in line:
+                line = line.replace("QtWidgets.QDesktopWidget().screenGeometry()",
+                                    "primary_screen().availableGeometry()")
+            elif "QtWidgets.QDesktopWidget()" in line:
+                line = line.replace("QtWidgets.QDesktopWidget()", "primary_screen()")
             else:
-                linea = self.general_replace("QTUtil.py", linea)
-            q6.write(linea)
+                line = self.general_replace("QTUtil.py", line)
+            q6.write(line)
 
-    def copy_scanner(self, f2, q6):
-        for linea in f2:
-            if linea.startswith("from Code.QT import Iconos"):
-                linea = linea.strip() + ", QTUtil\n"
+    def copy_scanner(self, lines_py, q6):
+        for line in lines_py:
+            if line.startswith("from Code.QT import Iconos"):
+                line = line.strip() + ", QTUtil\n"
             else:
-                linea = self.general_replace("Scanner.py", linea)
-            q6.write(linea)
+                line = self.general_replace("Scanner.py", line)
+            q6.write(line)
 
-    def copy_code_file(self, path2):
-        path6 = path2.replace("lucaschessR2", "lucaschessR6")
+    def convert_file(self, path6):
+        with open(path6, "rt", encoding="utf-8") as f6_old:
+            lines = [line for line in f6_old]
 
-        with (open(path2, "rt", encoding="utf-8") as f2, open(path6, "wt", encoding="utf-8") as q6):
-            basename = os.path.basename(path2)
+        with open(path6, "wt", encoding="utf-8") as q6:
+            basename = os.path.basename(path6)
             if basename == "Sound.py":
-                self.copy_sound(f2, q6)
+                self.copy_sound(q6)
             elif basename == "Configuration.py":
-                self.copy_configuration(f2, q6)
+                self.copy_configuration(lines, q6)
             elif basename == "QTUtil.py":
-                self.copy_qtutil(f2, q6)
+                self.copy_qtutil(lines, q6)
             elif basename == "LCDialog.py":
-                self.copy_lcdialog(f2, q6)
+                self.copy_lcdialog(lines, q6)
             elif basename == "Scanner.py":
-                self.copy_scanner(f2, q6)
+                self.copy_scanner(lines, q6)
 
             else:
-                for linea in f2:
-                    linea = self.general_replace(basename, linea)
+                for line in lines:
+                    line = self.general_replace(basename, line)
 
-                    q6.write(linea)
+                    q6.write(line)
 
-    def copy_code_folder(self, path2):
-        print(path2)
-        os.mkdir(path2.replace("lucaschessR2", "lucaschessR6"))
-        entry: os.DirEntry
-        for entry in os.scandir(path2):
-            if entry.is_dir():
-                if entry.name != "__pycache__":
-                    self.copy_code_folder(entry.path)
-            elif entry.name.endswith(".py"):
-                self.copy_code_file(entry.path)
+    def convert_code(self):
+        print("Converting Code")
+
+        def convert_code_folder(folder):
+            entry: os.DirEntry
+            for entry in os.scandir(folder):
+                if entry.is_file():
+                    self.convert_file(entry.path)
+                elif entry.is_dir():
+                    convert_code_folder(entry.path)
+
+        convert_code_folder(self.pathcode_6)
 
     def copy_code(self):
+        print("Copying Code")
         if os.path.isdir(self.pathcode_6):
             shutil.rmtree(self.pathcode_6)
-        self.copy_code_folder(self.pathcode_2)
+
+        shutil.copytree(self.pathcode_2, self.pathcode_6)
+
+    def remove_pycache(self):
+        def limpia(folder):
+            for entry in os.scandir(folder):
+                if entry.is_dir():
+                    if entry.name == "__pycache__":
+                        shutil.rmtree(entry.path)
+                    else:
+                        limpia(entry.path)
+
+        limpia(self.pathcode_6)
 
     def remove_old(self):
         for folder in ("Resources", "bin"):
@@ -239,11 +241,13 @@ def desktop_size():
 
     def copy_resources(self):
         folder = "Resources"
+        print("Copying Resources")
         path_ori = os.path.abspath(os.path.join(self.path_r2, folder))
         path_dest = os.path.abspath(os.path.join(self.path_r6, folder))
         shutil.copytree(path_ori, path_dest)
 
     def copy_os(self):
+        print("Copying engines")
         platform = sys.platform
         path_ori = os.path.abspath(os.path.join(self.path_r2, "bin", "OS", platform))
         path_dest = os.path.abspath(os.path.join(self.path_r6, "bin", "OS", platform))
@@ -255,29 +259,52 @@ def desktop_size():
 
         shutil.copytree(path_ori, path_dest)
 
-        if platform == "win32":
-            path_fastercode37 = os.path.join(path_ori, "FasterCode.cp37-win32.pyd")
-            path_fastercode312_ori = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
-                                                  "FasterCode.cp312-win_amd64.pyd")
-        else:
-            path_fastercode37 = os.path.join(path_ori, "FasterCode.cpython-38-x86_64-linux-gnu.so")
-            path_fastercode312_ori = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
-                                                  "FasterCode.cpython-312-x86_64-linux-gnu.so")
-        if os.path.isfile(path_fastercode37):
-            os.remove(path_fastercode37)
-
-        shutil.copy2(path_fastercode312_ori, path_dest)
-
     def copy_lucas(self):
         file = "LucasR.py"
         path_ori = os.path.abspath(os.path.join(self.path_r2, "bin", file))
         path_dest = os.path.abspath(os.path.join(self.path_r6, "bin", file))
         shutil.copy2(path_ori, path_dest)
 
+    def copy_fastercode(self):
+        path_fastercode = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
+                                       f"FasterCode.cp{self.python_version}-win_amd64.pyd")
+        platform = sys.platform
+        path_folder_os = os.path.join(self.path_r6, "bin", "OS", platform)
+        for entry in os.scandir(path_folder_os):
+            if entry.name.startswith("FasterCode"):
+                os.remove(entry.path)
+            elif entry.name == "__pycache__":
+                shutil.rmtree(entry.path)
 
-w = Work()
-w.remove_old()
-w.copy_os()
-w.copy_lucas()
-w.copy_resources()
-w.copy_code()
+        shutil.copy2(path_fastercode, path_folder_os)
+
+    def check_fastercode(self):
+        platform = sys.platform
+        if platform == "win32":
+            path_fastercode_new = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
+                                               f"FasterCode.cp{self.python_version}-win_amd64.pyd")
+        else:
+            path_fastercode_new = os.path.join(self.path_r6, "__Convert", "_fastercode", "source",
+                                               f"FasterCode.cpython-{self.python_version}-x86_64-linux-gnu.so")
+
+        if not os.path.isfile(path_fastercode_new):
+            input("\nFasterCode must be created first from __Convert/_fastercode\n\n"
+                  f"File to be created: {path_fastercode_new}\n\nPress enter to finish")
+            return False
+        return True
+
+
+path_r2 = r"h:\pyLCR2"
+
+w = Work(path_r2)
+if w.check_fastercode():
+    w.remove_old()
+    w.copy_os()
+    w.copy_lucas()
+    w.copy_resources()
+    w.copy_fastercode()
+    w.copy_code()
+    w.remove_pycache()
+    w.convert_code()
+
+    print("Done")

@@ -1,6 +1,6 @@
 # Lucas Chess Conversion Project
 
-This project converts the Lucas Chess application from PySide2 to PySide6 and updates the Python version from 3.7 (32bits) to 3.12 (64 bits). The conversion process is automated using a script located in the `__Convert` subdirectory.
+This project converts the Lucas Chess application from PySide2 to PySide6 and updates the Python version from 3.7 (32bits) to 3.13 (64 bits). The conversion process is automated using a script located in the `__Convert` subdirectory.
 
 ## Table of Contents
 - Introduction
@@ -13,8 +13,22 @@ This project converts the Lucas Chess application from PySide2 to PySide6 and up
 Lucas Chess is an open-source chess program designed for training, playing, and competing. This project aims to modernize the application by upgrading its dependencies to more recent versions.
 
 ## Requirements
-- Python 3.12
+- Python 3.13
 - PySide6
+- chardet
+- sortedcontainers
+- python-chess
+- pillow
+- cython
+- psutil
+- polib
+- deep_translator
+- requests
+- urllib3
+- idna
+- certifi
+- bs4
+
 
 ## Installation
 1. Clone the repository:
