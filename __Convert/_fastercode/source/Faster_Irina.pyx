@@ -307,7 +307,7 @@ def xpgn_pv(pgn: str) -> str:
         return pv.decode("utf-8")
 
 
-def pos_rc(pos: int) -> int:
+def pos_rc(pos: int) -> tuple:
     return pos // 8, pos % 8
 
 
@@ -857,7 +857,7 @@ def fen_ended(fen):
 def xparse_body(fen, body):
     body = bytes(body, "utf-8")
     fen = bytes(fen, "utf-8")
-    resp = bytearray(len(body)+200)
+    resp = bytearray(len(body)*14//10)
     tam = parse_body( fen, body, resp )
     if tam:
         return resp[:tam].decode("utf-8").split("\n")
@@ -866,7 +866,7 @@ def xparse_body(fen, body):
 
 def xparse_pgn(pgn):
     pgn = bytes(pgn, "utf-8")
-    resp = bytearray(len(pgn)+200)
+    resp = bytearray(len(pgn)*14//10)
     tam = parse_pgn( pgn, resp )
     if tam:
         return resp[:tam].decode("utf-8").split("\n")

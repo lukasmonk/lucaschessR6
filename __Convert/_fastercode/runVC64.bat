@@ -1,25 +1,62 @@
 @echo off
 
-set PATH_BASE=f:
 
+REM ---------------------------------------------------------------------------------------------------------
+REM It is necessary to indicate the python version and path of python and mingw, changing the next 3 lines
+set PYTHON_VERSION=313
+set PYTHON_PATH=d:\lucaschess_mas\WPy64-31310\python
+set MINGW64_PATH=h:\mingw64\bin
+REM ---------------------------------------------------------------------------------------------------------
+
+
+set PATH=%MINGW64_PATH%;%PYTHON_PATH%;%PYTHON_PATH%\DLLs;%PYTHON_PATH%\Scripts;%PYTHON_PATH%\lib;%PATH%
+
+REM ---------------------------------------------------------------------------------------------------------
+REM Library Irina
+echo Creating the C irina library
 cd source\irina
-set PATH_MINGW=%PATH_BASE%\Mingw64\bin
-set PATH_PYTHON=%PATH_BASE%\WPy64-31241\python-3.12.4.amd64
-set PATH=%PATH_MINGW%;%PATH_PYTHON%;%PATH_PYTHON%\DLLs;%PATH_PYTHON%\lib;%PATH%
-
-gcc -DNDEBUG -DWIN32 -c lc.c board.c data.c eval.c hash.c loop.c makemove.c movegen.c movegen_piece_to.c search.c util.c pgn.c parser.c polyglot.c
-ar rcs ..\libirina.a lc.o board.o data.o eval.o hash.o loop.o makemove.o movegen.o movegen_piece_to.o search.o util.o pgn.o parser.o polyglot.o
+gcc -DNDEBUG -DWIN32  -fPIC -O3 -c lc.c board.c data.c eval.c hash.c loop.c makemove.c movegen.c movegen_piece_to.c search.c util.c pgn.c parser.c polyglot.c
+ar cr ../libirina.so lc.o board.o data.o eval.o hash.o loop.o makemove.o movegen.o movegen_piece_to.o search.o util.o pgn.o parser.o polyglot.o
 del *.o
-
 cd ..
+REM ---------------------------------------------------------------------------------------------------------
 
-copy /B Faster_Irina.pyx+Faster_Polyglot.pyx FasterCode.pyx
+REM ---------------------------------------------------------------------------------------------------------
+REM cython
+echo Generating FasterCode in C with cython
+copy /B Faster_Irina.pyx+Faster_Polyglot.pyx FasterCode.pyx > nul
+cython --embed -o FasterCode.c FasterCode.pyx
+REM ---------------------------------------------------------------------------------------------------------
 
-python setup.py build_ext --inplace -i clean
+REM ---------------------------------------------------------------------------------------------------------
+REM Compiling
+echo Compiling everything
+gcc -c -I%PYTHON_PATH%\include -o FasterCode.o FasterCode.c
+gcc -shared -L%PYTHON_PATH%\libs -o FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd FasterCode.o .\libirina.so  -lpython%PYTHON_VERSION%
+strip FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd
+REM ---------------------------------------------------------------------------------------------------------
 
+REM ---------------------------------------------------------------------------------------------------------
+REM Removing temporary files
+del FasterCode.o
 del FasterCode.c
-del libirina.a
-rmdir /s /q build
+del FasterCode.pyx
+del libirina.so
+REM ---------------------------------------------------------------------------------------------------------
 
-
-
+REM ---------------------------------------------------------------------------------------------------------
+REM Final message
+if exist "FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd" (
+    echo.
+    echo.
+    echo File created: FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd
+    echo.
+    copy /Y "FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd" ..\..\..\bin\OS\win32\
+    echo This file is copied to the subfolder bin\OS\win32.
+    echo The subfolder bin\OS\win32 will have been created after executing convert.py
+    echo.
+) else (
+    echo Error,
+)
+pause
+REM ---------------------------------------------------------------------------------------------------------
