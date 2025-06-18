@@ -51,11 +51,16 @@ Lucas Chess is an open-source chess program designed for training, playing, and 
 1. Create FasterCode library
     ```sh
     cd _fastercode
+    ```
     windows:
         edit the first 8 lines of runVC64.bat, indicating the python version and the path to mingw
-        then exec runVC64.bat
+    ```
+   runVC64.bat
+    ```
+
     linux:
-        exec linux64.sh
+    ```
+   linux64.sh
     ```
 
 2. Run the conversion script, the script will copy all source files and convert them to use PySide6:
