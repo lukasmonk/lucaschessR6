@@ -51,9 +51,6 @@ if exist "FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd" (
     echo.
     echo File created: FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd
     echo.
-    copy /Y "FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd" ..\..\..\bin\OS\win32\
-    echo This file is copied to the subfolder bin\OS\win32.
-    echo The subfolder bin\OS\win32 will have been created after executing convert.py
     echo.
 ) else (
     echo Error,
