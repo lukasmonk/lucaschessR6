@@ -8,11 +8,19 @@
 
 
 #ifdef WIN32
-int is_bmi2()
-{
+void cpuidex(int info[4], int function_id, int subfunction_id) {
+    __asm__ __volatile__ (
+        "cpuid"
+        : "=a"(info[0]), "=b"(info[1]), "=c"(info[2]), "=d"(info[3])
+        : "a"(function_id), "c"(subfunction_id)
+    );
+}
+
+// Verifica soporte para BMI2 (bit 8 de EBX en CPUID.07H:EBX)
+int is_bmi2() {
     int info[4];
-    __cpuidex(info, 0x00000007, 0);
-    return (info[1] & ((int)1 <<  8)) != 0;
+    cpuidex(info, 7, 0);
+    return (info[1] & (1 << 8)) != 0;
 }
 #else
 #include <stdint.h>
