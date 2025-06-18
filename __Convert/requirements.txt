@@ -12,3 +12,4 @@ urllib3
 idna
 certifi
 bs4
+audioop
