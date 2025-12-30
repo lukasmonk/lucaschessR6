@@ -1,0 +1,46 @@
+[tool.ruff]
+builtins = ["_", "_F", "_X", "_FO", "_SP"]
+lint.ignore = ["E722"]
+line-length = 120
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 120
+target-version = ["py313"]
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+line_length = 120
+combine_as_imports = true
+
+[project]
+name = "Lucas Chess"
+version = "R6.0.0"
+description = "Chess GUI"
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [
+    {name = "Lucas Monge", email = "lukasmonk@email.com"}
+]
+
+dependencies = [
+    "charset-normalizer>=3.3.2",
+    "sortedcontainers>=2.4.0",
+    "python-chess>=1.999",
+    "pillow>=10.2.0",
+    "psutil>=5.9.8",
+    "polib>=1.2.0",
+    "deep-translator>=1.11.4",
+    "requests>=2.31.0",
+    "urllib3>=2.1.0",
+    "idna>=3.6",
+    "certifi>=2023.11.17",
+    "beautifulsoup4>=4.12.3",
+]
+
+[tool.uv]
+python = "3.12"
