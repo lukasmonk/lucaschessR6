@@ -1,42 +1,37 @@
-Lucas Chess (R)
-==============
+Lucas Chess (R6)
+================
 
-Lucas Chess (R) is a GUI of chess:
+Lucas Chess (R6) is a GUI of chess:
 
 1. To train in many different ways.
 2. To play chess against any UCI engine.
 3. To compete against engines to obtain an elo.
 4. It has utilities to edit games, create polyglot books, tournaments between engines ...
 
-This is an update of Lucas Chess with a new version of python (2.7 -> 3.7) and the main graphic library, from pyqt4 to pyside2 (qt4 -> qt5).
+This is an update of Lucas Chess with a new version of python (3.7 -> 3.12) and the main graphic library, from pyside2 to pyside6 (qt5 -> qt6).
 
 
 Incompatibilities
 -----------------
-* **Does not support Windows XP. Windows 7 32 bit incompatibilities have been reported.**
-* **Data files are not compatible with previous versions of Lucas Chess.**
+* **Does not support Windows 8 or previous versions.**
+* **Not compatible with 32-bit operating systems.**
 
 Dependencies
 ------------
 
-* Python 3.7
-* PySide2
-* psutil
-* Python for windows extensions
-* chardet
-* python-chess
-* pyllow
-* photohash
-* cython
+* Python 3.12+
+* charset-normalizer
 * sortedcontainers
+* python-chess
+* pillow
+* psutil
 * polib
-* deep_translator
+* deep-translator
 * requests
 * urllib3
 * idna
 * certifi
-* bs4
-
+* beautifulsoup4
 
 
 Links
