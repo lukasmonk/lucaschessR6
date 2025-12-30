@@ -1,0 +1,90 @@
+[General]
+BACKGROUND=Background
+FOREGROUND=Foreground
+
+[Moves in PGN table]
+VERY_GOOD_MOVE=Brilliant move|(!!)
+GOOD_MOVE=Good move|(!)
+INTERESTING_MOVE=Interesting move|(!?)
+INACCURACY=Dubious move|(?!)
+MISTAKE=Mistake|(?)
+BLUNDER=Blunder|(??)
+
+[Selected move in PGN table]
+PGN_SELBACKGROUND=Background
+PGN_SELFOREGROUND=Foreground
+
+[Windows with PGN]
+PGN_NUMBER=Numbers
+PGN_SELECT=Selected move
+PGN_MOVES=Other moves
+
+[Various]
+CONTROLMENSESPERA=Ephemeral message window
+LINKS=Links
+BOARD_STATIC=Messages in the middle of some boards (coordinate training/captures/...)
+
+[Database opening explorer]
+SUMMARY_FOREGROUND=Foreground
+SUMMARY_WIN=Win
+SUMMARY_LOST=Loss
+SUMMARY_TOTAL=Total
+
+[League]
+WLEAGUE_MIGRATION=Engines that change of division
+WLEAGUECONFIG_1=Configuration, selected engines, 1st division
+WLEAGUECONFIG_2=Configuration, selected engines, 2nd division
+WLEAGUECONFIG_3=Configuration, selected engines, 3rd division
+
+[League+Crosstabs]
+WLEAGUE_WIN=Win
+WLEAGUE_LOST=Loss
+WLEAGUE_NORESULT=No result
+WLEAGUE_DRAW=Draw
+
+[Opening lines]
+WLINES_PAR=Even lines
+WLINES_NON=Odd lines
+WLINES_LINE=Line numbers
+WLINES_PGN=PGN
+
+[Transsiberian Railway]
+ROUTES_FOREGROUND=Foreground
+ROUTES_BACKGROUND=Background
+ROUTES_STAGE_FOREGROUND=Stage foreground
+ROUTES_STAGE_BACKGROUND=Stage background
+ROUTES_TRACK_FOREGROUND=Track foreground
+ROUTES_TRACK_BACKGROUND=Track background
+ROUTES_STATE_FOREGROUND=State foreground
+ROUTES_STATE_BACKGROUND=State background
+ROUTES_NEXTTASK_FOREGROUND=Next task foreground
+ROUTES_NEXTTASK_BACKGROUND_PLAYING=Background colour of next task if playing
+ROUTES_NEXTTASK_BACKGROUND_ENDINGS=Background colour of next task if endings
+ROUTES_NEXTTASK_BACKGROUND_TACTICS=Background colour of next task if tactical
+ROUTES_TIME_FOREGROUND=Time foreground
+ROUTES_TIME_BACKGROUND=Time background
+ROUTES_DATE_FOREGROUND=Date foreground
+ROUTES_DATE_BACKGROUND=Date background
+
+
+[Training mates]
+MANAGERMATE_FOREGROUND=Foreground
+MANAGERMATE_BACKGROUND=Background
+
+
+[Director]
+DIRECTOR_BANDA_BORDER_ENABLE=Border when enable
+DIRECTOR_BANDA_FOREGROUND_ENABLE=Foreground when enable
+DIRECTOR_BANDA_BACKGROUND_ENABLE=Background when enable
+DIRECTOR_BANDA_BORDER_DISABLE=Border when disable
+DIRECTOR_BANDA_FOREGROUND_DISABLE=Foreground when disable
+DIRECTOR_BANDA_BACKGROUND_DISABLE=Background when disable
+
+[Analysis Bar]
+BLACK_ANALYSIS_BAR=Black
+WHITE_ANALYSIS_BAR=White
+
+[Tournaments between engines]
+TOURNAMENTS_RESULTS_WHITE=Results white
+TOURNAMENTS_RESULTS_BLACK=Results black
+TOURNAMENTS_RESULTS_SCORE=Score

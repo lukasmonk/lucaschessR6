@@ -1,0 +1,305 @@
+import copy
+
+from PySide6 import QtCore, QtWidgets
+
+import Code
+from Code import Util
+from Code.Board import Board, BoardTypes
+from Code.Director import TabVisual
+from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
+
+
+class WTV_Marco(QtWidgets.QDialog):
+    def __init__(self, owner, regMarco):
+
+        QtWidgets.QDialog.__init__(self, owner)
+
+        self.setWindowTitle(_("Box"))
+        self.setWindowFlags(
+            QtCore.Qt.WindowType.WindowCloseButtonHint
+            | QtCore.Qt.WindowType.Dialog
+            | QtCore.Qt.WindowType.WindowTitleHint
+        )
+
+        if not regMarco:
+            regMarco = TabVisual.PMarco()
+
+        tb = QTDialogs.LCTB(self)
+        tb.new(_("Save"), Iconos.Aceptar(), self.grabar),
+        tb.new(_("Cancel"), Iconos.Cancelar(), self.reject)
+
+        # Board
+        config_board = owner.board.config_board.copia(owner.board.config_board.id())
+        config_board.width_piece(36)
+        self.board = Board.Board(self, config_board, with_director=False)
+        self.board.crea()
+        self.board.copia_posicion_de(owner.board)
+
+        # Datos generales
+        li_gen = []
+
+        # name del box que se usara en los menus del tutorial
+        config = FormLayout.Editbox(_("Name"), ancho=120)
+        li_gen.append((config, regMarco.name))
+
+        # ( "tipo", "n", Qt.PenStyle.SolidLine ), #1=SolidLine, 2=DashLine, 3=DotLine, 4=DashDotLine, 5=DashDotDotLine
+        config = FormLayout.Combobox(_("Line Type"), QTMessages.lines_type())
+        li_gen.append((config, regMarco.tipo))
+
+        # ( "color", "n", 0 ),
+        config = FormLayout.Colorbox(_("Color"), 80, 20)
+        li_gen.append((config, regMarco.color))
+
+        # ( "colorinterior", "n", -1 ),
+        config = FormLayout.Colorbox(_("Internal color"), 80, 20, is_checked=True)
+        li_gen.append((config, regMarco.colorinterior))
+
+        # ( "opacity", "n", 1.0 ),
+        config = FormLayout.Dial(_("Degree of transparency"), 0, 99)
+        li_gen.append((config, 100 - int(regMarco.opacity * 100)))
+
+        # ( "grosor", "n", 1 ), # ancho del trazo
+        config = FormLayout.Spinbox(_("Thickness"), 1, 20, 50)
+        li_gen.append((config, regMarco.grosor))
+
+        # ( "redEsquina", "n", 0 ),
+        config = FormLayout.Spinbox(_("Rounded corners"), 0, 100, 50)
+        li_gen.append((config, regMarco.redEsquina))
+
+        # orden
+        config = FormLayout.Combobox(_("Order concerning other items"), QTMessages.list_zvalues())
+        li_gen.append((config, regMarco.physical_pos.orden))
+
+        self.form = FormLayout.FormWidget(li_gen, dispatch=self.cambios)
+
+        # Layout
+        layout = Colocacion.H().control(self.form).relleno().control(self.board)
+        layout1 = Colocacion.V().control(tb).otro(layout)
+        self.setLayout(layout1)
+
+        # Ejemplos
+        liMovs = ["b4c4", "e2e2", "e4g7"]
+        self.liEjemplos = []
+        for a1h8 in liMovs:
+            regMarco.a1h8 = a1h8
+            regMarco.siMovible = True
+            box = self.board.creaMarco(regMarco)
+            self.liEjemplos.append(box)
+
+    def cambios(self):
+        if hasattr(self, "form"):
+            li = self.form.get()
+            for n, box in enumerate(self.liEjemplos):
+                regMarco = box.bloqueDatos
+                regMarco.name = li[0]
+                regMarco.tipo = li[1]
+                regMarco.color = li[2]
+                regMarco.colorinterior = li[3]
+                # regMarco.colorinterior2 = li[]
+                regMarco.opacity = (100.0 - float(li[4])) / 100.0
+                regMarco.grosor = li[5]
+                regMarco.redEsquina = li[6]
+                regMarco.physical_pos.orden = li[7]
+                box.setOpacity(regMarco.opacity)
+                box.setZValue(regMarco.physical_pos.orden)
+                box.update()
+            self.board.escena.update()
+            QTUtils.refresh_gui()
+
+    def grabar(self):
+        regMarco = self.liEjemplos[0].bloqueDatos
+        name = regMarco.name.strip()
+        if name == "":
+            QTMessages.message_error(self, _("Name missing"))
+            return
+
+        self.regMarco = regMarco
+        pm = self.liEjemplos[0].pixmap()
+        bf = QtCore.QBuffer()
+        pm.save(bf, "PNG")
+        self.regMarco.png = bytes(bf.data().data())
+
+        self.accept()
+
+
+class WTV_Marcos(LCDialog.LCDialog):
+    def __init__(self, owner, list_boxes, dbMarcos):
+
+        titulo = _("Boxes")
+        icono = Iconos.Marcos()
+        extparam = "marcos"
+        LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
+
+        self.owner = owner
+
+        flb = Controles.FontType(puntos=8)
+
+        self.liPMarcos = list_boxes
+        self.configuration = Code.configuration
+
+        self.dbMarcos = dbMarcos
+
+        self.liPMarcos = owner.list_boxes()
+
+        # Lista
+        o_columns = Columnas.ListaColumnas()
+        o_columns.nueva("NUMBER", _("N."), 60, align_center=True)
+        o_columns.nueva("NOMBRE", _("Name"), 256)
+
+        self.grid = Grid.Grid(self, o_columns, xid="M", siSelecFilas=True)
+
+        tb = QTDialogs.LCTB(self)
+        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("New"), Iconos.Nuevo(), self.mas)
+        tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
+        tb.new(_("Modify"), Iconos.Modificar(), self.modificar)
+        tb.new(_("Copy"), Iconos.Copiar(), self.copiar)
+        tb.new(_("Up"), Iconos.Arriba(), self.arriba)
+        tb.new(_("Down"), Iconos.Abajo(), self.abajo)
+        tb.setFont(flb)
+
+        ly = Colocacion.V().control(tb).control(self.grid)
+
+        # Board
+        config_board = Code.configuration.config_board("EDIT_GRAPHICS", 48)
+        self.board = Board.Board(self, config_board, with_director=False)
+        self.board.crea()
+        self.board.copia_posicion_de(owner.board)
+
+        # Layout
+        layout = Colocacion.H().otro(ly).control(self.board)
+        self.setLayout(layout)
+
+        self.register_grid(self.grid)
+        self.restore_video()
+
+        # Ejemplos
+        liMovs = ["b4c4", "e2e2", "e4g7"]
+        self.liEjemplos = []
+        regMarco = BoardTypes.Marco()
+        for a1h8 in liMovs:
+            regMarco.a1h8 = a1h8
+            regMarco.siMovible = True
+            box = self.board.creaMarco(regMarco)
+            self.liEjemplos.append(box)
+
+        self.grid.gotop()
+        self.grid.setFocus()
+
+    def closeEvent(self, event):
+        self.save_video()
+
+    def terminar(self):
+        self.save_video()
+        self.close()
+
+    def grid_num_datos(self, grid):
+        return len(self.liPMarcos)
+
+    def grid_dato(self, grid, row, o_column):
+        key = o_column.key
+        if key == "NUMBER":
+            return str(row + 1)
+        elif key == "NOMBRE":
+            return self.liPMarcos[row].name
+
+    def grid_doble_click(self, grid, row, o_column):
+        self.modificar()
+
+    def grid_cambiado_registro(self, grid, row, o_column):
+        if row >= 0:
+            reg_marco = self.liPMarcos[row]
+            for ejemplo in self.liEjemplos:
+                a1h8 = ejemplo.bloqueDatos.a1h8
+                bd = copy.deepcopy(reg_marco)
+                bd.a1h8 = a1h8
+                bd.width_square = self.board.width_square
+                ejemplo.bloqueDatos = bd
+                ejemplo.reset()
+            self.board.escena.update()
+
+    def mas(self):
+        w = WTV_Marco(self, None)
+        if w.exec():
+            reg_marco = w.regMarco
+            reg_marco.id = Util.huella()
+            reg_marco.ordenVista = (self.liPMarcos[-1].ordenVista + 1) if self.liPMarcos else 1
+            self.dbMarcos[reg_marco.id] = reg_marco.save_dic()
+            self.liPMarcos.append(reg_marco)
+            self.grid.refresh()
+            self.grid.gobottom()
+            self.grid.setFocus()
+
+    def borrar(self):
+        row = self.grid.recno()
+        if row >= 0:
+            if QTMessages.pregunta(self, _X(_("Delete box %1?"), self.liPMarcos[row].name)):
+                reg_marco = self.liPMarcos[row]
+                str_id = reg_marco.id
+                del self.dbMarcos[str_id]
+                del self.liPMarcos[row]
+                self.grid.refresh()
+                self.grid.setFocus()
+
+    def modificar(self):
+        row = self.grid.recno()
+        if row >= 0:
+            w = WTV_Marco(self, self.liPMarcos[row])
+            if w.exec():
+                regMarco = w.regMarco
+                str_id = regMarco.id
+                self.liPMarcos[row] = regMarco
+                self.dbMarcos[str_id] = regMarco.save_dic()
+                self.grid.refresh()
+                self.grid.setFocus()
+                self.grid_cambiado_registro(self.grid, row, None)
+
+    def copiar(self):
+        row = self.grid.recno()
+        if row >= 0:
+            reg_marco = copy.deepcopy(self.liPMarcos[row])
+
+            def siEstaNombre(name):
+                for rf in self.liPMarcos:
+                    if rf.name == name:
+                        return True
+                return False
+
+            n = 1
+            name = "%s-%d" % (reg_marco.name, n)
+            while siEstaNombre(name):
+                n += 1
+                name = "%s-%d" % (reg_marco.name, n)
+            reg_marco.name = name
+            reg_marco.id = Util.huella()
+            reg_marco.ordenVista = self.liPMarcos[-1].ordenVista + 1
+            self.dbMarcos[reg_marco.id] = reg_marco
+            self.liPMarcos.append(reg_marco)
+            self.grid.refresh()
+            self.grid.setFocus()
+
+    def interchange(self, fila1, fila2):
+        reg_marco1, reg_marco2 = self.liPMarcos[fila1], self.liPMarcos[fila2]
+        reg_marco1.ordenVista, reg_marco2.ordenVista = (
+            reg_marco2.ordenVista,
+            reg_marco1.ordenVista,
+        )
+        self.dbMarcos[reg_marco1.id] = reg_marco1.save_dic()
+        self.dbMarcos[reg_marco2.id] = reg_marco2.save_dic()
+        self.liPMarcos[fila1], self.liPMarcos[fila2] = (
+            self.liPMarcos[fila2],
+            self.liPMarcos[fila1],
+        )
+        self.grid.goto(fila2, 0)
+        self.grid.refresh()
+        self.grid.setFocus()
+
+    def arriba(self):
+        row = self.grid.recno()
+        if row > 0:
+            self.interchange(row, row - 1)
+
+    def abajo(self):
+        row = self.grid.recno()
+        if 0 <= row < (len(self.liPMarcos) - 1):
+            self.interchange(row, row + 1)

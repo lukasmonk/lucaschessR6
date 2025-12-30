@@ -1,89 +1,71 @@
-# Lucas Chess Conversion Project
+Lucas Chess (R)
+==============
 
-This project converts the Lucas Chess application from PySide2 to PySide6 and updates the Python version from 3.7 (32bits) to 3.13 (64 bits). The conversion process is automated using a script located in the `__Convert` subdirectory.
+Lucas Chess (R) is a GUI of chess:
 
-## Table of Contents
-- Introduction
-- Requirements
-- Installation
-- Usage
-- License
+1. To train in many different ways.
+2. To play chess against any UCI engine.
+3. To compete against engines to obtain an elo.
+4. It has utilities to edit games, create polyglot books, tournaments between engines ...
 
-## Introduction
-Lucas Chess is an open-source chess program designed for training, playing, and competing. This project aims to modernize the application by upgrading its dependencies to more recent versions.
-
-## Requirements
-- Python 3.13
-- PySide6
-- chardet
-- sortedcontainers
-- python-chess
-- pillow
-- cython
-- psutil
-- polib
-- deep_translator
-- requests
-- urllib3
-- idna
-- certifi
-- bs4
+This is an update of Lucas Chess with a new version of python (2.7 -> 3.7) and the main graphic library, from pyqt4 to pyside2 (qt4 -> qt5).
 
 
-## Installation
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/lukasmonk/lucaschessR6.git
-    cd lucaschessR6
-    ```
+Incompatibilities
+-----------------
+* **Does not support Windows XP. Windows 7 32 bit incompatibilities have been reported.**
+* **Data files are not compatible with previous versions of Lucas Chess.**
 
-2. Navigate to the `__Convert` directory:
-    ```sh
-    cd __Convert
-    ```
+Dependencies
+------------
 
-3. Install the required dependencies:
-    ```sh
-    pip install -r requirements.txt
-    ```
+* Python 3.7
+* PySide2
+* psutil
+* Python for windows extensions
+* chardet
+* python-chess
+* pyllow
+* photohash
+* cython
+* sortedcontainers
+* polib
+* deep_translator
+* requests
+* urllib3
+* idna
+* certifi
+* bs4
 
-## Usage
-1. Create FasterCode library
-    ```sh
-    cd _fastercode
-    ```
-    windows:
-        edit the first 8 lines of runVC64.bat, indicating the python version and the path to mingw
-    ```
-   runVC64.bat
-    ```
 
-    linux:
-    ```
-   linux64.sh
-    ```
 
-2. Run the conversion script, the script will copy all source files and convert them to use PySide6:
-    ```sh
-    python convert.py
-    ```
+Links
+-----
 
-3. Navigate back to the main directory:
-    ```sh
-    cd ../bin
-    ```
+* Web: [https://lucaschess.pythonanywhere.com/](https://lucaschess.pythonanywhere.com/).
+* Blog: [https://lucaschess.blogspot.com.es/](https://lucaschess.blogspot.com.es/).
+* Wiki: [https://chessionate.com/lucaswiki](https://chessionate.com/lucaswiki/).
 
-4. If the OS is Linux:
-    ```sh
-    cd OS/linux
-    sh ./RunEngines
-    cd ../..
-    ```
 
-5. Launch of the programme:
-    ```sh
-    python LucasR.py
-    ```
+Legal Details
+-------------
 
-## License
-This project is licensed under the GNU General Public License v3.0. See the LICENSE file for details.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at
+your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+USA
+
+See the file "LICENSE" for details.
+
+
+
