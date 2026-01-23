@@ -31,15 +31,15 @@ class WDBMoveAnalysis(LCDialog.LCDialog):
         o_columns.nueva("centipawns_lost", _("Centipawns lost"), 116, align_center=True)
         o_columns.nueva("count", _("Occurrences"), 100, align_center=True)
         symbol = "\u2605"
-        o_columns.nueva("occ_game", symbol + " " + _("Occ / game"), 125, align_center=True)
-        o_columns.nueva("loss_game", symbol + " " + _("Loss / game"), 125, align_center=True)
+        o_columns.nueva("occ_game", f"{symbol} {_('Occ / game')}", 125, align_center=True)
+        o_columns.nueva("loss_game", f"{symbol} {_('Loss / game')}", 125, align_center=True)
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
         self.register_grid(self.grid)
 
         self.status = QtWidgets.QStatusBar(self)
         self.status.setFixedHeight(22)
-        self.status.showMessage(" %s %s %s" % (symbol, _("calculated using all games"), missing_tags_output))
+        self.status.showMessage(f" {symbol} {_('calculated using all games')} {missing_tags_output}")
 
         ly = Colocacion.V().control(self.grid).control(self.status).margen(1)
 
@@ -53,8 +53,8 @@ class WDBMoveAnalysis(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.li_output_dic)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        col = obj_column.key
         return self.li_output_dic[row][col]
 
     def keyPressEvent(self, event):
@@ -65,8 +65,8 @@ class WDBMoveAnalysis(LCDialog.LCDialog):
 
 
 class SelectedGameThemeAnalyzer:
-    def __init__(self, w_parent, um:QTMessages.WaitingMessage):
-        li_sel = w_parent.grid.recnosSeleccionados()
+    def __init__(self, w_parent, um: QTMessages.WaitingMessage):
+        li_sel = w_parent.grid.list_selected_recnos()
         if len(li_sel) == 1:
             li_sel = range(w_parent.db_games.reccount())
         self.dic_themes = dict()
@@ -79,7 +79,7 @@ class SelectedGameThemeAnalyzer:
         self.is_canceled = False
 
         for n, recno in enumerate(li_sel):
-            if um.is_canceled():
+            if um.canceled():
                 self.is_canceled = True
                 return
 
@@ -87,7 +87,7 @@ class SelectedGameThemeAnalyzer:
             themes_in_game = []
             my_game: Game.Game = w_parent.db_games.read_game_recno(recno)
             for move_num, move in enumerate(my_game.li_moves):
-                if um.is_canceled():
+                if um.canceled():
                     self.is_canceled = True
                     return
                 lostp_abs = move.get_points_lost()
@@ -110,13 +110,13 @@ class SelectedGameThemeAnalyzer:
                             self.dic_themes[theme]["games"] += 1
 
             if not game_has_themes:
-                self.li_games_missing_themes.append("#%s" % (recno + 1,))
+                self.li_games_missing_themes.append(f"#{recno + 1}")
 
         for key, value in sorted(self.dic_themes.items(), key=lambda i: i[1]["count"], reverse=True):
             self.li_output_dic.append(
                 {
                     "theme": key,
-                    "games": "%s (%s" % (value["games"], int(100 * value["games"] / self.game_count)) + "%)",
+                    "games": f"{value['games']} ({int(100 * value['games'] / self.game_count)}%)",
                     "centipawns_lost": value["centipawns_lost"],
                     "count": value["count"],
                     "occ_game": round(value["count"] / self.game_count, 2),

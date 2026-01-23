@@ -1,9 +1,10 @@
-import copy
 import random
 import time
+from typing import Callable, Any
 
 import Code
-from Code import Adjournments, Util
+from Code.Z import Adjournments, Util
+from Code.Adjudicator import Adjudicator
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_AGAINST_GM,
@@ -16,15 +17,57 @@ from Code.Base.Constantes import (
     TB_REINIT,
     TB_UTILITIES,
 )
+from Code.Books import Books
 from Code.GM import GM, WindowGM
 from Code.ManagerBase import Manager
-from Code.Openings import Opening
-from Code.QT import QTMessages, WindowJuicio
+from Code.QT import QTMessages
+from Code.ZQT import WindowJuicio
 from Code.SQL import UtilSQL
+
+
+class AdjudicatorGM(Adjudicator.Adjudicator):
+    def __init__(self, owner, gm, rut_player_move: Callable, name_engine: str, ms_time: int, depth: int, multipv: int):
+        self.name_engine = name_engine
+        self.depth = depth
+        self.ms_time = ms_time
+        self.multipv = multipv
+        super().__init__(owner, owner.main_window, gm, rut_player_move)
+        self.disable_message_same_book_moves()
+
+    def open_manager_analyzer(self):
+        engine = Code.configuration.engines.search(self.name_engine, defecto="stockfish")
+        return Code.procesador.create_manager_analysis(engine, self.ms_time, self.depth, 0, self.multipv)
 
 
 class ManagerGM(Manager.Manager):
     ini_time_s = 0.0
+    puntos: int
+    record: Util.Record
+    adjudicator: AdjudicatorGM
+    name_engine: str
+    gm_move: Move.Move
+    user_move: Move.Move
+    gm: str
+    vtime: int
+    is_white: bool
+    modo: GM.GameMode
+    with_adjudicator: bool
+    show_evals: bool
+    mostrar: bool
+    select_rival_move: bool
+    jugInicial: int
+    gameElegida: str
+    bypass_book: Books.Book
+    opening: Any
+    on_bypass_book: bool | None
+    on_opening: bool
+    analysis: tuple | None
+    is_human_side_white: bool
+    engine_gm: GM.GM
+    nombreGM: str
+    rival_name: str
+    textoPuntuacion: str
+    time_s_end: float
 
     def start(self, record):
         self.base_inicio(record)
@@ -44,10 +87,6 @@ class ManagerGM(Manager.Manager):
         self.modo = record.modo
         self.with_adjudicator = record.with_adjudicator
         self.show_evals = record.show_evals
-        self.engine = record.engine
-        self.vtime = record.vtime
-        self.depth = record.depth
-        self.multiPV = record.multiPV
         self.mostrar = record.mostrar
         self.select_rival_move = record.select_rival_move
         self.jugInicial = record.jugInicial
@@ -62,20 +101,18 @@ class ManagerGM(Manager.Manager):
         self.is_analyzing = False
 
         if self.with_adjudicator:
+            name_engine = record.engine
+            ms_time = int(record.vtime * 100)
+            depth = record.depth
+            multipv = record.multiPV
+            self.adjudicator = AdjudicatorGM(self, self.gm, self.player_has_moved, name_engine, ms_time, depth, multipv)
             self.puntos = 0
-            tutor = self.configuration.engines.search(self.engine)
-            t_t = self.vtime * 100
-            self.manager_tutor = self.procesador.create_manager_engine(tutor, t_t, self.depth)
-            self.manager_tutor.set_multipv(self.multiPV)
             self.analysis = None
-            self.continueTt = not Code.configuration.x_engine_notbackground
-
-        self.book = Opening.OpeningPol(999)
 
         self.thinking(True)
 
         default = GM.get_folder_gm()
-        carpeta = default if self.modo == "estandar" else self.configuration.paths.folder_personal_trainings()
+        carpeta = default if self.modo == GM.GameMode.STANDARD else self.configuration.paths.folder_personal_trainings()
         self.engine_gm = GM.GM(carpeta, self.gm)
         self.engine_gm.filter_side(self.is_white)
         if self.gameElegida is not None:
@@ -87,20 +124,20 @@ class ManagerGM(Manager.Manager):
 
         self.set_toolbar((TB_CLOSE, TB_REINIT, TB_ADJOURN, TB_CONFIG, TB_UTILITIES))
         self.main_window.active_game(True, False)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.remove_hints()
         self.put_pieces_bottom(self.is_white)
         dic = GM.dic_gm()
-        self.nombreGM = dic[self.gm.lower()] if self.modo == "estandar" else self.gm
+        self.nombreGM = dic[self.gm.lower()] if self.modo == GM.GameMode.STANDARD else self.gm
         rot = _("Grandmaster")
-        rotulo1 = rot + ": <b>%s</b>" if self.modo == "estandar" else "<b>%s</b>"
-        self.set_label1(rotulo1 % self.nombreGM)
+        rotulo1 = f"{rot}: <b>{self.nombreGM}</b>" if self.modo == GM.GameMode.STANDARD else f"<b>{self.nombreGM}</b>"
+        self.set_label1(rotulo1)
 
         self.rival_name = ""
         self.textoPuntuacion = ""
-        self.ponRotuloSecundario()
+        self.add_secondary_label()
         self.pgn_refresh(True)
         self.show_info_extra()
 
@@ -108,8 +145,8 @@ class ManagerGM(Manager.Manager):
 
         self.check_boards_setposition()
 
-    def ponRotuloSecundario(self):
-        self.set_label2(self.rival_name + "<br><br>" + self.textoPuntuacion)
+    def add_secondary_label(self):
+        self.set_label2(f"{self.rival_name}<br><br>{self.textoPuntuacion}")
 
     def run_action(self, key):
         if key == TB_CLOSE:
@@ -139,9 +176,9 @@ class ManagerGM(Manager.Manager):
         return self.end_game()
 
     def end_game(self):
-        self.analyze_terminate()
-        siJugadas = len(self.game) > 0
-        if siJugadas and self.state != ST_ENDGAME:
+        if self.with_adjudicator:
+            self.adjudicator.close()
+        if len(self.game) > 0 and self.state != ST_ENDGAME:
             self.game.set_unknown()
             self.set_end_game()
         self.procesador.start()
@@ -150,64 +187,12 @@ class ManagerGM(Manager.Manager):
 
     def reiniciar(self):
         if QTMessages.pregunta(self.main_window, _("Restart the game?")):
-            self.analyze_terminate()
+            self.adjudicator.analyze_end()
             self.game.set_position()
             self.main_window.active_information_pgn(False)
             self.start(self.record)
 
-    def analyze_begin(self):
-        if not self.is_finished():
-            if self.continueTt:
-                self.manager_tutor.ac_inicio(self.game)
-            else:
-                self.manager_tutor.ac_inicio_limit(self.game)
-            self.is_analyzing = True
-
-    def analyze_state(self):
-        self.manager_tutor.engine.ac_lee()
-        self.mrm = copy.deepcopy(self.manager_tutor.ac_estado())
-        return self.mrm
-
-    def analyze_minimum(self, min_time):
-        self.mrm = copy.deepcopy(self.manager_tutor.ac_minimo(min_time, False))
-        return self.mrm
-
-    def analyze_end(self):
-        if self.is_analyzing:
-            self.is_analyzing = False
-            if self.continueTt:
-                self.mrm_tutor = self.manager_tutor.ac_final(self.manager_tutor.mstime_engine)
-            else:
-                self.mrm_tutor = self.manager_tutor.ac_final_limit()
-
-    def analyze_end_now(self):
-        if self.is_analyzing:
-            self.is_analyzing = False
-            self.mrm_tutor = self.manager_tutor.ac_final(0)
-
-    def play_next_move(self):
-        self.analyze_end_now()
-        self.disable_all()
-
-        if self.state == ST_ENDGAME:
-            return
-
-        self.state = ST_PLAYING
-
-        self.human_is_playing = False
-        self.put_view()
-
-        is_white = self.game.last_position.is_white
-
-        if (len(self.game) > 0) and self.engine_gm.is_finished():
-            self.put_result()
-            return
-
-        self.set_side_indicator(is_white)
-        self.refresh()
-
-        si_rival = is_white == self.is_engine_side_white
-
+    def automatic_move(self) -> list | None:
         if self.jugInicial > 1:
             si_jug_inicial = len(self.game) < (self.jugInicial - 1) * 2
         else:
@@ -217,6 +202,7 @@ class ManagerGM(Manager.Manager):
         nli_alternativas = len(li_alternativas)
 
         # Movimiento automatico
+        move = None
         if si_jug_inicial or self.on_opening or self.on_bypass_book:
             si_buscar = True
             if self.on_opening:
@@ -262,163 +248,172 @@ class ManagerGM(Manager.Manager):
             if not si_buscar:
                 self.rival_has_moved(move)
                 self.play_next_move()
-                return
+                return None
+
+        return li_alternativas
+
+    def play_next_move(self):
+        self.disable_all()
+
+        if self.state == ST_ENDGAME:
+            return
+
+        self.state = ST_PLAYING
+
+        self.human_is_playing = False
+        self.put_view()
+
+        is_white = self.game.last_position.is_white
+
+        if (len(self.game) > 0) and self.engine_gm.is_finished():
+            self.put_result()
+            return
+
+        self.set_side_indicator(is_white)
+        self.refresh()
+
+        li_alternativas = self.automatic_move()
+        if li_alternativas is None:
+            return
+
+        si_rival = is_white == self.is_engine_side_white
 
         if si_rival:
-            if nli_alternativas > 1:
-                if self.select_rival_move:
-                    li_moves = self.engine_gm.get_moves_txt(self.game.last_position, False)
-                    from_sq, to_sq, promotion = WindowGM.select_move(self, li_moves, False)
-                    move = from_sq + to_sq + promotion
-                else:
-                    pos = random.randint(0, nli_alternativas - 1)
-                    move = li_alternativas[pos]
+            self.play_rival(li_alternativas)
+
+        else:
+            self.play_human(is_white)
+
+    def play_rival(self, li_alternativas):
+        nli_alternativas = len(li_alternativas)
+        if nli_alternativas > 1:
+            if self.select_rival_move:
+                li_moves = self.engine_gm.get_moves_txt(self.game.last_position, False)
+                from_sq, to_sq, promotion = WindowGM.select_move(self, li_moves, False)
+                move = from_sq + to_sq + promotion
             else:
-                move = li_alternativas[0]
-
-            self.rival_has_moved(move)
-            self.play_next_move()
-
+                pos = random.randint(0, nli_alternativas - 1)
+                move = li_alternativas[pos]
         else:
-            self.human_is_playing = True
-            self.ini_time_s = time.time()
-            if self.with_adjudicator:
-                self.thinking(True)
-                self.analyze_begin()
-                self.thinking(False)
-            self.activate_side(is_white)
+            move = li_alternativas[0]
 
-    def analyze_terminate(self):
-        if self.is_analyzing:
-            self.is_analyzing = False
-            self.manager_tutor.terminar()
+        self.rival_has_moved(move)
+        self.play_next_move()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
-        time_s_end = time.time()
-        jgUsu = self.check_human_move(from_sq, to_sq, promotion)
-        if not jgUsu:
+    def play_human(self, is_white):
+        self.human_is_playing = True
+        self.ini_time_s = time.time()
+        if self.with_adjudicator:
+            self.adjudicator.analyze_begin(self.game)
+        self.activate_side(is_white)
+
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
+        user_move = self.check_human_move(from_sq, to_sq, promotion)
+        if not user_move:
             return False
+        self.time_s_end = time.time()
 
-        movimiento = jgUsu.movimiento()
-        position = self.game.last_position
-        is_valid = self.engine_gm.is_valid_move(movimiento)
-        analysis = None
+        self.board.set_position(user_move.position)
+        self.put_arrow_sc(user_move.from_sq, user_move.to_sq)
+        self.board.disable_all()
 
-        if not is_valid:
-            self.board.set_position(position)
-            self.board.activate_side(self.is_human_side_white)
+        if self.with_adjudicator:
+            position = self.game.last_position
             li_moves = self.engine_gm.get_moves_txt(position, True)
-            desde_gm, hasta_gm, promotion_gm = WindowGM.select_move(self, li_moves, True)
-            si_analiza_juez = self.with_adjudicator
-            if si_analiza_juez:
-                if self.book:
-                    fen = self.last_fen()
-                    siH = self.book.check_human(fen, from_sq, to_sq)
-                    is_gm = self.book.check_human(fen, desde_gm, hasta_gm)
-                    if is_gm and siH:
-                        si_analiza_juez = False
-                    else:
-                        self.book = False
+            if len(li_moves) > 1:
+                ok = False
+                for mv in li_moves:
+                    if mv[0] == from_sq and mv[1] == to_sq and mv[2] == promotion:
+                        ok = True
+                        from_sq_gm, to_sq_gm, promotion_gm = from_sq, to_sq, promotion
+                        break
+                if not ok:
+                    from_sq_gm, to_sq_gm, promotion_gm = WindowGM.select_move(self, li_moves, True)
+            else:
+                mv = li_moves[0]
+                from_sq_gm, to_sq_gm, promotion_gm = mv[0], mv[1], mv[2]
+            self.human_is_playing = True
+            self.gm_move = self.check_human_move(from_sq_gm, to_sq_gm, promotion_gm)
+
+            self.thinking(True)
+            self.adjudicator.check_moves(self.gm_move, user_move)
+
         else:
-            si_analiza_juez = (
-                self.with_adjudicator and self.mostrar is None
-            )  # None es ver siempre False no ver nunca True ver si diferentes
-            if len(movimiento) == 5:
-                promotion = movimiento[4].lower()
-            desde_gm, hasta_gm, promotion_gm = from_sq, to_sq, promotion
+            self.player_has_moved(user_move)
 
-        ok, mens, jg_gm = Move.get_game_move(self.game, position, desde_gm, hasta_gm, promotion_gm)
-        mov_gm = jg_gm.pgn_translated()
-        mov_usu = jgUsu.pgn_translated()
+        return True
 
-        if si_analiza_juez:
-            with QTMessages.analizando(self.main_window):
-                mrm = self.analyze_minimum(self.vtime * 100)
+    def player_has_moved(self, user_move, book_moves=False):
+        self.thinking(False)
+        gm_move = self.gm_move
+        movimiento = user_move.movimiento()
+        is_valid = self.engine_gm.is_valid_move(movimiento)
+        same_move = user_move == gm_move
 
-                continue_tt = self.continueTt
+        show_adjudicator = self.with_adjudicator and self.modo != GM.ShowOption.NEVER and not book_moves
+        if show_adjudicator and self.modo == GM.ShowOption.WHEN_DIFFERENT:
+            show_adjudicator = not same_move
 
-                rm_usu, nada = mrm.search_rm(jgUsu.movimiento())
-                if rm_usu is None:
-                    self.analyze_end_now()
-                    continue_tt = False
-                    rm_usu = self.manager_tutor.valora(position, from_sq, to_sq, promotion)
-                    mrm.add_rm(rm_usu)
+        position = self.game.last_position
 
-                rm_gm, pos_gm = mrm.search_rm(jg_gm.movimiento())
-                if rm_gm is None:
-                    self.analyze_end_now()
-                    continue_tt = False
-                    rm_gm = self.manager_tutor.valora(position, desde_gm, hasta_gm, promotion_gm)
-                    pos_gm = mrm.add_rm(rm_gm)
-
+        if self.with_adjudicator and not book_moves:
+            mrm = self.adjudicator.get_mrm()
+            rm_gm, pos_gm = mrm.search_rm(gm_move.movimiento())
+            rm_user, pos_user = mrm.search_rm(user_move.movimiento())
             analysis = mrm, pos_gm
-            dpts = rm_usu.centipawns_abs() - rm_gm.centipawns_abs()
+            dpts = rm_user.centipawns_abs() - rm_gm.centipawns_abs()
 
-            if self.mostrar is None or ((self.mostrar is True) and not is_valid):
+            pgn_gm = self.gm_move.pgn_translated()
+            pgn_user = user_move.pgn_translated()
+
+            if show_adjudicator:
                 w = WindowJuicio.WJuicio(
                     self,
-                    self.manager_tutor,
+                    self.adjudicator,
                     self.nombreGM,
                     position,
                     mrm,
                     rm_gm,
-                    rm_usu,
+                    rm_user,
                     analysis,
-                    is_competitive=not self.show_evals,
-                    continue_tt=continue_tt,
+                    is_competitive=self.show_evals != GM.ShowOption.WHEN_DIFFERENT,
+                    continue_tt=self.adjudicator.is_analysing(),
                 )
                 w.exec()
 
-                rm, pos_gm = w.analysis[0].search_rm(jg_gm.movimiento())
-                analysis = w.analysis[0], pos_gm
-
-                rm_usu = w.rm_usu
+                rm_gm, pos_gm = mrm.search_rm(gm_move.movimiento())
+                analysis = mrm, pos_gm
+                rm_user = w.rm_usu
                 rm_gm = w.rm_obj
                 dpts = w.difPuntos()
 
             self.puntos += dpts
 
-            comentario0 = "<b>%s</b> : %s = %s<br>" % (
-                self.configuration.x_player,
-                mov_usu,
-                rm_usu.texto(),
-            )
-            comentario0 += "<b>%s</b> : %s = %s<br>" % (
-                self.nombreGM,
-                mov_gm,
-                rm_gm.texto(),
-            )
-            comentario1 = "<br><b>%s</b> = %+d<br>" % (_("Difference"), dpts)
-            comentario2 = "<b>%s</b> = %+d<br>" % (
-                _("Centipawns accumulated"),
-                self.puntos,
-            )
+            comentario0 = f"<b>{self.configuration.x_player}</b> : {pgn_user} = {rm_user.texto()}<br>"
+            comentario0 += f"<b>{self.nombreGM}</b> : {pgn_gm} = {rm_gm.texto()}<br>"
+            comentario1 = f"<br><b>{_('Difference')}</b> = {dpts:+d}<br>"
+            comentario2 = f"<b>{_('Centipawns accumulated')}</b> = {self.puntos:+d}<br>"
             self.textoPuntuacion = comentario2
-            self.ponRotuloSecundario()
+            self.add_secondary_label()
 
             if not is_valid:
-                jg_gm.set_comment(
+                gm_move.set_comment(
                     (comentario0 + comentario1 + comentario2)
                     .replace("<b>", "")
                     .replace("</b>", "")
                     .replace("<br>", "\n")
                 )
+            gm_move.analysis = analysis
 
-        self.analyze_end_now()
+        if self.with_adjudicator:
+            self.adjudicator.analyze_end()
 
-        self.move_the_pieces(jg_gm.liMovs)
+        # self.move_the_pieces(gm_move.list_piece_moves)
 
-        jg_gm.analysis = analysis
-        jg_gm.set_time_ms(int((time_s_end - self.ini_time_s) * 1000))
-        self.add_move(jg_gm, True)
-        self.error = ""
+        gm_move.set_time_ms(int((self.time_s_end - self.ini_time_s) * 1000))
+        self.add_move(True, gm_move, same_move=same_move)
         self.play_next_move()
         return True
-
-    def analize_position(self, row, key):
-        if self.state != ST_ENDGAME:
-            return
-        super().analize_position(row, key)
 
     def rival_has_moved(self, move):
         from_sq = move[:2]
@@ -426,33 +421,35 @@ class ManagerGM(Manager.Manager):
         promotion = move[4:]
 
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
-        if ok:
-            self.error = ""
+        self.add_move(False, move)
 
-            self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+        return True
 
-            return True
-        else:
-            self.error = mens
-            return False
+    def add_move(self, si_nuestra, move, comment=None, analysis=None, same_move=False):
+        if analysis:
+            move.analysis = analysis
+        if comment:
+            move.set_comment(comment)
 
-    def add_move(self, move, is_player_move):
-        self.game.add_move(move)
-        self.check_boards_setposition()
-
-        self.put_arrow_sc(move.from_sq, move.to_sq)
-        self.beep_extended(is_player_move)
-
-        txt = self.engine_gm.label_game_if_unique(is_gm=self.modo == "estandar")
+        txt = self.engine_gm.label_game_if_unique(is_gm=self.modo == GM.GameMode.STANDARD)
         if txt:
             self.rival_name = txt
-        self.ponRotuloSecundario()
+        self.add_secondary_label()
+
+        self.check_boards_setposition()
+        if not same_move:
+            self.board.set_position(move.position_before)
+            self.move_the_pieces(move.list_piece_moves, True)
+            self.board.set_position(move.position)
+            self.board.remove_arrows()
+            self.put_arrow_sc(move.from_sq, move.to_sq)
+        self.beep_extended(si_nuestra)
+
+        self.game.add_move(move)
+        self.engine_gm.play(move.movimiento())
 
         self.pgn_refresh(self.game.last_position.is_white)
         self.refresh()
-
-        self.engine_gm.play(move.movimiento())
 
     def put_result(self):
         self.state = ST_ENDGAME
@@ -460,33 +457,31 @@ class ManagerGM(Manager.Manager):
 
         mensaje = _("Game ended")
 
-        txt, porc, txtResumen = self.engine_gm.resultado(self.game)
-        mensaje += "<br><br>" + txt
+        txt, porc, txt_resumen = self.engine_gm.resultado(self.game)
+        mensaje += f"<br><br>{txt}"
         if self.with_adjudicator:
-            mensaje += "<br><br><b>%s</b> = %+d<br>" % (
-                _("Centipawns accumulated"),
-                self.puntos,
-            )
+            mensaje += f"<br><br><b>{_('Centipawns accumulated')}</b> = {self.puntos:+d}<br>"
 
         self.message_on_pgn(mensaje)
 
         db_histo = UtilSQL.DictSQL(self.configuration.paths.file_gm_histo())
 
-        gmK = "P_%s" % self.gm if self.modo == "personal" else self.gm
+        gm_k = f"P_{self.gm}" if self.modo == "personal" else self.gm
 
-        dic = {}
-        dic["FECHA"] = Util.today()
-        dic["PUNTOS"] = self.puntos
-        dic["PACIERTOS"] = porc
-        dic["JUEZ"] = self.engine
-        dic["TIEMPO"] = self.vtime
-        dic["RESUMEN"] = txtResumen
+        dic = {
+            "FECHA": Util.today(),
+            "PUNTOS": self.puntos,
+            "PACIERTOS": porc,
+            "JUEZ": self.name_engine,
+            "TIEMPO": self.vtime,
+            "RESUMEN": txt_resumen,
+        }
 
-        liHisto = db_histo[gmK]
-        if liHisto is None:
-            liHisto = []
-        liHisto.insert(0, dic)
-        db_histo[gmK] = liHisto
+        li_histo = db_histo[gm_k]
+        if li_histo is None:
+            li_histo = []
+        li_histo.insert(0, dic)
+        db_histo[gm_k] = li_histo
         db_histo.pack()
         db_histo.close()
 
@@ -532,7 +527,7 @@ class ManagerGM(Manager.Manager):
         if QTMessages.pregunta(self.main_window, _("Do you want to adjourn the game?")):
             dic = self.save_state()
 
-            label_menu = "%s %s" % (_("Play like a Grandmaster"), self.nombreGM)
+            label_menu = f"{_('Play like a Grandmaster')} {self.nombreGM}"
             self.state = ST_ENDGAME
 
             with Adjournments.Adjournments() as adj:
@@ -563,17 +558,17 @@ class ManagerGM(Manager.Manager):
             blancas = oponent
             negras = gm
 
-        resp = '[Event "%s"]\n' % event
-        resp += '[Date "%s"]\n' % fecha
-        resp += '[White "%s"]\n' % blancas
-        resp += '[Black "%s"]\n' % negras
-        resp += '[Result "%s"]\n' % result.strip()
+        resp = f'[Event "{event}"]\n'
+        resp += f'[Date "{fecha}"]\n'
+        resp += f'[White "{blancas}"]\n'
+        resp += f'[Black "{negras}"]\n'
+        resp += f'[Result "{result.strip()}"]\n'
 
         ap = self.game.opening
         if ap:
-            resp += '[ECO "%s"]\n' % ap.eco
-            resp += '[Opening "%s"]\n' % ap.tr_name
+            resp += f'[ECO "{ap.eco}"]\n'
+            resp += f'[Opening "{ap.tr_name}"]\n'
 
-        resp += "\n" + self.game.pgn_base() + " " + result.strip()
+        resp += f"\n{self.game.pgn_base()} {result.strip()}"
 
         return resp

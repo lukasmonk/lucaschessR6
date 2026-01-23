@@ -4,7 +4,22 @@ import string
 import FasterCode
 
 import Code
-from Code.Base.Constantes import BLACK, FEN_INITIAL, INFINITE, PZ_VALUES, WHITE
+import contextlib
+import itertools
+from Code.Base.Constantes import (
+    BLACK,
+    FEN_INITIAL,
+    INFINITE,
+    PZ_VALUES,
+    WHITE,
+    OPENING,
+    MIDDLEGAME,
+    ENDGAME,
+    PHASE_KNIGHT,
+    PHASE_BISHOP,
+    PHASE_ROOK,
+    PHASE_QUEEN,
+)
 from Code.Translations import TrListas
 
 
@@ -49,7 +64,7 @@ class Position:
         p.mov_pawn_capt = self.mov_pawn_capt
         return p
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Position"):
         return self.fen() == other.fen() if other else False
 
     def legal(self):
@@ -62,28 +77,23 @@ class Position:
             }
             enr = ""
             for tipo in self.castles:
-                try:
+                with contextlib.suppress(KeyError):
                     king, rook, pos_king, pos_rook = dic[tipo]
                     if self.squares.get(pos_king) == king and self.squares.get(pos_rook) == rook:
                         enr += tipo
-                except KeyError:
-                    pass
-
-            self.castles = enr if enr else "-"
+            self.castles = enr or "-"
 
         # https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation#:~:text=En%20passant%20target%20square%20in,make%20an%20en%20passant%20capture.
-        # En passant target square in algebraic notation. If there's no en passant target square, this is "-".
+        # En passant target square in algebraic notation. If there's no en passant target square, this is -.
         # If a pawn has just made a two-square move, this is the position "behind" the pawn. This is recorded
         # regardless of whether there is a pawn in position to make an en passant capture
         ok = len(self.en_passant) == 2
         if ok:
             lt, nm = self.en_passant[0], self.en_passant[1]
-            if nm not in "36":
-                ok = False
-            else:
+            ok = False
+            if nm in "36":
                 pawn = "P" if nm == "6" else "p"
                 bq_nm = "4" if nm == "3" else "5"
-                ok = False
                 if lt > "a":
                     pz = self.squares.get(chr(ord(lt) - 1) + bq_nm)
                     ok = pz == pawn
@@ -100,7 +110,7 @@ class Position:
         try:
             self.read_fen(fen)
             return True
-        except:
+        except Exception:
             return False
 
     def read_fen(self, fen):
@@ -117,8 +127,7 @@ class Position:
 
         self.is_white = color == "w"
         self.num_moves = int(move)
-        if self.num_moves < 1:
-            self.num_moves = 1
+        self.num_moves = max(self.num_moves, 1)
         self.mov_pawn_capt = int(mp)
 
         d = {}
@@ -170,7 +179,7 @@ class Position:
             if i > 1:
                 position += "/"
         color = "w" if self.is_white else "b"
-        return position + " " + color
+        return f"{position} {color}"
 
     def fen_dgt(self):
         n_sin = 0
@@ -204,7 +213,7 @@ class Position:
     def fenm2(self):
         position = self.fen_base()
         self.legal()
-        return "%s %s %s" % (position, self.castles, self.en_passant)
+        return f"{position} {self.castles} {self.en_passant}"
 
     # def siExistePieza(self, pieza, a1h8=None):
     #     if a1h8:
@@ -221,10 +230,7 @@ class Position:
 
     def get_pos_king(self, is_white):
         king = "K" if is_white else "k"
-        for pos, pz in self.squares.items():
-            if pz == king:
-                return pos
-        return None
+        return next((pos for pos, pz in self.squares.items() if pz == king), None)
 
     def pzs_key(self):
         td = "KQRBNPkqrbnp"
@@ -248,10 +254,10 @@ class Position:
 
     def capturas_diferencia(self):
         """
-        Devuelve las piezas capturadas, liNuestro, liOponente. ( pieza, number )
+        Devuelve las pieces capturadas, liNuestro, liOponente. ( pieza, number )
         """
-        piezas = "PRNBQK"
-        dic = {pz: 0 for pz in (piezas + piezas.lower())}
+        pieces = "PRNBQK"
+        dic = {pz: 0 for pz in (pieces + pieces.lower())}
         for pieza in self.squares.values():
             if pieza:
                 dic[pieza] += 1
@@ -282,10 +288,7 @@ class Position:
         en_pa = mv.is_enpassant()
 
         if promotion:
-            if self.is_white:
-                promotion = promotion.upper()
-            else:
-                promotion = promotion.lower()
+            promotion = promotion.upper() if self.is_white else promotion.lower()
             self.li_extras.append(("c", to_a1h8, promotion))
 
         elif enr_k:
@@ -309,21 +312,17 @@ class Position:
         return True, self.li_extras
 
     def pr_board(self):
-        resp = "   " + "+---" * 8 + "+" + "\n"
+        resp = f"   {'+---' * 8}+\n"
         for row in "87654321":
-            resp += " " + row + " |"
+            resp += f" {row} |"
             for column in "abcdefgh":
                 pieza = self.squares.get(column + row)
-                if pieza is None:
-                    resp += "   |"
-                    # resp += "-"+column+row + "|"
-                else:
-                    resp += " " + pieza + " |"
-            resp += " " + row + "\n"
-            resp += "   " + "+---" * 8 + "+" + "\n"
+                resp += "   |" if pieza is None else f" {pieza} |"
+            resp += f" {row}\n"
+            resp += f"   {'+---' * 8}+\n"
         resp += "    "
         for column in "abcdefgh":
-            resp += " " + column + "  "
+            resp += f" {column}  "
 
         return resp
 
@@ -358,10 +357,7 @@ class Position:
             n = ord(from_sq[0]) - ord(to_sq[0])
             if abs(n) == 2:
                 orden = "ke8kc8ra8rd8" if n == 2 else "ke8kg8rh8rf8"
-                if p_ori == "k":
-                    return orden
-                else:
-                    return orden.replace("k", "K").replace("8", "1")
+                return orden if p_ori == "k" else orden.replace("k", "K").replace("8", "1")
         # Promotion
         if promotion:
             promotion = promotion.upper() if self.is_white else promotion.lower()
@@ -376,7 +372,7 @@ class Position:
                 otro = "P"
                 dif = +1
             square = "%s%d" % (to_sq[0], int(to_sq[1]) + dif)
-            return p_ori + from_sq + p_ori + to_sq + otro + square + "." + square
+            return f"{p_ori}{from_sq}{p_ori}{to_sq}{otro}{square}.{square}"
 
         return p_ori + from_sq + p_ori + to_sq
 
@@ -401,30 +397,19 @@ class Position:
 
     def is_mate(self):
         n = self.set_lce()
-        if FasterCode.ischeck():
-            return n == 0
-        return False
+        return n == 0 if FasterCode.ischeck() else False
 
     def valor_material(self):
-        valor = 0
-        for v in self.squares.values():
-            if v:
-                valor += PZ_VALUES[v.upper()]
-        return valor
+        return sum(PZ_VALUES[v.upper()] for v in self.squares.values() if v)
 
     def valor_material_side(self, is_white):
-        valor = 0
         if is_white:
             d = PZ_VALUES
         else:
             d = {key.lower(): value for key, value in PZ_VALUES.items()}
-        for v in self.squares.values():
-            if v:
-                if v in d:
-                    valor += d[v]
-        return valor
+        return sum(d[v] for v in self.squares.values() if v and v in d)
 
-    def siFaltaMaterial(self):
+    def not_enough_material(self):
         # FIDE rules for "dead positions" (insufficient material)
         # Rey y Rey
         # Rey + Caballo y Rey
@@ -467,8 +452,8 @@ class Position:
 
         return False
 
-    def siFaltaMaterialColor(self, is_white):
-        piezas = ""
+    def not_enough_material_side(self, is_white):
+        pieces = ""
         nb = "nb"
         prq = "prq"
         if is_white:
@@ -479,49 +464,42 @@ class Position:
                 if v in prq:
                     return False
                 if v in nb:
-                    if piezas:
+                    if pieces:
                         return False
                     else:
-                        piezas = v
+                        pieces = v
         return False
 
     def num_pieces(self, pieza):
         num = 0
-        for i in range(8):
-            for j in range(8):
-                c_col = chr(i + 97)
-                c_fil = chr(j + 49)
-                if self.squares.get(c_col + c_fil) == pieza:
-                    num += 1
-        return num
-
-    def __len__(self):
-        num = 0
-        for pos in self.squares:
-            if self.squares[pos]:
+        for i, j in itertools.product(range(8), range(8)):
+            c_col = chr(i + 97)
+            c_fil = chr(j + 49)
+            if self.squares.get(c_col + c_fil) == pieza:
                 num += 1
         return num
 
+    def __len__(self):
+        return sum(bool(self.squares[pos]) for pos in self.squares)
+
     def num_piezas_wb(self):
         n_white = n_black = 0
-        for i in range(8):
-            for j in range(8):
-                c_col = chr(i + 97)
-                c_fil = chr(j + 49)
-                pz = self.squares.get(c_col + c_fil)
-                if pz and pz not in "pkPK":
-                    if pz.islower():
-                        n_black += 1
-                    else:
-                        n_white += 1
+        for i, j in itertools.product(range(8), range(8)):
+            c_col = chr(i + 97)
+            c_fil = chr(j + 49)
+            pz = self.squares.get(c_col + c_fil)
+            if pz and pz not in "pkPK":
+                if pz.islower():
+                    n_black += 1
+                else:
+                    n_white += 1
         return n_white, n_black
 
     def num_allpiezas_wb(self):
         n_white = n_black = 0
         for col in string.ascii_lowercase[:8]:
             for row in '12345678':
-                piece = self.squares.get(f"{col}{row}")
-                if piece:
+                if piece := self.squares.get(f"{col}{row}"):
                     if piece.islower():
                         n_black += 1
                     else:
@@ -530,12 +508,11 @@ class Position:
 
     def dic_pieces(self):
         dic = collections.defaultdict(int)
-        for i in range(8):
-            for j in range(8):
-                c_col = chr(i + 97)
-                c_fil = chr(j + 49)
-                pz = self.squares.get(c_col + c_fil)
-                dic[pz] += 1
+        for i, j in itertools.product(range(8), range(8)):
+            c_col = chr(i + 97)
+            c_fil = chr(j + 49)
+            pz = self.squares.get(c_col + c_fil)
+            dic[pz] += 1
         return dic
 
     def label(self):
@@ -545,9 +522,7 @@ class Position:
 
         li = []
         for pz in "KQRBNPkqrbnp":
-            for pos in d[pz]:
-                li.append("%s%s" % (pz, pos))
-
+            li.extend(f"{pz}{pos}" for pos in d[pz])
         return " ".join(li)
 
     def proximity_final(self, side: bool) -> float:
@@ -584,12 +559,14 @@ class Position:
 
     def distance_king(self, a1, side_king_rival):
         k = "K" if side_king_rival == WHITE else "k"
-        for i in range(8):
-            for j in range(8):
-                if self.squares.get(chr(i + 97) + chr(j + 49)) == k:
-                    c = ord(a1[0]) - 97
-                    f = int(a1[1]) - 1
-                    return ((i - c) ** 2 + (j - f) ** 2) ** 0.5
+        return next(
+            (
+                ((i - (ord(a1[0]) - 97)) ** 2 + (j - (int(a1[1]) - 1)) ** 2) ** 0.5
+                for i, j in itertools.product(range(8), range(8))
+                if self.squares.get(chr(i + 97) + chr(j + 49)) == k
+            ),
+            0,
+        )
 
     def pawn_can_promote(self, from_a1h8, to_a1h8):
         pieza = self.squares.get(from_a1h8)
@@ -602,10 +579,7 @@ class Position:
             ori = 2
             dest = 1
 
-        if not (int(from_a1h8[1]) == ori and int(to_a1h8[1]) == dest):
-            return False
-
-        return True
+        return int(from_a1h8[1]) == ori and int(to_a1h8[1]) == dest
 
     def aura(self):
         lista = []
@@ -614,14 +588,23 @@ class Position:
             for pos in lipos:
                 lista.append(FasterCode.pos_a1(pos))
 
-        def liBR(n_pos, fi, ci):
+        def list_pos_bishop_rook(n_pos, fi, ci):
+            """Collect reachable squares for sliding pieces in a given direction.
+            This helper walks from a start square until the board edge or a blocking piece is found.
+
+            The function is used to model rook, bishop, and queen movement rays for aura calculations.
+            It records each traversed square and stops when another piece is encountered.
+
+            Args:
+                n_pos: Starting square index in the internal numeric representation.
+                fi: Rank (row) increment per step along the ray.
+                ci: File (column) increment per step along the ray.
+            """
             fil, col = FasterCode.pos_rc(n_pos)
             li_m = []
             ft = fil + fi
             ct = col + ci
-            while True:
-                if ft < 0 or ft > 7 or ct < 0 or ct > 7:
-                    break
+            while 0 <= ft <= 7 and 0 <= ct <= 7:
                 t = FasterCode.rc_pos(ft, ct)
                 li_m.append(t)
 
@@ -653,13 +636,13 @@ class Position:
                             (0, 1),
                             (0, -1),
                         ):
-                            liBR(npos, f_i, c_i)
+                            list_pos_bishop_rook(npos, f_i, c_i)
                     elif pz == "R":
                         for f_i, c_i in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                            liBR(npos, f_i, c_i)
+                            list_pos_bishop_rook(npos, f_i, c_i)
                     elif pz == "B":
                         for f_i, c_i in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
-                            liBR(npos, f_i, c_i)
+                            list_pos_bishop_rook(npos, f_i, c_i)
                     elif pz == "N":
                         add(FasterCode.li_n(npos))
                     elif pz == "P":
@@ -697,6 +680,31 @@ class Position:
         p.mov_pawn_capt = self.mov_pawn_capt
 
         return p
+
+    def phase(self):
+        dic_pieces = self.dic_pieces()
+
+        def calc_piece(pz_lower: str):
+            return dic_pieces.get(pz_lower, 0) + dic_pieces.get(pz_lower.upper(), 0)
+
+        phase_value = (
+            calc_piece("n") * PHASE_KNIGHT
+            + calc_piece("b") * PHASE_BISHOP
+            + calc_piece("r") * PHASE_ROOK
+            + calc_piece("q") * PHASE_QUEEN
+        )
+
+        # 24 - 20	Apertura	La mayoría de las pieces menores y mayores están en el tablero.
+        # 19 - 10	Medio Juego	Se han producido intercambios (ej: un par de torres y algunas pieces menores fuera).
+        # 9 - 1	    Final	    Quedan pocas pieces; el Rey empieza a ser una pieza activate.
+        # 0	        Final Puro	Solo quedan peones y Reyes (o material insuficiente).
+
+        if phase_value > 20:
+            return OPENING
+        elif phase_value > 10:
+            return MIDDLEGAME
+        else:
+            return ENDGAME
 
 
 def distancia(from_sq, to_sq):

@@ -1,6 +1,6 @@
 import shutil
 
-from Code import Util
+from Code.Z import Util
 from Code.Odt import XML
 
 
@@ -10,27 +10,27 @@ class Content(XML.XML):
         self.add_param("xmlns:meta", "urn:oasis:names:tc:opendocument:xmlns:meta:1.0")
         self.add_param("xmlns:office", "urn:oasis:names:tc:opendocument:xmlns:office:1.0")
         self.add_param("xmlns:fo", "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0")
-        self.add_param("xmlns:ooo", "http://openoffice.org/2004/office")
-        self.add_param("xmlns:xlink", "http://www.w3.org/1999/xlink")
-        self.add_param("xmlns:dc", "http://purl.org/dc/elements/1.1/")
+        self.add_param("xmlns:ooo", "https://openoffice.org/2004/office")
+        self.add_param("xmlns:xlink", "https://www.w3.org/1999/xlink")
+        self.add_param("xmlns:dc", "https://purl.org/dc/elements/1.1/")
         self.add_param("xmlns:style", "urn:oasis:names:tc:opendocument:xmlns:style:1.0")
         self.add_param("xmlns:text", "urn:oasis:names:tc:opendocument:xmlns:text:1.0")
         self.add_param("xmlns:draw", "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0")
         self.add_param("xmlns:dr3d", "urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0")
         self.add_param("xmlns:svg", "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0")
         self.add_param("xmlns:chart", "urn:oasis:names:tc:opendocument:xmlns:chart:1.0")
-        self.add_param("xmlns:rpt", "http://openoffice.org/2005/report")
+        self.add_param("xmlns:rpt", "https://openoffice.org/2005/report")
         self.add_param("xmlns:table", "urn:oasis:names:tc:opendocument:xmlns:table:1.0")
         self.add_param("xmlns:number", "urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0")
-        self.add_param("xmlns:ooow", "http://openoffice.org/2004/writer")
-        self.add_param("xmlns:oooc", "http://openoffice.org/2004/calc")
+        self.add_param("xmlns:ooow", "https://openoffice.org/2004/writer")
+        self.add_param("xmlns:oooc", "https://openoffice.org/2004/calc")
         self.add_param("xmlns:of", "urn:oasis:names:tc:opendocument:xmlns:of:1.2")
-        self.add_param("xmlns:tableooo", "http://openoffice.org/2009/table")
+        self.add_param("xmlns:tableooo", "https://openoffice.org/2009/table")
         self.add_param(
             "xmlns:calcext",
             "urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0",
         )
-        self.add_param("xmlns:drawooo", "http://openoffice.org/2010/draw")
+        self.add_param("xmlns:drawooo", "https://openoffice.org/2010/draw")
         self.add_param(
             "xmlns:loext",
             "urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0",
@@ -39,21 +39,21 @@ class Content(XML.XML):
             "xmlns:field",
             "urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0",
         )
-        self.add_param("xmlns:math", "http://www.w3.org/1998/Math/MathML")
+        self.add_param("xmlns:math", "https://www.w3.org/1998/Math/MathML")
         self.add_param("xmlns:form", "urn:oasis:names:tc:opendocument:xmlns:form:1.0")
         self.add_param("xmlns:script", "urn:oasis:names:tc:opendocument:xmlns:script:1.0")
-        self.add_param("xmlns:dom", "http://www.w3.org/2001/xml-events")
-        self.add_param("xmlns:xforms", "http://www.w3.org/2002/xforms")
-        self.add_param("xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
-        self.add_param("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
+        self.add_param("xmlns:dom", "https://www.w3.org/2001/xml-events")
+        self.add_param("xmlns:xforms", "https://www.w3.org/2002/xforms")
+        self.add_param("xmlns:xsd", "https://www.w3.org/2001/XMLSchema")
+        self.add_param("xmlns:xsi", "https://www.w3.org/2001/XMLSchema-instance")
         self.add_param(
             "xmlns:formx",
             "urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0",
         )
-        self.add_param("xmlns:xhtml", "http://www.w3.org/1999/xhtml")
-        self.add_param("xmlns:grddl", "http://www.w3.org/2003/g/data-view#")
-        self.add_param("xmlns:css3t", "http://www.w3.org/TR/css3-text/")
-        self.add_param("xmlns:officeooo", "http://openoffice.org/2009/office")
+        self.add_param("xmlns:xhtml", "https://www.w3.org/1999/xhtml")
+        self.add_param("xmlns:grddl", "https://www.w3.org/2003/g/data-view#")
+        self.add_param("xmlns:css3t", "https://www.w3.org/TR/css3-text/")
+        self.add_param("xmlns:officeooo", "https://openoffice.org/2009/office")
         self.add_param("office:version", "1.3")
         element1 = XML.Element("office:scripts")
         self.add_content(element1)
@@ -238,11 +238,11 @@ class Content(XML.XML):
         element1.add_param("style:family", "table-column")
         self.automatic_styles.add_content(element1)
         element2 = XML.Element("style:table-column-properties")
-        element2.add_param("style:column-width", "%0.02fcm" % (width / num_cols,))
+        element2.add_param("style:column-width", f"{width / num_cols:0.02f}cm")
         element2.add_param("style:rel-column-width", "32767*")
         element1.add_content(element2)
 
-        name_cell = name_col + "1"
+        name_cell = f"{name_col}1"
         element1 = XML.Element("style:style")
         element1.add_param("style:name", name_cell)
         element1.add_param("style:family", "table-cell")
@@ -326,7 +326,6 @@ class Content(XML.XML):
         self.write_element(parent, element)
 
     def add_png(self, path_png, width, height=None, align_center=False, parent=None):
-        """<text:p text:style-name="P6"><draw:frame draw:style-name="fr1" draw:name="Imagen1" text:anchor-type="as-char" svg:width="8.729cm" svg:height="8.729cm" draw:z-index="0"><draw:image xlink:href="Pictures/100000010000014A0000014A845C32C77CCA2B7E.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" draw:mime-type="image/png"/></draw:frame></text:p>"""
         self.li_path_png.append(path_png)
         internal_path = self.fmt_png % self.pos_png
         self.pos_png += 1
@@ -338,8 +337,8 @@ class Content(XML.XML):
         element2.add_param("draw:style-name", "PNG_IMAGE")
         element2.add_param("draw:name", internal_name)
         element2.add_param("text:anchor-type", "as-char")
-        element2.add_param("svg:width", "%.02fcm" % width)
-        element2.add_param("svg:height", "%.02fcm" % (height if height else width))
+        element2.add_param("svg:width", f"{width:.02f}cm")
+        element2.add_param("svg:height", f"{(height if height else width):.02f}cm")
         element2.add_param("draw:z-index", "0")
         element.add_content(element2)
         element3 = XML.Element("draw:image")

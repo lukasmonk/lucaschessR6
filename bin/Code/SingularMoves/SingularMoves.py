@@ -2,7 +2,7 @@ import datetime
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.SQL import UtilSQL
 
 
@@ -18,7 +18,8 @@ class SingularMoves:
         self.db = UtilSQL.DictSQL(fichero_db)
         self.db_keys = self.db.keys(si_ordenados=True, si_reverse=True)
 
-    def lee(self, fichero_tactic):
+    @staticmethod
+    def lee(fichero_tactic):
         with open(fichero_tactic, "rt", encoding="utf-8", errors="ignore") as f:
             dic = {}
             for xdif in "12345":
@@ -65,7 +66,7 @@ class SingularMoves:
 
     def rotulo_media(self):
         m = self.media()
-        return "" if m is None else "%0.2f" % m
+        return "" if m is None else f"{m:0.2f}"
 
     def graba(self):
         if self.current_key is None:
@@ -80,9 +81,7 @@ class SingularMoves:
         strength = rep["STRENGTH"] = self.media()
         li = rep["BLOCK"] = []
         for pos, alm in enumerate(self.li_bloque_sol):
-            bl = {}
-            bl["SCORE"] = alm.score
-            bl["TIME"] = alm.time
+            bl = {"SCORE": alm.score, "TIME": alm.time}
             li.append(bl)
         repeticiones.append(rep)
         self.registro["REPETITIONS"] = repeticiones
@@ -100,10 +99,7 @@ class SingularMoves:
         registro["STRENGTH"] = self.media()
         li = registro["BLOCK"] = []
         for pos, alm in enumerate(self.li_bloque_sol):
-            bl = {}
-            bl["LINE"] = self.li_bloque[pos]
-            bl["SCORE"] = alm.score
-            bl["TIME"] = alm.time
+            bl = {"LINE": self.li_bloque[pos], "SCORE": alm.score, "TIME": alm.time}
             li.append(bl)
 
         self.db[key] = registro

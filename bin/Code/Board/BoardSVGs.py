@@ -4,24 +4,24 @@ from Code.Board import BoardBlocks
 
 
 class SVGSC(BoardBlocks.BloqueEspSC):
-    def __init__(self, escena, bloqueImgSVG, routine_if_pressed=None, siEditando=False):
+    def __init__(self, escena, block_imgsvg, routine_if_pressed=None, is_editing=False):
 
-        super(SVGSC, self).__init__(escena, bloqueImgSVG)
+        super(SVGSC, self).__init__(escena, block_imgsvg)
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None
 
-        self.distBordes = 0.30 * bloqueImgSVG.width_square
+        self.distBordes = 0.30 * block_imgsvg.width_square
 
-        self.pixmap = QtSvg.QSvgRenderer(QtCore.QByteArray(bloqueImgSVG.xml.encode("utf-8")))
+        self.pixmap = QtSvg.QSvgRenderer(QtCore.QByteArray(block_imgsvg.xml.encode("utf-8")))
 
         self.physical_pos2xy()
 
-        self.siMove = False
+        self.is_move = False
         self.tpSize = None
 
         self.siRecuadro = False
-        if siEditando:
+        if is_editing:
             self.setAcceptHoverEvents(True)
 
     def hoverEnterEvent(self, event):
@@ -38,18 +38,18 @@ class SVGSC(BoardBlocks.BloqueEspSC):
 
     def reset(self):
         self.physical_pos2xy()
-        bm = self.bloqueDatos
+        bm = self.block_data
         self.pixmap = QtSvg.QSvgRenderer(QtCore.QByteArray(bm.xml.encode()))
         self.setOpacity(bm.opacity)
         self.setZValue(bm.physical_pos.orden)
         self.update()
 
     def set_a1h8(self, a1h8):
-        self.bloqueDatos.a1h8 = a1h8
+        self.block_data.a1h8 = a1h8
         self.physical_pos2xy()
 
     def physical_pos2xy(self):
-        bm = self.bloqueDatos
+        bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
         tf = self.board.tamFrontera
@@ -66,9 +66,9 @@ class SVGSC(BoardBlocks.BloqueEspSC):
         physical_pos.ancho = (hc - dc + 1) * ac
         physical_pos.alto = (hf - df + 1) * ac
 
-    def coordinaPosicionOtro(self, otroSVG):
-        bs = self.bloqueDatos
-        bso = otroSVG.bloqueDatos
+    def coordinate_position_with_other(self, other_svg):
+        bs = self.block_data
+        bso = other_svg.block_data
 
         xk = float(bs.width_square * 1.0 / bso.width_square)
         physical_pos = bs.physical_pos
@@ -85,14 +85,14 @@ class SVGSC(BoardBlocks.BloqueEspSC):
             t = p2 - p1
             return ((t.x()) ** 2 + (t.y()) ** 2) ** 0.5
 
-        physical_pos = self.bloqueDatos.physical_pos
+        physical_pos = self.block_data.physical_pos
         dx = physical_pos.x
         dy = physical_pos.y
         ancho = physical_pos.ancho
         alto = physical_pos.alto
 
         self.rect = rect = QtCore.QRectF(dx, dy, ancho, alto)
-        dicEsquinas = {
+        dic_corners = {
             "tl": rect.topLeft(),
             "tr": rect.topRight(),
             "bl": rect.bottomLeft(),
@@ -101,31 +101,32 @@ class SVGSC(BoardBlocks.BloqueEspSC):
 
         db = self.distBordes
         self.tpSize = None
-        for k, v in dicEsquinas.items():
+        for k, v in dic_corners.items():
             if distancia(p, v) <= db:
                 self.tpSize = k
                 return True
-        self.siMove = self.rect.contains(p)
-        return self.siMove
+        self.is_move = self.rect.contains(p)
+        return self.is_move
 
-    def name(self):
+    @staticmethod
+    def name():
         return _("Image")
 
     def mousePressEvent(self, event):
         QtWidgets.QGraphicsItem.mousePressEvent(self, event)
         p = event.scenePos()
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouse_press_ext(self, event):
         p = event.pos()
         p = self.mapFromScene(p)
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouseMoveEvent(self, event):
         event.ignore()
-        if not (self.siMove or self.tpSize):
+        if not (self.is_move or self.tpSize):
             return
 
         p = event.pos()
@@ -133,45 +134,44 @@ class SVGSC(BoardBlocks.BloqueEspSC):
         x = p.x()
         y = p.y()
 
-        dx = x - self.expX
-        dy = y - self.expY
+        dx = x - self.exp_x
+        dy = y - self.exp_y
 
-        self.expX = x
-        self.expY = y
+        self.exp_x = x
+        self.exp_y = y
 
-        physical_pos = self.bloqueDatos.physical_pos
-        if self.siMove:
+        physical_pos = self.block_data.physical_pos
+        if self.is_move:
             physical_pos.x += dx
             physical_pos.y += dy
         else:
             tp = self.tpSize
-            if tp == "br":
-                physical_pos.ancho += dx
-                physical_pos.alto += dy
-            elif tp == "bl":
+            if tp == "bl":
                 physical_pos.x += dx
                 physical_pos.ancho -= dx
                 physical_pos.alto += dy
-            elif tp == "tr":
-                physical_pos.y += dy
+            elif tp == "br":
                 physical_pos.ancho += dx
-                physical_pos.alto -= dy
+                physical_pos.alto += dy
             elif tp == "tl":
                 physical_pos.x += dx
                 physical_pos.y += dy
                 physical_pos.ancho -= dx
                 physical_pos.alto -= dy
-
+            elif tp == "tr":
+                physical_pos.y += dy
+                physical_pos.ancho += dx
+                physical_pos.alto -= dy
         self.escena.update()
 
     def mouseReleaseEvent(self, event):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
-        if self.siActivo:
-            if self.siMove or self.tpSize:
+        if self.is_activated:
+            if self.is_move or self.tpSize:
                 self.escena.update()
-                self.siMove = False
+                self.is_move = False
                 self.tpSize = None
-            self.activa(False)
+            self.activate(False)
 
         if self.routine_if_pressed:
             if self.routine_if_pressed_argum:
@@ -179,16 +179,16 @@ class SVGSC(BoardBlocks.BloqueEspSC):
             else:
                 self.routine_if_pressed()
 
-    def mouseReleaseExt(self):
-        if self.siActivo:
-            if self.siMove or self.tpSize:
+    def mouse_release_ext(self):
+        if self.is_activated:
+            if self.is_move or self.tpSize:
                 self.escena.update()
-                self.siMove = False
+                self.is_move = False
                 self.tpSize = None
-            self.activa(False)
+            self.activate(False)
 
-    def pixmapX(self):
-        bm = self.bloqueDatos
+    def get_pixmap(self):
+        bm = self.block_data
 
         p = bm.physical_pos
 
@@ -213,8 +213,8 @@ class SVGSC(BoardBlocks.BloqueEspSC):
 
         return pm
 
-    def paint(self, painter, option, widget):
-        bm = self.bloqueDatos
+    def paint(self, painter, option, widget=None):
+        bm = self.block_data
 
         physical_pos = bm.physical_pos
         dx = physical_pos.x - 1
@@ -247,7 +247,7 @@ class SVGSC(BoardBlocks.BloqueEspSC):
 class SVGCandidate(SVGSC):
     def physical_pos2xy(self):
 
-        bm = self.bloqueDatos
+        bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
 
@@ -262,12 +262,12 @@ class SVGCandidate(SVGSC):
         physical_pos.x = ac * (dc - 1)
         physical_pos.y = ac * (df - 1)
 
-        posCuadro = bm.posCuadro
-        if posCuadro == 1:
+        pos_cuadro = bm.posCuadro
+        if pos_cuadro == 1:
             physical_pos.x += ac - ancho
-        elif posCuadro == 2:
+        elif pos_cuadro == 2:
             physical_pos.y += ac - ancho
-        elif posCuadro == 3:
+        elif pos_cuadro == 3:
             physical_pos.y += ac - ancho
             physical_pos.x += ac - ancho
 

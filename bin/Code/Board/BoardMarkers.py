@@ -4,25 +4,25 @@ from Code.Board import BoardBlocks
 
 
 class MarkerSC(BoardBlocks.BloqueEspSC):
-    def __init__(self, escena, bloqueMarker, routine_if_pressed=None, siEditando=False):
-        super(MarkerSC, self).__init__(escena, bloqueMarker)
+    def __init__(self, escena, block_marker, routine_if_pressed=None, is_editing=False):
+        super(MarkerSC, self).__init__(escena, block_marker)
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None
 
         self.distBordes = 0.20 * self.board.width_square
 
-        self.pixmap = QtSvg.QSvgRenderer(QtCore.QByteArray(bloqueMarker.xml.encode()))
+        self.pixmap = QtSvg.QSvgRenderer(QtCore.QByteArray(block_marker.xml.encode()))
 
         self.physical_pos2xy()
 
-        self.siMove = False
+        self.is_move = False
         self.tpSize = None
 
-        self.siEditando = siEditando
+        self.is_editing = is_editing
 
         self.siRecuadro = False
-        if siEditando:
+        if is_editing:
             self.setAcceptHoverEvents(True)
 
     def hoverEnterEvent(self, event):
@@ -39,13 +39,13 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
 
     def reset(self):
         self.physical_pos2xy()
-        bm = self.bloqueDatos
+        bm = self.block_data
         self.setOpacity(bm.opacity)
         self.setZValue(bm.physical_pos.orden)
         self.update()
 
     def physical_pos2xy(self):
-        bm = self.bloqueDatos
+        bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
         tf = self.board.tamFrontera
@@ -63,7 +63,7 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
         physical_pos.alto = (hf - df + 1) * ac
 
     def xy2physical_pos(self):
-        bm = self.bloqueDatos
+        bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
         tf = self.board.tamFrontera
@@ -85,7 +85,7 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
         self.physical_pos2xy()
 
     def set_a1h8(self, a1h8):
-        self.bloqueDatos.a1h8 = a1h8
+        self.block_data.a1h8 = a1h8
         self.physical_pos2xy()
 
     def contain(self, p):
@@ -95,7 +95,7 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
             t = p2 - p1
             return ((t.x()) ** 2 + (t.y()) ** 2) ** 0.5
 
-        physical_pos = self.bloqueDatos.physical_pos
+        physical_pos = self.block_data.physical_pos
         dx = physical_pos.x
         dy = physical_pos.y
         ancho = physical_pos.ancho
@@ -115,28 +115,28 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
             if distancia(p, v) <= db:
                 self.tpSize = k
                 return True
-        self.siMove = self.rect.contains(p)
-        return self.siMove
+        self.is_move = self.rect.contains(p)
+        return self.is_move
 
     def mousePressEvent(self, event):
         QtWidgets.QGraphicsItem.mousePressEvent(self, event)
 
         p = event.scenePos()
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouse_press_ext(self, event):
         p = event.pos()
         p = self.mapFromScene(p)
 
-        self.expX = p.x()
-        self.expY = p.y()
-        self.siMove = True
+        self.exp_x = p.x()
+        self.exp_y = p.y()
+        self.is_move = True
         self.tpSize = None
 
     def mouseMoveEvent(self, event):
         event.ignore()
-        if not (self.siMove or self.tpSize):
+        if not (self.is_move or self.tpSize):
             return
 
         p = event.pos()
@@ -145,14 +145,14 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
         x = p.x()
         y = p.y()
 
-        dx = x - self.expX
-        dy = y - self.expY
+        dx = x - self.exp_x
+        dy = y - self.exp_y
 
-        self.expX = x
-        self.expY = y
+        self.exp_x = x
+        self.exp_y = y
 
-        physical_pos = self.bloqueDatos.physical_pos
-        if self.siMove:
+        physical_pos = self.block_data.physical_pos
+        if self.is_move:
             physical_pos.x += dx
             physical_pos.y += dy
         else:
@@ -178,13 +178,13 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
 
     def mouseReleaseEvent(self, event):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
-        if self.siActivo:
-            if self.siMove or self.tpSize:
+        if self.is_activated:
+            if self.is_move or self.tpSize:
                 self.xy2physical_pos()
                 self.escena.update()
-                self.siMove = False
+                self.is_move = False
                 self.tpSize = None
-            self.activa(False)
+            self.activate(False)
 
         if self.routine_if_pressed:
             if self.routine_if_pressed_argum:
@@ -192,16 +192,16 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
             else:
                 self.routine_if_pressed()
 
-    def mouseReleaseExt(self):
-        if self.siActivo:
-            if self.siMove or self.tpSize:
+    def mouse_release_ext(self):
+        if self.is_activated:
+            if self.is_move or self.tpSize:
                 self.xy2physical_pos()
                 self.escena.update()
-                self.siMove = False
+                self.is_move = False
                 self.tpSize = None
-            self.activa(False)
+            self.activate(False)
 
-    def pixmapX(self):
+    def get_pixmap(self):
         pm = QtGui.QPixmap(33, 33)
         pm.fill(QtCore.Qt.GlobalColor.transparent)
         painter = QtGui.QPainter()
@@ -215,8 +215,8 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
     def name():
         return _("Marker")
 
-    def paint(self, painter, option, widget):
-        bm = self.bloqueDatos
+    def paint(self, painter, option, widget=None):
+        bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
         poscelda = bm.poscelda
@@ -271,7 +271,7 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
             dn = dn0
 
         self.rect = QtCore.QRectF(physical_pos.x, physical_pos.y, physical_pos.ancho, physical_pos.alto)
-        if self.siRecuadro and self.siEditando:
+        if self.siRecuadro and self.is_editing:
             pen = QtGui.QPen()
             pen.setColor(QtGui.QColor("blue"))
             pen.setWidth(2)

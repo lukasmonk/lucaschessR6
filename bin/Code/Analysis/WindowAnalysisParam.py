@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from PySide6 import QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Analysis import WindowAnalysisConfig
 from Code.Base.Constantes import (
     ALL_VARIATIONS,
@@ -27,10 +27,8 @@ SEPARADOR = FormLayout.separador
 def read_dic_params():
     configuration = Code.configuration
     file = configuration.paths.file_param_analysis()
-    dic = Util.restore_pickle(file)
-    if not dic:
-        dic = {}
-    analysis_params = SimpleNamespace(
+    dic = Util.restore_pickle(file) or {}
+    return SimpleNamespace(
         engine=dic.get("engine", configuration.x_tutor_clave),
         vtime=dic.get("vtime", configuration.x_tutor_mstime),
         depth=dic.get("depth", configuration.x_tutor_depth),
@@ -61,8 +59,6 @@ def read_dic_params():
         themes_reset=dic.get("themes_reset", False),
     )
 
-    return analysis_params
-
 
 def save_dic_params(dic):
     configuration = Code.configuration
@@ -77,14 +73,14 @@ def form_blunders_brilliancies(analysis_params, configuration):
 
     li_types = [
         (
-            _("Dubious move") + " (⁈)  + " + _("Mistake") + " (?) + " + _("Blunder") + " (⁇)",
+            f"{_('Dubious move')} (⁈)  + {_('Mistake')} (?) + {_('Blunder')} (⁇)",
             INACCURACY_MISTAKE_BLUNDER,
         ),
-        (_("Dubious move") + " (⁈) + " + _("Mistake") + " (?)", INACCURACY_MISTAKE),
-        (_("Mistake") + " (?) + " + _("Blunder") + " (⁇)", MISTAKE_BLUNDER),
-        (_("Dubious move") + " (⁈)", INACCURACY),
-        (_("Mistake") + " (?)", MISTAKE),
-        (_("Blunder") + " (⁇)", BLUNDER),
+        (f"{_('Dubious move')} (⁈) + {_('Mistake')} (?)", INACCURACY_MISTAKE),
+        (f"{_('Mistake')} (?) + {_('Blunder')} (⁇)", MISTAKE_BLUNDER),
+        (f"{_('Dubious move')} (⁈)", INACCURACY),
+        (f"{_('Mistake')} (?)", MISTAKE),
+        (f"{_('Blunder')} (⁇)", BLUNDER),
     ]
     condition = FormLayout.Combobox(_("Condition"), li_types)
     li_blunders.append((condition, analysis_params.kblunders_condition))
@@ -103,19 +99,19 @@ def form_blunders_brilliancies(analysis_params, configuration):
 
     config = FormLayout.Fichero(
         _("PGN Format"),
-        "%s (*.pgn)" % _("PGN Format"),
+        f'{_("PGN Format")} (*.pgn)',
         True,
-        anchoMinimo=280,
-        ficheroDefecto=path_pgn,
+        minimum_width=280,
+        file_default=path_pgn,
     )
     li_blunders.append((config, ""))
 
-    li_blunders.append((_("Also add complete game to PGN") + ":", False))
+    li_blunders.append((f"{_('Also add complete game to PGN')}:", False))
 
     li_blunders.append(SEPARADOR)
 
-    eti = '"%s"' % _("Find best move")
-    li_blunders.append((_X(_("Add to the training %1 with the name"), eti) + ":", ""))
+    eti = f'"{_("Find best move")}"'
+    li_blunders.append((f"{_X(_('Add to the training %1 with the name'), eti)}:", ""))
 
     li_brilliancies = [SEPARADOR]
 
@@ -126,28 +122,28 @@ def form_blunders_brilliancies(analysis_params, configuration):
 
     config = FormLayout.Fichero(
         _("List of FENs"),
-        "%s (*.fns)" % _("List of FENs"),
+        f'{_("List of FENs")} (*.fns)',
         True,
-        anchoMinimo=280,
-        ficheroDefecto=path_fns,
+        minimum_width=280,
+        file_default=path_fns,
     )
     li_brilliancies.append((config, ""))
 
     config = FormLayout.Fichero(
         _("PGN Format"),
-        "%s (*.pgn)" % _("PGN Format"),
+        f'{_("PGN Format")} (*.pgn)',
         True,
-        anchoMinimo=280,
-        ficheroDefecto=path_pgn,
+        minimum_width=280,
+        file_default=path_pgn,
     )
     li_brilliancies.append((config, ""))
 
-    li_brilliancies.append((_("Also add complete game to PGN") + ":", False))
+    li_brilliancies.append((f"{_('Also add complete game to PGN')}:", False))
 
     li_brilliancies.append(SEPARADOR)
 
-    eti = '"%s"' % _("Find best move")
-    li_brilliancies.append((_X(_("Add to the training %1 with the name"), eti) + ":", ""))
+    eti = f'"{_("Find best move")}"'
+    li_brilliancies.append((f"{_X(_('Add to the training %1 with the name'), eti)}:", ""))
 
     return li_blunders, li_brilliancies
 
@@ -155,9 +151,9 @@ def form_blunders_brilliancies(analysis_params, configuration):
 def form_variations(analysis_params):
     li_var = [
         SEPARADOR,
-        (_("Also analyze variations") + ":", analysis_params.analyze_variations),
+        (f"{_('Also analyze variations')}:", analysis_params.analyze_variations),
         SEPARADOR,
-        ("<big><b>" + _("Convert analyses into variations") + ":", analysis_params.include_variations),
+        (f"<big><b>{_('Convert analyses into variations')}:", analysis_params.include_variations),
     ]
 
     li = [
@@ -167,7 +163,7 @@ def form_variations(analysis_params):
     ]
     what_variations = FormLayout.Combobox(_("What variations?"), li)
     li_var.append((what_variations, analysis_params.what_variations))
-    li_var.append((_("Include move played") + ":", analysis_params.include_played))
+    li_var.append((f"{_('Include move played')}:", analysis_params.include_played))
     li_var.append(SEPARADOR)
 
     li_var.append(
@@ -178,37 +174,38 @@ def form_variations(analysis_params):
     )
     li_var.append(SEPARADOR)
 
-    li_var.append((_("Include info about engine") + ":", analysis_params.info_variation))
+    li_var.append((f"{_('Include info about engine')}:", analysis_params.info_variation))
     li_var.append(SEPARADOR)
 
     li_var.append(
         (
-            "%s %s/%s/%s:" % (_("Format"), _("Score"), _("Depth"), _("Time")),
+            f'{_("Format")} {_("Score")}/{_("Depth")}/{_("Time")}:',
             analysis_params.si_pdt,
         )
     )
     li_var.append(SEPARADOR)
 
-    li_var.append((_("Only one move of each variation") + ":", analysis_params.one_move_variation))
+    li_var.append((f"{_('Only one move of each variation')}:", analysis_params.one_move_variation))
     return li_var
 
 
 def form_themes(alm):
-    li_themes = [
+    return [
         SEPARADOR,
-        (_("Automatic assignment") + ":", alm.themes_assign),
+        (f"{_('Automatic assignment')}:", alm.themes_assign),
         SEPARADOR,
         SEPARADOR,
-        (None, _("In case automatic assignment is activated") + ":"),
+        (None, f"{_('In case automatic assignment is activated')}:"),
         SEPARADOR,
-        (_("Add themes tag to the game") + " (TacticThemes):", alm.themes_tags),
+        (
+            f"{_('Add themes tag to the game')} (TacticThemes):",
+            alm.themes_tags,
+        ),
         SEPARADOR,
-        (_("Pre-delete the following themes?") + ":", alm.themes_reset),
-        (None, "@|" + AssignThemes.AssignThemes().txt_all_themes()),
+        (f"{_('Pre-delete the following themes?')}:", alm.themes_reset),
+        (None, f"@|{AssignThemes.AssignThemes().txt_all_themes()}"),
         SEPARADOR,
     ]
-
-    return li_themes
 
 
 def form_engine(analysis_params, all_engines):
@@ -219,7 +216,7 @@ def form_engine(analysis_params, all_engines):
     else:
         li = Code.configuration.engines.formlayout_combo_analyzer(True)
         li[0] = analysis_params.engine
-    li_engine.append((_("Engine") + ":", li))
+    li_engine.append((f"{_('Engine')}:", li))
     li_engine.append(SEPARADOR)
 
     # # Time
@@ -236,9 +233,7 @@ def form_engine(analysis_params, all_engines):
 
     # MultiPV
     li_engine.append(SEPARADOR)
-    li = [(_("By default"), "PD"), (_("Maximum"), "MX")]
-    for x in list(range(1, 16)) + list(range(20, 60, 10)) + [75, 100, 150, 200, 250]:
-        li.append((str(x), str(x)))
+    li = Util.list_depths_to_cb()
     config = FormLayout.Combobox(_("Number of variations evaluated by the engine (MultiPV)"), li)
     li_engine.append((config, analysis_params.multiPV))
 
@@ -279,7 +274,7 @@ def analysis_parameters(parent, extended_mode, all_engines=False):
         li_gen.append((config, color))
 
         config = FormLayout.Editbox(
-            '<div align="right">' + _("Moves") + "<br>" + _("By example:") + " -5,8-12,14,19-",
+            f"<div align=\"right\">{_('Moves')}<br>{_('By example:')} -5,8-12,14,19-",
             rx=r"[0-9,\-]*",
         )
         li_gen.append((config, ""))
@@ -296,23 +291,23 @@ def analysis_parameters(parent, extended_mode, all_engines=False):
 
         li_gen.append(
             (
-                _("Do not scan standard opening moves") + ":",
+                f"{_('Do not scan standard opening moves')}:",
                 analysis_params.standard_openings,
             )
         )
         li_gen.append(SEPARADOR)
-        li_gen.append((_("Add accuracy tags to the game") + ":", analysis_params.accuracy_tags))
+        li_gen.append((f"{_('Add accuracy tags to the game')}:", analysis_params.accuracy_tags))
 
         li_gen.append(
             (
-                _("Redo any existing prior analysis (if they exist)") + ":",
+                f"{_('Redo any existing prior analysis (if they exist)')}:",
                 analysis_params.delete_previous,
             )
         )
 
-        li_gen.append((_("Start from the end of the game") + ":", analysis_params.from_last_move))
+        li_gen.append((f"{_('Start from the end of the game')}:", analysis_params.from_last_move))
 
-        li_gen.append((_("Show graphics") + ":", analysis_params.show_graphs))
+        li_gen.append((f"{_('Show graphics')}:", analysis_params.show_graphs))
 
         li_var = form_variations(analysis_params)
 
@@ -340,21 +335,22 @@ def analysis_parameters(parent, extended_mode, all_engines=False):
         if reg.form is None:
             if isinstance(valor, FormLayout.FormTabWidget):
                 reg.form = valor
-                reg.cb_variations = valor.getWidget(2, 0)
-                reg.cb_add_variations = valor.getWidget(2, 1)
+                reg.cb_variations = valor.get_widget(2, 0)
+                reg.cb_add_variations = valor.get_widget(2, 1)
                 reg.cb_variations_checked = reg.cb_variations.isChecked()
                 reg.cb_add_variations_checked = reg.cb_add_variations.isChecked()
                 if reg.cb_variations_checked is True and reg.cb_add_variations_checked is True:
                     reg.cb_add_variations.setChecked(False)
         else:
-            if hasattr(reg, "cb_variations"):
-                if reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True:
-                    if reg.cb_variations_checked:
-                        reg.cb_variations.setChecked(False)
-                    else:
-                        reg.cb_add_variations.setChecked(False)
-                    reg.cb_variations_checked = reg.cb_variations.isChecked()
-                    reg.cb_add_variations_checked = reg.cb_add_variations.isChecked()
+            if hasattr(reg, "cb_variations") and (
+                reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True
+            ):
+                if reg.cb_variations_checked:
+                    reg.cb_variations.setChecked(False)
+                else:
+                    reg.cb_add_variations.setChecked(False)
+                reg.cb_variations_checked = reg.cb_variations.isChecked()
+                reg.cb_add_variations_checked = reg.cb_add_variations.isChecked()
 
             QTUtils.refresh_gui()
 
@@ -370,11 +366,13 @@ def analysis_parameters(parent, extended_mode, all_engines=False):
         lista,
         title=_("Analysis Configuration"),
         parent=parent,
-        anchoMinimo=460,
+        minimum_width=460,
         icon=Iconos.Opciones(),
         dispatch=func_dispatch,
         li_extra_options=li_extra_options,
     )
+
+    li_gen = li_var = li_blunders = li_brilliancies = li_themes = None
 
     if resultado:
         accion, li_resp = resultado
@@ -469,25 +467,24 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
     cjug = ";".join(analysis_params.li_players) if analysis_params.li_players else ""
     li_gen.append(
         (
-            '<div align="right">'
-            + _("Only the following players")
-            + ":<br>%s</div>" % _("(You can add multiple aliases separated by ; and wildcards with *)"),
+            (
+                '<div align="right">'
+                + _("Only the following players")
+                + f':<br>{_("(You can add multiple aliases separated by ; and wildcards with *)")}</div>'
+            ),
             cjug,
         )
     )
 
     config = FormLayout.Editbox(
-        '<div align="right">' + _("Moves") + "<br>" + _("By example:") + " -5,8-12,14,19-",
+        f"<div align=\"right\">{_('Moves')}<br>{_('By example:')} -5,8-12,14,19-",
         rx=r"[0-9,\-]*",
     )
     li_gen.append((config, ""))
 
     list_books = Books.ListBooks()
     li = [("--", None)]
-    if analysis_params.book_name is None:
-        defecto = None
-    else:
-        defecto = list_books.lista[0]
+    defecto = None if analysis_params.book_name is None else list_books.lista[0]
     for book in list_books.lista:
         if book.name == analysis_params.book_name:
             defecto = book
@@ -497,24 +494,24 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
 
     li_gen.append(
         (
-            _("Do not scan standard opening moves") + ":",
+            f"{_('Do not scan standard opening moves')}:",
             analysis_params.standard_openings,
         )
     )
 
-    li_gen.append((_("Add accuracy tags to the game") + ":", analysis_params.accuracy_tags))
+    li_gen.append((f"{_('Add accuracy tags to the game')}:", analysis_params.accuracy_tags))
 
     li_gen.append(SEPARADOR)
-    li_gen.append((_("Start from the end of the game") + ":", analysis_params.from_last_move))
+    li_gen.append((f"{_('Start from the end of the game')}:", analysis_params.from_last_move))
 
     li_gen.append(
         (
-            _("Redo any existing prior analysis (if they exist)") + ":",
+            f"{_('Redo any existing prior analysis (if they exist)')}:",
             analysis_params.delete_previous,
         )
     )
 
-    li_gen.append((_("Only selected games") + ":", multiple_selected))
+    li_gen.append((f"{_('Only selected games')}:", multiple_selected))
     li_gen.append(SEPARADOR)
     cores = Util.cpu_count()
     li_gen.append(
@@ -552,21 +549,22 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
         if reg.form is None:
             if isinstance(valor, FormLayout.FormTabWidget):
                 reg.form = valor
-                reg.cb_variations = valor.getWidget(2, 0)
-                reg.cb_add_variations = valor.getWidget(2, 1)
+                reg.cb_variations = valor.get_widget(2, 0)
+                reg.cb_add_variations = valor.get_widget(2, 1)
                 reg.cb_variations_checked = reg.cb_variations.isChecked()
                 reg.cb_add_variations_checked = reg.cb_add_variations.isChecked()
                 if reg.cb_variations_checked is True and reg.cb_add_variations_checked is True:
                     reg.cb_add_variations.setChecked(False)
         else:
-            if hasattr(reg, "cb_variations"):
-                if reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True:
-                    if reg.cb_variations_checked:
-                        reg.cb_variations.setChecked(False)
-                    else:
-                        reg.cb_add_variations.setChecked(False)
-                    reg.cb_variations_checked = reg.cb_variations.isChecked()
-                    reg.cb_add_variations_checked = reg.cb_add_variations.isChecked()
+            if hasattr(reg, "cb_variations") and (
+                reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True
+            ):
+                if reg.cb_variations_checked:
+                    reg.cb_variations.setChecked(False)
+                else:
+                    reg.cb_add_variations.setChecked(False)
+                reg.cb_variations_checked = reg.cb_variations.isChecked()
+                reg.cb_add_variations_checked = reg.cb_add_variations.isChecked()
 
             QTUtils.refresh_gui()
 
@@ -581,7 +579,7 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
         lista,
         title=_("Mass analysis"),
         parent=parent,
-        anchoMinimo=460,
+        minimum_width=460,
         icon=Iconos.Opciones(),
         li_extra_options=li_extra_options,
         dispatch=dispatch,

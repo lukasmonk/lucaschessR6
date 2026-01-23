@@ -1,11 +1,11 @@
-# This code is a translation to python from pg_key.c and pg_show.c released in the public domain by Michel Van den Bergh.
-# http://alpha.uhasselt.be/Research/Algebra/Toga
+# This code is a translation to python from pg_key.c and pg_show.c released in
+# the public domain by Michel Van den Bergh. http://alpha.uhasselt.be/Research/Algebra/Toga
 
 import os
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
@@ -35,8 +35,7 @@ class ListBooks:
     #     self.lista.insert(0, book)
 
     def restore_pickle(self, file):
-        dic_booklist = Util.restore_pickle(file)
-        if dic_booklist:
+        if dic_booklist := Util.restore_pickle(file):
             self.lista = []
             for dic_book in dic_booklist["lista"]:
                 b = Book("P", "", "", False)
@@ -86,14 +85,15 @@ class ListBooks:
             b = Book("P", "Rodent", path_rodent, False)
             self.lista.append(b)
 
-    def modoAnalisis(self, apli):
-        return apli in self._modoAnalisis
+    # def modoAnalisis(self, apli):
+    #     return apli in self._modoAnalisis
 
     def by_default(self, book=None):
         if book:
             for book1 in self.lista:
                 book1.pordefecto = False
             book.pordefecto = True
+            return None
         else:
             self.at_least_one()
             for book in self.lista:
@@ -102,10 +102,7 @@ class ListBooks:
             return self.lista[0]
 
     def seek_book(self, name):
-        for book in self.lista:
-            if book.name == name:
-                return book
-        return None
+        return next((book for book in self.lista if book.name == name), None)
 
     def verify(self):
         for x in range(len(self.lista) - 1, -1, -1):
@@ -128,6 +125,8 @@ class ListBooks:
 
 
 class Book:
+    book: Polyglot.Polyglot
+
     def __init__(self, tipo, name, path, pordefecto, extras=None):
         self.tipo = tipo
         self.name = name
@@ -140,7 +139,7 @@ class Book:
         return Book(self.tipo, self.name, self.path, self.pordefecto, self.extras)
 
     def to_dic(self):
-        dic = {
+        return {
             "tipo": self.tipo,
             "name": self.name,
             "path": self.path,
@@ -148,7 +147,6 @@ class Book:
             "orden": self.orden,
             "extras": self.extras,
         }
-        return dic
 
     def from_dic(self, dic):
         self.tipo = dic["tipo"]
@@ -225,7 +223,7 @@ class Book:
             alm.pgn = position.pgn_translated(alm.from_sq, alm.to_sq, alm.promotion)
             alm.pgnRaw = position.pgn(alm.from_sq, alm.to_sq, alm.promotion)
             alm.fen = fen
-            alm.porc = "%0.02f%%" % (w * 100.0 / total,) if total else ""
+            alm.porc = f"{w * 100.0 / total:0.02f}%" if total else ""
             alm.weight = w
             lista_jugadas.append(alm)
 
@@ -277,12 +275,12 @@ class Book:
             pv = li[pos].pv()
 
         elif tipo == BOOK_RANDOM_PROPORTIONAL:  # Aleatorio proporcional
-            liW = [x.weight for x in li]
-            t = sum(liW)
+            li_w = [x.weight for x in li]
+            t = sum(li_w)
             num = random.randint(1, t)
             pos = 0
             t = 0
-            for n, x in enumerate(liW):
+            for n, x in enumerate(li_w):
                 t += x
                 if num <= t:
                     pos = n
@@ -294,24 +292,24 @@ class Book:
 
         return pv.lower()
 
-    def miraListaPV(self, fen, siMax, onlyone=True):
-        li = self.book.lista(self.path, fen)
-
-        li_resp = []
-        if siMax:
-            maxim = -1
-            for entry in li:
-                w = entry.weight
-                if w > maxim:
-                    maxim = w
-                    li_resp = [entry.pv()]
-                elif w == maxim and not onlyone:
-                    li_resp.append(entry.pv())
-        else:
-            for entry in li:
-                li_resp.append(entry.pv())
-
-        return li_resp
+    # def miraListaPV(self, fen, maximized, onlyone=True):
+    #     li = self.book.lista(self.path, fen)
+    #
+    #     li_resp = []
+    #     if maximized:
+    #         maxim = -1
+    #         for entry in li:
+    #             w = entry.weight
+    #             if w > maxim:
+    #                 maxim = w
+    #                 li_resp = [entry.pv()]
+    #             elif w == maxim and not onlyone:
+    #                 li_resp.append(entry.pv())
+    #     else:
+    #         for entry in li:
+    #             li_resp.append(entry.pv())
+    #
+    #     return li_resp
 
 
 class Libro(Book):  # Cambio de denominación, error en restore wplayagainst engine
@@ -330,8 +328,7 @@ class BookGame(Book):
 
     def si_esta(self, fen, move):
         if self.activo:
-            lista_jugadas = self.get_list_moves(fen)
-            if lista_jugadas:
+            if lista_jugadas := self.get_list_moves(fen):
                 for apdesde, aphasta, appromotion, nada, nada1 in lista_jugadas:
                     mx = apdesde + aphasta + appromotion
                     if mx.strip().lower() == move:

@@ -71,9 +71,7 @@ class AnalysisEval:
             return BLUNDER
         if dif >= self.conf.x_eval_mistake:
             return MISTAKE
-        if dif >= self.conf.x_eval_inaccuracy:
-            return INACCURACY
-        return NO_RATING
+        return INACCURACY if dif >= self.conf.x_eval_inaccuracy else NO_RATING
 
     def elo(self, rm_best, rm_player):
         dif = self.evaluate_dif(rm_best, rm_player)
@@ -106,7 +104,7 @@ class AnalysisEval:
         n_jg = n_jg_w = n_jg_b = 0
         porc_t = porc_w = porc_b = 0
 
-        for num, move in enumerate(game.li_moves):
+        for move in game.li_moves:
             if move.analysis:
                 mrm, pos = move.analysis
                 is_white = move.is_white()

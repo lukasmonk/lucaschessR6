@@ -1,22 +1,20 @@
 from typing import Any, Dict
 
-
 import Code
+from Code.Base.Constantes import (
+    GT_AGAINST_CHILD_ENGINE,
+)
 from Code.Base.Constantes import (
     ST_PLAYING,
 )
 from Code.Openings import Opening
-from Code.QT import QTDialogs
-
-
-from Code.Base.Constantes import (
-    GT_AGAINST_CHILD_ENGINE,
-)
 from Code.PlayAgainstEngine import ManagerPlayAgainstEngine
+from Code.QT import QTDialogs
 
 
 class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
     imagen: Any
+
     def _init_vars(self, dic_var: Dict[str, Any]):
         self.reinicio = dic_var
 
@@ -144,7 +142,7 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
 
     def _init_rival(self, dic_var: Dict[str, Any]):
         engine = self.configuration.engines.search("irina", None)
-        self.manager_rival = self.procesador.create_manager_engine(engine, 0, 2, 0 )
+        self.manager_rival = self.procesador.create_manager_engine(engine, 0, 2, 0)
         self.imagen = None
         for name, trans, ico, elo in QTDialogs.list_irina():
             if name == dic_var["RIVAL"]:
@@ -175,6 +173,5 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
 
     def show_basic_label(self):
         if self.imagen:
-            self.main_window.base.lbRotulo1.put_image(self.imagen)
-            self.main_window.base.lbRotulo1.show()
-
+            self.main_window.base.lb_rotulo1.put_image(self.imagen)
+            self.main_window.base.lb_rotulo1.show()

@@ -2,7 +2,8 @@ import random
 import sys
 
 import Code
-from Code import CPU, Adjournments, ManagerGame, ManagerSolo, Update, Util
+from Code import Update
+from Code.Z import Adjournments, CPU, ManagerGame, ManagerSolo, Util
 from Code.Base import Position
 from Code.Base.Constantes import (
     GT_AGAINST_CHILD_ENGINE,
@@ -41,7 +42,7 @@ from Code.Books import (
     WBooksTrainOL,
 )
 from Code.CompetitionWithTutor import ManagerCompeticion
-from Code.Competitions import ManagerElo, ManagerFideFics, ManagerMicElo, ManagerWicker
+from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
 from Code.Config import Configuration, WindowConfig
 from Code.Databases import DBgames
 from Code.Engines import (
@@ -190,7 +191,7 @@ class Procesador:
                 self.jugarSoloExtern(comando)
                 return
             elif comando_l.endswith(".lcdb"):
-                self.externDatabase(comando)
+                self.extern_database(comando)
                 return
             elif comando_l.endswith(".bmt"):
                 self.start()
@@ -208,11 +209,16 @@ class Procesador:
         else:
             self.start()
 
-    def externDatabase(self, file):
+    def extern_database(self, file):
         tm = ToolsMenu.ToolsMenu(self)
         tmr = ToolsMenuRun.ToolsMenuRun(tm)
-        tmr.externDatabase(file)
+        tmr.extern_database(file)
         self.run_action(TB_QUIT)
+
+    def openings_lines(self):
+        tm = ToolsMenu.ToolsMenu(self)
+        tmr = ToolsMenuRun.ToolsMenuRun(tm)
+        tmr.openings_lines()
 
     def externBMT(self, file):
         self.configuration.paths.set_file_bmt(file)
@@ -221,21 +227,21 @@ class Procesador:
     def reset(self):
         self.main_window.activate_analysis_bar(False)
         self.main_window.deactivate_eboard(0)
-        self.main_window.activaCapturas(False)
+        self.main_window.activate_captures(False)
         self.main_window.active_information_pgn(False)
         if self.manager:
             self.manager.end_manager()
             self.manager = None
         self.main_window.set_manager_active(self)  # Necesario, no borrar
         self.board.side_indicator_sc.setVisible(False)
-        self.board.blindfoldQuitar()
+        self.board.blindfold_remove()
         self.test_opcion_Adjournments()
         self.main_window.pon_toolbar(self.li_opciones_inicio, shortcuts=True)
         self.main_window.active_game(False, False)
         self.main_window.thinking(False)
         self.board.do_pressed_number = None
         self.board.set_position(self.posicionInicial)
-        self.board.borraMovibles()
+        self.board.remove_movables()
         self.board.remove_arrows()
         self.main_window.adjust_size()
         self.main_window.set_title()
@@ -268,10 +274,10 @@ class Procesador:
             self.board.activa_menu_visual(True)
             self.board.set_position(self.posicionInicial)
             self.board.setToolTip("")
-            self.board.bloqueaRotacion(False)
+            self.board.lock_rotation(False)
 
         else:
-            self.board.bloqueaRotacion(True)
+            self.board.lock_rotation(True)
             self.board.setToolTip("")
             self.board.activa_menu_visual(True)
             Presentacion.ManagerChallenge101(self)
@@ -327,15 +333,29 @@ class Procesador:
         return self.get_manager_analyzer()
 
     @staticmethod
-    def create_manager_analysis(engine, mstime, depth, nodes, multipv):
+    def create_manager_analysis(
+        engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
+    ):
+        assert type(mstime) is int and mstime >= 0
+        assert type(depth) is int and depth >= 0
+        assert type(nodes) is int and nodes >= 0
+
         engine.set_multipv_var(multipv)
         run_engine_params = EngineRun.RunEngineParams()
         run_engine_params.update(engine, mstime, depth, nodes, engine.multiPV)
         manager_analysis = EngineManagerAnalysis.EngineManagerAnalysis(engine, run_engine_params)
+        if priority is not None:
+            manager_analysis.set_priority(priority)
         return manager_analysis
 
     @staticmethod
-    def create_manager_engine(engine: Engines.Engine, mstime, depth, nodes, has_multipv=False, priority=None):
+    def create_manager_engine(
+        engine: Engines.Engine, mstime: int, depth: int, nodes: int, has_multipv=False, priority=None
+    ):
+        assert type(mstime) is int and mstime >= 0
+        assert type(depth) is int and depth >= 0
+        assert type(nodes) is int and nodes >= 0
+
         run_engine_params = EngineRun.RunEngineParams()
         multipv = engine.multiPV if has_multipv else 1
         run_engine_params.update(engine, mstime, depth, nodes, multipv)
@@ -467,7 +487,7 @@ class Procesador:
                 elif tp == GT_AGAINST_GM:
                     self.manager = ManagerGM.ManagerGM(self)
                 elif tp in (GT_FIDE, GT_FICS, GT_LICHESS):
-                    self.manager = ManagerFideFics.ManagerFideFics(self)
+                    self.manager = ManagerFideFicsLichess.ManagerFideFicsLichess(self)
                     self.manager.selecciona(tp)
                 elif tp == GT_AGAINST_ENGINE_LEAGUE:
                     self.manager = ManagerLeague.ManagerLeague(self)
@@ -539,7 +559,7 @@ class Procesador:
             Code.configuration.paths.file_train_books_ol(),
             WBooksTrainOL.BooksTrainOL,
             tabla="data",
-            reversed=True,
+            is_reversed=True,
         )
         # No es posible con with porque self.manager termina y deja el control en main_window
         w = WBooksTrainOL.WBooksTrainOL(self.main_window, dbli_books_train)
@@ -677,14 +697,14 @@ class Procesador:
         )
 
     def manager_game(
-            self,
-            window,
-            game,
-            is_complete,
-            only_consult,
-            father_board,
-            with_previous_next=None,
-            save_routine=None,
+        self,
+        window,
+        game,
+        is_complete,
+        only_consult,
+        father_board,
+        with_previous_next=None,
+        save_routine=None,
     ):
         clon_procesador = ProcesadorVariations(
             window,

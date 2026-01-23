@@ -14,17 +14,7 @@ from Code.Base.Constantes import (
     POS_TUTOR_VERTICAL,
 )
 from Code.Engines import CheckEngines, Priorities
-from Code.QT import (
-    Colocacion,
-    Columnas,
-    Controles,
-    Delegados,
-    Grid,
-    Iconos,
-    LCDialog,
-    QTDialogs,
-    SelectFiles,
-)
+from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, SelectFiles, QTUtils
 
 
 class WConfEngines(LCDialog.LCDialog):
@@ -42,7 +32,7 @@ class WConfEngines(LCDialog.LCDialog):
         self.li_uci_options = []
         self.grid_conf = None
 
-        li_acciones = [(_("Close"), Iconos.MainMenu(), self.terminar), None]
+        li_acciones = [(_("Close"), Iconos.MainMenu(), self.finalize), None]
         tb = QTDialogs.LCTB(
             self,
             li_acciones,
@@ -60,13 +50,13 @@ class WConfEngines(LCDialog.LCDialog):
         self.tab.new_tab(self.wconf_tutor, _("Tutor"))
         self.tab.new_tab(self.wconf_analyzer, _("Analyzer"))
         self.tab.new_tab(self.wothers, _("Others"))
-        self.tab.dispatchChange(self.cambiada_tab)
+        self.tab.dispatch_change(self.cambiada_tab)
 
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("OPTION", _("UCI option"), 180)
         o_columns.nueva("VALUE", _("Value"), 200, edicion=Delegados.MultiEditor(self))
         o_columns.nueva("DEFAULT", _("By default"), 90)
-        self.grid_conf = Grid.Grid(self, o_columns, siSelecFilas=False, is_editable=True)
+        self.grid_conf = Grid.Grid(self, o_columns, complete_row_select=False, is_editable=True)
         self.register_grid(self.grid_conf)
 
         # Layout
@@ -123,10 +113,7 @@ class WConfEngines(LCDialog.LCDialog):
             minimo = opcion.minimo
             maximo = opcion.maximo
         elif tipo in ("check", "button"):
-            if value == "true":
-                value = "false"
-            else:
-                value = "true"
+            value = "false" if value == "true" else "true"
             self.engine.set_uci_option(key, value)
             self.w_current.set_changed()
             self.grid_conf.refresh()
@@ -184,7 +171,7 @@ class WConfEngines(LCDialog.LCDialog):
         self.configuration.graba()
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save()
         self.accept()
 
@@ -194,31 +181,31 @@ class WConfEngines(LCDialog.LCDialog):
     def grid_num_datos(self, _grid):
         return len(self.li_uci_options) if self.engine else 0
 
-    def grid_dato(self, _grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         op = self.li_uci_options[row]
-        if key == "OPTION":
-            if op.minimo != op.maximo:
-                if op.minimo < 0:
-                    return op.name + " (%d - %+d)" % (op.minimo, op.maximo)
-                else:
-                    return op.name + " (%d - %d)" % (op.minimo, op.maximo)
-            else:
-                return op.name
-        elif key == "DEFAULT":
+        if key == "DEFAULT":
             df = str(op.default)
             return df.lower() if op.tipo == "check" else df
+        elif key == "OPTION":
+            if op.minimo != op.maximo:
+                return (
+                    op.name + " (%d - %+d)" % (op.minimo, op.maximo)
+                    if op.minimo < 0
+                    else op.name + " (%d - %d)" % (op.minimo, op.maximo)
+                )
+            else:
+                return op.name
         else:
             name = op.name
-            valor = op.valor
-            for xname, xvalue in self.engine.liUCI:
-                if xname == name:
-                    valor = xvalue
-                    break
+            valor = next(
+                (xvalue for xname, xvalue in self.engine.liUCI if xname == name),
+                op.valor,
+            )
             valor = str(valor)
             return valor.lower() if op.tipo == "check" else valor
 
-    def grid_bold(self, _grid, row, _o_column):
+    def grid_bold(self, _grid, row, _obj_column):
         op = self.li_uci_options[row]
         return str(op.default).strip().lower() != str(op.valor).strip().lower()
 
@@ -233,17 +220,17 @@ class WConfTutor(QtWidgets.QWidget):
         self.engine = self.configuration.engines.engine_tutor()
 
         lb_engine = Controles.LB2P(self, _("Engine"))
-        self.cb_engine = Controles.CB(self, self.configuration.engines.list_name_alias_multipv(), self.engine.alias)
+        self.cb_engine = Controles.CB(self, self.configuration.engines.list_name_alias_multipv(), self.engine.key)
         self.cb_engine.capture_changes(self.changed_engine)
 
         lb_time = Controles.LB2P(self, _("Duration of tutor analysis (secs)"))
-        self.ed_time = Controles.ED(self).tipoFloat(self.configuration.x_tutor_mstime / 1000.0).relative_width(50)
+        self.ed_time = Controles.ED(self).type_float(self.configuration.x_tutor_mstime / 1000.0).relative_width(50)
 
         lb_depth = Controles.LB2P(self, _("Depth"))
-        self.ed_depth = Controles.ED(self).tipoInt(self.configuration.x_tutor_depth).relative_width(30)
+        self.ed_depth = Controles.ED(self).type_integer(self.configuration.x_tutor_depth).relative_width(30)
 
         lb_multipv = Controles.LB2P(self, _("Number of variations evaluated by the engine (MultiPV)"))
-        self.ed_multipv = Controles.ED(self).tipoIntPositive(self.configuration.x_tutor_multipv).relative_width(30)
+        self.ed_multipv = Controles.ED(self).type_integer_positive(self.configuration.x_tutor_multipv).relative_width(30)
         lb_maximum = Controles.LB(self, _("0 = Maximum"))
         ly_multi = Colocacion.H().control(self.ed_multipv).control(lb_maximum).relleno()
 
@@ -262,8 +249,8 @@ class WConfTutor(QtWidgets.QWidget):
         lb_tutor_position = Controles.LB2P(self, _("Tutor boards position"))
         li_pos_tutor = [
             (_("Horizontal"), POS_TUTOR_HORIZONTAL),
-            (_("Horizontal") + " 2+1", POS_TUTOR_HORIZONTAL_2_1),
-            (_("Horizontal") + " 1+2", POS_TUTOR_HORIZONTAL_1_2),
+            (f"{_('Horizontal')} 2+1", POS_TUTOR_HORIZONTAL_2_1),
+            (f"{_('Horizontal')} 1+2", POS_TUTOR_HORIZONTAL_1_2),
             (_("Vertical"), POS_TUTOR_VERTICAL),
         ]
         self.cb_board_position = Controles.CB(self, li_pos_tutor, self.configuration.x_tutor_view)
@@ -271,9 +258,9 @@ class WConfTutor(QtWidgets.QWidget):
         lb_sensitivity = Controles.LB2P(self, _("Tutor appearance condition"))
         li_types = [
             (_("Always"), 0),
-            (_("Dubious move") + " (?!)", INACCURACY),
-            (_("Mistake") + " (?)", MISTAKE),
-            (_("Blunder") + " (??)", BLUNDER),
+            (f"{_('Dubious move')} (?!)", INACCURACY),
+            (f"{_('Mistake')} (?)", MISTAKE),
+            (f"{_('Blunder')} (??)", BLUNDER),
         ]
         self.cb_type = Controles.CB(self, li_types, self.configuration.x_tutor_diftype)
 
@@ -284,9 +271,9 @@ class WConfTutor(QtWidgets.QWidget):
         layout.controld(lb_multipv, 3, 0).otro(ly_multi, 3, 1)
         layout.controld(lb_priority, 4, 0).control(self.cb_priority, 4, 1)
         layout.controld(lb_tutor_position, 5, 0).control(self.cb_board_position, 5, 1)
-        layout.filaVacia(6, 30)
+        layout.empty_row(6, 30)
         layout.controld(lb_sensitivity, 7, 0).control(self.cb_type, 7, 1)
-        layout.filaVacia(8, 30)
+        layout.empty_row(8, 30)
         layout.control(self.chb_disabled, 9, 0, num_columns=2)
         layout.control(self.chb_background, 10, 0, num_columns=2)
 
@@ -299,15 +286,15 @@ class WConfTutor(QtWidgets.QWidget):
         self.is_changed = False
 
         for control in (self.chb_background, self.chb_disabled):
-            control.capture_changes(self, self.set_changed)
+            control.capture_changes(self.set_changed)
 
         for control in (
-                self.cb_priority,
-                self.cb_board_position,
-                self.ed_time,
-                self.ed_depth,
-                self.ed_multipv,
-                self.cb_type,
+            self.cb_priority,
+            self.cb_board_position,
+            self.ed_time,
+            self.ed_depth,
+            self.ed_multipv,
+            self.cb_type,
         ):
             control.capture_changes(self.set_changed)
 
@@ -329,10 +316,10 @@ class WConfTutor(QtWidgets.QWidget):
     def save(self):
         if self.is_changed:
             self.is_changed = False
-            self.configuration.x_tutor_clave = self.engine.alias
-            self.configuration.x_tutor_mstime = self.ed_time.textoFloat() * 1000
-            self.configuration.x_tutor_depth = self.ed_depth.textoInt()
-            self.configuration.x_tutor_multipv = self.ed_multipv.textoInt()
+            self.configuration.x_tutor_clave = self.engine.key
+            self.configuration.x_tutor_mstime = self.ed_time.text_to_float() * 1000
+            self.configuration.x_tutor_depth = self.ed_depth.text_to_integer()
+            self.configuration.x_tutor_multipv = self.ed_multipv.text_to_integer()
             self.configuration.x_tutor_priority = self.cb_priority.valor()
 
             self.configuration.x_tutor_view = self.cb_board_position.valor()
@@ -348,7 +335,7 @@ class WConfTutor(QtWidgets.QWidget):
             Code.procesador.change_manager_tutor()
 
     def activate_this(self):
-        self.cb_engine.rehacer(self.configuration.engines.list_name_alias_multipv(), self.engine.alias)
+        self.cb_engine.rehacer(self.configuration.engines.list_name_alias_multipv(), self.engine.key)
         self.owner.set_engine(self.engine, False)
 
 
@@ -363,17 +350,17 @@ class WConfAnalyzer(QtWidgets.QWidget):
         self.is_changed = False
 
         lb_engine = Controles.LB2P(self, _("Engine"))
-        self.cb_engine = Controles.CB(self, self.configuration.engines.list_name_alias_multipv(), self.engine.alias)
+        self.cb_engine = Controles.CB(self, self.configuration.engines.list_name_alias_multipv(), self.engine.key)
         self.cb_engine.capture_changes(self.changed_engine)
 
         lb_time = Controles.LB2P(self, _("Duration of analysis (secs)"))
-        self.ed_time = Controles.ED(self).tipoFloat(self.configuration.x_analyzer_mstime / 1000.0).relative_width(40)
+        self.ed_time = Controles.ED(self).type_float(self.configuration.x_analyzer_mstime / 1000.0).relative_width(40)
 
         lb_depth = Controles.LB2P(self, _("Depth"))
-        self.ed_depth = Controles.ED(self).tipoInt(self.configuration.x_analyzer_depth).relative_width(30)
+        self.ed_depth = Controles.ED(self).type_integer(self.configuration.x_analyzer_depth).relative_width(30)
 
         lb_multipv = Controles.LB2P(self, _("Number of variations evaluated by the engine (MultiPV)"))
-        self.ed_multipv = Controles.ED(self).tipoIntPositive(self.configuration.x_analyzer_multipv).relative_width(30)
+        self.ed_multipv = Controles.ED(self).type_integer_positive(self.configuration.x_analyzer_multipv).relative_width(30)
         lb_maximum = Controles.LB(self, _("0 = Maximum"))
         ly_multi = Colocacion.H().control(self.ed_multipv).control(lb_maximum).relleno()
 
@@ -385,16 +372,16 @@ class WConfAnalyzer(QtWidgets.QWidget):
             _("Analysis configuration parameters"),
             rutina=self.config_analysis_parameters,
             plano=False,
-        ).ponIcono(Iconos.ConfAnalysis())
+        ).set_icono(Iconos.ConfAnalysis())
 
         lb_analysis_bar = Controles.LB2P(self, _("Limits in the Analysis Bar (0=no limit)")).set_font_type(
             puntos=12, peso=700
         )
         lb_depth_ab = Controles.LB2P(self, _("Depth"))
-        self.ed_depth_ab = Controles.ED(self).tipoInt(self.configuration.x_analyzer_depth_ab).relative_width(30)
+        self.ed_depth_ab = Controles.ED(self).type_integer(self.configuration.x_analyzer_depth_ab).relative_width(30)
         lb_time_ab = Controles.LB2P(self, _("Time in seconds"))
         self.ed_time_ab = (
-            Controles.ED(self).tipoFloat(self.configuration.x_analyzer_mstime_ab / 1000.0).relative_width(40)
+            Controles.ED(self).type_float(self.configuration.x_analyzer_mstime_ab / 1000.0).relative_width(40)
         )
 
         layout = Colocacion.G()
@@ -403,7 +390,7 @@ class WConfAnalyzer(QtWidgets.QWidget):
         layout.controld(lb_depth, 2, 0).control(self.ed_depth, 2, 1)
         layout.controld(lb_multipv, 3, 0).otro(ly_multi, 3, 1)
         layout.controld(lb_priority, 4, 0).control(self.cb_priority, 4, 1)
-        layout.filaVacia(5, 20)
+        layout.empty_row(5, 20)
         layout.controld(lb_analysis_bar, 6, 0)
         layout.controld(lb_time_ab, 7, 0).control(self.ed_time_ab, 7, 1)
         layout.controld(lb_depth_ab, 8, 0).control(self.ed_depth_ab, 8, 1)
@@ -414,12 +401,12 @@ class WConfAnalyzer(QtWidgets.QWidget):
         self.setLayout(lyh)
 
         for control in (
-                self.cb_priority,
-                self.ed_multipv,
-                self.ed_depth,
-                self.ed_time,
-                self.ed_depth_ab,
-                self.ed_time_ab,
+            self.cb_priority,
+            self.ed_multipv,
+            self.ed_depth,
+            self.ed_time,
+            self.ed_depth_ab,
+            self.ed_time_ab,
         ):
             control.capture_changes(self.set_changed)
 
@@ -449,13 +436,13 @@ class WConfAnalyzer(QtWidgets.QWidget):
         if self.is_changed:
             self.is_changed = False
 
-            self.configuration.x_analyzer_clave = self.engine.alias
-            self.configuration.x_analyzer_mstime = self.ed_time.textoFloat() * 1000
-            self.configuration.x_analyzer_depth = self.ed_depth.textoInt()
-            self.configuration.x_analyzer_multipv = self.ed_multipv.textoInt()
+            self.configuration.x_analyzer_clave = self.engine.key
+            self.configuration.x_analyzer_mstime = self.ed_time.text_to_float() * 1000
+            self.configuration.x_analyzer_depth = self.ed_depth.text_to_integer()
+            self.configuration.x_analyzer_multipv = self.ed_multipv.text_to_integer()
             self.configuration.x_analyzer_priority = self.cb_priority.valor()
-            self.configuration.x_analyzer_mstime_ab = self.ed_time_ab.textoFloat() * 1000
-            self.configuration.x_analyzer_depth_ab = self.ed_depth_ab.textoInt()
+            self.configuration.x_analyzer_mstime_ab = self.ed_time_ab.text_to_float() * 1000
+            self.configuration.x_analyzer_depth_ab = self.ed_depth_ab.text_to_integer()
 
             dic = self.configuration.read_variables("TUTOR_ANALYZER")
             dic["ANALYZER"] = self.engine.list_uci_changed()
@@ -463,7 +450,7 @@ class WConfAnalyzer(QtWidgets.QWidget):
             Code.procesador.change_manager_analyzer()
 
     def activate_this(self):
-        self.cb_engine.rehacer(self.configuration.engines.list_name_alias_multipv(), self.engine.alias)
+        self.cb_engine.rehacer(self.configuration.engines.list_name_alias_multipv(), self.engine.key)
         self.owner.set_engine(self.engine, False)
 
 
@@ -500,7 +487,7 @@ class WOthers(QtWidgets.QWidget):
                 break
         self.sld_refresh_engines.setValue(result)
 
-        self.lb_refresh_value = Controles.LB(self).anchoMinimo(100)
+        self.lb_refresh_value = Controles.LB(self).minimum_width(100)
 
         def on_slider_moved(index):
             ms_actual = refresh_table[index]
@@ -535,7 +522,7 @@ class WOthers(QtWidgets.QWidget):
         lb_gaviota = Controles.LB2P(self, _("Gaviota Tablebases"))
         self.gaviota = Code.configuration.folder_gaviota()
         self.bt_gaviota = Controles.PB(self, self.gaviota, self.change_gaviota, plano=False)
-        self.bt_gaviota_remove = Controles.PB(self, "", self.remove_gaviota).ponIcono(Iconos.Delete())
+        self.bt_gaviota_remove = Controles.PB(self, "", self.remove_gaviota).set_icono(Iconos.Delete())
         ly_gav = Colocacion.H().control(self.bt_gaviota).control(self.bt_gaviota_remove).relleno()
 
         lb_stockfish = Controles.LB2P(self, "Stockfish")
@@ -544,22 +531,22 @@ class WOthers(QtWidgets.QWidget):
         )
         self.lb_stockfish_version.setStyleSheet("border:1px solid gray;padding:3px")
         bt_stockfish = (
-            Controles.PB(self, "", self.change_stockfish).ponIcono(Iconos.Reiniciar()).ponToolTip(_("Update"))
+            Controles.PB(self, "", self.change_stockfish).set_icono(Iconos.Reiniciar()).set_tooltip(_("Update"))
         )
         ly_stk = Colocacion.H().control(self.lb_stockfish_version).control(bt_stockfish).relleno()
 
         sep = 40
         layout = Colocacion.G()
-        layout.rellenoColumna(1, 1)
+        layout.relleno_column(1, 1)
         layout.controld(lb_refresh_engines, 0, 0)
         layout.otro(ly_refresh, 0, 1)
-        layout.filaVacia(1, sep)
+        layout.empty_row(1, sep)
         layout.controld(lb_maia, 2, 0)
         layout.control(self.cb_maia, 2, 1)
-        layout.filaVacia(3, sep)
+        layout.empty_row(3, sep)
         layout.controld(lb_gaviota, 4, 0)
         layout.otro(ly_gav, 4, 1)
-        layout.filaVacia(5, sep)
+        layout.empty_row(5, sep)
         layout.controld(lb_stockfish, 6, 0)
         layout.otro(ly_stk, 6, 1)
 
@@ -570,11 +557,10 @@ class WOthers(QtWidgets.QWidget):
         self.set_gaviota()
 
     def set_gaviota(self):
-        self.bt_gaviota.set_text("   %s   " % Code.relative_root(self.gaviota))
+        self.bt_gaviota.set_text(f"   {Code.relative_root(self.gaviota)}   ")
 
     def change_gaviota(self):
-        folder = SelectFiles.get_existing_directory(self, self.gaviota, _("Gaviota Tablebases"))
-        if folder:
+        if folder := SelectFiles.get_existing_directory(self, self.gaviota, _("Gaviota Tablebases")):
             self.gaviota = folder
             self.set_gaviota()
             self.save()
@@ -585,8 +571,9 @@ class WOthers(QtWidgets.QWidget):
         self.save()
 
     def change_stockfish(self):
-        self.lb_stockfish_version.set_text(" ? ")
-        CheckEngines.check_stockfish(self.owner, True)
+        self.lb_stockfish_version.set_text(_("Working..."))
+        QTUtils.refresh_gui()
+        CheckEngines.check_stockfish(True)
         self.lb_stockfish_version.set_text(CheckEngines.current_stockfish())
 
     def save(self):

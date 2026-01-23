@@ -51,14 +51,14 @@ class WThemes(LCDialog.LCDialog):
         o_columns.nueva("SHOW", "", 30, edicion=Delegados.EtiquetaPGN(None))
 
         self.o_columnas = o_columns
-        self.grid = Grid.Grid(self, o_columns, is_editable=True, altoCabecera=4)
+        self.grid = Grid.Grid(self, o_columns, is_editable=True, header_heigh=4)
 
-        lb_right_click = Controles.LB(self, " * %s" % _("More options with right-click"))
+        lb_right_click = Controles.LB(self, f" * {_('More options with right-click')}")
 
         layout = Colocacion.V().control(tb).control(self.grid).control(lb_right_click).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.anchoColumnas() + 48, default_height=640)
+        self.restore_video(default_width=self.grid.width_columns_displayables() + 48, default_height=640)
 
     def clear_themes(self):
         self.st_current_themes.clear()
@@ -71,17 +71,17 @@ class WThemes(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.themes)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        key = obj_column.key
         if key == "SELECTED":
             return self.themes.key_pos(row) in self.st_current_themes
         elif key == "THEME":
             return self.themes.name_pos(row)
         elif key == "SHOW":
-            return "", "", "", "|" + self.themes.key_pos(row), None
+            return "", "", "", f"|{self.themes.key_pos(row)}", None
 
-    def grid_setvalue(self, grid, row, o_column, value):
-        if o_column.key == "SELECTED":
+    def grid_setvalue(self, grid, row, obj_column, value):
+        if obj_column.key == "SELECTED":
             theme = self.themes.key_pos(row)
             if theme in self.st_current_themes:
                 self.st_current_themes.remove(theme)

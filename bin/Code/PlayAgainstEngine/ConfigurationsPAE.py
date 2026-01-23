@@ -2,6 +2,7 @@ from PySide6 import QtCore
 
 import Code
 from Code.Base.Constantes import ENG_INTERNAL
+from Code.Engines import SelectEngines
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -14,7 +15,6 @@ from Code.QT import (
     QTMessages,
 )
 from Code.SQL import UtilSQL
-from Code.Engines import SelectEngines
 
 
 class ConfigurationsPAE:
@@ -142,23 +142,27 @@ class WConfigurationsPAE(LCDialog.LCDialog):
                 dicv[self.kvisible] = True
                 self.configurations_pae[key] = dicv
 
-        li = [(key, dicv.get(self.kvisible, True), dicv.get(self.korder, 0)) for key, dicv in self.configurations_pae.items()]
+        li = [
+            (key, dicv.get(self.kvisible, True), dicv.get(self.korder, 0))
+            for key, dicv in self.configurations_pae.items()
+        ]
         li.sort(key=lambda x: x[2])
         self.li_data = li
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_data)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
 
         if col == "KEY":
             return self.li_data[row][0]
         if col == "VISIBLE":
             return self.li_data[row][1]
+        return None
 
-    def grid_setvalue(self, grid, nfila, o_column, value):
-        col = o_column.key
+    def grid_setvalue(self, _grid, nfila, obj_column, value):
+        col = obj_column.key
         key = self.li_data[nfila][0]
         if col == "KEY":
             if key != value and value:
@@ -173,15 +177,15 @@ class WConfigurationsPAE(LCDialog.LCDialog):
             self.configurations_pae[key] = dic
             self.refresh_gui()
 
-    def grid_right_button(self, grid, row, o_column, modif):
-        col = o_column.key
+    def grid_right_button(self, grid, row, obj_column, _modif):
+        col = obj_column.key
         if col == "KEY":
             key = self.li_data[row][0]
             result = QTMessages.read_simple(self, _("Maintenance"), _("Name"), key)
             if result:
-                self.grid_setvalue(grid, row, o_column, result)
+                self.grid_setvalue(grid, row, obj_column, result)
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, _grid, k, _is_shift, _is_control, _is_alt):
         if k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             self.remove()
 

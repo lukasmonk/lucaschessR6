@@ -3,7 +3,7 @@ import operator
 import OSEngines
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     ENG_FIXED,
 )
@@ -30,8 +30,7 @@ class ConfigEngines:
 
     def _read_external(self):
         self._dic_engines_external = {}
-        li = Util.restore_pickle(self.configuration.paths.file_external_engines())
-        if li:
+        if li := Util.restore_pickle(self.configuration.paths.file_external_engines()):
             from Code.Engines import Engines
 
             for x in li:
@@ -40,13 +39,13 @@ class ConfigEngines:
                     continue
 
                 if eng.exists():
-                    key = eng.alias
+                    key = eng.key
                     n = 0
-                    while eng.alias in self._dic_engines:
+                    while eng.key in self._dic_engines:
                         n += 1
-                        eng.alias = "%s-%d" % (key, n)
+                        eng.key = "%s-%d" % (key, n)
                     eng.set_extern()
-                    self._dic_engines_external[eng.alias] = eng
+                    self._dic_engines_external[eng.key] = eng
 
     def dic_engines(self):
         return self._dic_engines
@@ -103,8 +102,7 @@ class ConfigEngines:
         return li
 
     def list_name_external(self):
-        li = [cm for k, cm in self._dic_engines.items() if cm.is_type_external()]
-        return li
+        return [cm for k, cm in self._dic_engines.items() if cm.is_type_external()]
 
     def reset_external(self):
         self._dic_engines = {}

@@ -1,9 +1,8 @@
-import ast
+from typing import Any, Dict, Optional, Union, List
 
 import FasterCode
 
-import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Move, Position
 from Code.Base.Constantes import (
     ALL,
@@ -17,15 +16,12 @@ from Code.Base.Constantes import (
     BEEP_WIN_PLAYER,
     BEEP_WIN_PLAYER_TIME,
     BLACK,
-    ENDGAME,
     FEN_INITIAL,
     INFINITE,
     LI_BASIC_TAGS,
-    MIDDLEGAME,
     NONE,
     ONLY_BLACK,
     ONLY_WHITE,
-    OPENING,
     RESULT_DRAW,
     RESULT_UNKNOWN,
     RESULT_WIN_BLACK,
@@ -44,6 +40,10 @@ from Code.Base.Constantes import (
     TERMINATION_UNKNOWN,
     TERMINATION_WIN_ON_TIME,
     WHITE,
+    OPENING,
+    MIDDLEGAME,
+    ENDGAME,
+    PHASE_NODEFINED,
 )
 from Code.Nags.Nags import NAG_1, NAG_2, NAG_3, NAG_4, NAG_5, NAG_6
 from Code.Openings import Opening, OpeningsStd
@@ -60,7 +60,7 @@ class Game:
 
     def __init__(self, first_position=None, fen=None, li_tags=None):
         self.first_comment = ""
-        self.li_tags = li_tags if li_tags else []
+        self.li_tags = li_tags or []
         if fen:
             self.set_fen(fen)
         else:
@@ -71,7 +71,8 @@ class Game:
 
     def set_fen(self, fen):
         if not fen or fen == FEN_INITIAL:
-            return self.set_position()
+            self.set_position()
+            return
 
         cp = Position.Position()
         cp.read_fen(fen)
@@ -130,10 +131,7 @@ class Game:
 
     @property
     def last_position(self):
-        if self.li_moves:
-            position = self.li_moves[-1].position
-        else:
-            position = self.first_position
+        position = self.li_moves[-1].position if self.li_moves else self.first_position
         return position.copia()
 
     @property
@@ -210,28 +208,21 @@ class Game:
 
     def get_tag(self, tag):
         tag = tag.upper()
-        for k, v in self.li_tags:
-            if k.upper() == tag:
-                return v
-        return ""
+        return next((v for k, v in self.li_tags if k.upper() == tag), "")
 
     def has_tag(self, tag):
         return len(self.get_tag(tag)) > 0
 
     def dic_tags(self):
-        return {k: v for k, v in self.li_tags}
+        return dict(self.li_tags)
 
     def order_tags(self):
         self.set_result()
         li_main = []
         li_resto = []
         dic = {k.upper(): (k, v) for k, v in self.li_tags}
-        for k in LI_BASIC_TAGS:
-            if k in dic:
-                li_main.append(dic[k])
-        for k in dic:
-            if k not in LI_BASIC_TAGS:
-                li_resto.append(dic[k])
+        li_main.extend(dic[k] for k in LI_BASIC_TAGS if k in dic)
+        li_resto.extend(v for k, v in dic.items() if k not in LI_BASIC_TAGS)
         self.li_tags = li_main
         self.li_tags.extend(li_resto)
 
@@ -266,11 +257,9 @@ class Game:
 
         if self.termination:
             tm = self.get_tag("Termination")
-            if not tm:
-                if self.termination != TERMINATION_UNKNOWN:
-                    txt = self.label_termination()
-                    if txt:
-                        self.set_tag("Termination", txt)
+            if not tm and self.termination != TERMINATION_UNKNOWN:
+                if txt := self.label_termination():
+                    self.set_tag("Termination", txt)
 
         if self.is_fen_initial():
             op = self.get_tag("OPENING")
@@ -297,9 +286,7 @@ class Game:
                     st_hechos.add(tag)
                     li_nuevo.append((k, v))
                     break
-        for k, v in self.li_tags:
-            if k not in st_hechos:
-                li_nuevo.append((k, v))
+        li_nuevo.extend((k, v) for k, v in self.li_tags if k not in st_hechos)
         self.li_tags = li_nuevo
 
     def read_pgn(self, pgn):
@@ -317,21 +304,21 @@ class Game:
 
     def pgn(self):
         self.check_tags()
-        li = ['[%s "%s"]\n' % (k, v) for k, v in self.li_tags]
+        li = [f'[{k} "{v}"]\n' for k, v in self.li_tags]
         txt = "".join(li)
-        txt += "\n%s" % self.pgn_base()
+        txt += f"\n{self.pgn_base()}"
         return txt
 
     def pgn_tags(self):
         self.check_tags()
-        return "\n".join(['[%s "%s"]' % (k, v) for k, v in self.li_tags])
+        return "\n".join([f'[{k} "{v}"]' for k, v in self.li_tags])
 
     def pgn_base_raw(self, movenum=None, translated=False):
         resp = ""
         if movenum is None:
             if self.first_comment:
                 resp = "{%s} " % self.first_comment
-            movenum = self.primeraJugada()
+            movenum = self.first_num_move()
         if self.starts_with_black:
             resp += "%d... " % movenum
             movenum += 1
@@ -342,11 +329,7 @@ class Game:
             if n % 2 == salta:
                 resp += " %d." % movenum
                 movenum += 1
-            if translated:
-                resp += move.pgn_translated() + " "
-            else:
-                resp += move.pgnEN() + " "
-
+            resp += f"{move.pgn_translated()} " if translated else f"{move.pgn_english()} "
         resp = resp.replace("\r\n", " ").replace("\n", " ").replace("\r", " ").strip()
         while "  " in resp:
             resp = resp.replace("  ", " ")
@@ -383,13 +366,10 @@ class Game:
         else:
             return ""
 
-    def pgn_translated(self, movenum=None, hastaJugada=INFINITE):
-        if self.first_comment:
-            resp = "{%s} " % self.first_comment
-        else:
-            resp = ""
+    def pgn_translated(self, movenum=None, until_move=INFINITE):
+        resp = "{%s} " % self.first_comment if self.first_comment else ""
         if movenum is None:
-            movenum = self.primeraJugada()
+            movenum = self.first_num_move()
         if self.starts_with_black:
             resp += "%d..." % movenum
             movenum += 1
@@ -397,27 +377,26 @@ class Game:
         else:
             salta = 0
         for n, move in enumerate(self.li_moves):
-            if n > hastaJugada:
+            if n > until_move:
                 break
             if n % 2 == salta:
                 resp += "%d." % movenum
                 movenum += 1
 
             pgn = move.pgn_translated()
-            if n == len(self) - 1:
-                if self.termination == TERMINATION_MATE and not pgn.endswith("#"):
-                    pgn += "#"
+            if n == len(self) - 1 and (self.termination == TERMINATION_MATE and not pgn.endswith("#")):
+                pgn += "#"
 
-            resp += pgn + " "
+            resp += f"{pgn} "
 
         return resp.strip()
 
-    def pgn_html(self, movenum=None, hastaJugada=INFINITE, with_figurines=True):
+    def pgn_html(self, movenum=None, until_move=INFINITE, with_figurines=True):
         li_resp = []
         if self.first_comment:
             li_resp.append("{%s}" % self.first_comment)
         if movenum is None:
-            movenum = self.primeraJugada()
+            movenum = self.first_num_move()
         if self.starts_with_black:
             li_resp.append('<span style="color:navy">%d...</span>' % movenum)
             movenum += 1
@@ -425,7 +404,7 @@ class Game:
         else:
             salta = 0
         for n, move in enumerate(self.li_moves):
-            if n > hastaJugada:
+            if n > until_move:
                 break
             if n % 2 == salta:
                 x = '<span style="color:navy">%d.</span>' % movenum
@@ -438,7 +417,7 @@ class Game:
     def pgn_base_raw_copy(self, movenum, hasta_jugada):
         resp = ""
         if movenum is None:
-            movenum = self.primeraJugada()
+            movenum = self.first_num_move()
         if self.starts_with_black:
             resp += "%d... " % movenum
             movenum += 1
@@ -450,7 +429,7 @@ class Game:
                 resp += " %d." % movenum
                 movenum += 1
 
-            resp += move.pgnEN() + " "
+            resp += f"{move.pgn_english()} "
 
         resp = resp.replace("\n", " ").replace("\r", " ").replace("  ", " ").strip()
 
@@ -459,10 +438,8 @@ class Game:
     def titulo(self, *litags, sep=" ∣ "):
         li = []
         for key in litags:
-            tag = self.get_tag(key)
-            tagi = tag.replace("?", "").replace(".", "")
-            if tagi:
-                li.append(tag)
+            if tag := self.get_tag(key):
+                li.append(tag.replace("?", "").replace(".", ""))
         return sep.join(li)
 
     def window_title(self):
@@ -495,12 +472,12 @@ class Game:
             li.append(date)
         if result:
             li.append(result)
-        titulo = "%s-%s" % (white, black)
+        titulo = f"{white}-{black}"
         if li:
-            titulo += " (%s)" % (" - ".join(li),)
+            titulo += f' ({" - ".join(li)})'
         return titulo
 
-    def primeraJugada(self):
+    def first_num_move(self):
         return self.first_position.num_moves
 
     def move(self, num):
@@ -508,10 +485,7 @@ class Game:
         if total_moves > 0:
             if num < 0:
                 num = total_moves + num
-            if 0 <= num < total_moves:
-                return self.li_moves[num]
-            else:
-                return self.li_moves[-1]
+            return self.li_moves[num] if 0 <= num < total_moves else self.li_moves[-1]
         return None
 
     def move_pos(self, move: Move.Move) -> int:
@@ -544,7 +518,7 @@ class Game:
         elif self.last_position.mov_pawn_capt >= 100:
             self.set_termination(TERMINATION_DRAW_50, RESULT_DRAW)
 
-        elif self.last_position.siFaltaMaterial():
+        elif self.last_position.not_enough_material():
             self.set_termination(TERMINATION_DRAW_MATERIAL, RESULT_DRAW)
 
     def add_move(self, move):
@@ -559,12 +533,6 @@ class Game:
 
     def is_fen_initial(self):
         return self.first_position.fen() == FEN_INITIAL
-
-    def numJugadaPGN(self, njug):
-        primera = int(self.first_position.num_moves)
-        if self.starts_with_black:
-            njug += 1
-        return primera + njug / 2
 
     def num_moves(self):
         return len(self.li_moves)
@@ -584,25 +552,20 @@ class Game:
         if n_jug > 3:
             fenm2 = self.li_moves[n_jug - 1].fenm2()
             li_rep = [n_jug - 1]
-            for n in range(n_jug - 1):
-                if self.li_moves[n].fenm2() == fenm2:
-                    li_rep.append(n)
-
+            li_rep.extend(n for n in range(n_jug - 1) if self.li_moves[n].fenm2() == fenm2)
             if self.first_position.fenm2() == fenm2:
                 li_rep.append(-1)
 
             if len(li_rep) >= 3:
                 li_rep.sort()
-                label = ""
-                for j in li_rep:
-                    label += "%d," % (j / 2 + 1 if j != -1 else 0,)
+                label = "".join("%d," % (j / 2 + 1 if j != -1 else 0,) for j in li_rep)
                 label = label.strip(",")
                 self.rotuloTablasRepeticion = label
                 return True
         return False
 
-    def read_pv(self, pvBloque):
-        return self.read_lipv(pvBloque.split(" "))
+    def read_pv(self, pv_bloque):
+        return self.read_lipv(pv_bloque.split(" "))
 
     def read_xpv(self, xpv):
         return self.read_pv(FasterCode.xpv_pv(xpv))
@@ -642,20 +605,10 @@ class Game:
 
     def get_position(self, pos):
         n_jugadas = len(self.li_moves)
-        if n_jugadas:
-            return self.li_moves[pos].position
-        else:
-            return self.first_position
+        return self.li_moves[pos].position if n_jugadas else self.first_position
 
     def last_fen(self):
         return self.last_position.fen()
-
-    def fensActual(self):
-        resp = self.first_position.fen() + "\n"
-        for move in self.li_moves:
-            resp += move.position.fen() + "\n"
-
-        return resp
 
     def is_white(self):
         return self.last_position.is_white
@@ -666,15 +619,15 @@ class Game:
     def is_draw(self):
         return self.result == RESULT_DRAW
 
-    def set_first_comment(self, txt, siReplace=False):
-        if siReplace or not self.first_comment:
+    def set_first_comment(self, txt, replace):
+        if replace or not self.first_comment:
             self.first_comment = txt
         elif txt not in self.first_comment:
-            self.first_comment = "%s\n%s" % (self.first_comment.strip(), txt)
+            self.first_comment = f"{self.first_comment.strip()}\n{txt}"
 
     def is_finished(self):
         if self.termination != TERMINATION_UNKNOWN or self.result != RESULT_UNKNOWN:
-            self.test_tag_result()
+            self.check_tag_result()
             return True
         if self.li_moves:
             move = self.li_moves[-1]
@@ -685,7 +638,7 @@ class Game:
                 else:
                     self.result = RESULT_DRAW
                     self.termination = TERMINATION_DRAW_STALEMATE
-                self.test_tag_result()
+                self.check_tag_result()
                 return True
         return False
 
@@ -696,7 +649,7 @@ class Game:
                 return False
         return True
 
-    def test_tag_result(self):
+    def check_tag_result(self):
         if not self.get_tag("RESULT"):
             self.set_tag("Result", self.result)
 
@@ -708,16 +661,13 @@ class Game:
             self.set_tag("Result", self.result)
         return self.result
 
-    def siEstaTerminada(self):
-        return self.resultado() != RESULT_UNKNOWN
-
     def pv(self):
         return " ".join([move.movimiento() for move in self.li_moves])
 
     def xpv(self):
         resp = FasterCode.pv_xpv(self.pv())
         if not self.first_position.is_initial():
-            resp = "|%s|%s" % (self.first_position.fen(), resp)
+            resp = f"|{self.first_position.fen()}|{resp}"
         return resp
 
     def xpv_until_move(self, num_move):
@@ -738,7 +688,7 @@ class Game:
                 ):
                     for variation in move.variations.li_variations:
                         li_pvc.extend(variation.all_pv(pv_previo.strip(), with_variations))
-            pv_previo += move.movimiento() + " "
+            pv_previo += f"{move.movimiento()} "
             li_pvc.append(pv_previo.strip())
         return li_pvc
 
@@ -753,9 +703,8 @@ class Game:
                     or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
-                        dicv = variation.all_comments(with_variations)
-                        if dicv:
-                            dic.update(dicv)
+                        if dicv := variation.all_comments(with_variations):
+                            dic |= dicv
             if move.comment or move.li_nags:
                 fenm2 = move.position.fenm2()
                 d = {}
@@ -764,19 +713,20 @@ class Game:
                 if move.li_nags:
                     d["N"] = move.li_nags
                 dic[fenm2] = d
-        if self.first_comment:
-            if self.li_moves:
-                move = self.li_moves[0]
-                fenm2 = move.position.fenm2()
-                d = dic.get(fenm2, {})
-                comment = self.first_comment
-                previo = d.get("C")
-                if previo:
-                    comment += " " + previo
-                d["C"] = comment
-                dic[fenm2] = d
-
+        if self.first_comment and self.li_moves:
+            self._extracted_from_all_comments_(dic)
         return dic
+
+    # TODO Rename this here and in `all_comments`
+    def _extracted_from_all_comments_(self, dic):
+        move = self.li_moves[0]
+        fenm2 = move.position.fenm2()
+        d = dic.get(fenm2, {})
+        comment = self.first_comment
+        if previo := d.get("C"):
+            comment += f" {previo}"
+        d["C"] = comment
+        dic[fenm2] = d
 
     def lipv(self):
         return [move.movimiento() for move in self.li_moves]
@@ -811,14 +761,14 @@ class Game:
         self.termination = TERMINATION_UNKNOWN
         self.result = RESULT_UNKNOWN
 
-    def copia(self, hastaJugada=None):
+    def copia(self, until_move=None):
         p = Game()
         p.assign_other_game(self)
-        if hastaJugada is not None:
-            if hastaJugada == -1:
+        if until_move is not None:
+            if until_move == -1:
                 p.li_moves = []
-            elif hastaJugada < (p.num_moves() - 1):
-                p.li_moves = [move.clone(p) for move in p.li_moves[: hastaJugada + 1]]
+            elif until_move < (p.num_moves() - 1):
+                p.li_moves = [move.clone(p) for move in p.li_moves[: until_move + 1]]
             if len(p) != len(self):
                 p.set_unknown()
         return p
@@ -842,130 +792,9 @@ class Game:
         self.set_termination(TERMINATION_RESIGN, RESULT_WIN_BLACK if is_white else RESULT_WIN_WHITE)
         self.set_extend_tags()
 
-    def borraCV(self):
-        self.first_comment = ""
-        for move in self.li_moves:
-            move.borraCV()
-
     def remove_analysis(self):
         for move in self.li_moves:
             move.analysis = None
-
-    def calc_elo_color(self, is_white):
-        nummoves = {OPENING: 0, MIDDLEGAME: 0, ENDGAME: 0}
-        sumelos = {OPENING: 0, MIDDLEGAME: 0, ENDGAME: 0}
-        factormoves = {OPENING: 0, MIDDLEGAME: 0, ENDGAME: 0}
-        last = OPENING
-        for move in self.li_moves:
-            if move.analysis and move.has_alternatives():
-                if move.is_white() != is_white:
-                    continue
-                if last == ENDGAME:
-                    std = ENDGAME
-                else:
-                    if move.is_book:
-                        std = OPENING
-                    else:
-                        std = MIDDLEGAME
-                        material = move.position_before.valor_material()
-                        if material < 15:
-                            std = ENDGAME
-                        else:
-                            pz_w, pz_b = move.position_before.num_piezas_wb()
-                            if pz_w < 3 and pz_b < 3:
-                                std = ENDGAME
-                move.stateOME = std
-                last = std
-                move.calc_elo()
-                elo_factor = move.factor_elo()
-                nummoves[std] += 1
-                sumelos[std] += move.elo * elo_factor
-                factormoves[std] += elo_factor
-
-                xelos = {}
-                for std in (OPENING, MIDDLEGAME, ENDGAME):
-                    sume = sumelos[std]
-                    numf = factormoves[std]
-                    if numf:
-                        xelos[std] = int(sume * 1.0 / numf)
-                    else:
-                        xelos[std] = 0
-
-                sume = 0
-                numf = 0
-                for std in (OPENING, MIDDLEGAME, ENDGAME):
-                    sume += sumelos[std]
-                    numf += factormoves[std]
-
-                if numf:
-                    move.elo_avg = int(sume * 1.0 / numf)
-                else:
-                    move.elo_avg = 0
-
-        elos = {}
-        for std in (OPENING, MIDDLEGAME, ENDGAME):
-            sume = sumelos[std]
-            numf = factormoves[std]
-            if numf:
-                elos[std] = int(sume * 1.0 / numf)
-            else:
-                elos[std] = 0
-
-        sume = 0
-        numf = 0
-        for std in (OPENING, MIDDLEGAME, ENDGAME):
-            sume += sumelos[std]
-            numf += factormoves[std]
-
-        if numf:
-            elos[ALLGAME] = int(sume * 1.0 / numf)
-        else:
-            elos[ALLGAME] = 0
-
-        return elos
-
-    def calc_elos(self, configuration):
-        for move in self.li_moves:
-            move.is_book = False
-        if self.is_fen_initial():
-            ap = Opening.OpeningPol(999)
-            for move in self.li_moves:
-                move.is_book = ap.check_human(move.position_before.fen(), move.from_sq, move.to_sq)
-                if not move.is_book:
-                    break
-
-        elos = {}
-        for is_white in (True, False):
-            elos[is_white] = self.calc_elo_color(is_white)
-
-        elos[None] = {}
-        for std in (OPENING, MIDDLEGAME, ENDGAME, ALLGAME):
-            elos[None][std] = int((elos[True][std] + elos[False][std]) / 2.0)
-
-        return elos
-
-    def calc_elos_form(self, configuration):
-        for move in self.li_moves:
-            move.is_book = False
-        if self.is_fen_initial():
-            ap = Opening.OpeningPol(999)
-            for move in self.li_moves:
-                move.is_book = ap.check_human(move.position_before.fen(), move.from_sq, move.to_sq)
-                if not move.is_book:
-                    break
-
-        elos = {}
-        for is_white in (True, False):
-            elos[is_white] = self.calc_elo_color(is_white)
-
-        elos[None] = {}
-        for std in (OPENING, MIDDLEGAME, ENDGAME, ALLGAME):
-            w, b = elos[True][std], elos[False][std]
-
-            divisor = 1.0 if w == 0 or b == 0 else 2.0
-            elos[None][std] = int((w + b) / divisor)
-
-        return elos
 
     def assign_opening(self):
         OpeningsStd.ap.assign_opening(self)
@@ -977,25 +806,44 @@ class Game:
                 self.set_tag("Opening", self.opening.tr_name)
                 self.set_tag("ECO", self.opening.eco)
 
-    def rotuloOpening(self):
+    def label_opening(self):
         return self.opening.tr_name if hasattr(self, "opening") and self.opening is not None else None
 
-    def test_apertura(self):
+    def check_opening(self):
         if not hasattr(self, "opening") or self.pending_opening:
             self.assign_opening()
 
     def only_has_moves(self) -> bool:
         if self.first_comment:
             return False
-        for move in self.li_moves:
-            if not move.only_has_move():
-                return False
-        return True
+        return all(move.only_has_move() for move in self.li_moves)
 
     def dic_labels(self):
-        return {key: value for key, value in self.li_tags}
+        return dict(self.li_tags)
 
-    def label_resultado_player(self, player_side):
+    def _label_won(self, nom_other):
+        if nom_other:
+            mensaje = _X(_("Congratulations you have won against %1."), nom_other)
+        else:
+            mensaje = _("Congratulations you have won.")
+        if self.termination == TERMINATION_WIN_ON_TIME:
+            beep = BEEP_WIN_PLAYER_TIME
+        else:
+            beep = BEEP_WIN_PLAYER
+        return mensaje, beep
+
+    def _label_lost(self, nom_other):
+        if nom_other:
+            mensaje = _X(_("Unfortunately you have lost against %1."), nom_other)
+        else:
+            mensaje = _("Unfortunately you have lost.")
+        if self.termination == TERMINATION_WIN_ON_TIME:
+            beep = BEEP_WIN_OPPONENT_TIME
+        else:
+            beep = BEEP_WIN_OPPONENT
+        return mensaje, beep
+
+    def label_result_player(self, player_side):
         nom_w = self.get_tag("White")
         nom_b = self.get_tag("Black")
 
@@ -1007,33 +855,16 @@ class Game:
         if (self.result == RESULT_WIN_WHITE and player_side == WHITE) or (
             self.result == RESULT_WIN_BLACK and player_side == BLACK
         ):
-            if nom_other:
-                mensaje = _X(_("Congratulations you have won against %1."), nom_other)
-            else:
-                mensaje = _("Congratulations you have won.")
-            if self.termination == TERMINATION_WIN_ON_TIME:
-                beep = BEEP_WIN_PLAYER_TIME
-            else:
-                beep = BEEP_WIN_PLAYER
+            mensaje, beep = self._label_won(nom_other)
 
         elif (self.result == RESULT_WIN_WHITE and player_side == BLACK) or (
             self.result == RESULT_WIN_BLACK and player_side == WHITE
         ):
             player_lost = True
-            if nom_other:
-                mensaje = _X(_("Unfortunately you have lost against %1."), nom_other)
-            else:
-                mensaje = _("Unfortunately you have lost.")
-            if self.termination == TERMINATION_WIN_ON_TIME:
-                beep = BEEP_WIN_OPPONENT_TIME
-            else:
-                beep = BEEP_WIN_OPPONENT
+            mensaje, beep = self._label_lost(nom_other)
 
         elif self.result == RESULT_DRAW:
-            if nom_other:
-                mensaje = _X(_("Draw against %1."), nom_other)
-            else:
-                mensaje = _("Draw")
+            mensaje = _X(_("Draw against %1."), nom_other) if nom_other else _("Draw")
             beep = BEEP_DRAW
             if self.termination == TERMINATION_DRAW_REPETITION:
                 beep = BEEP_DRAW_REPETITION
@@ -1048,7 +879,7 @@ class Game:
             else:
                 label = self.label_termination()
 
-            mensaje += "\n\n%s: %s" % (_("Result"), label)
+            mensaje += f"\n\n{_('Result')}: {label}"
 
         return mensaje, beep, beep in (BEEP_WIN_PLAYER_TIME, BEEP_WIN_PLAYER)
 
@@ -1073,8 +904,7 @@ class Game:
     def copy_raw(self, xto):
         g = Game(self.first_position)
         if xto not in (None, -1):
-            pv = self.pv_hasta(xto)
-            if pv:
+            if pv := self.pv_hasta(xto):
                 g.read_pv(pv)
         return g
 
@@ -1090,8 +920,7 @@ class Game:
     def average_mstime_user(self, num):
         # solo se pregunta cuando le toca jugar al usuario
         is_white = self.last_position.is_white
-        li = [move.time_ms for move in self.li_moves if move.is_white() == is_white and move.time_ms > 0]
-        if len(li) > 0:
+        if li := [move.time_ms for move in self.li_moves if move.is_white() == is_white and move.time_ms > 0]:
             li = li[-num:]
             return sum(li) / len(li)
         else:
@@ -1155,16 +984,13 @@ class Game:
         self.assign_opening()
 
     def has_analisis(self):
-        for move in self.li_moves:
-            if move.analysis:
-                return True
-        return False
+        return any(move.analysis for move in self.li_moves)
 
     def get_accuracy(self):
         njg_t = njg_w = njg_b = 0
         porc_t = porc_w = porc_b = 0.0
 
-        for num, move in enumerate(self.li_moves):
+        for move in self.li_moves:
             if move.analysis:
                 mrm, pos = move.analysis
                 is_white = move.is_white()
@@ -1204,19 +1030,15 @@ class Game:
     def has_comments(self):
         if self.first_comment:
             return True
-        for move in self.li_moves:
-            if move.comment:
-                return True
-        return False
+        return any(move.comment for move in self.li_moves)
 
     def remove_bad_variations(self):
         for move in self.li_moves:
             move.remove_bad_variations()
 
     def refresh_tacticthemes(self, create: bool) -> None:
-        if not create:
-            if self.get_tag(TACTICTHEMES):
-                create = True
+        if not create and self.get_tag(TACTICTHEMES):
+            create = True
 
         if create:
             li = []
@@ -1229,10 +1051,91 @@ class Game:
             self.set_tag(TACTICTHEMES, tag)
 
     def has_themes(self):
+        return any(move.li_themes for move in self.li_moves)
+
+    def assign_isbook_phases(self) -> None:
+        ap = Opening.OpeningPol(999)
+        max_misses = 4
+        misses = 0
+
+        # 1. Detect opening-book moves
         for move in self.li_moves:
-            if move.li_themes:
-                return True
-        return False
+            move.is_book = False
+            if ap.check_human(move.position_before.fen(), move.from_sq, move.to_sq):
+                move.is_book = True
+                misses = 0
+            else:
+                misses += 1
+                if misses >= max_misses:
+                    break
+
+        # 2. Assign phases
+        last_phase = PHASE_NODEFINED
+
+        for idx, move in enumerate(self.li_moves):
+            if move.is_book:
+                if last_phase > OPENING:
+                    for prev in self.li_moves[:idx]:
+                        prev.set_phase(OPENING)
+
+                move.set_phase(OPENING)
+                last_phase = OPENING
+                continue
+            last_phase = max(MIDDLEGAME, last_phase)
+            phase = move.position_before.phase()
+            last_phase = max(last_phase, phase)
+            move.set_phase(last_phase)
+
+    def calc_elo_color(self, is_white):
+        nummoves = {OPENING: 0, MIDDLEGAME: 0, ENDGAME: 0}
+        sumelos = {OPENING: 0, MIDDLEGAME: 0, ENDGAME: 0}
+        factormoves = {OPENING: 0, MIDDLEGAME: 0, ENDGAME: 0}
+        for move in self.li_moves:
+            if move.analysis and move.has_alternatives():
+                if move.is_white() != is_white:
+                    continue
+                std = move.phase
+                move.calc_elo()
+                elo_factor = move.factor_elo()
+                nummoves[std] += 1
+                sumelos[std] += move.elo * elo_factor
+                factormoves[std] += elo_factor
+
+                sume = 0
+                numf = 0
+                for std in (OPENING, MIDDLEGAME, ENDGAME):
+                    sume += sumelos[std]
+                    numf += factormoves[std]
+
+                move.elo_avg = int(sume * 1.0 / numf) if numf else 0
+
+        elos = {}
+        for std in (OPENING, MIDDLEGAME, ENDGAME):
+            sume = sumelos[std]
+            numf = factormoves[std]
+            elos[std] = int(sume * 1.0 / numf) if numf else 0
+        sume = 0
+        numf = 0
+        for std in (OPENING, MIDDLEGAME, ENDGAME):
+            sume += sumelos[std]
+            numf += factormoves[std]
+
+        elos[ALLGAME] = int(sume * 1.0 / numf) if numf else 0
+        return elos
+
+    def calc_elos(self):
+        elos: dict[bool | None, dict[Any, Any]] = {
+            is_white: self.calc_elo_color(is_white) for is_white in (True, False)
+        }
+        elos[None] = {}
+        for std in (OPENING, MIDDLEGAME, ENDGAME, ALLGAME):
+            elos[None][std] = int((elos[True][std] + elos[False][std]) / 2.0)
+
+        return elos
+
+    def import_pgn(self, pgn):
+        import_pgn = PGNtoGame(pgn, self)
+        return import_pgn.read()
 
 
 def pv_san(fen, pv):
@@ -1260,7 +1163,7 @@ def lipv_lipgn(lipv):
     li_pgn = []
     for pv in lipv:
         info = FasterCode.move_expv(pv[:2], pv[2:4], pv[4:])
-        li_pgn.append(info._san.decode())
+        li_pgn.append(info.san())
     return li_pgn
 
 
@@ -1271,20 +1174,22 @@ def pv_pgn_raw(fen, pv):
 
 
 def pgn_game(pgn):
-    game = Game()
-    last_posicion = game.first_position
-    jg_activa = None
-    if isinstance(pgn, bytes):
-        try:
-            pgn, codec = Util.bytes_str_codec(pgn)
-        except:
-            pgn = pgn.decode("utf-8", errors="ignore")
-    li = FasterCode.xparse_pgn(pgn)
-    if li is None:
-        return False, game
+    ptg = PGNtoGame(pgn)
+    return ptg.read()
 
-    si_fen = False
-    dic_nags = {
+
+def fen_game(fen, variation):
+    pgn = f'[FEN "{fen}"]\n\n{variation}'
+    ok, p = pgn_game(pgn)
+    return p
+
+
+class PGNtoGame:
+    """
+    Represents a chess game and provides PGN import capabilities.
+    """
+
+    NAG_SYMBOLS: Dict[str, int] = {
         "!": NAG_1,
         "?": NAG_2,
         "!!": NAG_3,
@@ -1296,91 +1201,225 @@ def pgn_game(pgn):
         "?!": NAG_6,
         "⁈": NAG_6,
     }
-    FasterCode.set_init_fen()
-    for elem in li:
-        key = elem[0] if elem else ""
-        if key == "[":
-            kv = elem[1:].strip()
-            pos = kv.find(" ")
-            if pos > 0:
-                lb = kv[:pos]
-                vl = kv[pos + 1 :].strip()
-                lbup = lb.upper()
-                if lbup == "FEN":
-                    FasterCode.set_fen(vl)
-                    if vl != FEN_INITIAL:
-                        game.set_fen(vl)
-                        last_posicion = game.first_position
-                        game.set_tag(lb, vl)
-                        si_fen = True
-                elif lbup == "RESULT":
-                    game.result = vl
-                    game.set_tag("Result", vl)
-                else:
-                    game.set_tag(lb, vl)
+    _last_position: Position.Position
+    _active_move: object
+    _fen_detected: bool
 
-        elif key == "M":
-            a1h8 = elem[1:]
-            posicion_base = last_posicion
-            FasterCode.make_move(a1h8)
-            last_posicion = Position.Position()
-            last_posicion.read_fen(FasterCode.get_fen())
-            jg_activa = Move.Move(game, posicion_base, last_posicion, a1h8[:2], a1h8[2:4], a1h8[4:])
-            game.li_moves.append(jg_activa)
+    def __init__(self, pgn: Union[str, bytes], game: Game | None = None):
+        """Initialize a PGNtoGame instance with PGN content and an optional game object.
+        This sets up the converter to populate or update the provided Game instance.
 
-        elif key == "$":
-            if jg_activa:
-                nag = elem[1:]
-                if nag.isdigit():
-                    nag = int(nag)
-                    if 0 < nag < 256:
-                        jg_activa.add_nag(nag)
+        The PGN input is stored for later parsing, and a new Game is created if none is supplied.
+        This allows the same class to be used for both creating fresh games and enriching existing ones.
 
-        elif key in "{;":
-            comment = elem[1:-1].strip()
-            if comment:
-                if jg_activa:
-                    if jg_activa.comment:
-                        jg_activa.comment += "\n"
-                    jg_activa.comment += comment.replace("}", "]")
-                else:
-                    game.set_first_comment(comment)
+        Args:
+            pgn: PGN content as a string or bytes to be parsed into game moves and metadata.
+            game: Optional existing Game instance to populate; if omitted, a new Game is created.
+        """
+        self.pgn = pgn
+        self.game = Game() if game is None else game
 
-        elif key == "(":
-            variation = elem[1:-1].strip()
-            if variation:
-                if jg_activa:
-                    fen = FasterCode.get_fen()
-                    jg_activa.variations.add_pgn_variation(variation)
-                    FasterCode.set_fen(fen)
+    def read(self):
+        normalized_pgn: str = self._normalize_pgn(self.pgn)
+        tokens: Optional[List[str]] = FasterCode.xparse_pgn(normalized_pgn)
+        if not tokens:
+            return False, self.game
 
-        elif key == "R":
-            if jg_activa:
-                r1 = elem[1]
-                if r1 == "1":
-                    game.result = RESULT_WIN_WHITE
-                elif r1 == "2":
-                    game.result = RESULT_DRAW
-                elif r1 == "3":
-                    game.result = RESULT_WIN_BLACK
-                elif r1 == "0":
-                    game.result = RESULT_UNKNOWN
+        self._last_position: Position.Position = self.game.first_position
+        self._active_move: Move.Move | None = None
+        self._fen_detected: bool = False
 
-        elif elem in dic_nags:
-            if jg_activa:
-                jg_activa.add_nag(dic_nags[elem])
+        FasterCode.set_init_fen()
 
-    if si_fen:
-        game.pending_opening = False
-    if jg_activa:
-        game.verify()
-    return True, game
+        handlers = {
+            "[": self._handle_tag,
+            "M": self._handle_move,
+            "$": self._handle_numeric_nag,
+            "{": self._handle_comment,
+            ";": self._handle_comment,
+            "(": self._handle_variation,
+            "R": self._handle_result,
+        }
+
+        token: str
+        for token in tokens:
+            key: str = token[0] if token else ""
+            if handler := handlers.get(key):
+                handler(token)
+            elif token in self.NAG_SYMBOLS:
+                self._handle_symbolic_nag(token)
+
+        if self._fen_detected:
+            self.game.pending_opening = False
+
+        if self._active_move:
+            self.game.verify()
+
+        return True, self.game
+
+    @staticmethod
+    def _normalize_pgn(pgn: Union[str, bytes]) -> str:
+        """
+        Normalize PGN input to a UTF-8 string.
+
+        Args:
+            pgn: PGN content as string or bytes.
+
+        Returns:
+            PGN content as a decoded string.
+        """
+        if isinstance(pgn, bytes):
+            try:
+                pgn, _ = Util.bytes_str_codec(pgn)
+            except UnicodeDecodeError:
+                pgn = pgn.decode("utf-8", errors="ignore")
+        return pgn
+
+    def _handle_tag(self, token: str) -> None:
+        """
+        Handle PGN tag tokens (e.g. [Event "..."], [FEN "..."]).
+
+        Args:
+            token: Raw PGN tag token.
+        """
+        kv: str = token[1:].strip()
+        pos: int = kv.find(" ")
+        if pos <= 0:
+            return
+
+        label: str = kv[:pos]
+        value: str = kv[pos + 1 :].strip()
+        label_upper: str = label.upper()
+
+        if label_upper == "FEN":
+            FasterCode.set_fen(value)
+            if value != FEN_INITIAL:
+                self.game.set_fen(value)
+                self._last_position = self.game.first_position
+                self._fen_detected = True
+            self.game.set_tag(label, value)
+
+        elif label_upper == "RESULT":
+            self.result = value
+            self.game.set_tag("Result", value)
+
+        else:
+            self.game.set_tag(label, value)
+
+    def _handle_move(self, token: str) -> None:
+        """
+        Handle a move token and update game state.
+
+        Args:
+            token: PGN move token.
+        """
+        move_str: str = token[1:]
+        base_position: Position.Position = self._last_position
+
+        FasterCode.make_move(move_str)
+
+        new_position: Position.Position = Position.Position()
+        new_position.read_fen(FasterCode.get_fen())
+
+        move: Move.Move = Move.Move(
+            self,
+            base_position,
+            new_position,
+            move_str[:2],
+            move_str[2:4],
+            move_str[4:],
+        )
+
+        self.game.li_moves.append(move)
+        self._active_move = move
+        self._last_position = new_position
+
+    def _handle_numeric_nag(self, token: str) -> None:
+        """
+        Handle numeric NAG tokens (e.g. $1, $3).
+
+        Args:
+            token: Numeric NAG token.
+        """
+        if not self._active_move:
+            return
+
+        nag_str: str = token[1:]
+        if nag_str.isdigit():
+            nag: int = int(nag_str)
+            if 0 < nag < 256:
+                self._active_move.add_nag(nag)
+
+    def _handle_symbolic_nag(self, token: str) -> None:
+        """
+        Handle symbolic NAG tokens (e.g. !, ??, !?).
+
+        Args:
+            token: Symbolic NAG token.
+        """
+        if self._active_move:
+            self._active_move.add_nag(self.NAG_SYMBOLS[token])
+
+    def _handle_comment(self, token: str) -> None:
+        """
+        Handle PGN comments.
+
+        Args:
+            token: Comment token.
+        """
+        comment: str = token[1:-1].strip()
+        if not comment:
+            return
+
+        if self._active_move:
+            if self._active_move.comment:
+                self._active_move.comment += "\n"
+            self._active_move.comment += comment.replace("}", "]")
+        else:
+            self.game.set_first_comment(comment, False)
+
+    def _handle_variation(self, token: str) -> None:
+        """
+        Handle PGN variations.
+
+        Args:
+            token: Variation token.
+        """
+        if not self._active_move:
+            return
+
+        variation: str = token[1:-1].strip()
+        if not variation:
+            return
+
+        fen: str = FasterCode.get_fen()
+        self._active_move.variations.add_pgn_variation(variation)
+        FasterCode.set_fen(fen)
+
+    def _handle_result(self, token: str) -> None:
+        """
+        Handle PGN result markers.
+
+        Args:
+            token: Result token.
+        """
+        if not self._active_move:
+            return
+
+        code: str = token[1]
+        if code == "1":
+            self.result = RESULT_WIN_WHITE
+        elif code == "2":
+            self.result = RESULT_DRAW
+        elif code == "3":
+            self.result = RESULT_WIN_BLACK
+        elif code == "0":
+            self.result = RESULT_UNKNOWN
 
 
-def fen_game(fen, variation):
-    pgn = '[FEN "%s"]\n\n%s' % (fen, variation)
-    ok, p = pgn_game(pgn)
-    return p
+def pgn_to_game(pgn):
+    ptg = PGNtoGame(pgn)
+    return ptg.read()
 
 
 def read_games(pgnfile):
@@ -1394,122 +1433,20 @@ def read_games(pgnfile):
             if si_b_cab:
                 if linea and linea[0] != "[":
                     si_b_cab = False
-            else:
-                if last_line == "" and linea.startswith("["):
-                    ln = linea.strip()
-                    if ln.endswith("]"):
-                        ln = ln[:-1]
-                        if ln.endswith('"') and ln.count('"') > 1:
-                            ok, p = pgn_game("".join(lineas))
-                            yield nbytes, p
-                            lineas = []
-                            si_b_cab = True
+            elif last_line == "" and linea.startswith("["):
+                ln = linea.strip()
+                if ln.endswith("]"):
+                    ln = ln[:-1]
+                    if ln.endswith('"') and ln.count('"') > 1:
+                        ok, p = pgn_game("".join(lineas))
+                        yield nbytes, p
+                        lineas = []
+                        si_b_cab = True
             lineas.append(linea)
             last_line = linea.strip()
         if lineas:
             ok, p = pgn_game("".join(lineas))
             yield nbytes, p
-
-
-def calc_formula_elo(move):  # , limit=200.0):
-    with open(Code.path_resource("IntFiles", "Formulas", "eloperformance.formula")) as f:
-        formula = f.read().strip()
-
-    # dataLG = []
-    # titLG = []
-
-    # def LG(key, value):
-    #     titLG.append(key)
-    #     dataLG.append(str(value))
-
-    cp = move.position_before
-    mrm, pos = move.analysis
-
-    # LG("move", mrm.li_rm[pos].movimiento())
-
-    pts = mrm.li_rm[pos].score_abs5()
-    pts0 = mrm.li_rm[0].score_abs5()
-    lostp_abs = pts0 - pts
-
-    # LG("pts best", pts0)
-    # LG("pts current", pts)
-    # LG("xlostp", lostp_abs)
-
-    piew = pieb = 0
-    mat = 0.0
-    matw = matb = 0.0
-    dmat = {"k": 3.0, "q": 9.9, "r": 5.5, "b": 3.5, "n": 3.1, "p": 1.0}
-    for k, v in cp.squares.items():
-        if v:
-            m = dmat[v.lower()]
-            mat += m
-            if v.isupper():
-                piew += 1
-                matw += m
-            else:
-                pieb += 1
-                matb += m
-    base = mrm.li_rm[0].centipawns_abs()
-    is_white = cp.is_white
-
-    gmo34 = gmo68 = gmo100 = 0
-    for rm in mrm.li_rm:
-        dif = abs(rm.centipawns_abs() - base)
-        if dif < 34:
-            gmo34 += 1
-        elif dif < 68:
-            gmo68 += 1
-        elif dif < 101:
-            gmo100 += 1
-    gmo = float(gmo34) + float(gmo68) ** 0.8 + float(gmo100) ** 0.5
-    plm = (cp.num_moves - 1) * 2
-    if not is_white:
-        plm += 1
-
-    # xshow: Factor de conversion a puntos para mostrar
-    xshow = +1 if is_white else -1
-    xshow = 0.01 * xshow
-
-    li = (
-        ("xpiec", piew if is_white else pieb),
-        ("xpie", piew + pieb),
-        ("xeval", base if is_white else -base),
-        ("xstm", +1 if is_white else -1),
-        ("xplm", plm),
-        ("xshow", xshow),
-        ("xlost", lostp_abs),
-    )
-    for k, v in li:
-        if k in formula:
-            formula = formula.replace(k, "%d.0" % v)
-    li = (("xgmo", gmo), ("xmat", mat), ("xpow", matw if is_white else matb))
-    for k, v in li:
-
-        # LG(k, v)
-
-        if k in formula:
-            formula = formula.replace(k, "%f" % v)
-    # if "xcompl" in formula:
-    #     formula = formula.replace("xcompl", "%f" % calc_formula_elo("complexity", cp, mrm))
-    try:
-        x = float(ast.literal_eval(formula))
-        # if x < 0.0:
-        #     x = -x
-        # if x > limit:
-        #     x = limit
-
-        # LG("elo", int(min(3500, max(0, x))))
-        # LG("other elo", int(move.elo))
-
-        # with open("FormulaELO.csv", "a") as q:
-        #     if firstLG[0]:
-        #         firstLG[0] = False
-        #         q.write(",".join(titLG) + "\r\n")
-        #     q.write(",".join(dataLG) + "\r\n")
-
-        return min(3500, x if x > 0 else 0)
-    except:
-        return 0.0
 
 
 def game_without_variations(game: Game):

@@ -25,16 +25,16 @@ class Personalities:
         self.owner = owner
         self.configuration = configuration
 
-    def list_personalities(self, siTodos):
-        liAjustes = [
+    def list_personalities(self, si_todos):
+        li_ajustes = [
             (_("Best move"), ADJUST_BETTER),
-            (_("Somewhat better") + "++", ADJUST_SOMEWHAT_BETTER_MORE_MORE),
-            (_("Somewhat better") + "+", ADJUST_SOMEWHAT_BETTER_MORE),
+            (f"{_('Somewhat better')}++", ADJUST_SOMEWHAT_BETTER_MORE_MORE),
+            (f"{_('Somewhat better')}+", ADJUST_SOMEWHAT_BETTER_MORE),
             (_("Somewhat better"), ADJUST_SOMEWHAT_BETTER),
             (_("Similar to the player"), ADJUST_SIMILAR),
             (_("Somewhat worse"), ADJUST_WORSE),
-            (_("Somewhat worse") + "-", ADJUST_SOMEWHAT_WORSE_LESS),
-            (_("Somewhat worse") + "--", ADJUST_SOMEWHAT_WORSE_LESS_LESS),
+            (f"{_('Somewhat worse')}-", ADJUST_SOMEWHAT_WORSE_LESS),
+            (f"{_('Somewhat worse')}--", ADJUST_SOMEWHAT_WORSE_LESS_LESS),
             (_("Worst move"), ADJUST_WORST_MOVE),
             ("-" * 30, None),
             (_("High level"), ADJUST_HIGH_LEVEL),
@@ -43,22 +43,23 @@ class Personalities:
             ("-" * 30, None),
             (_("Move selected by the player"), ADJUST_SELECTED_BY_PLAYER),
         ]
-        if siTodos and self.configuration.li_personalities:
-            liAjustes.append(("-" * 30, None))
+        if si_todos and self.configuration.li_personalities:
+            li_ajustes.append(("-" * 30, None))
             for num, una in enumerate(self.configuration.li_personalities):
-                liAjustes.append((una["NOMBRE"], 1000 + num))
-        return liAjustes
+                li_ajustes.append((una["NOMBRE"], 1000 + num))
+        return li_ajustes
 
-    def list_personalities_minimum(self):
-        liAjustes = [
+    @staticmethod
+    def list_personalities_minimum():
+        li_ajustes = [
             (_("Best move"), ADJUST_BETTER),
             (_("Move selected by the player"), ADJUST_SELECTED_BY_PLAYER),
         ]
-        return liAjustes
+        return li_ajustes
 
-    def label(self, nAjuste):
+    def label(self, n_ajuste):
         for lb, n in self.list_personalities(True):
-            if n == nAjuste:
+            if n == n_ajuste:
                 return lb
         return ""
 
@@ -69,7 +70,7 @@ class Personalities:
         width_field = Controles.calc_fixed_width(50)
 
         # Datos basicos
-        li_gen = [(None, None)]
+        li_gen: list = [(None, None)]
         li_gen.append((FormLayout.Editbox(_("Name")), una.get("NOMBRE", "")))
 
         li_gen.append((None, None))
@@ -109,10 +110,10 @@ class Personalities:
         )
 
         # Opening
-        liA = [(None, None)]
+        li_a: list = [(None, None)]
 
         config = FormLayout.Fichero(_("Polyglot book"), "bin", False)
-        liA.append((config, una.get("BOOK", "")))
+        li_a.append((config, una.get("BOOK", "")))
 
         li_resp_book = [
             (_("Always the highest percentage"), BOOK_BEST_MOVE),
@@ -120,7 +121,7 @@ class Personalities:
             (_("Uniform random"), BOOK_RANDOM_UNIFORM),
             (_("Selected by the player"), SELECTED_BY_PLAYER),
         ]
-        liA.append(
+        li_a.append(
             (
                 FormLayout.Combobox(_("Book selection mode"), li_resp_book),
                 una.get("BOOKRR", BOOK_BEST_MOVE),
@@ -128,10 +129,10 @@ class Personalities:
         )
 
         # Medio juego
-        liMJ = [(None, None)]
+        li_mj: list = [(None, None)]
 
         # # Ajustar
-        liMJ.append(
+        li_mj.append(
             (
                 FormLayout.Combobox(_("Strength"), self.list_personalities(False)),
                 una.get("ADJUST", ADJUST_BETTER),
@@ -139,97 +140,97 @@ class Personalities:
         )
 
         # Movimiento siguiente
-        liMJ.append((None, _("In the next move")))
+        li_mj.append((None, _("In the next move")))
 
-        trlistaSG = [
+        trlista_sg = [
             _("To move a pawn"),
             _("Advance piece"),
             _("Make check"),
             _("Capture"),
         ]
-        listaSG = ["MOVERPEON", "AVANZARPIEZA", "JAQUE", "CAPTURAR"]
-        for n, opcion in enumerate(listaSG):
-            liMJ.append(
+        lista_sg = ["MOVERPEON", "AVANZARPIEZA", "JAQUE", "CAPTURAR"]
+        for n, opcion in enumerate(lista_sg):
+            li_mj.append(
                 (
-                    FormLayout.Spinbox(trlistaSG[n], -2000, +2000, width_field),
+                    FormLayout.Spinbox(trlista_sg[n], -2000, +2000, width_field),
                     una.get(opcion, 0),
                 )
             )
 
         # Movimientos previstos
-        liMJ.append((None, _("In the expected moves")))
-        trlistaPR = [
+        li_mj.append((None, _("In the expected moves")))
+        trlista_pr = [
             _("Keep the two bishops"),
             _("Advance"),
             _("Make check"),
             _("Capture"),
         ]
-        listaPR = ["2B", "AVANZAR", "JAQUE", "CAPTURAR"]
-        for n, opcion in enumerate(listaPR):
-            liMJ.append(
+        lista_pr = ["2B", "AVANZAR", "JAQUE", "CAPTURAR"]
+        for n, opcion in enumerate(lista_pr):
+            li_mj.append(
                 (
-                    FormLayout.Spinbox(trlistaPR[n], -2000, +2000, width_field),
-                    una.get(opcion + "PR", 0),
+                    FormLayout.Spinbox(trlista_pr[n], -2000, +2000, width_field),
+                    una.get(f"{opcion}PR", 0),
                 )
             )
 
         # Final
-        liF = [(None, None)]
+        li_f: list = [(None, None)]
 
         # Ajustar
-        liF.append(
+        li_f.append(
             (
                 FormLayout.Combobox(_("Strength"), self.list_personalities(False)),
                 una.get("AJUSTARFINAL", ADJUST_BETTER),
             )
         )
 
-        liF.append(
+        li_f.append(
             (
                 FormLayout.Spinbox(_("Maximum pieces at this stage"), 0, 32, width_field),
                 una.get("MAXPIEZASFINAL", 0),
             )
         )
-        liF.append((None, None))
+        li_f.append((None, None))
 
         # Movimiento siguiente
-        liF.append((None, _("In the next move")))
-        for n, opcion in enumerate(listaSG):
-            liF.append(
+        li_f.append((None, _("In the next move")))
+        for n, opcion in enumerate(lista_sg):
+            li_f.append(
                 (
-                    FormLayout.Spinbox(trlistaSG[n], -2000, +2000, width_field),
-                    una.get(opcion + "F", 0),
+                    FormLayout.Spinbox(trlista_sg[n], -2000, +2000, width_field),
+                    una.get(f"{opcion}F", 0),
                 )
             )
 
         # Movimientos previstos
-        liF.append((None, _("In the expected moves")))
-        for n, opcion in enumerate(listaPR):
-            liF.append(
+        li_f.append((None, _("In the expected moves")))
+        for n, opcion in enumerate(lista_pr):
+            li_f.append(
                 (
-                    FormLayout.Spinbox(trlistaPR[n], -2000, +2000, width_field),
-                    una.get(opcion + "PRF", 0),
+                    FormLayout.Spinbox(trlista_pr[n], -2000, +2000, width_field),
+                    una.get(f"{opcion}PRF", 0),
                 )
             )
 
         while True:
             lista = []
             lista.append((li_gen, _("Basic data"), ""))
-            lista.append((liA, _("Opening"), ""))
-            lista.append((liMJ, _("Middlegame"), ""))
-            lista.append((liF, _("Endgame"), ""))
+            lista.append((li_a, _("Opening"), ""))
+            lista.append((li_mj, _("Middlegame"), ""))
+            lista.append((li_f, _("Endgame"), ""))
             resultado = FormLayout.fedit(
                 lista,
                 title=_("Personalities"),
                 parent=self.owner,
-                anchoMinimo=460,
+                minimum_width=460,
                 icon=icono,
             )
             if resultado:
                 accion, li_resp = resultado
-                liGenR, liAR, liMJR, liFR = li_resp
+                li_gen_r, li_ar, li_mjr, li_fr = li_resp
 
-                name = liGenR[0].strip()
+                name = li_gen_r[0].strip()
 
                 if not name:
                     QTMessages.message_error(self.owner, _("Name missing"))
@@ -238,41 +239,41 @@ class Personalities:
                 una = {}
                 # Base
                 una["NOMBRE"] = name
-                una["DEBUG"] = liGenR[1]
-                una["MAXMATE"] = liGenR[2]
-                una["MINDIFPUNTOS"] = liGenR[3]
-                una["ATERRIZAJE"] = liGenR[4]
+                una["DEBUG"] = li_gen_r[1]
+                una["MAXMATE"] = li_gen_r[2]
+                una["MINDIFPUNTOS"] = li_gen_r[3]
+                una["ATERRIZAJE"] = li_gen_r[4]
 
                 # Opening
-                una["BOOK"] = liAR[0]
-                una["BOOKRR"] = liAR[1]
+                una["BOOK"] = li_ar[0]
+                una["BOOKRR"] = li_ar[1]
 
                 # Medio
-                una["ADJUST"] = liMJR[0]
+                una["ADJUST"] = li_mjr[0]
 
-                for num, opcion in enumerate(listaSG):
-                    una[opcion] = liMJR[num + 1]
+                for num, opcion in enumerate(lista_sg):
+                    una[opcion] = li_mjr[num + 1]
 
-                nSG = len(listaSG) + 1
-                for num, opcion in enumerate(listaPR):
-                    una[opcion + "PR"] = liMJR[num + nSG]
+                n_sg = len(lista_sg) + 1
+                for num, opcion in enumerate(lista_pr):
+                    una[f"{opcion}PR"] = li_mjr[num + n_sg]
 
                 # Final
-                una["AJUSTARFINAL"] = liFR[0]
-                una["MAXPIEZASFINAL"] = liFR[1]
+                una["AJUSTARFINAL"] = li_fr[0]
+                una["MAXPIEZASFINAL"] = li_fr[1]
 
-                for num, opcion in enumerate(listaSG):
-                    una[opcion + "F"] = liFR[num + 2]
+                for num, opcion in enumerate(lista_sg):
+                    una[f"{opcion}F"] = li_fr[num + 2]
 
-                nSG = len(listaSG) + 2
-                for num, opcion in enumerate(listaPR):
-                    una[opcion + "PRF"] = liFR[num + nSG]
+                n_sg = len(lista_sg) + 2
+                for num, opcion in enumerate(lista_pr):
+                    una[f"{opcion}PRF"] = li_fr[num + n_sg]
 
                 return una
 
             return None
 
-    def lanzaMenu(self):
+    def lanza_menu(self):
         menu = QTDialogs.LCMenu(self.owner)
         # f = Controles.FontType(puntos=8, peso=75)
         # menu.set_font(f)
@@ -287,13 +288,13 @@ class Personalities:
         li_personalities = self.configuration.li_personalities
         if li_personalities:
             menu.separador()
-            menuMod = menu.submenu(_("Edit"), ico_editar)
+            menu_mod = menu.submenu(_("Edit"), ico_editar)
             for num, una in enumerate(li_personalities):
-                menuMod.opcion(("e", num), una["NOMBRE"], ico_verde)
+                menu_mod.opcion(("e", num), una["NOMBRE"], ico_verde)
             menu.separador()
-            menuBor = menu.submenu(_("Remove"), ico_borrar)
+            menu_bor = menu.submenu(_("Remove"), ico_borrar)
             for num, una in enumerate(li_personalities):
-                menuBor.opcion(("b", num), una["NOMBRE"], ico_rojo)
+                menu_bor.opcion(("b", num), una["NOMBRE"], ico_rojo)
         resp = menu.lanza()
         if resp:
             si_rehacer = False

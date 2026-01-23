@@ -1,6 +1,7 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
+from Code.Base.Constantes import LI_BASIC_TAGS
 from Code.Databases import WindowDatabase
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
@@ -8,11 +9,12 @@ from Code.Translations import TrListas
 
 
 class DBPlayGame(UtilSQL.DictSQL):
+
     def __init__(self, file):
         UtilSQL.DictSQL.__init__(self, file)
         self.regKeys = self.keys(True, True)
 
-    def leeRegistro(self, num):
+    def read_record(self, num):
         return self.__getitem__(self.regKeys[num])
 
     def append(self, valor):
@@ -20,15 +22,15 @@ class DBPlayGame(UtilSQL.DictSQL):
         self.__setitem__(k, valor)
         self.regKeys = self.keys(True, True)
 
-    def appendHash(self, xhash, game):
+    def append_hash(self, xhash, game):
         """Usado from_sq databases-games, el hash = hash del xpv"""
         game = Game.game_without_variations(game)
         valor = {"GAME": game.save()}
-        k = str(Util.today()) + "|" + str(xhash)
+        k = f"{Util.today()!s}|{xhash!s}"
         self.__setitem__(k, valor)
         self.regKeys = self.keys(True, True)
 
-    def recnoHash(self, xhash):
+    def recno_hash(self, xhash):
         """Usado from_sq databases-games"""
         for recno, key in enumerate(self.regKeys):
             if "|" in key:
@@ -37,12 +39,12 @@ class DBPlayGame(UtilSQL.DictSQL):
                     return recno
         return None
 
-    def cambiaRegistro(self, num, valor):
+    def change_record(self, num, valor):
         self.__setitem__(self.regKeys[num], valor)
 
-    def borraRegistro(self, num):
-        self.__delitem__(self.regKeys[num])
-        self.regKeys = self.keys(True, True)
+    # def borraRegistro(self, num):
+    #     self.__delitem__(self.regKeys[num])
+    #     self.regKeys = self.keys(True, True)
 
     def remove_list(self, li):
         li.sort()
@@ -53,7 +55,7 @@ class DBPlayGame(UtilSQL.DictSQL):
         self.regKeys = self.keys(True, True)
 
     def label(self, num):
-        r = self.leeRegistro(num)
+        r = self.read_record(num)
         game = Game.Game()
         game.restore(r["GAME"])
 
@@ -61,13 +63,7 @@ class DBPlayGame(UtilSQL.DictSQL):
             return game.get_tag(k)
 
         date = x("DATE").replace(".?", "").replace("?", "")
-        return "%s-%s : %s %s %s" % (
-            x("WHITE"),
-            x("BLACK"),
-            date,
-            x("EVENT"),
-            x("SITE"),
-        )
+        return f"{x('WHITE')}-{x('BLACK')} : {date} {x('EVENT')} {x('SITE')}"
 
 
 class WPlayGameBase(LCDialog.LCDialog):
@@ -88,32 +84,17 @@ class WPlayGameBase(LCDialog.LCDialog):
         # Historico
         o_columns = Columnas.ListaColumnas()
 
-        def creaCol(key, label, align_center=True):
-            o_columns.nueva(key, label, 80, align_center=align_center)
-
         # # Claves segun orden estandar
-        self.li_keys = liBasic = (
-            "EVENT",
-            "SITE",
-            "DATE",
-            "ROUND",
-            "WHITE",
-            "BLACK",
-            "RESULT",
-            "ECO",
-            "FEN",
-            "WHITEELO",
-            "BLACKELO",
-        )
-        for key in liBasic:
+        self.li_keys = LI_BASIC_TAGS[:]
+        for key in self.li_keys:
             label = TrListas.pgn_label(key)
-            creaCol(key, label, key != "EVENT")
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+            o_columns.nueva(key, label, 80, align_center=key != "EVENT")
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         # Tool bar
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Play"), Iconos.Empezar(), self.play),
             (_("New"), Iconos.Nuevo(), self.new),
@@ -126,8 +107,8 @@ class WPlayGameBase(LCDialog.LCDialog):
         self.tb = QTDialogs.LCTB(self, li_acciones)
 
         # Colocamos
-        lyTB = Colocacion.H().control(self.tb).margen(0)
-        ly = Colocacion.V().otro(lyTB).control(self.grid).margen(3)
+        ly_tb = Colocacion.H().control(self.tb).margen(0)
+        ly = Colocacion.V().otro(ly_tb).control(self.grid).margen(3)
 
         self.setLayout(ly)
 
@@ -136,27 +117,27 @@ class WPlayGameBase(LCDialog.LCDialog):
 
         self.grid.gotop()
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.play()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.db)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         if row not in self.cache:
-            reg = self.db.leeRegistro(row)
+            reg = self.db.read_record(row)
             game = Game.Game()
             game.restore(reg["GAME"])
             self.cache[row] = {k: game.get_tag(k) for k in self.li_keys}
         return self.cache[row].get(col, "")
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.db.close()
         self.accept()
 
-    def closeEvent(self, QCloseEvent):
+    def closeEvent(self, _event):
         self.save_video()
         self.db.close()
 
@@ -186,7 +167,7 @@ class WPlayGameBase(LCDialog.LCDialog):
             self.grid.gotop()
 
     def remove(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 with QTMessages.one_moment_please(self):
@@ -196,7 +177,7 @@ class WPlayGameBase(LCDialog.LCDialog):
         self.grid.gotop()
 
     def play(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             recno = li[0]
             w = WPlay1(self, self.configuration, self.db, recno)
@@ -211,7 +192,7 @@ class WPlayGameBase(LCDialog.LCDialog):
 
         dic = self.configuration.read_variables(var_config)
 
-        form = FormLayout.FormLayout(self, _("Configuration"), Iconos.Opciones(), anchoMinimo=440)
+        form = FormLayout.FormLayout(self, _("Configuration"), Iconos.Opciones(), minimum_width=440)
 
         form.separador()
 
@@ -234,6 +215,8 @@ class WPlayGameBase(LCDialog.LCDialog):
 
 
 class WPlay1(LCDialog.LCDialog):
+    num_record: int
+
     def __init__(self, owner, configuration, db, recno):
 
         LCDialog.LCDialog.__init__(self, owner, _("Play against a game"), Iconos.PlayGame(), "play1game")
@@ -242,7 +225,7 @@ class WPlay1(LCDialog.LCDialog):
         self.db = db
         self.configuration = configuration
         self.recno = recno
-        self.registro = self.db.leeRegistro(recno)
+        self.registro = self.db.read_record(recno)
         self.is_white = None
         self.is_black = None
 
@@ -263,12 +246,12 @@ class WPlay1(LCDialog.LCDialog):
             o_columns.nueva("COLOR", _("Side you play with"), 120, align_center=True)
             o_columns.nueva("POINTS", _("Score"), 80, align_center=True)
             o_columns.nueva("TIME", _("Time"), 80, align_center=True)
-            self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-            self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+            self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+            self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
             # Tool bar
             self.tb = QTDialogs.LCTB(self)
-            self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+            self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
             self.tb.new(_("Train"), Iconos.Entrenar(), self.empezar)
             self.tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
 
@@ -283,11 +266,11 @@ class WPlay1(LCDialog.LCDialog):
 
             self.grid.gotop()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liIntentos)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         reg = self.liIntentos[row]
 
         if col == "DATE":
@@ -308,23 +291,24 @@ class WPlay1(LCDialog.LCDialog):
             m = int(s / 60)
             s -= m * 60
             return "%d' %d\"" % (m, s)
+        return None
 
     def guardar(self, dic):
         self.liIntentos.insert(0, dic)
         self.grid.refresh()
         self.grid.gotop()
         self.registro["LIINTENTOS"] = self.liIntentos
-        self.db.cambiaRegistro(self.numRegistro, self.registro)
+        self.db.change_record(self.num_record, self.registro)
 
-    def terminar(self, siAccept=False):
+    def finalize(self, accepted=False):
         self.save_video()
-        if siAccept:
+        if accepted:
             self.accept()
         else:
             self.reject()
 
     def borrar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 li.sort()
@@ -337,7 +321,7 @@ class WPlay1(LCDialog.LCDialog):
     def empezar(self):
         resp = QTDialogs.white_or_black(self, True)
         if resp is None:
-            self.terminar(False)
+            self.finalize(False)
         else:
             self.is_white, self.is_black = resp
-            self.terminar(True)
+            self.finalize(True)

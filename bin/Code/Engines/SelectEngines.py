@@ -3,7 +3,7 @@ import os
 import OSEngines  # in OS folder
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     ENG_ELO,
     ENG_EXTERNAL,
@@ -56,21 +56,21 @@ def busca_engine(tipo, key, alias):
     if tipo == ENG_EXTERNAL:
         li_external = Code.configuration.engines.list_name_external()
         for cm in li_external:
-            if cm.alias == key:
+            if cm.key == key:
                 return cm
 
     elif tipo == ENG_MICGM:
         li_engines_micgm, li_engines_micper = EnginesMicElo.separated_engines()
         for cm in li_engines_micgm:
-            if cm.alias == key and cm.alias == alias:
+            if cm.key == key and cm.key == alias:
                 return cm
 
     elif tipo == ENG_MICPER:
         li_engines = EnginesMicElo.all_engines()
         for cm in li_engines:
-            if cm.alias == key:
+            if cm.key == key:
                 if alias:
-                    if cm.alias == alias:
+                    if cm.key == alias:
                         return cm
                 else:
                     return cm
@@ -78,22 +78,22 @@ def busca_engine(tipo, key, alias):
     elif tipo == ENG_WICKER:
         li_engines = EnginesWicker.read_wicker_engines()
         for cm in li_engines:
-            if cm.alias == key:
+            if cm.key == key:
                 if alias:
-                    if cm.alias == alias:
+                    if cm.key == alias:
                         return cm
                 else:
                     return cm
 
     elif tipo == ENG_INTERNAL:
         for cm in Code.configuration.engines.list_name_internal():
-            if cm.alias == key:
+            if cm.key == key:
                 return cm
 
     elif tipo == ENG_FIXED:
         for elo, lista in Code.configuration.engines.dic_fixed_elo().items():
             for cm in lista:
-                if cm.alias == key:
+                if cm.key == key:
                     rival = cm
                     break
             if rival:
@@ -101,21 +101,23 @@ def busca_engine(tipo, key, alias):
 
     elif tipo == ENG_IRINA:
         for cm in gen_engines_irina():
-            if cm.alias == key:
+            if cm.key == key:
                 return cm
 
     elif tipo == ENG_ELO:
         for cm in gen_engines_elo():
-            if cm.alias == key:
+            if cm.key == key:
                 return cm
 
     elif tipo == ENG_RODENT:
         for group, dict_engs in gen_engines_rodent().items():
             for name, cm in dict_engs.items():
-                if cm.alias == alias:
+                if cm.key == alias:
                     rival = cm.clone()
                     rival.name = cm.menu
                     return rival
+
+    return None
 
 
 def busca_engine_default(tipo, key, alias):
@@ -130,7 +132,7 @@ def gen_engines_irina():
     for name, trans, ico, elo in QTDialogs.list_irina():
         cm = Engines.Engine(name, cmbase.autor, cmbase.version, cmbase.url, cmbase.path_exe)
         cm.name = trans
-        cm.alias = name
+        cm.key = name
         cm.ICON = ico
         cm.elo = elo
         cm.type = ENG_IRINA
@@ -146,13 +148,13 @@ def gen_engines_irina():
 def gen_engines_elo():
     d = OSEngines.read_engines(Code.folder_engines)
     li = []
-    for elo, key, depth in ManagerElo.listaMotoresElo():
+    for elo, key, depth in ManagerElo.list_engines_play_elo():
         if key in d:
             cm = d[key].clone()
             name = "%s (%s %d)" % (cm.name, _("depth"), depth)
             cm.menu = "%d - %s" % (elo, name)
             cm.name = name
-            cm.alias = cm.menu
+            cm.key = cm.menu
             cm.max_depth = depth
             cm.elo = elo
             cm.type = ENG_ELO
@@ -169,8 +171,8 @@ def gen_engines_rodent():
     for group, dict_engs in dict_ini.items():
         for name, data in dict_engs.items():
             cm = cmbase.clone()
-            cm.alias = name
-            cm.path_uci = Util.opj(path_personalities, group.lower(), name.lower() + ".txt")
+            cm.key = name
+            cm.path_uci = Util.opj(path_personalities, group.lower(), f"{name.lower()}.txt")
             txt, author, elo = data.split("|")
             cm.menu = f"{name} - {txt} ({author})"
             cm.id_info = f"{txt} ({author})"
@@ -182,10 +184,12 @@ def gen_engines_rodent():
 
 
 class SelectEngines:
+    li_external_engines: list
+
     def __init__(self, owner):
         with QTMessages.one_moment_please(owner, _("Reading the list of engines")):
             self.configuration = Code.configuration
-            self.dicIconos = {
+            self.dict_icons = {
                 ENG_INTERNAL: Iconos.Engine(),
                 ENG_EXTERNAL: Iconos.MotoresExternos(),
                 ENG_MICGM: Iconos.GranMaestro(),
@@ -213,8 +217,8 @@ class SelectEngines:
             self.li_engines = None
 
     def redo_external_engines(self):
-        self.liMotoresExternos = self.configuration.engines.list_name_external()
-        self.liMotoresClavePV = self.configuration.engines.list_name_alias_multipv10()
+        self.li_external_engines = self.configuration.engines.list_name_external()
+        # self.liMotoresClavePV = self.configuration.engines.list_name_alias_multipv10()
 
     # def gen_engines_komodo(self):
     #     cmbase = self.configuration.engines.search("komodo")
@@ -233,7 +237,7 @@ class SelectEngines:
     #     for personality in li_personalities:
     #         cm = Engines.Engine(name, cmbase.autor, cmbase.version, cmbase.url, cmbase.path_exe)
     #         cm.name = trans
-    #         cm.alias = name
+    #         cm.key = name
     #         cm.ICON = ico
     #         cm.elo = elo
     #         cm.type = ENG_IRINA
@@ -250,20 +254,20 @@ class SelectEngines:
         rp = QTDialogs.rondo_puntos(False)
         rc = QTDialogs.rondo_colores(False)
 
-        submenu = menu.submenu(dnames[ENG_INTERNAL], self.dicIconos[ENG_INTERNAL])
+        submenu = menu.submenu(dnames[ENG_INTERNAL], self.dict_icons[ENG_INTERNAL])
 
         li_m_i = sorted(self.liMotoresInternos, key=lambda x: x.elo)
 
-        def haz(from_sq, to_sq, label):
+        def haz(xfrom_sq, xto_sq, label):
             smn = None
-            for cm in li_m_i:
-                elo = cm.elo
-                if from_sq < elo <= to_sq:
+            for xcm in li_m_i:
+                xelo = xcm.elo
+                if xfrom_sq < xelo <= xto_sq:
                     if smn is None:
                         smn = submenu.submenu(label, rc.otro())
-                    texto = cm.name
-                    icono = rp.otro()
-                    smn.opcion(cm, "%s (%d)" % (texto, elo), icono)
+                    xtexto = xcm.name
+                    xicono = rp.otro()
+                    smn.opcion(xcm, "%s (%d)" % (xtexto, xelo), xicono)
 
         haz(0, 1500, _("Up to 1500"))
         haz(1500, 2000, "1500 - 2000")
@@ -272,18 +276,18 @@ class SelectEngines:
         haz(2750, 3000, "2750 - 3000")
         haz(3000, 5000, _("Above 3000"))
 
-        if self.liMotoresExternos:
+        if self.li_external_engines:
             menu.separador()
-            submenu = menu.submenu(dnames[ENG_EXTERNAL], self.dicIconos[ENG_EXTERNAL])
-            for cm in self.liMotoresExternos:
-                texto = cm.alias
+            submenu = menu.submenu(dnames[ENG_EXTERNAL], self.dict_icons[ENG_EXTERNAL])
+            for cm in self.li_external_engines:
+                texto = cm.key
                 if cm.elo:
                     texto = f"{texto} ({cm.elo})"
                 icono = rp.otro()
                 submenu.opcion(cm, texto, icono)
 
         menu.separador()
-        submenu = menu.submenu(dnames[ENG_MICGM], self.dicIconos[ENG_MICGM])
+        submenu = menu.submenu(dnames[ENG_MICGM], self.dict_icons[ENG_MICGM])
         for cm in self.li_engines_micgm:
             icono = rp.otro()
             texto = Util.primera_mayuscula(cm.name)
@@ -291,7 +295,7 @@ class SelectEngines:
             submenu.separador()
 
         menu.separador()
-        submenu = menu.submenu(dnames[ENG_MICPER], self.dicIconos[ENG_MICPER])
+        submenu = menu.submenu(dnames[ENG_MICPER], self.dict_icons[ENG_MICPER])
         li = self.li_engines_micper
         n_engines = len(li)
         blk = 15
@@ -305,14 +309,14 @@ class SelectEngines:
             icono = rp.otro()
             submenublk = submenu.submenu("%d - %d" % (li_blk[0].elo, li_blk[-1].elo), icono)
             for cm in li_blk:
-                texto = Util.primera_mayuscula(cm.alias + " (%d, %s)" % (cm.elo, cm.id_info.replace("\n", ", ")))
-                cm.name = Util.primera_mayuscula(cm.alias)
+                texto = Util.primera_mayuscula(cm.key + " (%d, %s)" % (cm.elo, cm.id_info.replace("\n", ", ")))
+                cm.name = Util.primera_mayuscula(cm.key)
                 submenublk.opcion(cm, texto, icono)
                 submenublk.separador()
             submenu.separador()
 
         menu.separador()
-        submenu = menu.submenu(dnames[ENG_WICKER], self.dicIconos[ENG_WICKER])
+        submenu = menu.submenu(dnames[ENG_WICKER], self.dict_icons[ENG_WICKER])
         li = self.li_engines_wicker
         n_engines = len(li)
         blk = 15
@@ -332,7 +336,7 @@ class SelectEngines:
             submenu.separador()
 
         menu.separador()
-        submenu = menu.submenu(dnames[ENG_FIXED], self.dicIconos[ENG_FIXED])
+        submenu = menu.submenu(dnames[ENG_FIXED], self.dict_icons[ENG_FIXED])
         li = sorted(self.dic_engines_fixed_elo.keys())
         for elo in li:
             icono = rp.otro()
@@ -346,7 +350,7 @@ class SelectEngines:
             submenu_elo.separador()
 
         menu.separador()
-        submenu = menu.submenu(dnames[ENG_RODENT], self.dicIconos[ENG_RODENT])
+        submenu = menu.submenu(dnames[ENG_RODENT], self.dict_icons[ENG_RODENT])
         for group, dict_engs in self.dict_rodent.items():
             submenu_submenu = submenu.submenu(group, rc.otro())
             for name, cm in dict_engs.items():
@@ -393,25 +397,25 @@ class SelectEngines:
 
             st_alias = set()
 
-            def add_cm(xcm, menu):
-                if xcm.alias in st_alias:
+            def add_cm(xcm, xmenu):
+                if xcm.key in st_alias:
                     return
-                st_alias.add(xcm.alias)
+                st_alias.add(xcm.key)
                 self.li_engines.append(xcm)
-                xcm.menu = menu
+                xcm.menu = xmenu
 
             for cm in self.liMotoresInternos:
                 add_cm(cm, cm.name)
 
-            for cm in self.liMotoresExternos:
-                add_cm(cm, cm.alias)
+            for cm in self.li_external_engines:
+                add_cm(cm, cm.key)
 
             for cm in self.li_engines_micgm:
-                cm.name = Util.primera_mayuscula(cm.alias)
+                cm.name = Util.primera_mayuscula(cm.key)
                 add_cm(cm, cm.name)
 
             for cm in self.li_engines_micper:
-                cm.name = Util.primera_mayuscula(cm.alias)
+                cm.name = Util.primera_mayuscula(cm.key)
                 menu = "%s (%s)" % (cm.name, cm.id_info.replace("\n", ", "))
                 add_cm(cm, menu)
 
@@ -432,10 +436,10 @@ class SelectEngines:
                 add_cm(cm, cm.name)
 
             for cm in self.liElo:
-                cm.alias = cm.alias
+                cm.key = cm.key
                 add_cm(cm, cm.menu)
 
-        self.li_engines.sort(key=lambda cm: cm.elo)
+        self.li_engines.sort(key=lambda xcm: xcm.elo)
 
         return self.li_engines
 
@@ -457,23 +461,23 @@ class SelectEngines:
 
         rival = None
         if tipo == ENG_EXTERNAL:
-            for cm in self.liMotoresExternos:
-                if cm.alias == key:
+            for cm in self.li_external_engines:
+                if cm.key == key:
                     rival = cm
                     break
 
         elif tipo == ENG_MICGM:
             for cm in self.li_engines_micgm:
-                if cm.alias == key and cm.alias == alias:
+                if cm.key == key and cm.key == alias:
                     rival = cm
                     break
 
         elif tipo == ENG_MICPER:
             li_engines = EnginesMicElo.all_engines()
             for cm in li_engines:
-                if cm.alias == key:
+                if cm.key == key:
                     if alias:
-                        if cm.alias == alias:
+                        if cm.key == alias:
                             rival = cm
                             break
                     else:
@@ -483,9 +487,9 @@ class SelectEngines:
         elif tipo == ENG_WICKER:
             li_engines = EnginesWicker.read_wicker_engines()
             for cm in li_engines:
-                if cm.alias == key:
+                if cm.key == key:
                     if alias:
-                        if cm.alias == alias:
+                        if cm.key == alias:
                             rival = cm
                             break
                     else:
@@ -494,14 +498,14 @@ class SelectEngines:
 
         elif tipo == ENG_INTERNAL:
             for cm in self.liMotoresInternos:
-                if cm.alias == key:
+                if cm.key == key:
                     rival = cm
                     break
 
         elif tipo == ENG_FIXED:
             for elo, lista in self.dic_engines_fixed_elo.items():
                 for cm in lista:
-                    if cm.alias == key:
+                    if cm.key == key:
                         rival = cm
                         break
                 if rival:
@@ -509,20 +513,20 @@ class SelectEngines:
 
         elif tipo == ENG_IRINA:
             for cm in self.liIrina:
-                if cm.alias == key:
+                if cm.key == key:
                     rival = cm
                     break
 
         elif tipo == ENG_ELO:
             for cm in self.liElo:
-                if cm.alias == key:
+                if cm.key == key:
                     rival = cm
                     break
 
         elif tipo == ENG_RODENT:
             for group, dict_engs in self.dict_rodent.items():
                 for name, cm in dict_engs.items():
-                    if cm.alias == alias:
+                    if cm.key == alias:
                         rival = cm.clone()
                         rival.name = cm.menu
 
@@ -585,7 +589,7 @@ class WSelectEngines(LCDialog.LCDialog):
         layout = Colocacion.V().otro(ly_head).control(self.grid).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.anchoColumnas() + 48, default_height=640)
+        self.restore_video(default_width=self.grid.width_columns_displayables() + 48, default_height=640)
 
     def clear_all(self):
         self.st_selected = set()
@@ -603,11 +607,11 @@ class WSelectEngines(LCDialog.LCDialog):
                 read_uci_rodent(cm)
         return li
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.list_all_engines)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         engine = self.list_all_engines[row]
         if key == "SELECTED":
             return engine.xhash() in self.st_selected
@@ -617,9 +621,10 @@ class WSelectEngines(LCDialog.LCDialog):
             return engine.name
         elif key == "TYPE":
             return self.dict_typenames[engine.type]
+        return None
 
-    def grid_setvalue(self, grid, row, o_column, value):
-        if o_column.key == "SELECTED":
+    def grid_setvalue(self, _grid, row, obj_column, _value):
+        if obj_column.key == "SELECTED":
             engine = self.list_all_engines[row]
             xhash = engine.xhash()
             if xhash in self.st_selected:
@@ -629,7 +634,7 @@ class WSelectEngines(LCDialog.LCDialog):
             self.show_count()
             self.grid.refresh()
 
-    def grid_doubleclick_header(self, grid, col):
+    def grid_doubleclick_header(self, _grid, col):
         key = col.key
         if key == "ELO":
 

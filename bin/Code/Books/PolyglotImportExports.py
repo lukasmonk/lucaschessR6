@@ -6,7 +6,7 @@ import FasterCode
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     BLACK,
@@ -30,28 +30,28 @@ class WExportarPGN(QtWidgets.QDialog):
             | QtCore.Qt.WindowType.WindowTitleHint
         )
 
-        self.setWindowTitle(_("Export") + " - " + _("PGN"))
+        self.setWindowTitle(f"{_('Export')} - {_('PGN')}")
         self.setWindowIcon(Iconos.Board())
         self.fontB = f = Controles.FontType(puntos=14)
 
         self.is_canceled = False
 
-        lb_file = Controles.LB(self, _("File") + ": " + os.path.basename(path_white)).set_font(f)
-        lb_positions = Controles.LB(self, _("Positions") + ":").set_font(f)
+        lb_file = Controles.LB(self, f"{_('File')}: {os.path.basename(path_white)}").set_font(f)
+        lb_positions = Controles.LB(self, f"{_('Positions')}:").set_font(f)
         self.lb_positions_white = Controles.LB(self, "0").set_font(f)
         ly_positions = Colocacion.H().control(lb_positions).control(self.lb_positions_white).margen(0)
-        self.lb_games_white = Controles.LB(self, _("Games") + ":").set_font(f)
+        self.lb_games_white = Controles.LB(self, f"{_('Games')}:").set_font(f)
         self.lb_games_white_number = Controles.LB(self, "").set_font(f)
         ly_games = Colocacion.H().control(self.lb_games_white).control(self.lb_games_white_number).margen(0)
         ly = Colocacion.V().control(lb_file).otro(ly_positions).otro(ly_games)
         gb_white = Controles.GB(self, _("White"), ly)
         Code.configuration.set_property(gb_white, "1")
 
-        lb_file = Controles.LB(self, _("File") + ": " + os.path.basename(path_black)).set_font(f)
-        lb_positions = Controles.LB(self, _("Positions") + ":").set_font(f)
+        lb_file = Controles.LB(self, f"{_('File')}: {os.path.basename(path_black)}").set_font(f)
+        lb_positions = Controles.LB(self, f"{_('Positions')}:").set_font(f)
         self.lb_positions_black = Controles.LB(self, "0").set_font(f)
         ly_positions = Colocacion.H().control(lb_positions).control(self.lb_positions_black).margen(0)
-        self.lb_games_black = Controles.LB(self, _("Games") + ":").set_font(f)
+        self.lb_games_black = Controles.LB(self, f"{_('Games')}:").set_font(f)
         self.lb_games_black_number = Controles.LB(self, "").set_font(f)
         ly_games = Colocacion.H().control(self.lb_games_black).control(self.lb_games_black_number).margen(0)
         ly = Colocacion.V().control(lb_file).otro(ly_positions).otro(ly_games)
@@ -60,7 +60,7 @@ class WExportarPGN(QtWidgets.QDialog):
 
         ly_datos = Colocacion.H().control(gb_white).control(gb_black)
 
-        self.bt_cancel_continue = Controles.PB(self, _("Cancel"), self.cancelar, plano=False).ponIcono(Iconos.Delete())
+        self.bt_cancel_continue = Controles.PB(self, _("Cancel"), self.cancelar, plano=False).set_icono(Iconos.Delete())
         ly_control = Colocacion.H().relleno().control(self.bt_cancel_continue)
 
         layout = Colocacion.V().otro(ly_datos).otro(ly_control)
@@ -75,11 +75,11 @@ class WExportarPGN(QtWidgets.QDialog):
         self.lb_games = self.lb_games_white_number if side == WHITE else self.lb_games_black_number
 
     def set_positions(self, num):
-        self.lb_positions.setText('{:,}'.format(num).replace(',', '.'))
+        self.lb_positions.setText(f'{num:,}'.replace(',', '.'))
         QTUtils.refresh_gui()
 
     def set_games(self, num):
-        self.lb_games.setText('{:,}'.format(num).replace(',', '.'))
+        self.lb_games.setText(f'{num:,}'.replace(',', '.'))
         QTUtils.refresh_gui()
 
     def cancelar(self):
@@ -90,14 +90,14 @@ class WExportarPGN(QtWidgets.QDialog):
         self.bt_cancel_continue.setEnabled(True)
         self.bt_cancel_continue.set_text(_("Saving..."))
         self.bt_cancel_continue.set_font(self.fontB)
-        self.bt_cancel_continue.ponIcono(Iconos.Grabar())
+        self.bt_cancel_continue.set_icono(Iconos.Grabar())
         QTUtils.refresh_gui()
 
     def pon_cancel(self):
         self.bt_cancel_continue.setEnabled(True)
         self.bt_cancel_continue.set_text(_("Cancel"))
         self.bt_cancel_continue.set_font(self.fontB)
-        self.bt_cancel_continue.ponIcono(Iconos.Delete())
+        self.bt_cancel_continue.set_icono(Iconos.Delete())
         QTUtils.refresh_gui()
 
     def pon_continue(self):
@@ -105,7 +105,7 @@ class WExportarPGN(QtWidgets.QDialog):
         self.bt_cancel_continue.set_text(_("Continue"))
         self.bt_cancel_continue.to_connect(self.continuar)
         self.bt_cancel_continue.set_font(self.fontB)
-        self.bt_cancel_continue.ponIcono(Iconos.Aceptar())
+        self.bt_cancel_continue.set_icono(Iconos.Aceptar())
         QTUtils.refresh_gui()
 
     def continuar(self):
@@ -134,12 +134,12 @@ class PolyglotExport:
     def export_polyglot(self):
         resp = self.export_polyglot_config()
         if resp is None:
-            return None
+            return
         path_bin, uniform = resp
         self.export_create_polyglot(path_bin, uniform)
 
     def export_polyglot_config(self):
-        return export_polyglot_config(self.wpolyglot, self.configuration, self.wpolyglot.title + ".bin")
+        return export_polyglot_config(self.wpolyglot, self.configuration, f"{self.wpolyglot.title}.bin")
 
     def export_create_polyglot(self, path_bin, uniform):
         total = len(self.db_entries)
@@ -193,7 +193,7 @@ class PolyglotExport:
         wpoly.close()
         bp.close()
         if not cancelled:
-            QTMessages.message_bold(self.wpolyglot, "%s\n%s" % (_("Saved"), path_bin))
+            QTMessages.message_bold(self.wpolyglot, f"{_('Saved')}\n{path_bin}")
 
     def export_pgn(self):
         dir_salvados = Code.configuration.pgn_folder()
@@ -203,8 +203,8 @@ class PolyglotExport:
         folder = os.path.dirname(path)
         Code.configuration.save_pgn_folder(folder)
 
-        path_white = path[:-4] + "_White.pgn"
-        path_black = path[:-4] + "_Black.pgn"
+        path_white = f"{path[:-4]}_White.pgn"
+        path_black = f"{path[:-4]}_Black.pgn"
 
         wexport = WExportarPGN(self.wpolyglot, path_white, path_black)
         wexport.show()
@@ -301,7 +301,7 @@ class PolyglotExport:
                                 game.set_tag("Event", self.wpolyglot.title)
                                 game.set_tag("Result", result)
                                 game.read_pv(pv)
-                                q.write(game.pgn() + "\n\n\n")
+                                q.write(f"{game.pgn()}\n\n\n")
                                 num_games += 1
                                 if time.time() - control[0] > 1.0:
                                     control[0] = time.time()
@@ -388,7 +388,7 @@ class PolyglotImport:
         pol_import.close()
         bp.close()
         if not canceled:
-            QTMessages.message_bold(self.wpolyglot, "%s\n%s" % (_("Imported"), path_bin))
+            QTMessages.message_bold(self.wpolyglot, f"{_('Imported')}\n{path_bin}")
         self.wpolyglot.set_position(self.wpolyglot.position, False)
 
     def import_polyglot_config(self, titulo):
@@ -399,7 +399,7 @@ class PolyglotImport:
         if not path_db:
             return
 
-        titulo = "%s %s" % (_("Import"), os.path.basename(path_db))
+        titulo = f"{_('Import')} {os.path.basename(path_db)}"
         resp = self.import_polyglot_config(titulo)
         if resp is None:
             return
@@ -451,7 +451,7 @@ class PolyglotImport:
         if not li_path_pgn:
             return
         pgns = ",".join(os.path.basename(path) for path in li_path_pgn)
-        titulo = "%s %d %s = %s" % (_("Import"), len(li_path_pgn), _("PGN"), pgns)
+        titulo = f"{_('Import')} {len(li_path_pgn)} {_('PGN')} = {pgns}"
         resp = self.import_polyglot_config(titulo)
         if resp is None:
             return
@@ -500,16 +500,16 @@ class PolyglotImport:
 
     @staticmethod
     def add_pgn(
-            path_pgn,
-            plies,
-            st_results,
-            st_side,
-            li_players,
-            bunknown_convert,
-            ftime,
-            time_dispatch,
-            dispatch,
-            fsum,
+        path_pgn,
+        plies,
+        st_results,
+        st_side,
+        li_players,
+        bunknown_convert,
+        ftime,
+        time_dispatch,
+        dispatch,
+        fsum,
     ):
         time_prev = ftime()
         cancelled = False
@@ -616,7 +616,7 @@ class ImportarPGNDB(QtWidgets.QDialog):
         self.invalid_prevision = True
         self.total = None
 
-        self.bt_cancelar = Controles.PB(self, _("Cancel"), self.cancelar, plano=False).ponIcono(Iconos.Delete())
+        self.bt_cancelar = Controles.PB(self, _("Cancel"), self.cancelar, plano=False).set_icono(Iconos.Delete())
 
         ly_bt = Colocacion.H().relleno().control(self.bt_cancelar)
 
@@ -725,9 +725,8 @@ def fuente_dbbig(db, min_games, min_score, calc_weight, save_score):
             break
         key, move = FasterCode.str_keymove(k)
         if key != current_key:
-            if current_key is not None:
-                if pasa_filtro(dic):
-                    yield current_key, dic_entry(current_key, dic)
+            if current_key is not None and pasa_filtro(dic):
+                yield current_key, dic_entry(current_key, dic)
             current_key = key
             dic = {}
         dic[move] = v
@@ -770,20 +769,20 @@ def create_bin_from_dbbig(owner, path_bin, db, min_games, min_score, calc_weight
 
         wpoly.close()
 
-    QTMessages.message_bold(owner, "%s\n%s" % (_("Saved"), path_bin))
+    QTMessages.message_bold(owner, f"{_('Saved')}\n{path_bin}")
 
 
 def import_polyglot_config(owner, configuration, titulo, with_collisions):
     dic = configuration.read_variables("POLYGLOT_IMPORT")
 
-    form = FormLayout.FormLayout(owner, titulo, Iconos.Import8(), anchoMinimo=440)
+    form = FormLayout.FormLayout(owner, titulo, Iconos.Import8(), minimum_width=440)
     form.separador()
 
     form.spinbox(_("Maximum movements"), 1, 999, 60, dic.get("PLIES", 50))
     form.separador()
 
     li_options = (
-        ("%s + %s" % (_("White"), _("Black")), {True, False}),
+        (f"{_('White')} + {_('Black')}", {True, False}),
         (_("White"), {True}),
         (_("Black"), {False}),
     )
@@ -801,11 +800,11 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
         ("0-1", "0-1"),
         ("1/2-1/2", "1/2-1/2"),
     )
-    form.combobox("%s %s" % (_("Unknown result"), _("convert to")), li_options, dic.get("*", ""))
+    form.combobox(f"{_('Unknown result')} {_('convert to')}", li_options, dic.get("*", ""))
     form.separador()
 
     form.spinbox(_("Minimum number of games"), 1, 999999, 50, dic.get("MINGAMES", 3))
-    form.spinbox(_("Minimum score") + " (0-100)", 0, 100, 50, dic.get("MINSCORE", 0))
+    form.spinbox(f"{_('Minimum score')} (0-100)", 0, 100, 50, dic.get("MINSCORE", 0))
     form.separador()
 
     form.edit(_("Only the following players"), dic.get("PLAYERS", ""))
@@ -817,8 +816,8 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
 
     li_options = (
         (_("Number of games"), CALCWEIGHT_NUMGAMES),
-        (_("Number of games") + " * " + _("Score"), CALCWEIGHT_NUMGAMES_SCORE),
-        (_("Score") + "% * 100", CALCWEIGHT_SCORE),
+        (f"{_('Number of games')} * {_('Score')}", CALCWEIGHT_NUMGAMES_SCORE),
+        (f"{_('Score')}% * 100", CALCWEIGHT_SCORE),
     )
     form.combobox(
         _("Calculation of the weight"),
@@ -933,7 +932,7 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
 
 def export_polyglot_config(owner, configuration, file_nom_def):
     dic = configuration.read_variables("POLYGLOT_EXPORT")
-    form = FormLayout.FormLayout(owner, _("Export to"), Iconos.Export8(), anchoMinimo=440)
+    form = FormLayout.FormLayout(owner, _("Export to"), Iconos.Export8(), minimum_width=440)
     form.separador()
 
     folder = dic.get("FOLDER", Code.configuration.paths.folder_userdata())
@@ -968,7 +967,7 @@ def export_polyglot_config(owner, configuration, file_nom_def):
             no=_("Choose another"),
         )
         if yn is None:
-            return
+            return None
         if not yn:
             return export_polyglot_config(owner, configuration, os.path.basename(path_bin))
 
@@ -1002,14 +1001,14 @@ def test_players(li_players, player) -> bool:
 
 
 def add_db(
-        db,
-        plies,
-        st_results,
-        st_side,
-        li_players,
-        unknown_convert,
-        dispatch,
-        fsum,
+    db,
+    plies,
+    st_results,
+    st_side,
+    li_players,
+    unknown_convert,
+    dispatch,
+    fsum,
 ):
     time_prev = time.time()
     cancelled = False

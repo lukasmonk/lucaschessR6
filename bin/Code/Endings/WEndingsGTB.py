@@ -1,3 +1,4 @@
+from typing import Callable
 import random
 import time
 
@@ -30,6 +31,14 @@ PLAY_STOP, PLAY_NEXT_SOLVED, PLAY_NEXT_BESTMOVES = range(3)
 
 
 class WEndingsGTB(LCDialog.LCDialog):
+    timer: float
+    fen: str
+    replaying: bool
+    ms: int
+    moves: int
+    is_helped: bool
+    error: str
+
     def __init__(self, wparent):
         self.configuration = Code.configuration
         self.reinit = False
@@ -48,7 +57,7 @@ class WEndingsGTB(LCDialog.LCDialog):
         self.act_recno = -1
 
         li_acciones = [
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Config"), Iconos.Configurar(), self.configurar),
             None,
@@ -72,8 +81,8 @@ class WEndingsGTB(LCDialog.LCDialog):
             icon_size=24,
         )
 
-        self.chb_help = Controles.CHB(self, _("Help mode"), False).capture_changes(self, self.help_changed)
-        self.bt_back = Controles.PB(self, _("Takeback"), self.takeback, plano=False).ponIcono(Iconos.Atras())
+        self.chb_help = Controles.CHB(self, _("Help mode"), False).capture_changes(self.help_changed)
+        self.bt_back = Controles.PB(self, _("Takeback"), self.takeback, plano=False).set_icono(Iconos.Atras())
         ly_bt.espacio(20).control(self.bt_back).control(self.chb_help)
 
         self.wpzs = QtWidgets.QWidget(self)
@@ -90,11 +99,11 @@ class WEndingsGTB(LCDialog.LCDialog):
 
         li_acciones = (
             None,
-            (" " + _("Restart"), Iconos.Reset(), self.restart),
+            (f" {_('Restart')}", Iconos.Reset(), self.restart),
             None,
-            (" " + _("New"), Iconos.New1(), self.nuevo),
+            (f" {_('New')}", Iconos.New1(), self.nuevo),
             None,
-            (" " + _("Remove"), Iconos.Remove1(), self.remove),
+            (f" {_('Remove')}", Iconos.Remove1(), self.remove),
             None,
         )
         self.tb_run = Controles.TBrutina(self, li_acciones, icon_size=32, puntos=self.configuration.x_tb_fontpoints)
@@ -109,8 +118,10 @@ class WEndingsGTB(LCDialog.LCDialog):
         o_columns.nueva("MOVES", _("Moves"), 120, align_center=True)
         o_columns.nueva("TIMEMS", _("Time"), 120, align_center=True)
         o_columns.nueva("AVERAGE", "⨊", 100, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
-        self.grid.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding))
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
+        self.grid.setSizePolicy(
+            QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+        )
 
         self.register_grid(self.grid)
 
@@ -119,12 +130,12 @@ class WEndingsGTB(LCDialog.LCDialog):
         config_board = self.configuration.config_board("ENDINGSGTB", 64)
         self.board = BoardEndings(self, config_board)
         self.board.set_startup_control(self.startup_control)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_side_bottom(True)
-        self.board.set_dispatcher(self.player_has_moved)
+        self.board.set_dispatcher(self.player_has_moved_dispatcher)
         self.board.set_dispatch_size(self.board_resized)
 
-        self.pzs = self.board.piezas
+        self.pzs = self.board.pieces
         self.playing = False
 
         ly_left_bottom = Colocacion.V().control(self.board).otro(ly_bt).relleno().margen(0)
@@ -159,7 +170,8 @@ class WEndingsGTB(LCDialog.LCDialog):
         self.w_board.setFixedWidth(self.board.ancho + 16)
         self.adjustSize()
 
-    def deactivate_eboard(self, ms):
+    @staticmethod
+    def deactivate_eboard(ms):
         if Code.eboard and Code.eboard.driver:
 
             def deactivate():
@@ -196,7 +208,7 @@ class WEndingsGTB(LCDialog.LCDialog):
 
     def startup_control(self):
         if self.playing:
-            if self.timer is None:
+            if self.timer == 0:
                 self.timer = time.time()
 
     def reset(self):
@@ -252,7 +264,7 @@ class WEndingsGTB(LCDialog.LCDialog):
         self.moves = 0
         self.is_helped = False
         self.replaying = False
-        self.timer = None
+        self.timer = 0
         self.playing = True
         self.continue_human()
 
@@ -308,7 +320,7 @@ class WEndingsGTB(LCDialog.LCDialog):
             self.db.examples_auto = examples_auto
             self.configuration.write_variables("endingsGTB", dic_vars)
             self.reinit = True
-            self.terminar()
+            self.finalize()
 
     def set_key(self, key):
         self.key = self.db.test_tipo(key)
@@ -343,10 +355,10 @@ class WEndingsGTB(LCDialog.LCDialog):
 
         self.board.set_position(self.game.first_position)
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return self.db.current_num_fens()
 
-    def grid_dato(self, grid, row, ocol):
+    def grid_dato(self, _grid, row, ocol):
         key = ocol.key
         if key == "NUM":
             return str(row + 1)
@@ -360,7 +372,7 @@ class WEndingsGTB(LCDialog.LCDialog):
             else:
                 moves = (mt + 1) // 2
             factor = timems / (moves * 1000)
-            return "%.1f" % factor
+            return f"{factor:.1f}"
         else:
             data = self.db.current_fen_field(row, ocol.key, None)
             if data is None:
@@ -379,7 +391,7 @@ class WEndingsGTB(LCDialog.LCDialog):
                 #         moves = (mt + 1) // 2
                 #     factor = data / (moves * 1000)
                 #     return "%.1f (%.1f)" % (data / 1000, factor)
-                return "%.1f" % (data / 1000,)
+                return f"{data / 1000:.1f}"
 
             # elif key == "TRIES":
             #     tok = self.db.current_fen_field(row, "TRIES_OK")
@@ -389,25 +401,25 @@ class WEndingsGTB(LCDialog.LCDialog):
             #     return "%d/%d" % (data, tok)
             return str(data)
 
-    def grid_cambiado_registro(self, grid, row, column):
+    def grid_cambiado_registro(self, _grid, row, _column):
         if row >= 0:
             self.reset()
             self.restart()
 
-    def grid_bold(self, grid, row, o_column):
+    def grid_bold(self, _grid, row, _obj_column):
         return row == self.act_recno
 
-    def grid_color_fondo(self, grid, row, o_column):
-        tok = self.db.current_fen_field(row, "TRIES_OK")
-        if tok > 0:
+    def grid_color_fondo(self, _grid, row, _obj_column):
+        if self.db.current_fen_field(row, "TRIES_OK") > 0:
             mt = self.db.current_fen_field(row, "MATE")
             if mt == 0 or ((mt + 1) // 2 == self.db.current_fen_field(row, "MOVES")):
                 return self.color_done
+        return None
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.restart()
 
-    def grid_right_button(self, grid, row, o_column, modif):
+    def grid_right_button(self, _grid, row, _obj_column, _modif):
         menu = QTDialogs.LCMenu(self)
         menu.opcion("reset", _("Reset data to 0"), Iconos.Delete())
         resp = menu.lanza()
@@ -415,7 +427,7 @@ class WEndingsGTB(LCDialog.LCDialog):
             self.db.reset_data_pos(row)
             self.grid.refresh()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.db.close()
         self.t4.close()
@@ -427,7 +439,7 @@ class WEndingsGTB(LCDialog.LCDialog):
         self.t4.close()
         self.save_video()
 
-    def change(self, event):
+    def change(self, _event):
         rondo = QTDialogs.rondo_puntos()
         menu = QTDialogs.LCMenuPiezas(self)
 
@@ -437,7 +449,7 @@ class WEndingsGTB(LCDialog.LCDialog):
 
         for key, li in dsubmenus.items():
             if li:
-                submenu = menu.submenu("K" + key, rondo.otro())
+                submenu = menu.submenu(f"K{key}", rondo.otro())
                 for keymenu in li:
                     submenu.opcion(keymenu, keymenu, rondo.otro())
 
@@ -483,7 +495,7 @@ class WEndingsGTB(LCDialog.LCDialog):
             else:
                 QTMessages.message_error(
                     self,
-                    _("Failed attempt") + "\n\n" + self.game.label_termination(),
+                    f"{_('Failed attempt')}\n\n{self.game.label_termination()}",
                     delayed=True,
                 )
 
@@ -514,7 +526,7 @@ class WEndingsGTB(LCDialog.LCDialog):
             self.komodo = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
         return self.komodo.play_fen(self.game.last_position.fen())
 
-    def sigueMaquina(self):
+    def continue_machine(self):
         ended, go_next = self.test_final()
         if ended:
             if go_next:
@@ -540,7 +552,7 @@ class WEndingsGTB(LCDialog.LCDialog):
         from_sq, to_sq, promotion = move[:2], move[2:4], move[4:]
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         self.game.add_move(move)
-        for movim in move.liMovs:
+        for movim in move.list_piece_moves:
             if movim[0] == "b":
                 self.board.remove_piece(movim[1])
             elif movim[0] == "m":
@@ -551,17 +563,17 @@ class WEndingsGTB(LCDialog.LCDialog):
         self.board.set_raw_last_position(self.game.last_position)
         self.continue_human()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
-        if self.timer:
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
+        if self.timer > 0:
             self.ms += int((time.time() - self.timer) * 1000)
         self.moves += 1
-        self.timer = None
+        self.timer = 0
 
         movimiento = from_sq + to_sq
 
         # Peon coronando
         if not promotion and self.game.last_position.pawn_can_promote(from_sq, to_sq):
-            promotion = self.board.peonCoronando(self.game.last_position.is_white)
+            promotion = self.board.pawn_promoting(self.game.last_position.is_white)
         if promotion:
             movimiento += promotion
 
@@ -569,7 +581,7 @@ class WEndingsGTB(LCDialog.LCDialog):
         if ok:
             self.game.add_move(move)
             self.board.set_position(move.position)
-            self.sigueMaquina()
+            self.continue_machine()
             return True
         else:
             return False
@@ -616,12 +628,12 @@ class WEndingsGTB(LCDialog.LCDialog):
             return
         self.set_position()
         if self.configuration.x_beep_replay:
-            Code.runSound.playBeep()
+            Code.runSound.play_beep()
         QtCore.QTimer.singleShot(self.configuration.x_interval_replay, self.mover_tiempo)
 
     def run_botones(self):
         key = self.sender().key
-        if key == "MoverTiempo":
+        if key == "move_timed":
             if self.replaying:
                 self.replaying = False
             else:
@@ -630,15 +642,15 @@ class WEndingsGTB(LCDialog.LCDialog):
                 self.set_position()
                 QtCore.QTimer.singleShot(self.configuration.x_interval_replay, self.mover_tiempo)
             return
-        elif key == "MoverInicio":
+        elif key == "move_to_beginning":
             self.pos_game = -1
-        elif key == "MoverAtras":
+        elif key == "move_back":
             if 0 <= self.pos_game:
                 self.pos_game -= 1
-        elif key == "MoverAdelante":
+        elif key == "move_forward":
             if self.pos_game < len(self.game):
                 self.pos_game += 1
-        elif key == "MoverFinal":
+        elif key == "move_to_end":
             self.pos_game = len(self.game) - 1
         self.set_position()
 
@@ -748,7 +760,7 @@ class WEndingsGTB(LCDialog.LCDialog):
 
         for key, li in dsubmenus.items():
             if li:
-                submenu = menu.submenu("K" + key, rondo.otro())
+                submenu = menu.submenu(f"K{key}", rondo.otro())
                 for keymenu in li:
                     submenu.opcion(keymenu, keymenu, rondo.otro())
 
@@ -770,7 +782,7 @@ class WEndingsGTB(LCDialog.LCDialog):
                     li = linea.strip().split(" ")
                     if li and len(li) >= 2:
                         if li[1] in "wb":
-                            fen = "%s %s - -" % (li[0], li[1])
+                            fen = f"{li[0]} {li[1]} - -"
                             li_fens.append(fen)
             self.import_lifens("fns", li_fens, um)
 
@@ -791,6 +803,8 @@ def train_gtb(wparent):
 
 
 class BoardEndings(Board.Board):
+    startup_control: Callable
+
     def set_startup_control(self, startup_control):
         self.startup_control = startup_control
 

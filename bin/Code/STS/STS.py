@@ -2,7 +2,7 @@ import collections
 import os
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Engines import Engines
 
 
@@ -357,7 +357,7 @@ class Formula:
         self.check_isdefault()
 
     def elo(self, pts: int):
-        return "%d" % int(pts * self.x + self.k) if pts else ""
+        return f"{int(pts * self.x + self.k)}" if pts else ""
 
 
 class STS:
@@ -376,7 +376,7 @@ class STS:
         folder = Code.configuration.paths.folder_sts()
         if not os.path.isdir(folder):
             Util.create_folder(folder)
-        return Util.opj(folder, "%s.sts" % self.name)
+        return Util.opj(folder, f"{self.name}.sts")
 
     def restore(self):
         dic = Util.restore_pickle(self.path())
@@ -407,7 +407,7 @@ class STS:
 
     def create_work(self, me):
         w = Work(len(self.groups))
-        w.ref = me.alias
+        w.ref = me.key
         if me.version and me.version not in w.ref:
             w.ref += f" {me.version}"
         w.engine = me
@@ -542,7 +542,7 @@ class STS:
         for x in range(len(self.groups)):
             group = self.groups.group(x)
             licabs.append(group.name)
-        f.write("%s\n" % ";".join(licabs))
+        f.write(f"{';'.join(licabs)}\n")
 
         def xt(c):
             return c[: c.find("/")] if "/" in c else ""
@@ -559,7 +559,7 @@ class STS:
             ]
             for x in range(len(self.groups)):
                 li.append(xt(self.done_points(work, x)))
-            f.write("%s\n" % ";".join(li))
+            f.write(f"{';'.join(li)}\n")
         f.close()
 
         Util.startfile(fich)

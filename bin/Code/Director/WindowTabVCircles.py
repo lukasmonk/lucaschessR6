@@ -3,13 +3,13 @@ import copy
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Board import Board, BoardTypes
 from Code.Director import TabVisual
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 
 
-class WTV_Circle(QtWidgets.QDialog):
+class WTVCircle(QtWidgets.QDialog):
     def __init__(self, owner, reg_circle):
 
         QtWidgets.QDialog.__init__(self, owner)
@@ -33,7 +33,7 @@ class WTV_Circle(QtWidgets.QDialog):
         config_board = owner.board.config_board.copia(owner.board.config_board.id())
         config_board.width_piece(36)
         self.board = Board.Board(self, config_board, with_director=False)
-        self.board.crea()
+        self.board.draw_window()
         self.board.copia_posicion_de(owner.board)
 
         # Datos generales
@@ -75,19 +75,19 @@ class WTV_Circle(QtWidgets.QDialog):
         self.setLayout(layout1)
 
         # Ejemplos
-        liMovs = ["b4c4", "e2e2", "e4g7"]
+        li_movs = ["b4c4", "e2e2", "e4g7"]
         self.liEjemplos = []
-        for a1h8 in liMovs:
+        for a1h8 in li_movs:
             reg_circle.a1h8 = a1h8
             reg_circle.siMovible = True
-            box = self.board.creaCircle(reg_circle)
+            box = self.board.create_circle(reg_circle)
             self.liEjemplos.append(box)
 
     def cambios(self):
         if hasattr(self, "form"):
             li = self.form.get()
             for n, box in enumerate(self.liEjemplos):
-                reg_circle = box.bloqueDatos
+                reg_circle = box.block_data
                 reg_circle.name = li[0]
                 reg_circle.tipo = li[1]
                 reg_circle.color = li[2]
@@ -102,7 +102,7 @@ class WTV_Circle(QtWidgets.QDialog):
             QTUtils.refresh_gui()
 
     def grabar(self):
-        reg_circle = self.liEjemplos[0].bloqueDatos
+        reg_circle = self.liEjemplos[0].block_data
         name = reg_circle.name.strip()
         if name == "":
             QTMessages.message_error(self, _("Name missing"))
@@ -117,7 +117,7 @@ class WTV_Circle(QtWidgets.QDialog):
         self.accept()
 
 
-class WTV_Circles(LCDialog.LCDialog):
+class WTVCircles(LCDialog.LCDialog):
     def __init__(self, owner, list_circles, db_circles):
 
         titulo = _("Circles")
@@ -139,10 +139,10 @@ class WTV_Circles(LCDialog.LCDialog):
         o_columns.nueva("NUMBER", _("N."), 60, align_center=True)
         o_columns.nueva("NOMBRE", _("Name"), 256)
 
-        self.grid = Grid.Grid(self, o_columns, xid="M", siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, xid="M", complete_row_select=True)
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("New"), Iconos.Nuevo(), self.mas)
         tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
         tb.new(_("Modify"), Iconos.Modificar(), self.modificar)
@@ -156,7 +156,7 @@ class WTV_Circles(LCDialog.LCDialog):
         # Board
         config_board = Code.configuration.config_board("EDIT_GRAPHICS", 48)
         self.board = Board.Board(self, config_board, with_director=False)
-        self.board.crea()
+        self.board.draw_window()
         self.board.copia_posicion_de(owner.board)
 
         # Layout
@@ -173,7 +173,7 @@ class WTV_Circles(LCDialog.LCDialog):
         for a1h8 in li_movs:
             reg_circle.a1h8 = a1h8
             reg_circle.siMovible = True
-            circle = self.board.creaCircle(reg_circle)
+            circle = self.board.create_circle(reg_circle)
             self.liEjemplos.append(circle)
 
         self.grid.gotop()
@@ -182,37 +182,38 @@ class WTV_Circles(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.close()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.lip_circles)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         if key == "NUMBER":
             return str(row + 1)
         elif key == "NOMBRE":
             return self.lip_circles[row].name
+        return None
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.modificar()
 
-    def grid_cambiado_registro(self, grid, row, o_column):
+    def grid_cambiado_registro(self, _grid, row, _obj_column):
         if row >= 0:
             reg_circle = self.lip_circles[row]
             for ejemplo in self.liEjemplos:
-                a1h8 = ejemplo.bloqueDatos.a1h8
+                a1h8 = ejemplo.block_data.a1h8
                 bd = copy.deepcopy(reg_circle)
                 bd.a1h8 = a1h8
                 bd.width_square = self.board.width_square
-                ejemplo.bloqueDatos = bd
+                ejemplo.block_data = bd
                 ejemplo.reset()
             self.board.escena.update()
 
     def mas(self):
-        w = WTV_Circle(self, None)
+        w = WTVCircle(self, None)
         if w.exec():
             reg_circle = w.reg_circle
             reg_circle.id = Util.huella()
@@ -237,7 +238,7 @@ class WTV_Circles(LCDialog.LCDialog):
     def modificar(self):
         row = self.grid.recno()
         if row >= 0:
-            w = WTV_Circle(self, self.lip_circles[row])
+            w = WTVCircle(self, self.lip_circles[row])
             if w.exec():
                 reg_circle = w.reg_circle
                 str_id = reg_circle.id
@@ -252,15 +253,15 @@ class WTV_Circles(LCDialog.LCDialog):
         if row >= 0:
             reg_circle = copy.deepcopy(self.lip_circles[row])
 
-            def siEstaNombre(name):
+            def exist_name(xname):
                 for rf in self.lip_circles:
-                    if rf.name == name:
+                    if rf.name == xname:
                         return True
                 return False
 
             n = 1
             name = "%s-%d" % (reg_circle.name, n)
-            while siEstaNombre(name):
+            while exist_name(name):
                 n += 1
                 name = "%s-%d" % (reg_circle.name, n)
             reg_circle.name = name

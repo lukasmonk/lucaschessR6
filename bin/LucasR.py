@@ -9,10 +9,19 @@ import sys
 import warnings
 import Code
 
-import faulthandler
-faulthandler.enable()
-
 warnings.simplefilter("ignore")
+
+try:
+    from Code.Update import UpdateLockedFiles
+    import os
+
+    bin_dir = os.path.dirname(os.path.abspath(__file__))
+    deleted = UpdateLockedFiles.cleanup_old_files(bin_dir, recursive=True)
+    if deleted:
+        print(f"Cleaned up {len(deleted)} old file(s) from previous update")
+except Exception:
+    # Don't fail startup if cleanup fails
+    pass
 
 n_args = len(sys.argv)
 if n_args == 1:
@@ -62,3 +71,4 @@ elif n_args >= 2:
 
     elif arg == "-healthcheck":
         sys.exit(0)
+

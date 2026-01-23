@@ -59,7 +59,7 @@ class ManagerTrainBooksOL(Manager.Manager):
         self.game_obj.read_pv(self.reg.lines[self.pos_line])
 
         self.main_window.active_game(True, False)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.remove_hints()
@@ -224,7 +224,7 @@ class ManagerTrainBooksOL(Manager.Manager):
             self.human_is_playing = True
             self.ini_time = time.time()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move_player: Move.Move = self.check_human_move(from_sq, to_sq, promotion)
         if not move_player:
             self.beep_error()
@@ -257,7 +257,7 @@ class ManagerTrainBooksOL(Manager.Manager):
             return False
 
         self.close_time()
-        self.move_the_pieces(move_player.liMovs)
+        self.move_the_pieces(move_player.list_piece_moves)
 
         self.add_move(move_player, True)
         self.play_next_move()
@@ -265,7 +265,7 @@ class ManagerTrainBooksOL(Manager.Manager):
 
     def rival_has_moved(self, move: Move.Move):
         self.add_move(move, False)
-        self.move_the_pieces(move.liMovs, True)
+        self.move_the_pieces(move.list_piece_moves, True)
         return True
 
     def add_move(self, move: Move.Move, is_player: bool):

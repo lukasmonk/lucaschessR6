@@ -16,14 +16,10 @@ class PhysicalPos:
         self.orden = int(orden)
 
     def copia(self):
-        p = PhysicalPos(self.x, self.y, self.ancho, self.alto, self.angulo, self.orden)
-        return p
+        return PhysicalPos(self.x, self.y, self.ancho, self.alto, self.angulo, self.orden)
 
     def __str__(self):
-        txt = ""
-        for var in ("x", "y", "ancho", "alto", "angulo", "orden"):
-            txt += "%s : %s\n" % (var, str(getattr(self, var)))
-        return txt
+        return "".join(f"{var} : {getattr(self, var)!s}\n" for var in ("x", "y", "ancho", "alto", "angulo", "orden"))
 
     def save_dic(self):
         dic = {}
@@ -135,7 +131,7 @@ class Bloque:
     def __str__(self):
         txt = ""
         for var, tipo in self.li_vars:
-            txt += "%s : %s\n" % (var, str(getattr(self, var)))
+            txt += f"{var} : {getattr(self, var)!s}\n"
         return txt
 
     def save_dic(self):
@@ -443,7 +439,7 @@ class SVG(Bloque):
     png: str
 
     def __init__(self, dic=None):
-        # orden por debajo de las piezas
+        # orden por debajo de las pieces
         li_vars = [
             ("physical_pos", "o", PhysicalPos(0, 0, 80, 80, 0, 9)),
             ("fa1h8", "c", "0.0,0.0,0.0,0.0"),
@@ -469,7 +465,7 @@ class Marker(Bloque):
     png: str
 
     def __init__(self, dic=None):
-        # orden por debajo de las piezas
+        # orden por debajo de las pieces
         li_vars = [
             ("physical_pos", "o", PhysicalPos(0, 0, 80, 80, 0, 9)),
             ("fa1h8", "c", "0.0,0.0,0.0,0.0"),
@@ -502,8 +498,8 @@ class Pizarra(QtWidgets.QWidget):
         self.chb = None
         self.bloqueada = False
         if edit_mode:
-            self.chb = Controles.CHB(self, _("With continue button"), False).capture_changes(self, self.save)
-            self.mensaje.capturaCambios(self.save)
+            self.chb = Controles.CHB(self, _("With continue button"), False).capture_changes(self.save)
+            self.mensaje.capture_changes(self.save)
         elif with_continue:
             self.pb = Controles.PB(self, _("Continue"), self.continuar, plano=False)
             self.bloqueada = True
@@ -511,10 +507,10 @@ class Pizarra(QtWidgets.QWidget):
         else:
             self.mensaje.read_only()
 
-        self.pbLeft = Controles.PB(self, "", self.go_left).ponIcono(Iconos.AnteriorF()).relative_width(24)
-        self.pbRight = Controles.PB(self, "", self.go_right).ponIcono(Iconos.SiguienteF()).relative_width(24)
-        self.pbDown = Controles.PB(self, "", self.go_down).ponIcono(Iconos.Abajo()).relative_width(24)
-        self.pbClose = Controles.PB(self, "", self.borrar).ponIcono(Iconos.CancelarPeque()).relative_width(24)
+        self.pbLeft = Controles.PB(self, "", self.go_left).set_icono(Iconos.AnteriorF()).relative_width(24)
+        self.pbRight = Controles.PB(self, "", self.go_right).set_icono(Iconos.SiguienteF()).relative_width(24)
+        self.pbDown = Controles.PB(self, "", self.go_down).set_icono(Iconos.Abajo()).relative_width(24)
+        self.pbClose = Controles.PB(self, "", self.borrar).set_icono(Iconos.CancelarPeque()).relative_width(24)
 
         cajon = QtWidgets.QWidget(self)
         ly = Colocacion.H()
@@ -574,7 +570,7 @@ class Pizarra(QtWidgets.QWidget):
         self.guion.posPizarra = "L"
 
     def write(self, tarea):
-        self.mensaje.ponHtml(tarea.texto())
+        self.mensaje.set_html(tarea.texto())
         self.tarea = tarea
         if self.chb:
             ok = self.tarea.continuar()
@@ -586,7 +582,7 @@ class Pizarra(QtWidgets.QWidget):
         self.tarea.texto(self.mensaje.html())
         if self.chb:
             self.tarea.continuar(self.chb.valor())
-        self.guion.savedPizarra()
+        self.guion.saved_pizarra()
 
     def is_blocked(self):
         if self.bloqueada:
@@ -601,7 +597,7 @@ class Pizarra(QtWidgets.QWidget):
         m = event.modifiers().value
         si_ctrl = (m & QtCore.Qt.KeyboardModifier.ControlModifier.value) > 0
         if si_ctrl and event.button() == QtCore.Qt.MouseButton.LeftButton:
-            self.guion.borrarPizarraActiva()
+            self.guion.remove_pizarra_active()
 
     def borrar(self):
-        self.guion.borrarPizarraActiva()
+        self.guion.remove_pizarra_active()

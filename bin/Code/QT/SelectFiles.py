@@ -3,7 +3,7 @@ import os
 from PySide6 import QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 
 
 def select_pgn(wowner):
@@ -39,10 +39,10 @@ def _lfTituloFiltro(extension, titulo):
     if " " in extension:
         filtro = extension
     else:
-        pathext = "*.%s" % extension
+        pathext = f"*.{extension}"
         if extension == "*" and Util.is_linux():
             pathext = "*"
-        filtro = _("File") + " %s (%s)" % (extension, pathext)
+        filtro = f"{_('File')} {extension} ({pathext})"
     return titulo, filtro
 
 

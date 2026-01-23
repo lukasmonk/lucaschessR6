@@ -30,7 +30,7 @@ padding: 2px;"""
         self.style_error = """background-color: #AB0000;color: white;"""
         self.style_normal = """background-color: white;color: black;"""
 
-        lb_title = Controles.LB(self, "<b>%s</b>" % _("Advanced mode")).align_center()
+        lb_title = Controles.LB(self, f"<b>{_('Advanced mode')}</b>").align_center()
         lb_title.setStyleSheet(style)
 
         ly_lineas = Colocacion.V().margen(0)
@@ -82,7 +82,7 @@ padding: 2px;"""
         lb_info = (
             Controles.LB(
                 self,
-                "<b>%s<br>%s - %s</b>" % (_("[ENTER] to add line"), _("F10 to check"), _("F1 help")),
+                f"<b>{_('[ENTER] to add line')}<br>{_('F10 to check')} - {_('F1 help')}</b>",
             )
             .align_center()
             .set_font_type(puntos=7)
@@ -197,7 +197,7 @@ padding: 2px;"""
             if position.is_white:
                 linea += "%d." % num_move
                 num_move += 1
-            linea += info_move.pgntr + " "
+            linea += f"{info_move.pgntr} "
             position.play(info_move.xfrom(), info_move.xto(), info_move.promotion())
 
         for ed in self.li_current_moves:
@@ -274,7 +274,7 @@ padding: 2px;"""
             QTMessages.message_error(self, _("You have not found the solution"))
 
         else:
-            self.li_lb_lineas[solution].setText("%s: %s" % (_("Solution"), linea))
+            self.li_lb_lineas[solution].setText(f"{_('Solution')}: {linea}")
             self.li_lb_lineas[solution].show()
             self.rut_return(True)
 

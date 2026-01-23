@@ -78,7 +78,7 @@ class ShortCuts:
         if resp is None:
             return
         if resp == "rem_all":
-            if QTMessages.pregunta(self.wlines, "%s<br>%s" % (_("Remove all"), _("Are you sure?"))):
+            if QTMessages.pregunta(self.wlines, f"{_('Remove all')}<br>{_('Are you sure?')}"):
                 self.li_shortcuts = []
                 self.reset()
                 return
@@ -114,7 +114,7 @@ class ShortCuts:
             if shortcut["ALT"]:
                 li_alt.remove(shortcut["ALT"])
 
-        form = FormLayout.FormLayout(self.wlines, _("Add shortcut"), Iconos.Atajos(), anchoMinimo=440)
+        form = FormLayout.FormLayout(self.wlines, _("Add shortcut"), Iconos.Atajos(), minimum_width=440)
         form.separador()
 
         form.edit(_("Name"), pgn)

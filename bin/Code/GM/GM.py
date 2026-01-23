@@ -1,11 +1,11 @@
 import operator
-import os
 import shutil
+from pathlib import Path
+from enum import Enum
 
 import FasterCode
 
 import Code
-from Code import Util
 from Code.Base import Move
 from Code.Base.Constantes import (
     BLACK,
@@ -14,6 +14,17 @@ from Code.Base.Constantes import (
     RESULT_WIN_WHITE,
     WHITE,
 )
+
+
+class GameMode(Enum):
+    STANDARD = "estandar"
+    PERSONAL = "personal"
+
+
+class ShowOption(Enum):
+    ALWAYS = None
+    WHEN_DIFFERENT = True
+    NEVER = False
 
 
 class GMgame:
@@ -31,15 +42,7 @@ class GMgame:
         self.len_pv = len(self.li_pv)
 
     def toline(self):
-        return "%s|%s|%s|%s|%s|%s|%s" % (
-            self.xpv,
-            self.event,
-            self.oponent,
-            self.date,
-            self.opening,
-            self.result,
-            self.color,
-        )
+        return f"{self.xpv}|{self.event}|{self.oponent}|{self.date}|{self.opening}|{self.result}|{self.color}"
 
     def is_white(self, is_white):
         if is_white:
@@ -61,15 +64,15 @@ class GMgame:
 
     def label(self, is_gm=True):
         if is_gm:
-            return _("Opponent") + ": <b>%s (%s)</b>" % (self.oponent, self.date)
+            return f'{_("Opponent")}: <b>{self.oponent} ({self.date})</b>'
         else:
-            return "%s (%s)" % (self.oponent, self.date)
+            return f"{self.oponent} ({self.date})"
 
     def basic_label(self, is_gm=True):
         if is_gm:
-            return _("Opponent") + ": %s (%s)" % (self.oponent, self.date)
+            return f'{_("Opponent")}: {self.oponent} ({self.date})'
         else:
-            return "%s (%s)" % (self.oponent, self.date)
+            return f"{self.oponent} ({self.date})"
 
 
 class GM:
@@ -93,8 +96,9 @@ class GM:
     def read(self):
         # (kupad fix) linux is case sensitive and can't find the xgm file because ficheroGM is all lower-case, but all
         # the xgm files have the first letter capitalized (including ones recently downloaded)
-        fichero_gm = "%s%s.xgm" % (self.gm[0].upper(), self.gm[1:])
-        with open(Util.opj(self.carpeta, fichero_gm), "rt", encoding="utf-8", errors="ignore") as f:
+        fichero_gm = f"{self.gm[0].upper()}{self.gm[1:]}.xgm"
+        file_path = Path(self.carpeta) / fichero_gm
+        with file_path.open("rt", encoding="utf-8", errors="ignore") as f:
             li = []
             for linea in f:
                 linea = linea.strip()
@@ -137,12 +141,13 @@ class GM:
         return True
 
     def alternativas(self):
-        li = []
+        # Usar un set para evitar duplicados y mejorar rendimiento O(n) en lugar de O(n²)
+        moves_set = set()
         for gmPartida in self.li_gm_games:
             move = gmPartida.move(self.ply)
-            if move and move not in li:
-                li.append(move)
-        return li
+            if move:
+                moves_set.add(move)
+        return list(moves_set)
 
     def get_moves_txt(self, position_before, is_gm):
         li = []
@@ -179,13 +184,13 @@ class GM:
         last_game = self.last_game
         opening = game.opening.tr_name if game.opening else last_game.opening
 
-        txt = _("Opponent") + " : <b>" + last_game.oponent + "</b><br>"
+        txt = f'{_("Opponent")} : <b>{last_game.oponent}</b><br>'
         event = last_game.event
         if event:
-            txt += _("Event") + " : <b>" + event + "</b><br>"
-        txt += _("Date") + " : <b>" + last_game.date + "</b><br>"
-        txt += _("Opening") + " : <b>" + opening + "</b><br>"
-        txt += _("Result") + " : <b>" + last_game.result + "</b><br>"
+            txt += f'{_("Event")} : <b>{event}</b><br>'
+        txt += f'{_("Date")} : <b>{last_game.date}</b><br>'
+        txt += f'{_("Opening")} : <b>{opening}</b><br>'
+        txt += f'{_("Result")} : <b>{last_game.result}</b><br>'
         txt += "<br>" * 2
         aciertos = 0
         for v in self.dicAciertos.values():
@@ -194,17 +199,12 @@ class GM:
         total = len(self.dicAciertos)
         if total:
             porc = int(aciertos * 100.0 / total)
-            txt += _("Hints") + " : <b>%d%%</b>" % porc
+            txt += f'{_("Hints")} : <b>{porc:d}%%</b>'
         else:
             porc = 0
 
-        event = " - %s" % event if event else ""
-        txt_summary = "%s%s - %s - %s" % (
-            last_game.oponent,
-            event,
-            last_game.date,
-            last_game.result,
-        )
+        event = f" - {event}" if event else ""
+        txt_summary = f"{last_game.oponent}{event} - {last_game.date} - {last_game.result}"
 
         return txt, porc, txt_summary
 
@@ -227,10 +227,11 @@ class GM:
         return li_regs
 
     def write(self):
-        fichero_gm = self.gm + ".xgm"
-        with open(Util.opj(self.carpeta, fichero_gm), "wt", encoding="utf-8", errors="ignore") as q:
+        fichero_gm = f"{self.gm}.xgm"
+        file_path = Path(self.carpeta) / fichero_gm
+        with file_path.open("wt", encoding="utf-8", errors="ignore") as q:
             for part in self.li_gm_games:
-                q.write(part.toline() + "\n")
+                q.write(f"{part.toline()}\n")
 
     def remove(self, num):
         del self.li_gm_games[num]
@@ -238,21 +239,21 @@ class GM:
 
 
 def get_folder_gm():
-    return Util.opj(Code.configuration.paths.folder_userdata(), "GM")
+    return Path(Code.configuration.paths.folder_userdata()) / "GM"
 
 
 def dic_gm():
     folder_gm = get_folder_gm()
-    if not os.path.isdir(folder_gm):
-        folder_ori_gm = Code.path_resource("GM")
+    if not folder_gm.is_dir():
+        folder_ori_gm = Path(Code.path_resource("GM"))
         shutil.copytree(folder_ori_gm, folder_gm)
     dic = {}
-    path_list = Code.path_resource("GM", "_listaGM.txt")
-    with open(path_list, "rt", encoding="utf-8", errors="ignore") as f:
+    path_list = Path(Code.path_resource("GM", "_listaGM.txt"))
+    with path_list.open("rt", encoding="utf-8", errors="ignore") as f:
         for linea in f:
             if linea:
                 li = linea.split("|")
-                gm = li[0].lower()
+                gm = f"{li[0].lower()}"
                 name = li[1]
                 dic[gm] = name
         return dic
@@ -261,17 +262,18 @@ def dic_gm():
 def lista_gm():
     dic = dic_gm()
     li = []
+    folder_gm = get_folder_gm()
 
-    for entry in Util.listdir(get_folder_gm()):
+    for entry in folder_gm.iterdir():
         fich = entry.name.lower()
         if fich.endswith(".xgm"):
             gm = fich[:-4].lower()
             li.append((dic.get(gm, gm), gm, True, True))
     if len(li) == 0:
-        folder_gm = get_folder_gm()
-        folder_ori_gm = Code.path_resource("GM")
-        for entry in os.scandir(folder_ori_gm):
-            shutil.copy(entry.path, folder_gm)
+        folder_ori_gm = Path(Code.path_resource("GM"))
+        for entry in folder_ori_gm.iterdir():
+            if entry.is_file():
+                shutil.copy(entry, folder_gm)
         return lista_gm()
 
     li = sorted(li, key=operator.itemgetter(0))
@@ -280,13 +282,14 @@ def lista_gm():
 
 def lista_gm_personal(carpeta):
     li = []
-    for entry in Util.listdir(carpeta):
+    carpeta_path = Path(carpeta)
+    for entry in carpeta_path.iterdir():
         fich = entry.name
         if fich.lower().endswith(".xgm"):
             gm = fich[:-4]
 
             si_w = si_b = False
-            with open(Util.opj(carpeta, fich), "rt", encoding="utf-8", errors="ignore") as f:
+            with entry.open("rt", encoding="utf-8", errors="ignore") as f:
                 for linea in f:
                     try:
                         gm_game = GMgame(linea.strip())
@@ -306,7 +309,7 @@ def lista_gm_personal(carpeta):
 
 class FabGM:
     def __init__(self, training_name, li_players, side, result):
-        self.training_path = Util.opj(Code.configuration.paths.folder_personal_trainings(), training_name) + ".xgm"
+        self.training_path = Path(Code.configuration.paths.folder_personal_trainings()) / f"{training_name}.xgm"
         self.li_players = li_players
 
         self.f = None
@@ -320,8 +323,8 @@ class FabGM:
 
     def check_previous(self):
         st_xpv = set()
-        if Util.exist_file(self.training_path):
-            with open(self.training_path, "rt", encoding="utf-8", errors="ignore") as f:
+        if self.training_path.exists():
+            with self.training_path.open("rt", encoding="utf-8", errors="ignore") as f:
                 for linea in f:
                     li_sp = linea.split("|")
                     if len(li_sp) > 1:
@@ -330,7 +333,7 @@ class FabGM:
 
     def write(self, txt):
         if self.f is None:
-            self.f = open(self.training_path, "at", encoding="utf-8", errors="ignore")
+            self.f = self.training_path.open("at", encoding="utf-8", errors="ignore")
         self.f.write(txt)
         self.added += 1
 
@@ -338,6 +341,12 @@ class FabGM:
         if self.f:
             self.f.close()
             self.f = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def other_game(self, game):
         dic = game.dic_tags()
@@ -403,29 +412,18 @@ class FabGM:
         pv = game.pv()
 
         event = dic.get("Event", "-")
-        oponente = dic.get("White", "?") + "-" + dic.get("Black", "?")
-        date = dic.get("Date", "-").replace("?", "").strip(".")
-        eco = dic.get("Eco", "-")
-        result = dic.get("Result", "-")
-        color = "W" if is_white else "B"
+        oponente = f"{dic.get('White', '?')}-{dic.get('Black', '?')}"
+        date = dic.get('Date', '-').replace('?', '').strip('.')
+        eco = dic.get('Eco', '-')
+        result = dic.get('Result', '-')
+        color = 'W' if is_white else 'B'
 
         def nopipe(txt):
             return txt.replace("|", " ").strip() if "|" in txt else txt
 
         xpv = FasterCode.pv_xpv(pv)
         if xpv not in self.st_xpv:
-            self.write(
-                "%s|%s|%s|%s|%s|%s|%s\n"
-                % (
-                    xpv,
-                    nopipe(event),
-                    nopipe(oponente),
-                    nopipe(date),
-                    eco,
-                    result,
-                    color,
-                )
-            )
+            self.write(f"{xpv}|{nopipe(event)}|{nopipe(oponente)}|{nopipe(date)}|{eco}|{result}|{color}\n")
             self.st_xpv.add(xpv)
 
     def xprocesa(self):

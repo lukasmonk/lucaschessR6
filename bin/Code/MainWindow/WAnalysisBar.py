@@ -152,10 +152,10 @@ class AnalysisBar(QtWidgets.QWidget):
                             for pos in range(0, len(li), 2):
                                 txt = li[pos]
                                 if pos < len(li) - 1:
-                                    txt += " " + li[pos + 1]
+                                    txt += f" {li[pos + 1]}"
                                 sli.append(txt)
                             pgn = "\n".join(sli)
-                        tooltip = main + "\n" + pgn
+                        tooltip = f"{main}\n{pgn}"
                         self.setToolTip(tooltip)
 
                 else:

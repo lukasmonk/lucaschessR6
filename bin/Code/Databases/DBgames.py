@@ -3,12 +3,11 @@ import random
 import sqlite3
 import time
 
+import FasterCode
 from PySide6 import QtCore
 
-import FasterCode
-
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import FEN_INITIAL, STANDARD_TAGS, TACTICTHEMES
 from Code.Databases import DBgamesST
@@ -73,7 +72,7 @@ class DBgames:
         summary_depth = self.read_config("SUMMARY_DEPTH", 0)
         self.with_db_stat = summary_depth > 0
         if self.with_db_stat:
-            self.db_stat = DBgamesST.TreeSTAT(self.path_file + ".st1", summary_depth)
+            self.db_stat = DBgamesST.TreeSTAT(f"{self.path_file}.st1", summary_depth)
         else:
             self.db_stat = None
 
@@ -134,8 +133,8 @@ class DBgames:
                 elif key == "PLYCOUNT":
                     licreate.append("PLYCOUNT INT")
                 else:
-                    licreate.append('"%s" VARCHAR' % key)
-                lifields.append('"%s"' % key)
+                    licreate.append(f'"{key}" VARCHAR')
+                lifields.append(f'"{key}"')
         sql_create = ",".join(licreate)
         sql_fields = ",".join(lifields)
         sql_select = ",".join(['Games_old."%s"' % f.replace('"', '') for f in lifields])
@@ -164,7 +163,7 @@ class DBgames:
 
     @property
     def select(self):
-        return ",".join('"%s"' % campo for campo in self.li_fields)
+        return ",".join(f'"{campo}"' for campo in self.li_fields)
 
     def lista_campos(self):
         try:
@@ -290,14 +289,14 @@ class DBgames:
                 li = []
                 for unpv in pv:
                     xpv = pv_xpv(unpv)
-                    li.append('XPV LIKE "%s%%"' % xpv)
-                condicion = "(%s)" % (" OR ".join(li),)
+                    li.append(f'XPV LIKE "{xpv}%"')
+                condicion = f"({' OR '.join(li)})"
         elif pv:
             xpv = pv_xpv(pv)
-            condicion = 'XPV LIKE "%s%%"' % xpv if xpv else ""
+            condicion = f'XPV LIKE "{xpv}%"' if xpv else ""
         if additional_condition:
             if condicion:
-                condicion += " AND (%s)" % additional_condition
+                condicion += f" AND ({additional_condition})"
             else:
                 condicion = additional_condition
         self.filter = condicion
@@ -412,7 +411,7 @@ class DBgames:
     def remove_duplicates(self):
         li_mirar = [field for field in self.li_fields if field.upper() not in ("_DATA_", "ECO", "XPV", "PLYCOUNT")]
         select = ",".join(li_mirar)
-        sql_xpv = "SELECT ROWID, %s FROM Games WHERE XPV = ?" % select
+        sql_xpv = f"SELECT ROWID, {select} FROM Games WHERE XPV = ?"
 
         st_rowid_borrar = set()
         sql = "SELECT XPV FROM Games GROUP BY XPV HAVING COUNT(XPV) > 1"
@@ -438,7 +437,7 @@ class DBgames:
         sql = "UPDATE Games SET _DATA_=NULL"
         if li_recnos is None:
             if self.filter:
-                sql += " WHERE %s" % self.filter
+                sql += f" WHERE {self.filter}"
             self.conexion.execute(sql)
         else:
             for recno in li_recnos:
@@ -464,7 +463,7 @@ class DBgames:
 
         if not self.with_db_stat:
             self.with_db_stat = True
-            self.db_stat = DBgamesST.TreeSTAT(self.path_file + ".st1", depth)
+            self.db_stat = DBgamesST.TreeSTAT(f"{self.path_file}.st1", depth)
 
         self.save_config("SUMMARY_DEPTH", depth)
         self.db_stat.depth = depth
@@ -509,12 +508,12 @@ class DBgames:
     def count_data(self, filtro):
         sql = "SELECT COUNT(*) FROM Games"
         if self.filter:
-            sql += " WHERE %s" % self.filter
+            sql += f" WHERE {self.filter}"
             if filtro:
-                sql += " AND %s" % filtro
+                sql += f" AND {filtro}"
         else:
             if filtro:
-                sql += " WHERE %s" % filtro
+                sql += f" WHERE {filtro}"
 
         cursor = self.conexion.execute(sql)
         return cursor.fetchone()[0]
@@ -573,14 +572,14 @@ class DBgames:
 
     def yield_data(self, li_fields, filtro):
         select = ",".join(li_fields)
-        sql = "SELECT %s FROM Games" % (select,)
+        sql = f"SELECT {select} FROM Games"
         if self.filter:
-            sql += " WHERE %s" % self.filter
+            sql += f" WHERE {self.filter}"
             if filtro:
-                sql += " AND (%s)" % filtro
+                sql += f" AND ({filtro})"
         else:
             if filtro:
-                sql += " WHERE (%s)" % filtro
+                sql += f" WHERE ({filtro})"
 
         cursor = self.conexion.execute(sql)
         while True:
@@ -606,10 +605,10 @@ class DBgames:
         si_white = select_field("WHITE")
         si_black = select_field("BLACK")
         select = ",".join(selected_fields)
-        sql = "SELECT %s FROM Games" % (select,)
+        sql = f"SELECT {select} FROM Games"
 
         if self.filter:
-            sql += " WHERE %s" % self.filter
+            sql += f" WHERE {self.filter}"
 
         cursor = self.conexion.execute(sql)
         result = "*"
@@ -774,17 +773,17 @@ class DBgames:
         return self.insert(game) if recno is None else self.modify(recno, game)
 
     def fill(self, li_field_value):
-        lset = ",".join(field + "=?" for field, value in li_field_value)
-        sql = "UPDATE Games SET " + lset
+        lset = ",".join(f"{field}=?" for field, value in li_field_value)
+        sql = f"UPDATE Games SET {lset}"
         if self.filter:
-            sql += " WHERE %s" % self.filter
+            sql += f" WHERE {self.filter}"
         self.conexion.execute(sql, [value for field, value in li_field_value])
         self.conexion.commit()
 
     def fill_pgn(self, field):
         sql = "SELECT ROWID, XPV FROM Games"
         if self.filter:
-            sql += " WHERE %s" % self.filter
+            sql += f" WHERE {self.filter}"
         cursor = self.conexion.execute(sql)
         for rowid, xpv in cursor.fetchall():
             if xpv.startswith("|"):
@@ -794,14 +793,14 @@ class DBgames:
             else:
                 pgn = xpv_pgn(xpv)
             pgn = pgn.replace("\n", " ")
-            sql = "UPDATE Games SET %s=? WHERE ROWID=?" % field
+            sql = f"UPDATE Games SET {field}=? WHERE ROWID=?"
             self.conexion.execute(sql, [pgn, rowid])
         self.conexion.commit()
 
     def fill_opening(self, field):
         sql = "SELECT ROWID, XPV FROM Games"
         if self.filter:
-            sql += " WHERE %s" % self.filter
+            sql += f" WHERE {self.filter}"
         cursor = self.conexion.execute(sql)
         op_std = OpeningsStd.ap
         for rowid, xpv in cursor.fetchall():
@@ -809,7 +808,7 @@ class DBgames:
                 continue
             name = op_std.xpv(xpv)
             if name:
-                sql = "UPDATE Games SET %s=? WHERE ROWID=?" % field
+                sql = f"UPDATE Games SET {field}=? WHERE ROWID=?"
                 self.conexion.execute(sql, [name, rowid])
         self.conexion.commit()
 
@@ -863,7 +862,7 @@ class DBgames:
                 ferr.write(b"\n")
 
         si_cols_cambiados = False
-        quoted_fields = ",".join(['"%s"' % campo for campo in self.li_fields])
+        quoted_fields = ",".join([f'"{campo}"' for campo in self.li_fields])
         select_values = ("?," * len(self.li_fields))[:-1]
         sql = f"INSERT INTO Games ({quoted_fields}) VALUES ({select_values});"
 
@@ -884,7 +883,7 @@ class DBgames:
                 # Copiar todos los XPVs existentes (una sola query)
                 conexion.execute("INSERT INTO temp_import_xpv SELECT XPV FROM Games")
                 conexion.commit()
-            except sqlite3.Error as e:
+            except sqlite3.Error:
                 # Si falla la creación de la tabla temporal, continuar sin ella
                 # (fallback al método antiguo)
                 duplicate_check = False
@@ -899,10 +898,10 @@ class DBgames:
 
         for file in ficheros:
             nomfichero = os.path.basename(file)
-            fich_erroneos = Util.opj(Code.configuration.temporary_folder(), nomfichero[:-3] + "errors.pgn")
+            fich_erroneos = Util.opj(Code.configuration.temporary_folder(), f"{nomfichero[:-3]}errors.pgn")
             fich_duplicados = Util.opj(
                 Code.configuration.temporary_folder(),
-                nomfichero[:-3] + "duplicates.pgn",
+                f"{nomfichero[:-3]}duplicates.pgn",
             )
             dl_tmp.pon_titulo(nomfichero)
             next_n = random.randint(800, 1500)
@@ -949,7 +948,7 @@ class DBgames:
                                 erroneos += 1
                                 write_logs(fich_erroneos, fpgn.bpgn())
                                 continue
-                            xpv = "|%s|%s" % (fen, xpv)
+                            xpv = f"|{fen}|{xpv}"
 
                     if not fen:
                         if not allows_complete_games:
@@ -1002,7 +1001,7 @@ class DBgames:
 
                             self.add_column(k)
                             si_cols_cambiados = True
-                            quoted_fields = ",".join(['"%s"' % f for f in self.li_fields])
+                            quoted_fields = ",".join([f'"{f}"' for f in self.li_fields])
                             select_values = ("?," * len(self.li_fields))[:-1]
                             sql = f"INSERT INTO Games ({quoted_fields}) VALUES ({select_values});"
 
@@ -1092,7 +1091,7 @@ class DBgames:
         dcabs_db = db.read_config("dcabs", {})
         self.save_config("dcabs", dcabs_db)
 
-        quoted_fields = ",".join(['"%s"' % f for f in db.li_fields])
+        quoted_fields = ",".join([f'"{f}"' for f in db.li_fields])
         select_values = ("?," * len(db.li_fields))[:-1]
         sql = f"INSERT INTO Games ({quoted_fields}) VALUES ({select_values});"
 
@@ -1218,7 +1217,7 @@ class DBgames:
         li_fields.insert(0, "XPV")
         fields = ",".join(li_fields)
         values = ",".join(["?"] * len(li_fields))
-        return "INSERT INTO Games (%s) VALUES (%s)" % (fields, values)
+        return f"INSERT INTO Games ({fields}) VALUES ({values})"
 
     def add_reg_lichess(self, sql, fen, pv, row, with_commit):
         xpv = f"|{fen}|{pv_xpv(pv)}"
@@ -1337,7 +1336,7 @@ class DBgames:
         xpv_nue = pv_xpv(pv_nue)
         if si_fen_nue:
             fen_nue = game_new.first_position.fen()
-            xpv_nue = "|%s|%s" % (fen_nue, xpv_nue)
+            xpv_nue = f"|{fen_nue}|{xpv_nue}"
         if not self.allows_duplicates:
             sql = "SELECT COUNT(*) FROM Games WHERE XPV = ?"
             cursor = self.conexion.execute(sql, (xpv_nue,))
@@ -1424,13 +1423,13 @@ class DBgames:
         if li_seq:
             for pv in li_seq:
                 xpv = pv_xpv(pv)
-                li.append('XPV LIKE "%s%%"' % xpv)
+                li.append(f'XPV LIKE "{xpv}%"')
 
         if li_rowids:
             for rowid in li_rowids:
                 li.append(f'ROWID = {rowid}')
 
-        condicion = "(%s)" % (" OR ".join(li),)
+        condicion = f"({' OR '.join(li)})"
         self.filter = condicion
 
         self.li_row_ids = []

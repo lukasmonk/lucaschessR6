@@ -42,7 +42,7 @@ class WindowTutor(LCDialog.LCDialog):
             if not si:
                 return None, None, None
             board = Board.Board(self, config_board)
-            board.crea()
+            board.draw_window()
             board.set_side_bottom(is_white)
             board.disable_eboard_here()
             lytb, tb = QTDialogs.ly_mini_buttons(self, name, si_libre, siMas=si_mas)
@@ -87,7 +87,7 @@ class WindowTutor(LCDialog.LCDialog):
 
             lb_openings = Controles.LB(self, _("Opening")).set_font(f).align_center()
             lb_openings.setFixedWidth(self.boardOpening.ancho)
-            lb_openings.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            lb_openings.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             manager.configuration.set_property(lb_openings, "tutor-tutor" if has_hints else "tutor-tutor-disabled")
             if has_hints:
                 lb_openings.mousePressEvent = self.select_opening
@@ -104,7 +104,7 @@ class WindowTutor(LCDialog.LCDialog):
 
         ly_rm = Colocacion.H().control(self.lbRM).control(self.cbRM).relleno(1)
 
-        bt_libros = Controles.PB(self, " %s " % _("Consult a book"), self.consult_book).ponPlano(False)
+        bt_libros = Controles.PB(self, f" {_('Consult a book')} ", self.consult_book).set_flat(False)
 
         dic_vista = {
             POS_TUTOR_HORIZONTAL: ((0, 1), (0, 2)),
@@ -163,8 +163,8 @@ class WindowTutor(LCDialog.LCDialog):
     def board_wheel_event(self, board, forward):
         forward = Code.configuration.wheel_board(forward)
         for t in ["Tutor", "Usuario", "Rival", "Opening"]:
-            if ast.literal_eval("self.board%s == board" % t):
-                self.run_toolbar(t.lower() + "Mover" + ("Adelante" if forward else "Atras"))
+            if ast.literal_eval(f"self.board{t} == board"):
+                self.run_toolbar(f"{t.lower()}Mover{'Adelante' if forward else 'Atras'}")
                 return
 
     def consult_book(self):

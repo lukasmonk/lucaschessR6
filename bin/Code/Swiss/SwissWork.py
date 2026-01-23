@@ -39,7 +39,7 @@ class SwissesWorkDB:
 
 class SwissWork:
     def __init__(self, swiss: Swiss.Swiss):
-        self.path = swiss.path() + ".work"
+        self.path = f"{swiss.path()}.work"
         self.nom_swiss = swiss.name()
         self.swiss = swiss
         self.season = swiss.read_season()

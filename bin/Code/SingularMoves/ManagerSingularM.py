@@ -1,6 +1,7 @@
 import time
+from typing import Optional, Any
 
-from Code.Base import Game
+from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GT_SINGULAR_MOVES,
     ST_ENDGAME,
@@ -12,11 +13,18 @@ from Code.Base.Constantes import (
     TB_UTILITIES,
 )
 from Code.ManagerBase import Manager
+from Code.SingularMoves import SingularMoves
 
 
 class ManagerSingularM(Manager.Manager):
-    def start(self, singularMoves):
-        self.singularMoves = singularMoves
+    is_rival_thinking: bool
+    singularMoves: SingularMoves.SingularMoves
+    pos_bloque: int
+    linea_bloque: Any
+    time_inicio: float
+
+    def start(self, singular_moves):
+        self.singularMoves = singular_moves
 
         self.pos_bloque = 0
         self.game_type = GT_SINGULAR_MOVES
@@ -35,7 +43,7 @@ class ManagerSingularM(Manager.Manager):
 
         self.main_window.active_game(True, True)
         self.main_window.remove_hints(True)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
 
         self.pgn_refresh(True)
 
@@ -116,41 +124,42 @@ class ManagerSingularM(Manager.Manager):
 
     def set_clock(self):
         p = self.calc_puntuacion(time.time() - self.time_inicio)
-        self.main_window.set_clock_white("%0.2f" % p, None)
+        self.main_window.set_clock_white(f"{p:0.2f}", None)
 
     def resign(self):
         self.add_move(None)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
-        jgSel = self.check_human_move(from_sq, to_sq, promotion)
-        if not jgSel:
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
+        move_select = self.check_human_move(from_sq, to_sq, promotion)
+        if not move_select:
             return False
-        self.add_move(jgSel)
+        self.add_move(move_select)
+        return True
 
-    def add_move(self, jgSel):
+    def add_move(self, move: Optional[Move.Move]):
         self.main_window.stop_clock()
         tm = time.time() - self.time_inicio
         self.linea_bloque.time = tm
         score = self.calc_puntuacion(tm)
 
-        resp = jgSel.movimiento() if jgSel else "a1a1"
+        resp = move.movimiento() if move else "a1a1"
         bm = self.linea_bloque.bm
         ok = bm == resp
         self.linea_bloque.score = score if ok else 0
-        self.main_window.set_clock_white("%0.2f" % self.linea_bloque.score, None)
+        self.main_window.set_clock_white(f"{self.linea_bloque.score:0.2f}", None)
 
         self.singularMoves.add_bloque_sol(self.linea_bloque)
         self.main_window.set_clock_black(self.singularMoves.rotulo_media(), None)
 
-        if jgSel:
-            self.move_the_pieces(jgSel.liMovs)
+        if move:
+            self.move_the_pieces(move.list_piece_moves)
 
-            self.game.add_move(jgSel)
+            self.game.add_move(move)
             self.check_boards_setposition()
 
-            self.put_arrow_sc(jgSel.from_sq, jgSel.to_sq)
+            self.put_arrow_sc(move.from_sq, move.to_sq)
             if not ok:
-                self.board.creaFlechaTmp(bm[:2], bm[2:], False)
+                self.board.show_one_arrow_temp(bm[:2], bm[2:], False)
             self.beep_extended(True)
 
         else:
@@ -172,9 +181,9 @@ class ManagerSingularM(Manager.Manager):
         self.refresh()
 
     def current_pgn(self):
-        resp = '[Event "%s"]\n' % _("Challenge 101")
-        resp += '[FEN "%s"\n' % self.game.first_position.fen()
+        resp = f"[Event \"{_('Challenge 101')}\"]\n"
+        resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
-        resp += "\n" + self.game.pgn_base()
+        resp += f"\n{self.game.pgn_base()}"
 
         return resp

@@ -83,7 +83,7 @@ class Translations:
     @staticmethod
     def get_path_openings(lang):
         path_locale = Code.path_resource("Locale")
-        return "%s/%s/LC_MESSAGES/lcopenings.mo" % (path_locale, lang)
+        return f"{path_locale}/{lang}/LC_MESSAGES/lcopenings.mo"
 
     def check_lang(self, lang):
         if not lang:

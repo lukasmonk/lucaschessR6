@@ -19,8 +19,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
         if with_blinfold:
             menu_cg = menu.submenu(_("Blindfold chess"), Iconos.Ojo())
 
-            si = self.manager.board.blindfold
-            if si:
+            if self.manager.board.blindfold_something():
                 ico = Iconos.Naranja()
                 tit = _("Disable")
             else:
@@ -32,7 +31,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
             menu_cg.separador()
             menu_cg.opcion(
                 "cg_pgn",
-                "%s: %s" % (_("PGN"), _("Hide") if self.manager.pgn.must_show else _("Show")),
+                f"{_('PGN')}: {_('Hide') if self.manager.pgn.must_show else _('Show')}",
                 Iconos.PGN(),
             )
 
@@ -52,7 +51,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
         label = _("Disable") if self.main_window.onTop else _("Enable")
         menu.opcion(
             "ontop",
-            "%s: %s" % (label, _("window on top")),
+            f"{label}: {_('window on top')}",
             Iconos.Unpin() if self.main_window.onTop else Iconos.Pin(),
         )
 
@@ -61,7 +60,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
         label = _("Disable") if self.configuration.x_direct_graphics else _("Enable")
         menu.opcion(
             "mouseGraphics",
-            "%s: %s" % (label, _("Live graphics with the right mouse button")),
+            f"{label}: {_('Live graphics with the right mouse button')}",
             Iconos.RightMouse(),
         )
 
@@ -71,7 +70,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
         label = _("Save engines log")
         if is_engines_log_active:
             icono = Iconos.LogActive()
-            label += " ...%s" % _("Working...")
+            label += f" ...{_('Working...')}"
             key = "log_close"
         else:
             icono = Iconos.LogInactive()
@@ -85,7 +84,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
             prefix = _("Disable") if self.manager.auto_rotate else _("Enable")
             menu.opcion(
                 "auto_rotate",
-                "%s: %s" % (prefix, _("Auto-rotate board")),
+                f"{prefix}: {_('Auto-rotate board')}",
                 Iconos.JS_Rotacion(),
             )
 
@@ -120,7 +119,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
                 self.external_engines()
 
             elif resp == "ontop":
-                self.main_window.onTopWindow()
+                self.main_window.on_top_window()
 
             elif resp == "mouseGraphics":
                 self.configuration.x_direct_graphics = not self.configuration.x_direct_graphics
@@ -132,10 +131,10 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
                     self.manager.pgn.must_show = not self.manager.pgn.must_show
                     self.manager.refresh_pgn()
                 elif orden == "change":
-                    self.board.blindfoldChange()
+                    self.board.blindfold_change()
 
                 elif orden == "conf":
-                    self.board.blindfoldConfig()
+                    self.board.blindfold_config()
 
             elif resp == "auto_rotate":
                 self.manager.change_auto_rotate()
@@ -143,7 +142,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
         return None
 
     def config_sonido(self):
-        form = FormLayout.FormLayout(self.main_window, _("Configuration"), Iconos.S_Play(), anchoMinimo=440)
+        form = FormLayout.FormLayout(self.main_window, _("Configuration"), Iconos.S_Play(), minimum_width=440)
         form.separador()
         form.apart(_("After each opponent move"))
         form.checkbox(_("Sound a beep"), self.configuration.x_sound_beep)
@@ -181,7 +180,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
         self.manager.manager_analyzer = self.procesador.change_manager_analyzer()
 
         self.manager.manager_tutor = self.procesador.change_manager_tutor()
-        self.manager.set_label2(_("Tutor") + ": <b>" + self.manager.manager_tutor.engine.name)
+        self.manager.set_label2(f"{_('Tutor')}: <b>{self.manager.manager_tutor.engine.name}")
         self.manager.is_analyzed_by_tutor = False
 
         if self.manager.game_type == GT_AGAINST_ENGINE:

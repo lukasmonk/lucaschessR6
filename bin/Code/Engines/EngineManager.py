@@ -4,7 +4,7 @@ from typing import Callable, Optional
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util, Debug
 from Code.Engines import EngineResponse, EngineRun, Engines, Priorities
 from Code.SQL import UtilSQL
 
@@ -59,6 +59,15 @@ class EngineManager:
         if self.engine_run:
             self.engine_run.set_multipv(multipv)
 
+    def maximize_multipv(self):
+        self.change_multipv(self.engine.maxMultiPV)
+
+    def set_multipv_var(self, multipv_var: str | int):
+        previo = self.engine.multiPV
+        self.engine.set_multipv_var(multipv_var)
+        if previo != self.engine.multiPV:
+            self.change_multipv(self.engine.multiPV)
+
     def set_option(self, name, value):
         if self.check_engine():
             self.engine_run.set_option(name, value)
@@ -77,9 +86,7 @@ class EngineManager:
             and self.engine_run is not None
             and self.engine_run.mrm is not None
         ):
-            mrm = self.engine_run.get_mrm()
-            if mrm:
-                mrm = mrm.clone()
+            if mrm := self.engine_run.get_mrm():
                 if self.depthchanged_connected_to(mrm) is False:
                     self.engine_run.stop()
 
@@ -117,8 +124,6 @@ class EngineManager:
         self.starting_the_engine = True
 
         if __debug__:
-            from Code import Debug
-
             Debug.prln(f"EngineManager.open called for {self.engine.name} {self.huella}", color="yellow")
 
         config_enginerun = EngineRun.StartEngineParams()
@@ -222,3 +227,10 @@ class EngineManager:
 
     def is_run_fast(self):
         return self.run_engine_params.is_fast()
+
+    def update_time_run(self, time_secs_white, time_secs_black, inc_time_secs_move):
+        self.run_engine_params.update_var_time(time_secs_white, time_secs_black, inc_time_secs_move)
+
+    @property
+    def name(self):
+        return self.engine.name

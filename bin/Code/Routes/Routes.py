@@ -2,7 +2,7 @@ import datetime
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Translations import TrListas
 
@@ -17,7 +17,7 @@ C_MILES = 1.609344
 
 
 def km_mi(km, is_miles):
-    return "%0.0f %s" % (float(km) / C_MILES, _("mi")) if is_miles else "%d %s" % (km, _("km"))
+    return f"{float(km) / C_MILES:0.0f} {_('mi')}" if is_miles else "%d %s" % (km, _("km"))
 
 
 class Station:
@@ -100,7 +100,7 @@ class Transsiberian:
 
         self.base = base = Code.path_resource("IntFiles", "Routes", "Transsiberian")
 
-        plant = base + "/transsiberian.%s"
+        plant = f"{base}/transsiberian.%s"
         self.svg = self.read_svg(plant)
         self.lines = self.read_dat(plant)
 
@@ -148,12 +148,12 @@ class Transsiberian:
 
         self.dicEndings = {}
         for tp in "01M":
-            with open(Code.path_resource("IntFiles", "endings%s.ini" % tp)) as f:
+            with open(Code.path_resource("IntFiles", f"endings{tp}.ini")) as f:
                 for linea in f:
                     linea = linea.strip()
                     if linea:
                         if linea.startswith("["):
-                            lastkey = "%s,%s" % (linea.strip("[] "), tp)
+                            lastkey = f"{linea.strip('[] ')},{tp}"
                             self.dicEndings[lastkey] = []
                         else:
                             self.dicEndings[lastkey].append(linea)
@@ -178,7 +178,7 @@ class Transsiberian:
             x = f.read()
             dic = TrListas.transsiberian()
             for k, v in dic.items():
-                x = x.replace(">%s<" % k, ">%s<" % v)
+                x = x.replace(f">{k}<", f">{v}<")
             return x
 
     def read_dat(self, base):
@@ -260,7 +260,7 @@ class Transsiberian:
         self.configuration.write_variables("TRANSSIBERIAN", self.write_dic())
 
     def write_with_level(self):
-        self.configuration.write_variables("TRANSSIBERIAN%s" % self._level, self.write_dic())
+        self.configuration.write_variables(f"TRANSSIBERIAN{self._level}", self.write_dic())
 
     def get_line(self):
         km = self._km
@@ -275,10 +275,10 @@ class Transsiberian:
     def get_txt(self):
         line = self.get_line()
         xpos = line.km_xpos(self._km)
-        xtrain = "%0.5f" % (xpos - 6.2,)
+        xtrain = f"{xpos - 6.2:0.5f}"
 
         xmoscow = self.lines[0].st_from.xpos
-        xkm = "%0.5f" % (xpos - xmoscow,)
+        xkm = f"{xpos - xmoscow:0.5f}"
 
         txt = self.svg.replace(self.key_km, xkm).replace(self.key_train, xtrain)
         return txt
@@ -489,7 +489,7 @@ class Transsiberian:
 
     def mens_tactic(self, is_end):
         st_from, st_to = self.get_track()
-        mens = "%s - %s" % (st_from.name, st_to.name)
+        mens = f"{st_from.name} - {st_to.name}"
         kmdif = st_to.km - self._km
 
         mens += "<br>" + _("To arrive to %s: %s") % (
@@ -498,7 +498,7 @@ class Transsiberian:
         )
         if not is_end:
             kmtac = min(self._km_tactic, kmdif)
-            mens += "<br>" + _("Advance: %s") % km_mi(kmtac, self._is_miles)
+            mens += f"<br>{_('Advance: %s') % km_mi(kmtac, self._is_miles)}"
         return mens
 
     def get_ending(self):

@@ -54,8 +54,10 @@ from Code.Base.Constantes import (  # TB_BOXROOMS_PGN,
     TB_TOOLS,
     TB_TRAIN,
     TB_TUTOR_STOP,
+    TB_ADJUDICATOR_STOP,
     TB_UTILITIES,
     TB_VARIATIONS,
+    TB_ADJUDICATOR,
 )
 from Code.Board import Board
 from Code.MainWindow import WAnalysisBar, WindowSolve
@@ -65,8 +67,25 @@ from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, QT
 
 
 class WBase(QtWidgets.QWidget):
-    dicToolbar: dict
+    dic_toolbar: dict
     tb: QtWidgets.QToolBar
+    board: Board.Board
+    lb_player_white: Controles.LB
+    lb_player_black: Controles.LB
+    lb_capt_white: Controles.LB
+    lb_capt_black: Controles.LB
+    lb_clock_white: Controles.LB
+    lb_clock_black: Controles.LB
+    lb_rotulo1: Controles.LB
+    lb_rotulo2: Controles.LB
+    lb_rotulo3: Controles.LB
+    lb_clock_black: Controles.LB
+    lb_clock_black: Controles.LB
+    pgn: Grid.Grid
+    bt_capt: Controles.PB
+    bt_active_tutor: Controles.PB
+    wmessage: "WMessage"
+    wsolve: WindowSolve.WSolve
 
     def __init__(self, parent, manager):
         super(WBase, self).__init__(parent)
@@ -89,7 +108,7 @@ class WBase(QtWidgets.QWidget):
         self.analysis_bar = None
         self.create_analysis_bar()
 
-        ly_bi = self.creaBloqueInformacion()
+        ly_bi = self.create_information_block()
 
         ly_bb = Colocacion.H().control(self.analysis_bar).control(self.board)
         ly_t = Colocacion.V().otro(ly_bb).relleno().margen(0)
@@ -201,7 +220,6 @@ class WBase(QtWidgets.QWidget):
             TB_PGN_LABELS: (_("PGN labels"), Iconos.InformacionPGN()),
             TB_OTHER_GAME: (_("Other game"), Iconos.FicheroRepite()),
             TB_DRAW: (_("Draw"), Iconos.Tablas()),
-            # TB_BOXROOMS_PGN: (_("Boxrooms PGN"), Iconos.BoxRooms()),
             TB_END_REPLAY: (_("End"), Iconos.MainMenu()),
             TB_SLOW_REPLAY: (_("Slow"), Iconos.Pelicula_Lento()),
             TB_PAUSE: (_("Pause"), Iconos.Pelicula_Pausa()),
@@ -227,7 +245,9 @@ class WBase(QtWidgets.QWidget):
             TB_COMMENTS: (_("Disable"), Iconos.Comment32()),
             TB_REPLAY: (_("Replay"), Iconos.Pelicula()),
             TB_SETTINGS: (_("Options"), Iconos.Preferencias()),
-            TB_TUTOR_STOP: (_("Tutor"), Iconos.StopTraining()),
+            TB_TUTOR_STOP: (_("Stop"), Iconos.StopTraining()),
+            TB_ADJUDICATOR_STOP: (_("Stop"), Iconos.StopTraining()),
+            TB_ADJUDICATOR: (_("Adjudicator"), Iconos.Adjudicator()),
         }
 
     def launch_shortcuts(self):
@@ -244,38 +264,38 @@ class WBase(QtWidgets.QWidget):
         key = "BASE" if self.parent.key_video == "maind" else "BASEV"
         config_board = self.manager.configuration.config_board(key, mx)
         self.board = Board.Board(self, config_board, allow_eboard=True)
-        self.board.crea()
+        self.board.draw_window()
         self.board.setFocus()
 
-        Delegados.genera_pm(self.board.piezas)
+        Delegados.genera_pm(self.board.pieces)
 
     def create_analysis_bar(self):
         self.analysis_bar = WAnalysisBar.AnalysisBar(self, self.board)
 
-    def columnas60(self, siPoner, cNivel, cWhite, cBlack):
-        if cNivel is None:
-            cNivel = _("Level")[0]
-        if cWhite is None:
-            cWhite = _("Errors")
-        if cBlack is None:
-            cBlack = _("Second(s)")
+    def columnas60(self, activate, label_level, label_white, label_black):
+        if label_level is None:
+            label_level = _("Level")[0]
+        if label_white is None:
+            label_white = _("Errors")
+        if label_black is None:
+            label_black = _("Second(s)")
         o_columns = self.pgn.o_columns
-        o_columns.li_columns[0].head = cNivel if siPoner else _("N.")
-        o_columns.li_columns[1].head = cWhite if siPoner else _("White")
-        o_columns.li_columns[2].head = cBlack if siPoner else _("Black")
-        o_columns.li_columns[0].key = "LEVEL" if siPoner else "NUMBER"
-        o_columns.li_columns[1].key = "ERRORS" if siPoner else "WHITE"
-        o_columns.li_columns[2].key = "TIME" if siPoner else "BLACK"
-        self.pgn.releerColumnas()
+        o_columns.li_columns[0].head = label_level if activate else _("N.")
+        o_columns.li_columns[1].head = label_white if activate else _("White")
+        o_columns.li_columns[2].head = label_black if activate else _("Black")
+        o_columns.li_columns[0].key = "LEVEL" if activate else "NUMBER"
+        o_columns.li_columns[1].key = "ERRORS" if activate else "WHITE"
+        o_columns.li_columns[2].key = "TIME" if activate else "BLACK"
+        self.pgn.reread_columns()
 
-        self.pgn.seleccionaFilas(siPoner, False)
+        self.pgn.how_select_rows(activate, False)
 
-    def ponWhiteBlack(self, white, black):
+    def set_white_black(self, white, black):
         o_columns = self.pgn.o_columns
         o_columns.li_columns[1].head = white if white else _("White")
         o_columns.li_columns[2].head = black if black else _("Black")
 
-    def creaBloqueInformacion(self):
+    def create_information_block(self):
         configuration = self.manager.configuration
         width_pgn = configuration.x_pgn_width
         width_each_color = (width_pgn - 52 - 18) // 2
@@ -299,8 +319,8 @@ class WBase(QtWidgets.QWidget):
         self.pgn = Grid.Grid(
             self,
             o_columns,
-            siCabeceraMovible=False,
-            altoFila=configuration.x_pgn_rowheight,
+            is_column_header_movable=False,
+            heigh_row=configuration.x_pgn_rowheight,
         )
         self.pgn.setMinimumWidth(width_pgn)
         self.pgn.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -327,7 +347,7 @@ class WBase(QtWidgets.QWidget):
             Controles.PB(self, self.captures_symbol(), self.captures_mouse_pressed).set_font_type(puntos=14)
         ).relative_width(10)
 
-        width_pgn = self.pgn.anchoColumnas() + 18
+        width_pgn = self.pgn.width_columns_displayables() + 18
         n_ancho_capt = (width_pgn - self.bt_capt.width() - 2) // 2
         self.lb_capt_white.setFixedWidth(n_ancho_capt)
         self.lb_capt_black.setFixedWidth(n_ancho_capt)
@@ -340,15 +360,15 @@ class WBase(QtWidgets.QWidget):
         # Relojes
         f = Controles.FontType(puntos=26, peso=500)
 
-        def lbReloj():
+        def label_clock():
             lb = Controles.LB(self, "00:00").set_font(f).align_center()
             lb.setFixedWidth(n_width_name_players)
-            lb.setFrameStyle(QtWidgets.QFrame.Box | QtWidgets.QFrame.Raised)
+            lb.setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
             self.configuration.set_property(lb, "clock")
             return lb
 
-        self.lb_clock_white = lbReloj()
-        self.lb_clock_black = lbReloj()
+        self.lb_clock_white = label_clock()
+        self.lb_clock_black = label_clock()
 
         f = Controles.FontType(puntos=12)
         # Boton de tutor activo
@@ -356,10 +376,10 @@ class WBase(QtWidgets.QWidget):
 
         # Rotulos de informacion
         f = Controles.FontType(puntos=configuration.x_sizefont_infolabels)
-        self.lbRotulo1 = Controles.LB(self).set_wrap().set_font(f)
-        self.lbRotulo2 = Controles.LB(self).set_wrap().set_font(f)
-        self.lbRotulo3 = Controles.LB(self).set_wrap().set_font(f)
-        self.lbRotulo3.setStyleSheet("*{ border: 1px solid darkgray }")
+        self.lb_rotulo1 = Controles.LB(self).set_wrap().set_font(f)
+        self.lb_rotulo2 = Controles.LB(self).set_wrap().set_font(f)
+        self.lb_rotulo3 = Controles.LB(self).set_wrap().set_font(f)
+        self.lb_rotulo3.setStyleSheet("*{ border: 1px solid darkgray }")
 
         # Rotulo de mensajes de trabajo con un cancelar
         self.wmessage = WMessage(self)
@@ -377,9 +397,9 @@ class WBase(QtWidgets.QWidget):
         self.lb_clock_black.hide()
         self.pgn.hide()
         self.bt_active_tutor.hide()
-        self.lbRotulo1.hide()
-        self.lbRotulo2.hide()
-        self.lbRotulo3.hide()
+        self.lb_rotulo1.hide()
+        self.lb_rotulo2.hide()
+        self.lb_rotulo3.hide()
         self.wsolve.hide()
         self.wmessage.hide()
 
@@ -406,7 +426,7 @@ class WBase(QtWidgets.QWidget):
         ly_abajo.setSizeConstraint(ly_abajo.SizeConstraint.SetFixedSize)
         ly_abajo.otro(ly_capturas)
         ly_abajo.control(self.bt_active_tutor)
-        ly_abajo.control(self.lbRotulo1).control(self.lbRotulo2).control(self.lbRotulo3).control(self.wmessage)
+        ly_abajo.control(self.lb_rotulo1).control(self.lb_rotulo2).control(self.lb_rotulo3).control(self.wmessage)
 
         ly_v = Colocacion.V().otro(ly_color).control(self.wsolve).control(self.pgn)
         ly_v.otro(ly_abajo)
@@ -416,7 +436,7 @@ class WBase(QtWidgets.QWidget):
     def captures_symbol(self):
         return "-" if self.configuration.x_captures_mode_diferences else "≡"
 
-    def captures_mouse_pressed(self, event):
+    def captures_mouse_pressed(self, _event):
         Code.configuration.x_captures_mode_diferences = not Code.configuration.x_captures_mode_diferences
         self.bt_capt.set_text(self.captures_symbol())
         self.configuration.graba()
@@ -468,9 +488,9 @@ class WBase(QtWidgets.QWidget):
     def is_enabled_option_toolbar(self, kopcion):
         return kopcion in self.dic_toolbar and self.dic_toolbar[kopcion].isEnabled()
 
-    def enable_option_toolbar(self, kopcion, siHabilitar):
+    def enable_option_toolbar(self, kopcion, activate):
         if kopcion in self.dic_toolbar:
-            self.dic_toolbar[kopcion].setEnabled(siHabilitar)
+            self.dic_toolbar[kopcion].setEnabled(activate)
 
     def show_option_toolbar(self, kopcion, must_show):
         if kopcion in self.dic_toolbar:
@@ -484,8 +504,8 @@ class WBase(QtWidgets.QWidget):
             title = _("Disable") if Code.eboard.driver else _("Enable")
             self.set_title_toolbar(TB_EBOARD, title)
 
-    def set_activate_tutor(self, siActivar):
-        self.si_tutor = siActivar
+    def set_activate_tutor(self, activate):
+        self.si_tutor = activate
         self.set_label_tutor()
 
     def set_label_tutor(self):
@@ -502,26 +522,26 @@ class WBase(QtWidgets.QWidget):
     def change_tutor_active(self):
         self.manager.change_tutor_active()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return self.manager.num_rows()
 
-    def grid_left_button(self, grid, row, column):
-        self.manager.goto_pgn_base(row, column.key)
+    def grid_left_button(self, _grid, row, obj_column):
+        self.manager.goto_pgn_base(row, obj_column.key)
 
-    def grid_right_button(self, grid, row, column, modificadores):
+    def grid_right_button(self, _grid, row, obj_column, modificadores):
         self.manager.grid_right_mouse(modificadores.is_shift, modificadores.is_control, modificadores.is_alt)
-        self.manager.goto_pgn_base(row, column.key)
+        self.manager.goto_pgn_base(row, obj_column.key)
 
     def board_right_mouse(self, is_shift, is_control, is_alt):
         if hasattr(self.manager, "board_right_mouse"):
             self.manager.board_right_mouse(is_shift, is_control, is_alt)
 
-    def grid_doble_click(self, grid, row, column):
-        if column.key == "NUMBER":
+    def grid_doble_click(self, _grid, row, obj_column):
+        if obj_column.key == "NUMBER":
             return
-        self.manager.analize_position(row, column.key)
+        self.manager.analize_position(row, obj_column.key)
 
-    def grid_pulsada_cabecera(self, grid, column):
+    def grid_pressed_header(self, _grid, _obj_column):
         col_white = self.pgn.o_columns.column(1)
         col_black = self.pgn.o_columns.column(2)
         new_width = 0
@@ -533,8 +553,8 @@ class WBase(QtWidgets.QWidget):
         if new_width:
             col_white.ancho = new_width
             col_black.ancho = new_width
-            self.pgn.set_widthsColumnas()
-            n_ancho_pgn = self.pgn.anchoColumnas() + 18
+            self.pgn.set_widths_columns()
+            n_ancho_pgn = self.pgn.width_columns_displayables() + 18
             self.pgn.setMinimumWidth(n_ancho_pgn)
             self.manager.configuration.x_pgn_width = n_ancho_pgn
             self.manager.configuration.graba()
@@ -550,16 +570,16 @@ class WBase(QtWidgets.QWidget):
             self.lb_capt_white.setFixedWidth(n_ancho_capt)
             self.lb_capt_black.setFixedWidth(n_ancho_capt)
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, _grid, k, _is_shift, _is_control, _is_alt):
         self.key_pressed("G", k)
 
-    def grid_wheel_event(self, ogrid, forward):
+    def grid_wheel_event(self, _grid, forward):
         self.key_pressed(
             "T",
             (QtCore.Qt.Key.Key_Left if self.configuration.wheel_pgn(forward) else QtCore.Qt.Key.Key_Right),
         )
 
-    def grid_dato(self, grid, row, o_columna):
+    def grid_dato(self, _grid, row, o_columna):
         control_pgn = self.manager.pgn
 
         col = o_columna.key
@@ -605,7 +625,7 @@ class WBase(QtWidgets.QWidget):
                 pts = rm.puntos
                 if not is_white:
                     pts = -pts
-                info = "%+0.2f" % float(pts / 100.0)
+                info = f"{float(pts / 100.0):+0.2f}"
 
             if color_nag == NAG_0:  # Son prioritarios los nags manuales
                 nothing, color_nag = mrm.set_nag_color(rm)
@@ -626,11 +646,11 @@ class WBase(QtWidgets.QWidget):
         if move.has_themes():
             if not image_initial:
                 image_initial = ""
-            image_initial += "|" + (move.li_themes[0] if len(move.li_themes) == 1 else "⧉")  # "📚")
+            image_initial += f"|{move.li_themes[0] if len(move.li_themes) == 1 else '⧉'}"  # "📚")
 
         return pgn, color, info, image_initial, st_nags
 
-    def grid_setvalue(self, grid, row, o_column, valor):
+    def grid_setvalue(self, grid, row, obj_column, valor):
         pass
 
     def keyPressEvent(self, event):
@@ -642,11 +662,11 @@ class WBase(QtWidgets.QWidget):
                     return
         self.key_pressed("V", event.key())
 
-    def board_wheel_event(self, board, forward):
+    def board_wheel_event(self, _board, forward):
         forward = self.configuration.wheel_board(forward)
         self.key_pressed("T", QtCore.Qt.Key.Key_Left if forward else QtCore.Qt.Key.Key_Right)
 
-    def key_pressed(self, tipo, tecla):
+    def key_pressed(self, _tipo, tecla):
         if self.procesandoEventos:
             QTUtils.refresh_gui()
             return
@@ -676,9 +696,9 @@ class WBase(QtWidgets.QWidget):
     def active_game(self, si_activar, si_reloj):
         self.pgn.setVisible(si_activar)
         self.bt_active_tutor.setVisible(si_activar)
-        self.lbRotulo1.setVisible(False)
-        self.lbRotulo2.setVisible(False)
-        self.lbRotulo3.setVisible(False)
+        self.lb_rotulo1.setVisible(False)
+        self.lb_rotulo2.setVisible(False)
+        self.lb_rotulo3.setVisible(False)
         self.lb_capt_white.setVisible(False)
         self.lb_capt_black.setVisible(False)
         self.bt_capt.setVisible(False)
@@ -695,9 +715,9 @@ class WBase(QtWidgets.QWidget):
         for control in (
             self.pgn,
             self.bt_active_tutor,
-            self.lbRotulo1,
-            self.lbRotulo2,
-            self.lbRotulo3,
+            self.lb_rotulo1,
+            self.lb_rotulo2,
+            self.lb_rotulo3,
             self.lb_capt_white,
             self.lb_capt_black,
             self.bt_capt,
@@ -727,9 +747,9 @@ class WBase(QtWidgets.QWidget):
                 self.tb,
                 self.pgn,
                 self.bt_active_tutor,
-                self.lbRotulo1,
-                self.lbRotulo2,
-                self.lbRotulo3,
+                self.lb_rotulo1,
+                self.lb_rotulo2,
+                self.lb_rotulo3,
                 self.lb_player_white,
                 self.lb_player_black,
                 self.lb_clock_white,
@@ -737,7 +757,7 @@ class WBase(QtWidgets.QWidget):
                 self.lb_capt_white,
                 self.lb_capt_black,
                 self.bt_capt,
-                self.parent.informacionPGN,
+                self.parent.pgn_information,
                 self.wsolve,
                 self.wmessage,
             ):
@@ -752,8 +772,8 @@ class WBase(QtWidgets.QWidget):
         self.change_player_labels(bl, ng)
 
     def change_player_labels(self, bl, ng):
-        self.lb_player_white.altoMinimo(0)
-        self.lb_player_black.altoMinimo(0)
+        self.lb_player_white.minimum_height(0)
+        self.lb_player_black.minimum_height(0)
         self.lb_player_white.set_text(bl)
         self.lb_player_black.set_text(ng)
         self.lb_player_white.show()
@@ -763,9 +783,9 @@ class WBase(QtWidgets.QWidget):
         hb = self.lb_player_white.height()
         hn = self.lb_player_black.height()
         if hb > hn:
-            self.lb_player_black.altoMinimo(hb)
+            self.lb_player_black.minimum_height(hb)
         elif hb < hn:
-            self.lb_player_white.altoMinimo(hn)
+            self.lb_player_white.minimum_height(hn)
 
     def put_captures(self, dic):
         value_num = {"q": 10, "r": 5, "b": 3, "n": 3, "p": 1, "k": 0}
@@ -783,10 +803,9 @@ class WBase(QtWidgets.QWidget):
         def xshow(tp, li, lb, xnum):
             html = "<small>%+d</small>" % xnum if xnum else ""
             li.sort(key=lambda xx: value[xx.lower()])
+            folder_pgn_pieces = Code.configuration.paths.folder_pieces_png()
             for n, xpz in enumerate(li):
-                html += (
-                    f'<img src="{Code.configuration.paths.folder_pieces_png()}/{tp}{xpz.lower()}.png" width="30" height="30">'
-                )
+                html += f'<img src="{folder_pgn_pieces}/{tp}{xpz.lower()}.png" width="30" height="30">'
             lb.set_text(html)
 
         xshow("b", d[True], self.lb_capt_white, xvpz if xvpz > 0 else 0)
@@ -818,45 +837,45 @@ class WBase(QtWidgets.QWidget):
 
     def set_label1(self, label):
         if label:
-            self.lbRotulo1.set_text(label)
-            self.lbRotulo1.show()
+            self.lb_rotulo1.set_text(label)
+            self.lb_rotulo1.show()
         else:
-            self.lbRotulo1.hide()
-        return self.lbRotulo1
+            self.lb_rotulo1.hide()
+        return self.lb_rotulo1
 
     def set_label2(self, label):
         if label:
-            self.lbRotulo2.set_text(label)
-            self.lbRotulo2.show()
+            self.lb_rotulo2.set_text(label)
+            self.lb_rotulo2.show()
         else:
-            self.lbRotulo2.hide()
-        return self.lbRotulo2
+            self.lb_rotulo2.hide()
+        return self.lb_rotulo2
 
     def set_hight_label3(self, px):
-        self.lbRotulo3.altoFijo(px)
+        self.lb_rotulo3.fixed_height(px)
 
     def set_label3(self, label):
         if label is not None:
-            self.lbRotulo3.set_text(label)
-            self.lbRotulo3.show()
+            self.lb_rotulo3.set_text(label)
+            self.lb_rotulo3.show()
         else:
-            self.lbRotulo3.hide()
-        return self.lbRotulo3
+            self.lb_rotulo3.hide()
+        return self.lb_rotulo3
 
     def get_labels(self):
         def get(lb):
             return lb.texto() if lb.isVisible() else None
 
-        return get(self.lbRotulo1), get(self.lbRotulo2), get(self.lbRotulo3)
+        return get(self.lb_rotulo1), get(self.lb_rotulo2), get(self.lb_rotulo3)
 
     def set_clock_white(self, tm, tm2):
         if tm2 is not None:
-            tm += '<br><FONT SIZE="-4">' + tm2
+            tm += f"<br><FONT SIZE=\"-4\">{tm2}"
         self.lb_clock_white.set_text(tm)
 
     def set_clock_black(self, tm, tm2):
         if tm2 is not None:
-            tm += '<br><FONT SIZE="-4">' + tm2
+            tm += f"<br><FONT SIZE=\"-4\">{tm2}"
         self.lb_clock_black.set_text(tm)
 
     def hide_clock_white(self):

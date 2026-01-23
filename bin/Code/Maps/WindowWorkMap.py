@@ -27,7 +27,7 @@ class WMap(LCDialog.LCDialog):
         titulo = self.workmap.name_map()
         icono = getattr(Iconos, mapa)()
 
-        LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, icono, mapa + "01")
+        LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, icono, f"{mapa}01")
 
         self.procesador = procesador
 
@@ -41,17 +41,17 @@ class WMap(LCDialog.LCDialog):
             "TYPE",
             "",
             24,
-            edicion=Delegados.PmIconosBMT(dicIconos=dic_iconos),
+            edicion=Delegados.PmIconosBMT(dict_icons=dic_iconos),
             align_center=True,
         )
         o_columns.nueva("SELECT", _("Select a country"), 140)
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, xid="W")
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, xid="W")
 
         self.register_grid(self.grid)
 
         li_acciones = [
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Play"), Iconos.Empezar(), self.play),
             None,
@@ -81,11 +81,11 @@ class WMap(LCDialog.LCDialog):
         o_columns.nueva("DEND", _("End date"), 110, align_center=True)
         o_columns.nueva("RESULT", _("Result"), 110, align_center=True)
 
-        self.gridData = Grid.Grid(self, o_columns, siSelecFilas=True, xid="H", siCabeceraMovible=False)
+        self.gridData = Grid.Grid(self, o_columns, complete_row_select=True, xid="H", is_column_header_movable=False)
         self.register_grid(self.gridData)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Select"), Iconos.Seleccionar(), self.data_select),
             None,
@@ -152,7 +152,7 @@ class WMap(LCDialog.LCDialog):
         if resp:
             tipo, model = resp.split("_")
             if tipo == "sts":
-                li_gen = [(None, None)]
+                li_gen: list = [(None, None)]
                 li_r = [(str(x), x) for x in range(1, 100)]
                 config = FormLayout.Combobox(_("Model"), li_r)
                 li_gen.append((config, "1"))
@@ -160,7 +160,7 @@ class WMap(LCDialog.LCDialog):
                     li_gen,
                     title=_("STS: Strategic Test Suite"),
                     parent=self,
-                    anchoMinimo=160,
+                    minimum_width=160,
                     icon=Iconos.Maps(),
                 )
                 if resultado is None:
@@ -187,7 +187,7 @@ class WMap(LCDialog.LCDialog):
 
     def data_select(self):
         row = self.gridData.recno()
-        self.workmap.activaRowID(row)
+        self.workmap.activa_rowid(row)
         self.active_workmap(gotop=False)
         self.check_pending()
 
@@ -204,22 +204,22 @@ class WMap(LCDialog.LCDialog):
         self.informacion()
 
     def data_remove(self):
-        raw = self.workmap.db.listaRaws[self.gridData.recno()]
+        raw = self.workmap.db.list_raws[self.gridData.recno()]
         if raw["ACTIVE"] != "X":
             if QTMessages.pregunta(self, _X(_("Delete %1?"), _("this work"))):
                 self.workmap.db.borra(raw["ROWID"])
                 self.gridData.refresh()
 
     def informacion(self):
-        current = self.workmap.nameCurrent()
+        current = self.workmap.name_current()
         hechos, total = self.workmap.get_done()
         info = self.workmap.get_info()
         tipo = self.workmap.get_tipo()
-        txt = '<b><span style="color:#C156F8">%s: %s</span>' % (_("Active"), current) if current else ""
+        txt = f"<b><span style=\"color:#C156F8\">{_('Active')}: {current}</span>" if current else ""
         txt += (
-            '<br><span style="color:brown">%s: %s</span></b>' % (_("Type"), tipo)
+            f"<br><span style=\"color:brown\">{_('Type')}: {tipo}</span></b>"
             + '<br><span style="color:teal">%s: %d/%d</span></b>' % (_("Done"), hechos, total)
-            + '<br><span style="color:blue">%s: %s</span></b>' % (_("Result"), info if info else "")
+            + f"<br><span style=\"color:blue\">{_('Result')}: {info if info else ''}</span></b>"
         )
         self.lbInfo.set_text(txt)
 
@@ -233,26 +233,26 @@ class WMap(LCDialog.LCDialog):
         else:
             self.do_work()
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, grid, row, _obj_column):
         if grid == self.grid:
             self.lanza(row)
         else:
             self.data_select()
-            self.tab.activa(0)
+            self.tab.activate(0)
 
     def play(self):
         row = self.grid.recno()
         self.lanza(row)
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
     def grid_num_datos(self, grid):
         return self.workmap.num_rows() if grid.id == "W" else self.workmap.db.num_rows()
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        key = obj_column.key
         return self.workmap.dato(row, key) if grid.id == "W" else self.workmap.db.dato(row, key)
 
 
@@ -272,11 +272,11 @@ class WUnSTSMap(LCDialog.LCDialog):
         config_board = self.configuration.config_board("STSMAP", 48)
 
         self.board = Board.Board(self, config_board)
-        self.board.crea()
-        self.board.set_dispatcher(self.player_has_moved)
+        self.board.draw_window()
+        self.board.set_dispatcher(self.player_has_moved_dispatcher)
 
         # Rotulos informacion
-        self.lbJuego = Controles.LB(self).set_wrap().anchoMinimo(200).align_center()
+        self.lbJuego = Controles.LB(self).set_wrap().minimum_width(200).align_center()
 
         # Tool bar
         self.li_acciones = (
@@ -315,7 +315,7 @@ class WUnSTSMap(LCDialog.LCDialog):
         self.position = cp = Position.Position()
         cp.read_fen(self.alm.fen)
 
-        mens = "<h2>%s</h2><br>" % self.alm.name
+        mens = f"<h2>{self.alm.name}</h2><br>"
 
         si_w = cp.is_white
         color, color_r = _("White"), _("Black")
@@ -338,12 +338,12 @@ class WUnSTSMap(LCDialog.LCDialog):
 
             enr = menr(c_k, c_q)
             if enr:
-                mens += "<br>%s : %s" % (color, enr)
+                mens += f"<br>{color} : {enr}"
             enr = menr(c_kr, c_qr)
             if enr:
-                mens += "<br>%s : %s" % (color_r, enr)
+                mens += f"<br>{color_r} : {enr}"
         if cp.en_passant != "-":
-            mens += "<br>     %s : %s" % (_("En passant"), cp.en_passant)
+            mens += f"<br>     {_('En passant')} : {cp.en_passant}"
         self.lbJuego.set_text(mens)
 
         si_w = cp.is_white
@@ -352,12 +352,12 @@ class WUnSTSMap(LCDialog.LCDialog):
         self.board.set_side_indicator(si_w)
         self.board.activate_side(si_w)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         self.board.disable_all()
 
         # Peon coronando
         if not promotion and self.position.pawn_can_promote(from_sq, to_sq):
-            promotion = self.board.peonCoronando(self.position.is_white)
+            promotion = self.board.pawn_promoting(self.position.is_white)
 
         ok, mens, move = Move.get_game_move(None, self.position, from_sq, to_sq, promotion)
         if ok:
@@ -381,9 +381,9 @@ class WUnSTSMap(LCDialog.LCDialog):
         done_pv = move.movimiento().lower()
         dic_results = self.alm.dic_results
 
-        mens = "<h2>%s</h2><br>" % self.alm.name
+        mens = f"<h2>{self.alm.name}</h2><br>"
 
-        mens += "<table><tr><th>%s</th><th>%s</th></tr>" % (_("Move"), _("Score"))
+        mens += f"<table><tr><th>{_('Move')}</th><th>{_('Score')}</th></tr>"
         mx = 0
         ok = False
         style_pv = ' style="color:red;"'

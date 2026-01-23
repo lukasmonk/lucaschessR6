@@ -1,5 +1,5 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Coordinates import CoordinatesBasic, CoordinatesConfig, WRunCoordinatesBasic
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
@@ -20,12 +20,12 @@ class WCoordinatesBasic(LCDialog.LCDialog):
         o_columns.nueva("DATE", _("Date"), 140, align_center=True)
         o_columns.nueva("SIDE", _("Side"), 100, align_center=True)
         o_columns.nueva("SCORE", _("Score"), 90, align_center=True)
-        self.glista = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
+        self.glista = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
         f = Controles.FontType(puntos=configuration.x_font_points)
         self.glista.set_font(f)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Play"), Iconos.Play(), self.play),
             None,
@@ -41,18 +41,18 @@ class WCoordinatesBasic(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.anchoColumnas() + 30, default_height=340)
+        self.restore_video(default_width=self.glista.width_columns_displayables() + 30, default_height=340)
 
         self.glista.gotop()
 
     def config_change(self):
         self.config.change(self)
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.play()
 
     def borrar(self):
-        li = self.glista.recnosSeleccionados()
+        li = self.glista.list_selected_recnos()
         if len(li) > 0:
             mens = _("Do you want to delete all selected records?")
             if QTMessages.pregunta(self, mens):
@@ -62,23 +62,24 @@ class WCoordinatesBasic(LCDialog.LCDialog):
                 if recno >= self.grid_num_datos(None):
                     self.glista.gotop()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.db)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         coordinate: CoordinatesBasic.CoordinatesBasic = self.db.coordinate(row)
-        col = o_column.key
+        col = obj_column.key
         if col == "DATE":
             return Util.dtostr_hm(coordinate.date)
         elif col == "SIDE":
             return coordinate.str_side()
         elif col == "SCORE":
             return "%d" % coordinate.score
+        return None
 
     def closeEvent(self, event):  # Cierre con X
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 

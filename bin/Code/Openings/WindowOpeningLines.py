@@ -1,10 +1,11 @@
 import os
 import shutil
+from typing import Optional, Dict, Any
 
 from PySide6 import QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Openings import OpeningLines, OpeningsStd, WindowOpenings
 from Code.QT import (
@@ -23,16 +24,18 @@ from Code.QT import (
 
 class WOpeningLines(LCDialog.LCDialog):
     def __init__(self, procesador):
-
         self.procesador = procesador
         self.configuration = Code.configuration
-        self.resultado = None
+        self.resultado: Optional[Dict[str, Any]] = None
         self.listaOpenings = OpeningLines.ListaOpenings()
+        self.glista: Optional[Grid.Grid] = None
+        self.tbtrain: Optional[Controles.TBrutina] = None
+        self.wtrain: Optional[QtWidgets.QWidget] = None
 
         LCDialog.LCDialog.__init__(
             self,
             procesador.main_window,
-            self.getTitulo(),
+            self.get_titulo(),
             Iconos.OpeningLines(),
             "openingLines",
         )
@@ -42,45 +45,29 @@ class WOpeningLines(LCDialog.LCDialog):
         o_columns.nueva("BASEPV", _("First moves"), 280)
         o_columns.nueva("NUMLINES", _("Lines"), 80, align_center=True)
         o_columns.nueva("FILE", _("File"), 200)
-        self.glista = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
+        self.glista = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
 
-        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
-        li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
-            None,
-            (_("Edit"), Iconos.Modificar(), self.modificar),
-            None,
-            (_("New"), Iconos.Nuevo(), self.new),
-            None,
-            (_("Copy"), Iconos.Copiar(), self.copy),
-            None,
-            (_("Change"), Iconos.Preferencias(), self.change),
-            None,
-            (_("Up"), Iconos.Arriba(), self.arriba),
-            (_("Down"), Iconos.Abajo(), self.abajo),
-            None,
-            (_("Remove"), Iconos.Borrar(), self.grid_remove),
-            None,
-            (_("Update"), Iconos.Reiniciar(), self.reiniciar),
-            None,
-            (_("Folder"), Iconos.File(), self.change_folder),
-            None,
-        )
-        tb = QTDialogs.LCTB(self, li_acciones)
+        tb = QTDialogs.LCTB(self)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        tb.new(_("Edit"), Iconos.Modificar(), self.modificar)
+        tb.new(_("New"), Iconos.Nuevo(), self.new)
+        tb.new(_("Copy"), Iconos.Copiar(), self.copy)
+        tb.new(_("Change"), Iconos.Preferencias(), self.change)
+        tb.new(_("Up"), Iconos.Arriba(), self.arriba, sep=False)
+        tb.new(_("Down"), Iconos.Abajo(), self.abajo)
+        tb.new(_("Remove"), Iconos.Borrar(), self.grid_remove)
+        tb.new(_("Update"), Iconos.Reiniciar(), self.reiniciar)
+        tb.new(_("Folder"), Iconos.File(), self.change_folder)
 
         tb.setSizePolicy(sp)
 
-        li_acciones = (
-            (_("Sequential"), Iconos.TrainSequential(), self.tr_sequential),
-            None,
-            (_("Static"), Iconos.TrainStatic(), self.tr_static),
-            None,
-            (_("Positions"), Iconos.TrainPositions(), self.tr_positions),
-            None,
-            (_("With engines"), Iconos.TrainEngines(), self.tr_engines),
-        )
-        self.tbtrain = tbtrain = Controles.TBrutina(self, li_acciones, with_text=False)
+        self.tbtrain = tbtrain = Controles.TBrutina(self, with_text=False)
+        tbtrain.new(_("Sequential"), Iconos.TrainSequential(), self.tr_sequential)
+        tbtrain.new(_("Static"), Iconos.TrainStatic(), self.tr_static)
+        tbtrain.new(_("Positions"), Iconos.TrainPositions(), self.tr_positions)
+        tbtrain.new(_("With engines"), Iconos.TrainEngines(), self.tr_engines)
 
         lbtrain = Controles.LB(self, _("Trainings")).align_center()
         lbtrain.setStyleSheet("*{border: 1px solid #bababa;}")
@@ -98,24 +85,21 @@ class WOpeningLines(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.anchoColumnas() + 20, default_height=640)
+        self.restore_video(default_width=self.glista.width_columns_displayables() + 20, default_height=640)
 
         self.wtrain.setVisible(False)
         self.glista.gotop()
         self.glista.setFocus()
 
-    def getTitulo(self):
-        return "%s [%s]" % (
-            _("Opening lines"),
-            Code.relative_root(self.listaOpenings.folder),
-        )
+    def get_titulo(self):
+        return f"{_('Opening lines')} [{Code.relative_root(self.listaOpenings.folder)}]"
 
     def tr_(self, tipo):
         recno = self.glista.recno()
         op = self.listaOpenings[recno]
         op["TRAIN"] = tipo
         self.resultado = op
-        self.terminar()
+        self.finalize()
 
     def tr_sequential(self):
         self.tr_("sequential")
@@ -162,7 +146,7 @@ class WOpeningLines(LCDialog.LCDialog):
                 name = ""
                 error = ""
                 while True:
-                    li_gen = [FormLayout.separador, (nof + ":", name)]
+                    li_gen = [FormLayout.separador, (f"{nof}:", name)]
                     if error:
                         li_gen.append(FormLayout.separador)
                         li_gen.append((None, error))
@@ -172,7 +156,7 @@ class WOpeningLines(LCDialog.LCDialog):
                         title=nof,
                         parent=self,
                         icon=Iconos.OpeningLines(),
-                        anchoMinimo=460,
+                        minimum_width=460,
                     )
                     if resultado:
                         accion, li_resp = resultado
@@ -191,14 +175,14 @@ class WOpeningLines(LCDialog.LCDialog):
                 path = Util.opj(base, resp)
 
             path = Util.relative_path(path)
-            self.configuration.set_folder_openings(path)
+            self.configuration.paths.set_folder_openings(path)
             self.configuration.graba()
             self.listaOpenings = OpeningLines.ListaOpenings()
             self.glista.refresh()
             self.glista.gotop()
             if len(self.listaOpenings) == 0:
                 self.wtrain.setVisible(False)
-            self.setWindowTitle(self.getTitulo())
+            self.setWindowTitle(self.get_titulo())
 
     def arriba(self):
         row = self.glista.recno()
@@ -221,7 +205,7 @@ class WOpeningLines(LCDialog.LCDialog):
         self.save_video()
         self.accept()
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         recno = self.glista.recno()
         if recno >= 0:
             self.modificar()
@@ -303,7 +287,7 @@ class WOpeningLines(LCDialog.LCDialog):
             li_remove = dbop.lines_to_remove(new_pv)
             if len(li_remove) > 0:
                 message = f'{len(li_remove)} {_("Lines")}'
-                if not QTMessages.pregunta(self, _("Are you sure you want to remove %s?") % message):
+                if not QTMessages.pregunta(self, f"{_('Are you sure you want to remove %s?')} {message}"):
                     dbop.close()
                     return
                 dbop.remove_list_lines(li_remove, f"{previous_pv} -> {new_pv}")
@@ -320,19 +304,19 @@ class WOpeningLines(LCDialog.LCDialog):
         if not Util.exist_file(current_path):
             self.listaOpenings.reiniciar()
             self.glista.refresh()
-            return
+            return None
         name_file = current_file[:-4]
         new_name = QTMessages.read_simple(self, _("File"), _("Name"), name_file, width=360)
         if not new_name:
-            return
+            return None
         new_name = new_name.strip()
         if new_name.endswith(".opk"):
             new_name = new_name[:-4]
         if new_name == name_file:
-            return
-        new_path = Util.opj(os.path.dirname(current_path), new_name + ".opk")
+            return None
+        new_path = Util.opj(os.path.dirname(current_path), f"{new_name}.opk")
         if os.path.isfile(new_path):
-            QTMessages.message_error(self, "%s\n%s" % (_("This file already exists"), new_name + ".opk"))
+            QTMessages.message_error(self, f"{_('This file already exists')}\n{new_name}.opk")
             return self.change_file(row, new_name)
         try:
             shutil.move(current_path, new_path)
@@ -341,14 +325,15 @@ class WOpeningLines(LCDialog.LCDialog):
             return self.change_file(row, new_name)
         self.listaOpenings.change_file(row, new_path)
         self.glista.refresh()
+        return None
 
     def grid_remove(self):
-        li = self.glista.recnosSeleccionados()
+        li = self.glista.list_selected_recnos()
         if len(li) > 0:
             mens = _("Do you want to delete all selected records?")
             mens += "\n"
             for num, row in enumerate(li, 1):
-                mens += "\n%d. %s" % (num, self.listaOpenings[row]["title"])
+                mens += f"\n{num}. {self.listaOpenings[row]['title']}"
             if QTMessages.pregunta(self, mens):
                 self.wtrain.setVisible(False)
                 li.sort(reverse=True)
@@ -359,11 +344,11 @@ class WOpeningLines(LCDialog.LCDialog):
                 if recno >= len(self.listaOpenings):
                     self.glista.gobottom()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.listaOpenings)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         op = self.listaOpenings[row]
         if col == "TITLE":
             return op["title"]
@@ -377,10 +362,9 @@ class WOpeningLines(LCDialog.LCDialog):
                 p = Game.Game()
                 p.read_pv(pv)
                 return p.pgn_base_raw()
-            else:
-                return ""
+        return ""
 
-    def grid_cambiado_registro(self, grid, row, column):
+    def grid_cambiado_registro(self, _grid, row, _obj_column):
         ok_ssp = False
         ok_eng = False
         if row >= 0:
@@ -399,10 +383,10 @@ class WOpeningLines(LCDialog.LCDialog):
         else:
             self.wtrain.setVisible(False)
 
-    def grid_right_button(self, grid, row, o_column, modif):
+    def grid_right_button(self, _grid, row, obj_column, _modif):
         if row < 0:
             return
-        col = o_column.key
+        col = obj_column.key
         if col == "TITLE":
             self.change_name(row)
         elif col == "FILE":
@@ -413,7 +397,7 @@ class WOpeningLines(LCDialog.LCDialog):
     def closeEvent(self, event):  # Cierre con X
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -429,9 +413,9 @@ class WStaticTraining(LCDialog.LCDialog):
         self.num_filas = (self.num_games - 1) / self.elems_fila + 1
         self.seleccionado = None
 
-        titulo = "%s - %s" % (_("Opening lines"), _("Static training"))
+        titulo = f"{_('Opening lines')} - {_('Static training')}"
 
-        extparam = "openlines_static_%s" % dbop.path_file
+        extparam = f"openlines_static_{dbop.path_file}"
 
         LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, Iconos.TrainStatic(), extparam)
 
@@ -440,7 +424,7 @@ class WStaticTraining(LCDialog.LCDialog):
 
         # Toolbar
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
 
         # Lista
         ancho = 42
@@ -448,37 +432,37 @@ class WStaticTraining(LCDialog.LCDialog):
         o_columns.nueva("FILA", "", 36, align_center=True)
         for x in range(self.elems_fila):
             o_columns.nueva(
-                "COL%d" % x,
-                "%d" % (x + 1,),
+                f"COL{x}",
+                f"{x + 1}",
                 ancho,
                 align_center=True,
                 edicion=Delegados.PmIconosWeather(),
             )
 
-        self.grid = Grid.Grid(self, o_columns, altoFila=ancho, background="white")
+        self.grid = Grid.Grid(self, o_columns, heigh_row=ancho, background="white")
         self.grid.setAlternatingRowColors(False)
         self.grid.font_type(puntos=10, peso=500)
-        nAnchoPgn = self.grid.anchoColumnas() + 20
-        self.grid.setMinimumWidth(nAnchoPgn)
+        n_ancho_pgn = self.grid.width_columns_displayables() + 20
+        self.grid.setMinimumWidth(n_ancho_pgn)
 
         ly = Colocacion.V().control(lb).control(tb).control(self.grid)
         self.setLayout(ly)
 
-        alto = self.num_filas * ancho + 146
-        self.restore_video(with_tam=True, default_height=alto, default_width=nAnchoPgn)
+        alto = int(self.num_filas * ancho + 146)
+        self.restore_video(with_tam=True, default_height=alto, default_width=n_ancho_pgn)
 
-    def terminar(self):
+    def finalize(self):
 
         self.save_video()
         self.reject()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return self.num_filas
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         if col == "FILA":
-            return "%d" % row
+            return f"{row}"
         elif col.startswith("COL"):
             num = row * self.elems_fila + int(col[3:])
             if num >= self.num_games:
@@ -486,9 +470,10 @@ class WStaticTraining(LCDialog.LCDialog):
             game = self.ligames[num]
             sinerror = game["NOERROR"]
             return str(sinerror) if sinerror < 4 else "4"
+        return None
 
-    def grid_doble_click(self, grid, row, o_column):
-        col = o_column.key
+    def grid_doble_click(self, _grid, row, obj_column):
+        col = obj_column.key
         if col.startswith("COL"):
             num = row * self.elems_fila + int(col[3:])
             if num >= self.num_games:
@@ -504,7 +489,7 @@ def select_static_line(procesador, dbop):
     return w.seleccionado
 
 
-def openingLines(procesador):
+def opening_lines(procesador):
     w = WOpeningLines(procesador)
     return w.resultado if w.exec() else None
 

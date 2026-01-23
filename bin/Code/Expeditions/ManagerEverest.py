@@ -1,8 +1,7 @@
-import copy
 import time
 
-from PySide6 import QtCore
-
+from Code.Adjudicator import Adjudicator
+from Code.Base import Move, Game
 from Code.Base.Constantes import (
     GT_AGAINST_PGN,
     ST_ENDGAME,
@@ -11,14 +10,34 @@ from Code.Base.Constantes import (
     TB_CLOSE,
     TB_CONFIG,
     TB_UTILITIES,
+    TB_RESIGN,
+    TB_ADJUDICATOR_STOP,
+    TB_ADJUDICATOR,
+    TB_TAKEBACK,
 )
 from Code.Expeditions import Everest
 from Code.ManagerBase import Manager
-from Code.Openings import Opening
-from Code.QT import QTMessages, WindowJuicio
+from Code.QT import Iconos
+from Code.QT import QTMessages
+from Code.ZQT import WindowJuicio
 
 
 class ManagerEverest(Manager.Manager):
+    expedition: Everest.Expedition
+    dic_analysis: dict
+    comment: str | None
+    is_human_side_white: bool
+    game_obj: Game.Game
+    analysis: tuple | None
+    numJugadasObj: int
+    pos_move_obj: int
+    adjudicator: Adjudicator.Adjudicator
+    initial_time: float
+    puntos: int
+    vtime: float
+    name_obj: str
+    show_all: bool
+
     def start(self, recno):
 
         self.expedition = Everest.Expedition(self.configuration, recno)
@@ -39,22 +58,20 @@ class ManagerEverest(Manager.Manager):
         self.game_obj = self.expedition.game
         self.game.set_tags(self.game_obj.li_tags)
         self.numJugadasObj = self.game_obj.num_moves()
-        self.posJugadaObj = 0
+        self.pos_move_obj = 0
         self.name_obj = self.expedition.name
 
-        self.manager_analyzer.maximize_multipv()
+        self.adjudicator = Adjudicator.Adjudicator(self, self.main_window, self.name_obj, self.player_has_moved)
 
         self.puntos = 0
         self.vtime = 0.0
 
-        self.book = Opening.OpeningPol(999)
-
-        self.set_toolbar((TB_CANCEL, TB_CONFIG))
+        self.pon_toolbar()
 
         self.main_window.active_game(True, False)
         self.remove_hints(True, True)
 
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.put_pieces_bottom(self.is_human_side_white)
         self.show_side_indicator(True)
@@ -65,36 +82,62 @@ class ManagerEverest(Manager.Manager):
         self.show_info_extra()
         self.check_boards_setposition()
 
-        var_config = "EXPEDITIONS"
-
-        dic = self.configuration.read_variables(var_config)
-
-        self.show_all = dic.get("SHOW_ALL", False)
-        self.show_rating_always, self.show_rating_different, self.show_rating_never = (
-            None,
-            True,
-            False,
-        )
-        self.show_rating = dic.get("SHOW_RATING", self.show_rating_always)
-
         self.state = ST_PLAYING
         self.play_next_move()
+
+    def configurar_local(self):
+        li_extra_options = [
+            (
+                "adjudicator_options",
+                f"{_('Adjudicator')} - {_('Options')}",
+                Iconos.Engines(),
+            ),
+        ]
+
+        if resp := Manager.Manager.configurar(self, li_extra_options):
+            if resp == "adjudicator_options":
+                self.adjudicator.change_adjudicator_options()
+
+    def thinking(self, ok):
+        super().thinking(ok)
+        self.pon_toolbar(stop_analysis=ok)
+
+    def pon_toolbar(self, stop_analysis=False):
+        li_tool = [TB_RESIGN, TB_CONFIG, TB_UTILITIES, TB_ADJUDICATOR]
+        if stop_analysis:
+            li_tool.append(TB_ADJUDICATOR_STOP)
+        self.set_toolbar(li_tool)
+        if stop_analysis:
+            for tool in li_tool[:-1]:
+                self.main_window.enable_option_toolbar(tool, False)
 
     def set_score(self):
         self.set_label2("%s : <b>%d</b>" % (_("Score"), self.puntos))
 
     def run_action(self, key):
         if key == TB_CANCEL:
-            self.cancelar()
+            self.resign()
+
+        elif key == TB_RESIGN:
+            self.resign()
 
         elif key == TB_CONFIG:
-            self.configurar(with_sounds=True)
+            self.configurar()
+
+        elif key == TB_TAKEBACK:
+            return  # disable
 
         elif key == TB_UTILITIES:
             self.menu_utilities_elo()
 
+        elif key == TB_ADJUDICATOR:
+            self.adjudicator.change_adjudicator_options()
+
+        elif key == TB_ADJUDICATOR_STOP:
+            self.adjudicator.analyze_end()
+
         elif key == TB_CLOSE:
-            self.terminar()
+            self.finalize()
 
         elif key in self.procesador.li_opciones_inicio:
             self.procesador.run_action(key)
@@ -103,41 +146,35 @@ class ManagerEverest(Manager.Manager):
             self.routine_default(key)
 
     def final_x(self):
-        return self.cancelar()
+        return self.resign()
 
-    def cancelar(self):
-        if self.posJugadaObj > 1 and self.state == ST_PLAYING:
+    def resign(self):
+        if self.pos_move_obj > 1 and self.state == ST_PLAYING:
             self.restart(False)
-        self.terminar()
+        self.finalize()
         return False
 
-    def terminar(self):
-        self.analyze_terminate()
-        self.terminaNoContinuo()
+    def finalize(self):
         self.procesador.start()
         self.procesador.showEverest(self.expedition.recno)
 
     def reiniciar(self):
         self.main_window.active_information_pgn(False)
         self.game.set_position()
-        self.posJugadaObj = 0
+        self.pos_move_obj = 0
         self.puntos = 0
         self.set_score()
         self.vtime = 0.0
-        self.book = Opening.OpeningPol(999)
         self.state = ST_PLAYING
         self.board.set_position(self.game.first_position)
         self.pgn_refresh(True)
         self.check_boards_setposition()
-        self.analyze_end()
-        self.terminaNoContinuo()
 
         self.set_label1(self.expedition.label())
         self.set_score()
         self.play_next_move()
 
     def restart(self, lost_points):
-        self.terminaNoContinuo()
         change_game, is_last, is_last_last = self.expedition.add_try(False, self.vtime, self.puntos)
         self.vtime = 0.0
         licoment = []
@@ -152,48 +189,6 @@ class ManagerEverest(Manager.Manager):
             comment = "\n".join(licoment)
             QTMessages.message_information(self.main_window, comment)
         return change_game
-
-    def analyze_begin(self):
-        self.manager_analyzer.ac_inicio(self.game)
-        self.is_analyzing = True
-
-    def analyze_minimum(self, minTime):
-        self.mrm = copy.deepcopy(self.manager_analyzer.ac_minimo(minTime, False))
-        return self.mrm
-
-    def analyze_state(self):
-        self.manager_analyzer.engine.ac_lee()
-        self.mrm = copy.deepcopy(self.manager_analyzer.ac_estado())
-        return self.mrm
-
-    def analyze_end(self):
-        if self.is_analyzing:
-            self.is_analyzing = False
-            self.manager_analyzer.ac_final(-1)
-
-    def analyze_terminate(self):
-        if self.is_analyzing:
-            self.is_analyzing = False
-            self.manager_analyzer.terminar()
-
-    def analizaNoContinuo(self):
-        self.tiempoNoContinuo += 500
-        if self.tiempoNoContinuo >= 5000:
-            self.analyze_minimum(5)
-            self.analyze_end()
-            self.pendienteNoContinuo = False
-        else:
-            QtCore.QTimer.singleShot(500, self.analizaNoContinuo)
-
-    def analizaNoContinuoFinal(self):
-        if self.tiempoNoContinuo < 5000:
-            with QTMessages.analizando(self.main_window):
-                self.analyze_minimum(5000)
-
-    def terminaNoContinuo(self):
-        if not self.continueTt:
-            self.tiempoNoContinuo = 99999
-            self.pendienteNoContinuo = False
 
     def play_next_move(self):
         if self.state == ST_ENDGAME:
@@ -216,173 +211,126 @@ class ManagerEverest(Manager.Manager):
             self.put_result()
             return
 
-        siRival = is_white == self.is_engine_side_white
+        is_rival = is_white == self.is_engine_side_white
         self.set_side_indicator(is_white)
 
-        # self.refresh()
-
-        if siRival:
+        if is_rival:
             self.add_move(False)
             self.play_next_move()
 
         else:
             self.human_is_playing = True
-            self.thinking(True)
-            self.analyze_begin()
             self.activate_side(is_white)
-            self.thinking(False)
-            self.iniTiempo = time.time()
-            if not self.continueTt:
-                QtCore.QTimer.singleShot(1000, self.analizaNoContinuo)
-                self.tiempoNoContinuo = 0
-                self.pendienteNoContinuo = True
+            self.initial_time = time.time()
+            self.adjudicator.analyze_begin(self.game)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
-        jg_usu = self.check_human_move(from_sq, to_sq, promotion)
-        if not jg_usu:
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
+        user_move = self.check_human_move(from_sq, to_sq, promotion)
+        if not user_move:
             return False
 
-        self.vtime += time.time() - self.iniTiempo
+        self.vtime += time.time() - self.initial_time
 
-        jg_obj = self.game_obj.move(self.posJugadaObj)
-        fen = jg_obj.position_before.fen()
+        self.board.set_position(user_move.position)
+        self.put_arrow_sc(user_move.from_sq, user_move.to_sq)
+        self.board.disable_all()
 
-        si_analiza_juez = True
-        if self.book:
-            si_book_usu = self.book.check_human(fen, from_sq, to_sq)
-            si_book_obj = self.book.check_human(fen, jg_obj.from_sq, jg_obj.to_sq)
-            if si_book_usu and si_book_obj:
-                if jg_obj.movimiento() != jg_usu.movimiento():
-                    bmove = _("book move")
-                    comment = "%s: %s %s<br>%s: %s %s" % (
-                        self.name_obj,
-                        jg_obj.pgn_translated(),
-                        bmove,
-                        self.configuration.x_player,
-                        jg_usu.pgn_translated(),
-                        bmove,
-                    )
-                    QTMessages.message_information(self.main_window, comment)
-                si_analiza_juez = False
-            else:
-                si_analiza_juez = True
-                if not si_book_obj:
-                    self.book = None
+        obj_move = self.game_obj.move(self.pos_move_obj)
 
-        analysis = None
-        comment = None
+        self.thinking(True)
 
-        if si_analiza_juez:
-            position = self.game.last_position
-            saved = fen in self.dic_analysis
-            continue_tt = self.continueTt
+        self.adjudicator.check_moves(obj_move, user_move)
 
-            if saved:
-                rm_obj, pos_obj, analysis, mrm = self.dic_analysis[fen]
-            else:
-                if self.continueTt:
-                    with QTMessages.analizando(self.main_window):
-                        mrm = self.analyze_minimum(3000) if self.continueTt else self.mrm
-                else:
-                    self.analizaNoContinuoFinal()
-                    mrm = self.mrm
-                rm_obj, pos_obj = mrm.search_rm(jg_obj.movimiento())
-                analysis = mrm, pos_obj
-                self.dic_analysis[fen] = [rm_obj, pos_obj, analysis, mrm]
+        return True
 
-            rm_usu, pos_usu = mrm.search_rm(jg_usu.movimiento())
-            if rm_usu is None:
-                with QTMessages.analizando(self.main_window):
-                    self.analyze_end()
-                    continue_tt = False
-                    rm_usu = self.manager_analyzer.valora(position, from_sq, to_sq, promotion)
-                    mrm.add_rm(rm_usu)
+    def player_has_moved(self, user_move: Move.Move, book_moves=False):
+        self.thinking(False)
+        obj_move = self.game_obj.move(self.pos_move_obj)
 
-            if self.show_rating == self.show_rating_different:
-                pv_usu = jg_usu.movimiento()
-                pv_obj = jg_obj.movimiento()
-                si_analiza_juez = pv_usu != pv_obj
-            elif self.show_rating == self.show_rating_never:
-                si_analiza_juez = False
+        if book_moves:
+            comentario_obj = comentario_usu = _("book move")
+            analysis = None
+            comentario_puntos = ""
+        else:
+            comentario_usu = ""
+            comentario_obj = ""
 
-            if si_analiza_juez:
-                w = WindowJuicio.WJuicio(
-                    self,
-                    self.manager_analyzer,
-                    self.name_obj,
-                    position,
-                    mrm,
-                    rm_obj,
-                    rm_usu,
-                    analysis,
-                    is_competitive=not self.show_all,
-                    continue_tt=continue_tt,
-                )
-                w.exec()
+            mrm = self.adjudicator.get_mrm()
+            rm_obj, pos_obj = mrm.search_rm(obj_move.movimiento())
+            rm_usu, pos_usu = mrm.search_rm(user_move.movimiento())
 
-                if not saved:
-                    analysis = w.analysis
-                    self.dic_analysis[fen][2] = analysis
+            analysis = mrm, pos_obj
 
-                dpts = w.difPuntos()
-                rm_usu = w.rm_usu
-                rm_obj = w.rm_obj
-            else:
-                dpts = rm_usu.score_abs5() - rm_obj.score_abs5()
-
+            w = WindowJuicio.WJuicio(
+                self,
+                self.adjudicator,
+                self.name_obj,
+                self.game.last_position,
+                mrm,
+                rm_obj,
+                rm_usu,
+                analysis,
+                is_competitive=not self.adjudicator.show_all,
+                continue_tt=self.adjudicator.is_analysing(),
+            )
+            w.exec()
+            analysis = w.analysis
+            dpts = w.difPuntos()
             self.puntos += dpts
             self.set_score()
+            comentario_usu += f" {w.rm_usu.abbrev_text()}"
+            comentario_obj += f" {w.rm_obj.abbrev_text()}"
 
-            if pos_usu != pos_obj:
-                comentario_usu = " %s" % rm_usu.abbrev_text()
-                comentario_obj = " %s" % rm_obj.abbrev_text()
+            comentario_puntos = (
+                f"{_('Score')} = {self.puntos - dpts} {w.rm_usu.centipawns_abs():+d} "
+                f"{-w.rm_obj.centipawns_abs():+d} = {self.puntos}"
+            )
 
-                comentario_puntos = "%s = %d %+d %+d = %d" % (
-                    _("Score"),
-                    self.puntos - dpts,
-                    rm_usu.centipawns_abs(),
-                    -rm_obj.centipawns_abs(),
-                    self.puntos,
-                )
-                comment = "%s: %s %s\n%s: %s %s\n%s" % (
-                    self.name_obj,
-                    jg_obj.pgn_translated(),
-                    comentario_obj,
-                    self.configuration.x_player,
-                    jg_usu.pgn_translated(),
-                    comentario_usu,
-                    comentario_puntos,
-                )
-        if not self.continueTt:
-            self.terminaNoContinuo()
+        self.adjudicator.analyze_end()  # Por si acaso no lo está ya.
 
-        self.analyze_end()
+        same_move = user_move.movimiento() == obj_move.movimiento()
+        if not same_move:
+            self.board.remove_arrows()
+            self.board.set_position(user_move.position_before)
 
-        self.add_move(True, analysis, comment)
+        comment = (
+            f"{self.name_obj}: {obj_move.pgn_translated()} {comentario_obj}\n"
+            f"{self.configuration.x_player}: {user_move.pgn_translated()} {comentario_usu}\n"
+            f"{comentario_puntos}"
+        )
 
+        self.add_move(True, comment, analysis, same_move=same_move)
         self.play_next_move()
         return True
 
-    def add_move(self, is_player_move, analysis=None, comment=None):
-        move = self.game_obj.move(self.posJugadaObj)
-        self.posJugadaObj += 1
-        if analysis:
+    def add_move(self, is_player_move, comment=None, analysis=None, same_move=False):
+        move = self.game_obj.move(self.pos_move_obj)
+        self.pos_move_obj += 1
+        if analysis is not None:
             move.analysis = analysis
         if comment:
             move.set_comment(comment)
 
+        if comment:
+            self.comment = f"{comment.replace('\n', '<br><br>')}<br>"
+
+        if not is_player_move:
+            if self.pos_move_obj:
+                self.comment = None
+
         self.game.add_move(move)
         self.check_boards_setposition()
-
-        self.move_the_pieces(move.liMovs, True)
-        self.board.set_position(move.position)
-        self.put_arrow_sc(move.from_sq, move.to_sq)
+        if not same_move:
+            self.move_the_pieces(move.list_piece_moves, True)
+            self.board.set_position(move.position)
+            self.board.remove_arrows()
+            self.put_arrow_sc(move.from_sq, move.to_sq)
         self.beep_extended(is_player_move)
 
         self.pgn_refresh(self.game.last_position.is_white)
+        self.refresh()
 
     def put_result(self):
-        self.analyze_terminate()
         self.disable_all()
         self.human_is_playing = False
 
@@ -393,9 +341,9 @@ class ManagerEverest(Manager.Manager):
         if is_last:
             mensaje = _("Congratulations, goal achieved")
             if is_last_last:
-                mensaje += "\n\n" + _("You have climbed Everest!")
+                mensaje += f"\n\n{_('You have climbed Everest!')}"
         else:
             mensaje = _("Congratulations you have passed this game.")
         self.mensaje(mensaje)
 
-        self.terminar()
+        self.finalize()

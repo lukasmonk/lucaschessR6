@@ -6,7 +6,7 @@ from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs
 
 class WNags(LCDialog.LCDialog):
     def __init__(self, owner, nags: Nags.Nags, current_move: Move.Move):
-        title = _("Ratings") + " (NAGs)"
+        title = f"{_('Ratings')} (NAGs)"
         extparam = "selelectnags"
 
         self.owner = owner
@@ -39,13 +39,13 @@ class WNags(LCDialog.LCDialog):
         o_columns.nueva("TITLE", "", 240)
 
         self.o_columnas = o_columns
-        self.grid = Grid.Grid(self, o_columns, is_editable=True, altoCabecera=4)
+        self.grid = Grid.Grid(self, o_columns, is_editable=True, header_heigh=4)
         self.register_grid(self.grid)
 
         layout = Colocacion.V().control(tb).control(self.grid).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.anchoColumnas() + 48, default_height=600)
+        self.restore_video(default_width=self.grid.width_columns_displayables() + 48, default_height=600)
 
     def clear_nags(self):
         self.st_current_nags.clear()
@@ -56,11 +56,11 @@ class WNags(LCDialog.LCDialog):
         self.save_video()
         self.accept()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.nags)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         nag = self.nags[row]
         if key == "SELECTED":
             return nag in self.st_current_nags
@@ -70,9 +70,10 @@ class WNags(LCDialog.LCDialog):
             return "$%d" % nag
         elif key == "TITLE":
             return self.nags.title(nag)
+        return None
 
-    def grid_setvalue(self, grid, row, o_column, value):
-        if o_column.key == "SELECTED":
+    def grid_setvalue(self, _grid, row, obj_column, _value):
+        if obj_column.key == "SELECTED":
             nag = self.nags[row]
             if nag in self.st_current_nags:
                 self.st_current_nags.remove(nag)

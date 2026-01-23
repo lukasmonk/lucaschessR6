@@ -166,7 +166,7 @@ class Line:
     ):
         self.li_pv = []
         self.st_fens_m2 = set()
-        self.start_fen = start_fen if start_fen else FEN_INITIAL
+        self.start_fen = start_fen or FEN_INITIAL
         self.last_fen = self.start_fen
 
         self.finished = False

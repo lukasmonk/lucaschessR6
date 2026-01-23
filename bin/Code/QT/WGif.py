@@ -4,7 +4,7 @@ from PIL import Image
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Board import Board2
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 
@@ -22,7 +22,7 @@ class WGif(LCDialog.LCDialog):
         conf_board = self.configuration.config_board("GIF", 64)
 
         self.board = Board2.BoardEstatico(self, conf_board)
-        self.board.crea()
+        self.board.draw_window()
 
         li_acciones = (
             (_("Save"), Iconos.GIF(), self.begin),
@@ -66,7 +66,7 @@ class WGif(LCDialog.LCDialog):
         key = "GIF"
         dic_vars = Code.configuration.read_variables(key)
 
-        form = FormLayout.FormLayout(self, self.title, Iconos.GIF(), anchoMinimo=640)
+        form = FormLayout.FormLayout(self, self.title, Iconos.GIF(), minimum_width=640)
 
         form.separador()
 

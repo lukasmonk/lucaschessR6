@@ -1,7 +1,7 @@
 import FasterCode
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import ALL_MOVES, BLACK, FEN_INITIAL, FIRST_BEST_MOVE, WHITE
 from Code.Books import Books, Polyglot, WBooks
@@ -46,8 +46,7 @@ class BooksTrainOL(object):
         self.limit_lines = dic_read.get("MAX_LINES", self.limit_lines)
 
     def read_config(self):
-        dic = Code.configuration.read_variables("BOOKSTRAININGLO")
-        if dic:
+        if dic := Code.configuration.read_variables("BOOKSTRAININGLO"):
             self.read_dic(dic)
 
     def write_config(self):
@@ -58,8 +57,8 @@ class BooksTrainOL(object):
         self.read_dic(dic_other)
 
     def current_training(self) -> dict:
-        if not self.li_trainings or self.li_trainings[-1]["DATE_END"] is not None:
-            dic_training = {
+        return (
+            {
                 "DATE_INIT": Util.today(),
                 "POS": 0,
                 "ERRORS": 0,
@@ -67,9 +66,9 @@ class BooksTrainOL(object):
                 "DATE_END": None,
                 "TIME_USED": 0,
             }
-        else:
-            dic_training = self.li_trainings[-1]
-        return dic_training
+            if not self.li_trainings or self.li_trainings[-1]["DATE_END"] is not None
+            else self.li_trainings[-1]
+        )
 
     def set_last_training(self, pos, errors, hints, time_used):
         dic_training = self.current_training()
@@ -80,10 +79,7 @@ class BooksTrainOL(object):
 
         must_saved_previously = len(self.li_trainings) > 0 and self.li_trainings[-1]["DATE_END"] is None
 
-        if pos >= len(self.lines):
-            dic_training["DATE_END"] = Util.today()
-        else:
-            dic_training["DATE_END"] = None
+        dic_training["DATE_END"] = Util.today() if pos >= len(self.lines) else None
         if must_saved_previously:
             self.li_trainings[-1] = dic_training
         else:
@@ -111,11 +107,11 @@ class WBooksTrainOL(LCDialog.LCDialog):
         o_columns.nueva("DONE", _("Done"), 60, align_center=True)
         o_columns.nueva("CURRENT", _("Current"), 60, align_center=True)
         o_columns.nueva("START_FEN", _("Start position"), 100, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         self.tb = QTDialogs.LCTB(self)
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         self.tb.new(_("Train"), Iconos.Empezar(), self.train)
         self.tb.new(_("New"), Iconos.Nuevo(), self.nuevo)
         self.tb.new(_("Copy"), Iconos.Copiar(), self.copy)
@@ -135,14 +131,14 @@ class WBooksTrainOL(LCDialog.LCDialog):
 
         self.train_rowid = None
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _column):
         self.train()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.dbli_books_train)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         reg: BooksTrainOL = self.dbli_books_train[row]
         if col == "SIDE":
             return _("White") if reg.side == WHITE else _("Black")
@@ -169,8 +165,9 @@ class WBooksTrainOL(LCDialog.LCDialog):
         if col == "CURRENT":
             dic = reg.current_training()
             return f'{dic["POS"] + 1}/{len(reg.lines)}'
+        return None
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -194,12 +191,12 @@ class WBooksTrainOL(LCDialog.LCDialog):
         self.edit(-1)
 
     def copy(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             self.edit(li[0])
 
     def borrar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 li.sort(reverse=True)
@@ -209,7 +206,7 @@ class WBooksTrainOL(LCDialog.LCDialog):
         self.grid.refresh()
 
     def historial(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             w = WBooksTrainOLHistory(self, li[0])
             w.exec()
@@ -239,10 +236,10 @@ class WBooksTrainOL(LCDialog.LCDialog):
             self.grid.goto(r1, 0)
 
     def train(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             self.train_rowid = self.dbli_books_train.rowid(li[0])
-            self.terminar()
+            self.finalize()
 
 
 class WGenBooksTrainOL(LCDialog.LCDialog):
@@ -276,12 +273,12 @@ class WGenBooksTrainOL(LCDialog.LCDialog):
         gb_side = Controles.GB(self, _("Side you play with"), hbox).set_font(flb)
 
         # Start position
-        self.bt_position = Controles.PB(self, "", self.change_start_position).ponPlano(False)
-        bt_position_remove = Controles.PB(self, "", self.remove_start_position).ponIcono(Iconos.Motor_No())
+        self.bt_position = Controles.PB(self, "", self.change_start_position).set_flat(False)
+        bt_position_remove = Controles.PB(self, "", self.remove_start_position).set_icono(Iconos.Motor_No())
         bt_position_paste = (
             Controles.PB(self, "", self.paste_start_position)
-            .ponIcono(Iconos.Pegar16())
-            .ponToolTip(_("Paste FEN position"))
+            .set_icono(Iconos.Pegar16())
+            .set_tooltip(_("Paste FEN position"))
         )
         hbox = (
             Colocacion.H()
@@ -520,11 +517,11 @@ class WBooksTrainOLHistory(LCDialog.LCDialog):
         o_columns.nueva("HINTS", _("Hints"), 80, align_center=True)
         o_columns.nueva("DATE_END", _("End date"), 120, align_center=True)
         o_columns.nueva("TIME_USED", _("Time used"), 120, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         self.tb = QTDialogs.LCTB(self)
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         self.tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
 
         # Colocamos
@@ -538,14 +535,11 @@ class WBooksTrainOLHistory(LCDialog.LCDialog):
 
         self.grid.gotop()
 
-    def grid_doble_click(self, grid, row, column):
-        self.empezar()
-
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.reg.li_trainings)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         dic: dict = self.reg.li_trainings[row]
         if col == "DATE_INIT":
             return Util.local_date_time(dic["DATE_INIT"])
@@ -564,13 +558,14 @@ class WBooksTrainOLHistory(LCDialog.LCDialog):
             m = (t - h * 3600) // 60
             s = t - h * 3600 - m * 60
             return f"{h:02d}:{m:02d}:{s:02d}"
+        return None
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
     def borrar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 li.sort(reverse=True)

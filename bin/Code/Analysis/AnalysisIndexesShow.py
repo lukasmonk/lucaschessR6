@@ -26,9 +26,7 @@ class ShowHtml:
 
     @staticmethod
     def pvar(x, tt):
-        if tt and x:
-            return f"{x*100.0/tt:.01f}%"
-        return "-"
+        return f"{x * 100.0 / tt:.01f}%" if tt and x else "-"
 
     def check_maxlabel(self, txt):
         if len(txt) >= self.maxlabel6:
@@ -141,19 +139,19 @@ class ShowHtml:
             return _("There are no analyzed moves.")
 
         def add_label(name_class, tipo, label):
-            w, b, t = (
+            w, b = (
                 elos_form[True][tipo],
                 elos_form[False][tipo],
-                elos_form[None][tipo],
             )
             t = w + b
             if t == 0:
                 return
+            mt = t // 2 if w and b else t
             self.li_body.append(
                 f"""<tr class="{name_class}"><td class="label">{label}</td>
-                  <td class="val">{w}</td>
-                  <td class="val">{b}</td>
-                  <td class="val">{t//2}</td>
+                  <td class="val">{w or ""}</td>
+                  <td class="val">{b or ""}</td>
+                  <td class="val">{mt}</td>
                 </tr>"""
             )
 

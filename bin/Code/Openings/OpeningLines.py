@@ -8,7 +8,7 @@ import sqlite3
 import FasterCode
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import ALL_VARIATIONS, WHITE
 from Code.Databases import DBgames, DBgamesST
@@ -199,8 +199,8 @@ class ListaOpenings:
                     "pv": op.basePV,
                     "title": op.title,
                     "lines": len(op),
-                    "withtrainings": op.withTrainings(),
-                    "withtrainings_engines": op.withTrainingsEngines(),
+                    "withtrainings": op.with_trainings(),
+                    "withtrainings_engines": op.with_trainings_engines(),
                 }
                 li.append(dicline)
                 op.close()
@@ -213,8 +213,8 @@ class ListaOpenings:
         name = name.strip().replace(" ", "_")
         name = Util.valid_filename(name)
 
-        plant = name + "%d.opk"
-        file = name + ".opk"
+        plant = f"{name}%d.opk"
+        file = f"{name}.opk"
         num = 0
         while os.path.isfile(Util.opj(self.folder, file)):
             num += 1
@@ -245,7 +245,7 @@ class ListaOpenings:
         if base.split("-")[-1].isdigit():
             li = base.split("-")
             base = "-".join(li[:-1])
-        filenew = "%s-1.opk" % base
+        filenew = f"{base}-1.opk"
         n = 1
         while os.path.isfile(Util.opj(self.folder, filenew)):
             filenew = "%s-%d.opk" % (base, n)
@@ -354,18 +354,12 @@ class Opening:
         if self.db_cache_engines is None:
             self.db_cache_engines = UtilSQL.DictSQL(self.path_file, tabla="CACHE_ENGINES")
 
-    def get_cache_engines(self, engine, ms, fenm2, depth=None):
-        if depth:
-            key = "%s-%d-%s-%d" % (engine, ms, fenm2, depth)
-        else:
-            key = "%s-%d-%s" % (engine, ms, fenm2)
+    def get_cache_engines(self, engine, ms, fenm2):
+        key = "%s-%d-%s" % (engine, ms, fenm2)
         return self.db_cache_engines[key]
 
-    def set_cache_engines(self, engine, ms, fenm2, move, depth=None):
-        if depth:
-            key = "%s-%d-%s-%d" % (engine, ms, fenm2, depth)
-        else:
-            key = "%s-%d-%s" % (engine, ms, fenm2)
+    def set_cache_engines(self, engine, ms, fenm2, move):
+        key = "%s-%d-%s" % (engine, ms, fenm2)
         self.db_cache_engines[key] = move
 
     def reinit_cache_engines(self):
@@ -412,15 +406,15 @@ class Opening:
         self.board = board
 
     def get_others(self, game):
-        liOp = ListaOpenings()
+        li_op = ListaOpenings()
         fich = os.path.basename(self.path_file)
         pvbase = game.pv()
-        liOp = [
+        li_op = [
             (dic["file"], dic["title"])
-            for dic in liOp.lista
+            for dic in li_op.lista
             if dic["file"] != fich and (pvbase.startswith(dic["pv"]) or dic["pv"].startswith(pvbase))
         ]
-        return liOp
+        return li_op
 
     def getfenvalue(self, fenm2):
         resp = self.db_fenvalues[fenm2]
@@ -445,11 +439,11 @@ class Opening:
             if reg and ("COMENTARIO" in reg or "VENTAJA" in reg or "VALORACION" in reg)
         }
 
-    def remove_analysis(self, tmpBP, mensaje):
+    def remove_analysis(self, tmp_bp, mensaje):
         for n, fenm2 in enumerate(self.db_fenvalues.keys()):
-            tmpBP.inc()
-            tmpBP.mensaje(mensaje % n)
-            if tmpBP.is_canceled():
+            tmp_bp.inc()
+            tmp_bp.mensaje(mensaje % n)
+            if tmp_bp.is_canceled():
                 break
             dic = self.getfenvalue(fenm2)
             if "ANALISIS" in dic:
@@ -470,16 +464,16 @@ class Opening:
     def training(self):
         return self.getconfig("TRAINING")
 
-    def setTraining(self, reg):
+    def set_training(self, reg):
         self.setconfig("TRAINING", reg)
 
-    def trainingEngines(self):
+    def training_engines(self):
         return self.getconfig("TRAINING_ENGINES")
 
-    def setTrainingEngines(self, reg):
+    def set_training_engines(self, reg):
         self.setconfig("TRAINING_ENGINES", reg)
 
-    def preparaTraining(self, reg, procesador):
+    def prepare_training(self, reg):
         maxmoves = reg["MAXMOVES"]
         is_white = reg["COLOR"] == "WHITE"
         is_random = reg["RANDOM"]
@@ -502,7 +496,6 @@ class Opening:
             pvmirar = "".join(lipv)
             dicpv[pvmirar] = lipv
 
-        lilipv = []
         set_correct = set()
         for pvmirar in dicpv:
             siesta = False
@@ -515,23 +508,20 @@ class Opening:
 
         lilipv = [value for key, value in dicpv.items() if key in set_correct]
 
-        ligamesST = []
-        ligamesSQ = []
-        dicFENm2 = {}
-        dicFENm2_lipv = {}
+        ligames_st = []
+        ligames_sq = []
+        dict_fenm2 = {}
+        dic_fenm2_lipv = {}
         cp = Position.Position()
 
         busca = " w " if is_white else " b "
 
         for lipv in lilipv:
-            game = {}
-            game["LIPV"] = lipv
-            game["NOERROR"] = 0
-            game["TRIES"] = []
+            game = {"LIPV": lipv, "NOERROR": 0, "TRIES": []}
 
-            ligamesST.append(game)
+            ligames_st.append(game)
             game = dict(game)
-            ligamesSQ.append(game)
+            ligames_sq.append(game)
 
             FasterCode.set_init_fen()
             for pos, pv in enumerate(lipv, 1):
@@ -539,38 +529,39 @@ class Opening:
                 cp.read_fen(fen)
                 if busca in fen:
                     fenm2 = cp.fenm2()
-                    if fenm2 not in dicFENm2:
-                        dicFENm2[fenm2] = set()
-                    dicFENm2[fenm2].add(pv)
-                    dicFENm2_lipv[fenm2] = lipv[:pos]
+                    if fenm2 not in dict_fenm2:
+                        dict_fenm2[fenm2] = set()
+                    dict_fenm2[fenm2].add(pv)
+                    dic_fenm2_lipv[fenm2] = lipv[:pos]
                 FasterCode.make_move(pv)
 
         if is_random:
-            random.shuffle(ligamesSQ)
-            random.shuffle(ligamesST)
+            random.shuffle(ligames_sq)
+            random.shuffle(ligames_st)
 
-        reg["LIGAMES_STATIC"] = ligamesST
-        reg["LIGAMES_SEQUENTIAL"] = ligamesSQ
-        reg["DICFENM2"] = dicFENm2
+        reg["LIGAMES_STATIC"] = ligames_st
+        reg["LIGAMES_SEQUENTIAL"] = ligames_sq
+        reg["DICFENM2"] = dict_fenm2
 
         # bcolor = " w " if is_white else " b "
         li_train_positions = []
-        for fenm2 in dicFENm2:
-            data = {}
-            data["FENM2"] = fenm2
-            data["MOVES"] = dicFENm2[fenm2]
-            data["NOERROR"] = 0
-            data["TRIES"] = []
-            data["LIPV"] = dicFENm2_lipv[fenm2]
+        for fenm2 in dict_fenm2:
+            data = {
+                "FENM2": fenm2,
+                "MOVES": dict_fenm2[fenm2],
+                "NOERROR": 0,
+                "TRIES": [],
+                "LIPV": dic_fenm2_lipv[fenm2],
+            }
             li_train_positions.append(data)
         random.shuffle(li_train_positions)
         reg["LITRAINPOSITIONS"] = li_train_positions
         reg["POS_TRAINPOSITIONS"] = 0
 
-    def recalcFenM2(self):
+    def recalc_fenm2(self):
         lilipv = [FasterCode.xpv_pv(xpv).split(" ") for xpv in self.li_xpv]
         cp = Position.Position()
-        dicFENm2 = {}
+        dict_fenm2 = {}
         if not lilipv and self.basePV:
             lilipv.append(self.basePV.split(" "))
         for lipv in lilipv:
@@ -579,11 +570,11 @@ class Opening:
                 fen = FasterCode.get_fen()
                 cp.read_fen(fen)
                 fenm2 = cp.fenm2()
-                if fenm2 not in dicFENm2:
-                    dicFENm2[fenm2] = set()
-                dicFENm2[fenm2].add(pv)
+                if fenm2 not in dict_fenm2:
+                    dict_fenm2[fenm2] = set()
+                dict_fenm2[fenm2].add(pv)
                 FasterCode.make_move(pv)
-        return dicFENm2
+        return dict_fenm2
 
     def dict_repeat_fen(self, si_white):
         lilipv = [FasterCode.xpv_pv(xpv).split(" ") for xpv in self.li_xpv]
@@ -605,23 +596,25 @@ class Opening:
         d = {fen: dic_pv for fen, dic_pv in dic.items() if len(dic_pv) > 1}
         return d
 
-    def preparaTrainingEngines(self, configuration, reg):
-        reg["DICFENM2"] = self.recalcFenM2()
+    def prepare_training_engines(self, configuration, reg):
+        reg["DICFENM2"] = self.recalc_fenm2()
         reg["TIMES"] = [500, 1000, 2000, 4000, 8000]
 
         if reg["NUM_ENGINES"] == 0:
             reg["ENGINES"] = []
         else:
-            reg["ENGINES"] = EnginesBunch.bunch(reg["KEY_ENGINE"], reg["NUM_ENGINES"], configuration.engines.dic_engines())
+            reg["ENGINES"] = EnginesBunch.bunch(
+                reg["KEY_ENGINE"], reg["NUM_ENGINES"], configuration.engines.dic_engines()
+            )
 
-    def updateTrainingEngines(self):
-        reg = self.trainingEngines()
+    def update_training_engines(self):
+        reg = self.training_engines()
         if reg:
-            reg["DICFENM2"] = self.recalcFenM2()
-            self.setTrainingEngines(reg)
+            reg["DICFENM2"] = self.recalc_fenm2()
+            self.set_training_engines(reg)
 
-    def createTrainingSSP(self, reg, procesador):
-        self.preparaTraining(reg, procesador)
+    def create_trainings_sp(self, reg):
+        self.prepare_training(reg)
 
         reg["DATECREATION"] = Util.today()
         self.setconfig("TRAINING", reg)
@@ -630,10 +623,10 @@ class Opening:
         lo = ListaOpenings()
         lo.add_training_file(os.path.basename(self.path_file))
 
-    def createTrainingEngines(self, reg, procesador):
-        self.preparaTrainingEngines(Code.configuration, reg)
+    def create_training_engines(self, reg):
+        self.prepare_training_engines(Code.configuration, reg)
         reg["DATECREATION"] = Util.today()
-        self.setTrainingEngines(reg)
+        self.set_training_engines(reg)
 
         self.setconfig("ENG_LEVEL", 0)
         self.setconfig("ENG_ENGINE", 0)
@@ -642,24 +635,24 @@ class Opening:
         lo.add_training_engines_file(os.path.basename(self.path_file))
         self.reinit_cache_engines()
 
-    def withTrainings(self):
+    def with_trainings(self):
         return "TRAINING" in self.db_config
 
-    def withTrainingsEngines(self):
+    def with_trainings_engines(self):
         return "TRAINING_ENGINES" in self.db_config
 
-    def updateTraining(self, procesador):
+    def update_training(self):
         reg = self.training()
         if reg is None:
             return
         reg1 = {}
         for key in ("MAXMOVES", "COLOR", "RANDOM"):
             reg1[key] = reg[key]
-        self.preparaTraining(reg1, procesador)
+        self.prepare_training(reg1)
 
         for tipo in ("LIGAMES_SEQUENTIAL", "LIGAMES_STATIC"):
             # Los que estan pero no son, los borramos
-            liBorrados = []
+            li_borrados = []
             for pos, game in enumerate(reg[tipo]):
                 pv = " ".join(game["LIPV"])
                 ok = False
@@ -669,16 +662,16 @@ class Opening:
                         ok = True
                         break
                 if not ok:
-                    liBorrados.append(pos)
-            if liBorrados:
+                    li_borrados.append(pos)
+            if li_borrados:
                 li = reg[tipo]
-                liBorrados.sort(reverse=True)
-                for x in liBorrados:
+                li_borrados.sort(reverse=True)
+                for x in li_borrados:
                     del li[x]
                 reg[tipo] = li
 
             # Los que son pero no estan
-            liMas = []
+            li_mas = []
             for game1 in reg1[tipo]:
                 pv1 = " ".join(game1["LIPV"])
                 ok = False
@@ -688,11 +681,11 @@ class Opening:
                         ok = True
                         break
                 if not ok:
-                    liMas.append(game1)
-            if liMas:
+                    li_mas.append(game1)
+            if li_mas:
                 li = reg[tipo]
-                liMas.sort(reverse=True)
-                for game in liMas:
+                li_mas.sort(reverse=True)
+                for game in li_mas:
                     li.insert(0, game)
                 reg[tipo] = li
 
@@ -701,7 +694,7 @@ class Opening:
         # Posiciones
 
         # Estan pero no son
-        liBorrados = []
+        li_borrados = []
         tipo = "LITRAINPOSITIONS"
         for pos, data in enumerate(reg[tipo]):
             fen = data["FENM2"]
@@ -712,16 +705,16 @@ class Opening:
                     ok = True
                     break
             if not ok:
-                liBorrados.append(pos)
-        if liBorrados:
+                li_borrados.append(pos)
+        if li_borrados:
             li = reg[tipo]
-            liBorrados.sort(reverse=True)
-            for x in liBorrados:
+            li_borrados.sort(reverse=True)
+            for x in li_borrados:
                 del li[x]
             reg[tipo] = li
 
         # Los que son pero no estan
-        liMas = []
+        li_mas = []
         for data1 in reg1[tipo]:
             fen1 = data1["FENM2"]
             ok = False
@@ -731,10 +724,10 @@ class Opening:
                     ok = True
                     break
             if not ok:
-                liMas.append(data1)
-        if liMas:
+                li_mas.append(data1)
+        if li_mas:
             li = reg[tipo]
-            li.insert(0, liMas)
+            li.insert(0, li_mas)
             reg[tipo] = li
 
         self.setconfig("TRAINING", reg)
@@ -795,7 +788,7 @@ class Opening:
         self.append(game)
         return True
 
-    def posPartida(self, game):
+    def data_of_game(self, game):
         # return siNueva, numlinea, siAppend
         xpv_busca = FasterCode.pv_xpv(game.pv())
         last_move = game.move(-1)
@@ -1014,7 +1007,7 @@ class Opening:
 
         dl_tmp = QTMessages.ProgressBarSimple(
             owner,
-            _("Import") + " - " + name,
+            f"{_('Import')} - {name}",
             _("Working..."),
             db.all_reccount(),
             width=600,
@@ -1085,7 +1078,7 @@ class Opening:
 
         dl_tmp = QTMessages.ProgressBarSimple(
             owner,
-            _("Import") + " - " + name,
+            f"{_('Import')} - {name}",
             _("Working..."),
             Util.filesize(path_pgn),
             width=600,
@@ -1162,7 +1155,7 @@ class Opening:
         name = os.path.basename(path_pgn)
         dl_tmp = QTMessages.ProgressBarSimple(
             owner,
-            _("Import") + " - " + name,
+            f"{_('Import')} - {name}",
             _("Working..."),
             Util.filesize(path_pgn),
             width=600,
@@ -1212,15 +1205,15 @@ class Opening:
         self.pack_database()
         otra.close()
 
-    def guardaPartidas(self, label, liPartidas, minMoves=0, with_history=True):
+    def save_games(self, label, li_games, min_movements=0, with_history=True):
         if with_history:
             self.save_history(_("Import"), label)
         gamebase = self.getgamebase()
         sql_insert = "INSERT INTO LINES( XPV) VALUES( ? )"
         sql_update = "UPDATE LINES SET XPV=? WHERE XPV=?"
         cursor = self._conexion.cursor()
-        for game in liPartidas:
-            if minMoves <= len(game) > gamebase.num_moves():
+        for game in li_games:
+            if min_movements <= len(game) > gamebase.num_moves():
                 xpv = FasterCode.pv_xpv(game.pv())
                 if xpv not in self.li_xpv:
                     updated = False
@@ -1238,12 +1231,12 @@ class Opening:
         self._conexion.commit()
         self.li_xpv.sort()
 
-    def guardaLiXPV(self, label, liXPV):
+    def save_lixpv(self, label, li_xpv):
         self.save_history(_("Import"), label)
         sql_insert = "INSERT INTO LINES( XPV) VALUES( ? )"
         sql_update = "UPDATE LINES SET XPV=? WHERE XPV=?"
         cursor = self._conexion.cursor()
-        for xpv in liXPV:
+        for xpv in li_xpv:
             if xpv not in self.li_xpv:
                 updated = False
                 for npos, xpv_ant in enumerate(self.li_xpv):
@@ -1283,7 +1276,7 @@ class Opening:
 
         li_partidas = []
 
-        def hazPV(lipv_ant):
+        def haz_pv(lipv_ant):
             if bp.is_canceled():
                 return
             n_ant = len(lipv_ant)
@@ -1316,13 +1309,13 @@ class Opening:
             for alm in li_children:
                 li = lipv_ant[:]
                 li.append(alm.move)
-                hazPV(li)
+                haz_pv(li)
 
-        hazPV(pv_base.split(" ") if pv_base else [])
+        haz_pv(pv_base.split(" ") if pv_base else [])
 
         bp.put_label(_("Writing..."))
-        self.guardaPartidas(
-            "%s,%s" % (_("Database opening explorer"), os.path.basename(fichero_summary)),
+        self.save_games(
+            f"{_('Database opening explorer')},{os.path.basename(fichero_summary)}",
             li_partidas,
         )
         self.pack_database()
@@ -1339,11 +1332,11 @@ class Opening:
             if xpv.startswith(xpvbase) and len(xpv) > tambase:
                 if xpv not in self.li_xpv:
                     lista.append(xpv)
-        self.guardaLiXPV("%s,%s" % (_("Other opening lines"), otra.title), lista)
+        self.save_lixpv(f"{_('Other opening lines')},{otra.title}", lista)
         self.db_fenvalues.copy_from(otra.db_fenvalues)
         for tabla in ("FEN", "Flechas", "Marcos", "SVGs", "Markers"):
-            dbr = UtilSQL.DictSQL(self.path_file, tabla=tabla)
-            dbv = UtilSQL.DictSQL(otra.path_file, tabla=tabla)
+            dbr: UtilSQL.DictSQL = UtilSQL.DictSQL(self.path_file, tabla=tabla)
+            dbv: UtilSQL.DictSQL = UtilSQL.DictSQL(otra.path_file, tabla=tabla)
             dbr.copy_from(dbv)
             dbr.close()
             dbv.close()
@@ -1402,13 +1395,13 @@ class Opening:
                     analisis = dic.get("ANALISIS")
                     if analisis is not None:
                         move.analysis = analisis, -1
-                        move.analisis2variantes(alm, False)
+                        move.analysis_to_variations(alm, False)
 
             if recno > 0 or not ws.is_new:
                 ws.write("\n\n")
-            tags = "".join(['[%s "%s"]\n' % (k, v) for k, v in li_tags])
+            tags = "".join([f'[{k} "{v}"]\n' for k, v in li_tags])
             ws.write(tags)
-            ws.write("\n%s" % game.pgn_base())
+            ws.write(f"\n{game.pgn_base()}")
 
         ws.pb_close()
 
@@ -1436,11 +1429,11 @@ class Opening:
 
         def game_add_lipv(xgame: Game.Game, xli_pv):
             xmove: Move.Move
-            for pos, xmove in enumerate(xgame.li_moves):
-                if xmove.movimiento() != xli_pv[pos]:
-                    if pos == 0 or pos < pos_move:
+            for post, xmove in enumerate(xgame.li_moves):
+                if xmove.movimiento() != xli_pv[post]:
+                    if post == 0 or post < pos_move:
                         return
-                    xli_pv_parcial = xli_pv[pos:]
+                    xli_pv_parcial = xli_pv[post:]
                     variations = xmove.variations
                     variation: Game.Game
                     for variation in variations.li_variations:
@@ -1493,12 +1486,13 @@ class Opening:
 
         if not ws.is_new:
             ws.write("\n\n")
-        tags = "".join(['[%s "%s"]\n' % (k, v) for k, v in game_main.li_tags])
+        tags = "".join([f'[{k} "{v}"]\n' for k, v in game_main.li_tags])
         ws.write(tags)
-        ws.write("\n%s\n" % game_main.pgn_base())
+        ws.write(f"\n{game_main.pgn_base()}\n")
         ws.write("\n\n")
 
         ws.pb_close()
+        return False
 
     def remove_info(self, is_comments, is_ratings, is_analysis, is_unused):
         st_fen = self.get_all_fen() if is_unused else None
@@ -1562,7 +1556,7 @@ class Opening:
             for fenm2, li_pv_prev in dir_prev.items():
                 for pv_prev in li_pv_prev:
                     for pv_post in dir_post[fenm2]:
-                        a1h8 = pv_prev + " " + pv_post
+                        a1h8 = f"{pv_prev} {pv_post}"
                         st_pv.add(a1h8)
             self.li_xpv = [FasterCode.pv_xpv(pv) for pv in st_pv]
             self.clean()
@@ -1640,14 +1634,14 @@ class Opening:
         game = Game.Game() if translated else None
 
         for xpv in self.li_xpv:
-            if um.is_canceled():
+            if um.canceled():
                 break
             lipv = FasterCode.xpv_pv(xpv).split(" ")
             if translated:
                 game.reset()
                 game.read_lipv(lipv)
                 lipgn = [
-                    (str(pos // 2 + 1) + "." if pos % 2 == 0 else "") + move.pgn_translated()
+                    (f"{pos // 2 + 1!s}." if pos % 2 == 0 else "") + move.pgn_translated()
                     for pos, move in enumerate(game.li_moves)
                 ]
 

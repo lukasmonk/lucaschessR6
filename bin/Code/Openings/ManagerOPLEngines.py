@@ -1,15 +1,14 @@
 import random
 import time
+from typing import Optional
 
 from PySide6.QtCore import Qt
 
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
-    BOOK_RANDOM_UNIFORM,
     GOOD_MOVE,
     GT_OPENING_LINES,
-    INACCURACY,
     ST_ENDGAME,
     ST_PLAYING,
     TB_CLOSE,
@@ -22,17 +21,49 @@ from Code.Base.Constantes import (
     TOP_RIGHT,
 )
 from Code.Books import Books
+from Code.Engines import EngineManagerAnalysis, EngineManagerPlay, EngineRun
+from Code.Engines import EngineResponse
 from Code.ManagerBase import Manager
 from Code.Openings import OpeningLines
 from Code.QT import Iconos, QTDialogs, QTMessages
 
 
 class ManagerOpeningEngines(Manager.Manager):
+    file_path: str
+    numengine: int
+    level: int
+    ask_movesdifferent: bool
+    auto_analysis: bool
+    plies_pendientes: int
+    error: str
+    ini_time: float
+    with_help: bool
+    dict_fenm2: dict
+    errores: int
+    li_info: list
+    plies_mandatory: int
+    plies_control: int
+    lost_points: int
+    key_rival: str
+    key_rival_cache: str
+    time: float
+    is_approved: bool
+    is_human_side_white: bool
+    book: Books.Book | None
+    keybook_engine: str
+    manager_adjudicator: EngineManagerAnalysis.EngineManagerAnalysis
+    manager_rival: Optional[EngineManagerPlay.EngineManagerPlay] = None
+    um: Optional[QTMessages.WaitingMessage] = None
+    mstime_adjudicator: int
+    key_adjudicator_cache: str
+    training_engines: dict
+    dbop: OpeningLines.Opening
+    mstime_rival: int
 
-    def start(self, pathFichero):
-        self.board.saveVisual()
-        self.pathFichero = pathFichero
-        dbop = OpeningLines.Opening(pathFichero)
+    def start(self, path):
+        self.board.save_visual_state()
+        self.file_path = path
+        dbop = OpeningLines.Opening(path)
         self.board.dbvisual_set_file(dbop.path_file)
         self.reinicio(dbop)
 
@@ -44,35 +75,35 @@ class ManagerOpeningEngines(Manager.Manager):
         self.level = self.dbop.getconfig("ENG_LEVEL", 0)
         self.numengine = self.dbop.getconfig("ENG_ENGINE", 0)
 
-        self.trainingEngines = self.dbop.trainingEngines()
+        self.training_engines = self.dbop.training_engines()
 
-        self.auto_analysis = self.trainingEngines.get("AUTO_ANALYSIS", True)
-        self.ask_movesdifferent = self.trainingEngines.get("ASK_MOVESDIFFERENT", False)
+        self.auto_analysis = self.training_engines.get("AUTO_ANALYSIS", True)
+        self.ask_movesdifferent = self.training_engines.get("ASK_MOVESDIFFERENT", False)
 
-        liTimes = self.trainingEngines.get("TIMES")
-        if not liTimes:
-            liTimes = [500, 1000, 2000, 4000, 8000]
-        liBooks = self.trainingEngines.get("BOOKS")
-        if not liBooks:
-            liBooks = ["", "", "", "", ""]
-        liBooks_sel = self.trainingEngines.get("BOOKS_SEL")
-        if not liBooks_sel:
-            liBooks_sel = ["", "", "", "", ""]
-        liEngines = self.trainingEngines["ENGINES"]
-        num_engines_base = len(liEngines)
-        liEnginesExt = [key for key in self.trainingEngines.get("EXT_ENGINES", []) if key not in liEngines]
-        num_engines = num_engines_base + len(liEnginesExt)
+        li_times = self.training_engines.get("TIMES")
+        if not li_times:
+            li_times = [500, 1000, 2000, 4000, 8000]
+        li_books = self.training_engines.get("BOOKS")
+        if not li_books:
+            li_books = ["", "", "", "", ""]
+        li_books_sel = self.training_engines.get("BOOKS_SEL")
+        if not li_books_sel:
+            li_books_sel = ["", "", "", "", ""]
+        li_engines = self.training_engines["ENGINES"]
+        num_engines_base = len(li_engines)
+        li_engines_ext = [key for key in self.training_engines.get("EXT_ENGINES", []) if key not in li_engines]
+        num_engines = num_engines_base + len(li_engines_ext)
 
         if self.numengine >= num_engines:
             self.level += 1
             self.numengine = 0
             self.dbop.setconfig("ENG_LEVEL", self.level)
             self.dbop.setconfig("ENG_ENGINE", 0)
-        num_levels = len(liTimes)
+        num_levels = len(li_times)
         if self.level >= num_levels:
             if QTMessages.pregunta(
                 self.main_window,
-                "%s.\n%s" % (_("Training finished"), _("Do you want to reinit?")),
+                f"{_('Training finished')}.\n{_('Do you want to reinit?')}",
             ):
                 self.dbop.setconfig("ENG_LEVEL", 0)
                 self.dbop.setconfig("ENG_ENGINE", 0)
@@ -80,53 +111,54 @@ class ManagerOpeningEngines(Manager.Manager):
             return
 
         if self.numengine < num_engines_base:
-            self.keyengine = liEngines[self.numengine]
+            self.key_rival = li_engines[self.numengine]
         else:
-            self.keyengine = liEnginesExt[self.numengine - num_engines_base]
+            self.key_rival = li_engines_ext[self.numengine - num_engines_base]
+        self.key_rival_cache = f"RIVAL{self.key_rival}"
 
-        self.time = liTimes[self.level]
-        nombook = liBooks[self.level]
+        self.mstime_rival = li_times[self.level]
+        nombook = li_books[self.level]
         if nombook:
             list_books = Books.ListBooks()
             self.book = list_books.seek_book(nombook)
             if self.book:
                 self.book.polyglot()
-                self.book.mode = liBooks_sel[self.level]
+                self.book.mode = li_books_sel[self.level]
                 if not self.book.mode:
                     self.book.mode = BOOK_BEST_MOVE
-                self.keybook_engine = self.keyengine + nombook
+                self.key_rival_cache = self.key_rival_cache + nombook
         else:
             self.book = None
 
-        self.plies_mandatory = self.trainingEngines["MANDATORY"]
-        self.plies_control = self.trainingEngines["CONTROL"]
+        self.plies_mandatory = self.training_engines["MANDATORY"]
+        self.plies_control = self.training_engines["CONTROL"]
         self.plies_pendientes = self.plies_control
-        self.lost_points = self.trainingEngines["LOST_POINTS"]
+        self.lost_points = self.training_engines["LOST_POINTS"]
 
-        self.is_human_side_white = self.trainingEngines["COLOR"] == "WHITE"
+        self.is_human_side_white = self.training_engines["COLOR"] == "WHITE"
         self.is_engine_side_white = not self.is_human_side_white
 
-        self.siAprobado = False
+        self.is_approved = False
 
-        rival = self.configuration.engines.search(self.keyengine)
-        self.manager_rival = self.procesador.create_manager_engine(rival, self.time, None)
+        rival = self.configuration.engines.search(self.key_rival)
+        self.manager_rival = self.procesador.create_manager_engine(rival, self.mstime_rival, 0, 0)
         self.manager_rival.is_white = self.is_engine_side_white
 
-        self.xanalyzer_specific = self.procesador.analyzer_clone(0, 0, 10)
-        self.xanalyzer_specific.options(max(self.manager_analyzer.mstime_engine, self.time + 5000), 0, True)
-
-        juez = self.configuration.engines.search(self.trainingEngines["ENGINE_CONTROL"])
-        self.xjuez = self.procesador.create_manager_engine(juez, int(self.trainingEngines["ENGINE_TIME"] * 1000), None)
-        self.xjuez.remove_multipv()
+        engine_adjudicator = self.configuration.engines.search(self.training_engines["ENGINE_CONTROL"])
+        self.mstime_adjudicator = int(self.training_engines["ENGINE_TIME"] * 1000)
+        run_engine_params = EngineRun.RunEngineParams()
+        run_engine_params.update(engine_adjudicator, self.mstime_adjudicator, 0, 0, 10)
+        self.manager_adjudicator = EngineManagerAnalysis.EngineManagerAnalysis(engine_adjudicator, run_engine_params)
+        self.key_adjudicator_cache = f"ADJUDICATOR{engine_adjudicator.name}"
 
         self.li_info = [
-            "<b>%s</b>: %d/%d - %s" % (_("Engine"), self.numengine + 1, num_engines, self.manager_rival.engine.name),
-            '<b>%s</b>: %d/%d - %0.1f"' % (_("Level"), self.level + 1, num_levels, self.time / 1000.0),
+            f"<b>{_('Engine')}</b>: {self.numengine + 1}/{num_engines} - {self.manager_rival.engine.name}",
+            f'<b>{_('Level')}</b>: {self.level + 1}/{num_levels} - {self.mstime_rival / 1000.0:.1f}"',
         ]
 
-        self.dicFENm2 = self.trainingEngines["DICFENM2"]
+        self.dict_fenm2 = self.training_engines["DICFENM2"]
 
-        self.siAyuda = False
+        self.with_help = False
         self.board.dbvisual_set_show_always(False)
         self.hints = 9999  # Para que analice sin problemas
 
@@ -134,7 +166,7 @@ class ManagerOpeningEngines(Manager.Manager):
 
         self.set_toolbar((TB_CLOSE, TB_RESIGN, TB_REINIT))
         self.main_window.active_game(True, False)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.remove_hints()
@@ -167,65 +199,56 @@ class ManagerOpeningEngines(Manager.Manager):
         self.set_side_indicator(is_white)
         self.refresh()
 
-        siRival = is_white == self.is_engine_side_white
+        is_rival = is_white == self.is_engine_side_white
 
-        if not self.runcontrol():
-            if siRival:
+        if not self.run_control():
+            if is_rival:
                 self.disable_all()
-                if self.rival_has_moved():
+                if self.play_rival():
                     self.play_next_move()
-
             else:
                 self.activate_side(is_white)
                 self.human_is_playing = True
 
-    def rival_has_moved(self):
-        si_obligatorio = len(self.game) <= self.plies_mandatory
-        si_pensar = True
+    def play_rival(self):
+        fen = self.game.last_position.fen()
         fenm2 = self.game.last_position.fenm2()
-        moves = self.dicFENm2.get(fenm2, set())
+        li_a1h8 = self.dict_fenm2.get(fenm2, set())
+        if len(li_a1h8) == 0:
+            si_obligatorio = False
+        else:
+            si_obligatorio = len(self.game) <= self.plies_mandatory
+
+        a1h8 = None
+
         if si_obligatorio:
-            nmoves = len(moves)
-            if nmoves == 0:
-                si_obligatorio = False
-            else:
-                move = self.dbop.get_cache_engines(self.keyengine, self.time, fenm2)
-                if move is None:
-                    if self.book:
-                        move_book = self.book.select_move_type(self.game.last_position.fen(), BOOK_RANDOM_UNIFORM)
-                        if move_book in list(moves):
-                            move = move_book
-                    if move is None:
-                        move = random.choice(list(moves))
-                    self.dbop.set_cache_engines(self.keyengine, self.time, fenm2, move)
-                from_sq, to_sq, promotion = move[:2], move[2:4], move[4:]
-                si_pensar = False
+            # Para los movimientos del rival,guardamos el movimiento, para los de análisis el mrm
+            # por si se repite que repita los mismos movimientos
+            a1h8 = self.dbop.get_cache_engines(self.key_rival_cache, self.mstime_rival, fen)
+            if a1h8 is None:
+                if self.book:
+                    a1h8_book = self.book.select_move_type(fen, self.book.mode)
+                    if a1h8_book in list(li_a1h8):
+                        a1h8 = a1h8_book
+                if a1h8 is None:
+                    a1h8 = random.choice(list(li_a1h8))
 
-        if si_pensar:
-            move = None
-            if self.book:
-                move = self.dbop.get_cache_engines(self.keybook_engine, self.time, fenm2)
-                if move is None:
-                    fen = self.game.last_position.fen()
-                    move = self.book.select_move_type(fen, self.book.mode)
-                    if move:
-                        self.dbop.set_cache_engines(self.keybook_engine, self.time, fenm2, move)
-            if move is None:
-                move = self.dbop.get_cache_engines(self.keyengine, self.time, fenm2)
-            if move is None:
+        if a1h8 is None:
+            a1h8 = self.dbop.get_cache_engines(self.key_rival_cache, self.mstime_rival, fen)
+            if a1h8 is None and self.book:
+                fen = self.game.last_position.fen()
+                a1h8 = self.book.select_move_type(fen, self.book.mode)
+            if a1h8 is None:
                 rm_rival = self.manager_rival.play_game(self.game)
-                move = rm_rival.movimiento()
-                self.dbop.set_cache_engines(self.keyengine, self.time, fenm2, move)
-            from_sq, to_sq, promotion = move[:2], move[2:4], move[4:]
-            if si_obligatorio:
-                if move not in moves:
-                    move = list(moves)[0]
-                    from_sq, to_sq, promotion = move[:2], move[2:4], move[4:]
+                a1h8 = rm_rival.movimiento()
 
+        self.dbop.set_cache_engines(self.key_rival_cache, self.mstime_rival, fen, a1h8)
+
+        from_sq, to_sq, promotion = a1h8[:2], a1h8[2:4], a1h8[4:]
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
             self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
 
             self.error = ""
 
@@ -234,34 +257,34 @@ class ManagerOpeningEngines(Manager.Manager):
             self.error = mens
             return False
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             self.beep_error()
             return False
 
         fenm2 = self.game.last_position.fenm2()
-        li_mv = self.dicFENm2.get(fenm2, [])
+        li_mv = self.dict_fenm2.get(fenm2, [])
         nmv = len(li_mv)
         if nmv > 0:
             if move.movimiento() not in li_mv:
                 for mv in li_mv:
-                    self.board.creaFlechaMulti(mv, False)
-                self.board.creaFlechaMulti(move.movimiento(), True)
+                    self.board.create_arrow_multi(mv, False)
+                self.board.create_arrow_multi(move.movimiento(), True)
                 if self.ask_movesdifferent:
-                    mensaje = "%s\n%s" % (
-                        _("This is not the move in the opening lines"),
-                        _("Do you want to go on with this move?"),
+                    mensaje = (
+                        f"{_('This is not the move in the opening lines')}\n"
+                        f"{_('Do you want to go on with this move?')}"
                     )
                     if not QTMessages.pregunta(self.main_window, mensaje):
-                        self.set_end_game()
+                        self.set_end_game_opl()
                         return True
                 else:
                     self.message_on_pgn(_("This is not the move in the opening lines, you must repeat the game"))
-                    self.set_end_game()
+                    self.set_end_game_opl()
                     return True
 
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
 
         self.add_move(move, True)
         self.play_next_move()
@@ -269,11 +292,11 @@ class ManagerOpeningEngines(Manager.Manager):
 
     def add_move(self, move, is_player_move):
         fenm2 = move.position_before.fenm2()
-        move.es_linea = False
-        if fenm2 in self.dicFENm2:
-            if move.movimiento() in self.dicFENm2[fenm2]:
+        move.is_line = False
+        if fenm2 in self.dict_fenm2:
+            if move.movimiento() in self.dict_fenm2[fenm2]:
                 move.add_nag(GOOD_MOVE)
-                move.es_linea = True
+                move.is_line = True
         self.game.add_move(move)
         self.check_boards_setposition()
 
@@ -290,76 +313,53 @@ class ManagerOpeningEngines(Manager.Manager):
         si_obligatorio = len(self.game) < self.plies_mandatory
         if si_obligatorio and self.state != ST_ENDGAME:
             fenm2 = self.game.last_position.fenm2()
-            moves = self.dicFENm2.get(fenm2, [])
+            moves = self.dict_fenm2.get(fenm2, [])
             if len(moves) > 0:
-                li.append(
-                    "<b>%s</b>: %d/%d"
-                    % (
-                        _("Mandatory movements"),
-                        len(self.game) + 1,
-                        self.plies_mandatory,
-                    )
-                )
+                li.append(f"<b>{_('Mandatory movements')}</b>: {len(self.game) + 1}/{self.plies_mandatory}")
             else:
                 si_obligatorio = False
 
         if not si_obligatorio and self.state != ST_ENDGAME:
             tm = self.plies_pendientes
-            if tm > 1 and len(self.game) and not self.game.move(-1).es_linea:
-                li.append("%s: %d" % (_("Moves until the control"), tm - 1))
+            if tm > 1 and len(self.game) and not self.game.move(-1).is_line:
+                li.append(f"{_('Moves until the control')}: {tm - 1}")
 
         self.set_label1("<br>".join(li))
 
     def run_auto_analysis(self):
-        lista = []
-        for njg in range(self.game.num_moves()):
-            move = self.game.move(njg)
+        list_num_moves = []
+        for num_move in range(self.game.num_moves()):
+            move = self.game.move(num_move)
             if move.is_white() == self.is_human_side_white:
-                fenm2 = move.position_before.fenm2()
-                if fenm2 not in self.dicFENm2:
-                    move.njg = njg
-                    lista.append(move)
-                    move.fenm2 = fenm2
-        total = len(lista)
+                fenm2 = move.position.fenm2()
+                if fenm2 not in self.dict_fenm2:
+                    list_num_moves.append(num_move)
+        total = len(list_num_moves)
         move_max = 0
-        for pos, move in enumerate(lista, 1):
+        for pos, num_move in enumerate(list_num_moves, 1):
             if self.is_canceled():
                 break
-            self.place_in_movement(move.njg)
-            self.waiting_message(with_cancel=True, masTitulo="%d/%d" % (pos, total))
-            name = self.xanalyzer_specific.name
-            vtime = self.xanalyzer_specific.mstime_engine
-            depth = self.xanalyzer_specific.depth_engine
-            mrm = self.dbop.get_cache_engines(name, vtime, move.fenm2, depth)
-            ok = False
-            if mrm:
-                rm, pos = mrm.search_rm(move.movimiento())
-                if rm:
-                    ok = True
-            if not ok:
-                mrm, pos = self.xanalyzer_specific.analysis_move(
-                    move,
-                    self.xanalyzer_specific.mstime_engine,
-                    self.xanalyzer_specific.depth_engine,
-                )
-                self.dbop.set_cache_engines(name, vtime, move.fenm2, mrm, depth)
+            self.place_in_movement(num_move)
+            self.waiting_message(add_to_title=f"{pos}/{total}")
+            move = self.game.move(num_move)
+            mrm, rm, pos = self.analyze_move(num_move)
 
             move.analysis = mrm, pos
             self.main_window.base.pgn_refresh()
             if pos == 0:
                 move_max += 1
 
-        return move_max < total  # si todos son lo máximo aunque pierda algo hay que darlo por probado
+        return move_max < total  # si todos son lo máximo aunque pierda algo hay que darlo por aprobado
 
     def place_in_movement(self, movenum):
-        row = (movenum + 1) / 2 if self.game.starts_with_black else movenum / 2
+        row = (movenum + 1) // 2 if self.game.starts_with_black else movenum // 2
         move: Move.Move = self.game.move(movenum)
         is_white = move.position_before.is_white
-        self.main_window.pgnColocate(row, is_white)
+        self.main_window.place_on_pgn_table(row, is_white)
         self.set_position(move.position)
         self.put_view()
 
-    def waiting_message(self, is_end=False, with_cancel=False, masTitulo=None):
+    def waiting_message(self, is_end=False, add_to_title=None):
         if is_end:
             if self.um:
                 self.um.final()
@@ -373,9 +373,8 @@ class ManagerOpeningEngines(Manager.Manager):
                     with_cancel=True,
                     tit_cancel=_("Cancel"),
                 )
-            if masTitulo:
-                self.um.label(_("Analyzing") + " " + masTitulo)
-            self.um.engine.activate_cancel(with_cancel)
+            if add_to_title:
+                self.um.label(f"{_('Analyzing')} {add_to_title}")
 
     def is_canceled(self):
         si = self.um.canceled()
@@ -383,9 +382,29 @@ class ManagerOpeningEngines(Manager.Manager):
             self.um.final()
         return si
 
-    def runcontrol(self):
-        puntos_inicio, mate_inicio = 0, 0
-        puntos_final, mate_final = 0, 0
+    def analyze_move(self, num_move):
+        move: Move.Move = self.game.move(num_move)
+        fen: str = move.position_before.fen()
+        vtime: float = self.mstime_adjudicator
+        mrm: Optional[EngineResponse.MultiEngineResponse] = self.dbop.get_cache_engines(
+            self.key_adjudicator_cache, vtime, fen
+        )
+        if mrm is not None:
+            rm, pos = mrm.search_rm(move.movimiento())
+            if rm is None:
+                mrm = None
+
+        if mrm is None:
+            self.waiting_message()
+            mrm, pos = self.manager_adjudicator.analyze_move(self.game, num_move, None)
+
+        rm, pos = mrm.search_rm(move.movimiento())
+        move.analysis = mrm, pos
+        self.dbop.set_cache_engines(self.key_adjudicator_cache, vtime, fen, mrm)
+        return mrm, rm, pos
+
+    def run_control(self):
+        # puntos_final, mate_final = 0, 0
         num_moves = len(self.game)
         if num_moves == 0:
             return False
@@ -393,90 +412,70 @@ class ManagerOpeningEngines(Manager.Manager):
         self.um = None  # controla one_moment_please
 
         def aprobado():
-            mens = '<b><span style="color:green">%s</span></b>' % _("Congratulations, goal achieved")
+            menst = f"<b><span style=\"color:green\">{_('Congratulations, goal achieved')}</span></b>"
             self.li_info.append("")
-            self.li_info.append(mens)
+            self.li_info.append(menst)
             self.show_labels()
             self.dbop.setconfig("ENG_ENGINE", self.numengine + 1)
-            self.message_on_pgn(mens)
-            self.siAprobado = True
+            self.message_on_pgn(menst)
+            self.is_approved = True
 
         def suspendido():
-            mens = '<b><span style="color:red">%s</span></b>' % _("You must repeat the game")
+            menst = f"<b><span style=\"color:red\">{_('You must repeat the game')}</span></b>"
             self.li_info.append("")
-            self.li_info.append(mens)
+            self.li_info.append(menst)
             self.show_labels()
-            self.message_on_pgn(mens)
+            self.message_on_pgn(menst)
 
-        def calculaJG(move, siinicio):
-            fen = move.position_before.fen() if siinicio else move.position.fen()
-            name = self.xjuez.name
-            vtime = self.xjuez.mstime_engine
-            mrm = self.dbop.get_cache_engines(name, vtime, fen)
-            if mrm is None:
-                self.waiting_message()
-                mrm = self.xjuez.analiza(fen)
-                self.dbop.set_cache_engines(name, vtime, fen, mrm)
-
-            rm = mrm.best_rm_ordered()
-            if (" w " in fen) == self.is_human_side_white:
-                return rm.puntos, rm.mate
-            else:
-                return -rm.puntos, -rm.mate
-
-        si_calcular_inicio = True
+        move = self.game.move(-1)
         if self.game.is_finished():
-            self.set_end_game()
-            move = self.game.move(-1)
+            self.set_end_game_opl()
             if move.is_mate:
                 if move.is_white() == self.is_human_side_white:
                     aprobado()
                 else:
                     suspendido()
-                self.set_end_game()
+                self.set_end_game_opl()
                 return True
             puntos_final, mate_final = 0, 0
 
         else:
-            move = self.game.move(-1)
-            if move.es_linea:
-                self.plies_pendientes = self.plies_control
-            else:
-                self.plies_pendientes -= 1
-            if self.plies_pendientes > 0:
+            if move.is_line:
                 return False
-            # Si la ultima move es de la linea no se calcula nada
+
+            self.plies_pendientes = self.plies_control
+            for num in range(len(self.game) - 1, -1, -1):
+                if self.game.move(num).is_line:
+                    break
+                else:
+                    self.plies_pendientes -= 1
+            self.plies_pendientes = max(self.plies_pendientes, 0)
+            # si el último movimiento no es nuestro, esperamos
+            if self.plies_pendientes > 0 or move.is_white() != self.is_human_side_white:
+                return False
             self.waiting_message()
-            puntos_final, mate_final = calculaJG(move, False)
+            mrm, rm, pos = self.analyze_move(len(self.game) - 1)
+            puntos_final, mate_final = rm.puntos, rm.mate
 
-        # Se marcan todas las num_moves que no siguen las lineas
-        # Y se busca la ultima del color del player
-        if si_calcular_inicio:
-            jg_inicial = None
-            for njg in range(num_moves):
-                move = self.game.move(njg)
-                fenm2 = move.position_before.fenm2()
-                if fenm2 in self.dicFENm2:
-                    moves = self.dicFENm2[fenm2]
-                    if move.movimiento() not in moves:
-                        move.add_nag(INACCURACY)
-                        if jg_inicial is None:
-                            jg_inicial = move
-                elif jg_inicial is None:
-                    jg_inicial = move
-            if jg_inicial:
-                puntos_inicio, mate_inicio = calculaJG(jg_inicial, True)
-            else:
-                puntos_inicio, mate_inicio = 0, 0
+        # Calculamos el score de inicio
+        num_move = next((num for num in range(len(self.game) - 1, -1, -1) if self.game.move(num).is_line), -1)
+        if num_move == -1:
+            puntos_inicio, mate_inicio = 0, 0
+        else:
+            mrm, rm, pos = self.analyze_move(num_move)
+            puntos_inicio, mate_inicio = rm.puntos, rm.mate
+            last_move = self.game.move(num_move)
+            if self.is_human_side_white != last_move.is_white():
+                puntos_inicio, mate_inicio = -puntos_inicio, -mate_inicio
 
-        self.li_info.append("<b>%s:</b>" % _("Score"))
+        self.li_info.append(f"<b>{_('Score')}:</b>")
         template = "&nbsp;&nbsp;&nbsp;&nbsp;<b>%s</b>: %d"
 
         def append_info(label, puntos, mate):
-            mens = template % (label, puntos)
+            menst = f"{template % (label, puntos)}"
             if mate:
-                mens += " %s %d" % (_("Mate"), mate)
-            self.li_info.append(mens)
+                menst += f' {_("Mate")} {mate}'
+            self.li_info.append(menst)
 
         append_info(_("Begin"), puntos_inicio, mate_inicio)
         append_info(_("End"), puntos_final, mate_final)
@@ -484,8 +483,8 @@ class ManagerOpeningEngines(Manager.Manager):
         ok = perdidos < self.lost_points
         if mate_inicio or mate_final:
             ok = mate_final > mate_inicio
-        mens = template % ("(%d)-(%d)" % (puntos_inicio, puntos_final), perdidos)
-        mens = "%s %s %d" % (mens, "&lt;" if ok else "&gt;", self.lost_points)
+        mens = template % ('(%d)-(%d)' % (puntos_inicio, puntos_final), perdidos)
+        mens = f"{mens} %s %d" % ('&lt;' if ok else '&gt;', self.lost_points)
         self.li_info.append(mens)
 
         if not ok:
@@ -502,7 +501,7 @@ class ManagerOpeningEngines(Manager.Manager):
             self.waiting_message(is_end=True)
             aprobado()
 
-        self.set_end_game()
+        self.set_end_game_opl()
         return True
 
     def run_action(self, key):
@@ -517,21 +516,22 @@ class ManagerOpeningEngines(Manager.Manager):
             self.reiniciar()
 
         elif key == TB_RESIGN:
-            self.set_end_game()
+            self.set_end_game_opl()
 
         elif key == TB_CONFIG:
             self.configurar(with_sounds=True)
 
         elif key == TB_UTILITIES:
-            li_extra_options = []
-            li_extra_options.append(("books", _("Consult a book"), Iconos.Libros()))
-            li_extra_options.append((None, None, None))
-            li_extra_options.append((None, _("Options"), Iconos.Opciones()))
+            li_extra_options = [
+                ("books", _("Consult a book"), Iconos.Libros()),
+                (None, None, None),
+                (None, _("Options"), Iconos.Opciones()),
+            ]
             mens = _("Cancel") if self.auto_analysis else _("Enable")
             li_extra_options.append(
                 (
                     "auto_analysis",
-                    "%s: %s" % (_("Automatic analysis"), mens),
+                    f"{_('Automatic analysis')}: {mens}",
                     Iconos.Analizar(),
                 )
             )
@@ -540,7 +540,7 @@ class ManagerOpeningEngines(Manager.Manager):
             li_extra_options.append(
                 (
                     "ask_movesdifferent",
-                    "%s: %s" % (_("Ask when the moves are different from the line"), mens),
+                    f"{_('Ask when the moves are different from the line')}: {mens}",
                     Iconos.Pelicula_Seguir(),
                 )
             )
@@ -569,18 +569,18 @@ class ManagerOpeningEngines(Manager.Manager):
                         game = self.game.copia(nj)
 
                 self.dbop.append(game)
-                self.dbop.updateTrainingEngines()
+                self.dbop.update_training_engines()
                 QTMessages.message_bold(self.main_window, _("Done"))
 
             elif resp == "auto_analysis":
                 self.auto_analysis = not self.auto_analysis
-                self.trainingEngines["AUTO_ANALYSIS"] = self.auto_analysis
-                self.dbop.setTrainingEngines(self.trainingEngines)
+                self.training_engines["AUTO_ANALYSIS"] = self.auto_analysis
+                self.dbop.set_training_engines(self.training_engines)
 
             elif resp == "ask_movesdifferent":
                 self.ask_movesdifferent = not self.ask_movesdifferent
-                self.trainingEngines["ASK_MOVESDIFFERENT"] = self.ask_movesdifferent
-                self.dbop.setTrainingEngines(self.trainingEngines)
+                self.training_engines["ASK_MOVESDIFFERENT"] = self.ask_movesdifferent
+                self.dbop.set_training_engines(self.training_engines)
 
             elif resp == "run_analysis":
                 self.um = None
@@ -596,9 +596,9 @@ class ManagerOpeningEngines(Manager.Manager):
 
     def end_game(self):
         self.dbop.close()
-        self.board.restoreVisual()
+        self.board.restore_visual_state()
         self.procesador.start()
-        self.procesador.openings()
+        self.procesador.openings_lines()
         return False
 
     def reiniciar(self):
@@ -606,11 +606,11 @@ class ManagerOpeningEngines(Manager.Manager):
         self.main_window.active_information_pgn(False)
         self.reinicio(self.dbop)
 
-    def set_end_game(self):
+    def set_end_game_opl(self):
         self.state = ST_ENDGAME
         self.disable_all()
         li_options = [TB_CLOSE]
-        if self.siAprobado:
+        if self.is_approved:
             li_options.append(TB_NEXT)
             li_options.append(TB_REPEAT)
         else:

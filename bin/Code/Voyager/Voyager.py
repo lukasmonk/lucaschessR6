@@ -7,7 +7,7 @@ from PIL import Image
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import BLACK, INFINITE, WHITE
 from Code.Board import Board, Board2
@@ -49,7 +49,7 @@ def average_hash(img, hash_size=8):
 
     # Compute the hash based on each pixels value compared to the average.
     bits = "".join(map(lambda pixel: "1" if pixel > avg else "0", pixels))
-    hashformat = "0{hashlength}x".format(hashlength=hash_size**2 // 4)
+    hashformat = f"0{hash_size ** 2 // 4}x"
     return int(bits, 2).__format__(hashformat)
 
 
@@ -67,12 +67,12 @@ class WPosicion(QtWidgets.QWidget):
 
         config_board = configuration.config_board("VOYAGERPOS", 24)
         self.board = Board2.PosBoard(self, config_board)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_dispatcher(self.mueve)
-        self.board.mensBorrar = self.clean_square
-        self.board.mensCrear = self.rightmouse_square
-        self.board.mensRepetir = self.repitePieza
-        self.board.set_dispatch_drop(self.dispatchDrop)
+        self.board.message_to_delete = self.clean_square
+        self.board.create_message = self.rightmouse_square
+        self.board.repeat_message = self.repeat_piece
+        self.board.set_dispatch_drop(self.dispatch_drop)
         self.board.baseCasillasSC.setAcceptDrops(True)
         self.board.set_side_bottom(is_white_bottom)
 
@@ -94,12 +94,12 @@ class WPosicion(QtWidgets.QWidget):
         self.rbWhite = Controles.RB(self, _("White"), rutina=self.change_side)
         self.rbBlack = Controles.RB(self, _("Black"), rutina=self.change_side)
 
-        self.cbWoo = Controles.CHB(self, _("White") + " O-O", True)
-        self.cbWooo = Controles.CHB(self, _("White") + " O-O-O", True)
-        self.cbBoo = Controles.CHB(self, _("Black") + " O-O", True)
-        self.cbBooo = Controles.CHB(self, _("Black") + " O-O-O", True)
+        self.cbWoo = Controles.CHB(self, f"{_('White')} O-O", True)
+        self.cbWooo = Controles.CHB(self, f"{_('White')} O-O-O", True)
+        self.cbBoo = Controles.CHB(self, f"{_('Black')} O-O", True)
+        self.cbBooo = Controles.CHB(self, f"{_('Black')} O-O-O", True)
 
-        lb_en_passant = Controles.LB(self, _("En passant") + ":")
+        lb_en_passant = Controles.LB(self, f"{_('En passant')}:")
         self.edEnPassant = Controles.ED(self).controlrx("(-|[a-h][36])").relative_width(30)
 
         self.edMovesPawn, lbMovesPawn = QTMessages.spinbox_lb(
@@ -115,12 +115,12 @@ class WPosicion(QtWidgets.QWidget):
         self.lb_scanner = Controles.LB(self)
 
         pb_scanner_deduce = Controles.PB(self, _("Deduce"), self.scanner_deduce, plano=False)
-        self.chb_scanner_flip = Controles.CHB(self, _("Flip the board"), False).capture_changes(self, self.scanner_flip)
+        self.chb_scanner_flip = Controles.CHB(self, _("Flip the board"), False).capture_changes(self.scanner_flip)
         self.pb_scanner_learn = Controles.PB(self, _("Learn"), self.scanner_learn, plano=False)
-        self.pb_scanner_learn_quit = Controles.PB(self, "", self.scanner_learn_quit).ponIcono(
+        self.pb_scanner_learn_quit = Controles.PB(self, "", self.scanner_learn_quit).set_icono(
             Iconos.Menos(), icon_size=24
         )
-        self.pb_scanner_learn_quit.ponToolTip(_("Remove last learned")).relative_width(24)
+        self.pb_scanner_learn_quit.set_tooltip(_("Remove last learned")).relative_width(24)
 
         self.sb_scanner_tolerance, lb_scanner_tolerance = QTMessages.spinbox_lb(
             self,
@@ -143,8 +143,8 @@ class WPosicion(QtWidgets.QWidget):
 
         self.cb_scanner_select, lb_scanner_select = QTMessages.combobox_lb(self, [], None, _("OPR"))
         self.cb_scanner_select.capture_changes(self.scanner_change)
-        pb_scanner_more = Controles.PB(self, "", self.scanner_more).ponIcono(Iconos.Mas())
-        pb_scanner_remove = Controles.PB(self, "", self.scanner_remove).ponIcono(Iconos.Borrar())
+        pb_scanner_more = Controles.PB(self, "", self.scanner_more).set_icono(Iconos.Mas())
+        pb_scanner_remove = Controles.PB(self, "", self.scanner_remove).set_icono(Iconos.Borrar())
 
         self.chb_scanner_ask = Controles.CHB(self, _("Ask before new capture"), self.vars_scanner.ask)
 
@@ -199,7 +199,7 @@ class WPosicion(QtWidgets.QWidget):
         ly_g = Colocacion.G()
         ly_g.controlc(self.drag_drop_down, 0, 0)
         ly_g.controlc(self.board, 1, 0).control(self.lb_scanner, 1, 1)
-        ly_g.controlc(self.drag_drop_up, 2, 0).controlc(self.gb_scanner, 2, 1, numFilas=4)
+        ly_g.controlc(self.drag_drop_up, 2, 0).controlc(self.gb_scanner, 2, 1, num_rows=4)
         ly_g.controlc(gb_color, 3, 0)
         ly_g.controlc(gb_enroques, 4, 0)
         ly_g.controlc(gb_otros, 5, 0)
@@ -211,9 +211,9 @@ class WPosicion(QtWidgets.QWidget):
         self.setLayout(layout)
 
         self.ultimaPieza = "P"
-        self.piezas = self.board.piezas
+        self.pieces = self.board.pieces
         self.reset_position()
-        self.ponCursor()
+        self.show_cursor()
 
         self.lb_scanner.hide()
         self.pb_scanner_learn_quit.hide()
@@ -236,9 +236,9 @@ class WPosicion(QtWidgets.QWidget):
         if fen.count("K") == 1 and fen.count("k") == 1:
             self.save()
         elif fen.count("k") == 1:
-            self.rbWhite.activa(True)
+            self.rbWhite.activate(True)
         elif fen.count("K") == 1:
-            self.rbBlack.activa(True)
+            self.rbBlack.activate(True)
 
     def closeEvent(self, event):
         self.scanner_write()
@@ -262,10 +262,10 @@ class WPosicion(QtWidgets.QWidget):
                 elif pz in "pP" and a1h8[1] in "18":
                     si_p1 = True
         if not si_kw:
-            QTMessages.message_error(self, _("King") + "-" + _("White") + "???")
+            QTMessages.message_error(self, f"{_('King')}-{_('White')}???")
             return
         if not si_kb:
-            QTMessages.message_error(self, _("King") + "-" + _("Black") + "???")
+            QTMessages.message_error(self, f"{_('King')}-{_('Black')}???")
             return
         if si_p1:
             QTMessages.message_error(self, _("Pawns in the first or last row"))
@@ -277,7 +277,7 @@ class WPosicion(QtWidgets.QWidget):
             QTMessages.message_error(self, _("The king is in check"))
             return
         self.position.is_white = not self.position.is_white
-        self.wparent.setPosicion(self.position)
+        self.wparent.set_position(self.position)
         self.scanner_write()
         if self.is_game:
             self.wparent.ponModo(MODO_PARTIDA)
@@ -293,19 +293,19 @@ class WPosicion(QtWidgets.QWidget):
         else:
             self.wparent.cancelar()
 
-    def ponCursor(self):
-        cursor = self.piezas.cursor(self.ultimaPieza)
+    def show_cursor(self):
+        cursor = self.pieces.cursor(self.ultimaPieza)
         for item in self.board.escena.items():
             item.setCursor(cursor)
         self.board.setCursor(cursor)
 
-    def cambiaPiezaSegun(self, pieza):
+    def change_piece_if_content(self, pieza):
         ant = self.ultimaPieza
         if ant.upper() == pieza:
             if ant == pieza:
                 pieza = pieza.lower()
         self.ultimaPieza = pieza
-        self.ponCursor()
+        self.show_cursor()
 
     def mueve(self, from_sq, to_sq):
         if from_sq == to_sq:
@@ -316,13 +316,13 @@ class WPosicion(QtWidgets.QWidget):
         self.squares.pop(from_sq, None)
         self.board.move_piece(from_sq, to_sq)
 
-        self.ponCursor()
+        self.show_cursor()
 
-    def dispatchDrop(self, from_sq, qbpieza):
+    def dispatch_drop(self, from_sq, qbpieza):
         pieza = qbpieza[0]
         if self.squares.get(from_sq):
             self.clean_square(from_sq)
-        self.ponPieza(from_sq, pieza)
+        self.ensure_piece_at(from_sq, pieza)
 
     def clean_square(self, from_sq):
         self.squares[from_sq] = None
@@ -364,7 +364,7 @@ class WPosicion(QtWidgets.QWidget):
         )
 
         for txt, pieza in li_options:
-            icono = self.board.piezas.icono(pieza)
+            icono = self.board.pieces.icono(pieza)
 
             accion = QtGui.QAction(icono, txt, menu)
             accion.key = pieza
@@ -373,20 +373,20 @@ class WPosicion(QtWidgets.QWidget):
         resp = menu.exec(QtGui.QCursor.pos())
         if resp:
             pieza = resp.key
-            self.ponPieza(from_sq, pieza)
+            self.ensure_piece_at(from_sq, pieza)
 
-    def ponPieza(self, from_sq, pieza):
+    def ensure_piece_at(self, from_sq, pieza):
         antultimo = self.ultimaPieza
         self.ultimaPieza = pieza
-        self.repitePieza(from_sq)
+        self.repeat_piece(from_sq)
         if pieza == "K":
             self.ultimaPieza = antultimo
         if pieza == "k":
             self.ultimaPieza = antultimo
 
-        self.ponCursor()
+        self.show_cursor()
 
-    def repitePieza(self, from_sq):
+    def repeat_piece(self, from_sq):
         pieza = self.ultimaPieza
         if pieza in "kK":
             for pos, pz in self.squares.items():
@@ -399,10 +399,10 @@ class WPosicion(QtWidgets.QWidget):
             else:
                 pieza = pieza.lower()
         self.squares[from_sq] = pieza
-        pieza = self.board.creaPieza(pieza, from_sq)
-        pieza.activa(True)
+        pieza = self.board.create_piece(pieza, from_sq)
+        pieza.activate(True)
 
-        self.ponCursor()
+        self.show_cursor()
 
     def leeDatos(self):
         is_white = self.rbWhite.isChecked()
@@ -439,7 +439,7 @@ class WPosicion(QtWidgets.QWidget):
         self.cbBoo.set_value("k" in castles)
         self.cbBooo.set_value("q" in castles)
 
-    def setPosicion(self, position):
+    def set_position(self, position):
         self.position = position.copia()
         self.reset_position()
 
@@ -498,9 +498,9 @@ class WPosicion(QtWidgets.QWidget):
 
         if reset_all:
             if self.position.is_white:
-                self.rbWhite.activa(True)
+                self.rbWhite.activate(True)
             else:
-                self.rbBlack.activa(True)
+                self.rbBlack.activate(True)
 
             # Enroques permitidos
             castles = self.position.castles
@@ -541,17 +541,10 @@ class WPosicion(QtWidgets.QWidget):
                 self.scanner_init()
                 self.is_scan_init = True
 
-            if Code.configuration.x_enable_highdpiscaling:
-                QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DisableHighDpiScaling)
-
             sc = Scanner.Scanner(self, self.configuration.paths.folder_scanners(), desktop, screen_geometry)
             if not sc.exec():
-                if Code.configuration.x_enable_highdpiscaling:
-                    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
                 return
 
-            if Code.configuration.x_enable_highdpiscaling:
-                QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
             self.vars_scanner.read()
             self.vars_scanner.tolerance = self.sb_scanner_tolerance.valor()  # releemos la variable
             self.vars_scanner.tolerance_learns = min(
@@ -597,7 +590,7 @@ class WPosicion(QtWidgets.QWidget):
                 x1 = x + tam - 4
                 y1 = y + tam - 4
                 im_t = im.crop((x, y, x1, y1))
-                pos = "%s%s" % (col, fil)
+                pos = f"{col}{fil}"
                 dic[pos] = average_hash(im_t, hash_size=8)
                 dic_color[pos] = (f + c) % 2 == 0
         self.dicscan_pos_hash = dic
@@ -642,7 +635,7 @@ class WPosicion(QtWidgets.QWidget):
         self.reset_position(reset_all=False)
         dic = self.scanner_deduce_base(False)
         for pos, pz in dic.items():
-            self.ponPieza(pos, pz)
+            self.ensure_piece_at(pos, pz)
 
     def scanner_learn(self):
         cp = Position.Position()
@@ -694,14 +687,14 @@ class WPosicion(QtWidgets.QWidget):
                 li_gen,
                 title=_("New scanner"),
                 parent=self,
-                anchoMinimo=200,
+                minimum_width=200,
                 icon=Iconos.Scanner(),
             )
             if resultado:
                 accion, li_gen = resultado
                 name = li_gen[0].strip()
                 if name:
-                    fich = Util.opj(self.configuration.paths.folder_scanners(), "%s.scn" % name)
+                    fich = Util.opj(self.configuration.paths.folder_scanners(), f"{name}.scn")
                     if Util.exist_file(fich):
                         QTMessages.message_error(self, _("This scanner already exists."))
                         continue
@@ -773,7 +766,7 @@ class WPosicion(QtWidgets.QWidget):
         self.scanner_show_learned()
 
     def scanner_show_learned(self):
-        self.pb_scanner_learn.set_text("%s (%d)" % (_("Learn"), len(self.li_scan_pch)))
+        self.pb_scanner_learn.set_text(f"{_('Learn')} ({len(self.li_scan_pch)})")
         self.pb_scanner_learn_quit.setVisible(self.n_scan_last_added < len(self.li_scan_pch))
 
     def scanner_write(self):
@@ -831,9 +824,9 @@ class WPGN(QtWidgets.QWidget):
 
         config_board = configuration.config_board("VOYAGERPGN", 24)
         self.board = Board.Board(self, config_board)
-        self.board.crea()
-        self.board.set_dispatcher(self.player_has_moved)
-        Delegados.genera_pm(self.board.piezas)
+        self.board.draw_window()
+        self.board.set_dispatcher(self.player_has_moved_dispatcher)
+        Delegados.genera_pm(self.board.pieces)
 
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NUMBER", _("N."), 35, align_center=True)
@@ -851,7 +844,7 @@ class WPGN(QtWidgets.QWidget):
             n_ancho_color,
             edicion=Delegados.EtiquetaPGN(False if self.with_figurines else None),
         )
-        self.pgn = Grid.Grid(self, o_columns, siCabeceraMovible=False, siSelecFilas=True)
+        self.pgn = Grid.Grid(self, o_columns, is_column_header_movable=False, complete_row_select=True)
         self.pgn.setMinimumWidth(self.board.ancho)
 
         ly = Colocacion.V().control(self.tb).control(self.board)
@@ -894,9 +887,9 @@ class WPGN(QtWidgets.QWidget):
         self.pgn.gobottom()
         self.board.activate_side(self.game.last_position.is_white)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         if not promotion and self.game.last_position.pawn_can_promote(from_sq, to_sq):
-            promotion = self.board.peonCoronando(self.game.last_position.is_white)
+            promotion = self.board.pawn_promoting(self.game.last_position.is_white)
 
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
 
@@ -920,8 +913,8 @@ class WPGN(QtWidgets.QWidget):
             n += 1
         return n // 2
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        col = obj_column.key
         if col == "NUMBER":
             return str(self.game.first_position.num_moves + row)
 
@@ -984,14 +977,14 @@ class Voyager(LCDialog.LCDialog):
     def ponModo(self, modo):
         self.modo = modo
         if modo == MODO_POSICION:
-            self.wPos.setPosicion(self.game.first_position)
+            self.wPos.set_position(self.game.first_position)
             self.wPGN.setVisible(False)
             self.wPos.setVisible(True)
         else:
             self.wPos.setVisible(False)
             self.wPGN.setVisible(True)
 
-    def setPosicion(self, position):
+    def set_position(self, position):
         self.game.first_position = position
         self.wPGN.limpia()
 

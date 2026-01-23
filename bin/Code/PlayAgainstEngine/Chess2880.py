@@ -2,7 +2,7 @@ import random
 from itertools import permutations
 
 import Code
-from Code import Util
+from Code.Z import Util
 
 
 class Chess2880:

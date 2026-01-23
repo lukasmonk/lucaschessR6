@@ -61,9 +61,9 @@ class ManagerOpeningLines(Manager.Manager):
 
         if self.show_comments and comment and fenm2 not in self.st_nocomments:
             if ventaja:
-                comment += "\n\n* " + Nags.dic_text_nags(ventaja)
+                comment += f"\n\n* {Nags.dic_text_nags(ventaja)}"
             if valoracion:
-                comment += "\n\n* " + Nags.dic_text_nags(valoracion)
+                comment += f"\n\n* {Nags.dic_text_nags(valoracion)}"
 
             text_move = "%d." % ((len(self.game) - 1) // 2 + 1)
             if not move.is_white():

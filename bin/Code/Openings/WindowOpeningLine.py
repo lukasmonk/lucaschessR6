@@ -1,4 +1,3 @@
-import copy
 import operator
 import os
 import os.path
@@ -6,7 +5,7 @@ import os.path
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import PGNtoGame, Util
 from Code.Analysis import Analysis
 from Code.Base import Game
 from Code.Base.Constantes import (
@@ -17,7 +16,6 @@ from Code.Base.Constantes import (
     NONE,
     ONLY_BLACK,
     ONLY_WHITE,
-    TOP_RIGHT,
 )
 from Code.Books import Books, Polyglot, WBooks
 from Code.Databases import DBgames
@@ -44,8 +42,8 @@ from Code.QT import (
     QTUtils,
     ScreenUtils,
     SelectFiles,
-    WindowSavePGN,
 )
+from Code.ZQT import WindowSavePGN
 from Code.Translations import TrListas
 from Code.Voyager import Voyager
 
@@ -78,7 +76,7 @@ class WLines(LCDialog.LCDialog):
         with_figurines = self.configuration.x_pgn_withfigurines
 
         self.tb = QTDialogs.LCTB(self, style=QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon, icon_size=32)
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         self.tb.new(_("Remove"), Iconos.Borrar(), self.remove)
         self.tb.new(_("Import"), Iconos.Import8(), self.importar)
         self.tb.new(_("Export"), Iconos.Export8(), self.exportar)
@@ -103,10 +101,10 @@ class WLines(LCDialog.LCDialog):
                 ancho_col,
                 edicion=Delegados.EtiquetaPOSN(with_figurines, True),
             )
-        self.glines = Grid.Grid(self, o_columns, siCabeceraMovible=False)
+        self.glines = Grid.Grid(self, o_columns, is_column_header_movable=False)
         self.glines.setAlternatingRowColors(False)
         self.glines.font_type(puntos=self.configuration.x_pgn_fontpoints)
-        self.glines.ponAltoFila(self.configuration.x_pgn_rowheight)
+        self.glines.set_height_row(self.configuration.x_pgn_rowheight)
 
         self.tabsanalisis = POLAnalisis.TabsAnalisis(self, self.procesador, self.configuration)
 
@@ -121,7 +119,7 @@ class WLines(LCDialog.LCDialog):
         splitter.setOrientation(QtCore.Qt.Orientation.Vertical)
         splitter.addWidget(widget)
         splitter.addWidget(self.tabsanalisis)
-        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         splitter.setSizePolicy(sp)
         self.register_splitter(splitter, "SPLITTER")
 
@@ -135,7 +133,7 @@ class WLines(LCDialog.LCDialog):
 
         self.game = self.gamebase
 
-        self.pboard.MoverFinal()
+        self.pboard.move_to_end()
 
         self.restore_video()
 
@@ -209,7 +207,7 @@ class WLines(LCDialog.LCDialog):
             for history in list_history[:20]:
                 h = history
                 if len(h) > 70:
-                    h = h[:70] + "..."
+                    h = f"{h[:70]}..."
                 submenu.opcion(history, h, rondo.otro())
                 submenu.separador()
             submenu.opcion(self.ta_remove_backups, _("Remove all backups"), Iconos.Delete())
@@ -219,7 +217,7 @@ class WLines(LCDialog.LCDialog):
             if isinstance(resp, str):
                 if QTMessages.pregunta(
                     self,
-                    _("Are you sure you want to restore backup %s ?") % ("\n%s" % resp),
+                    _("Are you sure you want to restore backup %s ?") % f"\n{resp}",
                 ):
                     um = QTMessages.working(self)
                     self.dbop.recovering_history(resp)
@@ -229,7 +227,7 @@ class WLines(LCDialog.LCDialog):
                 resp()
 
     def ta_remove_backups(self):
-        if QTMessages.pregunta(self, "%s\n%s" % (_("Remove all backups"), _("Are you sure?"))):
+        if QTMessages.pregunta(self, f"{_('Remove all backups')}\n{_('Are you sure?')}"):
             self.dbop.remove_all_history()
 
     def ta_transpositions(self):
@@ -242,19 +240,19 @@ class WLines(LCDialog.LCDialog):
     def ta_massive(self, line=None):
         dic_var = self.configuration.read_variables("MASSIVE_OLINES")
 
-        form = FormLayout.FormLayout(self, _("Mass analysis"), Iconos.Analizar(), anchoMinimo=460)
+        form = FormLayout.FormLayout(self, _("Mass analysis"), Iconos.Analizar(), minimum_width=460)
         form.separador()
 
         form.combobox(
             _("Engine"),
             self.configuration.engines.list_name_alias_multipv10(4),
-            dic_var.get("ENGINE", self.configuration.engines.engine_tutor()),
+            dic_var.get("ENGINE", self.configuration.engines.engine_analyzer()),
         )
         form.separador()
 
         form.seconds(
             _("Duration of engine analysis (secs)"),
-            dic_var.get("SEGUNDOS", float(self.configuration.x_tutor_mstime / 1000.0)),
+            dic_var.get("SEGUNDOS", float(self.configuration.x_analyzer_mstime / 1000.0)),
         )
 
         li_depths = [("--", 0)]
@@ -263,38 +261,15 @@ class WLines(LCDialog.LCDialog):
         form.combobox(
             _("Depth"),
             li_depths,
-            dic_var.get("DEPTH", self.configuration.x_tutor_depth),
+            dic_var.get("DEPTH", self.configuration.x_analyzer_depth),
         )
         form.separador()
 
-        li = [(_("Maximum"), 0)]
-        for x in (
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            12,
-            15,
-            20,
-            30,
-            40,
-            50,
-            75,
-            100,
-            150,
-            200,
-        ):
-            li.append((str(x), x))
+        li = Util.list_depths_to_cb()
         form.combobox(
             _("Number of variations evaluated by the engine (MultiPV)"),
             li,
-            dic_var.get("MULTIPV", self.configuration.x_tutor_multipv),
+            dic_var.get("MULTIPV", self.configuration.x_analyzer_multipv),
         )
         form.separador()
 
@@ -361,14 +336,17 @@ class WLines(LCDialog.LCDialog):
                 for fenm2 in li_borrar:
                     stfen.remove(fenm2)
 
-            conf_engine = copy.deepcopy(self.configuration.engines.search(clave_motor))
-            conf_engine.set_multipv_var(multi_pv)
-            xmanager = self.procesador.create_manager_engine(conf_engine, ms, depth, True, priority=priority)
+            engine = self.configuration.engines.search(clave_motor).clone()
+            engine.set_multipv_var(multi_pv)
+            xmanager = self.procesador.create_manager_analysis(engine, ms, depth, 0, engine.multiPV, priority=priority)
 
-        mensaje = _("Move") + "  %d/" + str(len(stfen))
+        mensaje = f"{_('Move')}  %d/{len(stfen)!s}"
         tmp_bp = QTMessages.ProgressBarSimple(self, _("Mass analysis"), "", len(stfen))
         tmp_bp.setFixedWidth(450)
         tmp_bp.mostrar()
+
+        def dispatch(rm, ms):
+            return not tmp_bp.is_canceled()
 
         for done, fenm2 in enumerate(stfen, 1):
             if tmp_bp.is_canceled():
@@ -377,7 +355,7 @@ class WLines(LCDialog.LCDialog):
             tmp_bp.inc()
             tmp_bp.mensaje(mensaje % done)
 
-            mrm = xmanager.analiza(fenm2 + " 0 1")
+            mrm = xmanager.analyze_fen(f"{fenm2} 0 1", dispatch)
             dic = self.dbop.getfenvalue(fenm2)
             dic["ANALISIS"] = mrm
             self.dbop.setfenvalue(fenm2, dic)
@@ -404,7 +382,7 @@ class WLines(LCDialog.LCDialog):
         submenu1 = submenu.submenu(_("Create trainings"), Iconos.Modificar())
         submenu1.opcion(
             "new_ssp",
-            "%s - %s - %s" % (_("Sequential"), _("Static"), _("Positions")),
+            f"{_('Sequential')} - {_('Static')} - {_('Positions')}",
             Iconos.TrainSequential(),
         )
         submenu1.opcion("new_eng", _("With engines"), Iconos.TrainEngines())
@@ -414,7 +392,7 @@ class WLines(LCDialog.LCDialog):
             return
         if resp.startswith("tr_"):
             self.resultado = resp
-            self.terminar()
+            self.finalize()
         elif resp == "new_ssp":
             self.train_new_ssp()
         elif resp == "new_eng":
@@ -426,7 +404,7 @@ class WLines(LCDialog.LCDialog):
         if len(self.dbop) == 0:
             return False, False
         training = self.dbop.training()
-        training_eng = self.dbop.trainingEngines()
+        training_eng = self.dbop.training_engines()
         return training is not None, training_eng is not None
 
     def train_new_ssp(self):
@@ -448,16 +426,16 @@ class WLines(LCDialog.LCDialog):
         li_gen.append((config, color))
 
         li_gen.append(separador)
-        li_gen.append((_("Random order") + ":", random_order))
+        li_gen.append((f"{_('Random order')}:", random_order))
 
         li_gen.append(separador)
-        li_gen.append((_("Maximum number of movements (0=all)") + ":", max_moves))
+        li_gen.append((f"{_('Maximum number of movements (0=all)')}:", max_moves))
 
         resultado = FormLayout.fedit(
             li_gen,
             title=_("New training"),
             parent=self,
-            anchoMinimo=360,
+            minimum_width=360,
             icon=Iconos.Study(),
         )
         if resultado is None:
@@ -467,12 +445,12 @@ class WLines(LCDialog.LCDialog):
 
         reg = {"COLOR": li_resp[0], "RANDOM": li_resp[1], "MAXMOVES": li_resp[2]}
 
-        self.dbop.createTrainingSSP(reg, self.procesador)
+        self.dbop.create_trainings_sp(reg)
 
         QTMessages.message_bold(self, _("The trainings of this opening has been created"))
 
     def train_new_engines(self):
-        training = self.dbop.trainingEngines()
+        training = self.dbop.training_engines()
         color = "WHITE"
         basepv = self.dbop.basePV
         mandatory = basepv.count(" ") + 1 if len(basepv) > 0 else 0
@@ -512,17 +490,17 @@ class WLines(LCDialog.LCDialog):
         config = FormLayout.Combobox(_("Side you play with"), li_j)
         li_gen.append((config, color))
 
-        li_gen.append((_("Mandatory movements") + ":", mandatory))
+        li_gen.append((f"{_('Mandatory movements')}:", mandatory))
         li_gen.append(separador)
-        li_gen.append((_("Movements until the control") + ":", control))
+        li_gen.append((f"{_('Movements until the control')}:", control))
         li_gen.append(separador)
-        li_gen.append((_("Maximum number of lost centipawns to pass control") + ":", lost_points))
+        li_gen.append((f"{_('Maximum number of lost centipawns to pass control')}:", lost_points))
         li_gen.append(separador)
 
         dic_engines = self.configuration.engines.dic_engines()
-        li_engines = EnginesBunch.lista(dic_engines)
+        li_engines = EnginesBunch.lista()
         config = FormLayout.Spinbox(
-            "%s: %s" % (_("Automatic selection"), _("number of engines")),
+            f"{_('Automatic selection')}: {_('number of engines')}",
             0,
             len(li_engines),
             50,
@@ -530,23 +508,23 @@ class WLines(LCDialog.LCDialog):
         li_gen.append((config, num_engines))
 
         likeys = [("%s %d" % (_("Group"), pos), x) for pos, x in enumerate(li_engines, 1) if x in dic_engines]
-        config = FormLayout.Combobox("%s: %s" % (_("Automatic selection"), _("bunch of engines")), likeys)
+        config = FormLayout.Combobox(f"{_('Automatic selection')}: {_('bunch of engines')}", likeys)
         li_gen.append((config, key_engine))
         li_gen.append(separador)
 
         config = FormLayout.Combobox(_("Engine that does the control"), self.configuration.engines.list_name_alias())
         li_gen.append((config, engine_control))
-        li_gen.append((_("Duration of analysis (secs)") + ":", float(engine_time)))
+        li_gen.append((f"{_('Duration of analysis (secs)')}:", float(engine_time)))
 
         li_gen.append(separador)
 
-        li_gen.append((_("Automatic analysis") + ":", auto_analysis))
+        li_gen.append((f"{_('Automatic analysis')}:", auto_analysis))
 
         li_gen.append(separador)
 
         li_gen.append(
             (
-                _("Ask when the moves are different from the line") + ":",
+                f"{_('Ask when the moves are different from the line')}:",
                 ask_movesdifferent,
             )
         )
@@ -578,7 +556,7 @@ class WLines(LCDialog.LCDialog):
             title = TrListas.level(n)
             # liLevels.append((None, title))
             tm = times[level] / 1000.0 if len(times) > level else 0.0
-            li_levels.append(("%s. %s:" % (title, _("Time engines think in seconds")), tm))
+            li_levels.append((f"{title}. {_('Time engines think in seconds')}:", tm))
 
             bk = books[level] if len(books) > level else ""
             book = list_books.seek_book(bk) if bk else None
@@ -598,7 +576,7 @@ class WLines(LCDialog.LCDialog):
             lista,
             title=_("With engines"),
             parent=self,
-            anchoMinimo=360,
+            minimum_width=360,
             icon=Iconos.Study(),
         )
         if resultado is None:
@@ -650,18 +628,18 @@ class WLines(LCDialog.LCDialog):
         reg["BOOKS"] = books
         reg["BOOKS_SEL"] = books_sel
 
-        self.dbop.createTrainingEngines(reg, self.procesador)
+        self.dbop.create_training_engines(reg)
 
         QTMessages.message_bold(self, _("Created"))
 
     def train_update_all(self):
-        self.dbop.updateTraining(self.procesador)
-        self.dbop.updateTrainingEngines()
+        self.dbop.update_training()
+        self.dbop.update_training_engines()
         QTMessages.message_bold(self, _("The trainings have been updated"))
 
     def add_partida(self, game):
         if game.pv().startswith(self.gamebase.pv()):
-            si_nueva, num_linea, si_append = self.dbop.posPartida(game)
+            si_nueva, num_linea, si_append = self.dbop.data_of_game(game)
             if si_nueva:
                 self.dbop.append(game)
             else:
@@ -677,7 +655,7 @@ class WLines(LCDialog.LCDialog):
         if len(self.dbop) == 0:
             game.assign_other_game(self.gamebase)
             return game
-        numcol = self.glines.posActualN()[1]
+        numcol = self.glines.current_position_num()[1]
         game.assign_other_game(self.game if self.game and numcol > 0 else self.gamebase)
         if self.num_jg_actual is not None and self.num_jg_inicial <= self.num_jg_actual < len(game):
             game.li_moves = game.li_moves[: self.num_jg_actual + 1]
@@ -800,7 +778,7 @@ class WLines(LCDialog.LCDialog):
         if not dic_data:
             dic_data = {}
 
-        form = FormLayout.FormLayout(self, titulo, Iconos.Naranja(), anchoMinimo=360)
+        form = FormLayout.FormLayout(self, titulo, Iconos.Naranja(), minimum_width=360)
         form.separador()
 
         form.apart(_("Select the number of half-moves <br> for each game to be considered"))
@@ -877,7 +855,7 @@ class WLines(LCDialog.LCDialog):
     def read_params_import(self, path):
         dic_vars = self.read_config_vars()
 
-        form = FormLayout.FormLayout(self, os.path.basename(path), Iconos.Import8(), anchoMinimo=460)
+        form = FormLayout.FormLayout(self, os.path.basename(path), Iconos.Import8(), minimum_width=460)
         form.separador()
 
         form.apart(_("Select the number of half-moves <br> for each game to be considered"))
@@ -952,7 +930,7 @@ class WLines(LCDialog.LCDialog):
     def import_pastepgn(self, game):
         txt = QTUtils.get_txt_clipboard()
         if txt:
-            ok, game1 = Game.pgn_game(txt)
+            ok, game1 = PGNtoGame.pgn_to_game(txt)
             if not ok:
                 QTMessages.message_error(
                     self,
@@ -1004,19 +982,19 @@ class WLines(LCDialog.LCDialog):
         self.glines.refresh()
         self.glines.gotop()
 
-    def grid_color_fondo(self, grid, row, o_column):
-        col = o_column.key
+    def grid_color_fondo(self, _grid, row, obj_column):
+        col = obj_column.key
         if col == "LINE":
             return self.colorLine
         else:
             linea = row // 2
             return self.colorPar if linea % 2 == 1 else self.colorNon
 
-    def grid_cambiado_registro(self, grid, row, o_column):
+    def grid_cambiado_registro(self, _grid, row, obj_column):
         if self.desactive_cambio_registro:
             self.desactive_cambio_registro = False
             return
-        col = o_column.key
+        col = obj_column.key
         linea = row // 2
         self.game = self.dbop[linea]
         iswhite = row % 2 == 0
@@ -1027,17 +1005,17 @@ class WLines(LCDialog.LCDialog):
         else:
             njug = -1
         self.num_jg_actual = njug
-        self.pboard.ponPartida(self.game)
+        self.pboard.pon_partida(self.game)
         self.pboard.goto_move_num(njug)
         self.glines.setFocus()
 
     def set_jugada(self, njug):
         """Recibimos informacion del panel del board"""
         if njug >= 0:
-            self.tabsanalisis.setPosicion(self.game, njug)
+            self.tabsanalisis.set_position(self.game, njug)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         linea = row // 2
         iswhite = (row % 2) == 0
         color = Code.dic_colors["WLINES_PGN"]
@@ -1111,11 +1089,11 @@ class WLines(LCDialog.LCDialog):
             si_line_o_shortcut,
         )
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.dbop) * 2
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
-        row, pos = self.glines.posActualN()
+    def grid_tecla_control(self, _grid, k, _is_shift, is_control, is_alt):
+        row, pos = self.glines.current_position_num()
 
         if k == QtCore.Qt.Key.Key_Left:
             if pos >= 1:
@@ -1137,7 +1115,7 @@ class WLines(LCDialog.LCDialog):
         elif k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             row, col = self.glines.current_position()
             if col.key == "LINE":
-                self.borrar()
+                self.remove_current_line()
             else:
                 self.borrar_move()
 
@@ -1155,7 +1133,7 @@ class WLines(LCDialog.LCDialog):
         elif is_alt and QtCore.Qt.Key.Key_1 <= k <= QtCore.Qt.Key.Key_9:
             self.shortcuts.launch_shortcut_with_alt(k - QtCore.Qt.Key.Key_0)
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         game = self.game_actual()
         if game is not None:
             self.procesador.change_manager_analyzer()
@@ -1163,15 +1141,25 @@ class WLines(LCDialog.LCDialog):
             move = game.move(-1)
             fenm2 = move.position_before.fenm2()
             dic = self.dbop.getfenvalue(fenm2)
+            pos = -1
+            mrm = None
             if "ANALISIS" in dic:
                 mrm = dic["ANALISIS"]
-                rm, pos = mrm.search_rm(move.movimiento())
-                move.analysis = mrm, pos if pos >= 0 else 0
+                rmact, pos = mrm.search_rm(move.movimiento())
             else:
-                with QTMessages.WaitingMessage(self, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
-                    move.analysis = xanalyzer.analyzes_move_game(
-                        game, len(game) - 1, xanalyzer.mstime_engine, xanalyzer.depth_engine
-                    )
+                mens = _("Analyzing the move....")
+                with QTMessages.WaitingMessage(self, mens, with_cancel=True) as wmsg:
+
+                    def dispatch(rm, ms):
+                        wmsg.label(f'{mens}<br><small>{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}')
+                        return not wmsg.canceled()
+
+                    mrm, pos = xanalyzer.analyze_move(game, len(game) - 1, dispatch)
+                    if wmsg.canceled():
+                        return
+            if pos < 0:
+                return
+            move.analysis = mrm, pos
             Analysis.show_analysis(
                 xanalyzer,
                 move,
@@ -1184,7 +1172,7 @@ class WLines(LCDialog.LCDialog):
             dic["ANALISIS"] = move.analysis[0]
             self.dbop.setfenvalue(fenm2, dic)
 
-    def grid_right_button(self, grid, row, o_column, modif):
+    def grid_right_button(self, grid, row, obj_column, _modif):
         if row < 0:
             return
 
@@ -1201,8 +1189,8 @@ class WLines(LCDialog.LCDialog):
         menu.separador()
         menu.opcion("mass_analysis", _("Mass analysis"), Iconos.Analizar())
 
-        col = o_column.key
-        if self.grid_dato(grid, row, o_column)[0] and col.isdigit():
+        col = obj_column.key
+        if self.grid_dato(grid, row, obj_column)[0] and col.isdigit():
             linea = row // 2
             iswhite = (row % 2) == 0
             njug = (int(col) - 1) * 2
@@ -1244,7 +1232,7 @@ class WLines(LCDialog.LCDialog):
                         ws.close()
                         ws.um_final()
                     else:
-                        QTMessages.message_error(self, "%s : %s" % (_("Unable to save"), ws.file))
+                        QTMessages.message_error(self, f"{_('Unable to save')} : {ws.file}")
 
     def borrar_move(self):
         row, col = self.glines.current_position()
@@ -1273,6 +1261,7 @@ class WLines(LCDialog.LCDialog):
 
                 self.goto_end_line()
         self.show_lines()
+        return None
 
     def remove_current_line(self):
         current = self.glines.recno() // 2
@@ -1283,8 +1272,8 @@ class WLines(LCDialog.LCDialog):
         self.pboard.reset_board()
         if len(self.dbop) == 0:
             self.game = self.gamebase
-            self.pboard.ponPartida(self.game)
-            self.pboard.MoverFinal()
+            self.pboard.pon_partida(self.game)
+            self.pboard.move_to_end()
         self.glines.refresh()
 
     def remove(self):
@@ -1320,7 +1309,7 @@ class WLines(LCDialog.LCDialog):
         elif resp == "lines":
             li_gen = [FormLayout.separador]
             config = FormLayout.Editbox(
-                '<div align="right">' + _("Lines") + "<br>" + _("By example:") + " -5,8-12,14,19-",
+                f"<div align=\"right\">{_('Lines')}<br>{_('By example:')} -5,8-12,14,19-",
                 rx=r"[0-9,\-]*",
             )
             li_gen.append((config, ""))
@@ -1328,7 +1317,7 @@ class WLines(LCDialog.LCDialog):
                 li_gen,
                 title=_("Remove a list of lines"),
                 parent=self,
-                anchoMinimo=460,
+                minimum_width=460,
                 icon=Iconos.OpeningLines(),
             )
             if resultado:
@@ -1341,7 +1330,7 @@ class WLines(LCDialog.LCDialog):
                     cad = ""
                     for num in li:
                         if cad:
-                            cad += "," + str(num)
+                            cad += f",{num!s}"
                         else:
                             cad = str(num)
                         if len(cad) > 80:
@@ -1353,7 +1342,7 @@ class WLines(LCDialog.LCDialog):
                     if cad:
                         sli.append(cad)
                     cli = "\n".join(sli)
-                    if QTMessages.pregunta(self, _("Do you want to remove the next lines?") + "\n\n" + cli):
+                    if QTMessages.pregunta(self, f"{_('Do you want to remove the next lines?')}\n\n{cli}"):
                         um = QTMessages.working(self)
                         self.dbop.remove_list_lines([x - 1 for x in li], cli)
                         self.glines.refresh()
@@ -1433,7 +1422,7 @@ class WLines(LCDialog.LCDialog):
 
             si_white = color == "WHITE"
             dic = self.dbop.dict_repeat_fen(si_white)
-            mensaje = _("Move") + "  %d/" + str(len(dic))
+            mensaje = f"{_('Move')}  %d/{len(dic)!s}"
             if ms:
                 xmanager = self.procesador.create_manager_engine(
                     self.configuration.engines.engine_tutor(), ms, 0, has_multipv=False
@@ -1507,7 +1496,7 @@ class WLines(LCDialog.LCDialog):
             tmp_bp.cerrar()
 
             if xmanager:
-                xmanager.terminar()
+                xmanager.finalize()
 
             if ok:
                 with QTMessages.working(self):
@@ -1552,7 +1541,7 @@ class WLines(LCDialog.LCDialog):
         form.separador()
 
         form.checkbox(_("Comments"), False)
-        form.checkbox(_("Ratings") + " (NAGs)", False)
+        form.checkbox(f"{_('Ratings')} (NAGs)", False)
         form.checkbox(_("Analysis"), False)
         form.checkbox(_("Unused data"), False)
 
@@ -1646,26 +1635,26 @@ class WLines(LCDialog.LCDialog):
 
     def final_processes(self):
         board = self.pboard.board
-        board.dbVisual.saveMoviblesBoard(board)
+        board.dbVisual.save_movables_board(board)
         self.dbop.setconfig("WHITEBOTTOM", board.is_white_bottom)
-        self.tabsanalisis.saveConfig()
+        self.tabsanalisis.save_config()
         self.dbop.close()
         self.save_video()
         self.procesador.close_engines()
 
-    def terminar(self):
+    def finalize(self):
         self.final_processes()
         self.accept()
 
     def closeEvent(self, event):
         self.final_processes()
 
-    def player_has_moved(self, game):
+    def player_has_moved_dispatcher(self, game):
         # Estamos en la misma linea ?
         # recno = self.glines.recno()
         # Buscamos en las lineas si hay alguna que el pv sea parcial o totalmente igual
         game.pending_opening = True
-        si_nueva, num_linea, si_append = self.dbop.posPartida(game)
+        si_nueva, num_linea, si_append = self.dbop.data_of_game(game)
         is_white = game.move(-1).is_white()
         ncol = (len(game) - self.num_jg_inicial + 1) // 2
         if self.num_jg_inicial % 2 == 1 and is_white:
@@ -1676,7 +1665,7 @@ class WLines(LCDialog.LCDialog):
             if si_append:
                 self.dbop[num_linea] = game
         if not si_append:
-            si_nueva, num_linea, si_append = self.dbop.posPartida(game)
+            si_nueva, num_linea, si_append = self.dbop.data_of_game(game)
 
         row = num_linea * 2
         if not is_white:
@@ -1734,12 +1723,12 @@ class WImportPolyglot(LCDialog.LCDialog):
         self.ed_white_porc_min = (
             Controles.ED(self)
             .relative_width(60)
-            .tipoFloat(decimales=3, valor=dic_data.get("PORC_WHITE", 0.0))
+            .type_float(decimales=3, valor=dic_data.get("PORC_WHITE", 0.0))
             .set_font_type(puntos=8)
         )
         lb_white_weight_min = Controles.LB2P(self, _("Minimum weight")).set_font_type(puntos=8)
         self.ed_white_weight_min = (
-            Controles.ED(self).relative_width(60).tipoInt(dic_data.get("WEIGHT_WHITE", 0)).set_font_type(puntos=8)
+            Controles.ED(self).relative_width(60).type_integer(dic_data.get("WEIGHT_WHITE", 0)).set_font_type(puntos=8)
         )
 
         ly_arr = Colocacion.H().control(self.cb_white).control(self.cb_mode_white)
@@ -1763,12 +1752,12 @@ class WImportPolyglot(LCDialog.LCDialog):
         self.ed_black_min = (
             Controles.ED(self)
             .relative_width(60)
-            .tipoFloat(decimales=3, valor=dic_data.get("PORC_BLACK", 0.0))
+            .type_float(decimales=3, valor=dic_data.get("PORC_BLACK", 0.0))
             .set_font_type(puntos=8)
         )
         lb_black_weight_min = Controles.LB2P(self, _("Minimum weight")).set_font_type(puntos=8)
         self.ed_black_weight_min = (
-            Controles.ED(self).relative_width(60).tipoInt(dic_data.get("WEIGHT_BLACK", 0)).set_font_type(puntos=8)
+            Controles.ED(self).relative_width(60).type_integer(dic_data.get("WEIGHT_BLACK", 0)).set_font_type(puntos=8)
         )
 
         ly_arr = Colocacion.H().control(self.cb_black).control(self.cb_mode_black)
@@ -1829,12 +1818,12 @@ class WImportPolyglot(LCDialog.LCDialog):
         dic = {
             "BOOK_WHITE": self.cb_white.valor().to_dic(),
             "MODE_WHITE": self.cb_mode_white.valor(),
-            "PORC_WHITE": self.ed_white_porc_min.textoFloat(),
-            "WEIGHT_WHITE": self.ed_white_weight_min.textoInt(),
+            "PORC_WHITE": self.ed_white_porc_min.text_to_float(),
+            "WEIGHT_WHITE": self.ed_white_weight_min.text_to_integer(),
             "BOOK_BLACK": self.cb_black.valor().to_dic(),
             "MODE_BLACK": self.cb_mode_black.valor(),
-            "PORC_BLACK": self.ed_black_min.textoFloat(),
-            "WEIGHT_BLACK": self.ed_black_weight_min.textoInt(),
+            "PORC_BLACK": self.ed_black_min.text_to_float(),
+            "WEIGHT_BLACK": self.ed_black_weight_min.text_to_integer(),
             "MAX_DEPTH": self.sb_limit_depth.valor(),
             "MAX_LINES": self.sb_limit_depth.valor(),
         }
@@ -1867,10 +1856,10 @@ class WImportPolyglot(LCDialog.LCDialog):
         limit_depth = self.sb_limit_depth.valor()
         start_fen = self.game.last_position.fen()
 
-        porc_min_white = self.ed_white_porc_min.textoFloat()
-        weight_min_white = self.ed_white_weight_min.textoInt()
-        porc_min_black = self.ed_black_min.textoFloat()
-        weight_min_black = self.ed_black_weight_min.textoInt()
+        porc_min_white = self.ed_white_porc_min.text_to_float()
+        weight_min_white = self.ed_white_weight_min.text_to_integer()
+        porc_min_black = self.ed_black_min.text_to_float()
+        weight_min_black = self.ed_black_weight_min.text_to_integer()
 
         mens_work = _("Working...")
         mens_depth = _("Depth")

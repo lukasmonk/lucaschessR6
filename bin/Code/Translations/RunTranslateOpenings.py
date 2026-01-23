@@ -5,7 +5,7 @@ from deep_translator import GoogleTranslator
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -64,7 +64,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         self.grid = Grid.Grid(
             self,
             o_columns,
-            altoFila=Code.configuration.x_pgn_rowheight + 14,
+            heigh_row=Code.configuration.x_pgn_rowheight + 14,
             is_editable=True,
         )
         self.grid.font_type(puntos=10)
@@ -84,7 +84,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         layout = Colocacion.V().otro(laytb).control(self.grid).otro(ly_seek).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.anchoColumnas() + 28, default_height=640)
+        self.restore_video(default_width=self.grid.width_columns_displayables() + 28, default_height=640)
         self.grid.setFocus()
 
         self.set_porcentage()
@@ -131,7 +131,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         return dic
 
     def path_current_pofile(self):
-        return Util.opj(Code.configuration.paths.folder_translations(), "openings_%s.po" % self.tr_actual)
+        return Util.opj(Code.configuration.paths.folder_translations(), f"openings_{self.tr_actual}.po")
 
     def add_po_file(self, path_po, field):
         num_new = 0
@@ -220,7 +220,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         key = self.li_labels[fila]
         dic = self.dic_translate[key]
         if clave == "BASE":
-            return "%s\n%s: %s" % (key, dic["ECO"], dic["PGN"])
+            return f"{key}\n{dic['ECO']}: {dic['PGN']}"
         elif clave == "CURRENT":
             return dic["NEW"] if dic["NEW"] else dic["TRANS"]
 
@@ -231,15 +231,15 @@ class WTranslateOpenings(LCDialog.LCDialog):
         dic["NEW"] = "" if value == dic["TRANS"] else value
         self.set_porcentage()
 
-    def grid_color_texto(self, grid, row, o_column):
-        if o_column.key == "CURRENT":
+    def grid_color_texto(self, grid, row, obj_column):
+        if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             if dic["NEW"]:
                 return self.color_new
 
-    def grid_bold(self, grid, row, o_column):
-        if o_column.key == "CURRENT":
+    def grid_bold(self, grid, row, obj_column):
+        if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             return dic["NEW"]
@@ -272,25 +272,25 @@ class WTranslateOpenings(LCDialog.LCDialog):
                 trans = self.dic_translate[key]["TRANS"].upper()
 
                 if new:
-                    orden = "B" + new
+                    orden = f"B{new}"
                 else:
                     # primero los que no tienen nada
                     if not trans:
-                        orden = "A" + key
+                        orden = f"A{key}"
                     else:
-                        orden = "C" + trans
+                        orden = f"C{trans}"
                 return orden
 
             def order_current_new(key):
                 new = self.dic_translate[key]["NEW"].upper()
                 trans = self.dic_translate[key]["TRANS"].upper()
                 if new:
-                    orden = "A" + new
+                    orden = f"A{new}"
                 else:
                     if not trans:
-                        orden = "B" + key
+                        orden = f"B{key}"
                     else:
-                        orden = "C" + trans
+                        orden = f"C{trans}"
                 return orden
 
             if order == 0:
@@ -412,7 +412,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
 
             self.create_po(path_po)
 
-            QTMessages.message(self, "Created\n%s" % path_po)
+            QTMessages.message(self, f"Created\n{path_po}")
             Util.startfile(folder)
 
     def import_po(self):

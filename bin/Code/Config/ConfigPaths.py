@@ -1,7 +1,7 @@
-import os
+import os.path
 
 import Code
-from Code import Util
+from Code.Z import Util
 
 
 class ConfigPaths:
@@ -11,7 +11,8 @@ class ConfigPaths:
     def __init__(self, configuration):
         self.configuration = configuration
         self.userdata_folder = self._get_userdata_folder()
-        Util.create_folder(self.userdata_folder)
+        if not os.path.isdir(self.userdata_folder):
+            Util.create_folder(self.userdata_folder)
         self.file = self._to_config("lk.pk2")
         self.is_first_time = not Util.exist_file(self.file)
 
@@ -258,6 +259,9 @@ class ConfigPaths:
     def file_singular_moves(self):
         return self._to_results("SingularMoves.db")
 
+    def file_washing_machine(self):
+        return self._to_results("washing.wsm")
+
     # -------------------------------------------------------------------------------------  BMT
 
     def file_bmt(self):
@@ -293,7 +297,7 @@ class ConfigPaths:
     # -------------------------------------------------------------------------------------  DATABASES
 
     def folder_databases(self):
-        return os.path.join(self.userdata_folder, "Databases")
+        return self.folder_from_userdata("Databases")
 
     def folder_databases_pgn(self):
         return self.folder_from_userdata("TemporaryDatabases")

@@ -3,7 +3,7 @@ import shutil
 import time
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.Swiss import Swiss, WSwiss, WSwissConfig
 
@@ -22,7 +22,7 @@ class WSwisses(LCDialog.LCDialog):
 
         # Toolbar
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Run"), Iconos.Play(), self.play),
             None,
@@ -44,7 +44,7 @@ class WSwisses(LCDialog.LCDialog):
         o_columns.nueva("NAME", _("Name"), 300)
         o_columns.nueva("DATE", _("Date"), 180, align_center=True)
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
         self.register_grid(self.grid)
 
         # Layout
@@ -96,8 +96,8 @@ class WSwisses(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.list_swisses)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         name, fcreacion, fmanten = self.list_swisses[row]
         if column == "NAME":
             return name[:-6]
@@ -114,7 +114,7 @@ class WSwisses(LCDialog.LCDialog):
     def grid_doble_click(self, grid, row, column):
         self.play()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -125,7 +125,7 @@ class WSwisses(LCDialog.LCDialog):
     def edit_name(self, previo):
         nom_swiss = QTMessages.read_simple(self, _("Swiss Tournaments"), _("Name"), previo)
         if nom_swiss:
-            path = Util.opj(Code.configuration.paths.folder_swisses(), nom_swiss + ".swiss")
+            path = Util.opj(Code.configuration.paths.folder_swisses(), f"{nom_swiss}.swiss")
             if os.path.isfile(path):
                 QTMessages.message_error(self, _("The file %s already exist") % nom_swiss)
                 return self.edit_name(nom_swiss)
@@ -156,8 +156,8 @@ class WSwisses(LCDialog.LCDialog):
             nom_origen = self.nom_swiss_pos(row)
             nom_destino = self.edit_name(nom_origen)
             if nom_destino and nom_origen != nom_destino:
-                path_origen = Util.opj(Code.configuration.paths.folder_swisses(), "%s.swiss" % nom_origen)
-                path_destino = Util.opj(Code.configuration.paths.folder_swisses(), "%s.swiss" % nom_destino)
+                path_origen = Util.opj(Code.configuration.paths.folder_swisses(), f"{nom_origen}.swiss")
+                path_destino = Util.opj(Code.configuration.paths.folder_swisses(), f"{nom_destino}.swiss")
                 shutil.move(path_origen, path_destino)
                 self.refresh_lista()
 
@@ -166,9 +166,9 @@ class WSwisses(LCDialog.LCDialog):
         if row >= 0:
             name = self.nom_swiss_pos(row)
             if QTMessages.pregunta(self, _X(_("Delete %1?"), name)):
-                path = Util.opj(Code.configuration.paths.folder_swisses(), "%s.swiss" % name)
+                path = Util.opj(Code.configuration.paths.folder_swisses(), f"{name}.swiss")
                 Util.remove_file(path)
-                Util.remove_file(path + ".work")
+                Util.remove_file(f"{path}.work")
                 self.refresh_lista()
 
     def copiar(self):
@@ -177,8 +177,8 @@ class WSwisses(LCDialog.LCDialog):
             nom_origen = self.nom_swiss_pos(row)
             nom_destino = self.edit_name(nom_origen)
             if nom_destino and nom_origen != nom_destino:
-                path_origen = Util.opj(Code.configuration.paths.folder_swisses(), "%s.swiss" % nom_origen)
-                path_destino = Util.opj(Code.configuration.paths.folder_swisses(), "%s.swiss" % nom_destino)
+                path_origen = Util.opj(Code.configuration.paths.folder_swisses(), f"{nom_origen}.swiss")
+                path_destino = Util.opj(Code.configuration.paths.folder_swisses(), f"{nom_destino}.swiss")
                 shutil.copy(path_origen, path_destino)
                 self.refresh_lista()
 

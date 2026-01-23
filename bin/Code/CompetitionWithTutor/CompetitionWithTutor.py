@@ -30,7 +30,7 @@ class Grupos:
         self.liGrupos = []
         li = []
         for key, cm in Code.configuration.engines.dic_engines().items():
-            if cm.elo > 0 and cm.alias not in ("acqua",):
+            if cm.elo > 0 and cm.key not in ("acqua",):
                 li.append((cm.elo, key, cm))
 
         self.li_rivales = sorted(li, key=operator.itemgetter(0))
@@ -45,7 +45,7 @@ class Grupos:
                 li_rivales_uno.append(cm)
                 if elo < minimo:
                     minimo = elo
-                    name = cm.alias
+                    name = cm.key
                     hay = True
         if hay:
             self.liGrupos.append(Grupo(name.capitalize(), from_sq, to_sq, min_puntos, li_rivales_uno))
@@ -84,7 +84,7 @@ class Categoria:
         return "B" in self.hecho
 
     def graba(self):
-        return self.key + "," + str(self.level_done) + "," + self.hecho
+        return f"{self.key},{self.level_done!s},{self.hecho}"
 
     def lee(self, txt):
         li = txt.split(",")
@@ -151,8 +151,9 @@ class Categorias:
     def graba(self):
         txt = ""
         for cat in self.lista:
-            txt += cat.graba() + "|"
-        # txt = "PRINCIPIANTE,20,B|AFICIONADO,19,|CANDIDATOMAESTRO,18,|MAESTRO,17,|CANDIDATOGRANMAESTRO,16,|GRANMAESTRO,15,|"
+            txt += f"{cat.graba()}|"
+        # txt = "PRINCIPIANTE,20,B|AFICIONADO,19,
+        #          |CANDIDATOMAESTRO,18,|MAESTRO,17,|CANDIDATOGRANMAESTRO,16,|GRANMAESTRO,15,|"
 
         return txt.rstrip("|")
 
@@ -193,6 +194,7 @@ class Categorias:
                     puntos = 0
                 return max_level, hecho, puntos
             max_level = cat.level_done
+        return None
 
 
 class DBManagerCWT:
@@ -207,7 +209,7 @@ class DBManagerCWT:
             p = 0
             for grupo in self.grupos.liGrupos:
                 for rival in grupo.li_rivales:
-                    txt = db[rival.alias]
+                    txt = db[rival.key]
                     if txt:
                         categorias = Categorias()
                         categorias.lee(txt)
@@ -246,7 +248,7 @@ class DBManagerCWT:
             if current_rival_key is None:
                 elo = 9999
                 for key, cm in self.configuration.engines.dic_engines().items():
-                    if 0 < cm.elo < elo and cm.alias not in ("acqua",):
+                    if 0 < cm.elo < elo and cm.key not in ("acqua",):
                         current_rival_key = key
                         elo = cm.elo
             return current_rival_key

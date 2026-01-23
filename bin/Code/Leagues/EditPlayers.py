@@ -15,7 +15,7 @@ class WEditPlayers(LCDialog.LCDialog):
         o_columns.nueva("NAME", _("Name"), 150, edicion=Delegados.LineaTextoUTF8())
         o_columns.nueva("ENGINE", _("Engine"), 200)
         self.grid = Grid.Grid(self, o_columns, is_editable=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Save"), Iconos.Aceptar(), self.save)
@@ -38,18 +38,18 @@ class WEditPlayers(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.save_video()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_players)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         player = self.li_players[row]
         if col == "NAME":
             return player.name()
         return _("Human") if player.is_human() else player.thinker.path_exe
 
-    def grid_setvalue(self, grid, row, o_column, value):
-        col = o_column.key
+    def grid_setvalue(self, _grid, row, obj_column, value):
+        col = obj_column.key
         player = self.li_players[row]
         value = value.strip()
         if col != "NAME" or not value:
@@ -57,8 +57,8 @@ class WEditPlayers(LCDialog.LCDialog):
         player.set_name(value)
         self.changed = True
 
-    def grid_doble_click(self, grid, row, o_column):
-        col = o_column.key
+    def grid_doble_click(self, _grid, row, obj_column):
+        col = obj_column.key
         if col == "ENGINE":
             select = SelectEngines.SelectEngines(self)
             engine = select.menu(self)
@@ -67,17 +67,17 @@ class WEditPlayers(LCDialog.LCDialog):
                 player.set_engine(engine)
                 self.changed = True
 
-    def grid_right_button(self, grid, row, o_column, modif):
-        col = o_column.key
+    def grid_right_button(self, grid, row, obj_column, _modif):
+        col = obj_column.key
         if row < 0:
             return
         player = self.li_players[row]
         if col == "NAME":
             resp = QTMessages.read_simple(self, _("Name"), _("Name"), player.name(), width=400)
             if resp is not None:
-                self.grid_setvalue(grid, row, o_column, resp)
+                self.grid_setvalue(grid, row, obj_column, resp)
         elif col == "ENGINE":
-            self.grid_doble_click(grid, row, o_column)
+            self.grid_doble_click(grid, row, obj_column)
             return
 
     def save(self):

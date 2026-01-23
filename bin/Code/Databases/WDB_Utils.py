@@ -5,7 +5,7 @@ import webbrowser
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import FEN_INITIAL
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
@@ -235,7 +235,7 @@ class WFiltrar(QtWidgets.QDialog):
                 if campo == "PLIES":
                     valor = valor.strip()
                     if valor.isdigit():
-                        valor = "%d" % int(valor)  # fonkap patch %3d -> %d
+                        valor = f"{int(valor)}"  # fonkap patch %3d -> %d
                 if par0:
                     npar += 1
                 if par1:
@@ -268,10 +268,10 @@ class WFiltrar(QtWidgets.QDialog):
                 if not valor:
                     continue
                 if "%" not in valor:
-                    valor = "%" + valor + "%"
+                    valor = f"%{valor}%"
 
             if union:
-                where += " %s " % union
+                where += f" {union} "
             if par0:
                 where += "("
             if condicion in ("=", "<>") and not valor:
@@ -299,7 +299,7 @@ class WFiltrar(QtWidgets.QDialog):
                         valor,
                     )  # fonkap patch
                 else:
-                    where += "%s %s '%s'" % (campo, condicion, valor)  # fonkap patch
+                    where += f"{campo} {condicion} '{valor}'"  # fonkap patch
             if condicion == "NOT LIKE":
                 where += f" OR {campo} IS NULL"
             if par1:
@@ -310,7 +310,7 @@ class WFiltrar(QtWidgets.QDialog):
 class EMSQL(Controles.EM):
     def __init__(self, owner, where, li_fields):
         self.li_fields = li_fields
-        Controles.EM.__init__(self, owner, where, siHTML=False)
+        Controles.EM.__init__(self, owner, where, is_html=False)
 
     def mousePressEvent(self, event):
         Controles.EM.mousePressEvent(self, event)
@@ -321,7 +321,7 @@ class EMSQL(Controles.EM):
                 menu.opcion(key, txt, rondo.otro())
             resp = menu.lanza()
             if resp:
-                self.insertarTexto(resp)
+                self.insert_text(resp)
 
 
 class WFiltrarRaw(LCDialog.LCDialog):
@@ -332,8 +332,8 @@ class WFiltrarRaw(LCDialog.LCDialog):
         li_fields = [(x.head, x.key) for x in o_columns.li_columns if x.key != "__num__"]
         f = Controles.FontType(puntos=12)  # 0, peso=75 )
 
-        lb_raw = Controles.LB(self, "%s:" % _("Raw SQL")).set_font(f)
-        self.edRaw = EMSQL(self, where, li_fields).altoFijo(72).anchoMinimo(512).set_font(f)
+        lb_raw = Controles.LB(self, f"{_('Raw SQL')}:").set_font(f)
+        self.edRaw = EMSQL(self, where, li_fields).fixed_height(72).minimum_width(512).set_font(f)
 
         lb_help = Controles.LB(self, _("Right button to select a column of database")).set_font(f)
         ly_help = Colocacion.H().relleno().control(lb_help).relleno()
@@ -366,22 +366,22 @@ class WFiltrarRaw(LCDialog.LCDialog):
 def message_creating_trainings(owner, li_creados, li_no_creados):
     txt = ""
     if li_creados:
-        txt += _("Created the following trainings") + ":"
+        txt += f"{_('Created the following trainings')}:"
         txt += "<ul>"
         for x in li_creados:
-            txt += "<li>%s</li>" % os.path.basename(x)
+            txt += f"<li>{os.path.basename(x)}</li>"
         txt += "</ul>"
     if li_no_creados:
         txt += _("No trainings created due to lack of data")
         if li_creados:
             txt += ":<ul>"
             for x in li_no_creados:
-                txt += "<li>%s</li>" % os.path.basename(x)
+                txt += f"<li>{os.path.basename(x)}</li>"
             txt += "</ul>"
     QTMessages.message_bold(owner, txt)
 
 
-def create_tactics(procesador, wowner, li_registros_selected, li_registros_total, rutina_datos, name):
+def create_tactics(wowner, li_registros_selected, li_registros_total, rutina_datos, name):
     nregs = len(li_registros_selected)
 
     form = FormLayout.FormLayout(wowner, _("Create tactics training"), Iconos.Tacticas())
@@ -505,16 +505,16 @@ def create_tactics(procesador, wowner, li_registros_selected, li_registros_total
         if site == event:
             es = event
         else:
-            es = event + " " + site
+            es = f"{event} {site}"
         es = es.strip()
         if date:
             if es:
-                es += " (%s)" % date
+                es += f" ({date})"
             else:
                 es = date
         white = xdic("WHITE")
         black = xdic("BLACK")
-        wb = ("%s-%s" % (white, black)).strip("-")
+        wb = f"{white}-{black}".strip("-")
 
         li_titulo = []
 
@@ -526,7 +526,7 @@ def create_tactics(procesador, wowner, li_registros_selected, li_registros_total
         add_titulo(wb)
         add_titulo(themes)
         if gameurl:
-            add_titulo('<a href="%s">%s</a>' % (gameurl, gameurl))
+            add_titulo(f'<a href="{gameurl}">{gameurl}</a>')
         for other in ("TASK", "SOURCE"):
             v = xdic(other)
             add_titulo(v)
@@ -534,9 +534,9 @@ def create_tactics(procesador, wowner, li_registros_selected, li_registros_total
 
         if skip_first:
             pgn_real = dic_valores["PGN_REAL"].replace("\n", " ").replace("\r", " ")
-            txt = fen + "|%s|%s|%s\n" % (titulo, num_moves, pgn_real)
+            txt = f"{fen}|{titulo}|{num_moves}|{pgn_real}\n"
         else:
-            txt = fen + "|%s|%s\n" % (titulo, num_moves)
+            txt = f"{fen}|{titulo}|{num_moves}\n"
 
         f.write(txt)
 
@@ -546,7 +546,7 @@ def create_tactics(procesador, wowner, li_registros_selected, li_registros_total
     # Se crea el file de control
     dic_ini[nom_tactic] = d = {}
     d["MENU"] = menuname
-    d["FILESW"] = "%s:100" % os.path.basename(nom_fns)
+    d["FILESW"] = f"{os.path.basename(nom_fns)}:100"
     d["POINTVIEW"] = pointview
 
     Util.dic2ini(nom_ini, dic_ini)
@@ -584,7 +584,7 @@ def create_tactics(procesador, wowner, li_registros_selected, li_registros_total
     )
 
 
-def create_training_positions(procesador, wowner, li_registros_selected, li_registros_total, rutina_datos, name):
+def create_training_positions(wowner, li_registros_selected, li_registros_total, rutina_datos, name):
     nregs = len(li_registros_selected)
 
     form = FormLayout.FormLayout(wowner, _("Training positions"), Iconos.TrainPositions())
@@ -618,12 +618,12 @@ def create_training_positions(procesador, wowner, li_registros_selected, li_regi
 
     menuname = Util.valid_filename(menuname)
     Util.create_folder(Code.configuration.paths.folder_personal_trainings())
-    nom_fns = Util.opj(Code.configuration.paths.folder_personal_trainings(), menuname + ".fns")
+    nom_fns = Util.opj(Code.configuration.paths.folder_personal_trainings(), f"{menuname}.fns")
 
     nom_menu = menuname
     if os.path.isfile(nom_fns):
         n = 1
-        nom_fns = Util.opj(Code.configuration.paths.folder_personal_trainings(), menuname + "-%d.fns")
+        nom_fns = Util.opj(Code.configuration.paths.folder_personal_trainings(), f"{menuname}-%d.fns")
         while os.path.isfile(nom_fns % n):
             n += 1
         nom_fns = nom_fns % n
@@ -676,16 +676,16 @@ def create_training_positions(procesador, wowner, li_registros_selected, li_regi
         if site == event:
             es = event
         else:
-            es = event + " " + site
+            es = f"{event} {site}"
         es = es.strip()
         if date:
             if es:
-                es += " (%s)" % date
+                es += f" ({date})"
             else:
                 es = date
         white = xdic("WHITE")
         black = xdic("BLACK")
-        wb = ("%s-%s" % (white, black)).strip("-")
+        wb = f"{white}-{black}".strip("-")
 
         li_titulo = []
 
@@ -697,7 +697,7 @@ def create_training_positions(procesador, wowner, li_registros_selected, li_regi
         add_titulo(wb)
         add_titulo(themes)
         if gameurl:
-            add_titulo('<a href="%s">%s</a>' % (gameurl, gameurl))
+            add_titulo(f'<a href="{gameurl}">{gameurl}</a>')
         for other in ("TASK", "SOURCE"):
             v = xdic(other)
             add_titulo(v)
@@ -705,9 +705,9 @@ def create_training_positions(procesador, wowner, li_registros_selected, li_regi
 
         if skip_first:
             pgn_real = dic_valores["PGN_REAL"].replace("\n", " ").replace("\r", " ")
-            txt = fen + "|%s|%s|%s\n" % (titulo, num_moves, pgn_real)
+            txt = f"{fen}|{titulo}|{num_moves}|{pgn_real}\n"
         else:
-            txt = fen + "|%s|%s\n" % (titulo, num_moves)
+            txt = f"{fen}|{titulo}|{num_moves}\n"
 
         f.write(txt)
 
@@ -716,4 +716,4 @@ def create_training_positions(procesador, wowner, li_registros_selected, li_regi
 
     if ok:
         message = f'{_("Tactics")}\n  {_("Training positions")}\n    {_("Personal Training")}\n      {nom_menu}\n'
-        QTMessages.message_bold(wowner, _("Created") + ":\n\n" + message)
+        QTMessages.message_bold(wowner, f"{_('Created')}:\n\n{message}")

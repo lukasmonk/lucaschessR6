@@ -9,7 +9,7 @@ from Code.PlayAgainstEngine import (
     ManagerPlayAgainstEngine,
     WindowAlbumes,
     WPlayAgainstEngine,
-    ConfigurationsPAE
+    ConfigurationsPAE,
 )
 from Code.PlayHuman import ManagerPlayHuman, WPlayHuman
 from Code.QT import Iconos, QTDialogs
@@ -127,7 +127,7 @@ class PlayMenu(BaseMenu.RootMenu):
         album = albumes.get_album(animal)
         album.event = _("Album of animals")
         album.test_finished()
-        cromo, must_reset = WindowAlbumes.eligeCromo(self.wparent, assistant, album)
+        cromo, must_reset = WindowAlbumes.elige_cromo(self.wparent, album)
         if cromo is None:
             if must_reset:
                 albumes.reset(animal)
@@ -143,7 +143,7 @@ class PlayMenu(BaseMenu.RootMenu):
         album = albumes.get_album(vehicle)
         album.event = _("Album of vehicles")
         album.test_finished()
-        cromo, must_reset = WindowAlbumes.eligeCromo(self.wparent, assistant, album)
+        cromo, must_reset = WindowAlbumes.elige_cromo(self.wparent, album)
         if cromo is None:
             if must_reset:
                 albumes.reset(vehicle)

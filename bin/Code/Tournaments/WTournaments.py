@@ -3,7 +3,7 @@ import shutil
 import time
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.Tournaments import WTournament
 
@@ -28,7 +28,7 @@ class WTournaments(LCDialog.LCDialog):
 
         # Toolbar
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("New"), Iconos.Nuevo(), self.crear),
             None,
@@ -48,7 +48,7 @@ class WTournaments(LCDialog.LCDialog):
         o_columns.nueva("NOMBRE", _("Name"), 240)
         o_columns.nueva("FECHA", _("Date"), 120, align_center=True)
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
         self.register_grid(self.grid)
 
         # Layout
@@ -81,8 +81,8 @@ class WTournaments(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.lista)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         name, fcreacion, fmanten = self.lista[row]
         if column == "NOMBRE":
             return name[:-4]
@@ -96,7 +96,7 @@ class WTournaments(LCDialog.LCDialog):
                 tm.tm_min,
             )
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -112,7 +112,7 @@ class WTournaments(LCDialog.LCDialog):
     def edit_name(self, previo):
         nom_torneo = QTMessages.read_simple(self, _("Tournaments between engines"), _("Name"), previo)
         if nom_torneo:
-            path = Util.opj(self.configuration.paths.folder_tournaments(), nom_torneo + ".mvm")
+            path = Util.opj(self.configuration.paths.folder_tournaments(), f"{nom_torneo}.mvm")
             if os.path.isfile(path):
                 QTMessages.message_error(self, _("The file %s already exist") % nom_torneo)
                 return self.edit_name(nom_torneo)
@@ -124,7 +124,7 @@ class WTournaments(LCDialog.LCDialog):
             self.trabajar(nom_torneo)
 
     def trabajar(self, nom_torneo):
-        self.play_torneo = Util.opj(self.configuration.paths.folder_tournaments(), "%s.mvm" % nom_torneo)
+        self.play_torneo = Util.opj(self.configuration.paths.folder_tournaments(), f"{nom_torneo}.mvm")
         self.accept()
 
     def rename(self):
@@ -133,8 +133,8 @@ class WTournaments(LCDialog.LCDialog):
             nom_origen = self.nom_torneo_pos(row)
             nom_destino = self.edit_name(nom_origen)
             if nom_destino and nom_origen != nom_destino:
-                path_origen = Util.opj(self.configuration.paths.folder_tournaments(), "%s.mvm" % nom_origen)
-                path_destino = Util.opj(self.configuration.paths.folder_tournaments(), "%s.mvm" % nom_destino)
+                path_origen = Util.opj(self.configuration.paths.folder_tournaments(), f"{nom_origen}.mvm")
+                path_destino = Util.opj(self.configuration.paths.folder_tournaments(), f"{nom_destino}.mvm")
                 shutil.move(path_origen, path_destino)
                 self.refresh_lista()
 
@@ -143,7 +143,7 @@ class WTournaments(LCDialog.LCDialog):
         if row >= 0:
             name = self.nom_torneo_pos(row)
             if QTMessages.pregunta(self, _X(_("Delete %1?"), name)):
-                path = Util.opj(self.configuration.paths.folder_tournaments(), "%s.mvm" % name)
+                path = Util.opj(self.configuration.paths.folder_tournaments(), f"{name}.mvm")
                 os.remove(path)
                 self.refresh_lista()
 
@@ -153,8 +153,8 @@ class WTournaments(LCDialog.LCDialog):
             nom_origen = self.nom_torneo_pos(row)
             nom_destino = self.edit_name(nom_origen)
             if nom_destino and nom_origen != nom_destino:
-                path_origen = Util.opj(self.configuration.paths.folder_tournaments(), "%s.mvm" % nom_origen)
-                path_destino = Util.opj(self.configuration.paths.folder_tournaments(), "%s.mvm" % nom_destino)
+                path_origen = Util.opj(self.configuration.paths.folder_tournaments(), f"{nom_origen}.mvm")
+                path_destino = Util.opj(self.configuration.paths.folder_tournaments(), f"{nom_destino}.mvm")
                 shutil.copy(path_origen, path_destino)
                 self.refresh_lista()
 

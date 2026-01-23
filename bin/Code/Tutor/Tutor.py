@@ -79,7 +79,7 @@ class Tutor:
                 else:
                     self.rm_user = mrm_usuario.li_rm[0]
                     self.rm_user.change_side(self.move.position)
-                    self.rm_user.pv = self.move.movimiento() + " " + self.rm_user.pv
+                    self.rm_user.pv = f"{self.move.movimiento()} {self.rm_user.pv}"
 
                 self.rm_user.from_sq = self.move.from_sq
                 self.rm_user.to_sq = self.move.to_sq
@@ -190,7 +190,7 @@ class Tutor:
             game_usuario.read_pv(self.rm_user.get_pv())
 
             jgvar = game_usuario.move(0)
-            jgvar.set_comment(Code.configuration.nom_player() + " " + self.rm_user.texto())
+            jgvar.set_comment(f"{Code.configuration.nom_player()} {self.rm_user.texto()}")
 
             move.add_variation(game_usuario)
 
@@ -205,7 +205,7 @@ class Tutor:
                 to_sq = pv1[2:4]
                 promotion = pv1[4] if len(pv1) == 5 else ""
                 name = pb.pgn_translated(from_sq, to_sq, promotion)
-                name += " " + rm.abbrev_text()
+                name += f" {rm.abbrev_text()}"
 
                 li.append((rm, name))
         return li
@@ -234,7 +234,7 @@ class Tutor:
         if quien not in ("user", "tutor", "opening", "rival"):
             return
 
-        funcion = ast.literal_eval("self.moving_" + quien)
+        funcion = ast.literal_eval(f"self.moving_{quien}")
 
         if que == "Adelante":
             funcion(n_saltar=1)
@@ -247,8 +247,8 @@ class Tutor:
         elif que == "Libre":
             self.analiza(quien)
         elif que == "Tiempo":
-            tb = ast.literal_eval("self.w.tb" + quien)
-            posMax = eval("self.max_" + quien)
+            tb = ast.literal_eval(f"self.w.tb{quien}")
+            posMax = eval(f"self.max_{quien}")
             self.move_timed(funcion, tb, posMax)
 
     def move_timed(self, funcion, tb, pos_max):
@@ -260,7 +260,7 @@ class Tutor:
 
         def other_tb(si_habilitar):
             for accion in tb.li_acciones:
-                if not accion.key.endswith("MoverTiempo"):
+                if not accion.key.endswith("move_timed"):
                     accion.setEnabled(si_habilitar)
 
         self.time_function = funcion
@@ -400,9 +400,9 @@ class Tutor:
 
     def ponBoardsGUI(self, board_tutor, board_user, board_rival, board_openings):
         self.board_tutor = board_tutor
-        self.board_tutor.do_pressed_number = self.exePulsadoNumTutor
+        self.board_tutor.do_pressed_number = self.exepressed_numberTutor
         self.board_user = board_user
-        self.board_user.do_pressed_number = self.exePulsadoNumUsuario
+        self.board_user.do_pressed_number = self.exepressed_numberUsuario
         self.board_rival = board_rival
         self.board_openings = board_openings
 
@@ -433,9 +433,9 @@ class Tutor:
 
         Analysis.AnalisisVariations(self.w, self.manager_tutor, move, self.is_white, pts)
 
-    def exePulsadoNumTutor(self, siActivar, number):
+    def exepressed_numberTutor(self, activate, number):
         if number in [1, 8]:
-            if siActivar:
+            if activate:
                 # Que move esta en el board
                 move = self.game_tutor.move(self.pos_tutor if self.pos_tutor > -1 else 0)
                 if self.pos_tutor == -1:
@@ -460,9 +460,9 @@ class Tutor:
                 if self.board_tutor.arrow_sc:
                     self.board_tutor.arrow_sc.show()
 
-    def exePulsadoNumUsuario(self, siActivar, number):
+    def exepressed_numberUsuario(self, activate, number):
         if number in [1, 8]:
-            if siActivar:
+            if activate:
                 # Que move esta en el board
                 move = self.game_user.move(self.pos_user if self.pos_user > -1 else 0)
                 if self.pos_user == -1:

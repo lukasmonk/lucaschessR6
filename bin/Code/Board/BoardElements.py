@@ -30,26 +30,29 @@ class BloqueSC(QtWidgets.QGraphicsItem):
     def boundingRect(self):
         return self.rect
 
-    def activa(self, siActivar):
-        if siActivar:
-            self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
-            self.setFlag(QtWidgets.QGraphicsItem.ItemIsFocusable, True)
+    def activate(self, ok: bool):
+        if ok:
+            self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+            self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsFocusable, True)
             self.setFocus()
         else:
-            self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, False)
-            self.setFlag(QtWidgets.QGraphicsItem.ItemIsFocusable, False)
+            self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+            self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsFocusable, False)
+
+    def rotate(self, angle):
+        pass
 
 
 class CajaSC(BloqueSC):
-    def __init__(self, escena, bloqueCaja):
+    def __init__(self, escena, block_caja):
 
-        physical_pos = bloqueCaja.physical_pos
+        physical_pos = block_caja.physical_pos
 
         super(CajaSC, self).__init__(escena, physical_pos)
 
-        self.bloqueDatos = self.bloqueCaja = bloqueCaja
+        self.block_data = self.bloqueCaja = block_caja
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
         bl = self.bloqueCaja
         pen = QtGui.QPen()
         pen.setColor(ScreenUtils.qt_color(bl.color))
@@ -65,17 +68,17 @@ class CajaSC(BloqueSC):
 
 
 class CirculoSC(BloqueSC):
-    def __init__(self, escena, bloqueCirculo, rutina=None):
+    def __init__(self, escena, block_circulo, rutina=None):
 
-        physical_pos = bloqueCirculo.physical_pos
+        physical_pos = block_circulo.physical_pos
 
         super(CirculoSC, self).__init__(escena, physical_pos)
 
-        self.bloqueDatos = self.bloqueCirculo = bloqueCirculo
+        self.block_data = self.bloqueCirculo = block_circulo
 
         self.rutina = rutina
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
         bl = self.bloqueCirculo
         pen = QtGui.QPen()
         pen.setColor(QtGui.QColor(bl.color))
@@ -90,7 +93,7 @@ class CirculoSC(BloqueSC):
             painter.drawPie(self.rect, 0 * 16, bl.grados * 16)
 
     def mostrar(self):
-        physical_pos = self.bloqueDatos.physical_pos
+        physical_pos = self.block_data.physical_pos
         self.setPos(physical_pos.x, physical_pos.y)
         self.show()
         self.update()
@@ -101,8 +104,8 @@ class CirculoSC(BloqueSC):
 
 
 class PuntoSC(CirculoSC):
-    def __init__(self, escena, bloqueCirculo, rutina, cursor=None):
-        CirculoSC.__init__(self, escena, bloqueCirculo, rutina)
+    def __init__(self, escena, block_circle, rutina, cursor=None):
+        CirculoSC.__init__(self, escena, block_circle, rutina)
 
         self.cursor = QtCore.Qt.CursorShape.WhatsThisCursor if cursor is None else cursor
 
@@ -116,28 +119,28 @@ class PuntoSC(CirculoSC):
 
 
 class TextoSC(BloqueSC):
-    def __init__(self, escena, bloqueTexto, rutina=None):
+    def __init__(self, escena, block_texto, rutina=None):
 
-        super(TextoSC, self).__init__(escena, bloqueTexto.physical_pos)
+        super(TextoSC, self).__init__(escena, block_texto.physical_pos)
 
-        self.bloqueDatos = self.bloqueTexto = bloqueTexto
+        self.block_data = self.bloqueTexto = block_texto
 
-        self.font = Controles.FontType(txt=str(bloqueTexto.font_type))
-        self.font.setPixelSize(bloqueTexto.font_type.puntos)
-        self.textOption = QtGui.QTextOption(ScreenUtils.qt_alignment(bloqueTexto.alineacion))
+        self.font = Controles.FontType(txt=str(block_texto.font_type))
+        self.font.setPixelSize(block_texto.font_type.puntos)
+        self.textOption = QtGui.QTextOption(ScreenUtils.qt_alignment(block_texto.alineacion))
         self.rutina = rutina
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
 
         pen = QtGui.QPen()
 
         if self.bloqueTexto.colorFondo != -1:
             painter.setBrush(QtGui.QBrush(QtGui.QColor(self.bloqueTexto.colorFondo)))
 
-        nColor = self.bloqueTexto.colorTexto if self.bloqueTexto.colorTexto != -1 else 0
+        num_color = self.bloqueTexto.colorTexto if self.bloqueTexto.colorTexto != -1 else 0
         if self.bloqueTexto.colorFondo != -1:
             painter.setBrush(QtGui.QBrush())
-        pen.setColor(ScreenUtils.qt_color(nColor))
+        pen.setColor(ScreenUtils.qt_color(num_color))
         painter.setPen(pen)
         painter.setFont(self.font)
         painter.drawText(self.rect, self.bloqueTexto.valor, self.textOption)
@@ -169,120 +172,21 @@ class TextoSC(BloqueSC):
             )
 
 
-# class PiezaSC(BloqueSC):
-#     def __init__(self, escena, bloquePieza, board):
-#
-#         self.board = board
-#
-#         physical_pos = bloquePieza.physical_pos
-#
-#         super(PiezaSC, self).__init__(escena, physical_pos)
-#
-#         self.bloqueDatos = self.bloquePieza = bloquePieza
-#
-#         # self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
-#         self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
-#
-#         pz = bloquePieza.pieza
-#         self.pixmap = board.piezas.render(pz)
-#
-#         self.ini_pos = None
-#
-#         self.pmRect = QtCore.QRectF(0, 0, physical_pos.ancho, physical_pos.ancho)
-#         self.is_active = False
-#         self.setAcceptHoverEvents(True)
-#
-#         ancho = physical_pos.ancho
-#         self.limL = -10  # ancho * 20 / 100
-#         self.limH = ancho - self.limL
-#         self.dragable = False
-#
-#         self.dispatchMove = None
-#
-#         self.setCacheMode(QtWidgets.QGraphicsItem.DeviceCoordinateCache)
-#
-#     def rehazPosicion(self):
-#         physical_pos = self.bloquePieza.physical_pos
-#         self.setPos(physical_pos.x, physical_pos.y)
-#         self.update()
-#
-#     def paint(self, painter, option, widget):
-#         self.pixmap.render(painter, self.rect)
-#
-#     def hoverMoveEvent(self, event):
-#         if self.is_active:
-#             pos = event.pos()
-#             x = pos.x()
-#             y = pos.y()
-#             self.dragable = (self.limL <= x <= self.limH) and (self.limL <= y <= self.limH)
-#             self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor if self.dragable else QtCore.Qt.CursorShape.ArrowCursor)
-#             self.setFocus()
-#         else:
-#             self.dragable = False
-#             self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
-#
-#     def hoverLeaveEvent(self, event):
-#         self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
-#
-#     def mousePressEvent(self, event):
-#         if self.dragable:
-#             self.ini_pos = event.scenePos()
-#             self.setZValue(ZVALUE_PIECE_MOVING)
-#             self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
-#             physical_pos = self.bloquePieza.physical_pos
-#             punto = QtCore.QPointF(self.ini_pos.x() - physical_pos.ancho/2, self.ini_pos.y() - physical_pos.alto/2)
-#             self.setPos(punto)
-#             if self.dispatchMove:
-#                 self.dispatchMove()
-#         else:
-#             event.ignore()
-#
-#     def mouseMoveEvent(self, event):
-#         if self.dragable:
-#             current_pos = event.scenePos()
-#             physical_pos = self.bloquePieza.physical_pos
-#             punto = QtCore.QPointF(current_pos.x() - physical_pos.ancho/2, current_pos.y() - physical_pos.alto/2)
-#             self.setPos(punto)
-#             self.update()
-#             event.ignore()
-#         else:
-#             QtWidgets.QGraphicsItem.mouseMoveEvent(self, event)
-#
-#     def setDispatchMove(self, rutina):
-#         self.dispatchMove = rutina
-#
-#     def mouseReleaseEvent(self, event):
-#         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
-#         if self.dragable:
-#             self.setZValue(ZVALUE_PIECE)
-#             self.board.try_to_move(self, event.scenePos(), event.button())
-#
-#     def activa(self, siActivar):
-#         self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, siActivar)
-#         self.is_active = siActivar
-#         if siActivar:
-#             self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
-#             self.setFocus()
-#         else:
-#             self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
-
-
 class PiezaSC(BloqueSC):
-    def __init__(self, escena, bloquePieza, board):
+    def __init__(self, escena, block_pieza, board):
 
         self.board = board
 
-        physical_pos = bloquePieza.physical_pos
+        physical_pos = block_pieza.physical_pos
 
         super(PiezaSC, self).__init__(escena, physical_pos)
 
-        self.bloqueDatos = self.bloquePieza = bloquePieza
+        self.block_data = self.bloquePieza = block_pieza
 
-        # self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIgnoresTransformations, True)
+        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations, True)
 
-        pz = bloquePieza.pieza
-        self.pixmap = board.piezas.render(pz)
+        pz = block_pieza.pieza
+        self.pixmap = board.pieces.render(pz)
 
         self.ini_pos = None
 
@@ -298,14 +202,14 @@ class PiezaSC(BloqueSC):
 
         self.dispatchMove = None
 
-        self.setCacheMode(QtWidgets.QGraphicsItem.DeviceCoordinateCache)
+        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
 
-    def rehazPosicion(self):
+    def redo_position(self):
         physical_pos = self.bloquePieza.physical_pos
         self.setPos(physical_pos.x, physical_pos.y)
         self.update()
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
         self.pixmap.render(painter, self.rect)
 
     def hoverMoveEvent(self, event):
@@ -348,17 +252,17 @@ class PiezaSC(BloqueSC):
         else:
             QtWidgets.QGraphicsItem.mouseMoveEvent(self, event)
 
-    def setDispatchMove(self, rutina):
+    def set_dispatch_move(self, rutina):
         self.dispatchMove = rutina
 
     def mouseReleaseEvent(self, event):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
         if self.dragable:
             self.setZValue(ZVALUE_PIECE)
-            self.board.try_to_move(self, event.scenePos(), event.button())
+            self.board.try_to_move(self, event.scenePos())
 
-    def activa(self, activate):
-        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, activate)
+    def activate(self, activate):
+        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, activate)
         self.is_active = activate
         if activate:
             self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
@@ -366,33 +270,52 @@ class PiezaSC(BloqueSC):
         else:
             self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
 
+    def reload_graphics(self):
+        """
+        Recarga el renderer gráfico de la pieza
+        según la configuración actual del board.
+        """
+        pz = self.bloquePieza.pieza
+
+        # Pedir de nuevo el renderer al proveedor de piezas
+        self.pixmap = self.board.pieces.render(pz)
+
+        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.NoCache)
+        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
+
+        # Forzar repaint
+        self.update()
+
 
 class TiempoSC(BloqueSC):
-    def __init__(self, escena, bloqueTexto, rutina=None):
+    chunk: float
+    exp_x: float
 
-        BloqueSC.__init__(self, escena, bloqueTexto.physical_pos)
+    def __init__(self, escena, block_texto, rutina=None):
 
-        self.bloqueDatos = self.bloqueTexto = bloqueTexto
+        BloqueSC.__init__(self, escena, block_texto.physical_pos)
 
-        self.font = Controles.FontType(txt=str(bloqueTexto.font_type))
+        self.block_data = self.bloqueTexto = block_texto
+
+        self.font = Controles.FontType(txt=str(block_texto.font_type))
         self.textOption = QtGui.QTextOption(ScreenUtils.qt_alignment("c"))
         self.rutina = rutina
-        self.minimo = bloqueTexto.min
-        self.maximo = bloqueTexto.max
-        self.inicialx = bloqueTexto.physical_pos.x
-        self.rutina = bloqueTexto.rutina
+        self.minimo = block_texto.min
+        self.maximo = block_texto.max
+        self.inicialx = block_texto.physical_pos.x
+        self.rutina = block_texto.rutina
 
         self.is_end = self.maximo == self.inicialx
 
-        self.centesimas = 0
+        self.hundreds_of_second = 0
 
-    def posInicial(self):
-        physical_pos = self.bloqueDatos.physical_pos
+    def initial_position(self):
+        physical_pos = self.block_data.physical_pos
         physical_pos.x = self.inicialx
         self.setPos(physical_pos.x, physical_pos.y)
 
     def texto(self):
-        t = self.calcCentesimas()
+        t = self.calc_hundreds_of_second()
         cent = t % 100
         t //= 100
         mins = t // 60
@@ -400,46 +323,40 @@ class TiempoSC(BloqueSC):
         seg = t
         return "%02d:%02d:%02d" % (mins, seg, cent)
 
-    def ponCentesimas(self, centesimas):
-        self.centesimas = centesimas
-        self.chunk = centesimas * 1.0 / 400.0
+    def set_hundreds_of_second(self, hundreds_of_second):
+        self.hundreds_of_second = hundreds_of_second
+        self.chunk = hundreds_of_second * 1.0 / 400.0
 
-    def setphysical_pos(self, centesimas):
-        physical_pos = self.bloqueDatos.physical_pos
-        physical_pos.x = int(round(1.0 * centesimas / self.chunk, 0) + self.inicialx)
+    def setphysical_pos(self, hundreds_of_second):
+        physical_pos = self.block_data.physical_pos
+        physical_pos.x = int(round(1.0 * hundreds_of_second / self.chunk, 0) + self.inicialx)
         self.setPos(physical_pos.x, physical_pos.y)
 
-    def siMovido(self):
-        return self.bloqueDatos.physical_pos.x != self.inicialx
+    def has_moved(self):
+        return self.block_data.physical_pos.x != self.inicialx
 
-    def calcCentesimas(self):
-        if self.is_end:
-            t = int(
-                round(
-                    self.chunk * (self.bloqueDatos.physical_pos.x - self.inicialx + 400),
-                    0,
-                )
-            )
-        else:
-            t = int(round(self.chunk * (self.bloqueDatos.physical_pos.x - self.inicialx), 0))
-        return t
+    def calc_hundreds_of_second(self):
+        return (
+            int(round(self.chunk * (self.block_data.physical_pos.x - self.inicialx + 400), 0))
+            if self.is_end
+            else int(round(self.chunk * (self.block_data.physical_pos.x - self.inicialx), 0))
+        )
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
 
         pen = QtGui.QPen()
 
-        painter.setBrush(QtGui.QBrush(QtGui.QColor(self.bloqueDatos.colorFondo)))
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(self.block_data.colorFondo)))
         painter.drawRect(self.rect)
 
-        nColor = self.bloqueDatos.colorTexto if self.bloqueDatos.colorTexto != -1 else 0
-        if self.bloqueDatos.colorFondo != -1:
+        num_color = self.block_data.colorTexto if self.block_data.colorTexto != -1 else 0
+        if self.block_data.colorFondo != -1:
             painter.setBrush(QtGui.QBrush())
-        pen.setColor(ScreenUtils.qt_color(nColor))
+        pen.setColor(ScreenUtils.qt_color(num_color))
         painter.setPen(pen)
         painter.setFont(self.font)
         painter.drawText(self.rect, self.texto(), self.textOption)
-        linea = self.bloqueDatos.linea
-        if linea:
+        if linea := self.block_data.linea:
             r = self.rect
             x, y, w, h = r.x(), r.y(), r.width(), r.height()
             if linea == "a":
@@ -461,7 +378,7 @@ class TiempoSC(BloqueSC):
     def mousePressEvent(self, event):
         QtWidgets.QGraphicsItem.mousePressEvent(self, event)
         p = event.scenePos()
-        self.expX = p.x()
+        self.exp_x = p.x()
 
     def mouseMoveEvent(self, event):
         event.ignore()
@@ -469,11 +386,11 @@ class TiempoSC(BloqueSC):
         p = event.scenePos()
         x = p.x()
 
-        dx = x - self.expX
+        dx = x - self.exp_x
 
-        self.expX = x
+        self.exp_x = x
 
-        bd = self.bloqueDatos
+        bd = self.block_data
         physical_pos = bd.physical_pos
         nx = physical_pos.x + dx
         if self.minimo <= nx <= self.maximo:
@@ -485,8 +402,8 @@ class TiempoSC(BloqueSC):
 
             self.escena.update()
 
-    def compruebaPos(self):
-        bd = self.bloqueDatos
+    def check_position(self):
+        bd = self.block_data
         physical_pos = bd.physical_pos
         mal = False
         if physical_pos.x < self.minimo:
@@ -499,35 +416,35 @@ class TiempoSC(BloqueSC):
             self.setPos(physical_pos.x, physical_pos.y)
             self.escena.update()
 
-    def activa(self, siActivar):
-        if siActivar:
-            self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, True)
+    def activate(self, ok):
+        if ok:
+            self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
             self.setFocus()
         else:
-            self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, False)
+            self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
 
 
 class PixmapSC(BloqueSC):
-    def __init__(self, escena, bloqueImagen, pixmap=None, rutina=None):
+    def __init__(self, escena, block_imagen, pixmap=None, rutina=None):
 
-        physical_pos = bloqueImagen.physical_pos
+        physical_pos = block_imagen.physical_pos
 
         BloqueSC.__init__(self, escena, physical_pos)
 
-        self.bloqueDatos = self.bloqueImagen = bloqueImagen
+        self.block_data = self.bloqueImagen = block_imagen
 
         if pixmap:
             self.pixmap = pixmap
         else:
             self.pixmap = QtGui.QPixmap()
-            self.pixmap.loadFromData(base64.b64decode(bloqueImagen.pixmap), "PNG")
+            self.pixmap.loadFromData(base64.b64decode(block_imagen.pixmap), "PNG")
 
         r = self.pixmap.rect()
         self.pmRect = QtCore.QRectF(0, 0, r.width(), r.height())
 
         self.rutina = rutina
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
         painter.drawPixmap(self.rect, self.pixmap, self.pmRect)
 
     def mousePressEvent(self, event):

@@ -95,10 +95,10 @@ class WUsuarios(LCDialog.LCDialog):
             self.grid.refresh()
             self.grid.setFocus()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liUsuarios)
 
-    def grid_setvalue(self, grid, row, column, valor):
+    def grid_setvalue(self, _grid, row, column, valor):
         campo = column.key
         valor = valor.strip()
         usuario = self.liUsuarios[row]
@@ -111,13 +111,14 @@ class WUsuarios(LCDialog.LCDialog):
             else:
                 QtWidgets.QApplication.beep()
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         usuario = self.liUsuarios[row]
         if key == "NUMBER":
             return str(usuario.number) if usuario.number else "-"
         elif key == "USUARIO":
             return usuario.name
+        return None
 
 
 def edit_users(procesador):

@@ -14,7 +14,7 @@ class InformationMenu(BaseMenu.RootMenu):
         self.new("docs", _("Documents"), Iconos.Ayuda())
         self.new("web", _("Homepage"), Iconos.Web())
         self.new("blog", "Fresh news", Iconos.Blog())
-        self.new("mail", _("Contact") + " (%s)" % "lukasmonk@gmail.com", Iconos.Mail())
+        self.new("mail", f"{_('Contact')} (lukasmonk@gmail.com)", Iconos.Mail())
         if Code.configuration.is_main:
             self.new("actualiza", _("Check for updates"), Iconos.Update())
             # submenu = menu.submenu(_("Updates"), Iconos.Update())
@@ -29,13 +29,13 @@ class InformationMenu(BaseMenu.RootMenu):
         if resp == "acercade":
             self.acercade()
         elif resp == "docs":
-            webbrowser.open("%s/docs" % Code.web)
+            webbrowser.open(f"{Code.web}/docs")
         elif resp == "blog":
             webbrowser.open(Code.blog)
         elif resp.startswith("http"):
             webbrowser.open(resp)
         elif resp == "web":
-            webbrowser.open("%s/index?lang=%s" % (Code.web, Code.configuration.translator()))
+            webbrowser.open(f"{Code.web}/index?lang={Code.configuration.translator()}")
         elif resp == "mail":
             webbrowser.open("mailto:lukasmonk@gmail.com")
 

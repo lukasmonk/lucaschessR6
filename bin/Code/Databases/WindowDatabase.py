@@ -49,7 +49,7 @@ class WBDatabase(LCDialog.LCDialog):
             self.register_grid(self.wplayer.gridMovesWhite)
             self.register_grid(self.wplayer.gridOpeningWhite)
             self.register_grid(self.wplayer.gridOpeningBlack)
-            self.wsummary = WDB_Summary.WSummary(procesador, self, self.db_games, siMoves=False)
+            self.wsummary = WDB_Summary.WSummary(procesador, self, self.db_games, with_moves=False)
             self.register_grid(self.wsummary.grid)
 
         self.wgames = WDB_Games.WGames(self, self.db_games, self.wsummary, si_select)
@@ -64,7 +64,7 @@ class WBDatabase(LCDialog.LCDialog):
         self.tab.new_tab(self.wgames, _("Games"))
         if si_summary:
             self.tab.new_tab(self.wsummary, _("Opening explorer"))
-            self.tab.dispatchChange(self.tab_changed)
+            self.tab.dispatch_change(self.tab_changed)
             # if not si_select:
             self.tab.new_tab(self.wplayer, _("Players"))
             self.tab.new_tab(self.wperfomance, _("Perfomance Rating"))
@@ -114,7 +114,7 @@ class WBDatabase(LCDialog.LCDialog):
             dic_grid = self.configuration.read_variables(key)
         if dic_grid:
             self.wgames.grid.restore_video(dic_grid)
-            self.wgames.grid.releerColumnas()
+            self.wgames.grid.reread_columns()
 
         self.inicializa()
 
@@ -165,7 +165,7 @@ class WBDatabase(LCDialog.LCDialog):
         if ntab == 0:  # in (0, 2):
             self.wgames.actualiza()
         elif ntab == 1:
-            self.wsummary.gridActualiza()
+            self.wsummary.grid_update()
         elif ntab == 2:
             self.wplayer.actualiza()
         elif ntab == 3:
@@ -182,7 +182,7 @@ class WBDatabase(LCDialog.LCDialog):
         if self.wsummary is not None:
             self.wsummary.set_info_move(self.infoMove)
             self.wsummary.set_db_games(self.db_games)
-            self.wsummary.actualizaPV("")
+            self.wsummary.update_pv("")
         self.wgames.actualiza(True)
         if self.is_temporary:
             self.wgames.adjustSize()
@@ -216,10 +216,12 @@ class WBDatabase(LCDialog.LCDialog):
                 paths = [elem.path().strip("/") for elem in li]
                 paths = [path for path in paths if path.lower().endswith(".pgn")]
                 if paths:
-                    if QTMessages.pregunta(self,
-                                           f'{_("Import")}:\n'
-                                           f'{", ".join([os.path.basename(path) for path in paths])}'
-                                           f'\n\n{_("Are you sure?")}'):
+                    if QTMessages.pregunta(
+                        self,
+                        f'{_("Import")}:\n'
+                        f'{", ".join([os.path.basename(path) for path in paths])}'
+                        f'\n\n{_("Are you sure?")}',
+                    ):
                         self.wgames.tw_importar_pgn(paths)
 
     def dragEnterEvent(self, event):

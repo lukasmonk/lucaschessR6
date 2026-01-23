@@ -3,7 +3,7 @@ import random
 from typing import Optional
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import Controles, FormLayout, Iconos, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
 from Code.TrainPositions import ManagerTrainPositions
@@ -50,7 +50,7 @@ class TrainPositions:
             Tuple of (position, tipo, tutor_active, jump, remove_solutions, show_comments, advanced)
             or None if dialog was cancelled.
         """
-        form = FormLayout.FormLayout(self.wparent, titulo, Iconos.Entrenamiento(), anchoMinimo=200)
+        form = FormLayout.FormLayout(self.wparent, titulo, Iconos.Entrenamiento(), minimum_width=200)
 
         form.separador()
         label = f"{_("Select position")} (1..{n_fen})"

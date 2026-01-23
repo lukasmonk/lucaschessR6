@@ -7,7 +7,7 @@ class RunWorker:
     slow_pieces: bool
     name: str
     key_video: str
-    adjudicator: str
+    move_evaluator: str
     adjudicator_time: float
     adjudicator_active: bool
     draw_range: int

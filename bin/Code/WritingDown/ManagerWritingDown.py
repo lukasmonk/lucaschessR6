@@ -1,6 +1,6 @@
 import time
 
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     GT_NOTE_DOWN,
@@ -88,7 +88,7 @@ class ManagerWritingDown(Manager.Manager):
             move = self.game_objetivo.move(self.jugada_actual)
             self.game.add_move(move)
 
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
             self.board.put_arrow_sc(move.from_sq, move.to_sq)
 
             tm = time.time()

@@ -1,6 +1,6 @@
 from typing import Any
 
-from Code import Adjournments
+from Code.Z import Adjournments
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_ALBUM,
@@ -54,14 +54,14 @@ class ManagerAlbum(Manager.Manager):
         self.set_toolbar((TB_RESIGN, TB_ADJOURN, TB_CONFIG, TB_UTILITIES))
 
         self.main_window.active_game(True, False)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.put_pieces_bottom(is_white)
         self.remove_hints(True, remove_back=True)
         self.show_side_indicator(True)
 
-        self.main_window.base.lbRotulo1.put_image(self.cromo.pixmap_level())
-        self.main_window.base.lbRotulo2.put_image(self.cromo.pixmap())
+        self.main_window.base.lb_rotulo1.put_image(self.cromo.pixmap_level())
+        self.main_window.base.lb_rotulo2.put_image(self.cromo.pixmap())
         self.pgn_refresh(True)
         self.show_info_extra()
 
@@ -81,7 +81,7 @@ class ManagerAlbum(Manager.Manager):
     def save_state(self):
         dic = {
             "ALBUMES_PRECLAVE": self.album.claveDB.split("_")[0],
-            "ALBUM_ALIAS": self.album.alias,
+            "ALBUM_ALIAS": self.album.key,
             "ALBUM_EVENT": self.album.event,
             "POS_CROMO": self.cromo.pos,
             "GAME_SAVE": self.game.save(),
@@ -114,11 +114,7 @@ class ManagerAlbum(Manager.Manager):
         if QTMessages.pregunta(self.main_window, _("Do you want to adjourn the game?")):
             dic = self.save_state()
 
-            label_menu = "%s %s/%s" % (
-                _("Album"),
-                _F(self.album.name),
-                _F(self.cromo.name),
-            )
+            label_menu = f"{_('Album')} {_F(self.album.name)}/{_F(self.cromo.name)}"
             self.state = ST_ENDGAME
 
             with Adjournments.Adjournments() as adj:
@@ -206,7 +202,7 @@ class ManagerAlbum(Manager.Manager):
         if not move:
             return False
 
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
 
         self.add_move(move, True)
         self.error = ""
@@ -232,7 +228,7 @@ class ManagerAlbum(Manager.Manager):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
             self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
 
             self.error = ""
 
@@ -246,7 +242,7 @@ class ManagerAlbum(Manager.Manager):
         self.disable_all()
         self.human_is_playing = False
 
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
 
         self.beep_result(beep)
 
@@ -255,7 +251,7 @@ class ManagerAlbum(Manager.Manager):
             self.cromo.hecho = True
             self.album.guarda()
             if self.album.test_finished():
-                mensaje += "\n\n%s" % _("You have finished this album.")
+                mensaje += f"\n\n{_('You have finished this album.')}"
                 nuevo = self.album.siguiente
                 if nuevo:
                     mensaje += "\n\n%s" % _X(_("Now you can play with album %1"), _F(nuevo))

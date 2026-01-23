@@ -14,24 +14,24 @@ class WStockfishEval(WKibCommon.WKibCommon):
     def __init__(self, cpu):
         WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Book())
 
-        self.em = Controles.EM(self, siHTML=False).read_only()
+        self.em = Controles.EM(self, is_html=False).read_only()
         f = Controles.FontType(name=Code.font_mono, puntos=10)
         self.em.set_font(f)
 
         li_acciones = (
-            (_("Quit"), Iconos.Kibitzer_Close(), self.terminar),
+            (_("Quit"), Iconos.Kibitzer_Close(), self.finalize),
             (_("Continue"), Iconos.Kibitzer_Play(), self.play),
             (_("Pause"), Iconos.Kibitzer_Pause(), self.pause),
             (_("Original position"), Iconos.HomeBlack(), self.home),
             (_("Takeback"), Iconos.Kibitzer_Back(), self.takeback),
             (_("Show/hide board"), Iconos.Kibitzer_Board(), self.config_board),
             (
-                "%s: %s" % (_("Enable"), _("window on top")),
+                f"{_('Enable')}: {_('window on top')}",
                 Iconos.Pin(),
                 self.window_top,
             ),
             (
-                "%s: %s" % (_("Disable"), _("window on top")),
+                f"{_('Disable')}: {_('window on top')}",
                 Iconos.Unpin(),
                 self.window_bottom,
             ),
@@ -49,16 +49,24 @@ class WStockfishEval(WKibCommon.WKibCommon):
         self.timer.timeout.connect(self.cpu.check_input)
         self.timer.start(200)
 
-        self.restore_video(self.dicVideo)
+        self.restore_video(self.dic_video)
         self.set_flags()
 
     def stop(self):
         self.siPlay = False
 
-    def whether_to_analyse(self):
-        si_w = self.game.last_position.is_white
-        if not self.siPlay or (si_w and (not self.is_white)) or ((not si_w) and (not self.is_black)):
+    def whether_to_analyse(self) -> bool:
+        is_white_to_move = self.game.last_position.is_white
+
+        if not self.siPlay:
             return False
+
+        if is_white_to_move and not self.is_white:
+            return False
+
+        if not is_white_to_move and not self.is_black:
+            return False
+
         return True
 
     def finalizar(self):

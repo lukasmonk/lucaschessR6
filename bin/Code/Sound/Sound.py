@@ -8,7 +8,7 @@ from PySide6 import QtCore, QtMultimedia, QtWidgets
 from PySide6.QtMultimedia import QAudioFormat, QAudioSource, QMediaDevices
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import QTUtils
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
@@ -48,7 +48,7 @@ class RunSound:
     def play_key(self, key, start=True):
         played = False
         if key not in self.dic_sounds:
-            name_wav = self.relations[key]["WAV_KEY"] + ".wav"
+            name_wav = f"{self.relations[key]['WAV_KEY']}.wav"
             path_wav = Util.opj(Code.configuration.paths.folder_sounds(), name_wav)
             if os.path.isfile(path_wav):
                 wf = wave.open(path_wav)
@@ -81,25 +81,25 @@ class RunSound:
 
         with UtilSQL.DictSQL(configuration.paths.file_sounds(), "general") as db:
             for key in db.keys():
-                wav = self.relations[key]["WAV_KEY"] + ".wav"
+                wav = f"{self.relations[key]['WAV_KEY']}.wav"
                 path_wav = Util.opj(folder_sounds, wav)
                 with open(path_wav, "wb") as q:
                     q.write(db[key])
 
     def save_wav(self, key, wav):
         folder_sounds = Code.configuration.paths.folder_sounds()
-        path_wav = Util.opj(folder_sounds, self.relations[key]["WAV_KEY"] + ".wav")
+        path_wav = Util.opj(folder_sounds, f"{self.relations[key]['WAV_KEY']}.wav")
         with open(path_wav, "wb") as q:
             q.write(wav)
 
     def remove_wav(self, key):
         folder_sounds = Code.configuration.paths.folder_sounds()
-        path_wav = Util.opj(folder_sounds, self.relations[key]["WAV_KEY"] + ".wav")
+        path_wav = Util.opj(folder_sounds, f"{self.relations[key]['WAV_KEY']}.wav")
         Util.remove_file(path_wav)
 
     def path_wav(self, key):
         folder_sounds = Code.configuration.paths.folder_sounds()
-        return Util.opj(folder_sounds, self.relations[key]["WAV_KEY"] + ".wav")
+        return Util.opj(folder_sounds, f"{self.relations[key]['WAV_KEY']}.wav")
 
     def read_sounds(self):
         configuration = Code.configuration
@@ -137,12 +137,12 @@ class RunSound:
     def play_zeinot(self):
         self.play_key("ZEITNOT")
 
-    def playError(self):
+    def play_error(self):
         self.play_key("ERROR")
         if self.dic_sounds["ERROR"][0] is None:
             QtWidgets.QApplication.beep()
 
-    def playBeep(self):
+    def play_beep(self):
         self.play_key("MC")
         if self.dic_sounds["MC"][0] is None:
             QtWidgets.QApplication.beep()
@@ -166,13 +166,15 @@ class RunSound:
         add("TABLASFALTAMATERIAL", _("Draw by insufficient material"), "DRAW_MATERIAL")
         add("GANAMOSTIEMPO", _("You win on time"), "WIN_TIME")
         add("GANARIVALTIEMPO", _("Opponent has won on time"), "LOST_TIME")
+        add("OFRECETABLAS", _("Opponent offers draw"), "OFFERS_DRAW")
+        add("OFRECERESIGNAR", _("Opponent offers resignation"), "OFFERS_RESIGN")
 
         for c in "abcdefgh12345678":
-            add(c, c, "COORD_" + c)
+            add(c, c, f"COORD_{c}")
 
         d = TrListas.dic_nom_pieces()
         for c in "KQRBNP":
-            add(c, d[c], "PIECE_" + c)
+            add(c, d[c], f"PIECE_{c}")
 
         add("O-O", _("Short castling"), "SHORT_CASTLING")
         add("O-O-O", _("Long castling"), "LONG_CASTLING")
@@ -184,8 +186,8 @@ class RunSound:
         return dic
 
 
-def msc(centesimas):
-    t = centesimas
+def msc(hundreds_of_second):
+    t = hundreds_of_second
     cent = t % 100
     t //= 100
     mins = t // 60
@@ -210,14 +212,15 @@ class TallerSonido:
         self.wav = wav
 
         self.owner = owner
+        self.datos = []
 
         if not wav:
-            self.centesimas = 0
+            self.hundreds_of_second = 0
         else:
             f = BytesIO(self.wav)
 
             wf = wave.open(f)
-            self.centesimas = int(round(100.0 * wf.getnframes() / wf.getframerate(), 0))
+            self.hundreds_of_second = int(round(100.0 * wf.getnframes() / wf.getframerate(), 0))
             wf.close()
 
     def with_data(self):
@@ -225,10 +228,9 @@ class TallerSonido:
 
     def reset_to_0(self):
         self.wav = None
-        self.centesimas = 0
+        self.hundreds_of_second = 0
 
     def mic_start(self):
-
         format_audio = QAudioFormat()
         format_audio.setSampleRate(self.SAMPLE_RATE)
         format_audio.setChannelCount(self.CHANNELS)
@@ -242,6 +244,7 @@ class TallerSonido:
         self.datos = []
         self.io_device = self.audio_input.start()
         self.io_device.readyRead.connect(self.mic_record)
+        return True
 
     def lin2alaw(self, data: bytes, width: int) -> bytes:
         """
@@ -252,7 +255,7 @@ class TallerSonido:
             raise ValueError("Solo se soporta width=2 (16-bit PCM)")
         out = bytearray()
         for i in range(0, len(data), width):
-            sample = int.from_bytes(data[i : i + 2], "little", signed=True)
+            sample = int.from_bytes(data[i:i + 2], "little", signed=True)
             out.append(self._linear2alaw_sample(sample))
         return bytes(out)
 
@@ -333,13 +336,13 @@ class TallerSonido:
         wf.setframerate(self.SAMPLE_RATE)
         wf.writeframes(frames)
         self.wav = io.getvalue()
-        self.centesimas = round(100.0 * wf.getnframes() / wf.getframerate(), 0)
+        self.hundreds_of_second = round(100.0 * wf.getnframes() / wf.getframerate(), 0)
         wf.close()
 
     def read_wav_from_disk(self, file):
         try:
             wf = wave.open(file, "rb")
-            self.centesimas = round(100.0 * wf.getnframes() / wf.getframerate(), 0)
+            self.hundreds_of_second = round(100.0 * wf.getnframes() / wf.getframerate(), 0)
             wf.close()
             f = open(file, "rb")
             self.wav = f.read()
@@ -347,7 +350,7 @@ class TallerSonido:
             return True
         except:
             self.wav = None
-            self.centesimas = 0
+            self.hundreds_of_second = 0
             return False
 
     def play(self, cent_desde, cent_hasta):
@@ -368,11 +371,11 @@ class TallerSonido:
         if self.owner.is_canceled:
             return
         t1 = time.time()
-        centesimas = (t1 - self.ini_time) * 100 + self.cent_desde
+        hundreds_of_second = (t1 - self.ini_time) * 100 + self.cent_desde
         try:
-            if centesimas >= self.cent_hasta:
-                centesimas = self.cent_desde
-            self.owner.mesa.ponCentesimasActual(centesimas)
+            if hundreds_of_second >= self.cent_hasta:
+                hundreds_of_second = self.cent_desde
+            self.owner.mesa.pon_centesimas_actual(hundreds_of_second)
             QTUtils.refresh_gui()
             if not self.owner.siPlay:
                 self.qsound.stop()
@@ -408,4 +411,4 @@ class TallerSonido:
 
     def recorta(self, cent_desde, cent_hasta):
         self.wav = self.io_wav(cent_desde, cent_hasta)
-        self.centesimas = cent_hasta - cent_desde
+        self.hundreds_of_second = cent_hasta - cent_desde

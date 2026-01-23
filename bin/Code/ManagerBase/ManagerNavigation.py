@@ -17,7 +17,7 @@ class ManagerNavigation:
 
     def mueve_number(self, tipo):
         game = self.manager.game
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
 
         col = 0
 
@@ -61,19 +61,19 @@ class ManagerNavigation:
         move: Move.Move = self.manager.game.move(row * 2 + col)
         self.manager.set_position(move.position_before)
         self.main_window.base.pgn.goto(row, col)
-        self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados y aqui eso no funciona
+        self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados
         self.manager.put_view()
         if row > 0 or col > 0:
             move: Move.Move = self.manager.game.move(row * 2 + col - 1)
             self.manager.board.put_arrow_sc(move.from_sq, move.to_sq)
-            self.main_window.pgnColocate(row, col)
-            self.pgnMueve(row, move.is_white())
+            self.main_window.place_on_pgn_table(row, col)
+            self.pgn_move(row, move.is_white())
 
     def move_according_key(self, tipo):
         game = self.manager.game
         if not len(game):
-            return
-        row, column = self.main_window.pgnPosActual()
+            return None
+        row, column = self.main_window.pgn_pos_actual()
 
         starts_with_black = game.starts_with_black
 
@@ -98,7 +98,7 @@ class ManagerNavigation:
                 pos += 1
             if row < 0 or (row == 0 and pos == 0 and starts_with_black):
                 self.goto_firstposition()
-                return
+                return None
         elif tipo == GO_BACK2:
             row -= 1
         elif tipo == GO_FORWARD:
@@ -109,32 +109,34 @@ class ManagerNavigation:
             row += 1
         elif tipo == GO_START:
             self.goto_firstposition()
-            return
+            return None
         elif tipo == GO_END:
             row = ult_fila
             is_white = not game.last_position.is_white
 
         if row == ult_fila:
             if si_ult_blancas and not is_white:
-                return
+                return None
 
         if row < 0 or row > ult_fila:
             self.manager.refresh()
-            return
+            return None
         if row == 0 and is_white and starts_with_black:
             is_white = False
 
-        self.main_window.pgnColocate(row, is_white)
-        self.pgnMueve(row, is_white)
+        self.main_window.place_on_pgn_table(row, is_white)
+        self.pgn_move(row, is_white)
+
+        return None
 
     def goto_firstposition(self):
         self.manager.set_position(self.manager.game.first_position)
         self.main_window.base.pgn.goto(0, 0)
-        self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados y aqui eso no funciona
+        self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados
         self.manager.put_view()
         self.manager.board.set_last_position(self.manager.game.first_position)
 
-    def pgnMueve(self, row, is_white):
+    def pgn_move(self, row, is_white):
         self.manager.pgn.goto_row_iswhite(row, is_white)
         self.manager.put_view()
 
@@ -144,7 +146,7 @@ class ManagerNavigation:
                 if self.manager.pgn.variations_mode:
                     self.manager.set_position(self.manager.game.first_position, "-1")
                     self.main_window.base.pgn.goto(0, 0)
-                    self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados y aqui eso no funciona
+                    self.manager.refresh_pgn()  # No se puede usar pgn_refresh,
                     self.manager.put_view()
                 else:
                     self.goto_firstposition()
@@ -162,16 +164,16 @@ class ManagerNavigation:
             self.move_according_key(GO_END)
         else:
             self.manager.set_position(self.manager.game.first_position)
-            self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados y aqui eso no funciona
+            self.manager.refresh_pgn()  # No se puede usar pgn_refresh,
         self.manager.put_view()
 
     def goto_current(self):
         num_moves, nj, row, is_white = self.current_move()
-        self.pgnMueve(row, is_white)
+        self.pgn_move(row, is_white)
 
     def current_move(self):
         game = self.manager.game
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         is_white = column.key != "BLACK"
         starts_with_black = game.starts_with_black
 
@@ -187,7 +189,7 @@ class ManagerNavigation:
 
     def current_move_number(self):
         game = self.manager.game
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         if column.key == "WHITE":
             is_white = True
         elif column.key == "BLACK":
@@ -225,7 +227,7 @@ class ManagerNavigation:
             pos -= 1
         tam_lj = len(self.manager.game)
         if tam_lj == 0:
-            return
+            return None
         si_ultimo = (pos + 1) >= tam_lj
 
         move = self.manager.game.move(pos)

@@ -3,7 +3,7 @@ import os
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     GO_BACK,
     GO_FORWARD,
@@ -15,7 +15,7 @@ from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
 
 
 def options(parent, configuration):
-    form = FormLayout.FormLayout(parent, _("General configuration"), Iconos.Opciones(), anchoMinimo=640)
+    form = FormLayout.FormLayout(parent, _("General configuration"), Iconos.Opciones(), minimum_width=640)
 
     sb_width_60 = 60
     sb_width_70 = 70
@@ -94,7 +94,7 @@ def options(parent, configuration):
     for x in drap:
         drap_v[drap[x]] = x
     form.slider(
-        "%s (%s=1)" % (_("Speed"), _("By default")),
+        f"{_('Speed')} ({_('By default')}=1)",
         1,
         len(drap),
         drap_v.get(configuration.x_pieces_speed, 100),
@@ -109,7 +109,7 @@ def options(parent, configuration):
     ]
     form.combobox(_("Mouse shortcuts"), li_mouse_sh, configuration.x_mouse_shortcuts)
     form.checkbox(_("Show candidates"), configuration.x_show_candidates)
-    li_copy = [(_("CTRL") + " C", True), (_("ALT") + " C", False)]
+    li_copy = [(f"{_('CTRL')} C", True), (f"{_('ALT')} C", False)]
     form.combobox(_("Key for copying the FEN to clipboard"), li_copy, configuration.x_copy_ctrl)
     li_wheel = [(_("Forward"), GO_FORWARD), (_("Backward"), GO_BACK)]
     form.combobox(
@@ -218,7 +218,7 @@ def options(parent, configuration):
     form.apart(_("Message windows"))
     form.spinbox(_("Font size"), 3, 64, sb_width_60, configuration.x_sizefont_messages)
 
-    form.add_tab("%s 1" % _("Appearance"))
+    form.add_tab(f"{_('Appearance')} 1")
 
     # Aspect 2/2 #######################################################################################################
     # form.separador()
@@ -249,9 +249,8 @@ def options(parent, configuration):
     )
     form.spinbox(_("Players"), 3, 99, sb_width_70, configuration.x_sizefont_players)
     form.separador()
-    form.checkbox(_("Enable high dpi scaling"), configuration.x_enable_highdpiscaling)
 
-    form.add_tab("%s 2" % _("Appearance"))
+    form.add_tab(f"{_('Appearance')} 2")
 
     # ELOS ############################################################################################
     form.separador()
@@ -335,7 +334,6 @@ def options(parent, configuration):
             configuration.x_analyzer_activate_ab,
             configuration.x_sizefont_infolabels,
             configuration.x_sizefont_players,
-            configuration.x_enable_highdpiscaling,
         ) = li_asp2
 
         if configuration.x_font_family in ("System", "MS Shell Dlg 2"):

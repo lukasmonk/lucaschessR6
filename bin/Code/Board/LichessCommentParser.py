@@ -80,9 +80,6 @@ def parse_lichess_graphics(text: str):
     for m in RE_BLOCK.finditer(text):
         tag = m.group("tag").lower()
         body = (m.group("body") or "").strip()
-        if not body and tag in {"csl", "cal"}:
-            # tolerate bodies that spill until next %TAG via RE_BLOCK
-            pass
         if tag == "csl":
             squares.extend(_parse_csl(body))
         elif tag == "cal":

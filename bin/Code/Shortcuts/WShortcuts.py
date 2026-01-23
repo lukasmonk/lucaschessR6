@@ -9,7 +9,7 @@ class WShortcuts(LCDialog.LCDialog):
         self.shortcuts = shortcuts
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("Play"), Iconos.Libre(), self.play_menu, sep=False)
         tb.new(_("Train"), Iconos.Entrenamiento(), self.train_menu, sep=False)
         tb.new(_("Compete"), Iconos.NuevaPartida(), self.compete_menu, sep=False)
@@ -34,8 +34,8 @@ class WShortcuts(LCDialog.LCDialog):
             is_editable=True,
         )
 
-        self.grid = Grid.Grid(self, o_columnas, siSelecFilas=True, is_editable=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columnas, complete_row_select=True, is_editable=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
         f = Controles.FontType(puntos=10, peso=75)
         self.grid.set_font(f)
 
@@ -46,7 +46,7 @@ class WShortcuts(LCDialog.LCDialog):
 
         self.grid.gotop()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -80,21 +80,27 @@ class WShortcuts(LCDialog.LCDialog):
     def information_menu(self):
         self.select_option("information")
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.shortcuts.li_shortcuts)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        column = obj_column.key
         if column == "KEY":
             return "%s %d" % (_("ALT"), row + 1) if row < 9 else ""
         return self.shortcuts.get_grid_column(row, column)
 
-    def grid_setvalue(self, grid, row, o_column, valor):
+    def grid_setvalue(self, _grid, row, _obj_column, valor):
         valor = valor.strip()
         if valor:
             shortcut = self.shortcuts.li_shortcuts[row]
             shortcut.set_label(valor)
             self.save()
+
+    def grid_doble_click(self, _grid, row, _obj_column):
+        if row >= 0:
+            shortcut = self.shortcuts.li_shortcuts[row]
+            self.finalize()
+            self.shortcuts.lauch_shortcut(shortcut)
 
     def save(self):
         self.shortcuts.save()

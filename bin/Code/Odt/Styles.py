@@ -1,4 +1,4 @@
-from Code import Util
+from Code.Z import Util
 from Code.Odt import XML
 
 
@@ -8,27 +8,27 @@ class Styles(XML.XML):
         self.add_param("xmlns:meta", "urn:oasis:names:tc:opendocument:xmlns:meta:1.0")
         self.add_param("xmlns:office", "urn:oasis:names:tc:opendocument:xmlns:office:1.0")
         self.add_param("xmlns:fo", "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0")
-        self.add_param("xmlns:ooo", "http://openoffice.org/2004/office")
-        self.add_param("xmlns:xlink", "http://www.w3.org/1999/xlink")
-        self.add_param("xmlns:dc", "http://purl.org/dc/elements/1.1/")
+        self.add_param("xmlns:ooo", "https://openoffice.org/2004/office")
+        self.add_param("xmlns:xlink", "https://www.w3.org/1999/xlink")
+        self.add_param("xmlns:dc", "https://purl.org/dc/elements/1.1/")
         self.add_param("xmlns:style", "urn:oasis:names:tc:opendocument:xmlns:style:1.0")
         self.add_param("xmlns:text", "urn:oasis:names:tc:opendocument:xmlns:text:1.0")
         self.add_param("xmlns:draw", "urn:oasis:names:tc:opendocument:xmlns:drawing:1.0")
         self.add_param("xmlns:dr3d", "urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0")
         self.add_param("xmlns:svg", "urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0")
         self.add_param("xmlns:chart", "urn:oasis:names:tc:opendocument:xmlns:chart:1.0")
-        self.add_param("xmlns:rpt", "http://openoffice.org/2005/report")
+        self.add_param("xmlns:rpt", "https://openoffice.org/2005/report")
         self.add_param("xmlns:table", "urn:oasis:names:tc:opendocument:xmlns:table:1.0")
         self.add_param("xmlns:number", "urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0")
-        self.add_param("xmlns:ooow", "http://openoffice.org/2004/writer")
-        self.add_param("xmlns:oooc", "http://openoffice.org/2004/calc")
+        self.add_param("xmlns:ooow", "https://openoffice.org/2004/writer")
+        self.add_param("xmlns:oooc", "https://openoffice.org/2004/calc")
         self.add_param("xmlns:of", "urn:oasis:names:tc:opendocument:xmlns:of:1.2")
-        self.add_param("xmlns:tableooo", "http://openoffice.org/2009/table")
+        self.add_param("xmlns:tableooo", "https://openoffice.org/2009/table")
         self.add_param(
             "xmlns:calcext",
             "urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0",
         )
-        self.add_param("xmlns:drawooo", "http://openoffice.org/2010/draw")
+        self.add_param("xmlns:drawooo", "https://openoffice.org/2010/draw")
         self.add_param(
             "xmlns:loext",
             "urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0",
@@ -37,14 +37,14 @@ class Styles(XML.XML):
             "xmlns:field",
             "urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0",
         )
-        self.add_param("xmlns:math", "http://www.w3.org/1998/Math/MathML")
+        self.add_param("xmlns:math", "https://www.w3.org/1998/Math/MathML")
         self.add_param("xmlns:form", "urn:oasis:names:tc:opendocument:xmlns:form:1.0")
         self.add_param("xmlns:script", "urn:oasis:names:tc:opendocument:xmlns:script:1.0")
-        self.add_param("xmlns:dom", "http://www.w3.org/2001/xml-events")
-        self.add_param("xmlns:xhtml", "http://www.w3.org/1999/xhtml")
-        self.add_param("xmlns:grddl", "http://www.w3.org/2003/g/data-view#")
-        self.add_param("xmlns:css3t", "http://www.w3.org/TR/css3-text/")
-        self.add_param("xmlns:officeooo", "http://openoffice.org/2009/office")
+        self.add_param("xmlns:dom", "https://www.w3.org/2001/xml-events")
+        self.add_param("xmlns:xhtml", "https://www.w3.org/1999/xhtml")
+        self.add_param("xmlns:grddl", "https://www.w3.org/2003/g/data-view#")
+        self.add_param("xmlns:css3t", "https://www.w3.org/TR/css3-text/")
+        self.add_param("xmlns:officeooo", "https://openoffice.org/2009/office")
         self.add_param("office:version", "1.3")
         element1 = XML.Element("office:font-face-decls")
         self.add_content(element1)

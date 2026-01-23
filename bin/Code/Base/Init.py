@@ -1,14 +1,18 @@
 import sys
 
 import Code
-from Code import Procesador, Util, XRun
+from Code import Procesador
+from Code.Z import Util, XRun
 from Code.Base.Constantes import ExitProgram
 from Code.MainWindow import LucasChessGui
 from Code.Sound import Sound
 
 
 def init():
-    if not __debug__:
+    if __debug__:
+        from Code.Z import Debug
+        sys.stderr = Debug.LogDebug("bug.log")
+    else:
         sys.stderr = Util.Log("bug.log")
 
     main_procesador = Procesador.Procesador()

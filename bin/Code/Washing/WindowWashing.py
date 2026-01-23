@@ -5,7 +5,7 @@ from PySide6 import QtCore
 from PySide6.QtSvgWidgets import QSvgWidget
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Databases import DBgames
 from Code.QT import (
@@ -18,8 +18,8 @@ from Code.QT import (
     LCDialog,
     QTDialogs,
     QTMessages,
-    WindowSavePGN,
 )
+from Code.ZQT import WindowSavePGN
 from Code.Washing import Washing
 
 
@@ -45,7 +45,7 @@ class WWashing(LCDialog.LCDialog):
 
         # Toolbar
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("File"), Iconos.Recuperar(), self.file)
         if not finished:
             tb.new(_("Play"), Iconos.Play(), self.play)
@@ -109,7 +109,7 @@ class WWashing(LCDialog.LCDialog):
                 _("Repetitions"),
                 "%d (%0.02f)" % (games, games * 1.0 / n_engines),
                 _("Time"),
-                "%s (%s)" % (Util.secs2str(times), Util.secs2str(int(times / n_engines))),
+                f"{Util.secs2str(times)} ({Util.secs2str(int(times / n_engines))})",
             )
 
         else:
@@ -127,7 +127,7 @@ class WWashing(LCDialog.LCDialog):
                 eng.name,
                 _("Elo"),
                 eng.elo,
-                "<b>%s</b>" % _("Task"),
+                f"<b>{_('Task')}</b>",
                 eng.lbState(),
                 _("Color"),
                 _("White") if eng.color else _("Black"),
@@ -142,7 +142,7 @@ class WWashing(LCDialog.LCDialog):
             )
 
         lb_txt = Controles.LB(self, html).set_font_type(puntos=12)
-        lb_idx = Controles.LB(self, "%0.2f%%" % ia).align_center().set_font_type(puntos=36, peso=700)
+        lb_idx = Controles.LB(self, f"{ia:0.2f}%").align_center().set_font_type(puntos=36, peso=700)
 
         ly0 = Colocacion.V().control(wsvg).relleno(1)
         ly1 = Colocacion.V().espacio(20).control(lb_txt).espacio(20).control(lb_idx).relleno(1)
@@ -162,8 +162,8 @@ class WWashing(LCDialog.LCDialog):
         o_columns.nueva("DATE", _("Date"), 120, align_center=True)
         o_columns.nueva("INDEX", _("Index"), 60, align_center=True)
 
-        self.grid = grid = Grid.Grid(self, o_columns, siSelecFilas=True)
-        n_ancho_pgn = self.grid.anchoColumnas() + 20
+        self.grid = grid = Grid.Grid(self, o_columns, complete_row_select=True)
+        n_ancho_pgn = self.grid.width_columns_displayables() + 20
         self.grid.setMinimumWidth(n_ancho_pgn)
         self.register_grid(grid)
 
@@ -180,7 +180,7 @@ class WWashing(LCDialog.LCDialog):
 
         self.restore_video(with_tam=True, default_width=n_ancho_pgn)
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
@@ -217,7 +217,7 @@ class WWashing(LCDialog.LCDialog):
                 fich = name = li_resp[0]
                 if name.lower()[-4:] != ".wsm":
                     fich += ".wsm"
-                path = Util.opj(self.configuration.paths.folder_results, fich)
+                path = Util.opj(self.configuration.paths.folder_results(), fich)
                 ok = True
                 if Util.exist_file(path):
                     ok = QTMessages.pregunta(
@@ -233,8 +233,8 @@ class WWashing(LCDialog.LCDialog):
                     shutil.copy(self.dbwashing.file, path)
         elif resp == "restorefrom":
             li = []
-            for fich in os.listdir(self.configuration.paths.folder_results):
-                if fich.endswith(".wsm") and fich != self.dbwashing.filename:
+            for fich in os.listdir(self.configuration.paths.folder_results()):
+                if fich.endswith(".wsm") and fich != os.path.basename(self.dbwashing.file):
                     li.append(fich[:-4])
             if not li:
                 QTMessages.message_bold(self, _("There is no file"))
@@ -253,7 +253,7 @@ class WWashing(LCDialog.LCDialog):
                     ),
                 ):
                     shutil.copy(
-                        Util.opj(self.configuration.paths.folder_results, resp + ".wsm"),
+                        Util.opj(self.configuration.paths.folder_results(), f"{resp}.wsm"),
                         self.dbwashing.file,
                     )
                     self.wreload = True
@@ -347,8 +347,8 @@ class WWashing(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return self.washing.num_engines()
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        col = obj_column.key
         if col == "STEP":
             return str(row + 1)
         engine = self.washing.liEngines[row]

@@ -29,10 +29,10 @@ class WPlayHuman(LCDialog.LCDialog):
         tb = QTDialogs.LCTB(self, li_acciones)
 
         self.lb_white = Controles.LB2P(self, _("White")).set_font(font)
-        self.ed_white = Controles.ED(self, "").anchoMaximo(250).set_font(font)
+        self.ed_white = Controles.ED(self, "").ancho_maximo(250).set_font(font)
 
         self.lb_black = Controles.LB2P(self, _("Black")).set_font(font)
-        self.ed_black = Controles.ED(self, "").anchoMaximo(250).set_font(font)
+        self.ed_black = Controles.ED(self, "").ancho_maximo(250).set_font(font)
 
         ly_players = Colocacion.G()
         ly_players.controld(self.lb_white, 0, 0).control(self.ed_white, 0, 1)
@@ -41,8 +41,8 @@ class WPlayHuman(LCDialog.LCDialog):
         gb_players = Controles.GB(self, _("Players"), ly_players)
         self.configuration.set_property(gb_players, "1")
 
-        self.lb_minutos = Controles.LB(self, _("Total minutes") + ":").set_font(font)
-        self.ed_minutos = Controles.ED(self).tipoFloat(10.0).set_font(font).relative_width(50)
+        self.lb_minutos = Controles.LB(self, f"{_('Total minutes')}:").set_font(font)
+        self.ed_minutos = Controles.ED(self).type_float(10.0).set_font(font).relative_width(50)
         self.ed_segundos, self.lb_segundos = QTMessages.spinbox_lb(
             self,
             0,
@@ -71,7 +71,7 @@ class WPlayHuman(LCDialog.LCDialog):
         if Code.eboard:
             self.chb_eboard = Controles.CHB(
                 self,
-                "%s: %s" % (_("Activate e-board"), self.configuration.x_digital_board),
+                f"{_('Activate e-board')}: {self.configuration.x_digital_board}",
                 False,
             ).set_font(font)
             ly.control(self.chb_eboard)
@@ -99,7 +99,7 @@ class WPlayHuman(LCDialog.LCDialog):
             "WHITE": self.ed_white.texto(),
             "BLACK": self.ed_black.texto(),
             "WITHTIME": self.chb_tiempo.isChecked(),
-            "MINUTES": self.ed_minutos.textoFloat(),
+            "MINUTES": self.ed_minutos.text_to_float(),
             "SECONDS": self.ed_segundos.value(),
             "ACTIVATE_EBOARD": self.chb_eboard.valor() if Code.eboard else False,
             # "ANALYSIS_BAR": self.chb_analysis_bar.valor(),
@@ -110,7 +110,7 @@ class WPlayHuman(LCDialog.LCDialog):
         self.ed_white.set_text(dg("WHITE", ""))
         self.ed_black.set_text(dg("BLACK", ""))
 
-        self.ed_minutos.ponFloat(float(dg("MINUTES", 10.0)))
+        self.ed_minutos.set_float(float(dg("MINUTES", 10.0)))
         self.ed_segundos.setValue(dg("SECONDS", 0))
         self.chb_tiempo.setChecked(dg("WITHTIME", False))
         if Code.eboard:

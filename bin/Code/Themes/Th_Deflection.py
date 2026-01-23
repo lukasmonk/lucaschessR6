@@ -28,7 +28,7 @@ class Deflection(CheckTheme.CheckTheme):
         if len(li_pv) < 3:
             return False
 
-        # Condicion 2: el movimiento no es de rey y hay piezas en el bando contrario
+        # Condicion 2: el movimiento no es de rey y hay pieces en el bando contrario
         pz = move.position_before.get_pz(move.from_sq)
         if pz.lower() in "k":
             return False
@@ -54,7 +54,7 @@ class Deflection(CheckTheme.CheckTheme):
         st_rival_defended_after = set(li_rival_defended_after)
         st_rival_undefended = st_rival_defended_previous - st_rival_defended_after
 
-        # Quitamos las que están defendidas por otras piezas del rival
+        # Quitamos las que están defendidas por otras pieces del rival
         is_white = move.is_white()
         st_rival_undefended_final = {
             square for square in st_rival_undefended if not self.square_attacked(move.position, square, not is_white)

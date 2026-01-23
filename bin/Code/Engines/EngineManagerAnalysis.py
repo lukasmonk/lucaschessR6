@@ -1,3 +1,4 @@
+import contextlib
 import time
 from typing import Callable, Optional
 
@@ -22,11 +23,9 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
         def check_state(bestmove):
             def close():
-                try:
+                with contextlib.suppress(RuntimeError, TypeError):
                     if self.engine_run is not None:
                         self.engine_run.bestmove_found.disconnect(check_state)
-                except (RuntimeError, TypeError):
-                    pass
                 timer.stop()
                 loop.quit()
 
@@ -251,6 +250,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             return None
 
         self.engine_run.set_game_position(game, None, False)
+        self.engine_run.play(self.run_engine_params)
 
         self.elapsed_time.start()
 
@@ -270,6 +270,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             return None
 
         self.engine_run.set_fen_position(fen)
+        self.engine_run.play(self.run_engine_params)
 
         self.elapsed_time.start()
 

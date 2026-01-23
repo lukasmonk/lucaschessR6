@@ -153,7 +153,7 @@ class Themes:
                 hue = 0.05 + (0.7 - 0.05) * ratio
                 lightness = 0.7 + 0.2 * (1.0 - ratio)
                 r, g, b = colorsys.hls_to_rgb(hue, lightness, 0.9)
-                return "#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
+                return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
 
             color = generar_color_contraste(theme)
         return color
@@ -164,7 +164,7 @@ class Themes:
 
         # Convertir string a QByteArray
         if theme == "⧉":
-            letters = "+" + theme
+            letters = f"+{theme}"
         else:
             if theme in self.dic_custom_letters:
                 letters = self.dic_custom_letters[theme]

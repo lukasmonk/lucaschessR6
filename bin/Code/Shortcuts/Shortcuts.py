@@ -1,7 +1,7 @@
 from typing import Optional
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Menus import (
     BaseMenu,
     CompeteMenu,

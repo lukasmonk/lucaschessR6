@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets
 
-from Code import Util
+from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.Translations import TrListas
 
@@ -28,7 +28,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         o_columns.nueva("FFINAL", _("End date"), 120, align_center=True)
         o_columns.nueva(
             "TIME",
-            "%s - %s:%s" % (_("Days"), _("Hours"), _("Minutes")),
+            f"{_('Days')} - {_('Hours')}:{_('Minutes')}",
             120,
             align_center=True,
         )
@@ -36,8 +36,8 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         o_columns.nueva("SECONDS", _("Working time"), 100, align_center=True)
         o_columns.nueva("ERRORS", _("Errors"), 100, align_center=True)
         o_columns.nueva("FACTOR", "∇", 120, align_center=True)
-        self.ghistorico = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        self.ghistorico.setMinimumWidth(self.ghistorico.anchoColumnas() + 20)
+        self.ghistorico = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
 
         # Toolbar
         self.tb = Controles.TBrutina(self)
@@ -57,12 +57,12 @@ class WHistoricoTacticas(LCDialog.LCDialog):
     def grid_num_datos(self, _grid):
         return len(self.li_histo)
 
-    def grid_doble_click(self, _grid, row, _o_column):
+    def grid_doble_click(self, _grid, row, _obj_column):
         if row == 0 and not self.tactica.finished():
             self.entrenar()
 
-    def grid_dato(self, _grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         reg = self.li_histo[row]
         if col == "FINICIAL":
             fecha = reg["FINICIAL"]
@@ -144,7 +144,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
 
         return ""
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
@@ -179,7 +179,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         self.accept()
 
     def borrar(self):
-        li = self.ghistorico.recnosSeleccionados()
+        li = self.ghistorico.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 self.tactica.borraListaHistorico(li)
@@ -191,7 +191,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
 
     def set_toolbar(self):
         self.tb.clear()
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         if self.tactica.finished():
             self.tb.new(_("New"), Iconos.Nuevo(), self.nuevo)
         else:
@@ -223,11 +223,11 @@ class WConfTactics(QtWidgets.QWidget):
         if not num or num > total:
             num = total
 
-        lb_puzzles = Controles.LB(self, _("Max number of puzzles in each block") + ": ")
+        lb_puzzles = Controles.LB(self, f"{_('Max number of puzzles in each block')}: ")
         self.sb_puzzles = Controles.SB(self, num, 1, total)
 
         # Reference
-        lb_reference = Controles.LB(self, _("Reference") + ": ")
+        lb_reference = Controles.LB(self, f"{_('Reference')}: ")
         self.ed_reference = Controles.ED(self)
 
         # Iconos
@@ -262,8 +262,8 @@ class WConfTactics(QtWidgets.QWidget):
             align_center=True,
             edicion=Delegados.LineaTexto(is_integer=True),
         )
-        self.grid_jumps = Grid.Grid(self, o_col, siSelecFilas=True, is_editable=True, xid="j")
-        self.grid_jumps.setMinimumWidth(self.grid_jumps.anchoColumnas() + 20)
+        self.grid_jumps = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="j")
+        self.grid_jumps.setMinimumWidth(self.grid_jumps.width_columns_displayables() + 20)
         ly = Colocacion.V().control(tb).control(self.grid_jumps)
         gb_jumps = Controles.GB(self, _("Repetitions of each puzzle"), ly).set_font(f)
         self.grid_jumps.gotop()
@@ -284,8 +284,8 @@ class WConfTactics(QtWidgets.QWidget):
             align_center=True,
             edicion=Delegados.ComboBox(self.liREPEATtxt),
         )
-        self.grid_repeat = Grid.Grid(self, o_col, siSelecFilas=True, is_editable=True, xid="r")
-        self.grid_repeat.setMinimumWidth(self.grid_repeat.anchoColumnas() + 20)
+        self.grid_repeat = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="r")
+        self.grid_repeat.setMinimumWidth(self.grid_repeat.width_columns_displayables() + 20)
         ly = Colocacion.V().control(tb).control(self.grid_repeat)
         gb_repeat = Controles.GB(self, _("Blocks"), ly).set_font(f)
         self.grid_repeat.gotop()
@@ -306,8 +306,8 @@ class WConfTactics(QtWidgets.QWidget):
             edicion=Delegados.LineaTexto(is_integer=True),
         )
         o_col.nueva("PENAL_%", _("Affected"), 100, align_center=True)
-        self.grid_penal = Grid.Grid(self, o_col, siSelecFilas=True, is_editable=True, xid="p")
-        self.grid_penal.setMinimumWidth(self.grid_penal.anchoColumnas() + 20)
+        self.grid_penal = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="p")
+        self.grid_penal.setMinimumWidth(self.grid_penal.width_columns_displayables() + 20)
         ly = Colocacion.V().control(tb).control(self.grid_penal)
         gb_penal = Controles.GB(self, _("Penalties"), ly).set_font(f)
         self.grid_penal.gotop()
@@ -329,8 +329,8 @@ class WConfTactics(QtWidgets.QWidget):
             edicion=Delegados.ComboBox(self.liSHOWTEXTtxt),
         )
         o_col.nueva("SHOW_%", _("Affected"), 100, align_center=True)
-        self.grid_show = Grid.Grid(self, o_col, siSelecFilas=True, is_editable=True, xid="s")
-        self.grid_show.setMinimumWidth(self.grid_show.anchoColumnas() + 20)
+        self.grid_show = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="s")
+        self.grid_show.setMinimumWidth(self.grid_show.width_columns_displayables() + 20)
         ly = Colocacion.V().control(tb).control(self.grid_show)
         gb_show = Controles.GB(self, _("Show the reference associated with each puzzle"), ly).set_font(f)
         self.grid_show.gotop()
@@ -343,10 +343,10 @@ class WConfTactics(QtWidgets.QWidget):
             self.reinforcement_errors = tactica.reinforcement_errors
             self.reinforcement_cycles = tactica.reinforcement_cycles
 
-        lb_r_errors = Controles.LB(self, _("Accumulated errors to launch reinforcement") + ": ")
+        lb_r_errors = Controles.LB(self, f"{_('Accumulated errors to launch reinforcement')}: ")
         li_opciones = [(_("Disable"), 0), ("5", 5), ("10", 10), ("15", 15), ("20", 20)]
         self.cb_reinf_errors = Controles.CB(self, li_opciones, self.reinforcement_errors)
-        lb_r_cycles = Controles.LB(self, _("Cycles") + ": ")
+        lb_r_cycles = Controles.LB(self, f"{_('Cycles')}: ")
         self.sb_reinf_cycles = Controles.SB(self, self.reinforcement_cycles, 1, 10)
         ly = (
             Colocacion.H()
@@ -398,8 +398,8 @@ class WConfTactics(QtWidgets.QWidget):
             align_center=True,
             edicion=Delegados.LineaTexto(is_integer=True),
         )
-        self.grid_files = Grid.Grid(self, o_col, siSelecFilas=True, is_editable=True, xid="f")
-        self.grid_files.setMinimumWidth(self.grid_files.anchoColumnas() + 20)
+        self.grid_files = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="f")
+        self.grid_files.setMinimumWidth(self.grid_files.width_columns_displayables() + 20)
         ly = Colocacion.V().control(self.grid_files)
         gb_files = Controles.GB(self, _("FNS files"), ly).set_font(f)
         self.grid_files.gotop()
@@ -409,14 +409,14 @@ class WConfTactics(QtWidgets.QWidget):
         ly_puzzles = Colocacion.H().control(lb_puzzles).control(self.sb_puzzles)
         ly = Colocacion.G()
         ly.otro(ly_puzzles, 0, 0).otro(ly_reference, 0, 1)
-        ly.filaVacia(1, 5)
+        ly.empty_row(1, 5)
         ly.controld(gb_jumps, 2, 0).control(gb_penal, 2, 1)
-        ly.filaVacia(3, 5)
+        ly.empty_row(3, 5)
         ly.controld(gb_repeat, 4, 0)
         ly.control(gb_show, 4, 1)
-        ly.filaVacia(5, 5)
+        ly.empty_row(5, 5)
         ly.otro(ly_gb_adv, 6, 0, 1, 2)
-        ly.filaVacia(6, 5)
+        ly.empty_row(6, 5)
         ly.control(gb_files, 7, 0, 1, 2)
 
         layout = Colocacion.V().espacio(10).otro(ly)
@@ -448,8 +448,8 @@ class WConfTactics(QtWidgets.QWidget):
         a = p * (row + 1)
         return f"{int(de):d}%  -  {int(a):d}%"
 
-    def grid_dato(self, _grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         if col == "NUMBER":
             return str(row + 1)
         if col == "JUMPS_SEPARATION":
@@ -482,7 +482,7 @@ class WConfTactics(QtWidgets.QWidget):
             return str(self.liFILES[row][3])
         return None
 
-    def grid_setvalue(self, grid, row, o_column, valor):
+    def grid_setvalue(self, grid, row, obj_column, valor):
         xid = grid.id
         if xid == "j":
             self.liJUMPS[row] = int(valor)
@@ -493,7 +493,7 @@ class WConfTactics(QtWidgets.QWidget):
         elif xid == "s":
             self.liSHOWTEXT[row] = self.liSHOWTEXTtxt.index(valor)
         elif xid == "f":
-            col = o_column.key
+            col = obj_column.key
             n = int(valor)
             if col == "WEIGHT":
                 if n > 0:
@@ -663,9 +663,9 @@ class WEditaTactica(LCDialog.LCDialog):
         nico = QTDialogs.rondo_colores()
 
         for opcion, txt in (
-                (self.remove_jumps, _("Without repetitions of each puzzle")),
-                (self.remove_repeat, _("Without repetitions of block")),
-                (self.remove_penalization, _("Without penalties")),
+            (self.remove_jumps, _("Without repetitions of each puzzle")),
+            (self.remove_repeat, _("Without repetitions of block")),
+            (self.remove_penalization, _("Without penalties")),
         ):
             menu.opcion(opcion, txt, nico.otro())
             menu.separador()

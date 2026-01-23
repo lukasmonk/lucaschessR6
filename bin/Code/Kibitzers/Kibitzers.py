@@ -3,7 +3,7 @@ import os.path
 from PySide6 import QtGui
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     KIB_AFTER_MOVE,
     KIB_BEFORE_MOVE,
@@ -35,7 +35,7 @@ class Tipos:
         self.li_tipos = (
             (KIB_CANDIDATES, _("Candidates"), Iconos.pmKibitzer().scaledToWidth(16)),
             (KIB_BESTMOVE, _("Best move"), Iconos.pmKibitzer().scaledToWidth(16)),
-            (KIB_INDEXES, _("Indexes") + " - RodentII", Iconos.pmPuntoNegro()),
+            (KIB_INDEXES, f"{_('Indexes')} - RodentII", Iconos.pmPuntoNegro()),
             (
                 KIB_BESTMOVE_ONELINE,
                 _("Best move in one line"),
@@ -55,7 +55,7 @@ class Tipos:
     def combo(self):
         return [(label, key) for key, label, pm in self.li_tipos]
 
-    def comboSinIndices(self):
+    def comobo_with_indices(self):
         return [
             (label, key)
             for key, label, pm in self.li_tipos
@@ -66,11 +66,12 @@ class Tipos:
         for tp, nom, pm in self.li_tipos:
             if tp == tipo:
                 return nom
+        return None
 
-    def dicDelegado(self):
+    def dict_delegado(self):
         return {tp: pm for tp, txt, pm in self.li_tipos}
 
-    def dicIconos(self):
+    def dict_icons(self):
         return {tp: QtGui.QIcon(pm) for tp, txt, pm in self.li_tipos}
 
 
@@ -92,7 +93,7 @@ class Kibitzer(Engines.Engine):
             if self.huella not in li_huellas:
                 return
 
-    def clone(self, li_engines):
+    def clone_list(self, li_engines):
         otro = Kibitzer()
         otro.restore(self.save())
         otro.tipo = self.tipo
@@ -105,7 +106,7 @@ class Kibitzer(Engines.Engine):
         d = 0
         while otro.name in lista:
             d += 1
-            otro.name = "%s-%d" % (self.name, d)
+            otro.name = f"{self.name}-{d}"
         return otro
 
     def ctipo(self):
@@ -118,6 +119,7 @@ class Kibitzer(Engines.Engine):
         for txt, key in cb_pointofview_options():
             if self.pointofview == key:
                 return txt
+        return None
 
     def read_uci_options(self):
         if self.tipo in (KIB_GAVIOTA, KIB_POLYGLOT):
@@ -135,7 +137,7 @@ class Kibitzer(Engines.Engine):
             KIB_STOCKFISH,
         ):
             if not os.path.isfile(self.path_exe):
-                eng = Code.configuration.engines.search(self.alias)
+                eng = Code.configuration.engines.search(self.key)
                 if eng:
                     self.path_exe = eng.path_exe
                 else:
@@ -176,12 +178,13 @@ class Kibitzers:
         for num, kib in enumerate(self.lista):
             if kib.huella == huella:
                 return num
+        return None
 
     def save(self):
         dic = {"LISTA": [en.save() for en in self.lista], "LASTFOLDER": self.lastfolder}
         Util.save_pickle(self.file, dic)
 
-    def nuevo_engine(self, name, engine, tipo, prioridad, pointofview, fixed_time, fixed_depth):
+    def new_engine(self, name, engine, tipo, prioridad, pointofview, fixed_time, fixed_depth):
         kib = Kibitzer()
         kib.pon_huella(self.lista)
         eng = Code.configuration.engines.search(engine)
@@ -197,10 +200,10 @@ class Kibitzers:
         self.save()
         return len(self.lista) - 1
 
-    def nuevo_polyglot(self, book):
+    def new_polyglot(self, book):
         kib = Kibitzer()
         kib.pon_huella(self.lista)
-        kib.name = "%s: %s" % (_("Book"), book.name)
+        kib.name = f"{_('Book')}: {book.name}"
         kib.key = book.name
         kib.tipo = KIB_POLYGLOT
         kib.path_exe = book.path
@@ -208,10 +211,10 @@ class Kibitzers:
         self.save()
         return len(self.lista) - 1
 
-    def nuevo_gaviota(self):
+    def new_gaviota(self):
         for kib in self.lista:
             if kib.tipo == KIB_GAVIOTA:
-                return
+                return None
         kib = Kibitzer()
         kib.pon_huella(self.lista)
         kib.name = _("Gaviota Tablebases")
@@ -222,15 +225,15 @@ class Kibitzers:
         self.save()
         return len(self.lista) - 1
 
-    def nuevo_index(self):
+    def new_indexes(self):
         for kib in self.lista:
             if kib.tipo == KIB_INDEXES:
-                return
+                return None
         kib = Kibitzer()
         eng = Code.configuration.engines.search("rodentii")
         kib.restore(eng.save())
         kib.pon_huella(self.lista)
-        kib.name = _("Indexes") + " - RodentII"
+        kib.name = f"{_('Indexes')} - RodentII"
         kib.key = kib.name
         kib.tipo = KIB_INDEXES
         kib.autor = "Michele Tumbarello"
@@ -241,7 +244,7 @@ class Kibitzers:
     def nuevo_database(self, path_database):
         kib = Kibitzer()
         kib.pon_huella(self.lista)
-        kib.name = _("Database") + ": " + os.path.basename(path_database)[:-5]
+        kib.name = f"{_('Database')}: {os.path.basename(path_database)[:-5]}"
         kib.path_exe = path_database
         kib.key = kib.name
         kib.tipo = KIB_DATABASES
@@ -275,13 +278,13 @@ class Kibitzers:
         return None
 
     def clone(self, num):
-        kib = self.lista[num].clone(self.lista)
+        kib = self.lista[num].clone_list(self.lista)
         self.lista.append(kib)
         self.save()
         return len(self.lista) - 1
 
     def lista_menu(self):
-        d_ico = Tipos().dicIconos()
+        d_ico = Tipos().dict_icons()
         li = []
         for kib in self.lista:
             if kib.tipo in (

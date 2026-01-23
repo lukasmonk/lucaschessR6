@@ -5,7 +5,7 @@ import webbrowser
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, QTDialogs, QTMessages, QTUtils, SelectFiles
 
 li_fide = [
@@ -368,22 +368,22 @@ class WPerfomance(QtWidgets.QWidget):
         o_columns.nueva("player", _("Player"), 190, align_center=True)
         o_columns.nueva("elo", _("Avg Elo"), 80, align_center=True)
         o_columns.nueva("WB", perf, 100, align_center=True)
-        o_columns.nueva("W", perf + "\n" + _("White"), 90, align_center=True)
-        o_columns.nueva("B", perf + "\n" + _("Black"), 90, align_center=True)
-        o_columns.nueva("scorep", "%" + _("Score") + "\n" + awb, 150, align_center=True)
-        o_columns.nueva("score", _("Score") + "\n" + awb, 170, align_center=True)
+        o_columns.nueva("W", f"{perf}\n{_('White')}", 90, align_center=True)
+        o_columns.nueva("B", f"{perf}\n{_('Black')}", 90, align_center=True)
+        o_columns.nueva("scorep", f"%{_('Score')}\n{awb}", 150, align_center=True)
+        o_columns.nueva("score", f"{_('Score')}\n{awb}", 170, align_center=True)
         o_columns.nueva(
             "results",
-            _("Results") + "\n" + _("Wins") + "/" + _("Draws") + "/" + _("Losses"),
+            f"{_('Results')}\n{_('Wins')}/{_('Draws')}/{_('Losses')}",
             190,
             align_center=True,
         )
-        o_columns.nueva("opponent", _("Avg Opponent") + "\n" + awb, 150, align_center=True)
+        o_columns.nueva("opponent", f"{_('Avg Opponent')}\n{awb}", 150, align_center=True)
 
         font_metrics = QtGui.QFontMetrics(self.font())
         alto_cabecera = font_metrics.height() * 2 + 6
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, altoCabecera=alto_cabecera)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, header_heigh=alto_cabecera)
 
         ly = Colocacion.V().control(self.tb).control(self.lb_tipo).control(self.grid).margen(1)
 
@@ -392,7 +392,7 @@ class WPerfomance(QtWidgets.QWidget):
         self.show_type()
 
     def actualiza(self):
-        li_regs = self.wb_games.grid.recnosSeleccionados()
+        li_regs = self.wb_games.grid.list_selected_recnos()
         if len(li_regs) == 1:
             li_regs = range(self.db_games.reccount())
         with QTMessages.one_moment_please(self, with_cancel=True) as omp:
@@ -492,11 +492,11 @@ class WPerfomance(QtWidgets.QWidget):
     def linear(self):
         self.change_tipo("LINEAR")
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_players)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         player = self.li_players[row]
         if col == "player":
             return player
@@ -522,8 +522,8 @@ class WPerfomance(QtWidgets.QWidget):
             return perfomance.str_results()
         return None
 
-    def grid_doubleclick_header(self, grid, o_column):
-        col = o_column.key
+    def grid_doubleclick_header(self, _grid, obj_column):
+        col = obj_column.key
         if col == "__num__":
             return
 
@@ -547,11 +547,12 @@ class WPerfomance(QtWidgets.QWidget):
                 return player.upper()
             if col == "elo":
                 return perfomance.avg_elo_player()
+            return None
 
         reset = False
 
         if col == self.last_col:
-            if o_column.head.endswith(" -"):
+            if obj_column.head.endswith(" -"):
                 reset = True
             self.last_reverse = not self.last_reverse
 
@@ -569,11 +570,11 @@ class WPerfomance(QtWidgets.QWidget):
             self.last_reverse = False
             self.last_col = col
         else:
-            o_column.head = o_column.head + (" -" if self.last_reverse else " +")
+            obj_column.head = obj_column.head + (" -" if self.last_reverse else " +")
             self.li_players.sort(key=element, reverse=self.last_reverse)
         self.grid.refresh()
 
-    def grid_right_button(self, grid, row, col, modif):
+    def grid_right_button(self, grid, row, col, _modif):
         key = col.key
         if key.startswith("__"):
             return
@@ -583,13 +584,14 @@ class WPerfomance(QtWidgets.QWidget):
             QTUtils.set_clipboard(val)
             QTMessages.temporary_message(
                 self,
-                val + "<br><br>" + _("It is saved in the clipboard to paste it wherever you want."),
+                f"{val}<br><br>{_('It is saved in the clipboard to paste it wherever you want.')}",
                 2.0,
             )
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, _grid, k, _is_shift, _is_control, is_alt):
         if k == QtCore.Qt.Key.Key_R and is_alt:
             self.grid.resizeColumnsToContents()
+            return False
         else:
             return True  # que siga con el resto de teclas
 
@@ -607,18 +609,18 @@ class WPerfomance(QtWidgets.QWidget):
         dic_csv = self.configuration.read_variables("CSV")
         path_csv = SelectFiles.salvaFichero(
             self,
-            _("Export") + " - " + _("To a CSV file"),
+            f"{_('Export')} - {_('To a CSV file')}",
             dic_csv.get("FOLDER", self.configuration.paths.folder_userdata()),
             "csv",
         )
         if not path_csv:
             return
         if not path_csv.lower().endswith(".csv"):
-            path_csv = path_csv.strip() + ".csv"
+            path_csv = f"{path_csv.strip()}.csv"
         dic_csv["FOLDER"] = os.path.dirname(path_csv)
         self.configuration.write_variables("CSV", dic_csv)
         li_cols = []
-        for col in self.grid.oColumnasR.li_columns:
+        for col in self.grid.columns_displayables.li_columns:
             key = col.key
             if key.startswith("__"):
                 continue

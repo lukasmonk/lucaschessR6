@@ -1,7 +1,8 @@
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util, XRun
+import contextlib
+from Code.Z import Util, XRun
 from Code.Base import Game
 from Code.Base.Constantes import (
     RUNA_CONFIGURATION,
@@ -36,9 +37,9 @@ class IPCAnalysis:
         configuration = Code.configuration
 
         folder_tmp = Code.configuration.temporary_folder()
-        filebase = Util.opj(folder_tmp, huella + f"_{num_worker}")
-        file_send = filebase + "_send.sqlite"
-        file_receive = filebase + "_receive.sqlite"
+        filebase = Util.opj(folder_tmp, f"{huella}_{num_worker}")
+        file_send = f"{filebase}_send.sqlite"
+        file_receive = f"{filebase}_receive.sqlite"
 
         self.ipc_send = UtilSQL.IPC(file_send, True)
         self.ipc_receive = UtilSQL.IPC(file_receive, True)
@@ -72,26 +73,25 @@ class IPCAnalysis:
         orden.dv["RECNO"] = recno
         self.send(orden)
 
-    def send_halt(self):
+    def _send_orden(self, key):
         orden = Orden()
-        orden.key = RUNA_HALT
+        orden.key = key
         self.send(orden)
 
+    def send_halt(self):
+        self._send_orden(RUNA_HALT)
+
     def send_terminate(self):
-        orden = Orden()
-        orden.key = RUNA_TERMINATE
-        self.send(orden)
+        self._send_orden(RUNA_TERMINATE)
 
     def close(self):
         if not self.closed:
             self.ipc_send.close()
             self.ipc_receive.close()
             if self.popen:
-                try:
+                with contextlib.suppress(Exception):
                     self.popen.terminate()
-                    self.popen = None
-                except:
-                    pass
+                self.popen = None
             self.closed = True
 
 
@@ -108,10 +108,7 @@ class AnalysisMassiveWithWorkers:
         self.bmt_blunders = None
         self.bmt_brillancies = None
 
-        if alm.num_moves:
-            alm.lni = Util.ListaNumerosImpresion(alm.num_moves)
-        else:
-            alm.lni = None
+        alm.lni = Util.ListaNumerosImpresion(alm.num_moves) if alm.num_moves else None
         self.alm = alm
 
         self.li_workers = []
@@ -150,10 +147,38 @@ class AnalysisMassiveWithWorkers:
                 worker.close()
         self.window.xclose()
 
+    def run_game(self, num_worker, order):
+        self.send_game_worker(num_worker)
+
+        game: Game.Game = order.get("GAME")
+        if self.alm.accuracy_tags:
+            game.add_accuracy_tags()
+        recno = order.get("RECNO")
+        self.db_games.save_game_recno(recno, game)
+        self.num_games_analyzed += 1
+        self.window.set_pos(self.num_games_analyzed)
+
+        if li_extra := order.get("EXTRA"):
+            for tipo, par1, par2, par3 in li_extra:
+                if tipo == "bmt_blunders":
+                    if self.bmt_blunders is None:
+                        self.bmt_blunders = BMT.BMTLista()
+                    self.bmt_blunders.nuevo(par1)
+                    self.bmt_blunders.check_game(par2, par3)
+                elif tipo == "bmt_brilliancies":
+                    if self.bmt_brillancies is None:
+                        self.bmt_brillancies = BMT.BMTLista()
+                    self.bmt_brillancies.nuevo(par1)
+                    self.bmt_brillancies.check_game(par2, par3)
+                elif tipo == "file":
+                    with open(par1, "at", encoding="utf-8", errors="ignore") as f:
+                        f.write(par2)
+
     def processing(self):
         QTUtils.refresh_gui()
         if self.window.is_canceled():
-            return self.close()
+            self.close()
+            return
 
         if self.window.is_paused():
             return
@@ -174,32 +199,7 @@ class AnalysisMassiveWithWorkers:
             if order is None:
                 pass
             elif order.key == RUNA_GAME:
-                self.send_game_worker(num_worker)
-
-                game: Game.Game = order.get("GAME")
-                if self.alm.accuracy_tags:
-                    game.add_accuracy_tags()
-                recno = order.get("RECNO")
-                self.db_games.save_game_recno(recno, game)
-                self.num_games_analyzed += 1
-                self.window.set_pos(self.num_games_analyzed)
-
-                li_extra = order.get("EXTRA")
-                if li_extra:
-                    for tipo, par1, par2, par3 in li_extra:
-                        if tipo == "file":
-                            with open(par1, "at", encoding="utf-8", errors="ignore") as f:
-                                f.write(par2)
-                        elif tipo == "bmt_blunders":
-                            if self.bmt_blunders is None:
-                                self.bmt_blunders = BMT.BMTLista()
-                            self.bmt_blunders.nuevo(par1)
-                            self.bmt_blunders.check_game(par2, par3)
-                        elif tipo == "bmt_brilliancies":
-                            if self.bmt_brillancies is None:
-                                self.bmt_brillancies = BMT.BMTLista()
-                            self.bmt_brillancies.nuevo(par1)
-                            self.bmt_brillancies.check_game(par2, par3)
+                self.run_game(num_worker, order)
 
             elif order.key == RUNA_TERMINATE:
                 worker.close()
@@ -209,7 +209,8 @@ class AnalysisMassiveWithWorkers:
         if actives == 0:
             self.close()
 
-    def save_bmt(self, bmt):
+    @staticmethod
+    def save_bmt(bmt):
         if bmt is None:
             return
 
@@ -224,7 +225,7 @@ class AnalysisMassiveWithWorkers:
             (self.bmt_brillancies, self.alm.bmtbrilliancies),
         ):
             if bmt_lista and len(bmt_lista) > 0:
-                bmt = BMT.BMT(Code.configuration.path.file_bmt())
+                bmt = BMT.BMT(Code.configuration.paths.file_bmt())
                 dbf = bmt.read_dbf(False)
 
                 reg = dbf.baseRegistro()
@@ -255,13 +256,13 @@ class WProgress(LCDialog.LCDialog):
         self.lb_game = Controles.LB(self)
 
         self.pb_moves = QtWidgets.QProgressBar(self)
-        self.pb_moves.setFormat(_("Game") + " %v/%m")
+        self.pb_moves.setFormat(f"{_('Game')} %v/%m")
         self.pb_moves.setRange(0, nregs)
 
         self._is_paused = False
         self.bt_pause = Controles.PB(self, "", self.pause_continue, plano=True)
         self.icon_pause_continue()
-        pb_cancel = Controles.PB(self, _("Cancel"), self.xcancel, plano=False).ponIcono(Iconos.Delete())
+        pb_cancel = Controles.PB(self, _("Cancel"), self.xcancel, plano=False).set_icono(Iconos.Delete())
 
         lay = Colocacion.H().control(self.lb_game).control(self.pb_moves).control(self.bt_pause)
         lay2 = Colocacion.H().relleno().control(pb_cancel)
@@ -293,16 +294,11 @@ class WProgress(LCDialog.LCDialog):
         self.amww.close()
 
     def pause_continue(self):
-        if self._is_paused:
-            self._is_paused = False
-            self.icon_pause_continue()
-        else:
-            self._is_paused = True
-            self.icon_pause_continue()
+        self._is_paused = not self._is_paused
+        self.icon_pause_continue()
 
     def icon_pause_continue(self):
-        # self.bt_pause.ponIcono(Iconos.Kibitzer_Play() if self._is_paused else Iconos.Kibitzer_Pause())
-        self.bt_pause.ponIcono(Iconos.ContinueColor() if self._is_paused else Iconos.PauseColor())
+        self.bt_pause.set_icono(Iconos.ContinueColor() if self._is_paused else Iconos.PauseColor())
 
     def is_canceled(self):
         return self._is_canceled

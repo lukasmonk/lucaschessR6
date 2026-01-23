@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import os
 import sys
@@ -8,7 +9,7 @@ from typing import Any, Optional
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Analysis import AnalysisIndexes, RunAnalysisControl
 from Code.Base import Game
 from Code.Base.Constantes import (
@@ -41,8 +42,8 @@ class CPU:
 
     def __init__(self, filebase: str):
         # Configuración de IPC
-        self.ipc_send = UtilSQL.IPC(filebase + "_receive.sqlite", False)
-        self.ipc_receive = UtilSQL.IPC(filebase + "_send.sqlite", False)
+        self.ipc_send = UtilSQL.IPC(f"{filebase}_receive.sqlite", False)
+        self.ipc_receive = UtilSQL.IPC(f"{filebase}_send.sqlite", False)
 
         # Estado del análisis
         self.configuration: Optional[Configuration.Configuration] = None
@@ -140,23 +141,24 @@ class CPU:
 
     def close(self) -> None:
         """Cierra el proceso de análisis"""
-        if not self.is_closed:
-            self.is_closed = True
-            if self.window:
-                self.window.finalizar()
-            QTUtils.refresh_gui()
+        if self.is_closed:
+            return
+        self.is_closed = True
+        if self.window:
+            self.window.finalizar()
+        QTUtils.refresh_gui()
 
-            orden = RunAnalysisControl.Orden()
-            orden.key = RUNA_TERMINATE
-            self.send(orden)
+        orden = RunAnalysisControl.Orden()
+        orden.key = RUNA_TERMINATE
+        self.send(orden)
 
-            self.ipc_send.close()
-            self.ipc_receive.close()
+        self.ipc_send.close()
+        self.ipc_receive.close()
 
-            if hasattr(Code, 'list_engine_managers'):
-                Code.list_engine_managers.close_all()
+        if hasattr(Code, 'list_engine_managers'):
+            Code.list_engine_managers.close_all()
 
-            QtWidgets.QApplication.quit()
+        QtWidgets.QApplication.quit()
 
     def analyzer_clone(self, mstime: int, depth: int, nodes: int, multipv: int | None) -> EngineManagerAnalysis:
         engine = self.configuration.engines.engine_analyzer()
@@ -166,15 +168,14 @@ class CPU:
         run_engine_params = EngineRun.RunEngineParams()
         run_engine_params.update(engine, mstime, depth, nodes, multipv)
         engine.set_multipv_var(self.configuration.x_analyzer_multipv if multipv is None else multipv)
-        manager_analysis = EngineManagerAnalysis(engine, run_engine_params)
-        return manager_analysis
+        return EngineManagerAnalysis(engine, run_engine_params)
 
     def analyze(self, game: Game.Game, recno: int) -> None:
         """Inicia el análisis de un juego"""
         if self.is_closed:
             return
 
-        self.window.init_game(recno, len(game))
+        self.window.init_game(recno)
         self.is_analyzing = True
         self.ag.xprocesa(game)
         self.is_analyzing = False
@@ -184,8 +185,7 @@ class CPU:
         orden.set("GAME", game)
         orden.set("RECNO", recno)
 
-        li_save_extra = self.ag.xsave_extra_get()
-        if li_save_extra:
+        if li_save_extra := self.ag.xsave_extra_get():
             orden.set("EXTRA", li_save_extra)
 
         self.send(orden)
@@ -232,7 +232,7 @@ class WAnalysis(LCDialog.LCDialog):
         # UI Elements
         self.lb_game = Controles.LB(self)
         self.pb_moves = QtWidgets.QProgressBar()
-        self.pb_moves.setFormat(_("Move") + " %v/%m")
+        self.pb_moves.setFormat(f"{_('Move')} %v/%m")
 
         self.bt_pause = Controles.PB(self, "", self.pause_continue, plano=True)
         self.icon_pause_continue()
@@ -254,7 +254,7 @@ class WAnalysis(LCDialog.LCDialog):
         if not self.cpu.is_analyzing:
             self.cpu.procesa()
 
-    def init_game(self, num_game: int, num_moves: int) -> None:
+    def init_game(self, num_game: int) -> None:
         """Inicializa la visualización para un nuevo juego"""
         self.lb_game.set_text(f"{_('Game')} {num_game + 1}")
         QTUtils.refresh_gui()
@@ -288,12 +288,19 @@ class WAnalysis(LCDialog.LCDialog):
                 QTUtils.refresh_gui()
 
     def icon_pause_continue(self):
-        # self.bt_pause.ponIcono(Iconos.Kibitzer_Play() if self.is_paused else Iconos.Kibitzer_Pause())
-        self.bt_pause.ponIcono(Iconos.ContinueColor() if self.is_paused else Iconos.PauseColor())
+        # self.bt_pause.set_icono(Iconos.Kibitzer_Play() if self.is_paused else Iconos.Kibitzer_Pause())
+        self.bt_pause.set_icono(Iconos.ContinueColor() if self.is_paused else Iconos.PauseColor())
 
 
 class AnalyzeGame:
     """Clase que maneja el análisis de un juego de ajedrez"""
+
+    si_bmt_blunders: bool
+    si_tactic_blunders: bool
+    si_bmt_brilliancies: bool
+    li_selected: list | None
+    bmt_listaBlunders: BMT.BMTLista | None
+    bmt_listaBrilliancies: BMT.BMTLista | None
 
     def __init__(self, cpu: CPU, alm: Any):
         self.cpu = cpu
@@ -318,14 +325,16 @@ class AnalyzeGame:
     def _setup_engine(self) -> None:
         """Configura el motor de análisis"""
         if self.alm.engine == "default":
-            self.manager_analysis = self.cpu.analyzer_clone(self.alm.vtime, self.alm.depth, self.alm.nodes,
-                                                            self.alm.multiPV)
+            self.manager_analysis = self.cpu.analyzer_clone(
+                self.alm.vtime, self.alm.depth, self.alm.nodes, self.alm.multiPV
+            )
         else:
             engine = self.configuration.engines.search(self.alm.engine)
             if self.alm.multiPV:
                 engine.set_multipv_var(self.alm.multiPV)
-            self.manager_analysis = self.cpu.create_manager_analyzer(engine, self.alm.vtime, self.alm.depth,
-                                                                     self.alm.nodes, engine.multiPV)
+            self.manager_analysis = self.cpu.create_manager_analyzer(
+                engine, self.alm.vtime, self.alm.depth, self.alm.nodes, engine.multiPV
+            )
 
         self.manager_analysis.set_priority(self.alm.priority)
 
@@ -361,7 +370,7 @@ class AnalyzeGame:
         self.oriblunders = self.alm.oriblunders
         self.bmtblunders = self.alm.bmtblunders
         self.bmt_listaBlunders = None
-        self.siTacticBlunders = False
+        self.si_tactic_blunders = False
         self.delete_previous = True
 
     def _setup_brilliancies(self) -> None:
@@ -403,7 +412,7 @@ class AnalyzeGame:
         @param name: name del entrenamiento
         """
         if bmt_lista and len(bmt_lista) > 0:
-            bmt = BMT.BMT(self.configuration.path.file_bmt())
+            bmt = BMT.BMT(self.configuration.paths.file_bmt())
             dbf = bmt.read_dbf(False)
 
             reg = dbf.baseRegistro()
@@ -426,12 +435,12 @@ class AnalyzeGame:
 
             bmt.cerrar()
 
-    def terminar(self, si_bmt):
+    def finalize(self, si_bmt):
         """
         Proceso final, para cerrar el engine que hemos usado
         @param si_bmt: si hay que grabar el registro de BMT
         """
-        self.manager_analysis.terminar()
+        self.manager_analysis.close()
         if si_bmt:
             self.terminar_bmt(self.bmt_listaBlunders, self.bmtblunders)
             self.terminar_bmt(self.bmt_listaBrilliancies, self.bmtbrilliancies)
@@ -447,7 +456,7 @@ class AnalyzeGame:
         for k, v in game.dic_tags().items():
             ku = k.upper()
             if ku not in ("RESULT", "FEN"):
-                cab += '[%s "%s"]' % (k, v)
+                cab += f'[{k} "{v}"]'
 
         game_raw = Game.game_without_variations(game)
         p = Game.Game(fen=fen)
@@ -464,48 +473,40 @@ class AnalyzeGame:
             return
 
         # Esta creado el folder
-        before = "%s.fns" % _("Avoid the blunder")
-        after = "%s.fns" % _("Take advantage of blunder")
+        before = f'{_("Avoid the blunder")}.fns'
+        after = f'{_("Take advantage of blunder")}.fns'
 
-        try:
+        with contextlib.suppress(OSError):
             if not os.path.isdir(self.tacticblunders):
                 dtactics = Util.opj(self.configuration.paths.folder_personal_trainings(), "../Tactics")
                 if not os.path.isdir(dtactics):
                     Util.create_folder(dtactics)
                 Util.create_folder(self.tacticblunders)
                 with open(
-                        Util.opj(self.tacticblunders, "Config.ini"),
-                        "wt",
-                        encoding="utf-8",
-                        errors="ignore",
+                    Util.opj(self.tacticblunders, "Config.ini"),
+                    "wt",
+                    encoding="utf-8",
+                    errors="ignore",
                 ) as f:
                     f.write(
-                        """[COMMON]
+                        f"""[COMMON]
     ed_reference=20
     REPEAT=0
     SHOWTEXT=1
     [TACTIC1]
-    MENU=%s
-    FILESW=%s:100
+    MENU={_('Avoid the blunder')}
+    FILESW={before}:100
     [TACTIC2]
-    MENU=%s
-    FILESW=%s:100
+    MENU={_('Take advantage of blunder')}
+    FILESW={after}:100
     """
-                        % (
-                            _("Avoid the blunder"),
-                            before,
-                            _("Take advantage of blunder"),
-                            after,
-                        )
                     )
-        except:
-            pass
 
         cab = ""
         for k, v in game.dic_tags().items():
             ku = k.upper()
             if ku not in ("RESULT", "FEN"):
-                cab += '[%s "%s"]' % (k, v)
+                cab += f'[{k} "{v}"]'
         move = game.move(njg)
 
         fen = move.position_before.fen()
@@ -529,15 +530,10 @@ class AnalyzeGame:
         p.read_pv(" ".join(li[1:]))
 
         path = Util.opj(self.tacticblunders, after)
-        texto = "%s||%s|%s%s\n" % (
-            fen,
-            p.pgn_base_raw(),
-            cab,
-            game.pgn_base_raw_copy(None, njg),
-        )
+        texto = f"{fen}||{p.pgn_base_raw()}|{cab}{game.pgn_base_raw_copy(None, njg)}\n"
         self.xsave_extra("file", path, texto)
 
-        self.siTacticBlunders = True
+        self.si_tactic_blunders = True
 
     def save_pgn(self, file, name, dic_cab, fen, move, rm, mj):
         """
@@ -560,6 +556,8 @@ class AnalyzeGame:
             game_blunder.read_pv(rm.pv)
             jg0 = game_blunder.move(0)
             jg0.set_comment(rm.texto())
+        else:
+            game_blunder = None
 
         p = Game.Game()
         p.set_position(move.position_before)
@@ -574,13 +572,13 @@ class AnalyzeGame:
             result = "*"
 
         jg0 = p.move(0)
-        t = "%0.2f" % (float(self.vtime) / 1000.0,)
+        t = f"{float(self.vtime) / 1000.0:0.2f}"
         t = t.rstrip("0")
         if t[-1] == ".":
             t = t[:-1]
-        eti_t = "%s %s" % (t, _("Second(s)"))
+        eti_t = f'{t} {_("Second(s)")}'
 
-        jg0.set_comment("%s %s: %s\n" % (name, eti_t, rm.texto()))
+        jg0.set_comment(f"{name} {eti_t}: {rm.texto()}\n")
         if mj:
             jg0.add_variation(game_blunder)
 
@@ -588,12 +586,12 @@ class AnalyzeGame:
         for k, v in dic_cab.items():
             ku = k.upper()
             if ku not in ("RESULT", "FEN"):
-                cab += '[%s "%s"]\n' % (k, v)
+                cab += f'[{k} "{v}"]\n'
         # Nos protegemos de que se hayan escrito en el pgn original de otra forma
-        cab += '[FEN "%s"]\n' % fen
-        cab += '[Result "%s"]\n' % result
+        cab += f'[FEN "{fen}"]\n'
+        cab += f'[Result "{result}"]\n'
 
-        texto = cab + "\n" + p.pgn_base() + mas + "\n\n"
+        texto = f"{cab}\n{p.pgn_base()}{mas}\n\n"
         self.xsave_extra("file", file, texto)
 
         return True
@@ -650,7 +648,7 @@ class AnalyzeGame:
         if self.alm.num_moves:
             li_moves = []
             lni = Util.ListaNumerosImpresion(self.alm.num_moves)
-            num_move = int(game.primeraJugada())
+            num_move = int(game.first_num_move())
             is_white = not game.starts_with_black
             for nRaw in range(game.num_moves()):
                 must_save = lni.if_in_list(num_move)
@@ -815,22 +813,25 @@ class AnalyzeGame:
 
                     fen = move.position_before.fen()
 
-                    if self.with_variations and allow_add_variations:
-                        if not move.analisis2variantes(self.alm, self.delete_previous):
-                            move.remove_all_variations()
+                    if (
+                        self.with_variations
+                        and allow_add_variations
+                        and not move.analysis_to_variations(self.alm, self.delete_previous)
+                    ):
+                        move.remove_all_variations()
 
                     ok_blunder = nag in self.kblunders_condition_list
                     if ok_blunder:
                         self.graba_tactic(game, pos_move, mrm, pos_act)
 
                         if self.save_pgn(
-                                self.pgnblunders,
-                                mrm.name,
-                                game.dic_tags(),
-                                fen,
-                                move,
-                                rm,
-                                mj,
+                            self.pgnblunders,
+                            mrm.name,
+                            game.dic_tags(),
+                            fen,
+                            move,
+                            rm,
+                            mj,
                         ):
                             si_poner_pgn_original_blunders = True
 
@@ -844,13 +845,13 @@ class AnalyzeGame:
                         self.save_brilliancies_fns(self.fnsbrilliancies, fen, mrm, game, pos_current_move)
 
                         if self.save_pgn(
-                                self.pgnbrilliancies,
-                                mrm.name,
-                                game.dic_tags(),
-                                fen,
-                                move,
-                                rm,
-                                None,
+                            self.pgnbrilliancies,
+                            mrm.name,
+                            game.dic_tags(),
+                            fen,
+                            move,
+                            rm,
+                            None,
                         ):
                             si_poner_pgn_original_brilliancies = True
 
@@ -861,11 +862,10 @@ class AnalyzeGame:
 
         # Ponemos el texto original en la ultima
         if si_poner_pgn_original_blunders and self.oriblunders:
-            self.xsave_extra("file", self.pgnblunders, "\n%s\n\n" % game.pgn())
+            self.xsave_extra("file", self.pgnblunders, f"\n{game.pgn()}\n\n")
 
         if si_poner_pgn_original_brilliancies and self.oribrilliancies:
-            self.xsave_extra("file", self.pgnbrilliancies, "\n%s\n\n" % game.pgn())
+            self.xsave_extra("file", self.pgnbrilliancies, f"\n{game.pgn()}\n\n")
 
         if self.themes_assign:
             self.themes_assign.assign_game(game, self.with_themes_tags, self.reset_themes)
-

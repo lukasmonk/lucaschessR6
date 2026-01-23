@@ -4,7 +4,7 @@ import time
 import FasterCode
 
 import Code
-from Code import Adjournments, ControlPGN, TimeControl, Util, XRun
+from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
     BLACK,
@@ -44,7 +44,7 @@ from Code.Base.Constantes import (
 )
 from Code.Board import BoardTypes
 from Code.Databases import DBgames
-from Code.Engines import EngineResponse
+from Code.Engines import EngineResponse, EngineManagerAnalysis
 from Code.ManagerBase import (
     ManagerAnalysis,
     ManagerMenuConfig,
@@ -58,10 +58,8 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
     QTUtils,
-    WindowArbol,
-    WindowArbolBook,
-    WReplay,
 )
+from Code.ZQT import WReplay, WindowArbolBook, WindowArbol
 
 
 class Manager:
@@ -73,7 +71,7 @@ class Manager:
         self.procesador.manager = self
         self.main_window = procesador.main_window
         self.board = procesador.board
-        self.board.setAcceptDropPGNs(None)
+        self.board.set_accept_drop_pgns(None)
         self.configuration = Code.configuration
         self.runSound = Code.runSound
 
@@ -99,11 +97,12 @@ class Manager:
 
         self.human_is_playing = False
         self.is_engine_side_white = False
+        self.is_human_side_white = False
 
         self.pgn = ControlPGN.ControlPGN(self)
 
-        self.manager_tutor = procesador.get_manager_tutor()
-        self.manager_analyzer = procesador.get_manager_analyzer()
+        self.manager_tutor: EngineManagerAnalysis.EngineManagerAnalysis = procesador.get_manager_tutor()
+        self.manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis = procesador.get_manager_analyzer()
         self.manager_rival = None
         self.is_tutor_enabled = False
 
@@ -266,7 +265,7 @@ class Manager:
     def colect_candidates(self, a1h8):
         if not hasattr(self.pgn, "get_pos_move"):  # manager60 por ejemplo
             return None
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         pos_move, move = self.pgn.get_pos_move(row, column.key)
         if move:
             position = move.position
@@ -278,7 +277,7 @@ class Manager:
         if not li:
             return None
 
-        # Se verifica si algun movimiento puede empezar o terminar ahi
+        # Se verifica si algun movimiento puede empezar o finalize ahi
         si_origen = si_destino = False
         for mov in li:
             from_sq = mov.xfrom()
@@ -334,7 +333,7 @@ class Manager:
         if not li_moves:
             return
 
-        # Se verifica si algun movimiento puede empezar o terminar ahi
+        # Se verifica si algun movimiento puede empezar o finalize ahi
         li_destinos = []
         li_origenes = []
         for mov in li_moves:
@@ -349,7 +348,7 @@ class Manager:
             return
 
         def mueve():
-            self.board.move_pieceTemporal(self.atajosRatonOrigen, self.atajosRatonDestino)
+            self.board.move_piece_temp(self.atajosRatonOrigen, self.atajosRatonDestino)
             if (not self.board.mensajero(self.atajosRatonOrigen, self.atajosRatonDestino)) and self.atajosRatonOrigen:
                 self.board.set_piece_again(self.atajosRatonOrigen)
             self.reset_shortcuts_mouse()
@@ -424,7 +423,7 @@ class Manager:
             ant_speed = self.configuration.x_pieces_speed
             self.configuration.x_show_effects = True
             self.configuration.x_pieces_speed = 200
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
             self.configuration.x_show_effects = ant_show
             self.configuration.x_pieces_speed = ant_speed
 
@@ -489,7 +488,7 @@ class Manager:
     def put_view(self):
         if not hasattr(self.pgn, "get_pos_move"):  # manager60 por ejemplo
             return
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         pos_move, move = self.pgn.get_pos_move(row, column.key)
         inicio = False
         if column.key == COL_NUMBER:
@@ -529,17 +528,17 @@ class Manager:
             if opening:
                 nom_opening = opening.tr_name
                 if opening.eco:
-                    nom_opening += " (%s)" % opening.eco
+                    nom_opening += f" ({opening.eco})"
 
             self.check_captures()
 
             if self.main_window.siInformacionPGN:
                 if (row == 0 and column.key == COL_NUMBER) or row < 0:
-                    self.main_window.put_informationPGN(self.game, None, nom_opening)
-                else:
+                    self.main_window.put_information_pgn(self.game, None, nom_opening)
+                elif move:
                     move_check = move
                     move_check.pos_in_game = pos_move
-                    self.main_window.put_informationPGN(None, move_check, nom_opening)
+                    self.main_window.put_information_pgn(None, move_check, nom_opening)
 
             if self.kibitzers_manager.some_working():
                 if self.si_check_kibitzers():
@@ -549,13 +548,12 @@ class Manager:
         self.check_changed()
 
     def check_captures(self):
-        if self.main_window.siCapturas:
-            if self.board.last_position is not None:
-                if Code.configuration.x_captures_mode_diferences:
-                    dic = self.board.last_position.capturas_diferencia()
-                else:
-                    dic = self.board.last_position.capturas()
-                self.main_window.put_captures(dic)
+        if self.main_window.siCapturas and self.board.last_position is not None:
+            if Code.configuration.x_captures_mode_diferences:
+                dic = self.board.last_position.capturas_diferencia()
+            else:
+                dic = self.board.last_position.capturas()
+            self.main_window.put_captures(dic)
 
     def show_nags(self, move_check):
         nag = move_check.get_nag()
@@ -609,7 +607,7 @@ class Manager:
             self.main_window.run_analysis_bar(game_run)
 
     def current_game(self):
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         pos_move, move = self.pgn.get_pos_move(row, column.key)
         if pos_move is not None:
             if column.key == COL_NUMBER and pos_move != -1:
@@ -715,14 +713,14 @@ class Manager:
                 move = self.game.move(-1)
                 played = self.runSound.play_list(move.sounds_list())
         if not played and self.configuration.x_sound_beep:
-            self.runSound.playBeep()
+            self.runSound.play_beep()
 
     def beep_zeitnot(self):
         self.runSound.play_zeinot()
 
     def beep_error(self):
         if self.configuration.x_sound_error:
-            self.runSound.playError()
+            self.runSound.play_error()
 
     def beep_result_change(self, resfinal):  # TOO Cambiar por beepresultado1
         if not self.configuration.x_sound_results:
@@ -810,13 +808,13 @@ class Manager:
             self.must_be_autosaved = False
 
     def show_info_extra(self):
-        key = "SHOW_INFO_EXTRA_" + DICT_GAME_TYPES[self.game_type]
+        key = f"SHOW_INFO_EXTRA_{DICT_GAME_TYPES[self.game_type]}"
         dic = self.configuration.read_variables(key)
 
         captured_material = dic.get("CAPTURED_MATERIAL")
         if captured_material is None:  # importante preguntarlo aquí, no vale pillarlo en el get
             captured_material = self.configuration.x_captures_activate
-        self.main_window.activaCapturas(captured_material)
+        self.main_window.activate_captures(captured_material)
 
         pgn_information = dic.get("PGN_INFORMATION")
         if pgn_information is None:
@@ -831,7 +829,7 @@ class Manager:
         self.put_view()
 
     def change_info_extra(self, who):
-        key = "SHOW_INFO_EXTRA_" + DICT_GAME_TYPES[self.game_type]
+        key = f"SHOW_INFO_EXTRA_{DICT_GAME_TYPES[self.game_type]}"
         dic = self.configuration.read_variables(key)
 
         if who == "pgn_information":
@@ -860,21 +858,21 @@ class Manager:
 
     def capturas(self):
         if self.capturasActivable:
-            self.main_window.activaCapturas()
+            self.main_window.activate_captures()
             self.put_view()
 
     def remove_captures(self):
-        self.main_window.activaCapturas(False)
+        self.main_window.activate_captures(False)
         self.put_view()
 
     def non_distract_mode(self):
         self.nonDistract = self.main_window.base.non_distract_mode(self.nonDistract)
         self.main_window.adjust_size()
 
-    def board_right_mouse(self, is_control, is_alt):
-        self.board.lanzaDirector()
+    def board_right_mouse(self, _is_control, _is_alt):
+        self.board.launch_director()
 
-    def grid_right_mouse(self, is_shift, is_control, is_alt):
+    def grid_right_mouse(self, _is_shift, _is_control, is_alt):
         if is_alt:
             self.arbol()
         else:
@@ -889,9 +887,10 @@ class Manager:
             return self.pgn.actual()
         elif tipo == "fen":
             return self.fen_active()
+        return None
 
     def active_movement(self):
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         is_white = column.key != COL_BLACK
         pos = row * 2
         if not is_white:
@@ -907,7 +906,7 @@ class Manager:
     def fen_active(self):
         pos, move = self.active_movement()
         if pos == 0:
-            row, column = self.main_window.pgnPosActual()
+            row, column = self.main_window.pgn_pos_actual()
             if column.key == COL_NUMBER:
                 return self.game.first_position.fen()
         return move.position.fen() if move else self.last_fen()
@@ -987,7 +986,7 @@ class Manager:
         # Se llama from_sq la main_window al pulsar X
         # Se verifica si estamos en la replay
         if self.xpelicula:
-            self.xpelicula.terminar()
+            self.xpelicula.finalize()
             return False
         if self.is_analyzing:
             self.main_window.base.check_is_hide()
@@ -1057,7 +1056,7 @@ class Manager:
                         reg_marco.color = color
                         reg_marco.colorinterior = color
                         reg_marco.opacity = 0.5
-                        box = self.board.creaMarco(reg_marco)
+                        box = self.board.create_marco(reg_marco)
                         self.li_marcos_tmp.append(box)
                         st.add(h8)
 
@@ -1089,7 +1088,7 @@ class Manager:
                 li_pv = rm.pv.split(" ")
                 for side in range(2):
                     base = "s" if side == 0 else "t"
-                    alt = "m" + base
+                    alt = f"m{base}"
                     opacity = 0.8
                     li = [li_pv[x] for x in range(len(li_pv)) if x % 2 == side]
                     for pv in li:
@@ -1139,7 +1138,7 @@ class Manager:
 
         # Peon coronando
         if not promotion and self.game.last_position.pawn_can_promote(from_sq, to_sq):
-            promotion = self.board.peonCoronando(self.game.last_position.is_white)
+            promotion = self.board.pawn_promoting(self.game.last_position.is_white)
             if promotion is None:
                 self.continue_human()
                 return None
@@ -1255,7 +1254,7 @@ class Manager:
         self.manager_menu_utilities.save_pgn_clipboard()
 
     def arbol(self):
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         num_moves, nj, row, is_white = self.current_move()
         if column.key == COL_NUMBER:
             nj -= 1
@@ -1263,7 +1262,7 @@ class Manager:
         w.exec()
 
     def control0(self):
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         num_moves, nj, row, is_white = self.current_move()
         if num_moves:
             self.game.is_finished()
@@ -1291,7 +1290,7 @@ class Manager:
                 p = self.game.copy_from_move(nj + 1)
                 siguientes = p.pgn_base_raw(p.first_position.num_moves).replace("|", "-")
 
-            txt = "%s||%s|%s\n" % (fen, siguientes, pgn)
+            txt = f"{fen}||{siguientes}|{pgn}\n"
             QTUtils.set_clipboard(txt)
             QTMessages.temporary_message(
                 self.main_window,
@@ -1400,7 +1399,7 @@ class Manager:
                 if li_movs:
                     for x in range(len(li_movs) - 1, -1, -1):
                         from_sq, to_sq, promotion = li_movs[x]
-                        self.player_has_moved_base(from_sq, to_sq, promotion)
+                        self.player_has_moved_dispatcher(from_sq, to_sq, promotion)
 
     def pgn_informacion_menu(self):
         menu = QTDialogs.LCMenu(self.main_window)
@@ -1413,7 +1412,7 @@ class Manager:
                 valor = valor.replace(".??", "").replace(".?", "")
             valor = valor.strip("?")
             if valor:
-                menu.opcion(key, "%s : %s" % (key, valor), Iconos.PuntoAzul())
+                menu.opcion(key, f"{key} : {valor}", Iconos.PuntoAzul())
 
         menu.lanza()
 
@@ -1426,7 +1425,7 @@ class Manager:
             return move.position
 
     def play_current_position(self):
-        row, column = self.main_window.pgnPosActual()
+        row, column = self.main_window.pgn_pos_actual()
         num_moves, nj, row, is_white = self.current_move()
         self.game.is_finished()
         if row == 0 and column.key == COL_NUMBER or nj == -1:
@@ -1470,7 +1469,7 @@ class Manager:
         return self.messenger(from_sq, to_sq, promotion)
 
     def mueve_variation(self, from_sq, to_sq, promotion=""):
-        link_variation_pressed = self.main_window.informacionPGN.variantes.link_variation_pressed
+        link_variation_pressed = self.main_window.pgn_information.variantes.link_variation_pressed
         li_variation_move = [int(cnum) for cnum in self.board.variation_history.split("|")]
         num_var_move = li_variation_move[0]
 
@@ -1494,9 +1493,9 @@ class Manager:
                 is_num_variation = not is_num_variation
 
         if not promotion and var_move.position_before.pawn_can_promote(from_sq, to_sq):
-            promotion = self.board.peonCoronando(var_move.position_before.is_white)
+            promotion = self.board.pawn_promoting(var_move.position_before.is_white)
             if promotion is None:
-                return None
+                return
         else:
             promotion = ""
 
@@ -1517,12 +1516,12 @@ class Manager:
                 num_var = var_move.add_variation(game_var)
 
                 self.main_window.active_information_pgn(True)
-                row, column = self.main_window.pgnPosActual()
+                row, column = self.main_window.pgn_pos_actual()
                 is_white = var_move.position_before.is_white
                 # if is_white and column.key == COL_WHITE:
                 if is_white and column.key == COL_BLACK:
                     row += 1
-                self.main_window.pgnColocate(row, is_white)
+                self.main_window.place_on_pgn_table(row, is_white)
                 self.put_view()
                 link_variation_pressed(f"{num_var_move}|{num_var}|0")
                 self.kibitzers_manager.put_game(game_var, self.board.is_white_bottom)
@@ -1533,7 +1532,7 @@ class Manager:
                 var_move = variation.move(num_var_move + 1)
                 if var_move.movimiento() == movimiento:
                     link = "%s|%d" % (cvariation_move, (num_var_move + 1))
-                    self.main_window.informacionPGN.variantes.link_variation_pressed(link)
+                    self.main_window.pgn_information.variantes.link_variation_pressed(link)
                     return
 
                 position_before = var_move.position_before.copia()
@@ -1569,7 +1568,7 @@ class Manager:
 
     def keypressed_when_variations(self, nkey):
         if len(self.game) == 0:
-            return
+            return None
 
         # Si no tiene variantes -> move_according_key
         num_moves, nj, row, is_white = self.current_move()
@@ -1584,8 +1583,8 @@ class Manager:
         if is_shift or is_control or is_alt:
             if not navigating_variations:
                 variation_history = f'{variation_history.split("|")[0]}|0|0'
-                self.main_window.informacionPGN.variantes.link_variation_pressed(variation_history)
-                return
+                self.main_window.pgn_information.variantes.link_variation_pressed(variation_history)
+                return None
 
         if not navigating_variations:
             return self.move_according_key(nkey)
@@ -1601,31 +1600,31 @@ class Manager:
                     num_variation_move -= 1
                 else:
                     self.move_according_key(nkey)
-                    return
+                    return None
             elif nkey == GO_FORWARD:
                 if num_variation_move < num_moves_current_variation - 1:
                     num_variation_move += 1
                 else:
-                    return
+                    return None
             elif nkey == GO_BACK2:
                 if num_variation > 0 and is_shift:
                     num_variation -= 1
                     num_variation_move = 0
                 else:
                     if is_shift:
-                        self.main_window.informacionPGN.variantes.link_variation_pressed(str(num_move))
-                    return
+                        self.main_window.pgn_information.variantes.link_variation_pressed(str(num_move))
+                    return None
             elif nkey == GO_FORWARD2:
                 if num_variation < num_variations - 1:
                     num_variation += 1
                     num_variation_move = 0
                 else:
-                    return
+                    return None
             else:
-                return
+                return None
 
             link = f"{num_move}|{num_variation}|{num_variation_move}"
-            self.main_window.informacionPGN.variantes.link_variation_pressed(link)
+            self.main_window.pgn_information.variantes.link_variation_pressed(link)
 
         else:
 
@@ -1648,10 +1647,11 @@ class Manager:
                 li_var = li_var[:-2]
 
             else:
-                return
+                return None
 
             link = "|".join(li_var)
-            self.main_window.informacionPGN.variantes.link_variation_pressed(link)
+            self.main_window.pgn_information.variantes.link_variation_pressed(link)
+        return None
 
     def bestmove_from_analysis_bar(self):
         return self.main_window.bestmove_from_analysis_bar()

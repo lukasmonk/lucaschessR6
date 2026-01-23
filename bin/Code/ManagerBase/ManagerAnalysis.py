@@ -90,20 +90,20 @@ class ManagerAnalysis:
             return
         if self.manager.state != ST_ENDGAME:
             if not (
-                    self.manager.game_type
-                    in [
-                        GT_POSITIONS,
-                        GT_AGAINST_PGN,
-                        GT_AGAINST_ENGINE,
-                        GT_AGAINST_GM,
-                        GT_ALONE,
-                        GT_GAME,
-                        GT_VARIATIONS,
-                        GT_BOOK,
-                        GT_OPENINGS,
-                        GT_TACTICS,
-                    ]
-                    or (self.manager.game_type in [GT_ELO, GT_MICELO, GT_WICKER] and not self.manager.is_competitive)
+                self.manager.game_type
+                in [
+                    GT_POSITIONS,
+                    GT_AGAINST_PGN,
+                    GT_AGAINST_ENGINE,
+                    GT_AGAINST_GM,
+                    GT_ALONE,
+                    GT_GAME,
+                    GT_VARIATIONS,
+                    GT_BOOK,
+                    GT_OPENINGS,
+                    GT_TACTICS,
+                ]
+                or (self.manager.game_type in [GT_ELO, GT_MICELO, GT_WICKER] and not self.manager.is_competitive)
             ):
                 if si_ultimo or self.manager.hints == 0:
                     return
@@ -160,8 +160,8 @@ class ManagerAnalysis:
 
     def show_analysis(self):
         with QTMessages.one_moment_please(self.main_window):
-            elos = self.manager.game.calc_elos(self.configuration)
-            elos_form = self.manager.game.calc_elos_form(self.configuration)
+            self.manager.game.assign_isbook_phases()
+            elos = self.manager.game.calc_elos()
             alm = Histogram.gen_histograms(self.manager.game)
             (
                 alm.indexesHTML,
@@ -172,7 +172,7 @@ class ManagerAnalysis:
                 alm.eloW,
                 alm.eloB,
                 alm.eloT,
-            ) = AnalysisIndexes.gen_indexes(self.manager.game, elos, elos_form, alm)
+            ) = AnalysisIndexes.gen_indexes(self.manager.game, elos, alm)
             alm.is_white_bottom = self.manager.board.is_white_bottom
 
         if len(alm.lijg) == 0:

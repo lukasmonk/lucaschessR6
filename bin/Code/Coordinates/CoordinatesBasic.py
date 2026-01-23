@@ -67,6 +67,8 @@ class CoordinatesBasic:
 
 
 class DBCoordinatesBasic:
+    li_data: list
+
     def __init__(self, path):
         self.path = path
         self.refresh()

@@ -40,15 +40,15 @@ class Element:
     def to_str(self):
         content_root = self.name
         if self.params:
-            content_root += " " + " ".join(['%s="%s"' % (key, value) for key, value in self.params.items()])
+            content_root += f" {' '.join([f'{key}=\"{value}\"' for key, value in self.params.items()])}"
         if len(self.sub_elements) == 0 and not self.value:
-            txt = "<%s/>" % content_root
+            txt = f"<{content_root}/>"
         else:
-            txt = "<%s>" % content_root
+            txt = f"<{content_root}>"
             txt += "".join([element.to_str() for element in self.sub_elements])
             if self.value:
                 txt += self.value
-            txt += "</%s>" % self.name
+            txt += f"</{self.name}>"
         if self.later:
             txt += self.later
         return txt
@@ -61,6 +61,7 @@ class Element:
                 sub_element = element.seek(name_element)
                 if sub_element:
                     return sub_element
+        return None
 
     def seek_param_key(self, name, key, value):
         for element in self.sub_elements:
@@ -72,6 +73,7 @@ class Element:
             sub_element = element.seek_param_key(name, key, value)
             if sub_element:
                 return sub_element
+        return None
 
     def change_param(self, key, value):
         self.params[key] = value
@@ -83,7 +85,7 @@ class XML(Element):
         Element.__init__(self, root_name, dic_params)
 
     def to_str(self):
-        return self.head + "\n" + Element.to_str(self)
+        return f"{self.head}\n{Element.to_str(self)}"
 
     def save(self, path_file):
         with open(path_file, "wt", encoding="utf-8") as q:

@@ -3,7 +3,7 @@ import sys
 from PySide6 import QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Config import Configuration
 from Code.MainWindow import InitApp
@@ -21,7 +21,7 @@ class SwissWorker(RunWorker.RunWorker):
         self.name = self.swiss.name()
         self.key_video = "SWISSPLAY"
         self.adjudicator_active = self.swiss.adjudicator_active()
-        self.adjudicator = self.swiss.adjudicator
+        self.move_evaluator = self.swiss.move_evaluator
         self.adjudicator_time = self.swiss.adjudicator_time
         self.draw_range = self.swiss.draw_range
         self.draw_min_ply = self.swiss.draw_min_ply

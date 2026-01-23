@@ -78,10 +78,13 @@ class ToolbarMoves(QtWidgets.QWidget):
 
     def run_p(self):
         v = self.sbply.valor()
-        self.dispatch(self.side, "p%d" % v)
+        self.dispatch(self.side, f"p{v}")
 
 
 class WPlayer(QtWidgets.QWidget):
+    db_games = None
+    player: str
+
     def __init__(self, procesador, wb_database, db_games):
         QtWidgets.QWidget.__init__(self)
 
@@ -107,18 +110,18 @@ class WPlayer(QtWidgets.QWidget):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("opening", _("Opening"), 200)
         o_columns.nueva("games", _("Games"), ancho, align_right=True)
-        o_columns.nueva("pgames", "% " + _("Games"), 70, align_right=True)
+        o_columns.nueva("pgames", f"% {_('Games')}", 70, align_right=True)
         o_columns.nueva("win", _("Win"), ancho, align_right=True)
         o_columns.nueva("draw", _("Draw"), ancho, align_right=True)
         o_columns.nueva("lost", _("Loss"), ancho, align_right=True)
-        o_columns.nueva("pwin", "% " + _("Win"), ancho, align_right=True)
-        o_columns.nueva("pdraw", "% " + _("Draw"), ancho, align_right=True)
-        o_columns.nueva("plost", "% " + _("Loss"), ancho, align_right=True)
-        o_columns.nueva("pdrawwin", "%% %s" % _("W+D"), ancho, align_right=True)
-        o_columns.nueva("pdrawlost", "%% %s" % _("L+D"), ancho, align_right=True)
+        o_columns.nueva("pwin", f"% {_('Win')}", ancho, align_right=True)
+        o_columns.nueva("pdraw", f"% {_('Draw')}", ancho, align_right=True)
+        o_columns.nueva("plost", f"% {_('Loss')}", ancho, align_right=True)
+        o_columns.nueva("pdrawwin", f"% {_('W+D')}", ancho, align_right=True)
+        o_columns.nueva("pdrawlost", f"% {_('L+D')}", ancho, align_right=True)
 
-        self.gridOpeningWhite = Grid.Grid(self, o_columns, siSelecFilas=True, xid="OpeningWhite")
-        self.gridOpeningBlack = Grid.Grid(self, o_columns, siSelecFilas=True, xid="OpeningBlack")
+        self.gridOpeningWhite = Grid.Grid(self, o_columns, complete_row_select=True, xid="OpeningWhite")
+        self.gridOpeningBlack = Grid.Grid(self, o_columns, complete_row_select=True, xid="OpeningBlack")
 
         # GridWhite/GridBlack
         o_columns = Columnas.ListaColumnas()
@@ -126,9 +129,9 @@ class WPlayer(QtWidgets.QWidget):
         o_columns.nueva("win", _("Win"), ancho, align_right=True)
         o_columns.nueva("draw", _("Draw"), ancho, align_right=True)
         o_columns.nueva("lost", _("Loss"), ancho, align_right=True)
-        o_columns.nueva("pwin", "% " + _("Win"), ancho, align_right=True)
-        o_columns.nueva("pdraw", "% " + _("Draw"), ancho, align_right=True)
-        o_columns.nueva("plost", "% " + _("Loss"), ancho, align_right=True)
+        o_columns.nueva("pwin", f"% {_('Win')}", ancho, align_right=True)
+        o_columns.nueva("pdraw", f"% {_('Draw')}", ancho, align_right=True)
+        o_columns.nueva("plost", f"% {_('Loss')}", ancho, align_right=True)
 
         ancho_col = 40
         with_figurines = self.configuration.x_pgn_withfigurines
@@ -136,31 +139,31 @@ class WPlayer(QtWidgets.QWidget):
             num = (x - 1) * 2
             o_columns.nueva(
                 str(num),
-                "%d." % x,
+                f"{x}.",
                 ancho_col,
                 align_center=True,
-                edicion=Delegados.EtiquetaPOS(with_figurines, siLineas=False),
+                edicion=Delegados.EtiquetaPOS(with_figurines, with_lines=False),
             )
             o_columns.nueva(
                 str(num + 1),
                 "...",
                 ancho_col,
                 align_center=True,
-                edicion=Delegados.EtiquetaPOS(with_figurines, siLineas=False),
+                edicion=Delegados.EtiquetaPOS(with_figurines, with_lines=False),
             )
 
-        self.gridMovesWhite = Grid.Grid(self, o_columns, siSelecFilas=True, xid="MovesWhite")
+        self.gridMovesWhite = Grid.Grid(self, o_columns, complete_row_select=True, xid="MovesWhite")
         self.gridMovesWhite.font_type(puntos=self.configuration.x_pgn_fontpoints)
-        self.gridMovesBlack = Grid.Grid(self, o_columns, siSelecFilas=True, xid="MovesBlack")
+        self.gridMovesBlack = Grid.Grid(self, o_columns, complete_row_select=True, xid="MovesBlack")
         self.gridMovesBlack.font_type(puntos=self.configuration.x_pgn_fontpoints)
 
         w_white = QtWidgets.QWidget(self)
-        tbmovesw = ToolbarMoves("white", self.dispatchMoves)
+        tbmovesw = ToolbarMoves("white", self.dispatch_moves)
         ly = Colocacion.V().control(tbmovesw).control(self.gridMovesWhite).margen(3)
         w_white.setLayout(ly)
 
         wblack = QtWidgets.QWidget(self)
-        tbmovesb = ToolbarMoves("black", self.dispatchMoves)
+        tbmovesb = ToolbarMoves("black", self.dispatch_moves)
         ly = Colocacion.V().control(tbmovesb).control(self.gridMovesBlack).margen(3)
         wblack.setLayout(ly)
 
@@ -169,7 +172,7 @@ class WPlayer(QtWidgets.QWidget):
         tabs.new_tab(self.gridOpeningBlack, _("Black openings"))
         tabs.new_tab(w_white, _("White moves"))
         tabs.new_tab(wblack, _("Black moves"))
-        tabs.dispatchChange(self.tabChanged)
+        tabs.dispatch_change(self.tab_changed)
         self.tabs = tabs
 
         # ToolBar
@@ -186,9 +189,9 @@ class WPlayer(QtWidgets.QWidget):
         self.setLayout(layout)
 
         self.set_db_games(db_games)
-        self.setPlayer(self.leeVariable("PLAYER", ""))
+        self.set_player(self.read_variable("PLAYER", ""))
 
-    def tabChanged(self, ntab):
+    def tab_changed(self, ntab):
         QtWidgets.QApplication.processEvents()
 
         if ntab == 0:  # in (0, 2):
@@ -205,9 +208,9 @@ class WPlayer(QtWidgets.QWidget):
             self.grid_cambiado_registro(grid, recno, None)
 
     def actualiza(self):
-        self.tabChanged(self.tabs.current_position())
+        self.tab_changed(self.tabs.current_position())
 
-    def dispatchMoves(self, side, opcion):
+    def dispatch_moves(self, side, opcion):
         data_side = self.data[MOVES_WHITE if side == "white" else MOVES_BLACK]
 
         if opcion == "all":
@@ -229,7 +232,7 @@ class WPlayer(QtWidgets.QWidget):
         else:  # if opcion.startswith("p"):
             num = int(opcion[1:])
             if num == 0:
-                return self.dispatchMoves(side, "all")
+                return self.dispatch_moves(side, "all")
             if self.lastFilterMoves[side].startswith("p"):
                 show_data_previo = range(len(data_side))
             else:
@@ -246,11 +249,13 @@ class WPlayer(QtWidgets.QWidget):
 
         self.lastFilterMoves[side] = opcion
 
+        return None
+
     def set_db_games(self, db_games):
         self.db_games = db_games
-        self.setPlayer(self.leeVariable("PLAYER", ""))
+        self.set_player(self.read_variable("PLAYER", ""))
 
-    def setPlayer(self, player):
+    def set_player(self, player):
         self.player = player
         self.data = [[], [], [], []]
         accion = self.tbWork.li_acciones[1]
@@ -262,10 +267,10 @@ class WPlayer(QtWidgets.QWidget):
         self.gridMovesBlack.refresh()
         self.gridOpeningWhite.setFocus()
 
-    def set_info_move(self, infoMove):
-        self.infoMove = infoMove
+    def set_info_move(self, info_move):
+        self.infoMove = info_move
 
-    def dataGrid(self, grid):
+    def data_grid(self, grid):
         if grid == self.gridOpeningWhite:
             return self.data[OPENINGS_WHITE]
         elif grid == self.gridOpeningBlack:
@@ -274,6 +279,7 @@ class WPlayer(QtWidgets.QWidget):
             return self.data[MOVES_WHITE]
         elif grid == self.gridMovesBlack:
             return self.data[MOVES_BLACK]
+        return None
 
     def grid_num_datos(self, grid):
         if self.rebuilding:
@@ -293,15 +299,15 @@ class WPlayer(QtWidgets.QWidget):
         if self.rebuilding:
             return ""
         key = ocol.key
-        dt = self.dataGrid(grid)
+        dt = self.data_grid(grid)
         if grid == self.gridMovesWhite:
             nfila = self.movesWhite[nfila]
         elif grid == self.gridMovesBlack:
             nfila = self.movesBlack[nfila]
         return dt[nfila][key]
 
-    def grid_cambiado_registro(self, grid, nfila, oCol):
-        dt = self.dataGrid(grid)
+    def grid_cambiado_registro(self, grid, nfila, _ocol):
+        dt = self.data_grid(grid)
         if grid == self.gridMovesWhite:
             nfila = self.movesWhite[nfila]
         elif grid == self.gridMovesBlack:
@@ -318,32 +324,34 @@ class WPlayer(QtWidgets.QWidget):
             grid.setFocus()
 
     def grid_color_fondo(self, grid, nfila, ocol):
-        dt = self.dataGrid(grid)
+        dt = self.data_grid(grid)
         if not dt:
-            return
+            return None
         if grid == self.gridMovesWhite:
             nfila = self.movesWhite[nfila]
         elif grid == self.gridMovesBlack:
             nfila = self.movesBlack[nfila]
-        key = ocol.key + "c"
+        key = f"{ocol.key}c"
         color = dt[nfila].get(key, 99)
         if color == 0:
             return Code.dic_qcolors["SUMMARY_WIN"]
         if color == 2:
             return Code.dic_qcolors["SUMMARY_LOST"]
+        return None
 
     def grid_color_texto(self, grid, nfila, ocol):
-        dt = self.dataGrid(grid)
+        dt = self.data_grid(grid)
         if dt and self.foreground:
-            key = ocol.key + "c"
+            key = f"{ocol.key}c"
             color = dt[nfila].get(key)
             if color:
                 return self.foreground
+        return None
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, grid, k, _is_shift, _is_control, _is_alt):
         if k in (QtCore.Qt.Key.Key_Left, QtCore.Qt.Key.Key_Right):
             self.infoMove.tecla_pulsada(k)
-            row, col = grid.posActualN()
+            row, col = grid.current_position_num()
             if QtCore.Qt.Key.Key_Right:
                 if col > 0:
                     col -= 1
@@ -355,40 +363,39 @@ class WPlayer(QtWidgets.QWidget):
             grid.gotop()
         elif k == QtCore.Qt.Key.Key_End:
             grid.gobottom()
-        else:
-            return True  # que siga con el resto de teclas
+        return True
 
-    def leeVariable(self, var, default=None):
+    def read_variable(self, var, default=None):
         return self.db_games.read_config(var, default)
 
-    def escVariable(self, var, valor):
+    def write_variable(self, var, valor):
         self.db_games.save_config(var, valor)
 
-    def listaPlayers(self):
-        return self.leeVariable("LISTA_PLAYERS", [])
+    def list_of_players(self):
+        return self.read_variable("LISTA_PLAYERS", [])
 
-    def rereadPlayers(self):
+    def reread_players(self):
         with QTMessages.one_moment_please(self):
             lista = self.db_games.players()
-            self.escVariable("LISTA_PLAYERS", lista)
+            self.write_variable("LISTA_PLAYERS", lista)
 
     def change_player(self, lp):
         li_gen = []
         lista = [(player, player) for player in lp]
         lista.insert(0, ("", ""))
         config = FormLayout.Combobox(_("Name"), lista, extend_seek=True)
-        li_gen.append((config, self.leeVariable("PLAYER", "")))
+        li_gen.append((config, self.read_variable("PLAYER", "")))
 
         for nalias in range(1, 4):
             li_gen.append(FormLayout.separador)
-            config = FormLayout.Combobox("%s %d" % (_("Alias"), nalias), lista, extend_seek=True)
-            li_gen.append((config, self.leeVariable("ALIAS%d" % nalias, "")))
+            config = FormLayout.Combobox(f"{_('Alias')} {nalias}", lista, extend_seek=True)
+            li_gen.append((config, self.read_variable(f"ALIAS{nalias}", "")))
 
         resultado = FormLayout.fedit(
             li_gen,
             title=_("Player"),
             parent=self,
-            anchoMinimo=200,
+            minimum_width=200,
             icon=Iconos.Player(),
         )
         if resultado is None:
@@ -397,11 +404,11 @@ class WPlayer(QtWidgets.QWidget):
         name, alias1, alias2, alias3 = li_gen
         if not name:
             return
-        self.escVariable("PLAYER", name)
-        self.escVariable("ALIAS1", alias1)
-        self.escVariable("ALIAS2", alias2)
-        self.escVariable("ALIAS3", alias3)
-        self.setPlayer(name)
+        self.write_variable("PLAYER", name)
+        self.write_variable("ALIAS1", alias1)
+        self.write_variable("ALIAS2", alias2)
+        self.write_variable("ALIAS3", alias3)
+        self.set_player(name)
         self.tw_rebuild()
 
     def test_players_in_db(self):
@@ -412,11 +419,11 @@ class WPlayer(QtWidgets.QWidget):
 
     def tw_changeplayer(self):
         if not self.test_players_in_db():
-            return
-        lp = self.listaPlayers()
+            return None
+        lp = self.list_of_players()
         if len(lp) == 0:
-            self.rereadPlayers()
-            lp = self.listaPlayers()
+            self.reread_players()
+            lp = self.list_of_players()
             if len(lp) == 0:
                 return None
 
@@ -430,7 +437,9 @@ class WPlayer(QtWidgets.QWidget):
             self.change_player(lp)
 
         elif resp == "reread":
-            self.rereadPlayers()
+            self.reread_players()
+
+        return None
 
     def tw_rebuild(self):
         if not self.test_players_in_db():
@@ -442,24 +451,24 @@ class WPlayer(QtWidgets.QWidget):
         self.rebuilding = True
         pb = QTMessages.ProgressBarWithTime(self, _("Working..."), formato1="%p%")
         pb.mostrar()
-        liFields = ["RESULT", "XPV", "WHITE", "BLACK"]
-        dicOpenings = {"white": {}, "black": {}}
-        dicMoves = {"white": {}, "black": {}}
+        li_fields = ["RESULT", "XPV", "WHITE", "BLACK"]
+        dic_openings = {"white": {}, "black": {}}
+        dic_moves = {"white": {}, "black": {}}
         dic_hap = {}
         name = self.player
-        alias1 = self.leeVariable("ALIAS1")
-        alias2 = self.leeVariable("ALIAS2")
-        alias3 = self.leeVariable("ALIAS3")
+        alias1 = self.read_variable("ALIAS1")
+        alias2 = self.read_variable("ALIAS2")
+        alias3 = self.read_variable("ALIAS3")
 
         liplayer = (name, alias1, alias2, alias3)
 
-        filtro = "WHITE = '%s' or BLACK = '%s'" % (name, name)
+        filtro = f"WHITE = '{name}' or BLACK = '{name}'"
         for alias in (alias1, alias2, alias3):
             if alias:
-                filtro += "or WHITE = '%s' or BLACK = '%s'" % (alias, alias)
+                filtro += f"or WHITE = '{alias}' or BLACK = '{alias}'"
         pb.set_total(self.db_games.count_data(filtro))
 
-        for n, alm in enumerate(self.db_games.yield_data(liFields, filtro)):
+        for n, alm in enumerate(self.db_games.yield_data(li_fields, filtro)):
             pb.pon(n)
             if pb.is_canceled():
                 self.rebuilding = False
@@ -487,7 +496,7 @@ class WPlayer(QtWidgets.QWidget):
                 # openings
                 ap = self.ap.base_xpv(xpv)
                 hap = hash(ap)
-                dco = dicOpenings[side]
+                dco = dic_openings[side]
                 if hap not in dic_hap:
                     dic_hap[hap] = ap
                 if hap not in dco:
@@ -496,11 +505,11 @@ class WPlayer(QtWidgets.QWidget):
 
                 # moves
                 listapvs = FasterCode.xpv_pv(xpv).split(" ")
-                dcm = dicMoves[side]
+                dcm = dic_moves[side]
                 pvt = ""
                 for pv in listapvs:
                     if pvt:
-                        pvt += " " + pv
+                        pvt = f"{pvt} {pv}"
                     else:
                         pvt = pv
                     if pvt not in dcm:
@@ -512,35 +521,35 @@ class WPlayer(QtWidgets.QWidget):
 
         with QTMessages.one_moment_please(self, _("Working...")):
 
-            def color3(x, y, z):
-                if x > y and x > z:
+            def color3(rx, ry, rz):
+                if rx > ry and rx > rz:
                     return 0
-                if x < y and x < z:
+                if rx < ry and rx < rz:
                     return 2
                 return 1
 
-            def color2(x, y):
-                if x > y:
+            def color2(rx, ry):
+                if rx > ry:
                     return 0
-                if x < y:
+                if rx < ry:
                     return 2
                 return 1
 
-            def z(x):
-                return "%0.2f" % x
+            def z(rx):
+                return f"{rx:0.2f}"
 
             color = None
             info = None
-            indicadorInicial = None
+            init_indicator = None
             li_nags = []
-            siLine = False
+            is_line = False
 
             data = [[], [], [], []]
             for side in ("white", "black"):
                 dtemp = []
                 tt = 0
-                for hap in dicOpenings[side]:
-                    dt = dicOpenings[side][hap]
+                for hap in dic_openings[side]:
+                    dt = dic_openings[side][hap]
                     win, draw, lost = dt["win"], dt["draw"], dt["lost"]
                     t = win + draw + lost
                     tt += t
@@ -574,7 +583,7 @@ class WPlayer(QtWidgets.QWidget):
                 for draw in dtemp:
                     draw["pgames"] = z(draw["games"] * 100.0 / tt)
                 dtemp.sort(
-                    key=lambda x: "%5d%s" % (99999 - x["games"], x["opening"]),
+                    key=lambda rx: f'{99999 - rx["games"]:5d}{rx["opening"]}',
                     reverse=False,
                 )
                 if side == "white":
@@ -584,10 +593,10 @@ class WPlayer(QtWidgets.QWidget):
 
                 # moves
                 dtemp = []
-                dc = dicMoves[side]
+                dc = dic_moves[side]
                 st_rem = set()
 
-                listapvs = list(dicMoves[side].keys())
+                listapvs = list(dic_moves[side].keys())
                 listapvs.sort()
 
                 sipar = 1 if side == "white" else 0
@@ -598,17 +607,17 @@ class WPlayer(QtWidgets.QWidget):
                         nlipv = len(lipv)
                         if nlipv > 1:
                             pvant = " ".join(lipv[:-1])
-                            if pvant in st_rem or dc[pvant]["games"] == 1 and (nlipv) % 2 == sipar:
+                            if pvant in st_rem or dc[pvant]["games"] == 1 and nlipv % 2 == sipar:
                                 st_rem.add(pv)
 
                 for pv in st_rem:
                     del dc[pv]
 
-                listapvs = list(dicMoves[side].keys())
+                listapvs = list(dic_moves[side].keys())
                 listapvs.sort()
                 antlipv = []
                 for npv, pv in enumerate(listapvs):
-                    dt = dicMoves[side][pv]
+                    dt = dic_moves[side][pv]
                     win, draw, lost = dt["win"], dt["draw"], dt["lost"]
                     t = win + draw + lost
                     tt += t
@@ -645,10 +654,10 @@ class WPlayer(QtWidgets.QWidget):
                             iswhite,
                             color,
                             info,
-                            indicadorInicial,
+                            init_indicator,
                             li_nags,
                             agrisar,
-                            siLine,
+                            is_line,
                         )
                     antlipv = lipv
                     dic["winc"] = dic["pwinc"] = color3(win, draw, lost)
@@ -662,10 +671,10 @@ class WPlayer(QtWidgets.QWidget):
 
                 def ordena(empieza, nivel):
                     li = []
-                    for n, uno in enumerate(dtemp):
+                    for uno in dtemp:
                         if uno["nivel"] == nivel and uno["pv"].startswith(empieza):
                             li.append(uno)
-                    li.sort(key=lambda x: "%5d%5d" % (x["games"], x["win"]), reverse=True)
+                    li.sort(key=lambda rx: f"{rx['games']:5d}{rx['win']:5d}", reverse=True)
                     for uno in li:
                         liorder.append(uno)
                         ordena(uno["pv"], nivel + 1)

@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import QTUtils
 
 dAlineacion = {

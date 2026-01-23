@@ -70,7 +70,7 @@ class ManagerTactics(Manager.Manager):
         self.main_window.active_game(True, False)
         self.main_window.remove_hints(True, True)
         self.activatable_info = True
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.put_pieces_bottom(is_white)
@@ -159,7 +159,7 @@ class ManagerTactics(Manager.Manager):
                 txt = _("Enable")
                 ico = Iconos.Add()
             li_mas_opciones = [
-                ("lmo_advanced", "%s: %s" % (txt, _("Advanced mode")), ico),
+                ("lmo_advanced", f"{txt}: {_('Advanced mode')}", ico),
                 (None, None, None),
             ]
             if self.with_automatic_jump:
@@ -200,7 +200,7 @@ class ManagerTactics(Manager.Manager):
     def help(self):
         move_obj = self.game_obj.move(self.pos_obj)
         if self.requested_help:
-            self.board.ponFlechasTmp(([move_obj.from_sq, move_obj.to_sq, False],))
+            self.board.show_arrows_temp(([move_obj.from_sq, move_obj.to_sq, False],))
         else:
             self.board.mark_position(move_obj.from_sq)
             self.requested_help = True
@@ -213,7 +213,7 @@ class ManagerTactics(Manager.Manager):
 
     @staticmethod
     def list_help_keyboard(add_key):
-        add_key("+/%s" % _("Page Down"), _("Next position"))
+        add_key(f"+/{_('Page Down')}", _("Next position"))
 
     def ent_siguiente(self):
         if self.tactic.work_game_finished():
@@ -270,7 +270,7 @@ class ManagerTactics(Manager.Manager):
 
         if si_rival:
             move = self.game_obj.move(self.pos_obj)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
             self.add_move(move, False)
             self.play_next_move()
 
@@ -301,7 +301,7 @@ class ManagerTactics(Manager.Manager):
 
         return True
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         self.set_toolbar("first_move")
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
@@ -319,14 +319,14 @@ class ManagerTactics(Manager.Manager):
                 if is_variation:
                     li_flechas = [(x[:2], x[2:4], False) for x in li_a1h8]
                     li_flechas.append((a1h8_obj[:2], a1h8_obj[2:4], True))
-                    self.board.ponFlechasTmp(li_flechas)
+                    self.board.show_arrows_temp(li_flechas)
             if not is_variation:
                 self.put_penalization()
                 self.num_bad_tries += 1
                 if self.num_bad_tries > 3:
                     self.board.mark_position(move_obj.from_sq)
                     if self.num_bad_tries > 6:
-                        self.board.creaFlechaTmp(move_obj.from_sq, move_obj.to_sq, True)
+                        self.board.show_one_arrow_temp(move_obj.from_sq, move_obj.to_sq, True)
             self.beep_error()
             self.continue_human()
             return False

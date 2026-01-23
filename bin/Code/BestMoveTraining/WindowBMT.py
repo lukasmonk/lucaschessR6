@@ -1,7 +1,7 @@
 import os.path
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import INFINITE
 from Code.BestMoveTraining import BMT, WindowBMTtrain
@@ -50,13 +50,13 @@ class WHistorialBMT(LCDialog.LCDialog):
 
         # Dialogo ---------------------------------------------------------------
         icono = Iconos.Historial()
-        titulo = _("History") + ": " + dbf.NOMBRE
+        titulo = f"{_('History')}: {dbf.NOMBRE}"
         extparam = "bmthistorial"
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
 
         # Toolbar
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
 
         # Lista
         o_columns = Columnas.ListaColumnas()
@@ -66,7 +66,7 @@ class WHistorialBMT(LCDialog.LCDialog):
         o_columns.nueva("FFINAL", _("End date"), 90, align_center=True)
 
         self.grid = grid = Grid.Grid(self, o_columns, xid=False, is_editable=True)
-        # n = grid.anchoColumnas()
+        # n = grid.width_columns_displayables()
         # grid.setMinimumWidth( n + 20 )
         self.register_grid(grid)
 
@@ -77,39 +77,38 @@ class WHistorialBMT(LCDialog.LCDialog):
 
         self.restore_video(with_tam=True)
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liHistorial)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         dic = self.liHistorial[row]
-        col = o_column.key
-        if col == "STATE":
-            return dic["STATE"]
+        col = obj_column.key
+        if col == "FFINAL":
+            f = dic["FFINAL"]
+            return f"{f[6:]}-{f[4:6]}-{f[:4]}" if f else ""
 
         elif col == "HECHOS":
             return "%d" % (dic["HECHOS"])
 
         elif col == "PUNTOS":
-            p = dic["PUNTOS"]
             m = self.max_puntos
+            p = dic["PUNTOS"]
             porc = p * 100 / m
-            return "%d/%d=%d" % (p, m, porc) + "%"
+            return f"{'%d/%d=%d' % (p, m, porc)}%"
 
-        elif col == "FFINAL":
-            f = dic["FFINAL"]
-            return "%s-%s-%s" % (f[6:], f[4:6], f[:4]) if f else ""
+        elif col == "STATE":
+            return dic["STATE"]
 
         elif col == "TIME":
-            s = dic["SEGUNDOS"]
-            if not s:
-                s = 0
+            s = dic["SEGUNDOS"] or 0
             m = s / 60
             s %= 60
             return "%d' %d\"" % (m, s) if m else '%d"' % s
+        return None
 
 
 class WBMT(LCDialog.LCDialog):
@@ -117,9 +116,9 @@ class WBMT(LCDialog.LCDialog):
 
         self.procesador = procesador
         self.configuration = Code.configuration
-        self.configuration.path.check_file_bmt()
+        self.configuration.paths.check_file_bmt()
 
-        self.bmt = BMT.BMT(self.configuration.path.file_bmt())
+        self.bmt = BMT.BMT(self.configuration.paths.file_bmt())
         self.read_dbf()
 
         owner = procesador.main_window
@@ -130,7 +129,7 @@ class WBMT(LCDialog.LCDialog):
 
         # Toolbar
         li_acciones = [
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Play"), Iconos.Empezar(), self.entrenar),
             None,
@@ -151,7 +150,7 @@ class WBMT(LCDialog.LCDialog):
         # Lista
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NOMBRE", _("Name"), 274, edicion=Delegados.LineaTextoUTF8())
-        o_columns.nueva("EXTRA", _("Extra info."), 64, align_center=True)
+        o_columns.nueva("EXTRA", _("Extra info."), 74, align_center=True)
         o_columns.nueva("HECHOS", _("Made"), 84, align_center=True)
         o_columns.nueva("PUNTOS", _("Score"), 84, align_center=True)
         o_columns.nueva("TIME", _("Time"), 80, align_center=True)
@@ -163,8 +162,8 @@ class WBMT(LCDialog.LCDialog):
             o_columns,
             xid="P",
             is_editable=False,
-            siSelecFilas=True,
-            siSeleccionMultiple=True,
+            complete_row_select=True,
+            select_multiple=True,
         )
         self.register_grid(grid)
         tab.new_tab(grid, _("Pending"))
@@ -186,8 +185,8 @@ class WBMT(LCDialog.LCDialog):
             o_columns,
             xid="T",
             is_editable=True,
-            siSelecFilas=True,
-            siSeleccionMultiple=True,
+            complete_row_select=True,
+            select_multiple=True,
         )
         self.register_grid(gridT)
         tab.new_tab(gridT, _("Finished"))
@@ -207,9 +206,9 @@ class WBMT(LCDialog.LCDialog):
 
     def titulo(self):
         fdir, fnam = os.path.split(self.configuration.paths.file_bmt())
-        return "%s : %s (%s)" % (_("Find best move"), fnam, Util.relative_path(fdir))
+        return f'{_("Find best move")} : {fnam} ({Util.relative_path(fdir)})'
 
-    def terminar(self):
+    def finalize(self):
         self.bmt.cerrar()
         self.save_video()
         self.reject()
@@ -230,10 +229,9 @@ class WBMT(LCDialog.LCDialog):
 
     def historial(self):
         grid, dbf, recno = self.actual()
-        if recno >= 0:
-            if dbf.REPE > 0:
-                w = WHistorialBMT(self, dbf)
-                w.exec()
+        if recno >= 0 and dbf.REPE > 0:
+            w = WHistorialBMT(self, dbf)
+            w.exec()
 
     def utilities(self):
         menu = QTDialogs.LCMenu(self)
@@ -241,7 +239,7 @@ class WBMT(LCDialog.LCDialog):
         menu.opcion("cambiar", _("Select/create another file of training"), Iconos.BMT())
 
         menu.separador()
-        menu1 = menu.submenu(_("Import") + "/" + _("Export"), Iconos.PuntoMagenta())
+        menu1 = menu.submenu(f"{_('Import')}/{_('Export')}", Iconos.PuntoMagenta())
         menu1.opcion("exportar", _("Export the current training"), Iconos.PuntoVerde())
         menu1.separador()
         menu1.opcion(
@@ -265,12 +263,11 @@ class WBMT(LCDialog.LCDialog):
         menu.separador()
         menu.opcion(
             "odt",
-            "%s: %s (*.odt)" % (_("Export to"), _("Open Document Format")),
+            f'{_("Export to")}: {_("Open Document Format")} (*.odt)',
             Iconos.ODT(),
         )
 
-        resp = menu.lanza()
-        if resp:
+        if resp := menu.lanza():
             if resp == "cambiar":
                 self.cambiar()
             elif resp == "importar":
@@ -308,17 +305,14 @@ class WBMT(LCDialog.LCDialog):
         path_odt = WOdt.path_saveas_odt(self, dbf.NOMBRE)
         if not path_odt:
             return
-        wodt = WOdt.WOdt(self, path_odt)
-        board = wodt.board
+        base_wodt = WOdt.WOdt(self, path_odt)
+        board = base_wodt.board
 
         def run_data(wodt):
             current_pos = dic["POS"]
             total = dic["TOTAL"]
             if current_pos == -1:
-                wodt.create_document(
-                    "%s - %s: %s" % (_("Lucas Chess"), _("Find best move"), dbf.NOMBRE),
-                    True,
-                )
+                wodt.create_document(f'{_("Lucas Chess")} - {_("Find best move")}: {dbf.NOMBRE}', True)
                 current_pos += 1
             else:
                 wodt.odt_doc.add_pagebreak()
@@ -338,47 +332,44 @@ class WBMT(LCDialog.LCDialog):
             board.save_as_img(path_img, "png", False, True)
             wodt.odt_doc.add_png(path_img, 13.4)
             wodt.odt_doc.add_pagebreak()
-            wodt.odt_doc.add_paragraph8("FEN: " + bmt_uno.fen)
+            wodt.odt_doc.add_paragraph8(f"FEN: {bmt_uno.fen}")
             mrm = bmt_uno.mrm
             best_score = 0
 
-            for j in range(0, len(mrm.li_rm)):
+            for j in range(len(mrm.li_rm)):
                 rm = mrm.li_rm[j]
                 if j == 0:
                     best_score = rm.centipawns_abs()
 
                 wodt.odt_doc.add_linebreak()
-                game = Game.Game()
-                game.restore(rm.txtPartida)
+                base_game = Game.Game()
+                base_game.restore(rm.txtPartida)
 
                 def get_move_list(game):
                     is_black = game.starts_with_black
                     move_ctr = 1 if is_black else 0
-                    lst_moves = "1. .." if is_black else "1."
+                    list_of_moves = "1. .." if is_black else "1."
                     for move in game.li_moves:
                         if not is_black:
                             move_ctr += 1
                             if move_ctr > 1:
-                                lst_moves += " %s." % move_ctr
-                        lst_moves += " %s" % move.pgnBase
+                                list_of_moves += f" {move_ctr}."
+                        list_of_moves += f" {move.base_pgn()}"
                         is_black = not is_black
                     return lst_moves
 
-                lst_moves = get_move_list(game)
+                lst_moves = get_move_list(base_game)
                 pts_lost = best_score - rm.centipawns_abs()
-                if pts_lost > 0:
-                    txt_lost = " (%s %s)" % (pts_lost / 100, _("pws lost"))
-                else:
-                    txt_lost = ""
+                txt_lost = f' ({pts_lost / 100} {_("pws lost")})' if pts_lost > 0 else ""
                 txt = "%d: %s = %s%s" % (
                     rm.nivelBMT + 1,
-                    game.move(0).pgn_translated(),
+                    base_game.move(0).pgn_translated(),
                     rm.abbrev_text(),
                     txt_lost,
                 )
                 if rm.siPrimero:
-                    txt = "* %s" % txt
-                wodt.odt_doc.add_paragraph("%s | %s" % (txt, lst_moves))
+                    txt = f"* {txt}"
+                wodt.odt_doc.add_paragraph(f"{txt} | {lst_moves}")
 
             original_game = None
             if bmt_uno.cl_game and bmt_uno.cl_game in dic_games:
@@ -394,15 +385,15 @@ class WBMT(LCDialog.LCDialog):
                 wodt.odt_doc.add_linebreak()
                 wodt.odt_doc.add_linebreak()
 
-                tag_txt = _("Actual game") + ": "
+                tag_txt = f"{_('Actual game')}: "
                 if "White" in di_tags and "Black" in di_tags:
-                    tag_txt += "%s vs %s" % (di_tags["White"], di_tags["Black"])
+                    tag_txt += f'{di_tags["White"]} vs {di_tags["Black"]}'
                 if "Date" in di_tags:
-                    tag_txt += " (%s)" % (di_tags["Date"])
+                    tag_txt += f' ({di_tags["Date"]})'
 
                 if "Site" in di_tags and di_tags["Site"].startswith("http"):
                     gamelink = di_tags["Site"]
-                    tag_txt += ": %s" % gamelink
+                    tag_txt += f": {gamelink}"
                     wodt.odt_doc.add_hyperlink(gamelink, tag_txt)
                 else:
                     wodt.odt_doc.add_paragraph(tag_txt)
@@ -416,18 +407,17 @@ class WBMT(LCDialog.LCDialog):
                     "BlackElo",
                 ]:
                     if tag in di_tags:
-                        wodt.odt_doc.add_paragraph("%s: %s " % (tag, di_tags[tag]))
+                        wodt.odt_doc.add_paragraph(f"{tag}: {di_tags[tag]} ")
 
             dic["POS"] = current_pos + 1
             if dic["POS"] < total:
                 return True
-            else:
-                wodt.odt_doc.create(path_odt)
-                Util.startfile(path_odt)
-                return False
+            wodt.odt_doc.create(path_odt)
+            Util.startfile(path_odt)
+            return False
 
-        wodt.set_routine(run_data)
-        wodt.exec()
+        base_wodt.set_routine(run_data)
+        base_wodt.exec()
 
     def pack(self):
         with QTMessages.one_moment_please(self):
@@ -436,11 +426,10 @@ class WBMT(LCDialog.LCDialog):
 
     def zip2var_bmt_lista(self, dbf, recno):
         var = Util.zip2var(dbf.leeOtroCampo(recno, "BMT_LISTA"))
-        if var is None:
-            QTMessages.message_error(self, _("There was an error while reading the data"))
-            return None
-        else:
+        if var is not None:
             return var.patch()
+        QTMessages.message_error(self, _("There was an error while reading the data"))
+        return None
 
     def rehacer(self):
         grid, dbf, recno = self.actual()
@@ -463,23 +452,20 @@ class WBMT(LCDialog.LCDialog):
             vtime = self.configuration.x_tutor_mstime
 
         # Bucle para control de errores
-        li_gen = [(None, None)]
-
-        # # Nombre del entrenamiento
-        li_gen.append((_("Name") + ":", name))
-        li_gen.append((_("Extra info.") + ":", extra))
+        li_gen = [(None, None), (f"{_('Name')}:", name), (f"{_('Extra info.')}:", extra)]
 
         # # Tutor
         li = self.configuration.engines.list_alias_name_multipv()
         li[0] = engine
-        li_gen.append((_("Engine") + ":", li))
+        li_gen.append((f"{_('Engine')}:", li))
 
-        # Decimas de segundo a pensar el tutor
-        li_gen.append((_("Duration of engine analysis (secs)") + ":", vtime / 1000.0))
-
-        li_gen.append((None, None))
-
-        resultado = FormLayout.fedit(li_gen, title=name, parent=self, anchoMinimo=560, icon=Iconos.Opciones())
+        li_gen.extend(
+            (
+                (f"{_('Duration of engine analysis (secs)')}:", vtime / 1000.0),
+                (None, None),
+            )
+        )
+        resultado = FormLayout.fedit(li_gen, title=name, parent=self, minimum_width=560, icon=Iconos.Opciones())
         if not resultado:
             return
         accion, li_gen = resultado
@@ -515,12 +501,7 @@ class WBMT(LCDialog.LCDialog):
             uno = bmt_lista.dame_uno(pos)
 
             fen = uno.fen
-            ant_movimiento = ""
-            for rm in uno.mrm.li_rm:
-                if rm.siPrimero:
-                    ant_movimiento = rm.movimiento()
-                    break
-
+            ant_movimiento = next((rm.movimiento() for rm in uno.mrm.li_rm if rm.siPrimero), "")
             tmp_bp.mensaje(mensaje + " %d/%d" % (pos, tam_lista))
             tmp_bp.pon(pos)
             if tmp_bp.is_canceled():
@@ -556,11 +537,9 @@ class WBMT(LCDialog.LCDialog):
 
             uno.mrm = mrm  # lo cambiamos y ya esta
 
-        xmanager.terminar()
+        xmanager.finalize()
 
         if not is_canceled:
-            # Grabamos
-
             bmt_lista.reiniciar()
 
             reg = self.dbf.baseRegistro()
@@ -585,8 +564,8 @@ class WBMT(LCDialog.LCDialog):
         tmp_bp.cerrar()
         self.grid.refresh()
 
-    def grid_doubleclick_header(self, grid, o_column):
-        key = o_column.key
+    def grid_doubleclick_header(self, _grid, obj_column):
+        key = obj_column.key
         if key != "NOMBRE":
             return
 
@@ -597,7 +576,7 @@ class WBMT(LCDialog.LCDialog):
             dbf.goto(x)
             li.append((dbf.NOMBRE, x))
 
-        li.sort(key=lambda x: x[0])
+        li.sort(key=lambda r: r[0])
 
         si_reverse = self.dicReverse.get(grid.id, False)
         self.dicReverse[grid.id] = not si_reverse
@@ -605,12 +584,10 @@ class WBMT(LCDialog.LCDialog):
         if si_reverse:
             li.reverse()
 
-        order = 0
         reg = dbf.baseRegistro()
-        for nom, recno in li:
+        for order, (nom, recno) in enumerate(li):
             reg.ORDEN = order
             dbf.modificarReg(recno, reg)
-            order += 1
         dbf.commit()
         dbf.leer()
         grid.refresh()
@@ -622,23 +599,21 @@ class WBMT(LCDialog.LCDialog):
             return
         reg = dbf.registroActual()  # Importante ya que dbf puede cambiarse mientras se edita
 
-        li_gen: list = [(None, None)]
-
         mx = dbf.TOTAL
         if mx <= 1:
             return
         bl = mx / 2
 
-        li_gen.append((FormLayout.Spinbox(_("Block Size"), 1, mx - 1, 50), bl))
-
-        resultado = FormLayout.fedit(
+        li_gen: list = [
+            (None, None),
+            (FormLayout.Spinbox(_("Block Size"), 1, mx - 1, 50), bl),
+        ]
+        if resultado := FormLayout.fedit(
             li_gen,
-            title="%s %s" % (reg.NOMBRE, reg.EXTRA),
+            title=f"{reg.NOMBRE} {reg.EXTRA}",
             parent=self,
             icon=Iconos.Opciones(),
-        )
-
-        if resultado:
+        ):
             accion, li_gen = resultado
             bl = li_gen[0]
 
@@ -679,29 +654,24 @@ class WBMT(LCDialog.LCDialog):
         if recno < 0:
             return
         reg = dbf.registroActual()  # Importante ya que dbf puede cambiarse mientras se edita
-        li_gen: list = [(None, None)]
         config = FormLayout.Editbox(
-            '<div align="right">' + _("List of positions") + "<br>" + _("By example:") + " -5,7-9,14,19-",
+            f"<div align=\"right\">{_('List of positions')}<br>{_('By example:')} -5,7-9,14,19-",
             rx=r"[0-9,\-,\,]*",
         )
-        li_gen.append((config, ""))
-
-        resultado = FormLayout.fedit(
+        li_gen: list = [(None, None), (config, "")]
+        if resultado := FormLayout.fedit(
             li_gen,
             title=reg.NOMBRE,
             parent=self,
-            anchoMinimo=200,
+            minimum_width=200,
             icon=Iconos.Opciones(),
-        )
-
-        if resultado:
+        ):
             accion, li_gen = resultado
 
             bmt_lista = self.zip2var_bmt_lista(dbf, recno)
             if bmt_lista is None:
                 return
-            clista = li_gen[0]
-            if clista:
+            if clista := li_gen[0]:
                 lni = Util.ListaNumerosImpresion(clista)
                 bmt_lista_nv = bmt_lista.extrae_lista(lni)
 
@@ -724,7 +694,7 @@ class WBMT(LCDialog.LCDialog):
     def juntar(self):
         # Lista de recnos
         grid, dbf, recno = self.actual()
-        li = grid.recnosSeleccionados()
+        li = grid.list_selected_recnos()
 
         if len(li) < 1:
             return
@@ -734,14 +704,12 @@ class WBMT(LCDialog.LCDialog):
         extra = dbf.EXTRA
 
         # Se pide name y extra
-        li_gen: list = [(None, None)]
-
-        # # Nombre del entrenamiento
-        li_gen.append((_("Name") + ":", name))
-
-        li_gen.append((_("Extra info.") + ":", extra))
-
-        li_gen.append((FormLayout.Editbox(_("Order"), tipo=int, ancho=50), orden))
+        li_gen: list = [
+            (None, None),
+            (f"{_('Name')}:", name),
+            (f"{_('Extra info.')}:", extra),
+            (FormLayout.Editbox(_("Order"), tipo=int, ancho=50), orden),
+        ]
 
         li_j = [
             ("--", 9),
@@ -754,8 +722,8 @@ class WBMT(LCDialog.LCDialog):
         config = FormLayout.Combobox(_("Drop answers with minimum score"), li_j)
         li_gen.append((config, 9))
 
-        titulo = "%s (%d)" % (_("Joining selected trainings"), len(li))
-        resultado = FormLayout.fedit(li_gen, title=titulo, parent=self, anchoMinimo=560, icon=Iconos.Opciones())
+        titulo = f"{_('Joining selected trainings')} ({len(li)})"
+        resultado = FormLayout.fedit(li_gen, title=titulo, parent=self, minimum_width=560, icon=Iconos.Opciones())
         if not resultado:
             return
 
@@ -776,7 +744,7 @@ class WBMT(LCDialog.LCDialog):
                 bmt_lista1 = self.zip2var_bmt_lista(dbf, recno)
                 if bmt_lista1 is not None:
                     li_unos.extend(bmt_lista1.li_bmt_uno)
-                    dic_games.update(bmt_lista1.dic_games)
+                    dic_games |= bmt_lista1.dic_games
 
             st_fen = set()
             if eliminar_state_minimo < 9:
@@ -819,14 +787,13 @@ class WBMT(LCDialog.LCDialog):
             self.releer()
 
     def cambiar(self):
-        fbmt = SelectFiles.salvaFichero(
+        if fbmt := SelectFiles.salvaFichero(
             self,
             _("Select/create another file of training"),
-            self.configuration.path.file_bmt(),
+            self.configuration.paths.file_bmt(),
             "bmt",
             False,
-        )
-        if fbmt:
+        ):
             fbmt = Util.relative_path(fbmt)
             abmt = self.bmt
             try:
@@ -836,7 +803,7 @@ class WBMT(LCDialog.LCDialog):
                 return
             abmt.cerrar()
             self.read_dbf()
-            self.configuration.path.set_file_bmt(fbmt)
+            self.configuration.paths.set_file_bmt(fbmt)
             self.configuration.graba()
             self.setWindowTitle(self.titulo())
             self.grid.refresh()
@@ -847,12 +814,8 @@ class WBMT(LCDialog.LCDialog):
 
         if recno >= 0:
             reg_actual = dbf.registroActual()
-            carpeta = "%s/%s.bm1" % (
-                os.path.dirname(self.configuration.path.file_bmt()),
-                dbf.NOMBRE,
-            )
-            fbm1 = SelectFiles.salvaFichero(self, _("Export the current training"), carpeta, "bm1", True)
-            if fbm1:
+            carpeta = f"{os.path.dirname(self.configuration.paths.file_bmt())}/{dbf.NOMBRE}.bm1"
+            if fbm1 := SelectFiles.salvaFichero(self, _("Export the current training"), carpeta, "bm1", True):
                 bmt_lista = self.zip2var_bmt_lista(dbf, recno)
                 if bmt_lista is not None:
                     if si_limpiar:
@@ -883,14 +846,18 @@ class WBMT(LCDialog.LCDialog):
 
             li_gen: list = [
                 (None, None),
-                (_("Name") + ":", name),
-                (_("Extra info.") + ":", extra),
+                (f"{_('Name')}:", name),
+                (f"{_('Extra info.')}:", extra),
                 (FormLayout.Editbox(_("Order"), tipo=int, ancho=50), orden),
             ]
 
-            resultado = FormLayout.fedit(li_gen, title=name, parent=self, anchoMinimo=560, icon=Iconos.Opciones())
-
-            if resultado:
+            if resultado := FormLayout.fedit(
+                li_gen,
+                title=name,
+                parent=self,
+                minimum_width=560,
+                icon=Iconos.Opciones(),
+            ):
                 accion, li_gen = resultado
                 li_fields_valor = (
                     ("NOMBRE", li_gen[0].strip()),
@@ -907,10 +874,8 @@ class WBMT(LCDialog.LCDialog):
         QTUtils.refresh_gui()
 
     def importar(self):
-        carpeta = os.path.dirname(self.configuration.path.file_bmt())
-        fbm1 = SelectFiles.leeFichero(self, carpeta, "bm1", titulo=_("Import a training"))
-        if fbm1:
-
+        carpeta = os.path.dirname(self.configuration.paths.file_bmt())
+        if fbm1 := SelectFiles.leeFichero(self, carpeta, "bm1", titulo=_("Import a training")):
             reg = Util.restore_pickle(fbm1)
             if hasattr(reg, "BMT_LISTA"):
                 reg.BMT_LISTA = Util.var2zip(reg.BMT_LISTA)
@@ -933,12 +898,12 @@ class WBMT(LCDialog.LCDialog):
 
     def borrar(self):
         grid, dbf, recno = self.actual()
-        li = grid.recnosSeleccionados()
+        li = grid.list_selected_recnos()
         if len(li) > 0:
             tit = "<br><ul>"
             for x in li:
                 dbf.goto(x)
-                tit += "<li>%s %s</li>" % (dbf.NOMBRE, dbf.EXTRA)
+                tit += f"<li>{dbf.NOMBRE} {dbf.EXTRA}</li>"
             base = _("the following training")
             if QTMessages.pregunta(self, _X(_("Delete %1?"), base) + tit):
                 with QTMessages.one_moment_please(self):
@@ -956,63 +921,56 @@ class WBMT(LCDialog.LCDialog):
         dbf.leer()
         grid.refresh()
 
-    def grid_setvalue(self, grid, row, o_column, valor):  # ? necesario al haber delegados
+    def grid_setvalue(self, grid, row, obj_column, valor):  # ? necesario al haber delegados
         pass
 
     def grid_num_datos(self, grid):
         dbf = self.dbfT if grid.id == "T" else self.dbf
         return dbf.reccount()
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _column):
         self.entrenar()
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, grid, row, obj_column):
         dbf = self.dbfT if grid.id == "T" else self.dbf
-        col = o_column.key
+        col = obj_column.key
 
         dbf.goto(row)
 
-        if col == "NOMBRE":
-            return dbf.NOMBRE
-
-        elif col == "ORDEN":
-            return dbf.ORDEN if dbf.ORDEN else 0
-
-        elif col == "STATE":
-            return dbf.ESTADO
-
-        elif col == "HECHOS":
-            if grid.id == "T":
-                return "%d" % dbf.TOTAL
-            else:
-                return "%d/%d" % (dbf.HECHOS, dbf.TOTAL)
-
-        elif col == "PUNTOS":
-            p = dbf.PUNTOS
-            m = dbf.MAXPUNTOS
-            if grid.id == "T" and m > 0:
-                porc = p * 100 / m
-                return "%d/%d=%d" % (p, m, porc) + "%"
-            else:
-                return "%d/%d" % (p, m)
-
-        elif col == "EXTRA":
+        if col == "EXTRA":
             return dbf.EXTRA
 
         elif col == "FFINAL":
             f = dbf.FFINAL
-            return "%s-%s-%s" % (f[6:], f[4:6], f[:4]) if f else ""
+            return f"{f[6:]}-{f[4:6]}-{f[:4]}" if f else ""
+
+        elif col == "HECHOS":
+            return "%d" % dbf.TOTAL if grid.id == "T" else "%d/%d" % (dbf.HECHOS, dbf.TOTAL)
+        elif col == "NOMBRE":
+            return dbf.NOMBRE
+
+        elif col == "ORDEN":
+            return dbf.ORDEN or 0
+
+        elif col == "PUNTOS":
+            p = dbf.PUNTOS
+            m = dbf.MAXPUNTOS
+            if grid.id != "T" or m <= 0:
+                return "%d/%d" % (p, m)
+
+            porc = p * 100 / m
+            return f"{'%d/%d=%d' % (p, m, porc)}%"
+        elif col == "REPETICIONES":
+            return str(dbf.REPE)
+
+        elif col == "STATE":
+            return dbf.ESTADO
 
         elif col == "TIME":
-            s = dbf.SEGUNDOS
-            if not s:
-                s = 0
+            s = dbf.SEGUNDOS or 0
             m = s / 60
             s %= 60
             return "%d' %d\"" % (m, s) if m else '%d"' % s
-
-        elif col == "REPETICIONES":
-            return str(dbf.REPE)
 
         return None
 
@@ -1044,34 +1002,27 @@ class WBMT(LCDialog.LCDialog):
         name = os.path.basename(path_fns)[:-4]
         name = TrListas.dic_training().get(name, name)
 
-        # Motor y vtime, cogemos los estandars de analysis
-        file = self.configuration.paths.file_param_analysis()
-        dic = Util.restore_pickle(file)
-        name_engine = self.configuration.x_analyzer_clave
-        mstime = self.configuration.x_analyzer_mstime
-        if dic:
-            # engine = dic.get("ENGINE", engine)
-            mstime = dic.get("TIME", mstime)
-
-        if not mstime:
-            mstime = 3.0
+        key_var = "BMT_NEW"
+        dic_saved = self.configuration.read_variables(key_var)
+        name_engine = dic_saved.get("ENGINE", self.configuration.x_analyzer_clave)
+        secs_time = dic_saved.get("SECONDS", 3.0)
 
         # Bucle para control de errores
         while True:
-            form = FormLayout.FormLayout(self, name, Iconos.Opciones(), anchoMinimo=560)
+            form = FormLayout.FormLayout(self, name, Iconos.Opciones(), minimum_width=560)
             form.separador()
             form.edit(_("Name"), name)
             form.combobox(
                 _("Engine"),
                 self.configuration.engines.list_name_alias_multipv10(),
-                self.configuration.x_analyzer_clave,
+                name_engine,
             )
             form.editbox(
                 _("Duration of engine analysis (secs)"),
                 ancho=60,
                 decimales=2,
                 tipo=float,
-                init_value=mstime / 1000.0,
+                init_value=secs_time,
             )
             form.spinbox(_("From number"), 1, n_fen, 50, init_value=1)
             form.spinbox(_("To number"), 1, n_fen, 50, init_value=n_fen if n_fen < 20 else 20)
@@ -1082,15 +1033,12 @@ class WBMT(LCDialog.LCDialog):
             if resultado:
                 accion, li_gen = resultado
 
-                name = li_gen[0]
-                engine = li_gen[1]
-                mstime = int(li_gen[2] * 1000)
+                name, name_engine, secs_time, from_sq, to_sq = li_gen
+                mstime = int(secs_time * 1000)
 
-                if not mstime or not name:
+                if not mstime or not name or not name_engine:
                     return
 
-                from_sq = li_gen[3]
-                to_sq = li_gen[4]
                 n_dh = to_sq - from_sq + 1
                 if n_dh <= 0:
                     return
@@ -1099,10 +1047,15 @@ class WBMT(LCDialog.LCDialog):
             else:
                 return
 
+        dic_saved["ENGINE"] = name_engine
+        dic_saved["SECONDS"] = secs_time
+        self.configuration.write_variables(key_var, dic_saved)
+
         # Analizamos todos, creamos las games, y lo salvamos
         engine = self.configuration.engines.search(name_engine)
-        manager_engine: EngineManagerAnalysis.EngineManagerAnalysis = (
-            self.procesador.create_manager_analysis(engine, mstime, None, None, 16))
+        manager_engine: EngineManagerAnalysis.EngineManagerAnalysis = self.procesador.create_manager_analysis(
+            engine, mstime, 0, 0, 16
+        )
 
         mensaje = _("Analyzing the move....")
         tmp_bp = QTMessages.ProgressBarSimple(self.procesador.main_window, name, mensaje, n_dh).mostrar()
@@ -1115,7 +1068,7 @@ class WBMT(LCDialog.LCDialog):
         game = Game.Game()
 
         def dispatcher(rm, ms):
-            return tmp_bp.is_canceled()
+            return not tmp_bp.is_canceled()
 
         for n in range(from_sq - 1, to_sq):
 

@@ -5,16 +5,16 @@ from Code.Board import Board, BoardElements, BoardTypes
 
 
 class PosBoard(Board.Board):
-    dispatchDrop = None
+    dispatch_drop = None
 
     def enable_all(self):
-        for pieza, pieza_sc, is_active in self.liPiezas:
-            pieza_sc.activa(True)
+        for pieza, pieza_sc, is_active in self.li_pieces:
+            pieza_sc.activate(True)
 
     def keyPressEvent(self, event):
         k = event.key()
         if (96 > k > 64) and chr(k) in "PQKRNB":
-            self.parent().cambiaPiezaSegun(chr(k))
+            getattr(self.parent(), "change_piece_if_content")(chr(k))
         else:
             Board.Board.keyPressEvent(self, event)
         event.ignore()
@@ -31,22 +31,20 @@ class PosBoard(Board.Board):
             si_der = event.button() == QtCore.Qt.MouseButton.RightButton
             if hasattr(self, "squares") and self.squares.get(a1h8):
                 self.parent().ultimaPieza = self.squares.get(a1h8)
-                if hasattr(self.parent(), "ponCursor"):
-                    self.parent().ponCursor()
-                    # ~ if si_izq:
-                    # ~ QtWidgets.QGraphicsView.mousePressEvent(self,event)
+                if hasattr(self.parent(), "show_cursor"):
+                    getattr(self.parent(), "show_cursor")()
                 if si_der:
-                    if hasattr(self, "mensBorrar"):
-                        self.mensBorrar(a1h8)
+                    if hasattr(self, "message_to_delete"):
+                        self.message_to_delete(a1h8)
                     si_event = False
             else:
                 if si_der:
-                    if hasattr(self, "mensCrear") and self.mensCrear:
-                        self.mensCrear(a1h8)
+                    if hasattr(self, "create_message") and self.create_message:
+                        self.create_message(a1h8)
                     si_event = False
                 if si_izq:
-                    if hasattr(self, "mensRepetir") and self.mensRepetir:
-                        self.mensRepetir(a1h8)
+                    if hasattr(self, "repeat_message") and self.repeat_message:
+                        self.repeat_message(a1h8)
                     si_event = False
         else:
             Board.Board.mousePressEvent(self, event)
@@ -55,7 +53,7 @@ class PosBoard(Board.Board):
             QtWidgets.QGraphicsView.mousePressEvent(self, event)
 
     def set_dispatch_drop(self, dispatch):
-        self.dispatchDrop = dispatch
+        self.dispatch_drop = dispatch
 
     def dropEvent(self, event):
         mime_data = event.mimeData()
@@ -68,7 +66,7 @@ class PosBoard(Board.Board):
             cy = self.punto2fila(y)
             if cx in range(1, 9) and cy in range(1, 9):
                 a1h8 = self.num2alg(cy, cx)
-                self.dispatchDrop(a1h8, dato)
+                self.dispatch_drop(a1h8, dato)
             event.setDropAction(QtCore.Qt.DropAction.IgnoreAction)
         event.ignore()
 
@@ -83,15 +81,15 @@ class BoardEstatico(Board.Board):
         pos = event.pos()
         x = pos.x()
         y = pos.y()
-        minimo = self.margenCentro
-        maximo = self.margenCentro + (self.width_square * 8)
+        minimo = self.margin_center
+        maximo = self.margin_center + (self.width_square * 8)
         if not ((minimo < x < maximo) and (minimo < y < maximo)):
             if self.atajos_raton:
                 self.atajos_raton(self.last_position, None)
             Board.Board.mousePressEvent(self, event)
             return
-        xc = 1 + int(float(x - self.margenCentro) / self.width_square)
-        yc = 1 + int(float(y - self.margenCentro) / self.width_square)
+        xc = 1 + int(float(x - self.margin_center) / self.width_square)
+        yc = 1 + int(float(y - self.margin_center) / self.width_square)
 
         if self.is_white_bottom:
             yc = 9 - yc
@@ -117,8 +115,8 @@ class BoardEstaticoMensaje(BoardEstatico):
         self.size_factor = 1.0 if size_factor is None else size_factor
         BoardEstatico.__init__(self, parent, config_board)
 
-    def rehaz(self):
-        Board.Board.rehaz(self)
+    def redraw(self):
+        super().redraw()
         self.mens = BoardTypes.Texto()
         self.mens.font_type = BoardTypes.FontType(puntos=self.width_square * 2 * self.size_factor, peso=750)
         self.mens.physical_pos.ancho = self.width_square * 8
@@ -158,6 +156,6 @@ class BoardEstaticoMensaje(BoardEstatico):
         self.mensSC2.show()
         self.escena.update()
 
-    def remove_pieces(self, st):
-        for a1h8 in st:
-            self.remove_piece(a1h8)
+    # def remove_pieces(self, st):
+    #     for a1h8 in st:
+    #         self.remove_piece(a1h8)

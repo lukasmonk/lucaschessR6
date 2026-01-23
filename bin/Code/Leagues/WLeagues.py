@@ -3,7 +3,7 @@ import shutil
 import time
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Leagues import Leagues, WLeague, WLeagueConfig
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
@@ -22,7 +22,7 @@ class WLeagues(LCDialog.LCDialog):
 
         # Toolbar
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Run"), Iconos.Play(), self.play),
             None,
@@ -44,7 +44,7 @@ class WLeagues(LCDialog.LCDialog):
         o_columns.nueva("NAME", _("Name"), 300)
         o_columns.nueva("DATE", _("Date"), 180, align_center=True)
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
         self.register_grid(self.grid)
 
         # Layout
@@ -86,11 +86,11 @@ class WLeagues(LCDialog.LCDialog):
     def nom_league_pos(self, row):
         return self.list_leagues[row][0][:-7]
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.list_leagues)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        column = obj_column.key
         name, fcreacion, fmanten = self.list_leagues[row]
         if column == "NAME":
             return name[:-7]
@@ -103,11 +103,12 @@ class WLeagues(LCDialog.LCDialog):
                 tm.tm_hour,
                 tm.tm_min,
             )
+        return None
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _column):
         self.play()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -120,11 +121,12 @@ class WLeagues(LCDialog.LCDialog):
         if name:
             nom_league = Util.valid_filename(name.strip())
             if nom_league:
-                path = Util.opj(Code.configuration.paths.folder_leagues(), nom_league + ".league")
+                path = Util.opj(Code.configuration.paths.folder_leagues(), f"{nom_league}.league")
                 if os.path.isfile(path):
                     QTMessages.message_error(self, _("The file %s already exist") % nom_league)
                     return self.edit_name(nom_league)
             return nom_league
+        return None
 
     def crear(self):
         nom_league = self.edit_name("")
@@ -151,8 +153,8 @@ class WLeagues(LCDialog.LCDialog):
             nom_origen = self.nom_league_pos(row)
             nom_destino = self.edit_name(nom_origen)
             if nom_destino and nom_origen != nom_destino:
-                path_origen = Util.opj(Code.configuration.paths.folder_leagues(), "%s.league" % nom_origen)
-                path_destino = Util.opj(Code.configuration.paths.folder_leagues(), "%s.league" % nom_destino)
+                path_origen = Util.opj(Code.configuration.paths.folder_leagues(), f"{nom_origen}.league")
+                path_destino = Util.opj(Code.configuration.paths.folder_leagues(), f"{nom_destino}.league")
                 shutil.move(path_origen, path_destino)
                 self.refresh_lista()
 
@@ -161,9 +163,9 @@ class WLeagues(LCDialog.LCDialog):
         if row >= 0:
             name = self.nom_league_pos(row)
             if QTMessages.pregunta(self, _X(_("Delete %1?"), name)):
-                path = Util.opj(Code.configuration.paths.folder_leagues(), "%s.league" % name)
+                path = Util.opj(Code.configuration.paths.folder_leagues(), f"{name}.league")
                 Util.remove_file(path)
-                Util.remove_file(path + ".work")
+                Util.remove_file(f"{path}.work")
                 self.refresh_lista()
 
     def copiar(self):

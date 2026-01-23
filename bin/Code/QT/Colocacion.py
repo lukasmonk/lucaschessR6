@@ -71,7 +71,7 @@ class H(QtWidgets.QHBoxLayout):
         self.addSpacing(espacio)
         return self
 
-    def ponSeparacion(self, tam: int) -> "H":
+    def set_separation(self, tam: int) -> "H":
         self.setSpacing(tam)
         return self
 
@@ -96,11 +96,11 @@ class G(QtWidgets.QGridLayout):
         control: QtWidgets.QWidget,
         row: int,
         column: int,
-        numFilas: int = 1,
+        num_rows: int = 1,
         num_columns: int = 1,
         alineacion: str | None = None,
     ) -> "G":
-        self.addWidget(control, row, column, numFilas, num_columns, self.dicAlineacion[alineacion])
+        self.addWidget(control, row, column, num_rows, num_columns, self.dicAlineacion[alineacion])
         return self
 
     def controld(
@@ -108,10 +108,10 @@ class G(QtWidgets.QGridLayout):
         control: QtWidgets.QWidget,
         row: int,
         column: int,
-        numFilas: int = 1,
+        num_rows: int = 1,
         num_columns: int = 1,
     ) -> "G":
-        self.addWidget(control, row, column, numFilas, num_columns, self.dicAlineacion["d"])
+        self.addWidget(control, row, column, num_rows, num_columns, self.dicAlineacion["d"])
         return self
 
     def controlc(
@@ -119,10 +119,10 @@ class G(QtWidgets.QGridLayout):
         control: QtWidgets.QWidget,
         row: int,
         column: int,
-        numFilas: int = 1,
+        num_rows: int = 1,
         num_columns: int = 1,
     ) -> "G":
-        self.addWidget(control, row, column, numFilas, num_columns, self.dicAlineacion["c"])
+        self.addWidget(control, row, column, num_rows, num_columns, self.dicAlineacion["c"])
         return self
 
     def otro(
@@ -130,11 +130,11 @@ class G(QtWidgets.QGridLayout):
         layout: QtWidgets.QLayout,
         row: int,
         column: int,
-        numFilas: int = 1,
+        num_rows: int = 1,
         num_columns: int = 1,
         alineacion: str | None = None,
     ) -> "G":
-        self.addLayout(layout, row, column, numFilas, num_columns, self.dicAlineacion[alineacion])
+        self.addLayout(layout, row, column, num_rows, num_columns, self.dicAlineacion[alineacion])
         return self
 
     def otroc(
@@ -142,10 +142,10 @@ class G(QtWidgets.QGridLayout):
         layout: QtWidgets.QLayout,
         row: int,
         column: int,
-        numFilas: int = 1,
+        num_rows: int = 1,
         num_columns: int = 1,
     ) -> "G":
-        self.addLayout(layout, row, column, numFilas, num_columns, self.dicAlineacion["c"])
+        self.addLayout(layout, row, column, num_rows, num_columns, self.dicAlineacion["c"])
         return self
 
     def otrod(
@@ -153,28 +153,28 @@ class G(QtWidgets.QGridLayout):
         layout: QtWidgets.QLayout,
         row: int,
         column: int,
-        numFilas: int = 1,
+        num_rows: int = 1,
         num_columns: int = 1,
     ) -> "G":
-        self.addLayout(layout, row, column, numFilas, num_columns, self.dicAlineacion["d"])
+        self.addLayout(layout, row, column, num_rows, num_columns, self.dicAlineacion["d"])
         return self
 
     def margen(self, n: int) -> "G":
         self.setContentsMargins(n, n, n, n)
         return self
 
-    def rellenoColumna(self, col: int, factor: int) -> "G":
+    def relleno_column(self, col: int, factor: int) -> "G":
         self.setColumnStretch(col, factor)
         return self
 
-    def columnaVacia(self, column: int, minSize: int) -> "G":
-        self.setColumnMinimumWidth(column, minSize)
+    def empty_column(self, column: int, min_size: int) -> "G":
+        self.setColumnMinimumWidth(column, min_size)
         return self
 
-    def filaVacia(self, row: int, minSize: int) -> "G":
-        self.setRowMinimumHeight(row, minSize)
+    def empty_row(self, row: int, min_size: int) -> "G":
+        self.setRowMinimumHeight(row, min_size)
         return self
 
 
-def juntaH(control1: QtWidgets.QWidget, control2: QtWidgets.QWidget) -> H:
-    return H().control(control1).control(control2).relleno()
+# def juntaH(control1: QtWidgets.QWidget, control2: QtWidgets.QWidget) -> H:
+#     return H().control(control1).control(control2).relleno()

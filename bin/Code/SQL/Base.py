@@ -1,7 +1,6 @@
 import atexit
 import sqlite3
 
-from Code import Util
 from Code.SQL import DBF, DBFcache
 
 
@@ -13,13 +12,13 @@ class DBBase:
 
     def __init__(self, path_file):
         self.path_file = path_file
-        existe = Util.exist_file(path_file)
         self.conexion = sqlite3.connect(self.path_file)
-        if not existe:
-            cursor = self.conexion.cursor()
-            cursor.execute("PRAGMA page_size = 4096")
-            cursor.execute("PRAGMA synchronous = NORMAL")
-            cursor.close()
+
+        cursor = self.conexion.cursor()
+        cursor.execute("PRAGMA page_size = 4096")
+        cursor.execute("PRAGMA synchronous = NORMAL")
+        cursor.close()
+
         atexit.register(self.cerrar)
 
     def cerrar(self):
@@ -32,10 +31,10 @@ class DBBase:
 
     def existeTabla(self, tabla):
         cursor = self.conexion.cursor()
-        cursor.execute("pragma table_info(%s)" % tabla)
+        cursor.execute(f"pragma table_info({tabla})")
         li_fields = cursor.fetchall()
         cursor.close()
-        return li_fields
+        return not (li_fields is None or len(li_fields) == 0)
 
     def dbf(self, ctabla, select, condicion="", orden=""):
         """
@@ -88,15 +87,13 @@ class TablaBase:
         self.name = name
 
     def crearBase(self, cursor):
-        sql = "CREATE TABLE %s (" % self.name
-        for x in self.li_fields:
-            sql += x.create().rstrip() + ","
-        sql = sql[:-1] + " );"
+        li = [x.create().rstrip() for x in self.li_fields]
+        sql = f"CREATE TABLE {self.name} ({', '.join(li)});"
         cursor.execute(sql)
 
         for x in self.liIndices:
-            c = "UNIQUE" if x.siUnico else ""
-            cursor.execute("CREATE %s INDEX [%s] ON '%s'(%s);" % (c, x.name, self.name, x.campos))
+            c = "UNIQUE " if x.siUnico else ""
+            cursor.execute(f"CREATE {c}INDEX [{x.name}] ON '{self.name}'({x.campos});")
 
     def nuevoCampo(self, name, tipo, notNull=False, primaryKey=False, autoInc=False):
         campo = Campo(name, tipo, notNull, primaryKey, autoInc)
@@ -120,14 +117,14 @@ class Campo:
         self.autoInc = autoInc
 
     def create(self):
-        c = ""
+        parts = [self.name, self.tipo]
         if self.notNull:
-            c += "NOT NULL"
+            parts.append("NOT NULL")
         if self.primaryKey:
-            c += " PRIMARY KEY"
+            parts.append("PRIMARY KEY")
         if self.autoInc:
-            c += " AUTOINCREMENT"
-        return "%s %s %s" % (self.name, self.tipo, c)
+            parts.append("AUTOINCREMENT")
+        return " ".join(parts)
 
 
 class Indice:

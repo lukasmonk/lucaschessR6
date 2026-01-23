@@ -50,7 +50,7 @@ class DovetailMate(CheckTheme.CheckTheme):
         if abs(dc) != 1 or abs(dr) != 1:
             return False
 
-        # Condicion 3: dos piezas rivales al lado del rey rival hacen de embudo.
+        # Condicion 3: dos pieces rivales al lado del rey rival hacen de embudo.
         def correct_piece(x_offset: int, y_offset: int) -> bool:
             col = chr(ord(cr_king_rival[0]) + x_offset)
             row = chr(ord(cr_king_rival[1]) + y_offset)

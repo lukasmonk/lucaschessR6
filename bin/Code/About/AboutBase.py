@@ -2,7 +2,7 @@ import os
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 
 
 class ThanksTo:
@@ -15,11 +15,11 @@ class ThanksTo:
             "themes": _("Themes"),
             "pieces": _("Pieces"),
             "training": _("Training"),
-            "engines-1": "%s/1" % _("Engines"),
-            "engines-2": "%s/2" % _("Engines"),
-            "engines-3": "%s/3" % _("Engines"),
-            "engines-4": "%s/4" % _("Engines"),
-            "engines-5": "%s/5" % _("Engines"),
+            "engines-1": f'{_("Engines")}/1',
+            "engines-2": f'{_("Engines")}/2',
+            "engines-3": f'{_("Engines")}/3',
+            "engines-4": f'{_("Engines")}/4',
+            "engines-5": f'{_("Engines")}/5',
             "games": _("Games"),
             "programming": _("Programming"),
             "dedicated": _("Dedicated to"),
@@ -34,8 +34,7 @@ class ThanksTo:
         nli = len(li)
         x = nli // 5
         bl = [x, x, x, x, x]
-        resto = nli - x * 5
-        if resto:
+        if resto := nli - x * 5:
             for x in range(resto):
                 bl[x] += 1
         nbl = int(bloque)
@@ -52,7 +51,7 @@ class ThanksTo:
     @staticmethod
     def table_ini(center=True, border="1"):
         txt = "<center>" if center else ""
-        txt += '<table border="%s" cellpadding="3" cellspacing="0" width="90%%">' % border
+        txt += f'<table border="{border}" cellpadding="3" cellspacing="0" width="90%">'
         return txt
 
     @staticmethod
@@ -61,7 +60,7 @@ class ThanksTo:
 
     @staticmethod
     def th(txt, mas=""):
-        return "<th %s>%s</th>" % (mas, txt)
+        return f"<th {mas}>{txt}</th>"
 
     @staticmethod
     def dl_ini():
@@ -69,11 +68,11 @@ class ThanksTo:
 
     @staticmethod
     def dl_tit(tit):
-        return "<dt><b>%s</b></dt>" % tit
+        return f"<dt><b>{tit}</b></dt>"
 
     @staticmethod
     def dl_elem(elem):
-        return "<dd>%s</dd>" % elem
+        return f"<dd>{elem}</dd>"
 
     @staticmethod
     def dl_end():
@@ -87,7 +86,8 @@ class ThanksTo:
             ),
             (
                 "Alfonso Solbes",
-                "His work was an essential help (saved many hours) in the transition from Python 2.7 (version 11) to Python 3 (version R).",
+                "His work was an essential help (saved many hours) in the transition "
+                "from Python 2.7 (version 11) to Python 3 (version R).",
             ),
             ("Eric", "Main betatester."),
             (
@@ -96,18 +96,20 @@ class ThanksTo:
             ),  # Programme wiki administrator"),
             (
                 "Laudecir Daniel",
-                "Main promoter of the Linux version, he did the selection and compilation of engines,<br>as well as the establishment of the working Linux version.",
+                "Main promoter of the Linux version, he did the selection and compilation of engines,"
+                "<br>as well as the establishment of the working Linux version.",
             ),
             (
                 '<a href="https://goneill.co.nz/index.php">Graham O\'Neill</a>',
-                "Author of the drivers for the use of the electronic boards (except the official DGT ones).<br>Also co-operator in the development of the interface code with the electronic boards.",
+                "Author of the drivers for the use of the electronic boards (except the official DGT ones)."
+                "<br>Also co-operator in the development of the interface code with the electronic boards.",
             ),
         )
 
         txt = self.dl_ini()
         for person, task in li:
             txt += self.dl_tit(person)
-            txt += self.dl_elem(task) + "<hr>"
+            txt += f"{self.dl_elem(task)}<hr>"
         txt += self.dl_end()
         return txt
 
@@ -126,13 +128,13 @@ class ThanksTo:
                 if n >= 100:
                     el_txt += "<br>"
                     n = 0
-                el_txt += uno + ", "
+                el_txt += f"{uno}, "
                 elem = uno
                 if ">" in elem:
                     elem = elem.split(">")[1].split("<")[0]
                 n += len(elem)
 
-            mtxt += self.dl_elem(el_txt[:-2]) + "<hr>"
+            mtxt += f"{self.dl_elem(el_txt[:-2])}<hr>"
             return mtxt.replace(", ,", ",")
 
         # Version R
@@ -144,7 +146,7 @@ class ThanksTo:
             '<a href="https://github.com/cja000">cja000</a>',
             "Reinhard",
             "Olav Stüwe",
-            '<a href="http://99-developer-tools.com/chess/">A. Wicker</a>',
+            '<a href="https://99-developer-tools.com/chess/">A. Wicker</a>',
             'Budana P',
             'Rudolf Krämer',
             "Luis",
@@ -249,8 +251,11 @@ class ThanksTo:
         return txt
 
     def translators(self):
-        txt = "<center>" + self.table_ini(center=False, border="1")
-        txt += f'<tr><th></th><th>{_("Current")}</th><th>{_("Previous")}</th><th></th><th>{_("Current")}</th><th>{_("Previous")}</th></tr>'
+        txt = f"<center>{self.table_ini(center=False, border='1')}"
+        txt += (
+            f'<tr><th></th><th>{_("Current")}</th><th>{_("Previous")}</th>'
+            f'<th></th><th>{_("Current")}</th><th>{_("Previous")}</th></tr>'
+        )
         li = [x for x in os.listdir(Code.path_resource("Locale")) if len(x) == 2]
         nli = len(li)
         for pos in range(0, nli, 2):
@@ -258,21 +263,24 @@ class ThanksTo:
             for elem in (pos, pos + 1):
                 if elem == nli:
                     break
-                d = Util.ini_base2dic(Code.path_resource("Locale", "%s/lang.ini" % li[elem]))
+                d = Util.ini_base2dic(Code.path_resource("Locale", f"{li[elem]}/lang.ini"))
                 author = d.get("AUTHOR", "")
                 language = d["NAME"]
                 previous = d.get("PREVIOUS", "")
                 if previous.count(",") > 2:
                     liprev = previous.split(",")
-                    previous = ",".join(liprev[:3]) + "<br>" + ",".join(liprev[3:])
+                    previous = f"{','.join(liprev[:3])}<br>{','.join(liprev[3:])}"
                 txt += f'<td><b>{language}</b></td>'
                 txt += f'<td><b>{author}</b></td>'
                 txt += f'<td><small>{previous}</small></td>'
             txt += '</tr>'
 
-        txt += self.table_end() + "</center>"
-        txt += '<big><bold><center>%s: <a href="https://explore.transifex.com/">Transifex</a>' % _("Web")
-        txt += ' -  <a href="mailto:lukasmonk@gmail.com">Join Translation of LucasChess: mail to lukasmonk@gmail.com</a></center></bold></big>'
+        txt += f"{self.table_end()}</center>"
+        txt += f'<big><bold><center>{_("Web")}: <a href="https://explore.transifex.com/">Transifex</a>'
+        txt += (
+            ' -  <a href="mailto:lukasmonk@gmail.com">Join Translation of LucasChess: '
+            'mail to lukasmonk@gmail.com</a></center></bold></big>'
+        )
         return txt
 
     def images(self):
@@ -354,9 +362,9 @@ class ThanksTo:
         ]
         for tipo, autor, web, licencia in li:
             txt += "<tr>"
-            txt += "<td align=right><b>%s</b></td>" % tipo
-            txt += '<td><center><a href="%s">%s</a></center></td>' % (web, autor)
-            txt += "<td>%s</td>" % licencia
+            txt += f"<td align=right><b>{tipo}</b></td>"
+            txt += f'<td><center><a href="{web}">{autor}</a></center></td>'
+            txt += f"<td>{licencia}</td>"
             txt += "</tr>"
 
         txt += "</table></center>"
@@ -387,8 +395,8 @@ class ThanksTo:
         ]
         for autor, licencia in li:
             txt += "<tr>"
-            txt += "<td align=center>%s</td>" % autor
-            txt += "<td>%s</td>" % licencia
+            txt += f"<td align=center>{autor}</td>"
+            txt += f"<td>{licencia}</td>"
             txt += "</tr>"
         txt += "</table>"
 
@@ -396,10 +404,9 @@ class ThanksTo:
         txt += "<tr>"
         txt += self.th(_("Colors"))
         txt += self.th(_("Author"))
-        txt += '<th>%s: <a href="%s">%s</a></th>' % (
-            _("License"),
-            "https://creativecommons.org/licenses/by-nc-sa/3.0/",
-            "Attribution-NonCommercial-ShareAlike 3.0 Unported",
+        txt += (
+            f'<th>{_("License")}: <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/">'
+            f'Attribution-NonCommercial-ShareAlike 3.0 Unported</a></th>'
         )
         txt += "</tr>"
 
@@ -433,9 +440,9 @@ class ThanksTo:
 
         for tipo, autor, web in li:
             txt += "<tr>"
-            txt += "<td align=right>%s</td>" % tipo
-            txt += "<td align=center>%s</td>" % autor
-            txt += '<td><a href="%s">%s</a></td>' % (web, web)
+            txt += f"<td align=right>{tipo}</td>"
+            txt += f"<td align=center>{autor}</td>"
+            txt += f'<td><a href="{web}">{web}</a></td>'
             txt += "</tr>"
 
         txt += "</table><center>"
@@ -574,13 +581,13 @@ class ThanksTo:
                 tipo1, autor1, licencia1 = li[n * 2 + 1]
             else:
                 tipo1, autor1, licencia1 = "", "", ""
-            txt += "<td align=right><b>%s</b></td>" % tipo
-            txt += "<td><center>%s</center></td>" % autor
-            txt += "<td>%s</td>" % licencia
+            txt += f"<td align=right><b>{tipo}</b></td>"
+            txt += f"<td><center>{autor}</center></td>"
+            txt += f"<td>{licencia}</td>"
 
-            txt += "<td align=right><b>%s</b></td>" % tipo1
-            txt += "<td><center>%s</center></td>" % autor1
-            txt += "<td>%s</td>" % licencia1
+            txt += f"<td align=right><b>{tipo1}</b></td>"
+            txt += f"<td><center>{autor1}</center></td>"
+            txt += f"<td>{licencia1}</td>"
 
         txt += self.table_end()
         return txt
@@ -606,16 +613,17 @@ class ThanksTo:
             (_("Endgames by Victor Perez"), "", _("Permission of author")),
             (
                 _("Tactics by UNED chess school"),
-                '<a href="https://www.uned.es/universidad/inicio/unidad/cultura-deporte/escuela-de-ajedrez/descargas.html10">'
+                '<a href="https://www.uned.es/universidad/inicio/unidad/'
+                'cultura-deporte/escuela-de-ajedrez/descargas.html10">'
                 "escuela-de-ajedrez/descargas</a>",
                 _("Permission of author"),
             ),
         )
         for autor, web, licencia in li:
             txt += "<tr>"
-            txt += "<td align=center><b>%s</b></td>" % autor
-            txt += "<td>%s</td>" % web
-            txt += "<td>%s</td>" % licencia
+            txt += f"<td align=center><b>{autor}</b></td>"
+            txt += f"<td>{web}</td>"
+            txt += f"<td>{licencia}</td>"
             txt += "</tr>"
 
         txt += "</table><center>"
@@ -630,9 +638,9 @@ class ThanksTo:
         txt += "</tr>"
         for name, autor, url in self.list_engines(orden):
             txt += "<tr>"
-            txt += "<td>%s</td>" % name
-            txt += "<td>%s</td>" % autor
-            txt += '<td><a href="%s">%s</a></td>' % (url, url)
+            txt += f"<td>{name}</td>"
+            txt += f"<td>{autor}</td>"
+            txt += f'<td><a href="{url}">{url}</a></td>'
             txt += "</tr>"
         txt += self.table_end()
         return txt
@@ -645,13 +653,13 @@ class ThanksTo:
                 "https://www.jordigonzalezboada.com/ajedrez/aperturas.html",
             ),
             ("PGN Mentor", "https://www.pgnmentor.com/files.html"),
-            ("Dann Corbit", "http://cap.connx.com/"),
+            ("Dann Corbit", "https://www.chessprogramming.org/Dann_Corbit"),
             ("The Week in Chess", "https://theweekinchess.com/"),
             ("Wikipedia", "https://en.wikipedia.org/wiki/List_of_chess_games"),
             ("fics", "https://www.ficsgames.org/download.html"),
-            ("Norman Pollock", "http://www.nk-qy.info/40h/"),
+            ("Norman Pollock", ""),
             (
-                "STS<br>" + _X(_("Created by %1"), "Dann Corbit, Swaminathan"),
+                f"STS<br>{_X(_('Created by %1'), 'Dann Corbit, Swaminathan')}",
                 "https://sites.google.com/site/strategictestsuite/about",
             ),
             ("liChess database", "https://database.lichess.org"),
@@ -660,8 +668,8 @@ class ThanksTo:
         txt = '<center><table border="1" cellpadding="5" cellspacing="0" >'
         for nom, web in li:
             txt += "<tr>"
-            txt += "<th>%s</th>" % nom
-            txt += '<td><a href="%s">%s</a></td>' % (web, web)
+            txt += f"<th>{nom}</th>"
+            txt += f'<td><a href="{web}">{web}</a></td>'
             txt += "</tr>"
         txt += "</table><center>"
         return txt
@@ -670,7 +678,7 @@ class ThanksTo:
         li = (
             (
                 _("Programming language"),
-                "Python 3.",
+                "Python 3.12+",
                 "https://www.python.org/",
                 "PSF License Agreement",
             ),
@@ -713,7 +721,8 @@ class ThanksTo:
             ),
             (
                 "cython",
-                "Stefan Behnel, Robert Bradshaw, Lisandro Dalcín,<br>Mark Florisson, Vitja Makarov, Dag Sverre Seljebotn",
+                "Stefan Behnel, Robert Bradshaw, Lisandro Dalcín,"
+                "<br>Mark Florisson, Vitja Makarov, Dag Sverre Seljebotn",
                 "https://cython.org/",
                 "Apache Software License 2.0",
             ),
@@ -766,21 +775,28 @@ class ThanksTo:
                 "https://pypi.org/project/bs4",
                 "Mozilla Public License 2.0",
             ),
+            (
+                "py-cpuinfo",
+                "Matthew Brennan Jones",
+                "https://github.com/workhorsy/py-cpuinfo",
+                "MIT License",
+            ),
         )
         txt = self.table_ini()
 
         for tipo, nom, web, licencia in li:
             txt += "<tr>"
-            txt += "<th>%s</th>" % tipo
-            txt += "<td><center>%s</center></td>" % nom
-            txt += '<td><a href="%s">%s</a></td>' % (web, web)
-            txt += '<td>%s</td>' % licencia
+            txt += f"<th>{tipo}</th>"
+            txt += f"<td><center>{nom}</center></td>"
+            txt += f'<td><a href="{web}">{web}</a></td>'
+            txt += f'<td>{licencia}</td>'
             txt += "</tr>"
 
         txt += self.table_end()
         return txt
 
-    def dedicated(self):
+    @staticmethod
+    def dedicated():
         # db_path = Code.path_resource("IntFiles", "dedicated10.sqlite")
         #
         # with UtilSQL.DictSQL(db_path) as db:

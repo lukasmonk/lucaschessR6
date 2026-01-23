@@ -10,5 +10,6 @@ urllib3>=2.1.0
 idna>=3.6
 certifi>=2023.11.17
 beautifulsoup4>=4.12.3
+py-cpuinfo>=9.0.0
 
 

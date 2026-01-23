@@ -13,16 +13,16 @@ class WRemoveCommentsVariations(LCDialog.LCDialog):
 
         self.ok = False
 
-        self.lb_title = Controles.LB(self, _("Remove") + ":").set_font_type(puntos=14, peso=700)
+        self.lb_title = Controles.LB(self, f"{_('Remove')}:").set_font_type(puntos=14, peso=700)
 
         self.chb_variations = Controles.CHB(self, _("Variations"), self.rem.rem_variations)
-        self.chb_nags = Controles.CHB(self, _("Ratings") + " (NAGs)", self.rem.rem_nags)
+        self.chb_nags = Controles.CHB(self, f"{_('Ratings')} (NAGs)", self.rem.rem_nags)
         self.chb_analysis = Controles.CHB(self, _("Analysis"), self.rem.rem_analysis)
         self.chb_themes = Controles.CHB(self, _("Themes"), self.rem.rem_themes)
         self.chb_comments = Controles.CHB(self, _("Comments"), self.rem.rem_comments)
-        self.chb_comments.capture_changes(self, self.changes_done)
+        self.chb_comments.capture_changes(self.changes_done)
         self.chb_brackets = Controles.CHB(self, _("Brackets in comments"), self.rem.rem_brackets)
-        self.chb_brackets.capture_changes(self, self.changes_done)
+        self.chb_brackets.capture_changes(self.changes_done)
         self.chb_clk = Controles.CHB(self, "[%clk ...]", self.rem.rem_clk)
         self.chb_emt = Controles.CHB(self, "[%emt ...]", self.rem.rem_emt)
         self.chb_eval = Controles.CHB(self, "[%eval ...]", self.rem.rem_eval)
@@ -237,7 +237,7 @@ class RemoveCommentsVariations:
         # texto = re.sub(rf'%{comando}\s+[^\]\s]+(\s+|\])]*', '', texto)
 
         # Eliminar corchetes vacíos
-        texto = re.sub(r'\[ *\]', '', texto)
+        texto = re.sub(r'\[\s*]', '', texto)
 
         # Limpiar espacios extra dentro de los corchetes restantes
         # texto = re.sub(r'\[ +', '[', texto)

@@ -25,7 +25,7 @@ class OpeningPol:
             si_ptz = 1 <= max_nivel <= 2
         self.file = Code.tbookPTZ if si_ptz else Code.tbook
         self.book = Polyglot.Polyglot()
-        self.activa = True
+        self.activate = True
         self.max_level = max_nivel * 2
         self.nivel_actual = 0
         self.si_obligatoria = False
@@ -46,15 +46,15 @@ class OpeningPol:
     def run_engine(self, fen):
         self.nivel_actual += 1
         if self.nivel_actual > self.max_level:
-            self.activa = False
+            self.activate = False
             return False, None, None, None
 
-        if not self.activa:
+        if not self.activate:
             return False, None, None, None
 
         entry = self.lee_random(fen)
         if entry is None:
-            self.activa = False
+            self.activate = False
             return False, None, None, None
 
         pv = entry.pv()
@@ -62,7 +62,7 @@ class OpeningPol:
         return True, pv[:2], pv[2:4], pv[4:]
 
     def check_human(self, fen, from_sq, to_sq):
-        if not self.activa:
+        if not self.activate:
             return False
 
         li = self.book.lista(self.file, fen)
@@ -101,14 +101,14 @@ class JuegaOpening:
         self.dicFEN = {}
         for move in p.li_moves:
             self.dicFEN[move.position_before.fen()] = move
-        self.activa = True
+        self.activate = True
 
     def run_engine(self, fen):
         try:
             move = self.dicFEN[fen]
             return True, move.from_sq, move.to_sq, move.promotion
         except:
-            self.activa = False
+            self.activate = False
             return False, None, None, None
 
     def check_human(self, fen, from_sq, to_sq):
@@ -116,12 +116,12 @@ class JuegaOpening:
             move = self.dicFEN[fen]
             return from_sq == move.from_sq and to_sq == move.to_sq
         else:
-            self.activa = False
+            self.activate = False
             return False
 
     def from_to_active(self, fen):
         if fen in self.dicFEN:
             move = self.dicFEN[fen]
             return move.from_sq, move.to_sq, move.promotion
-        self.activa = False
+        self.activate = False
         return None, None, None

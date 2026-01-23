@@ -1,7 +1,8 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import BOOK_RANDOM_UNIFORM, ENG_WICKER
+from Code.Engines import EnginesMicElo
 
 
 def read_wicker_engines():
@@ -29,10 +30,11 @@ def read_wicker_engines():
 
         engine = configuration.engines.dic_engines().get(nom_base_engine)
         if engine:
-            eng = engine.clone()
+            eng = EnginesMicElo.EngineTourneys()
+            eng.read_engine(engine)
             eng.name = _SP(alias)
             eng.id_info = id_info
-            eng.alias = alias
+            eng.key = alias
             eng.elo = elo
             eng.liUCI = li_uci
             eng.book = book

@@ -23,7 +23,7 @@ class WRunCounts(LCDialog.LCDialog):
         conf_board = self.configuration.config_board("RUNCOUNTS", 64)
 
         self.board = Board2.BoardEstaticoMensaje(self, conf_board, None)
-        self.board.crea()
+        self.board.draw_window()
 
         # Rotulo informacion
         self.lb_info_game = Controles.LB(
@@ -38,10 +38,12 @@ class WRunCounts(LCDialog.LCDialog):
 
         ly = Colocacion.H().relleno().control(self.ed_moves).relleno()
 
-        self.gb_counts = Controles.GB(self, _("Number of moves"), ly).set_font(Controles.FontType(puntos=10, peso=75))
+        self.gb_counts = Controles.GB(self, _("Number of movements"), ly).set_font(
+            Controles.FontType(puntos=10, peso=75)
+        )
 
         self.lb_result = (
-            Controles.LB(self).set_font_type(puntos=10, peso=500).relative_width(254).altoFijo(32).set_wrap()
+            Controles.LB(self).set_font_type(puntos=10, peso=500).relative_width(254).fixed_height(32).set_wrap()
         )
         self.lb_info = (
             Controles.LB(self)
@@ -52,7 +54,7 @@ class WRunCounts(LCDialog.LCDialog):
 
         # Botones
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Begin"), Iconos.Empezar(), self.begin),
             (_("Verify"), Iconos.Check(), self.verify),
@@ -64,7 +66,7 @@ class WRunCounts(LCDialog.LCDialog):
             style=QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
             icon_size=32,
         )
-        self.show_tb(self.terminar, self.begin)
+        self.show_tb(self.finalize, self.begin)
 
         ly_right = (
             Colocacion.V()
@@ -126,7 +128,7 @@ class WRunCounts(LCDialog.LCDialog):
         self.save_video()
         event.accept()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
@@ -167,7 +169,7 @@ class WRunCounts(LCDialog.LCDialog):
                 QTUtils.refresh_gui()
 
         # Ponemos el toolbar
-        self.show_tb(self.verify, self.terminar)
+        self.show_tb(self.verify, self.finalize)
 
         # Activamos capturas
         self.gb_counts.setEnabled(True)
@@ -194,10 +196,10 @@ class WRunCounts(LCDialog.LCDialog):
             if (self.count.current_posmove + self.count.current_depth) >= (len(self.count.game) + 1):
                 QTMessages.message_result_win(
                     self,
-                    _("Training finished") + "<br><br>" + _('Congratulations, goal achieved'),
+                    f"{_('Training finished')}<br><br>{_('Congratulations, goal achieved')}",
                 )
                 self.db_counts.change_count_capture(self.count)
-                self.terminar()
+                self.finalize()
                 return
             self.lb_result.set_text("%s (%d)" % (_("Right, go to the next level of depth"), self.count.current_depth))
             self.lb_result.set_foreground("green")
@@ -221,7 +223,7 @@ class WRunCounts(LCDialog.LCDialog):
                 self.lb_result.set_foreground("red")
             self.board.set_position(self.position_obj)
             for x in moves:
-                self.board.creaFlechaTmp(x.xfrom(), x.xto(), False)
+                self.board.show_one_arrow_temp(x.xfrom(), x.xto(), False)
 
         self.db_counts.change_count_capture(self.count)
-        self.show_tb(self.terminar, self.seguir)
+        self.show_tb(self.finalize, self.seguir)

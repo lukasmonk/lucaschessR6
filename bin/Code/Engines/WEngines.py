@@ -4,7 +4,7 @@ import random
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
     BOOK_RANDOM_PROPORTIONAL,
@@ -169,11 +169,11 @@ class WSelectEngineElo(LCDialog.LCDialog):
         self.grid = Grid.Grid(
             self,
             o_columns,
-            siSelecFilas=True,
-            siCabeceraMovible=False,
-            altoFila=Code.configuration.x_pgn_rowheight,
+            complete_row_select=True,
+            is_column_header_movable=False,
+            heigh_row=Code.configuration.x_pgn_rowheight,
         )
-        n = self.grid.anchoColumnas()
+        n = self.grid.width_columns_displayables()
         self.grid.setMinimumWidth(n + 20)
         self.register_grid(self.grid)
 
@@ -257,33 +257,33 @@ class WSelectEngineElo(LCDialog.LCDialog):
         else:
             QTMessages.message_error(self, _("There is not a playable engine between these values"))
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.elegir()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liMotoresActivos)
 
-    def grid_wheel_event(self, quien, forward):
+    def grid_wheel_event(self, _quien, forward):
         n = len(self.liMotoresActivos)
-        f, c = self.grid.posActualN()
+        f, c = self.grid.current_position_num()
         f += -1 if forward else +1
         if 0 <= f < n:
             self.grid.goto(f, c)
 
-    def grid_color_fondo(self, grid, row, o_column):
+    def grid_color_fondo(self, _grid, row, _obj_column):
         mt = self.liMotoresActivos[row]
         if mt.siOut:
             return self.colorNoJugable
         else:
             return self.colorMenor if mt.elo < self.elo else self.colorMayor
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         mt = self.liMotoresActivos[row]
-        key = o_column.key
+        key = obj_column.key
         if key == "NUMBER":
             valor = "%2d" % mt.number
         elif key == "ENGINE":
-            valor = " " + mt.name
+            valor = f" {mt.name}"
         elif key == "DEPTH":
             valor = str(mt.depth) if mt.depth else ""
         elif key == "ELO":
@@ -294,11 +294,11 @@ class WSelectEngineElo(LCDialog.LCDialog):
             if not mt.siJugable:
                 return "x"
             if key == "GANA":
-                pts = mt.pgana
+                pts = mt.points_win
             elif key == "TABLAS":
-                pts = mt.ptablas
+                pts = mt.points_draw
             else:  # if key == "PIERDE":
-                pts = mt.ppierde
+                pts = mt.points_lose
 
             valor = "%+d" % pts
 
@@ -306,7 +306,7 @@ class WSelectEngineElo(LCDialog.LCDialog):
 
 
 def select_engine_elo(manager, elo):
-    titulo = _("Lucas-Elo") + ". " + _("Choose the opponent")
+    titulo = f"{_('Lucas-Elo')}. {_('Choose the opponent')}"
     icono = Iconos.Elo()
     w = WSelectEngineElo(manager, elo, titulo, icono, "ELO")
     if w.exec():
@@ -316,7 +316,7 @@ def select_engine_elo(manager, elo):
 
 
 def select_engine_micelo(manager, elo):
-    titulo = _("Club players competition") + ". " + _("Choose the opponent")
+    titulo = f"{_('Club players competition')}. {_('Choose the opponent')}"
     icono = Iconos.EloTimed()
     w = WSelectEngineElo(manager, elo, titulo, icono, "MICELO")
     if w.exec():
@@ -326,7 +326,7 @@ def select_engine_micelo(manager, elo):
 
 
 def select_engine_wicker(manager, elo):
-    titulo = _("The Wicker Park Tourney") + ". " + _("Choose the opponent")
+    titulo = f"{_('The Wicker Park Tourney')}. {_('Choose the opponent')}"
     icono = Iconos.EloTimed()
     w = WSelectEngineElo(manager, elo, titulo, icono, "WICKER")
     if w.exec():
@@ -360,36 +360,36 @@ class WEngineExtend(QtWidgets.QDialog):
         tb = QTDialogs.tb_accept_cancel(self)
 
         lb_alias = Controles.LB2P(self, _("Alias"))
-        self.edAlias = Controles.ED(self, engine.alias).anchoMinimo(360)
+        self.edAlias = Controles.ED(self, engine.key).minimum_width(360)
 
         lb_nombre = Controles.LB2P(self, _("Name"))
-        self.edNombre = Controles.ED(self, engine.name).anchoMinimo(360)
+        self.edNombre = Controles.ED(self, engine.name).minimum_width(360)
 
-        lb_info = Controles.LB(self, _("Information") + ": ")
-        self.emInfo = Controles.EM(self, engine.id_info, siHTML=False).anchoMinimo(360).altoFijo(60)
+        lb_info = Controles.LB(self, f"{_('Information')}: ")
+        self.emInfo = Controles.EM(self, engine.id_info, is_html=False).minimum_width(360).fixed_height(60)
 
         lb_elo = Controles.LB(self, "ELO: ")
         self.sbElo = Controles.SB(self, engine.elo, 0, 4000)
 
-        lb_exe = Controles.LB(self, "%s: %s" % (_("File"), Util.relative_path(engine.path_exe)))
+        lb_exe = Controles.LB(self, f"{_('File')}: {Util.relative_path(engine.path_exe)}")
 
         if is_tournament:
             lb_depth = Controles.LB2P(self, _("Max depth"))
             self.sbDepth = Controles.SB(self, engine.depth, 0, 50)
 
             lb_time = Controles.LB2P(self, _("Maximum seconds to think"))
-            self.edTime = Controles.ED(self, "").ponFloat(engine.time).relative_width(60).align_right()
+            self.edTime = Controles.ED(self, "").set_float(engine.time).relative_width(60).align_right()
 
             lb_nodes = Controles.LB2P(self, _("Fixed nodes"))
-            self.edNodes = Controles.ED(self, "").ponInt(engine.nodes).relative_width(80).align_right()
+            self.edNodes = Controles.ED(self, "").set_integer(engine.nodes).relative_width(80).align_right()
 
-            lb_book = Controles.LB(self, _("Opening book") + ": ")
+            lb_book = Controles.LB(self, f"{_('Opening book')}: ")
             self.list_books = Books.ListBooks()
             li = [(x.name, x.path) for x in self.list_books.lista]
             li.insert(0, (f'<{_("None")}>', "-"))
             li.insert(0, (f'<{_("By default")}>', "*"))
             self.cbBooks = Controles.CB(self, li, engine.book)
-            bt_nuevo_book = Controles.PB(self, "", self.new_book, plano=False).ponIcono(Iconos.Nuevo(), icon_size=16)
+            bt_nuevo_book = Controles.PB(self, "", self.new_book, plano=False).set_icono(Iconos.Nuevo(), icon_size=16)
             # # Respuesta rival
             li = (
                 (_("Always the highest percentage"), BOOK_BEST_MOVE),
@@ -447,8 +447,8 @@ class WEngineExtend(QtWidgets.QDialog):
             b = Books.Book("P", name, fbin, False)
             self.list_books.nuevo(b)
             li = [(x.name, x.path) for x in self.list_books.lista]
-            li.insert(0, ("* " + _("Engine book"), "-"))
-            li.insert(0, ("* " + _("By default"), "*"))
+            li.insert(0, (f"* {_('Engine book')}", "-"))
+            li.insert(0, (f"* {_('By default')}", "*"))
             self.cbBooks.rehacer(li, b.path)
 
     def aceptar(self):
@@ -459,7 +459,7 @@ class WEngineExtend(QtWidgets.QDialog):
 
         # Comprobamos que no se repita el alias
         for engine in self.list_engines:
-            if (self.external_engine != engine) and (engine.alias == alias):
+            if (self.external_engine != engine) and (engine.key == alias):
                 QTMessages.message_error(
                     self,
                     _(
@@ -467,7 +467,7 @@ class WEngineExtend(QtWidgets.QDialog):
                     ),
                 )
                 return
-        self.external_engine.alias = alias
+        self.external_engine.key = alias
         name = self.edNombre.texto().strip()
         self.external_engine.name = name if name else alias
         self.external_engine.id_info = self.emInfo.texto()
@@ -475,8 +475,8 @@ class WEngineExtend(QtWidgets.QDialog):
 
         if self.is_tournament:
             self.external_engine.depth = self.sbDepth.valor()
-            self.external_engine.time = self.edTime.textoFloat()
-            self.external_engine.nodes = self.edNodes.textoInt()
+            self.external_engine.time = self.edTime.text_to_float()
+            self.external_engine.nodes = self.edNodes.text_to_integer()
             pbook = self.cbBooks.valor()
             self.external_engine.book = pbook
             self.external_engine.bookRR = self.cbBooksRR.valor()
@@ -546,7 +546,7 @@ def wgen_options_engine(owner, engine):
     layout = Colocacion.G()
     for opcion in engine.li_uci_options_editable():
         tipo = opcion.tipo
-        lb = Controles.LB(owner, opcion.name + ":").align_right()
+        lb = Controles.LB(owner, f"{opcion.name}:").align_right()
         control = None
         if tipo == "spin":
             control = Controles.SB(
@@ -606,6 +606,7 @@ def wsave_options_engine_test(engine, controls):
         opcion.valor = valor
         if opcion.name == "MultiPV":
             engine.maxMultiPV = opcion.maximo
+
 
 def wsave_options_engine(engine):
     li_uci = engine.liUCI = []

@@ -6,9 +6,15 @@ from Code.Base.Constantes import INFINITE
 from Code.Board import BoardBlocks
 
 
-class FlechaSC(BoardBlocks.BloqueEspSC):
-    def __init__(self, escena, bloqueFlecha, routine_if_pressed=None):
-        super(FlechaSC, self).__init__(escena, bloqueFlecha)
+class ArrowSC(BoardBlocks.BloqueEspSC):
+    siSizeTop: bool
+    siSizeBottom: bool
+    is_move: bool
+    exp_x: float
+    exp_y: float
+
+    def __init__(self, escena, block_arrow, routine_if_pressed=None):
+        super(ArrowSC, self).__init__(escena, block_arrow)
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None
 
@@ -23,18 +29,21 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
         self.routine_if_pressed_argum = carga
 
     def set_a1h8(self, a1h8):
-        self.bloqueDatos.a1h8 = a1h8
+        self.block_data.a1h8 = a1h8
         self.physical_pos2xy()
+
+    def get_a1h8(self):
+        return self.block_data.a1h8
 
     def reset(self):
         self.physical_pos2xy()
-        bf = self.bloqueDatos
+        bf = self.block_data
         self.setOpacity(bf.opacity)
         self.setZValue(bf.physical_pos.orden)
         self.update()
 
     def physical_pos2xy(self):
-        bf = self.bloqueDatos
+        bf = self.block_data
         physical_pos = bf.physical_pos
         ac = self.board.width_square
         tf = self.board.tamFrontera
@@ -67,7 +76,7 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
         physical_pos.alto = hy + tf / 2 if df != hf else dy
 
     def xy2physical_pos(self):
-        bf = self.bloqueDatos
+        bf = self.block_data
         physical_pos = bf.physical_pos
         ac = bf.width_square
         tf = self.board.tamFrontera
@@ -83,21 +92,24 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
         def bien(fc):
             return (fc < 9) and (fc > 0)
 
-        if bien(dc) and bien(df) and bien(hc) and bien(hf):
-            if dc != hc or df != hf:
-                bf.a1h8 = self.board.fc_a1h8(df, dc, hf, hc)
+        if bien(dc) and bien(df) and bien(hc) and bien(hf) and (dc != hc or df != hf):
+            bf.a1h8 = self.board.fc_a1h8(df, dc, hf, hc)
 
         self.physical_pos2xy()
 
     def contain(self, p):
         p = self.mapFromScene(p)
-        for x in (self.poligonoSizeTop, self.poligonoSizeBottom, self.poligonoMove):
-            if x:
-                if x.containsPoint(p, QtCore.Qt.FillRule.OddEvenFill):
-                    return True
-        return False
+        return any(
+            x and x.containsPoint(p, QtCore.Qt.FillRule.OddEvenFill)
+            for x in (
+                self.poligonoSizeTop,
+                self.poligonoSizeBottom,
+                self.poligonoMove,
+            )
+        )
 
-    def name(self):
+    @staticmethod
+    def name():
         return _("Arrow")
 
     def mousePressEvent(self, event):
@@ -105,11 +117,11 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
         if self.poligonoSizeTop:
             self.siSizeTop = self.poligonoSizeTop.containsPoint(event.pos(), QtCore.Qt.FillRule.OddEvenFill)
             self.siSizeBottom = self.poligonoSizeBottom.containsPoint(event.pos(), QtCore.Qt.FillRule.OddEvenFill)
-            self.siMove = self.poligonoMove.containsPoint(event.pos(), QtCore.Qt.FillRule.OddEvenFill)
+            self.is_move = self.poligonoMove.containsPoint(event.pos(), QtCore.Qt.FillRule.OddEvenFill)
 
         p = event.scenePos()
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouse_press_ext(self, event):
         p = event.pos()
@@ -117,14 +129,14 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
         if self.poligonoSizeTop:
             self.siSizeTop = self.poligonoSizeTop.containsPoint(p, QtCore.Qt.FillRule.OddEvenFill)
             self.siSizeBottom = self.poligonoSizeBottom.containsPoint(p, QtCore.Qt.FillRule.OddEvenFill)
-            self.siMove = self.poligonoMove.containsPoint(p, QtCore.Qt.FillRule.OddEvenFill)
+            self.is_move = self.poligonoMove.containsPoint(p, QtCore.Qt.FillRule.OddEvenFill)
 
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouseMoveEvent(self, event):
         event.ignore()
-        if not (self.siMove or self.siSizeTop or self.siSizeBottom):
+        if not (self.is_move or self.siSizeTop or self.siSizeBottom):
             return
 
         p = event.pos()
@@ -133,14 +145,14 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
         x = p.x()
         y = p.y()
 
-        dx = x - self.expX
-        dy = y - self.expY
+        dx = x - self.exp_x
+        dy = y - self.exp_y
 
-        self.expX = x
-        self.expY = y
+        self.exp_x = x
+        self.exp_y = y
 
-        physical_pos = self.bloqueDatos.physical_pos
-        if self.siMove:
+        physical_pos = self.block_data.physical_pos
+        if self.is_move:
             physical_pos.x += dx
             physical_pos.y += dy
             physical_pos.ancho += dx
@@ -154,19 +166,19 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
 
         self.escena.update()
 
-    def mouseMoveExt(self, event):
+    def mouse_move_ext(self, event):
         p = event.pos()
         p = self.mapFromScene(p)
         x = p.x()
         y = p.y()
 
-        dx = x - self.expX
-        dy = y - self.expY
+        dx = x - self.exp_x
+        dy = y - self.exp_y
 
-        self.expX = x
-        self.expY = y
+        self.exp_x = x
+        self.exp_y = y
 
-        physical_pos = self.bloqueDatos.physical_pos
+        physical_pos = self.block_data.physical_pos
         physical_pos.ancho += dx
         physical_pos.alto += dy
 
@@ -174,12 +186,12 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
 
     def mouseReleaseEvent(self, event):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
-        if self.siActivo:
-            if self.siMove or self.siSizeTop or self.siSizeBottom:
+        if self.is_activated:
+            if self.is_move or self.siSizeTop or self.siSizeBottom:
                 self.xy2physical_pos()
                 self.escena.update()
-                self.siMove = self.siSizeTop = self.siSizeBottom = False
-            self.activa(False)
+                self.is_move = self.siSizeTop = self.siSizeBottom = False
+            self.activate(False)
 
         if self.routine_if_pressed:
             if self.routine_if_pressed_argum:
@@ -187,14 +199,14 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
             else:
                 self.routine_if_pressed()
 
-    def mouseReleaseExt(self):
+    def mouse_release_ext(self):
         self.xy2physical_pos()
         self.escena.update()
-        self.siMove = self.siSizeTop = self.siSizeBottom = False
-        self.activa(False)
+        self.is_move = self.siSizeTop = self.siSizeBottom = False
+        self.activate(False)
 
     def pixmap(self):
-        bf = self.bloqueDatos
+        bf = self.block_data
 
         a1h8 = bf.a1h8
         destino = bf.destino
@@ -222,28 +234,13 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
 
         return pm1
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
 
-        bf = self.bloqueDatos
+        bf = self.block_data
 
-        resp = paintArrow(painter, bf)
-        if resp:
+        if resp := paint_arrow(painter, bf):
             self.poligonoSizeBottom, self.poligonoMove, self.poligonoSizeTop = resp
-            # document_pgn = QtGui.QTextDocument()
-            # post_pz = "1"
-            # document_pgn.setHtml(post_pz)
-            # w_pgn = document_pgn.idealWidth()
-            # painter.save()
-            # physical_pos = bf.physical_pos
-            # dx = physical_pos.x
-            # dy = physical_pos.y
-            # hx = physical_pos.ancho
-            # hy = physical_pos.alto
-            #
-            # painter.translate(hx, hy)
-            # document_pgn.drawContents(painter)
-            # painter.restore()
-            if self.siActivo:
+            if self.is_activated:
                 pen = QtGui.QPen()
                 pen.setColor(QtGui.QColor("blue"))
                 pen.setWidth(2)
@@ -255,7 +252,7 @@ class FlechaSC(BoardBlocks.BloqueEspSC):
                 painter.drawPolygon(self.poligonoSizeTop)
 
 
-def paintArrow(painter, bf):
+def paint_arrow(painter, bf):
     physical_pos = bf.physical_pos
     dx = physical_pos.x
     dy = physical_pos.y
@@ -265,7 +262,7 @@ def paintArrow(painter, bf):
     p_ini = QtCore.QPointF(dx, dy)
     p_fin = QtCore.QPointF(hx, hy)
     linea = QtCore.QLineF(p_ini, p_fin)
-    tamLinea = linea.length()
+    line_size = linea.length()
     if linea.isNull():
         return None
 
@@ -284,15 +281,15 @@ def paintArrow(painter, bf):
     ancho = float(bf.ancho) * xk
     vuelo = float(bf.vuelo) * xk
 
-    altoCab = float(bf.altocabeza) * xk
-    if tamLinea * 0.65 < altoCab:
-        nv = tamLinea * 0.65
-        prc = nv / altoCab
-        altoCab = nv
+    alto_cab = float(bf.altocabeza) * xk
+    if line_size * 0.65 < alto_cab:
+        nv = line_size * 0.65
+        prc = nv / alto_cab
+        alto_cab = nv
         ancho *= prc
         vuelo *= prc
 
-    xp = 1.0 - float(altoCab) / tamLinea
+    xp = 1.0 - float(alto_cab) / line_size
     pbc = linea.pointAt(xp)  # base de la cabeza
 
     # Usamos una linea a 90 grados para calcular los puntos del final de la cabeza de arrow
@@ -303,7 +300,7 @@ def paintArrow(painter, bf):
     l90.translate(p_ala1 - l90.p2())  # La colocamos que empiece en ala1
     p_ala2 = l90.p1()  # final del ala de un lado
 
-    xp = 1.0 - float(altoCab - bf.descuelgue) / tamLinea
+    xp = 1.0 - float(alto_cab - bf.descuelgue) / line_size
     p_basecab = linea.pointAt(xp)  # Punto teniendo en cuenta el angulo en la base de la cabeza, valido para tipo c y p
 
     # Puntos de la base, se calculan aunque no se dibujen para determinar el poligono de control
@@ -339,16 +336,16 @@ def paintArrow(painter, bf):
     xp_final1 = xl90.p1()
     xp_final2 = xl90.p2()
 
-    poligonoSizeBottom = QtGui.QPolygonF([xp_base1, xp_medio1b, xp_medio2b, xp_base2, xp_base1])
-    poligonoMove = QtGui.QPolygonF([xp_medio1b, xp_medio1t, xp_medio2t, xp_medio2b, xp_medio1b])
-    poligonoSizeTop = QtGui.QPolygonF([xp_medio1t, xp_final1, xp_final2, xp_medio2t, xp_medio1t])
+    poligono_size_bottom = QtGui.QPolygonF([xp_base1, xp_medio1b, xp_medio2b, xp_base2, xp_base1])
+    poligono_move = QtGui.QPolygonF([xp_medio1b, xp_medio1t, xp_medio2t, xp_medio2b, xp_medio1b])
+    poligono_size_top = QtGui.QPolygonF([xp_medio1t, xp_final1, xp_final2, xp_medio2t, xp_medio1t])
 
     forma = bf.forma
     # Abierta, forma normal
     if forma == "a":
         painter.drawLine(linea)
 
-        if altoCab:
+        if alto_cab:
             lf = QtCore.QLineF(p_fin, p_ala1)
             painter.drawLine(lf)
 
@@ -361,7 +358,7 @@ def paintArrow(painter, bf):
             if bf.colorinterior2 >= 0:
                 color2 = QtGui.QColor(bf.colorinterior2)
                 x, y = p_ini.x(), p_ini.y()
-                gradient = QtGui.QLinearGradient(x, y, x, y - tamLinea - altoCab)
+                gradient = QtGui.QLinearGradient(x, y, x, y - line_size - alto_cab)
                 gradient.setColorAt(0.0, color)
                 gradient.setColorAt(1.0, color2)
                 painter.setBrush(QtGui.QBrush(gradient))
@@ -413,10 +410,10 @@ def paintArrow(painter, bf):
                     )
                 )
 
-    return poligonoSizeBottom, poligonoMove, poligonoSizeTop
+    return poligono_size_bottom, poligono_move, poligono_size_top
 
 
-def pixmapArrow(bf, width, height):
+def pixmap_arrow(bf, width, height):
     bf = copy.deepcopy(bf)
 
     pm = QtGui.QPixmap(width, height)
@@ -426,7 +423,7 @@ def pixmapArrow(bf, width, height):
     painter.begin(pm)
     painter.setRenderHint(painter.RenderHint.Antialiasing, True)
     painter.setRenderHint(painter.RenderHint.SmoothPixmapTransform, True)
-    paintArrow(painter, bf)
+    paint_arrow(painter, bf)
     painter.end()
 
     return pm

@@ -5,7 +5,7 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Position
 from Code.Board import Board
 from Code.Engines import EngineManagerPlay, Engines, SelectEngines, WEngines
@@ -28,7 +28,7 @@ from Code.STS import STS
 
 class WRun(LCDialog.LCDialog):
     def __init__(self, w_parent, xsts, work, procesador, with_board):
-        titulo = "%s - %s - %s" % (xsts.name, work.ref, work.path_to_exe())
+        titulo = f"{xsts.name} - {work.ref} - {work.path_to_exe()}"
         icono = Iconos.STS()
         extparam = "runsts"
         if with_board:
@@ -41,7 +41,7 @@ class WRun(LCDialog.LCDialog):
 
         engine: Engines.Engine = work.config_engine()
         self.engine_manager: EngineManagerPlay.EngineManagerPlay = procesador.create_manager_engine(
-            engine, work.seconds * 1000, work.depth, work.nodes, engine.multiPV
+            engine, int(work.seconds * 1000), work.depth, work.nodes, engine.multiPV
         )
 
         self.playing = False
@@ -62,7 +62,7 @@ class WRun(LCDialog.LCDialog):
             # Board
             config_board = self.configuration.config_board("STS", 32)
             self.board = Board.Board(self, config_board)
-            self.board.crea()
+            self.board.draw_window()
 
         # Area resultados
         o_columns = Columnas.ListaColumnas()
@@ -79,7 +79,7 @@ class WRun(LCDialog.LCDialog):
                 reg = self.dworks[key]
                 o_columns.nueva(key, reg.title, 160, align_center=True)
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
 
         self.colorMax = ScreenUtils.qt_color("#840C24")
         self.colorOth = ScreenUtils.qt_color("#4668A6")
@@ -155,7 +155,7 @@ class WRun(LCDialog.LCDialog):
                 mov = rm.movimiento()
                 if mov:
                     if self.with_board:
-                        self.board.creaFlechaTmp(rm.from_sq, rm.to_sq, False)
+                        self.board.show_one_arrow_temp(rm.from_sq, rm.to_sq, False)
                     self.sts.set_result(self.work, self.ngroup, self.nfen, mov, t1)
                     self.grid.refresh()
             else:
@@ -174,20 +174,20 @@ class WRun(LCDialog.LCDialog):
     def dispatcher(self, rm):
         if self.with_board:
             if rm.from_sq:
-                self.board.creaFlechaTmp(rm.from_sq, rm.to_sq, False)
+                self.board.show_one_arrow_temp(rm.from_sq, rm.to_sq, False)
         return self.playing
 
     def grid_num_datos(self, grid):
         return len(self.sts.groups)
 
-    def grid_bold(self, grid, row, o_column):
-        column = o_column.key
+    def grid_bold(self, grid, row, obj_column):
+        column = obj_column.key
         if column.startswith("OTHER") or column == "WORK":
             return self.dworks[column].labels[row].is_max
         return False
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         group = self.sts.groups.group(row)
         if column == "GROUP":
             return group.name
@@ -197,12 +197,13 @@ class WRun(LCDialog.LCDialog):
             return self.sts.done_points(self.work, row)
         elif column.startswith("OTHER"):
             return self.dworks[column].labels[row].label
+        return None
 
     def read_work(self, work):
         tm = '%d"' % work.seconds if work.seconds else ""
         dp = "%d^" % work.depth if work.depth else ""
         r = Util.Record()
-        r.title = "%s %s%s" % (work.ref, tm, dp)
+        r.title = f"{work.ref} {tm}{dp}"
         r.labels = []
         for ng in range(len(self.sts.groups)):
             rl = Util.Record()
@@ -261,22 +262,22 @@ class WWork(QtWidgets.QDialog):
         tab = Controles.Tab()
 
         # Tab-basic --------------------------------------------------
-        lb_ref = Controles.LB(self, _("Reference") + ": ")
-        self.edRef = Controles.ED(self, work.ref).anchoMinimo(360)
+        lb_ref = Controles.LB(self, f"{_('Reference')}: ")
+        self.edRef = Controles.ED(self, work.ref).minimum_width(360)
 
         lb_info = Controles.LB2P(self, _("Information"))
-        self.emInfo = Controles.EM(self, work.info, siHTML=False).anchoMinimo(360).altoFijo(60)
+        self.emInfo = Controles.EM(self, work.info, is_html=False).minimum_width(360).fixed_height(60)
 
         lb_depth = Controles.LB2P(self, _("Max depth"))
-        self.sbDepth = Controles.ED(self).tipoInt(work.depth).relative_width(30)
+        self.sbDepth = Controles.ED(self).type_integer(work.depth).relative_width(30)
 
         lb_seconds = Controles.LB2P(self, _("Maximum seconds to think"))
-        self.sbSeconds = Controles.ED(self).tipoFloat(float(work.seconds), decimales=3).relative_width(60)
+        self.sbSeconds = Controles.ED(self).type_float(float(work.seconds), decimales=3).relative_width(60)
 
         lb_nodes = Controles.LB2P(self, _("Fixed nodes"))
-        self.sbNodes = Controles.ED(self).tipoInt(work.nodes).relative_width(60)
+        self.sbNodes = Controles.ED(self).type_integer(work.nodes).relative_width(60)
 
-        lb_sample = Controles.LB(self, _("Sample") + ": ")
+        lb_sample = Controles.LB(self, f"{_('Sample')}: ")
         self.sbIni = Controles.SB(self, work.ini + 1, 1, 100).capture_changes(self.changeSample)
         self.sbIni.isIni = True
         lb_guion = Controles.LB(self, _("to"))
@@ -309,7 +310,7 @@ class WWork(QtWidgets.QDialog):
         ly_an = Colocacion.H().control(bt_all).espacio(10).control(bt_none)
         self.liGroups = []
         ly = Colocacion.G()
-        ly.columnaVacia(1, 10)
+        ly.empty_column(1, 10)
         num = len(sts.groups)
         mitad = num / 2 + num % 2
 
@@ -353,9 +354,9 @@ class WWork(QtWidgets.QDialog):
     def aceptar(self):
         self.work.ref = self.edRef.texto()
         self.work.info = self.emInfo.texto()
-        self.work.depth = self.sbDepth.textoInt()
-        self.work.nodes = self.sbNodes.textoInt()
-        self.work.seconds = self.sbSeconds.textoFloat()
+        self.work.depth = self.sbDepth.text_to_integer()
+        self.work.nodes = self.sbNodes.text_to_integer()
+        self.work.seconds = self.sbSeconds.text_to_float()
         self.work.ini = self.sbIni.valor() - 1
         self.work.end = self.sbEnd.valor() - 1
         me = self.work.engine
@@ -380,9 +381,9 @@ class WUnSTS(LCDialog.LCDialog):
 
         # Toolbar
         tb = Controles.TBrutina(self, icon_size=24)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("Run"), Iconos.Run(), self.wk_run, sep=False)
-        tb.new("+%s" % _("Board"), Iconos.Run2(), self.wk_run_with_board)
+        tb.new(f"+{_('Board')}", Iconos.Run2(), self.wk_run_with_board)
         tb.new(_("New"), Iconos.NuevoMas(), self.wk_new)
         tb.new(_("Import"), Iconos.Import8(), self.wk_import)
         tb.new(_("Edit"), Iconos.Modificar(), self.wk_edit)
@@ -406,7 +407,7 @@ class WUnSTS(LCDialog.LCDialog):
         for x in range(len(sts.groups)):
             group = sts.groups.group(x)
             o_columns.nueva("T%d" % x, group.name, 140, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
         self.register_grid(self.grid)
 
         # Layout
@@ -417,7 +418,7 @@ class WUnSTS(LCDialog.LCDialog):
 
         self.grid.gotop()
 
-    def terminar(self):
+    def finalize(self):
         self.procesador.close_engines()
         self.save_video()
         self.accept()
@@ -544,7 +545,7 @@ class WUnSTS(LCDialog.LCDialog):
             self.wk_new(work.clone())
 
     def wk_remove(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if li:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 li.sort(reverse=True)
@@ -556,9 +557,9 @@ class WUnSTS(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.sts.works)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, grid, row, obj_column):
         work = self.sts.works.lista[row]
-        column = o_column.key
+        column = obj_column.key
         if column == "POS":
             return str(row + 1)
         if column == "REF":
@@ -606,7 +607,7 @@ class WSTS(LCDialog.LCDialog):
         self.lista = self.leeSTS()
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("Select"), Iconos.Seleccionar(), self.modificar)
         tb.new(_("New"), Iconos.NuevoMas(), self.crear)
         tb.new(_("Rename"), Iconos.Rename(), self.rename)
@@ -622,7 +623,7 @@ class WSTS(LCDialog.LCDialog):
         o_columns.nueva("NOMBRE", _("Name"), 340)
         o_columns.nueva("FECHA", _("Date"), 120, align_center=True)
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
         self.register_grid(self.grid)
 
         lb = Controles.LB(
@@ -654,8 +655,8 @@ class WSTS(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.lista)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         name, fcreacion, fmanten = self.lista[row]
         if column == "NOMBRE":
             return name[:-4]
@@ -669,7 +670,7 @@ class WSTS(LCDialog.LCDialog):
                 tm.tm_min,
             )
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -705,8 +706,8 @@ class WSTS(LCDialog.LCDialog):
             nombreOri = self.nombreNum(n)
             nombreDest = self.edit_name(nombreOri)
             if nombreDest:
-                pathOri = Util.opj(self.carpetaSTS, nombreOri + ".sts")
-                pathDest = Util.opj(self.carpetaSTS, nombreDest + ".sts")
+                pathOri = Util.opj(self.carpetaSTS, f"{nombreOri}.sts")
+                pathDest = Util.opj(self.carpetaSTS, f"{nombreDest}.sts")
                 shutil.move(pathOri, pathDest)
                 self.reread()
 
@@ -718,7 +719,7 @@ class WSTS(LCDialog.LCDialog):
                 if name:
                     if not si_nuevo and previo == name:
                         return None
-                    path = Util.opj(self.carpetaSTS, name + ".sts")
+                    path = Util.opj(self.carpetaSTS, f"{name}.sts")
                     if os.path.isfile(path):
                         QTMessages.message_error(self, _("The file %s already exist") % name)
                         continue
@@ -737,7 +738,7 @@ class WSTS(LCDialog.LCDialog):
         if n >= 0:
             name = self.nombreNum(n)
             if QTMessages.pregunta(self, _X(_("Delete %1?"), name)):
-                path = Util.opj(self.carpetaSTS, name + ".sts")
+                path = Util.opj(self.carpetaSTS, f"{name}.sts")
                 os.remove(path)
                 self.reread()
 

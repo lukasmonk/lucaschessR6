@@ -29,10 +29,10 @@ class MainWindow(LCDialog.LCDialog):
         self.base = WBase.WBase(self, manager)
 
         self.siCapturas = False
-        self.informacionPGN = WInformation.Information(self)
+        self.pgn_information = WInformation.Information(self)
         self.siInformacionPGN = False
-        self.informacionPGN.hide()
-        self.register_splitter(self.informacionPGN.splitter, "InformacionPGN")
+        self.pgn_information.hide()
+        self.register_splitter(self.pgn_information.splitter, "InformacionPGN")
         self.with_analysis_bar = False
         self.base.analysis_bar.hide()
 
@@ -53,7 +53,7 @@ class MainWindow(LCDialog.LCDialog):
 
         self.splitter = splitter = QtWidgets.QSplitter(self)
         splitter.addWidget(self.base)
-        splitter.addWidget(self.informacionPGN)
+        splitter.addWidget(self.pgn_information)
 
         ly = Colocacion.H().control(splitter).margen(0)
 
@@ -111,19 +111,19 @@ class MainWindow(LCDialog.LCDialog):
                     self.manager.run_action(elem_tb)
                     return
 
-    def onTopWindow(self):
+    def on_top_window(self):
         self.onTop = not self.onTop
         self.muestra()
 
-    def activateTrayIcon(self, reason):
-        if reason == QtWidgets.QSystemTrayIcon.DoubleClick:
-            self.restauraTrayIcon()
+    def activate_tray_icon(self, reason):
+        if reason == QtWidgets.QSystemTrayIcon.ActivationReason.DoubleClick:
+            self.restore_tray_icon()
 
-    def restauraTrayIcon(self):
+    def restore_tray_icon(self):
         self.showNormal()
         self.trayIcon.hide()
 
-    def quitTrayIcon(self):
+    def quit_tray_icon(self):
         self.trayIcon.hide()
         self.final_processes()
         self.accept()
@@ -131,9 +131,11 @@ class MainWindow(LCDialog.LCDialog):
     def pressed_shortcut_f12(self):
         if not self.trayIcon:
             restore_action: QtGui.QAction = QtGui.QAction(
-                Iconos.PGN(), _("Show"), self, triggered=self.restauraTrayIcon
+                Iconos.PGN(), _("Show"), self, triggered=self.restore_tray_icon
             )
-            quit_action: QtGui.QAction = QtGui.QAction(Iconos.Terminar(), _("Quit"), self, triggered=self.quitTrayIcon)
+            quit_action: QtGui.QAction = QtGui.QAction(
+                Iconos.Terminar(), _("Quit"), self, triggered=self.quit_tray_icon
+            )
             tray_icon_menu = QtWidgets.QMenu(self)
             tray_icon_menu.addAction(restore_action)
             tray_icon_menu.addSeparator()
@@ -142,7 +144,7 @@ class MainWindow(LCDialog.LCDialog):
             self.trayIcon: QtWidgets.QSystemTrayIcon = QtWidgets.QSystemTrayIcon(self)
             self.trayIcon.setContextMenu(tray_icon_menu)
             self.trayIcon.setIcon(Iconos.Aplicacion64())
-            self.trayIcon.activated.connect(self.activateTrayIcon)
+            self.trayIcon.activated.connect(self.activate_tray_icon)
             self.trayIcon.hide()
 
         if self.trayIcon:
@@ -153,17 +155,17 @@ class MainWindow(LCDialog.LCDialog):
         self.activadoF11 = not self.activadoF11
         if self.activadoF11:
             if self.siInformacionPGN:
-                self.informacionPGN.save_width_parent()
+                self.pgn_information.save_width_parent()
             self.showFullScreen()
         else:
             self.showNormal()
             if self.siInformacionPGN:
-                self.informacionPGN.restore_width()
+                self.pgn_information.restore_width()
 
     def final_processes(self):
         self.stop_clock()
         self.board.close_visual_script()
-        self.board.terminar()
+        self.board.finalize()
 
         if self.work_translate:
             self.work_translate.close()
@@ -290,7 +292,7 @@ class MainWindow(LCDialog.LCDialog):
 
         QtCore.QTimer.singleShot(15, adjust)
 
-    def ajustaTamH(self):
+    def _adjust_tamh(self):
         if not (self.isMaximized() or self.board.siF11):
             for n in range(3):
                 self.adjustSize()
@@ -315,11 +317,11 @@ class MainWindow(LCDialog.LCDialog):
     def get_labels(self):
         return self.base.get_labels()
 
-    def ponWhiteBlack(self, white=None, black=None):
-        self.base.ponWhiteBlack(white, black)
+    def set_white_black(self, white=None, black=None):
+        self.base.set_white_black(white, black)
 
-    def set_activate_tutor(self, siActivar):
-        self.base.set_activate_tutor(siActivar)
+    def set_activate_tutor(self, ok):
+        self.base.set_activate_tutor(ok)
 
     def pon_toolbar(self, li_acciones, separator=True, shortcuts=False, with_eboard=False):
         return self.base.pon_toolbar(li_acciones, separator, shortcuts, with_eboard=with_eboard)
@@ -355,11 +357,11 @@ class MainWindow(LCDialog.LCDialog):
         self.base.pgn_refresh()
         self.base.pgn.gobottom(2 if is_white else 1)
 
-    def pgnColocate(self, fil, is_white):
+    def place_on_pgn_table(self, fil, is_white):
         col = 1 if is_white else 2
         self.base.pgn.goto(fil, col)
 
-    def pgnPosActual(self):
+    def pgn_pos_actual(self):
         return self.base.pgn.current_position()
 
     def hide_pgn(self):
@@ -372,46 +374,46 @@ class MainWindow(LCDialog.LCDialog):
         self.update()
         QTUtils.refresh_gui()
 
-    def activaCapturas(self, siActivar=None):
-        if siActivar is None:
+    def activate_captures(self, activate=None):
+        if activate is None:
             self.siCapturas = not self.siCapturas
             Code.configuration.x_captures_activate = self.siCapturas
             Code.configuration.graba()
         else:
-            self.siCapturas = siActivar
+            self.siCapturas = activate
         self.base.lb_capt_white.setVisible(self.siCapturas)
         self.base.lb_capt_black.setVisible(self.siCapturas)
         self.base.bt_capt.setVisible(self.siCapturas)
 
-    def active_information_pgn(self, siActivar=None):
-        if siActivar is None:
+    def active_information_pgn(self, activate=None):
+        if activate is None:
             self.siInformacionPGN = not self.siInformacionPGN
             Code.configuration.x_info_activate = self.siInformacionPGN
             Code.configuration.graba()
         else:
-            self.siInformacionPGN = siActivar
+            self.siInformacionPGN = activate
 
-        self.informacionPGN.activa(self.siInformacionPGN)
-        sizes = self.informacionPGN.splitter.sizes()
+        self.pgn_information.activate(self.siInformacionPGN)
+        sizes = self.pgn_information.splitter.sizes()
         for n, size in enumerate(sizes):
             if size == 0:
                 sizes[n] = 100
-                self.informacionPGN.splitter.setSizes(sizes)
+                self.pgn_information.splitter.setSizes(sizes)
                 break
         if not self.siInformacionPGN:
-            self.ajustaTamH()
+            self._adjust_tamh()
 
     def put_captures(self, dic):
         self.base.put_captures(dic)
 
-    def put_informationPGN(self, game, move, opening):
-        self.informacionPGN.set_move(game, move, opening)
+    def put_information_pgn(self, game, move, opening):
+        self.pgn_information.set_move(game, move, opening)
 
     def active_game(self, si_activar, si_reloj):
         self.base.active_game(si_activar, si_reloj)
         if not self.board.siF11:
             if not self.siInformacionPGN:
-                self.ajustaTamH()
+                self._adjust_tamh()
 
     def set_data_clock(self, bl, rb, ng, rn):
         self.base.set_data_clock(bl, rb, ng, rn)
@@ -446,8 +448,8 @@ class MainWindow(LCDialog.LCDialog):
             del self.timer
             self.timer = None
 
-    def columnas60(self, siPoner, cNivel=None, cWhite=None, cBlack=None):
-        self.base.columnas60(siPoner, cNivel, cWhite, cBlack)
+    def columnas60(self, activate, label_level=None, label_white=None, label_black=None):
+        self.base.columnas60(activate, label_level, label_white, label_black)
 
     def pressed_shortcut_alt_a(self):
         if self.manager and hasattr(self.manager, "alt_a"):
@@ -509,33 +511,33 @@ class MainWindow(LCDialog.LCDialog):
 
         for sp, name in self.liSplitters:
             sps = sp.sizes()
-            key = "SP_%s" % name
+            key = f"SP_{name}"
             if name == "InformacionPGN" and sps[1] == 0:
-                sps = self.informacionPGN.sp_sizes
+                sps = self.pgn_information.sp_sizes
                 if sps is None or sps[1] == 0:
                     dr = self.restore_dicvideo()
                     if dr and key in dr:
                         dic[key] = dr[key]
                         continue
                     sps = [1, 1]
-            dic["SP_%s" % name] = sps
+            dic[f"SP_{name}"] = sps
 
-        dic["WINFO_WIDTH"] = self.informacionPGN.width_saved
-        dic["WINFOPARENT_WIDTH"] = self.informacionPGN.parent_width_saved
+        dic["WINFO_WIDTH"] = self.pgn_information.width_saved
+        dic["WINFOPARENT_WIDTH"] = self.pgn_information.parent_width_saved
         Code.configuration.save_video(self.key_video, dic)
         return dic
 
     def xrestore_video(self):
         if self.restore_video():
             dic = self.restore_dicvideo()
-            self.informacionPGN.width_saved = dic.get("WINFO_WIDTH")
-            if self.informacionPGN.width_saved:
-                self.informacionPGN.resize(self.informacionPGN.width_saved, self.informacionPGN.height())
-            self.informacionPGN.parent_width_saved = dic.get("WINFOPARENT_WIDTH")
-            self.informacionPGN.sp_sizes = dic.get("SP_InformacionPGN")
-            if self.informacionPGN.sp_sizes:
+            self.pgn_information.width_saved = dic.get("WINFO_WIDTH")
+            if self.pgn_information.width_saved:
+                self.pgn_information.resize(self.pgn_information.width_saved, self.pgn_information.height())
+            self.pgn_information.parent_width_saved = dic.get("WINFOPARENT_WIDTH")
+            self.pgn_information.sp_sizes = dic.get("SP_InformacionPGN")
+            if self.pgn_information.sp_sizes:
                 try:
-                    self.informacionPGN.splitter.setSizes(self.informacionPGN.sp_sizes)
+                    self.pgn_information.splitter.setSizes(self.pgn_information.sp_sizes)
                 except TypeError:
                     pass
 
@@ -589,7 +591,7 @@ class MainWindow(LCDialog.LCDialog):
             self.base.analysis_bar.end_think()
 
     def is_active_information_pgn(self):
-        return self.informacionPGN.isVisible()
+        return self.pgn_information.isVisible()
 
     def is_active_captures(self):
         return self.siCapturas
@@ -598,4 +600,4 @@ class MainWindow(LCDialog.LCDialog):
         return self.with_analysis_bar
 
     def get_noboard_width(self):
-        return self.base.analysis_bar.width() + self.informacionPGN.width() + Code.configuration.x_pgn_width
+        return self.base.analysis_bar.width() + self.pgn_information.width() + Code.configuration.x_pgn_width

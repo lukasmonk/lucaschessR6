@@ -29,10 +29,10 @@ class WritingDown(LCDialog.LCDialog):
         o_columns.nueva("ERRORS", _("Errors"), 80, align_center=True)
         o_columns.nueva("HINTS", _("Hints"), 80, align_center=True)
         o_columns.nueva("SUCCESS", _("Success"), 90, align_center=True)
-        self.glista = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
+        self.glista = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("New"), Iconos.Nuevo(), self.new)
         tb.new(_("Repeat"), Iconos.Copiar(), self.repetir)
         tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
@@ -42,10 +42,10 @@ class WritingDown(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.anchoColumnas() + 20)
+        self.restore_video(default_width=self.glista.width_columns_displayables() + 20)
         self.glista.gotop()
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, grid, row, obj_column):
         self.repetir()
 
     def repetir(self):
@@ -72,7 +72,7 @@ class WritingDown(LCDialog.LCDialog):
         self.accept()
 
     def borrar(self):
-        li = self.glista.recnosSeleccionados()
+        li = self.glista.list_selected_recnos()
         if len(li) > 0:
             mens = _("Do you want to delete all selected records?")
             if QTMessages.pregunta(self, mens):
@@ -95,8 +95,8 @@ class WritingDown(LCDialog.LCDialog):
             game.restore(reg["PC"])
         return game
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        col = obj_column.key
         reg = self.db[self.lista[row]]
         if not reg:
             return ""
@@ -112,7 +112,7 @@ class WritingDown(LCDialog.LCDialog):
             else:
                 return "%d/%d" % (moves, total)
         elif col == "TIME":
-            return '%0.2f"' % reg["TIME"]
+            return f"{reg['TIME']:0.2f}\""
         elif col == "HINTS":
             return str(reg["HINTS"])
         elif col == "ERRORS":
@@ -121,7 +121,7 @@ class WritingDown(LCDialog.LCDialog):
             err = int(reg["ERRORS"]) if reg["ERRORS"] else 0
             hin = int(reg["HINTS"]) if reg["HINTS"] else 0
             nmv = int(reg["MOVES"]) if reg["MOVES"] else None
-            return "%0.02f%%" % (100.00 - (err + hin) * 100 / nmv,) if nmv else ""
+            return f"{100.0 - (err + hin) * 100 / nmv:0.02f}%" if nmv else ""
         elif col == "COLOR":
             return _("White") if reg["COLOR"] else _("Black")
 
@@ -129,7 +129,7 @@ class WritingDown(LCDialog.LCDialog):
         self.db.close()
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.db.close()
         self.save_video()
         self.reject()

@@ -1,4 +1,4 @@
-import ast
+from typing import Any, Dict, Tuple
 
 import FasterCode
 
@@ -15,98 +15,155 @@ from Code.Base.Constantes import (
 )
 from Code.Nags import Nags
 
+# Constante global: valores de material por pieza
+PIECE_MATERIAL_VALUES = {"k": 3.0, "q": 9.9, "r": 5.5, "b": 3.5, "n": 3.1, "p": 1.0}
 
-def calc_formula(cual, cp, mrm):  # , limit=200.0):
-    if len(mrm) == 0:
+
+def _compute_material_balance(cp) -> Tuple[float, float, float, int, int]:
+    """Calcula material total, blanco, negro, y número de pieces."""
+    total_material = white_material = black_material = 0.0
+    white_pieces = black_pieces = 0
+
+    for piece in cp.squares.values():
+        if not piece:
+            continue
+        value = PIECE_MATERIAL_VALUES[piece.lower()]
+        total_material += value
+        if piece.isupper():
+            white_pieces += 1
+            white_material += value
+        else:
+            black_pieces += 1
+            black_material += value
+
+    return total_material, white_material, black_material, white_pieces, black_pieces
+
+
+def _compute_gmo(mrm) -> float:
+    """Calcula el factor GMO basado en la dispersión de evaluaciones."""
+    if not mrm.li_rm:
         return 0.0
-    with open(Code.path_resource("IntFiles", "Formulas", "%s.formula" % cual), "rt") as f:
-        formula = f.read()
-    piew = pieb = 0
-    mat = 0.0
-    matw = matb = 0.0
-    dmat = {"k": 3.0, "q": 9.9, "r": 5.5, "b": 3.5, "n": 3.1, "p": 1.0}
-    for k, v in cp.squares.items():
-        if v:
-            m = dmat[v.lower()]
-            mat += m
-            if v.isupper():
-                piew += 1
-                matw += m
-            else:
-                pieb += 1
-                matb += m
-    mov = FasterCode.set_fen(cp.fen())
-    base = mrm.li_rm[0].centipawns_abs()
-    is_white = cp.is_white
 
+    base_eval = mrm.li_rm[0].centipawns_abs()
     gmo34 = gmo68 = gmo100 = 0
+
     for rm in mrm.li_rm:
-        dif = abs(rm.centipawns_abs() - base)
-        if dif < 34:
+        diff = abs(rm.centipawns_abs() - base_eval)
+        if diff < 34:
             gmo34 += 1
-        elif dif < 68:
+        elif diff < 68:
             gmo68 += 1
-        elif dif < 101:
+        elif diff < 101:
             gmo100 += 1
-    gmo = float(gmo34) + float(gmo68) ** 0.8 + float(gmo100) ** 0.5
-    plm = (cp.num_moves - 1) * 2
-    if not is_white:
-        plm += 1
 
-    # xshow: Factor de conversion a puntos para mostrar
-    xshow = +1 if is_white else -1
-    xshow = 0.01 * xshow
+    return float(gmo34) + (gmo68**0.8) + (gmo100**0.5)
 
-    li = (
-        ("xpiec", piew if is_white else pieb),
-        ("xpie", piew + pieb),
-        ("xmov", mov),
-        ("xeval", base if is_white else -base),
-        ("xstm", +1 if is_white else -1),
-        ("xplm", plm),
-        ("xshow", xshow),
-    )
-    for k, v in li:
-        if k in formula:
-            formula = formula.replace(k, "%d.0" % v)
-    li = (("xgmo", gmo), ("xmat", mat), ("xpow", matw if is_white else matb))
-    for k, v in li:
-        if k in formula:
-            formula = formula.replace(k, "%f" % v)
-    if "xcompl" in formula:
-        formula = formula.replace("xcompl", "%f" % calc_formula("complexity", cp, mrm))
+
+def _compute_context_variables(cp, mrm, is_white: bool) -> Dict[str, Any]:
+    """Construye el diccionario de variables para la fórmula."""
+    (
+        total_material,
+        white_material,
+        black_material,
+        white_pieces,
+        black_pieces,
+    ) = _compute_material_balance(cp)
+
+    gmo = _compute_gmo(mrm)
+    mov = FasterCode.set_fen(cp.fen())
+    base_eval = mrm.li_rm[0].centipawns_abs() if mrm.li_rm else 0
+    plm = (cp.num_moves - 1) * 2 + (0 if is_white else 1)
+    xshow = 0.01 * (1 if is_white else -1)
+
+    return {
+        "xpiec": white_pieces if is_white else black_pieces,
+        "xpie": white_pieces + black_pieces,
+        "xmov": mov,
+        "xeval": base_eval if is_white else -base_eval,
+        "xstm": 1 if is_white else -1,
+        "xplm": plm,
+        "xshow": xshow,
+        "xgmo": gmo,
+        "xmat": total_material,
+        "xpow": white_material if is_white else black_material,
+    }
+
+
+def calc_formula(cual: str, cp, mrm) -> float:
+    """Evalúa una fórmula desde un archivo usando el contexto del tablero y análisis."""
+    if not mrm.li_rm:
+        return 0.0
+
     try:
-        x = float(ast.literal_eval(formula))
-        return x
-    except:
+        formula_path = Code.path_resource("IntFiles", "Formulas", f"{cual}.formula")
+        with open(formula_path, "rt") as f:
+            formula = f.read().strip()
+    except (FileNotFoundError, IOError):
+        return 0.0
+
+    is_white = cp.is_white
+    context = _compute_context_variables(cp, mrm, is_white)
+
+    # Reemplazo de variables en dos pasos: enteras y flotantes
+    for key, value in context.items():
+        if key in formula:
+            if isinstance(value, int):
+                formula = formula.replace(key, f"{value}.0")
+            else:
+                formula = formula.replace(key, f"{value:.10f}")
+
+    # Soporte recursivo para xcompl
+    if "xcompl" in formula:
+        compl_value = calc_formula("complexity", cp, mrm)
+        formula = formula.replace("xcompl", f"{compl_value:.10f}")
+
+    try:
+        # Restringir el entorno de evaluación para seguridad
+        allowed_names = {
+            'abs': abs,
+            'round': round,
+            'min': min,
+            'max': max,
+            'pow': pow,
+            'sqrt': __import__('math').sqrt if 'sqrt' in formula else None,
+            'log': __import__('math').log if 'log' in formula else None,
+            'exp': __import__('math').exp if 'exp' in formula else None,
+        }
+
+        # Filtrar funciones None
+        allowed_names = {k: v for k, v in allowed_names.items() if v is not None}
+
+        # Evaluar con entorno restringido
+        result = eval(formula, {"__builtins__": {}}, allowed_names)
+        return float(result)
+    except (SyntaxError, NameError, TypeError, ZeroDivisionError, ValueError):
         return 0.0
 
 
 def lb_levels(x):
     if x < 0:
-        txt = _("Extremely low")
+        return _("Extremely low")
     elif x < 5.0:
-        txt = _("Very low")
+        return _("Very low")
     elif x < 15.0:
-        txt = _("Low")
+        return _("Low")
     elif x < 35.0:
-        txt = _("Moderate")
+        return _("Moderate")
     elif x < 55.0:
-        txt = _("High")
+        return _("High")
     elif x < 85.0:
-        txt = _("Very high")
+        return _("Very high")
     else:
-        txt = _("Extreme")
-    return txt
+        return _("Extreme")
 
 
 def txt_levels(x):
-    return "%s (%.02f%%)" % (lb_levels(x), x)
+    return f"{lb_levels(x)} ({x:.02f}%)"
 
 
 def txt_formula(titulo, funcion, cp, mrm):
     x = funcion(cp, mrm)
-    return "%s: %s" % (titulo, txt_levels(x))
+    return f"{titulo}: {txt_levels(x)}"
 
 
 def tp_formula(titulo, funcion, cp, mrm):
@@ -151,8 +208,7 @@ def tp_narrowness(cp, mrm):
 
 
 def calc_efficientmobility(cp, mrm):
-    x = calc_formula("efficientmobility", cp, mrm)
-    return x
+    return calc_formula("efficientmobility", cp, mrm)
 
 
 def get_efficientmobility(cp, mrm):
@@ -241,9 +297,9 @@ def tp_gamestage(cp, mrm):
     return _("Game stage"), calc_gamestage(cp, mrm), get_gamestage(cp, mrm)
 
 
-def gen_indexes(game, elos, elos_form, alm):
-    average = {True: 0, False: 0}
-    domination = {True: 0, False: 0}
+def gen_indexes(game, elos, alm):
+    average = {True: 0.0, False: 0.0}
+    domination = {True: 0.0, False: 0.0}
     complexity = {True: 0.0, False: 0.0}
     narrowness = {True: 0.0, False: 0.0}
     efficientmobility = {True: 0.0, False: 0.0}
@@ -420,7 +476,7 @@ def gen_indexes(game, elos, elos_form, alm):
             txt_indices_raw += f" {t}={ct}"
 
     sh = AnalysisIndexesShow.ShowHtml(nmoves_analyzed)
-    txt_html_elo = sh.elo_html(elos_form)
+    txt_html_elo = sh.elo_html(elos)
     txt_html_moves = sh.moves_html(
         moves_very_good,
         moves_good,
@@ -497,13 +553,13 @@ def old_way(
 
     tmoves = nmoves_analyzed[True] + nmoves_analyzed[False]
     if tmoves > 0:
-        w = " %.02f%%" % (moves_best[True] * 100 / nmoves_analyzed[True],) if nmoves_analyzed[True] else ""
-        b = " %.02f%%" % (moves_best[False] * 100 / nmoves_analyzed[False],) if nmoves_analyzed[False] else ""
-        t = " %.02f%%" % ((moves_best[True] + moves_best[False]) * 100 / tmoves,)
+        w = f" {moves_best[True] * 100 / nmoves_analyzed[True]:.02f}%" if nmoves_analyzed[True] else ""
+        b = f" {moves_best[False] * 100 / nmoves_analyzed[False]:.02f}%" if nmoves_analyzed[False] else ""
+        t = f" {(moves_best[True] + moves_best[False]) * 100 / tmoves:.02f}%"
         color = "black"
         best_moves = plantilla_e % (
             color,
-            _("Best moves") + " %",
+            f"{_('Best moves')} %",
             color,
             w,
             color,
@@ -530,7 +586,7 @@ def old_way(
     txt = best_moves
     txt += xm(_("Opening"), moves_book, "black")
     txt += xm(_("Brilliant moves"), moves_very_good, Nags.nag_color(VERY_GOOD_MOVE))
-    txt += xm(_("Good moves") + " (!)", moves_good, Nags.nag_color(GOOD_MOVE))
+    txt += xm(f"{_('Good moves')} (!)", moves_good, Nags.nag_color(GOOD_MOVE))
     txt += xm(_("Good moves"), moves_good_no, Nags.nag_color(GOOD_MOVE))
     txt += xm(_("Interesting moves"), moves_interestings, Nags.nag_color(INTERESTING_MOVE))
     txt += xm(_("Acceptable moves"), moves_gray, "#333333")
@@ -540,5 +596,5 @@ def old_way(
     txt += xm(_("Not analysed"), moves_noanalyzed, "#aaaaaa")
 
     cab = (plantilla_c % ("", cw, cb, ct)).replace("<td", "<th")
-    txt_html_moves = '<table border="1" cellpadding="5" cellspacing="0" >%s%s</table>' % (cab, txt)
+    txt_html_moves = f'<table border="1" cellpadding="5" cellspacing="0" >{cab}{txt}</table>'
     return txt_html_moves

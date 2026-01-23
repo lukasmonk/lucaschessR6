@@ -10,7 +10,7 @@ class T4:
         self.tb = chess.gaviota.open_tablebase(configuration.folder_gaviota())
 
     def better_moves(self, fen, move):
-        dic = self.checkFen(fen)
+        dic = self.check_fen(fen)
         max_dtm = move_dtm = dic[move] if move else -1
         for pv, dtm in dic.items():
             if dtm < 0:
@@ -118,11 +118,11 @@ class T4:
             wdl = None
         return wdl
 
-    def checkFen(self, fen):
+    def check_fen(self, fen):
         FasterCode.set_fen(fen)
-        liMoves = FasterCode.get_moves()
+        li_moves = FasterCode.get_moves()
         dic = {}
-        for xpv in liMoves:
+        for xpv in li_moves:
             pv = xpv[1:]
             FasterCode.set_fen(fen)
             FasterCode.move_pv(pv[:2], pv[2:4], pv[4:])
@@ -132,11 +132,11 @@ class T4:
                 dic[pv] = -dtm
         return dic
 
-    def listFen(self, fen):
+    def list_fen(self, fen):
         FasterCode.set_fen(fen)
-        liMoves = FasterCode.get_exmoves()
+        li_moves = FasterCode.get_exmoves()
         li = []
-        for move in liMoves:
+        for move in li_moves:
             from_sq = move.xfrom()
             to_sq = move.xto()
             promotion = move.promotion()
@@ -169,9 +169,9 @@ class T4:
 
     def best_mvs(self, fen):
         FasterCode.set_fen(fen)
-        liMoves = FasterCode.get_exmoves()
+        li_moves = FasterCode.get_exmoves()
         li = []
-        for move in liMoves:
+        for move in li_moves:
             from_sq = move.xfrom()
             to_sq = move.xto()
             promotion = move.promotion()
@@ -204,10 +204,10 @@ class T4:
 
     def wdl_move(self, fen, move):
         FasterCode.set_fen(fen)
-        liMoves = FasterCode.get_moves()
-        liMoves = map(lambda x: x[1:], liMoves)
+        li_moves = FasterCode.get_moves()
+        li_moves = map(lambda x: x[1:], li_moves)
 
-        if move in liMoves:
+        if move in li_moves:
             FasterCode.move_pv(move[:2], move[2:4], move[4:])
             xfen = FasterCode.get_fen()
             wdl = self.wdl(xfen)

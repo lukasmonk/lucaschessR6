@@ -33,6 +33,7 @@ class ManagerTrainBooks(Manager.Manager):
     li_reinit = None
     is_human_side_white: bool
     is_book_side_white: bool
+    error: str
 
     def start(self, book_player, player_highest, book_rival, resp_rival, is_white, show_menu):
         self.game_type = GT_BOOK
@@ -70,8 +71,8 @@ class ManagerTrainBooks(Manager.Manager):
         self.show_side_indicator(True)
         self.remove_hints(remove_back=False)
         self.put_pieces_bottom(is_white)
-        self.set_label1("%s: %s" % (_("Player"), self.book_player.name))
-        self.set_label2("%s: %s" % (_("Opponent"), self.book_rival.name))
+        self.set_label1(f"{_('Player')}: {self.book_player.name}")
+        self.set_label2(f'{_("Opponent")}: {self.book_rival.name}')
         self.pgn_refresh(True)
         self.show_info_extra()
 
@@ -107,7 +108,7 @@ class ManagerTrainBooks(Manager.Manager):
             self.get_help()
 
         else:
-            Manager.routine_default(self, clave)
+            Manager.Manager.routine_default(self, clave)
 
     def final_x(self):
         return self.end_game()
@@ -238,7 +239,7 @@ class ManagerTrainBooks(Manager.Manager):
                         paux = p
                         saux = True
                     opacity = 1.0 if p == paux else max(p, 0.25)
-                self.board.creaFlechaMulti(jug[0] + jug[1], siMain=simain, opacity=opacity)
+                self.board.create_arrow_multi(jug[0] + jug[1], is_main=simain, opacity=opacity)
                 if simain and Code.eboard:
                     self.board.eboard_arrow(jug[0], jug[1], jug[2])
 
@@ -261,9 +262,9 @@ class ManagerTrainBooks(Manager.Manager):
                 self.aciertos += actpeso
         self.movimientos += 1
 
-        self.set_label3("<b>%s</b>" % self.txt_matches())
+        self.set_label3(f"<b>{self.txt_matches()}</b>")
 
-        self.move_the_pieces(jg.liMovs)
+        self.move_the_pieces(jg.list_piece_moves)
 
         self.add_move(jg, True)
         self.error = ""
@@ -287,7 +288,7 @@ class ManagerTrainBooks(Manager.Manager):
                     paux = p
                     saux = True
                 opacity = 1.0 if p == paux else max(p, 0.25)
-            self.board.creaFlechaMulti(jug[0] + jug[1], siMain=simain, opacity=opacity)
+            self.board.create_arrow_multi(jug[0] + jug[1], is_main=simain, opacity=opacity)
 
         self.sumar_aciertos = False
 
@@ -337,13 +338,13 @@ class ManagerTrainBooks(Manager.Manager):
 
         comentario = ""
 
-        linea = "-" * 24 + "\n"
+        linea = f"{'-' * 24}\n"
         list_moves = self.get_list_moves(not is_human)
         for jdesde, jhasta, jpromotion, jpgn, peso in list_moves:
             si_lineas = xfrom == jdesde and xto == jhasta and promotion == jpromotion
             if si_lineas:
                 comentario += linea
-            comentario += jpgn + "\n"
+            comentario += f"{jpgn}\n"
             if si_lineas:
                 comentario += linea
 
@@ -360,7 +361,7 @@ class ManagerTrainBooks(Manager.Manager):
             self.set_variations(False, jg)
 
             self.add_move(jg, False)
-            self.move_the_pieces(jg.liMovs, True)
+            self.move_the_pieces(jg.list_piece_moves, True)
 
             self.error = ""
 
@@ -389,5 +390,5 @@ class ManagerTrainBooks(Manager.Manager):
 
         txt = self.txt_matches()
 
-        mensaje = "%s\n%s\n" % (_("Line completed"), txt)
+        mensaje = f"{_('Line completed')}\n{txt}\n"
         self.message_on_pgn(mensaje, delayed=True)

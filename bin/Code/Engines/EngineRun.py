@@ -1,3 +1,4 @@
+import contextlib
 import os
 import time
 import traceback
@@ -9,13 +10,11 @@ import psutil
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util, Debug
 from Code.Base import Game
 from Code.Engines import EngineResponse, Priorities
 
 if __debug__:
-    from Code import Debug
-
     prln = Debug.prln
 
 
@@ -111,6 +110,10 @@ class EngineRun(QtCore.QObject):
 
     is_white: bool
 
+    last_depth_emit: int = 0
+    last_time_depth_emit: int = 0
+    time_interval_depth_emit: int = 500
+
     def __init__(self, config: StartEngineParams):
         super().__init__()
 
@@ -121,9 +124,9 @@ class EngineRun(QtCore.QObject):
         self.config = config
         self._wait_loop: Optional[QtCore.QEventLoop] = None
         self.stream_line_processor = StreamLineProcessor()
-        
+
         self.mode_timer_poll = Code.configuration.x_msrefresh_poll_engines > 0
-        
+
         if self.mode_timer_poll:
             # Configuración del Timer de Polling (Queue virtual)
             # Se inicia solo cuando es necesario leer.
@@ -132,10 +135,10 @@ class EngineRun(QtCore.QObject):
             self._timer_poll.setInterval(mstimer_poll)  # Revisar cada x ms
             self._timer_poll.timeout.connect(self._poll_output)
         self.process: Optional[QtCore.QProcess] = QtCore.QProcess(self)
-        
+
         if not self.mode_timer_poll:
             self.process.readyReadStandardOutput.connect(self._read_output)
-            
+
         self.process.finished.connect(self._engine_terminated)
 
         self.state = EngineState.OFF
@@ -186,7 +189,7 @@ class EngineRun(QtCore.QObject):
         self.emit = True
 
     def _start_polling(self):
-        """Activa la lectura periódica si no está activa."""
+        """Activa la lectura periódica si no está activate."""
         if self._timer_poll and not self._timer_poll.isActive():
             self._timer_poll.start()
 
@@ -236,7 +239,7 @@ class EngineRun(QtCore.QObject):
 
         Args:
             pid: ID del proceso a cerrar
-            including_parent: Si True, también cierra el proceso padre
+            including_parent: Si True, también cierra el proceso father
             timeout: Tiempo en segundos para esperar cierre normal antes de forzar
         """
         try:
@@ -262,10 +265,8 @@ class EngineRun(QtCore.QObject):
 
         # Obtener todos los procesos hijos
         children = []
-        try:
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
             children = parent.children(recursive=True)
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
 
         # Primero intentar cierre normal de los hijos
         for child in children:
@@ -276,7 +277,7 @@ class EngineRun(QtCore.QObject):
                 pass
             except Exception as e:
                 if __debug__:
-                    Debug.prln(f"Error al terminar proceso hijo {child.pid}: {e}", color="yellow")
+                    Debug.prln(f"Error al finalize proceso hijo {child.pid}: {e}", color="yellow")
 
         # Esperar a que los hijos terminen
         gone, alive = psutil.wait_procs(children, timeout=timeout)
@@ -292,7 +293,7 @@ class EngineRun(QtCore.QObject):
                 if __debug__:
                     Debug.prln(f"Error al matar proceso hijo {child.pid}: {e}", color="yellow")
 
-        # Ahora cerrar el proceso padre si se solicita
+        # Ahora cerrar el proceso father si se solicita
         if including_parent:
             try:
                 if parent.is_running():
@@ -308,14 +309,14 @@ class EngineRun(QtCore.QObject):
                     pass
                 except Exception as e:
                     if __debug__:
-                        Debug.prln(f"Error al matar proceso padre {pid}: {e}", color="red")
+                        Debug.prln(f"Error al matar proceso father {pid}: {e}", color="red")
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
             except Exception as e:
                 if __debug__:
-                    Debug.prln(f"Error al terminar proceso padre {pid}: {e}", color="red")
+                    Debug.prln(f"Error al finalize proceso father {pid}: {e}", color="red")
 
-        # Asegurar que esté muerto (solo para el padre)
+        # Asegurar que esté muerto (solo para el father)
         if including_parent:
             try:
                 if parent.is_running():
@@ -364,6 +365,8 @@ class EngineRun(QtCore.QObject):
                 return
             try:
                 output = self.process.readAllStandardOutput()
+                if not self.emit:
+                    return
             except (RuntimeError, AttributeError):
                 return
             except Exception as e:
@@ -381,7 +384,7 @@ class EngineRun(QtCore.QObject):
                         Debug.prln(f"{self.config.name}: {line}")
                     if self.log is not None:
                         try:
-                            self.log.write(line + "\n")
+                            self.log.write(f"{line}\n")
                         except:
                             pass
 
@@ -426,23 +429,24 @@ class EngineRun(QtCore.QObject):
 
                     elif st == EngineState.THINKING:
                         if self.mrm is not None:
-                            depth = self.mrm.get_current_depth()
                             try:
                                 self.mrm.dispatch(line)
                             except:
                                 if __debug__:
-                                    Debug.prln("mrm.dispatch error:\n" + traceback.format_exc(), color="red")
+                                    Debug.prln(f"mrm.dispatch error:\n{traceback.format_exc()}", color="red")
                             new_depth = self.mrm.get_current_depth()
-                            if new_depth > depth:
-                                try:
-                                    self.mrm.ordena()
-                                except:
-                                    pass
+                            if new_depth > self.last_depth_emit:
+                                self.mrm.ordena()
                                 if self.emit:
-                                    try:
-                                        self.depth_changed.emit()
-                                    except:
-                                        pass
+                                    current_time = int(time.time() * 1000)
+                                    if current_time - self.last_time_depth_emit >= self.time_interval_depth_emit:
+                                        try:
+                                            self.depth_changed.emit()
+                                        except:
+                                            pass
+                                        self.last_time_depth_emit = new_depth
+                                        self.last_time_depth_emit = current_time
+
                         if line.startswith("bestmove"):
                             self.state = EngineState.OK
                             if self.mode_timer_poll:
@@ -458,11 +462,11 @@ class EngineRun(QtCore.QObject):
                                     pass
                 except:
                     if __debug__:
-                        Debug.prln("Unhandled error processing engine line:\n" + traceback.format_exc(), color="red")
+                        Debug.prln(f"Unhandled error processing engine line:\n{traceback.format_exc()}", color="red")
                     continue
         except:
             if __debug__:
-                Debug.prln("Critical error in _read_output:\n" + traceback.format_exc(), color="red")
+                Debug.prln(f"Critical error in _read_output:\n{traceback.format_exc()}", color="red")
 
     # --- terminated handler ---
     @QtCore.Slot(int, QtCore.QProcess.ExitStatus)
@@ -485,12 +489,14 @@ class EngineRun(QtCore.QObject):
                 Debug.prln(f"process del motor terminado {status_msg} con código: {exit_code}", color="red")
         except:
             if __debug__:
-                Debug.prln("Error handling engine termination:\n" + traceback.format_exc(), color="red")
+                Debug.prln(f"Error handling engine termination:\n{traceback.format_exc()}", color="red")
 
     # --- wait helper ---
     def _wait_for(self, command: str, wait_state: EngineState, timeout_ms: int = 3000) -> bool:
         self.state = wait_state
+
         self._wait_loop = QtCore.QEventLoop()
+
         if self.mode_timer_poll:
             # ACTIVAR POLLING para esperar la respuesta
             self._start_polling()
@@ -500,6 +506,8 @@ class EngineRun(QtCore.QObject):
         timer.timeout.connect(self._wait_loop.quit)
         timer.start(timeout_ms)
         QtCore.QTimer.singleShot(0, lambda: self._send_command(command))
+
+        QtCore.QCoreApplication.processEvents()
 
         self._wait_loop.exec()
         timer.stop()
@@ -540,7 +548,7 @@ class EngineRun(QtCore.QObject):
                 self._send_command("stop")
         except:
             if __debug__:
-                Debug.prln("Error in stop():\n" + traceback.format_exc(), color="red")
+                Debug.prln(f"Error in stop():\n{traceback.format_exc()}", color="red")
 
     def time_played(self):
         return (time.time() - self.play_time_begin) if self.play_time_begin else 0.0
@@ -607,7 +615,7 @@ class EngineRun(QtCore.QObject):
         if self.state == EngineState.CLOSED:
             return
         self.emit = False
-        
+
         if self.mode_timer_poll:
             # --- CRUCIAL: Parar polling antes de tocar el proceso ---
             try:
@@ -632,11 +640,8 @@ class EngineRun(QtCore.QObject):
                 pass
 
         # Bloquear señales para evitar eventos durante el cierre
-        try:
+        with contextlib.suppress(RuntimeError, AttributeError):
             self.blockSignals(True)
-        except (RuntimeError, AttributeError):
-            pass
-
         self.state = EngineState.OFF
 
         # Detener timer si existe
@@ -670,11 +675,8 @@ class EngineRun(QtCore.QObject):
         if self.process is not None:
             try:
                 pid = -1
-                try:
+                with contextlib.suppress(RuntimeError, AttributeError, ValueError, TypeError):
                     pid = int(self.process.processId())
-                except (RuntimeError, AttributeError, ValueError, TypeError):
-                    pass
-
                 if pid > 0:
                     # Estrategia 1: Intento de cierre normal
                     try:
@@ -742,9 +744,12 @@ class EngineRun(QtCore.QObject):
     def play(self, run_engine_params: RunEngineParams):
 
         def send_go(args: str):
+            self.last_depth_emit = 0
+            self.last_time_depth_emit = 0
+
             self.play_time_begin = time.time()
             self.state = EngineState.THINKING
-            
+
             if self.mode_timer_poll:
                 # ACTIVAMOS POLLING
                 self._start_polling()
@@ -795,7 +800,7 @@ class EngineRun(QtCore.QObject):
         self.set_fen_position(fen)
         self.li_cache = []
         self.state = EngineState.READING_EVAL_STOCKFISH
-        
+
         if self.mode_timer_poll:
             # ACTIVAMOS POLLING
             self._start_polling()

@@ -32,6 +32,7 @@ Dependencies
 * idna
 * certifi
 * beautifulsoup4
+* py-cpuinfo
 
 
 Links

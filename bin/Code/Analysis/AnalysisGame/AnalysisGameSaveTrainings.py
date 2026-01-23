@@ -2,7 +2,7 @@ import copy
 import os
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import INFINITE
 from Code.BestMoveTraining import BMT
@@ -15,7 +15,7 @@ def terminar_bmt(bmt_lista, name):
     @param name: name del entrenamiento
     """
     if bmt_lista and len(bmt_lista) > 0:
-        bmt = BMT.BMT(Code.configuration.path.file_bmt())
+        bmt = BMT.BMT(Code.configuration.paths.file_bmt())
         dbf = bmt.read_dbf(False)
 
         reg = dbf.baseRegistro()
@@ -50,7 +50,7 @@ def save_brilliancies_fns(file, fen, mrm, game: Game.Game, njg):
     for k, v in game.dic_tags().items():
         ku = k.upper()
         if ku not in ("RESULT", "FEN"):
-            cab += '[%s "%s"]' % (k, v)
+            cab += f'[{k} "{v}"]'
 
     game_raw = Game.game_without_variations(game)
     p = Game.Game(fen=fen)
@@ -65,8 +65,8 @@ def graba_tactic(tacticblunders, game, njg, mrm, pos_act) -> bool:
         return False
 
     # Esta creado el folder
-    before = "%s.fns" % _("Avoid the blunder")
-    after = "%s.fns" % _("Take advantage of blunder")
+    before = f"{_('Avoid the blunder')}.fns"
+    after = f"{_('Take advantage of blunder')}.fns"
     if not os.path.isdir(tacticblunders):
         dtactics = Util.opj(Code.configuration.paths.folder_personal_trainings(), "../Tactics")
         if not os.path.isdir(dtactics):
@@ -79,30 +79,24 @@ def graba_tactic(tacticblunders, game, njg, mrm, pos_act) -> bool:
             errors="ignore",
         ) as f:
             f.write(
-                """[COMMON]
+                f"""[COMMON]
 ed_reference=20
 REPEAT=0
 SHOWTEXT=1
 [TACTIC1]
-MENU=%s
-FILESW=%s:100
+MENU={_('Avoid the blunder')}
+FILESW={before}:100
 [TACTIC2]
-MENU=%s
-FILESW=%s:100
+MENU={_('Take advantage of blunder')}
+FILESW={after}:100
 """
-                % (
-                    _("Avoid the blunder"),
-                    before,
-                    _("Take advantage of blunder"),
-                    after,
-                )
             )
 
     cab = ""
     for k, v in game.dic_tags().items():
         ku = k.upper()
         if ku not in ("RESULT", "FEN"):
-            cab += '[%s "%s"]' % (k, v)
+            cab += f'[{k} "{v}"]'
     move = game.move(njg)
 
     fen = move.position_before.fen()
@@ -111,7 +105,7 @@ FILESW=%s:100
     p.read_pv(rm.pv)
     game_raw = Game.game_without_variations(game)
     with open(Util.opj(tacticblunders, before), "at", encoding="utf-8", errors="ignore") as f:
-        f.write("%s||%s|%s%s\n" % (fen, p.pgn_base_raw(), cab, game_raw.pgn_base_raw_copy(None, njg - 1)))
+        f.write(f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg - 1)}\n")
 
     fen = move.position.fen()
     p = Game.Game(fen=fen)
@@ -119,7 +113,7 @@ FILESW=%s:100
     li = rm.pv.split(" ")
     p.read_pv(" ".join(li[1:]))
     with open(Util.opj(tacticblunders, after), "at", encoding="utf-8", errors="ignore") as f:
-        f.write("%s||%s|%s%s\n" % (fen, p.pgn_base_raw(), cab, game_raw.pgn_base_raw_copy(None, njg)))
+        f.write(f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg)}\n")
 
     return True
 
@@ -175,13 +169,13 @@ def save_pgn(file, name, dic_cab, fen, move, rm, mj):
     for k, v in dic_cab.items():
         ku = k.upper()
         if ku not in ("RESULT", "FEN"):
-            cab += '[%s "%s"]\n' % (k, v)
+            cab += f'[{k} "{v}"]\n'
     # Nos protegemos de que se hayan escrito en el pgn original de otra forma
-    cab += '[FEN "%s"]\n' % fen
-    cab += '[Result "%s"]\n' % result
+    cab += f'[FEN "{fen}"]\n'
+    cab += f'[Result "{result}"]\n'
 
     with open(file, "at", encoding="utf-8", errors="ignore") as q:
-        texto = cab + "\n" + p.pgn_base() + mas + "\n\n"
+        texto = f"{cab}\n{p.pgn_base()}{mas}\n\n"
         q.write(texto)
 
     return True

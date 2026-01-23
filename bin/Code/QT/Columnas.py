@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from PySide6 import QtCore, QtGui
 
 from Code.QT import Delegados
+
+if TYPE_CHECKING:
+    from Code.QT import Grid
 
 
 class Columna:
@@ -136,14 +139,14 @@ class Columna:
         else:
             return QtGui.QBrush(QtGui.QColor(rgb))
 
-    def save_configuration(self, dic: dict, grid: Optional[object]) -> None:
+    def save_configuration(self, dic: dict, grid: Optional[Grid.Grid]) -> None:
         xid = grid.id if grid else None
 
         def x(c: str, v: str) -> None:
             if xid is None:
-                k = "%s.%s" % (self.key, c)
+                k = f"{self.key}.{c}"
             else:
-                k = "%s.%s.%s" % (self.key, c, xid)
+                k = f"{self.key}.{c}.{xid}"
 
             dic[k] = v
 
@@ -155,13 +158,13 @@ class Columna:
         x("POSICION", str(self.position))
         x("SIMOSTRAR", "S" if self.must_show else "N")
 
-    def restore_configuration(self, dic: dict, grid: Optional[object], with_cabeceras: bool = False) -> Columna:
+    def restore_configuration(self, dic: dict, grid: Optional[Grid.Grid], with_cabeceras: bool = False) -> Columna:
         xid = grid.id if grid else None
 
         def x(var_txt: str, var_int: str, tipo: str) -> None:
-            key = "%s.%s" % (self.key, var_txt)
+            key = f"{self.key}.{var_txt}"
             if xid:
-                key += ".%s" % xid
+                key += f".{xid}"
             if key in dic:
                 v = dic[key]
                 if tipo == "n":
@@ -260,14 +263,14 @@ class ListaColumnas:
         for x in self.li_columns:
             x.by_default()
 
-    def displayable_columns(self, grid: object) -> ListaColumnas:
+    def displayable_columns(self, grid: Grid.Grid) -> ListaColumnas:
         """
         Crea un nuevo objeto con solo las columnas mostrables.
         """
         for col in self.li_columns:
             col.set_qt()
         cols = [column for column in self.li_columns if column.must_show]
-        if grid.siCabeceraMovible:
+        if grid.is_column_header_movable:
             cols.sort(key=lambda x: x.position)
         o_columnas_r = ListaColumnas()
         o_columnas_r.li_columns = cols

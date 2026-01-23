@@ -1,6 +1,6 @@
 import Code
 from Code.Base.Constantes import GT_FICS, GT_FIDE, GT_LICHESS
-from Code.Competitions import ManagerElo, ManagerFideFics, ManagerMicElo, ManagerWicker
+from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
 from Code.CompetitionWithTutor import ManagerCompeticion, WCompetitionWithTutor
 from Code.Engines import WEngines
 from Code.MainWindow import Presentacion
@@ -54,13 +54,13 @@ class CompeteMenu(BaseMenu.RootMenu):
                     menu_ffl.new(f"{key}_{level}", f"{elo_level}-{elo_level + 99}", rp.otro())
 
         fics = configuration.x_fics
-        haz_submenu_ffl("fics", _("Fics-Elo"), Iconos.Fics(), fics, 9, 27)
+        haz_submenu_ffl("ficselo", _("Fics-Elo"), Iconos.Fics(), fics, 9, 27)
 
         fide = configuration.x_fide
-        haz_submenu_ffl("fide", _("Fide-Elo"), Iconos.Fide(), fide, 10, 28)
+        haz_submenu_ffl("fideelo", _("Fide-Elo"), Iconos.Fide(), fide, 10, 28)
 
         lichess = configuration.x_lichess
-        haz_submenu_ffl("lichess", _("Lichess-Elo"), Iconos.Lichess(), lichess, 8, 26)
+        haz_submenu_ffl("lichesselo", _("Lichess-Elo"), Iconos.Lichess(), lichess, 8, 26)
 
         submenu_singular_moves = self.new_submenu(_("Singular moves"), Iconos.Singular())
         submenu_singular_moves.new("strenght101", _("Calculate your strength"), Iconos.Strength())
@@ -69,7 +69,7 @@ class CompeteMenu(BaseMenu.RootMenu):
     def run_select(self, resp):
         if "_" in resp:
             key, opcion = resp.split("_")
-            getattr(self, key)(opcion)
+            getattr(self, key)(int(opcion))
         else:
             getattr(self, resp)()
 
@@ -143,19 +143,19 @@ class CompeteMenu(BaseMenu.RootMenu):
                 manager.start(resp, minutos, seconds)
 
     def ficselo(self, nivel):
-        manager = ManagerFideFics.ManagerFideFics(self.procesador)
+        manager = ManagerFideFicsLichess.ManagerFideFicsLichess(self.procesador)
         manager.selecciona(GT_FICS)
         xid = manager.elige_juego(nivel)
         manager.start(xid)
 
     def fideelo(self, nivel):
-        manager = ManagerFideFics.ManagerFideFics(self.procesador)
+        manager = ManagerFideFicsLichess.ManagerFideFicsLichess(self.procesador)
         manager.selecciona(GT_FIDE)
         xid = manager.elige_juego(nivel)
         manager.start(xid)
 
     def lichesselo(self, nivel):
-        manager = ManagerFideFics.ManagerFideFics(self.procesador)
+        manager = ManagerFideFicsLichess.ManagerFideFicsLichess(self.procesador)
         manager.selecciona(GT_LICHESS)
         xid = manager.elige_juego(nivel)
         manager.start(xid)

@@ -1,5 +1,5 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Mate15 import Mate15, WRunMate15
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
@@ -27,13 +27,13 @@ class WMate15(LCDialog.LCDialog):
         self.glista = Grid.Grid(
             self,
             o_columns,
-            siSelecFilas=True,
-            siSeleccionMultiple=True,
-            altoFila=configuration.x_pgn_rowheight,
+            complete_row_select=True,
+            select_multiple=True,
+            heigh_row=configuration.x_pgn_rowheight,
         )
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Play"), Iconos.Play(), self.play),
             None,
@@ -53,11 +53,11 @@ class WMate15(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.anchoColumnas() + 30)
+        self.restore_video(default_width=self.glista.width_columns_displayables() + 30)
 
         self.glista.gotop()
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.play()
 
     def repetir(self):
@@ -74,7 +74,7 @@ class WMate15(LCDialog.LCDialog):
         self.play()
 
     def borrar(self):
-        li = self.glista.recnosSeleccionados()
+        li = self.glista.list_selected_recnos()
         if len(li) > 0:
             mens = _("Do you want to delete all selected records?")
             if QTMessages.pregunta(self, mens):
@@ -84,12 +84,12 @@ class WMate15(LCDialog.LCDialog):
                 if recno >= self.grid_num_datos(None):
                     self.glista.gotop()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.db)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         m15 = self.db.mate15(row)
-        col = o_column.key
+        col = obj_column.key
         if col == "DATE":
             return Util.dtostr_hm(m15.date)
         elif col == "POS":
@@ -104,12 +104,13 @@ class WMate15(LCDialog.LCDialog):
                 return ""
             else:
                 min_tm = m15.result()
-                return '%.01f"' % min_tm if min_tm else ""
+                return f'{min_tm:.01f}"' if min_tm else ""
+        return None
 
     def closeEvent(self, event):  # Cierre con X
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 

@@ -1,23 +1,28 @@
+from typing import Optional
+
 import os
 
 import FasterCode
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtWidgets
 
 from Code.Base import Game, Position
 from Code.Books import Books, WBooks
 from Code.Databases import DBgames, DBgamesST, WDB_Games, WDB_Summary
 from Code.Openings import POLAnalisisTree
 from Code.QT import Colocacion, Columnas, Controles, Delegados, FormLayout, Grid, Iconos, QTDialogs
+from Code.Engines import EngineManagerAnalysis
 
 
 class TabEngine(QtWidgets.QWidget):
+    current_posicion: Position.Position | None
+
     def __init__(self, tabs_analisis, procesador, configuration):
         QtWidgets.QWidget.__init__(self)
 
         self.analyzing = False
         self.position = None
         self.li_analysis = []
-        self.manager_motor = None
+        self.engine_manager: Optional[EngineManagerAnalysis.EngineManagerAnalysis] = None
         self.current_mrm = None
         self.pv = None
 
@@ -29,37 +34,37 @@ class TabEngine(QtWidgets.QWidget):
         self.with_figurines = configuration.x_pgn_withfigurines
 
         self.tabsAnalisis = tabs_analisis
-        self.bt_start = Controles.PB(self, "", self.start).ponIcono(Iconos.Pelicula_Seguir(), 32)
-        self.bt_stop = Controles.PB(self, "", self.stop).ponIcono(Iconos.Pelicula_Pausa(), 32)
+        self.bt_start = Controles.PB(self, "", self.start).set_icono(Iconos.Pelicula_Seguir(), 32)
+        self.bt_stop = Controles.PB(self, "", self.stop).set_icono(Iconos.Pelicula_Pausa(), 32)
         self.bt_stop.hide()
 
-        self.lb_engine = Controles.LB(self, _("Engine") + ":")
+        self.lb_engine = Controles.LB(self, f"{_('Engine')}:")
         list_engines = configuration.engines.list_name_alias()  # (name, key)
         default = configuration.x_tutor_clave
         engine = self.dbop.getconfig("ENGINE", default)
         if len([key for name, key in list_engines if key == engine]) == 0:
             engine = default
-        self.cb_engine = Controles.CB(self, list_engines, engine).capture_changes(self.reset_motor)
+        self.cb_engine = Controles.CB(self, list_engines, engine).capture_changes(self.reset_engine)
 
         multipv = self.dbop.getconfig("ENGINE_MULTIPV", 5)
-        lb_multipv = Controles.LB(self, _("Multi PV") + ": ")
+        lb_multipv = Controles.LB(self, f"{_('Multi PV')}: ")
         self.sb_multipv = Controles.SB(self, multipv, 1, 500).relative_width(50)
 
         self.chb_show_analysis = Controles.CHB(self, _("Show the analysis"), self.dbop.getconfig("SHOW_ANALYSIS", True))
-        self.chb_show_analysis.capture_changes(self, self.check_show_analysis)
+        self.chb_show_analysis.capture_changes(self.check_show_analysis)
 
         self.lb_analisis = Controles.LB(self, "").set_font_type(puntos=configuration.x_pgn_fontpoints).set_wrap()
         self.configuration.set_property(self.lb_analisis, "pgn")
 
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("PDT", "", 120, align_center=True)
-        delegado = Delegados.EtiquetaPOS(True, siLineas=False) if self.with_figurines else None
+        delegado = Delegados.EtiquetaPOS(True, with_lines=False) if self.with_figurines else None
         o_columns.nueva("SOL", "", 100, align_center=True, edicion=delegado)
         o_columns.nueva("PGN", _("Solution"), 860)
 
-        self.grid_analysis = Grid.Grid(self, o_columns, siSelecFilas=True, altoCabecera=4)
+        self.grid_analysis = Grid.Grid(self, o_columns, complete_row_select=True, header_heigh=4)
         self.grid_analysis.font_type(puntos=configuration.x_pgn_fontpoints)
-        self.grid_analysis.ponAltoFila(configuration.x_pgn_rowheight)
+        self.grid_analysis.set_height_row(configuration.x_pgn_rowheight)
         # self.register_grid(self.grid_analysis)
 
         ly_lin1 = Colocacion.H().control(self.bt_start).control(self.bt_stop).control(self.lb_engine)
@@ -69,7 +74,7 @@ class TabEngine(QtWidgets.QWidget):
 
         self.setLayout(ly)
 
-        self.reset_motor()
+        self.reset_engine()
 
     def check_show_analysis(self):
         ok = self.chb_show_analysis.valor()
@@ -87,18 +92,17 @@ class TabEngine(QtWidgets.QWidget):
             dic["ANALISIS"] = self.current_mrm
             self.dbop.setfenvalue(fenm2, dic)
 
-    def setData(self, label, position, pv):
+    def set_data(self, label, position, pv):
         self.save_current()
         self.position = position
         self.pv = pv
         self.lb_analisis.set_text(label)
         if self.analyzing:
             self.analyzing = False
-            self.manager_motor.ac_final(0)
+            self.engine_manager.stop()
             game = Game.Game(self.position)
-            self.manager_motor.ac_inicio(game)
+            self.engine_manager.analyze_nomodal(game)
             self.analyzing = True
-            QtCore.QTimer.singleShot(1000, self.lee_analisis)
         else:
             fenm2 = position.fenm2()
             dic = self.dbop.getfenvalue(fenm2)
@@ -117,10 +121,10 @@ class TabEngine(QtWidgets.QWidget):
         self.sb_multipv.setDisabled(True)
         self.show_stop()
         multipv = self.sb_multipv.valor()
-        self.manager_motor.set_multipv_var(multipv)
         game = Game.Game(self.position)
-        self.manager_motor.ac_inicio(game)
-        QtCore.QTimer.singleShot(1000, self.lee_analisis)
+        self.engine_manager.set_multipv_var(multipv)
+        self.engine_manager.connect_depthchanged(self.lee_analisis)
+        self.engine_manager.analyze_nomodal(game)
 
     def show_start(self):
         self.bt_stop.hide()
@@ -157,11 +161,9 @@ class TabEngine(QtWidgets.QWidget):
         self.li_analysis = li
         self.grid_analysis.refresh()
 
-    def lee_analisis(self):
+    def lee_analisis(self, mrm):
         if self.analyzing:
-            mrm = self.manager_motor.ac_estado()
             self.show_analisis(mrm)
-            QtCore.QTimer.singleShot(2000, self.lee_analisis)
 
     def stop(self):
         self.save_current()
@@ -169,36 +171,36 @@ class TabEngine(QtWidgets.QWidget):
         self.cb_engine.setDisabled(False)
         self.analyzing = False
         self.show_start()
-        if self.manager_motor:
-            self.manager_motor.ac_final(0)
+        if self.engine_manager:
+            self.engine_manager.stop()
         self.tabsAnalisis.refresh_lines()
 
-    def reset_motor(self):
+    def reset_engine(self):
         self.save_current()
         key = self.cb_engine.valor()
         if not key:
             return
         self.analyzing = False
-        if self.manager_motor:
-            self.manager_motor.terminar()
+        if self.engine_manager:
+            self.engine_manager.close()
         self.stop()
-        conf_engine = self.configuration.engines.search(key)
+        engine = self.configuration.engines.search(key)
 
         multipv = self.sb_multipv.valor()
-        self.manager_motor = self.procesador.create_manager_engine(conf_engine, 0, 0, has_multipv=multipv > 1)
+        self.engine_manager = self.procesador.create_manager_analysis(engine, 0, 0, 0, multipv)
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_analysis)
 
-    def grid_dato(self, grid, row, o_column):
-        if o_column.key == "PDT":
+    def grid_dato(self, _grid, row, obj_column):
+        if obj_column.key == "PDT":
             return self.li_analysis[row].ms_pdt
-        elif o_column.key == "SOL":
+        elif obj_column.key == "SOL":
             return self.li_analysis[row].ms_sol
         else:
             return self.li_analysis[row].ms_pgn
 
-    def grid_right_button(self, grid, row, o_column, modif):
+    def grid_right_button(self, _grid, row, _obj_column, _modif):
         if row < 0:
             return
         menu = QTDialogs.LCMenu(self)
@@ -231,7 +233,7 @@ class TabEngine(QtWidgets.QWidget):
             form.combobox(_("Variations to add"), li_options, tp)
             form.separador()
             form.spinbox(_("Movements to add in each variation"), 0, 999, 50, plies)
-            form.apart_simple_np("    %s = 0" % _("Full line"))
+            form.apart_simple_np(f"    {_('Full line')} = 0")
             form.separador()
             resp = form.run()
             if resp is None:
@@ -255,31 +257,31 @@ class TabEngine(QtWidgets.QWidget):
             if len(g) > 0:
                 pv = self.pv
                 if plies == 0:
-                    pv += " " + g.pv()
+                    pv += f" {g.pv()}"
                 else:
                     for n in range(plies):
-                        pv += " " + g.move(n).movimiento()
+                        pv += f" {g.move(n).movimiento()}"
                 if self.dbop.append_pv(pv.strip()):
                     refresh = True
 
         if refresh:
             self.tabsAnalisis.refresh_lines()
 
-    def saveConfig(self):
+    def save_config(self):
         self.dbop.setconfig("ENGINE", self.cb_engine.valor())
         self.dbop.setconfig("ENGINE_MULTIPV", self.sb_multipv.valor())
 
 
 class TabBook(QtWidgets.QWidget):
-    def __init__(self, tabsAnalisis, book, configuration):
+    def __init__(self, tabs_analisis, book, configuration):
         QtWidgets.QWidget.__init__(self)
 
-        self.tabsAnalisis = tabsAnalisis
+        self.tabsAnalisis = tabs_analisis
         self.position = None
         self.leido = False
         self.pv = None
 
-        self.dbop = tabsAnalisis.dbop
+        self.dbop = tabs_analisis.dbop
 
         self.book = book
         book.polyglot()
@@ -288,30 +290,30 @@ class TabBook(QtWidgets.QWidget):
         self.with_figurines = configuration.x_pgn_withfigurines
 
         o_columns = Columnas.ListaColumnas()
-        delegado = Delegados.EtiquetaPOS(True, siLineas=False) if self.with_figurines else None
+        delegado = Delegados.EtiquetaPOS(True, with_lines=False) if self.with_figurines else None
         for x in range(20):
-            o_columns.nueva(x, "", 80, align_center=True, edicion=delegado)
+            o_columns.nueva(str(x), "", 80, align_center=True, edicion=delegado)
         self.grid_moves = Grid.Grid(
             self,
             o_columns,
-            siSelecFilas=True,
-            siCabeceraMovible=False,
-            siCabeceraVisible=False,
+            complete_row_select=True,
+            is_column_header_movable=False,
+            header_visible=False,
         )
         self.grid_moves.font_type(puntos=configuration.x_pgn_fontpoints)
-        self.grid_moves.ponAltoFila(configuration.x_pgn_rowheight)
+        self.grid_moves.set_height_row(configuration.x_pgn_rowheight)
 
         ly = Colocacion.V().control(self.grid_moves).margen(3)
 
         self.setLayout(ly)
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_moves)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         mv = self.li_moves[row]
         li = mv.dato
-        key = int(o_column.key)
+        key = int(obj_column.key)
         pgn = li[key]
         if self.with_figurines:
             is_white = " w " in mv.fen
@@ -319,7 +321,7 @@ class TabBook(QtWidgets.QWidget):
         else:
             return pgn
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, row, _obj_column):
         alm_base = self.li_moves[row]
         if row != len(self.li_moves) - 1:
             alm_base1 = self.li_moves[row + 1]
@@ -331,7 +333,7 @@ class TabBook(QtWidgets.QWidget):
         self.lee_subnivel(row)
         self.grid_moves.refresh()
 
-    def grid_right_button(self, grid, row, column, modificadores):
+    def grid_right_button(self, _grid, row, _obj_column, _modificadores):
         if row < 0:
             return
         menu = QTDialogs.LCMenu(self)
@@ -386,16 +388,16 @@ class TabBook(QtWidgets.QWidget):
             for r in range(row - 1, -1, -1):
                 alm = self.li_moves[r]
                 if alm.nivel < lv:
-                    pv = alm.pv + " " + pv
+                    pv = f"{alm.pv} {pv}"
                     lv = alm.nivel
-            pv = self.pv + " " + pv
+            pv = f"{self.pv} {pv}"
             if self.dbop.append_pv(pv.strip()):
                 refresh = True
 
         if refresh:
             self.tabsAnalisis.refresh_lines()
 
-    def setData(self, position, pv):
+    def set_data(self, position, pv):
         self.position = position
         self.pv = pv
         self.start()
@@ -460,10 +462,12 @@ class TabBook(QtWidgets.QWidget):
 
 
 class TabDatabaseSummary(QtWidgets.QWidget):
-    def __init__(self, tabsAnalisis, procesador, dbstat):
+    position: Position.Position
+
+    def __init__(self, tabs_analisis, procesador, dbstat):
         QtWidgets.QWidget.__init__(self)
 
-        self.tabsAnalisis = tabsAnalisis
+        self.tabsAnalisis = tabs_analisis
 
         self.pv = None
 
@@ -474,13 +478,13 @@ class TabDatabaseSummary(QtWidgets.QWidget):
         layout = Colocacion.H().control(self.wsummary)
         self.setLayout(layout)
 
-    def setData(self, position, pv):
+    def set_data(self, position, pv):
         self.pv = pv
         self.position = position
-        self.wsummary.actualizaPV(self.pv)
+        self.wsummary.update_pv(self.pv)
 
     def start(self):
-        self.wsummary.actualizaPV(self.pv)
+        self.wsummary.update_pv(self.pv)
 
     def stop(self):
         self.dbstat.close()
@@ -491,15 +495,18 @@ class InfoMoveReplace:
         self.tab_database = owner
         self.board = self.tab_database.tabsAnalisis.wlines.pboard.board
 
-    def game_mode(self, x, y):
+    @staticmethod
+    def game_mode(_x, _y):
         return True
 
 
 class TabDatabase(QtWidgets.QWidget):
-    def __init__(self, tabsAnalisis, procesador, db):
+    position: Position.Position
+
+    def __init__(self, tabs_analisis, db):
         QtWidgets.QWidget.__init__(self)
 
-        self.tabsAnalisis = tabsAnalisis
+        self.tabsAnalisis = tabs_analisis
         self.is_temporary = False
 
         self.pv = None
@@ -517,7 +524,7 @@ class TabDatabase(QtWidgets.QWidget):
     def tw_terminar(self):
         return
 
-    def setData(self, position, pv):
+    def set_data(self, position, pv):
         self.position = position
         self.set_pv(pv)
 
@@ -559,16 +566,16 @@ class TabsAnalisis(QtWidgets.QWidget):
         self.tabs.new_tab(self.tabtree, _("Tree"))
         self.tabs.setTabIcon(1, Iconos.Arbol())
 
-        self.tabs.dispatchChange(self.tabChanged)
+        self.tabs.dispatch_change(self.tab_changed)
 
         tab_button = QtWidgets.QToolButton(self)
         tab_button.setIcon(Iconos.Nuevo())
-        tab_button.clicked.connect(self.creaTab)
+        tab_button.clicked.connect(self.crea_tab)
         li = [
             (_("Analysis of next move"), True),
             (_("Analysis of current move"), False),
         ]
-        self.cb_nextmove = Controles.CB(self, li, True).capture_changes(self.changedNextMove)
+        self.cb_nextmove = Controles.CB(self, li, True).capture_changes(self.changed_next_move)
 
         corner_widget = QtWidgets.QWidget(self)
         ly_corner = Colocacion.H().control(self.cb_nextmove).control(tab_button).margen(0)
@@ -576,7 +583,7 @@ class TabsAnalisis(QtWidgets.QWidget):
 
         self.tabs.setCornerWidget(corner_widget)
         self.tabs.setTabsClosable(True)
-        self.tabs.tabCloseRequested.connect(self.tabCloseRequested)
+        self.tabs.tabCloseRequested.connect(self.tab_close_requested)
 
         self.tabs.quita_x(0)
         self.tabs.quita_x(1)
@@ -585,17 +592,17 @@ class TabsAnalisis(QtWidgets.QWidget):
         layout.control(self.tabs).margen(0)
         self.setLayout(layout)
 
-    def changedNextMove(self):
+    def changed_next_move(self):
         if self.game is not None:
-            self.setPosicion(self.game, self.njg)
+            self.set_position(self.game, self.njg)
 
-    def tabChanged(self, ntab):
+    def tab_changed(self, ntab):
         self.tabActive = ntab
         if ntab > 0:
             tipo, wtab = self.li_tabs[ntab]
             wtab.start()
 
-    def tabCloseRequested(self, ntab):
+    def tab_close_requested(self, ntab):
         tipo, wtab = self.li_tabs[ntab]
         wtab.stop()
         if ntab > 1:
@@ -603,7 +610,7 @@ class TabsAnalisis(QtWidgets.QWidget):
             self.tabs.removeTab(ntab)
             del wtab
 
-    def creaTab(self):
+    def crea_tab(self):
         menu = QTDialogs.LCMenu(self)
         menu.opcion("book", _("Polyglot book"), Iconos.Libros())
         menu.separador()
@@ -613,23 +620,23 @@ class TabsAnalisis(QtWidgets.QWidget):
         resp = menu.lanza()
         pos = 0
         if resp == "book":
-            book = self.seleccionaLibro()
+            book = self.selecciona_libro()
             if book:
                 tabbook = TabBook(self, book, self.configuration)
                 self.li_tabs.append((resp, tabbook))
                 pos = len(self.li_tabs) - 1
                 self.tabs.new_tab(tabbook, book.name, pos)
                 self.tabs.setTabIcon(pos, Iconos.Libros())
-                self.setPosicion(self.game, self.njg, pos)
+                self.set_position(self.game, self.njg, pos)
 
         elif resp == "summary":
             nomfichgames = QTDialogs.select_db(self, self.configuration, True, False)
             if nomfichgames:
-                db_stat = DBgamesST.TreeSTAT(nomfichgames + ".st1")
+                db_stat = DBgamesST.TreeSTAT(f"{nomfichgames}.st1")
                 tabdb = TabDatabaseSummary(self, self.procesador, db_stat)
                 self.li_tabs.append((resp, tabdb))
                 pos = len(self.li_tabs) - 1
-                self.setPosicion(self.game, self.njg, pos)
+                self.set_position(self.game, self.njg, pos)
                 name = os.path.basename(nomfichgames)[:-5]
                 self.tabs.new_tab(tabdb, name, pos)
                 self.tabs.setTabIcon(pos, Iconos.Arbol())
@@ -638,28 +645,28 @@ class TabsAnalisis(QtWidgets.QWidget):
             nomfichgames = QTDialogs.select_db(self, self.configuration, True, False)
             if nomfichgames:
                 db = DBgames.DBgames(nomfichgames)
-                tabdb = TabDatabase(self, self.procesador, db)
+                tabdb = TabDatabase(self, db)
                 self.li_tabs.append((resp, tabdb))
                 pos = len(self.li_tabs) - 1
-                self.setPosicion(self.game, self.njg, pos)
+                self.set_position(self.game, self.njg, pos)
                 name = os.path.basename(nomfichgames)[:-5]
                 self.tabs.new_tab(tabdb, name, pos)
                 self.tabs.setTabIcon(pos, Iconos.Database())
-        self.tabs.activa(pos)
+        self.tabs.activate(pos)
 
-    def setPosicion(self, game, njg, numTab=None):
+    def set_position(self, game, njg, num_tab=None):
         if game is None:
             return
         move = game.move(njg)
         self.game = game
         self.njg = njg
-        next = self.cb_nextmove.valor()
+        nextmove = self.cb_nextmove.valor()
         if move:
             if njg == 0:
-                pv = game.pv_hasta(njg) if next else ""
+                pv = game.pv_hasta(njg) if nextmove else ""
             else:
-                pv = game.pv_hasta(njg if next else njg - 1)
-            position = move.position if next else move.position_before
+                pv = game.pv_hasta(njg if nextmove else njg - 1)
+            position = move.position if nextmove else move.position_before
         else:
             position = Position.Position().set_pos_initial()
             pv = ""
@@ -668,20 +675,20 @@ class TabsAnalisis(QtWidgets.QWidget):
             if ntab == 0:
                 p = Game.Game()
                 p.read_pv(pv)
-                tab.setData(
+                tab.set_data(
                     p.pgn_html(with_figurines=self.configuration.x_pgn_withfigurines),
                     position,
                     pv,
                 )
             else:
-                if numTab is not None:
-                    if ntab != numTab:
+                if num_tab is not None:
+                    if ntab != num_tab:
                         continue
                 if ntab > 1:
-                    tab.setData(position, pv)
+                    tab.set_data(position, pv)
                     tab.start()
 
-    def seleccionaLibro(self):
+    def selecciona_libro(self):
         list_books = Books.ListBooks()
         menu = QTDialogs.LCMenu(self)
         rondo = QTDialogs.rondo_puntos()
@@ -700,10 +707,10 @@ class TabsAnalisis(QtWidgets.QWidget):
             book = None
         return book
 
-    def saveConfig(self):
+    def save_config(self):
         for tipo, wtab in self.li_tabs:
             if tipo == "engine":
-                wtab.saveConfig()
+                wtab.save_config()
 
     def refresh_lines(self):
         self.wlines.refresh_lines()

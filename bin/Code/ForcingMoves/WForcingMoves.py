@@ -18,9 +18,9 @@ class BoardForcingMoves(Board2.BoardEstatico):
         Board2.BoardEstatico.mousePressEvent(self, event)
         self.enable_borraMovibles = True
 
-    def borraMovibles(self):
+    def remove_movables(self):
         if self.enable_borraMovibles:
-            Board2.BoardEstatico.borraMovibles(self)
+            Board2.BoardEstatico.remove_movables(self)
 
 
 class WForcingMoves(LCDialog.LCDialog):
@@ -32,16 +32,16 @@ class WForcingMoves(LCDialog.LCDialog):
         self.owner = owner
         self.pvs = owner.rm.pv.split(" ")
 
-        self.tr_findit = " " + _("Find it.")
-        self.tr_correct = _("Correct!") + " "
+        self.tr_findit = f" {_('Find it.')}"
+        self.tr_correct = f"{_('Correct!')} "
 
         self.configuration = Code.configuration
 
         conf_board = self.configuration.config_board("RUNCOUNTS", 64)
 
         self.board = BoardForcingMoves(self, conf_board)
-        self.board.crea()
-        self.board.set_dispatcher(self.player_has_moved)
+        self.board.draw_window()
+        self.board.set_dispatcher(self.player_has_moved_dispatcher)
         self.board.dbvisual_set_show_always(False)
         self.board.enable_all()
         self.li_checks_found = []
@@ -70,7 +70,7 @@ class WForcingMoves(LCDialog.LCDialog):
             Controles.FontType(puntos=10, peso=75)
         )
 
-        self.lb_result = Controles.LB(self).set_font_type(puntos=10, peso=500).altoFijo(32).set_wrap()
+        self.lb_result = Controles.LB(self).set_font_type(puntos=10, peso=500).fixed_height(32).set_wrap()
         self.lb_info = Controles.LB(self).set_font_type(puntos=14, peso=500)
         self.lb_info.set_foreground_backgound("white", "#496075").align_center().set_wrap()
 
@@ -78,14 +78,14 @@ class WForcingMoves(LCDialog.LCDialog):
 
         # Botones
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Begin"), Iconos.Empezar(), self.begin),
             (_("Verify"), Iconos.Check(), self.check),
             (_("Continue"), Iconos.Pelicula_Seguir(), self.seguir),
         )
         self.tb = QTDialogs.LCTB(self, li_acciones, icon_size=32)
-        self.show_tb(self.terminar, self.begin)
+        self.show_tb(self.finalize, self.begin)
 
         ly_right = (
             Colocacion.V()
@@ -116,43 +116,43 @@ class WForcingMoves(LCDialog.LCDialog):
         self.set_position()
         self.begin()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = from_sq + to_sq + promotion
         if not promotion and self.board.last_position.pawn_can_promote(from_sq, to_sq):
-            promotion = self.board.peonCoronando(self.board.last_position.is_white)
+            promotion = self.board.pawn_promoting(self.board.last_position.is_white)
             if promotion is None:
-                return None
+                return
             move = from_sq + to_sq + promotion.lower()
 
-        # pr int("player_has_moved: %s" % move)
+        # pr int("player_has_moved_dispatcher: %s" % move)
         if self.must_find_best_move:
             # pr int("Best moves", self.owner.st_best_moves)
             if move in self.owner.st_best_moves:
                 self.board.remove_arrows()
-                self.board.creaFlechaTmp(move[:2], move[2:4], False)
+                self.board.show_one_arrow_temp(move[:2], move[2:4], False)
                 self.lb_result.set_foreground("green")
                 self.lb_result.set_text(_("You found the best move!"))
                 self.lb_info.set_text(_("Success!"))
                 self.found_best_move = True
                 self.ed_moves.set_text("")
                 if self.owner.bm_is_mate:
-                    self.show_tb(self.terminar)
+                    self.show_tb(self.finalize)
                 else:
                     self.show_tb(self.seguir)
             return
 
         if self.level == 1:
             if move in self.owner.li_checks and move not in self.li_checks_found:
-                self.board.creaFlechaTmp(move[:2], move[2:4], False)
+                self.board.show_one_arrow_temp(move[:2], move[2:4], False)
                 self.li_checks_found.append(move)
-                self.ed_moves.set_text("%s" % len(self.li_checks_found))
+                self.ed_moves.set_text(f"{len(self.li_checks_found)}")
                 if len(self.owner.li_checks) == len(self.li_checks_found):
                     self.check()
         else:
             if move in self.owner.li_captures and move not in self.li_captures_found:
-                self.board.creaFlechaTmp(move[:2], move[2:4], False)
+                self.board.show_one_arrow_temp(move[:2], move[2:4], False)
                 self.li_captures_found.append(move)
-                self.ed_moves.set_text("%s" % len(self.li_captures_found))
+                self.ed_moves.set_text(f"{len(self.li_captures_found)}")
                 if len(self.owner.li_captures) == len(self.li_captures_found):
                     self.check()
 
@@ -169,12 +169,13 @@ class WForcingMoves(LCDialog.LCDialog):
         elif self.pvs[self.level].startswith(self.ed_moves.text() + celda):
             # pr int("Drawing arrow from %s to %s" % (self.ed_moves.text(), celda))
             # self.board.put_arrow_sc(self.ed_moves.text(), celda)
-            self.board.creaFlechaTmp(self.ed_moves.text(), celda, False)
+            self.board.show_one_arrow_temp(self.ed_moves.text(), celda, False)
             self.level += 1
             self.ed_moves.set_text("")
         else:
-            # pr int("Not the best next move. Best PV is %s and your move was %s" % (self.pvs[self.level], self.ed_moves.text() + celda))
-            self.ed_moves.set_text("?" + celda)
+            # pr int("Not the best next move. Best PV is %s and your move was %s" % (self.pvs[self.level],
+            # self.ed_moves.text() + celda))
+            self.ed_moves.set_text(f"?{celda}")
         self.lb_info.set_text(_("PV level %s") % self.level)
 
         if self.level >= len(self.pvs):
@@ -187,20 +188,20 @@ class WForcingMoves(LCDialog.LCDialog):
 
     def set_position(self):
         self.board.set_position(self.owner.board.last_position)
-        siW = self.owner.board.last_position.is_white
-        self.board.set_side_bottom(siW)
-        self.board.set_side_indicator(siW)
-        self.board.activate_side(siW)
+        is_white = self.owner.board.last_position.is_white
+        self.board.set_side_bottom(is_white)
+        self.board.set_side_indicator(is_white)
+        self.board.activate_side(is_white)
         self.ed_moves.setFocus()
 
     def pon_info_posic(self):
-        self.lb_info.set_text("  " + _("Find forcing moves") + "  ")
+        self.lb_info.set_text(f"  {_('Find forcing moves')}  ")
 
     def closeEvent(self, event):
         self.save_video()
         event.accept()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
@@ -299,16 +300,16 @@ class WForcingMoves(LCDialog.LCDialog):
         self.board.remove_arrows()
         arrow_count = 0
         for move in self.owner.st_best_moves:
-            self.board.creaFlechaTmp(move[:2], move[2:4], False)
+            self.board.show_one_arrow_temp(move[:2], move[2:4], False)
             arrow_count += 1
         for move in self.owner.li_all_moves:
             if move not in self.owner.li_checks and move not in self.owner.li_captures:
                 if arrow_count <= 6 and move not in self.owner.st_best_moves:
                     if self.owner.bm_is_threat and move in self.owner.li_threats:
-                        self.board.creaFlechaTmp(move[:2], move[2:4], False)
+                        self.board.show_one_arrow_temp(move[:2], move[2:4], False)
                         arrow_count += 1
                     elif not self.owner.bm_is_threat:
-                        self.board.creaFlechaTmp(move[:2], move[2:4], False)
+                        self.board.show_one_arrow_temp(move[:2], move[2:4], False)
                         arrow_count += 1
 
     def seguir(self):
@@ -321,7 +322,7 @@ class WForcingMoves(LCDialog.LCDialog):
             self.gb_counts.show()
             self.ed_moves.show()
             self.board.disable_all()
-            self.show_tb(self.terminar)
+            self.show_tb(self.finalize)
             return
 
         if self.level == 1:
@@ -330,7 +331,7 @@ class WForcingMoves(LCDialog.LCDialog):
                 self.must_find_best_move = True
                 self.gb_counts.hide()
                 self.ed_moves.hide()
-                self.show_tb(self.terminar)
+                self.show_tb(self.finalize)
                 return
         if self.level == 2:
             if self.ask_is_bm_capture():
@@ -338,7 +339,7 @@ class WForcingMoves(LCDialog.LCDialog):
                 self.must_find_best_move = True
                 self.gb_counts.hide()
                 self.ed_moves.hide()
-                self.show_tb(self.terminar)
+                self.show_tb(self.finalize)
                 return
             else:
                 self.ask_is_bm_threat()
@@ -346,7 +347,7 @@ class WForcingMoves(LCDialog.LCDialog):
                 self.lb_result.set_text(_("Indicate the best move!"))
                 self.gb_counts.hide()
                 self.ed_moves.hide()
-                self.show_tb(self.terminar)
+                self.show_tb(self.finalize)
                 return
 
         self.board.remove_arrows()
@@ -356,7 +357,7 @@ class WForcingMoves(LCDialog.LCDialog):
         self.show_tb()
 
         # Ponemos el toolbar
-        self.show_tb(self.check, self.terminar)
+        self.show_tb(self.check, self.finalize)
 
         # Activamos capturas
         self.gb_counts.setEnabled(True)
@@ -388,9 +389,9 @@ class WForcingMoves(LCDialog.LCDialog):
 
             self.board.remove_arrows()
             for move in self.owner.li_checks:
-                self.board.creaFlechaTmp(move[:2], move[2:4], False)
+                self.board.show_one_arrow_temp(move[:2], move[2:4], False)
 
-            self.show_tb(self.terminar, self.seguir)
+            self.show_tb(self.finalize, self.seguir)
         else:  # captures
             ok = num_moves_calculated == self.owner.captures  # len(moves)
             self.lb_result.set_text(_("There are %s capture(s).") % self.owner.captures)
@@ -402,6 +403,6 @@ class WForcingMoves(LCDialog.LCDialog):
 
             self.board.remove_arrows()
             for move in self.owner.li_captures:
-                self.board.creaFlechaTmp(move[:2], move[2:4], False)
+                self.board.show_one_arrow_temp(move[:2], move[2:4], False)
 
-            self.show_tb(self.terminar, self.seguir)
+            self.show_tb(self.finalize, self.seguir)

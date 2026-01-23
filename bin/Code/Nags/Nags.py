@@ -217,7 +217,7 @@ class Nags:
             symbol = self.dic_standard[num_nag].symbol if num_nag in self.dic_standard else ""
             resp = symbol if symbol else "$%d" % num_nag
             text = self.dic_standard[num_nag].text if num_nag in self.dic_standard else ""
-            resp += " %s" % text
+            resp += f" {text}"
             li_resp.append(resp)
         return "\n".join(li_resp)
 

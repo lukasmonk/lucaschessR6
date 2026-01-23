@@ -1,3 +1,5 @@
+from typing import Any
+
 from Code.Base import Move, Position
 from Code.Base.Constantes import (
     GT_WORLD_MAPS,
@@ -13,6 +15,14 @@ from Code.QT import QTUtils
 
 
 class ManagerMateMap(Manager.Manager):
+    workmap: Any
+    player_win: bool
+    is_rival_thinking: bool
+    is_human_side_white: bool
+    reiniciando: bool
+    is_human_thinking: bool
+    error: str
+
     def start(self, workmap):
         self.workmap = workmap
 
@@ -20,26 +30,26 @@ class ManagerMateMap(Manager.Manager):
 
         self.player_win = False
 
-        fenInicial = workmap.fenAim()
+        initial_fen = workmap.fen_aim()
 
         self.is_rival_thinking = False
 
         etiqueta = ""
-        if "|" in fenInicial:
-            li = fenInicial.split("|")
+        if "|" in initial_fen:
+            li = initial_fen.split("|")
 
-            fenInicial = li[0]
-            if fenInicial.endswith(" 0"):
-                fenInicial = fenInicial[:-1] + "1"
+            initial_fen = li[0]
+            if initial_fen.endswith(" 0"):
+                initial_fen = f"{initial_fen[:-1]}1"
 
             nli = len(li)
             if nli >= 2:
                 etiqueta = li[1]
 
         cp = Position.Position()
-        cp.read_fen(fenInicial)
+        cp.read_fen(initial_fen)
 
-        self.fen = fenInicial
+        self.fen = initial_fen
 
         is_white = cp.is_white
 
@@ -67,7 +77,7 @@ class ManagerMateMap(Manager.Manager):
 
         self.main_window.active_game(True, False)
         self.main_window.remove_hints(True, True)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.put_pieces_bottom(is_white)
@@ -127,7 +137,7 @@ class ManagerMateMap(Manager.Manager):
     def play_next_move(self):
         if self.state == ST_ENDGAME:
             return
-        self.siPiensaHumano = False
+        self.is_human_thinking = False
 
         self.state = ST_PLAYING
 
@@ -143,8 +153,8 @@ class ManagerMateMap(Manager.Manager):
         self.set_side_indicator(is_white)
         self.refresh()
 
-        siRival = is_white == self.is_engine_side_white
-        if siRival:
+        si_rival = is_white == self.is_engine_side_white
+        if si_rival:
             self.piensa_rival()
 
         else:
@@ -171,12 +181,12 @@ class ManagerMateMap(Manager.Manager):
         else:
             self.is_rival_thinking = False
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             return False
 
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
         self.add_move(move, True)
         self.error = ""
         self.play_next_move()
@@ -196,7 +206,7 @@ class ManagerMateMap(Manager.Manager):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
             self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
 
             self.error = ""
 
@@ -210,7 +220,7 @@ class ManagerMateMap(Manager.Manager):
         self.human_is_playing = False
         self.state = ST_ENDGAME
 
-        mensaje, beep_result, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep_result, player_win = self.game.label_result_player(self.is_human_side_white)
 
         self.player_win = player_win
 

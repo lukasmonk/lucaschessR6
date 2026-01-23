@@ -7,7 +7,7 @@ from PySide6 import QtCore
 from PySide6.QtSvgWidgets import QSvgWidget
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Databases import DBgames
 from Code.Expeditions import Everest
 from Code.QT import (
@@ -37,10 +37,10 @@ class WNewExpedition(LCDialog.LCDialog):
         self.selected = None
 
         # Torneo
-        li = [("%s (%d)" % (_FO(tourney["TOURNEY"]), len(tourney["GAMES"])), tourney) for tourney in self.litourneys]
+        li = [(f"{_FO(tourney['TOURNEY'])} ({len(tourney['GAMES'])})", tourney) for tourney in self.litourneys]
         li.sort(key=lambda x: x[0])
         self.cbtourney, lbtourney = QTMessages.combobox_lb(self, li, li[0], _("Expedition"))
-        btmas = Controles.PB(self, "", self.mas).ponIcono(Iconos.Mas22())
+        btmas = Controles.PB(self, "", self.mas).set_icono(Iconos.Mas22())
         lytourney = Colocacion.H().control(lbtourney).control(self.cbtourney).control(btmas).relleno(1)
 
         # tolerance
@@ -64,8 +64,8 @@ class WNewExpedition(LCDialog.LCDialog):
         gbtries = Controles.GB(self, _("Repetitions"), layout)
 
         # color
-        liColors = ((_("By default"), "D"), (_("White"), "W"), (_("Black"), "B"))
-        self.cbcolor = Controles.CB(self, liColors, "D")
+        li_colors = ((_("By default"), "D"), (_("White"), "W"), (_("Black"), "B"))
+        self.cbcolor = Controles.CB(self, li_colors, "D")
         layout = Colocacion.H().relleno(1).control(self.cbcolor).relleno(1)
         gbcolor = Controles.GB(self, _("Color"), layout)
 
@@ -127,7 +127,7 @@ class WNewExpedition(LCDialog.LCDialog):
         li_regs = []
         max_moves = 0
         while True:
-            form = FormLayout.FormLayout(self, _("Select games"), Iconos.Opciones(), anchoMinimo=200)
+            form = FormLayout.FormLayout(self, _("Select games"), Iconos.Opciones(), minimum_width=200)
             form.apart_np("%s: %d" % (_("Total games"), nreccount))
             form.editbox(_("Select games"), rx=r"[0-9,\-]*", init_value=plant)
             form.apart_simple_np(
@@ -175,9 +175,8 @@ class WNewExpedition(LCDialog.LCDialog):
                 li_regs.sort(reverse=True)
             li_regs = [x - 1 for x in li_regs]  # 0 init
 
-            dic = {}
-            dic["TOURNEY"] = os.path.basename(path_pgn)[:-4]
-            games = dic["GAMES"] = []
+            dic = {"TOURNEY": os.path.basename(path_pgn)[:-4], "GAMES": []}
+            games = dic["GAMES"]
 
             for recno in li_regs:
                 g = db.read_game_recno(recno)
@@ -191,7 +190,7 @@ class WNewExpedition(LCDialog.LCDialog):
 
             self.litourneys.append(dic)
 
-            li = [("%s (%d)" % (tourney["TOURNEY"], len(tourney["GAMES"])), tourney) for tourney in self.litourneys]
+            li = [(f"{tourney['TOURNEY']} ({len(tourney['GAMES'])})", tourney) for tourney in self.litourneys]
             self.cbtourney.rehacer(li, dic)
 
         db.close()
@@ -215,7 +214,7 @@ class WExpedition(LCDialog.LCDialog):
         wsvg = QSvgWidget()
         wsvg.load(QtCore.QByteArray(svg))
         wsvg.setFixedSize(762, int(762.0 * 520.0 / 1172.0))
-        lySVG = Colocacion.H().relleno(1).control(wsvg).relleno(1)
+        ly_svg = Colocacion.H().relleno(1).control(wsvg).relleno(1)
 
         li_acciones = (
             (_("Climb"), Iconos.Empezar(), self.climb),
@@ -227,14 +226,14 @@ class WExpedition(LCDialog.LCDialog):
         if self.current is None:
             tb.set_action_visible(self.climb, False)
 
-        lyRot = Colocacion.H()
+        ly_rot = Colocacion.H()
         for elem in label:
             lb_rotulo = Controles.LB(self, elem).align_center()
             lb_rotulo.setStyleSheet(
                 "QWidget { border-style: groove; border-width: 2px; border-color: LightSlateGray ;}"
             )
             lb_rotulo.set_font_type(puntos=12, peso=700)
-            lyRot.control(lb_rotulo)
+            ly_rot.control(lb_rotulo)
 
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("ROUTE", _("Route"), 240, align_center=True)
@@ -245,26 +244,27 @@ class WExpedition(LCDialog.LCDialog):
         o_columns.nueva("MPOINTS", _("Average cps"), 80, align_center=True)
         o_columns.nueva("TRIES", _("Max tries"), 80, align_center=True)
         o_columns.nueva("TOLERANCE", _("Tolerance"), 80, align_center=True)
-        grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=False)
-        grid.setMinimumWidth(grid.anchoColumnas() + 20)
-        grid.coloresAlternados()
+        grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=False)
+        grid.setMinimumWidth(grid.width_columns_displayables() + 20)
+        grid.alternate_colors()
 
-        lyG = Colocacion.V().otro(lyRot).control(grid).margen(0)
+        ly_g = Colocacion.V().otro(ly_rot).control(grid).margen(0)
 
-        lyR = Colocacion.H().control(tb).otro(lyG).margen(0)
+        ly_r = Colocacion.H().control(tb).otro(ly_g).margen(0)
 
-        ly = Colocacion.V().otro(lySVG).otro(lyR).margen(3)
+        ly = Colocacion.V().otro(ly_svg).otro(ly_r).margen(3)
 
         self.setLayout(ly)
 
         self.register_grid(grid)
         self.restore_video(default_width=784, default_height=670)
 
-    def grid_num_datos(self, grid):
+    @staticmethod
+    def grid_num_datos(_grid):
         return 12
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         val = self.li_routes[row][key]
         if key == "MPOINTS":
             if val:
@@ -278,31 +278,31 @@ class WExpedition(LCDialog.LCDialog):
             val = str(int(val) + 1)
         return val
 
-    def grid_color_texto(self, grid, row, o_column):
-        if o_column.key == "MPOINTS":
+    def grid_color_texto(self, _grid, row, obj_column):
+        if obj_column.key == "MPOINTS":
             mpoints = self.li_routes[row]["MPOINTS"]
             if mpoints:
                 v = int(mpoints)
                 if v:
                     return self.color_positivo if v < 0 else self.color_negativo
+        return None
 
-    def grid_bold(self, grid, row, o_column):
+    def grid_bold(self, _grid, row, _obj_column):
         return self.current is not None and row == self.current
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, row, _obj_column):
         if self.current is not None and row == self.current:
             self.climb()
 
-    def gen_routes(self, ev, li_distribution, done_game, tries, tolerances, times):
+    @staticmethod
+    def gen_routes(ev, li_distribution, done_game, tries, tolerances, times):
         li_p = ev.li_points
         li_routes = []
         xgame = done_game + 1
         xcurrent = None
         for x in range(12):
-            d = {}
-            d["ROUTE"] = "%s - %s" % (li_p[x][4], li_p[x + 1][4])
             xc = li_distribution[x]
-            d["GAMES"] = str(xc)
+            d = {"ROUTE": f"{li_p[x][4]} - {li_p[x + 1][4]}", "GAMES": str(xc)}
             done = xgame if xc >= xgame else xc
             xgame -= xc
             if xcurrent is None and xgame < 0:
@@ -355,11 +355,11 @@ class WEverest(LCDialog.LCDialog):
         o_columns.nueva("TIMES", _("Time"), 120, align_center=True)
         o_columns.nueva("TOLERANCE", _("Tolerance"), 90, align_center=True)
         o_columns.nueva("TRIES", _("Tries"), 90, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Start"), Iconos.Empezar(), self.start),
             None,
@@ -373,8 +373,8 @@ class WEverest(LCDialog.LCDialog):
         self.tb = QTDialogs.LCTB(self, li_acciones)
 
         # Colocamos
-        lyTB = Colocacion.H().control(self.tb).margen(0)
-        ly = Colocacion.V().otro(lyTB).control(self.grid).margen(3)
+        ly_tb = Colocacion.H().control(self.tb).margen(0)
+        ly = Colocacion.V().otro(ly_tb).control(self.grid).margen(3)
 
         self.setLayout(ly)
 
@@ -383,15 +383,15 @@ class WEverest(LCDialog.LCDialog):
 
         self.grid.gotop()
 
-    def grid_doble_click(self, grid, fil, col):
+    def grid_doble_click(self, _grid, fil, _col):
         if fil >= 0:
             self.start()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return self.db.reccount()
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         v = self.db.field(row, col)
 
         # if col in ("NAME", "TOLERANCE", "TRIES"):return v
@@ -423,13 +423,13 @@ class WEverest(LCDialog.LCDialog):
 
         return v
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.db.close()
         self.reject()
 
     def borrar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 self.db.borrar_lista(li)
@@ -456,7 +456,7 @@ class WEverest(LCDialog.LCDialog):
         resp = menu.lanza()
         if not resp:
             return
-        file = Code.path_resource("IntFiles", "Everest", "%s.str" % resp)
+        file = Code.path_resource("IntFiles", "Everest", f"{resp}.str")
         w = WNewExpedition(self, file)
         if w.exec():
             reg = w.selected
@@ -468,7 +468,7 @@ class WEverest(LCDialog.LCDialog):
 
         dic = self.configuration.read_variables(var_config)
 
-        form = FormLayout.FormLayout(self, _("Configuration"), Iconos.Opciones(), anchoMinimo=440)
+        form = FormLayout.FormLayout(self, _("Configuration"), Iconos.Opciones(), minimum_width=440)
 
         form.separador()
 

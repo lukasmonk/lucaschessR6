@@ -2,7 +2,7 @@ import os
 import shutil
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Odt import Content, Others, Settings, Styles
 
 
@@ -40,7 +40,7 @@ class ODT:
 
         if os.path.isfile(path):
             os.unlink(path)
-        pzip = path + ".zip"
+        pzip = f"{path}.zip"
         if os.path.isfile(pzip):
             os.remove(pzip)
         shutil.make_archive(path, "zip", folder)

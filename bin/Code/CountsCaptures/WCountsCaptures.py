@@ -1,5 +1,5 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.CountsCaptures import CountsCaptures, WRunCaptures, WRunCounts
 from Code.Databases import DBgames, WindowDatabase
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
@@ -32,12 +32,12 @@ class WCountsCaptures(LCDialog.LCDialog):
         o_columns.nueva("TIME", _("Time"), 70, align_center=True)
         o_columns.nueva("AVG", _("Average"), 70, align_center=True)
         o_columns.nueva("GAME", _("Game"), 520)
-        self.glista = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
+        self.glista = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
         # f = Controles.FontType(puntos=self.configuration.x_font_points)
         # self.glista.set_font(f)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Play"), Iconos.Play(), self.play),
             None,
@@ -57,10 +57,10 @@ class WCountsCaptures(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.anchoColumnas() + 32, default_height=360)
+        self.restore_video(default_width=self.glista.width_columns_displayables() + 32, default_height=360)
         self.glista.gotop()
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.play()
 
     def repetir(self):
@@ -100,7 +100,7 @@ class WCountsCaptures(LCDialog.LCDialog):
         self.glista.refresh()
 
     def borrar(self):
-        li = self.glista.recnosSeleccionados()
+        li = self.glista.list_selected_recnos()
         if len(li) > 0:
             mens = _("Do you want to delete all selected records?")
             if QTMessages.pregunta(self, mens):
@@ -110,12 +110,12 @@ class WCountsCaptures(LCDialog.LCDialog):
                 if recno >= self.grid_num_datos(None):
                     self.glista.gobottom()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.db)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         count_capture = self.db.count_capture(row)
-        col = o_column.key
+        col = obj_column.key
         if col == "DATE":
             return Util.dtostr_hm(count_capture.date)
         elif col == "GAME":
@@ -128,7 +128,7 @@ class WCountsCaptures(LCDialog.LCDialog):
                 count_capture.current_depth,
             )
         elif col == "MOVES":
-            return "%d" % len(count_capture.game)
+            return f"{len(count_capture.game)}"
         elif col == "%":
             return count_capture.label_success()
         elif col == "TIME":
@@ -141,7 +141,7 @@ class WCountsCaptures(LCDialog.LCDialog):
     def closeEvent(self, event):  # Cierre con X
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 

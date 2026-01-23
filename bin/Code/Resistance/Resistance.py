@@ -1,7 +1,7 @@
 import collections
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.SQL import UtilSQL
 
 
@@ -23,8 +23,8 @@ class Resistance:
 
     def calcClaveActual(self):
         merr = self.maxerror()
-        mas = "M%d" % merr if merr else ""
-        return "S%dP%d%s" % (self.conf["SEGUNDOS"], self.conf["PUNTOS"], mas)
+        mas = f"M{merr}" if merr else ""
+        return f"S{self.conf['SEGUNDOS']}P{self.conf['PUNTOS']}{mas}"
 
     def cambiaconfiguration(self, seconds, puntos, maxerror):
         self.conf["SEGUNDOS"] = seconds
@@ -48,21 +48,21 @@ class Resistance:
         dicEngine = self.dicActual.get(engine, None)
         if dicEngine is None:
             return None, None
-        recordFecha = dicEngine.get("RECORD_FECHA_%s" % campo, None)
-        recordMovimientos = dicEngine.get("RECORD_MOVIMIENTOS_%s" % campo, None)
+        recordFecha = dicEngine.get(f"RECORD_FECHA_{campo}", None)
+        recordMovimientos = dicEngine.get(f"RECORD_MOVIMIENTOS_{campo}", None)
         return recordFecha, recordMovimientos
 
     def put_result(self, num_engine, key, movimientos):
         engine = self.list_engines[num_engine][1]
         dicEngine = self.dicActual.get(engine, collections.OrderedDict())
-        historico = dicEngine.get("HISTORICO_%s" % key, [])
+        historico = dicEngine.get(f"HISTORICO_{key}", [])
         hoy = Util.today()
         historico.append((hoy, movimientos))
-        recordMovimientos = dicEngine.get("RECORD_MOVIMIENTOS_%s" % key, 0)
+        recordMovimientos = dicEngine.get(f"RECORD_MOVIMIENTOS_{key}", 0)
         siRecord = movimientos > recordMovimientos
         if siRecord:
-            dicEngine["RECORD_FECHA_%s" % key] = hoy
-            dicEngine["RECORD_MOVIMIENTOS_%s" % key] = movimientos
+            dicEngine[f"RECORD_FECHA_{key}"] = hoy
+            dicEngine[f"RECORD_MOVIMIENTOS_{key}"] = movimientos
         self.dicActual[engine] = dicEngine
 
         self.db[self.claveActual] = self.dicActual
@@ -73,13 +73,13 @@ class Resistance:
         if not fecha:
             return "-"
         if moves > 2000:
-            mv = _("Won") + " %d" % (moves - 2000)
+            mv = f"{_('Won')} {moves - 2000}"
         elif moves > 1000:
-            mv = _("Draw") + " %d" % (moves - 1000)
+            mv = f"{_('Draw')} {moves - 1000}"
         else:
-            mv = "%d %s" % (moves, _("Moves"))
+            mv = f"{moves} {_('Moves')}"
 
-        return "%s -> %s" % (Util.local_date(fecha), mv)
+        return f"{Util.local_date(fecha)} -> {mv}"
 
     def dameEtiRecord(self, campo, row):
         fecha, moves = self.dameResultado(campo, row)

@@ -4,28 +4,20 @@ from Code.Board import BoardBlocks
 
 
 class MarcoSC(BoardBlocks.BloqueEspSC):
-    def __init__(self, escena, bloqueMarco, routine_if_pressed=None):
 
-        super(MarcoSC, self).__init__(escena, bloqueMarco)
+    def __init__(self, escena, block_marco, routine_if_pressed=None):
+
+        super(MarcoSC, self).__init__(escena, block_marco)
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None
 
-        self.distBordes = 0.20 * bloqueMarco.width_square
+        self.distBordes = 0.20 * block_marco.width_square
 
         self.physical_pos2xy()
 
-        self.siMove = False
+        self.is_move = False
         self.tpSize = None
-
-        # bm = self.bloqueDatos
-        # physical_pos = bm.physical_pos
-        # dx = physical_pos.x
-        # dy = physical_pos.y
-        # ancho = physical_pos.ancho
-        # alto = physical_pos.alto
-        # rect = QtCore.QRectF( dx, dy, ancho, alto )
-        # self.dicEsquinas = { "tl":rect.topLeft(), "tr":rect.topRight(), "bl":rect.bottomLeft(), "br":rect.bottomRight() }
 
     def set_routine_if_pressed(self, rutina, carga):
         self.routine_if_pressed = rutina
@@ -33,13 +25,13 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
 
     def reset(self):
         self.physical_pos2xy()
-        bm = self.bloqueDatos
+        bm = self.block_data
         self.setOpacity(bm.opacity)
         self.setZValue(bm.physical_pos.orden)
         self.update()
 
     def physical_pos2xy(self):
-        bm = self.bloqueDatos
+        bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
         tf = self.board.tamFrontera
@@ -57,7 +49,7 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
         physical_pos.alto = (hf - df + 1) * ac
 
     def xy2physical_pos(self):
-        bm = self.bloqueDatos
+        bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
         tf = self.board.tamFrontera
@@ -79,7 +71,7 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
         self.physical_pos2xy()
 
     def set_a1h8(self, a1h8):
-        self.bloqueDatos.a1h8 = a1h8
+        self.block_data.a1h8 = a1h8
         self.physical_pos2xy()
 
     def contain(self, p):
@@ -89,14 +81,14 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
             t = p2 - p1
             return ((t.x()) ** 2 + (t.y()) ** 2) ** 0.5
 
-        physical_pos = self.bloqueDatos.physical_pos
+        physical_pos = self.block_data.physical_pos
         dx = physical_pos.x
         dy = physical_pos.y
         ancho = physical_pos.ancho
         alto = physical_pos.alto
 
         self.rect = rect = QtCore.QRectF(dx, dy, ancho, alto)
-        dicEsquinas = {
+        dic_corners = {
             "tl": rect.topLeft(),
             "tr": rect.topRight(),
             "bl": rect.bottomLeft(),
@@ -105,14 +97,15 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
 
         db = self.distBordes
         self.tpSize = None
-        for k, v in dicEsquinas.items():
+        for k, v in dic_corners.items():
             if distancia(p, v) <= db:
                 self.tpSize = k
                 return True
-        self.siMove = self.rect.contains(p)
-        return self.siMove
+        self.is_move = self.rect.contains(p)
+        return self.is_move
 
-    def name(self):
+    @staticmethod
+    def name():
         return _("Box")
 
     def mousePressEvent(self, event):
@@ -120,19 +113,19 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
         self.mouse_press_ext(event)
 
         p = event.scenePos()
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouse_press_ext(self, event):
         """Needed in Scripts"""
         p = event.pos()
         p = self.mapFromScene(p)
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouseMoveEvent(self, event):
         event.ignore()
-        if not (self.siMove or self.tpSize):
+        if not (self.is_move or self.tpSize):
             return
 
         p = event.pos()
@@ -141,63 +134,63 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
         x = p.x()
         y = p.y()
 
-        dx = x - self.expX
-        dy = y - self.expY
+        dx = x - self.exp_x
+        dy = y - self.exp_y
 
-        self.expX = x
-        self.expY = y
+        self.exp_x = x
+        self.exp_y = y
 
-        physical_pos = self.bloqueDatos.physical_pos
-        if self.siMove:
+        physical_pos = self.block_data.physical_pos
+        if self.is_move:
             physical_pos.x += dx
             physical_pos.y += dy
         else:
             tp = self.tpSize
-            if tp == "br":
-                physical_pos.ancho += dx
-                physical_pos.alto += dy
-            elif tp == "bl":
+            if tp == "bl":
                 physical_pos.x += dx
                 physical_pos.ancho -= dx
                 physical_pos.alto += dy
-            elif tp == "tr":
-                physical_pos.y += dy
+            elif tp == "br":
                 physical_pos.ancho += dx
-                physical_pos.alto -= dy
+                physical_pos.alto += dy
             elif tp == "tl":
                 physical_pos.x += dx
                 physical_pos.y += dy
                 physical_pos.ancho -= dx
                 physical_pos.alto -= dy
 
+            elif tp == "tr":
+                physical_pos.y += dy
+                physical_pos.ancho += dx
+                physical_pos.alto -= dy
         self.escena.update()
 
-    def mouseMoveExt(self, event):
+    def mouse_move_ext(self, event):
         p = event.pos()
         p = self.mapFromScene(p)
         x = p.x()
         y = p.y()
 
-        dx = x - self.expX
-        dy = y - self.expY
+        dx = x - self.exp_x
+        dy = y - self.exp_y
 
-        self.expX = x
-        self.expY = y
+        self.exp_x = x
+        self.exp_y = y
 
-        physical_pos = self.bloqueDatos.physical_pos
+        physical_pos = self.block_data.physical_pos
         physical_pos.ancho += dx
         physical_pos.alto += dy
         self.escena.update()
 
     def mouseReleaseEvent(self, event):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
-        if self.siActivo:
-            if self.siMove or self.tpSize:
+        if self.is_activated:
+            if self.is_move or self.tpSize:
                 self.xy2physical_pos()
                 self.escena.update()
-                self.siMove = False
+                self.is_move = False
                 self.tpSize = None
-            self.activa(False)
+            self.activate(False)
 
         if self.routine_if_pressed:
             if self.routine_if_pressed_argum:
@@ -205,15 +198,15 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
             else:
                 self.routine_if_pressed()
 
-    def mouseReleaseExt(self):
+    def mouse_release_ext(self):
         self.xy2physical_pos()
         self.escena.update()
-        self.siMove = False
+        self.is_move = False
         self.tpSize = None
-        self.activa(False)
+        self.activate(False)
 
     def pixmap(self):
-        bm = self.bloqueDatos
+        bm = self.block_data
 
         xk = float(self.board.width_square / 32.0)
 
@@ -237,9 +230,9 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
 
         return pm
 
-    def paint(self, painter, option, widget):
+    def paint(self, painter, option, widget=None):
 
-        bm = self.bloqueDatos
+        bm = self.block_data
 
         xk = float(self.board.width_square / 32.0)
 
@@ -283,5 +276,5 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
             painter.drawRect(self.rect)
 
     def boundingRect(self):
-        x = self.bloqueDatos.grosor
+        x = self.block_data.grosor
         return QtCore.QRectF(self.rect).adjusted(-x, -x, x * 2, x * 2)

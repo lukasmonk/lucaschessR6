@@ -32,6 +32,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 __license__ = __doc__
 
 import os
+from typing import Any
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -55,21 +56,21 @@ separador = (None, None)
 
 class FormLayout:
     def __init__(
-        self,
-        parent,
-        title,
-        icon,
-        with_default=False,
-        anchoMinimo=None,
-        dispatch=None,
-        font_txt=None,
+            self,
+            parent,
+            title,
+            icon,
+            with_default=False,
+            minimum_width=None,
+            dispatch=None,
+            font_txt=None,
     ):
         self.parent = parent
         self.title = title
         self.icon = icon
         self.font_txt = font_txt
         self.with_default = with_default
-        self.anchoMinimo = anchoMinimo
+        self.minimum_width = minimum_width
         self.dispatch = dispatch
 
         self.li_gen = []
@@ -82,7 +83,7 @@ class FormLayout:
         self.li_gen.append((config, valor))
 
     def eddefault(self, label: str, init_value):
-        self.li_gen.append((label + ":", init_value))
+        self.li_gen.append((f"{label}:", init_value))
 
     def edit_np(self, label: str, init_value):
         self.li_gen.append((label, init_value))
@@ -91,17 +92,17 @@ class FormLayout:
         self.eddefault(label, init_value)
 
     def editbox(
-        self,
-        label,
-        ancho=None,
-        rx=None,
-        tipo=None,
-        is_password=False,
-        alto=1,
-        decimales=1,
-        init_value=None,
-        negatives=False,
-        tooltip=None,
+            self,
+            label,
+            ancho=None,
+            rx=None,
+            tipo=None,
+            is_password=False,
+            alto=1,
+            decimales=1,
+            init_value=None,
+            negatives=False,
+            tooltip=None,
     ):
         self.li_gen.append(
             (
@@ -141,26 +142,17 @@ class FormLayout:
     def font(self, label, init_value):
         self.li_gen.append((FontCombobox(label), init_value))
 
-    def file(
-        self,
-        label,
-        extension,
-        siSave,
-        init_value,
-        siRelativo=True,
-        anchoMinimo=None,
-        ficheroDefecto="",
-        li_histo=None,
-    ):
+    def file(self, label, extension, si_save, init_value, is_relative=True, minimum_width=None, file_default="",
+             li_histo=None):
         self.li_gen.append(
             (
                 Fichero(
                     label,
                     extension,
-                    siSave,
-                    siRelativo,
-                    anchoMinimo,
-                    ficheroDefecto,
+                    si_save,
+                    is_relative,
+                    minimum_width,
+                    file_default,
                     li_histo,
                 ),
                 init_value,
@@ -170,8 +162,8 @@ class FormLayout:
     def filename(self, label: str, init_value: str):
         self.li_gen.append((Editbox(label, rx="[^\\:/|?*^%><()]*"), init_value))
 
-    def folder(self, label, init_value, carpetaDefecto):
-        self.li_gen.append((Carpeta(label, carpetaDefecto), init_value))
+    def folder(self, label, init_value, folder_default):
+        self.li_gen.append((Carpeta(label, folder_default), init_value))
 
     def dial(self, label, minimo, maximo, init_value, siporc=True):
         self.li_gen.append((Dial(label, minimo, maximo, siporc), init_value))
@@ -181,19 +173,19 @@ class FormLayout:
         self.li_gen.append((sld, init_value))
 
     def apart(self, title):
-        self.li_gen.append((None, title + ":"))
+        self.li_gen.append((None, f"{title}:"))
 
     def apart_np(self, title):
         self.li_gen.append((None, title))
 
     def apart_simple(self, title):
-        self.li_gen.append((None, "$" + title + ":"))
+        self.li_gen.append((None, f"${title}:"))
 
     def apart_simple_np(self, title):
-        self.li_gen.append((None, "$" + title))
+        self.li_gen.append((None, f"${title}"))
 
     def apart_nothtml_np(self, title):
-        self.li_gen.append((None, "@|" + title))
+        self.li_gen.append((None, f"@|{title}"))
 
     def add_tab(self, title):
         self.li_tabs.append((self.li_gen, title, ""))
@@ -206,7 +198,7 @@ class FormLayout:
             li,
             title=self.title,
             parent=self.parent,
-            anchoMinimo=self.anchoMinimo,
+            minimum_width=self.minimum_width,
             icon=self.icon,
             if_default=self.with_default,
             dispatch=self.dispatch,
@@ -223,7 +215,7 @@ class FormLayout:
 class Spinbox:
     def __init__(self, label, minimo, maximo, ancho):
         self.tipo = SPINBOX
-        self.label = label + ":"
+        self.label = f"{label}:"
         self.minimo = minimo
         self.maximo = maximo
         self.ancho = ancho
@@ -232,7 +224,7 @@ class Spinbox:
 class CHSpinbox:
     def __init__(self, label, minimo, maximo, ancho, chlabel):
         self.tipo = CHSPINBOX
-        self.label = label + ":"
+        self.label = f"{label}:"
         self.chlabel = chlabel
         self.minimo = minimo
         self.maximo = maximo
@@ -243,7 +235,7 @@ class Combobox:
     def __init__(self, label, lista, is_editable=False, tooltip=None, extend_seek=False):
         self.tipo = COMBOBOX
         self.lista = lista  # (key,titulo),....
-        self.label = label + ":"
+        self.label = f"{label}:"
         self.is_editable = is_editable
         self.extend_seek = extend_seek
         self.tooltip = tooltip
@@ -252,34 +244,34 @@ class Combobox:
 class FontCombobox:
     def __init__(self, label):
         self.tipo = FONTCOMBOBOX
-        self.label = label + ":"
+        self.label = f"{label}:"
 
 
 class Colorbox:
-    def __init__(self, label, ancho, alto, is_checked=False, siSTR=False):
+    def __init__(self, label, ancho, alto, is_checked=False, is_str=False):
         self.tipo = COLORBOX
         self.ancho = ancho
         self.alto = alto
         self.is_checked = is_checked
-        self.siSTR = siSTR
-        self.label = label + ":"
+        self.is_str = is_str
+        self.label = f"{label}:"
 
 
 class Editbox:
     def __init__(
-        self,
-        label,
-        ancho=None,
-        rx=None,
-        tipo=None,
-        is_password=False,
-        alto=1,
-        decimales=1,
-        negatives=False,
-        tooltip=None,
+            self,
+            label,
+            ancho=None,
+            rx=None,
+            tipo=None,
+            is_password=False,
+            alto=1,
+            decimales=1,
+            negatives=False,
+            tooltip=None,
     ):
         self.tipo = EDITBOX
-        self.label = label + ":"
+        self.label = f"{label}:"
         self.ancho = ancho
         self.rx = rx
         self.tipoCampo = str if tipo is None else tipo
@@ -301,7 +293,7 @@ class Dial:
         self.minimo = minimo
         self.maximo = maximo
         self.siporc = siporc
-        self.label = "\n" + label + ":"
+        self.label = f"\n{label}:"
 
 
 class XSlider:
@@ -318,68 +310,68 @@ class XSlider:
 class Carpeta:
     def __init__(self, label, carpeta_defecto):
         self.tipo = CARPETA
-        self.label = label + ":"
-        self.carpetaDefecto = carpeta_defecto
+        self.label = f"{label}:"
+        self.folder_default = carpeta_defecto
 
 
 class Fichero:
     def __init__(
-        self,
-        label,
-        extension,
-        siSave,
-        siRelativo=True,
-        anchoMinimo=None,
-        ficheroDefecto="",
-        li_histo=None,
+            self,
+            label,
+            extension,
+            is_save,
+            is_relative=True,
+            minimum_width=None,
+            file_default="",
+            li_histo=None,
     ):
         self.tipo = FICHERO
         self.extension = extension
-        self.siSave = siSave
-        self.label = label + ":"
-        self.siRelativo = siRelativo
-        self.anchoMinimo = anchoMinimo
-        self.ficheroDefecto = ficheroDefecto
+        self.is_save = is_save
+        self.label = f"{label}:"
+        self.is_relative = is_relative
+        self.minimum_width = minimum_width
+        self.file_default = file_default
         self.li_histo = li_histo
 
 
 class BotonFichero(QtWidgets.QPushButton):
-    def __init__(self, file, extension, si_save, si_relativo, ancho_minimo, fichero_defecto):
+    def __init__(self, file, extension, si_save, si_relativo, minimum_width, fichero_defecto):
         QtWidgets.QPushButton.__init__(self)
-        self.clicked.connect(self.cambiaFichero)
+        self.clicked.connect(self.change_file)
         self.file = file
         self.extension = extension
-        self.siSave = si_save
-        self.siRelativo = si_relativo
-        self.anchoMinimo = ancho_minimo
-        if ancho_minimo:
-            self.setMinimumWidth(ancho_minimo)
+        self.is_save = si_save
+        self.is_relative = si_relativo
+        self.minimum_width = minimum_width
+        if minimum_width:
+            self.setMinimumWidth(minimum_width)
         self.qm = QtGui.QFontMetrics(self.font())
         self.file = file
-        self.ficheroDefecto = fichero_defecto
+        self.file_default = fichero_defecto
         self.is_first_time = True
 
-    def cambiaFichero(self):
-        titulo = _("File to save") if self.siSave else _("File to read")
-        fbusca = self.file if self.file else self.ficheroDefecto
-        if self.siSave:
+    def change_file(self):
+        titulo = _("File to save") if self.is_save else _("File to read")
+        fbusca = self.file if self.file else self.file_default
+        if self.is_save:
             resp = SelectFiles.salvaFichero(self, titulo, fbusca, self.extension, True)
         else:
             resp = SelectFiles.leeFichero(self, fbusca, self.extension, titulo=titulo)
         if resp:
-            self.ponFichero(resp)
+            self.set_filepath(resp)
 
-    def ponFichero(self, txt):
+    def set_filepath(self, txt):
         self.file = txt
         if txt:
             txt = os.path.realpath(txt)
-            if self.siRelativo:
+            if self.is_relative:
                 txt = Code.relative_root(txt)
             tam_txt = self.qm.boundingRect(txt).width()
             tmax = self.width() - 10
             if self.is_first_time:
                 self.is_first_time = False
-                tmax = self.anchoMinimo if self.anchoMinimo else tmax
+                tmax = self.minimum_width if self.minimum_width else tmax
 
             while tam_txt > tmax:
                 txt = txt[1:]
@@ -392,29 +384,29 @@ class LBotonFichero(QtWidgets.QHBoxLayout):
     def __init__(self, parent, config, file):
         QtWidgets.QHBoxLayout.__init__(self)
 
-        if config.li_histo and not config.ficheroDefecto:
-            config.ficheroDefecto = os.path.dirname(config.li_histo[0])
+        if config.li_histo and not config.file_default:
+            config.file_default = os.path.dirname(config.li_histo[0])
 
         self.boton = BotonFichero(
             file,
             config.extension,
-            config.siSave,
-            config.siRelativo,
-            config.anchoMinimo,
-            config.ficheroDefecto,
+            config.is_save,
+            config.is_relative,
+            config.minimum_width,
+            config.file_default,
         )
         bt_cancelar = Controles.PB(parent, "", self.cancelar)
-        bt_cancelar.ponIcono(Iconos.Delete()).relative_width(16)
+        bt_cancelar.set_icono(Iconos.Delete()).relative_width(16)
         self.parent = parent
 
         self.addWidget(self.boton)
         self.addWidget(bt_cancelar)
 
         if config.li_histo:
-            bt_historico = Controles.PB(parent, "", self.historico).ponIcono(Iconos.Favoritos())
+            bt_historico = Controles.PB(parent, "", self.historico).set_icono(Iconos.Favoritos())
             self.addWidget(bt_historico)
             self.li_histo = config.li_histo
-        self.boton.ponFichero(file)
+        self.boton.set_filepath(file)
 
     def historico(self):
         if self.li_histo:
@@ -425,17 +417,17 @@ class LBotonFichero(QtWidgets.QHBoxLayout):
 
             resp = menu.lanza()
             if resp:
-                if menu.siIzq:
-                    self.boton.ponFichero(resp)
-                elif menu.siDer:
+                if menu.is_left:
+                    self.boton.set_filepath(resp)
+                elif menu.is_right:
                     if QTMessages.pregunta(
-                        self.parent,
-                        _("Do you want to remove file %s from the list?") % resp,
+                            self.parent,
+                            _("Do you want to remove file %s from the list?") % resp,
                     ):
                         del self.li_histo[self.li_histo.index(resp)]
 
     def cancelar(self):
-        self.boton.ponFichero("")
+        self.boton.set_filepath("")
 
 
 class LBotonCarpeta(QtWidgets.QHBoxLayout):
@@ -446,36 +438,36 @@ class LBotonCarpeta(QtWidgets.QHBoxLayout):
         self.parent = parent
 
         self.carpeta = carpeta
-        self.boton = Controles.PB(parent, self.carpeta, self.cambiarCarpeta, plano=False)
+        self.boton = Controles.PB(parent, self.carpeta, self.change_folder, plano=False)
         bt_cancelar = Controles.PB(parent, "", self.cancelar)
-        bt_cancelar.ponIcono(Iconos.Delete()).relative_width(16)
+        bt_cancelar.set_icono(Iconos.Delete()).relative_width(16)
         self.parent = parent
 
         self.addWidget(self.boton)
         self.addWidget(bt_cancelar)
 
-    def cambiarCarpeta(self):
+    def change_folder(self):
         carpeta = SelectFiles.get_existing_directory(self.parent, self.carpeta, self.config.label)
         if carpeta:
             self.carpeta = os.path.abspath(carpeta)
             self.boton.set_text(carpeta)
 
     def cancelar(self):
-        self.carpeta = self.config.carpetaDefecto
+        self.carpeta = self.config.folder_default
         self.boton.set_text(self.carpeta)
 
 
 class BotonColor(QtWidgets.QPushButton):
-    def __init__(self, parent, ancho, alto, siSTR, dispatch):
+    def __init__(self, parent, ancho, alto, is_str, dispatch):
         QtWidgets.QPushButton.__init__(self, parent)
 
         self.setFixedSize(Controles.calc_fixed_width(ancho), Controles.calc_fixed_width(alto))
 
         self.clicked.connect(self.pulsado)
 
-        self.xcolor = "" if siSTR else -1
+        self.xcolor = "" if is_str else -1
 
-        self.siSTR = siSTR
+        self.is_str = is_str
 
         self.dispatch = dispatch
 
@@ -483,22 +475,22 @@ class BotonColor(QtWidgets.QPushButton):
 
         self.xcolor = xcolor
 
-        if self.siSTR:
+        if self.is_str:
             color = QtGui.QColor(xcolor)
         else:
             color = QtGui.QColor()
             color.setRgba(xcolor)
-        self.setStyleSheet("QWidget { background-color: %s }" % color.name())
+        self.setStyleSheet(f"QWidget {{ background-color: {color.name()} }}")
 
     def pulsado(self):
-        if self.siSTR:
+        if self.is_str:
             color = QtGui.QColor(self.xcolor)
         else:
             color = QtGui.QColor()
             color.setRgba(self.xcolor)
         color = QTDialogs.select_color(color)
         if color:
-            if self.siSTR:
+            if self.is_str:
                 self.set_color_foreground(color.name())
             else:
                 self.set_color_foreground(color.rgba())
@@ -570,15 +562,15 @@ class Edit(Controles.ED):
         self.decimales = config.decimales
         if self.tipo is float:
             if config.negatives:
-                self.controlrx(r"^-?\d+(\.\d{1,%d})?$" % self.decimales)
+                self.controlrx(rf"^-?\d+(\.\d{{1,{self.decimales}}})?$")
             else:
-                self.controlrx(r"\d+(\.\d{1,%d})?$" % self.decimales)
+                self.controlrx(rf"\d+(\.\d{{1,{self.decimales}}})?$")
 
     def valor(self):
         if self.tipo is int:
-            v = self.textoInt()
+            v = self.text_to_integer()
         elif self.tipo is float:
-            v = self.textoFloat()
+            v = self.text_to_float()
         else:
             v = self.texto()
         return v
@@ -590,7 +582,7 @@ class TextEdit(Controles.EM):
         if dispatch:
             self.textChanged.connect(dispatch)
 
-        self.altoMinimo(config.alto)
+        self.minimum_height(config.alto)
 
     def valor(self):
         return self.texto()
@@ -619,16 +611,16 @@ class DialNum(Colocacion.H):
 
     def set_value(self, nvalor):
         self.dial.setValue(nvalor)
-        self.ponLB()
+        self.set_txt_label()
 
-    def ponLB(self):
-        txt = "%d" % self.dial.value()
+    def set_txt_label(self):
+        txt = f"{self.dial.value()}"
         if self.siporc:
             txt += "%"
         self.lb.setText(txt)
 
-    def movido(self, valor):
-        self.ponLB()
+    def movido(self, _valor):
+        self.set_txt_label()
         if self.dispatch:
             self.dispatch()
 
@@ -642,7 +634,7 @@ class Slider(Colocacion.H):
 
         self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, parent)
         self.slider.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
-        self.slider.setTickPosition(QtWidgets.QSlider.TicksBothSides)
+        self.slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
         self.slider.setTickInterval(1)
         self.slider.setSingleStep(1)
         self.slider.setMinimum(config.minimo)
@@ -660,18 +652,18 @@ class Slider(Colocacion.H):
 
         # self.set_value()
 
-    def ponLB(self):
-        txt = "%d" % self.slider.value()
+    def set_txt_label(self):
+        txt = f"{self.slider.value()}"
         if self.siporc:
             txt += "%"
         self.lb.setText(txt)
 
     def set_value(self, value):
         self.slider.setValue(value)
-        self.ponLB()
+        self.set_txt_label()
 
-    def movido(self, valor):
-        self.ponLB()
+    def movido(self, _value):
+        self.set_txt_label()
         if self.dispatch:
             self.dispatch()
 
@@ -758,7 +750,7 @@ class FormWidget(QtWidgets.QWidget):
                         if config.is_checked:
                             field = BotonCheckColor(self, config.ancho, config.alto, dispatch)
                         else:
-                            field = BotonColor(self, config.ancho, config.alto, config.siSTR, dispatch)
+                            field = BotonColor(self, config.ancho, config.alto, config.is_str, dispatch)
                         field.set_color_foreground(value)
 
                     elif tipo == DIAL:
@@ -776,12 +768,12 @@ class FormWidget(QtWidgets.QWidget):
                             if tp is str:
                                 field.set_text(value)
                             elif tp is int:
-                                field.tipoInt()
-                                field.ponInt(value)
+                                field.type_integer()
+                                field.set_integer(value)
                             elif tp is float:
                                 field.align_right()
-                                # field.tipoFloat(0.0)
-                                field.ponFloat(value)
+                                # field.type_float(0.0)
+                                field.set_float(value)
                         else:
                             field = TextEdit(self, config, dispatch)
                             field.set_text(value)
@@ -834,7 +826,7 @@ class FormWidget(QtWidgets.QWidget):
 
                 # Float seconds
                 elif isinstance(value, float):  # Para los seconds
-                    v = "%0.1f" % value
+                    v = f"{value:0.1f}"
                     field = QtWidgets.QLineEdit(v, self)
                     validator = QtGui.QDoubleValidator(0.0, 36000.0, 1, field)
                     validator.setNotation(QtGui.QDoubleValidator.Notation.StandardNotation)
@@ -907,7 +899,7 @@ class FormWidget(QtWidgets.QWidget):
                     txt = txt.replace(",", ".")
                 while txt.count(".") > 1:
                     x = txt.index(".")
-                    txt = txt[:x] + txt[x + 1 :]
+                    txt = txt[:x] + txt[x + 1:]
                 try:
                     value = float(txt)
                 except ValueError:
@@ -919,7 +911,7 @@ class FormWidget(QtWidgets.QWidget):
             valuelist.append(value)
         return valuelist
 
-    def getWidget(self, number):
+    def get_widget(self, number):
         n = -1
         for index in range(len(self.data)):
             field = self.widgets[index]
@@ -947,25 +939,28 @@ class FormTabWidget(QtWidgets.QWidget):
     def get(self):
         return [widget.get() for widget in self.widgetlist]
 
-    def getWidget(self, numTab, number):
-        return self.widgetlist[numTab].getWidget(number)
+    def get_widget(self, num_tab, number):
+        return self.widgetlist[num_tab].get_widget(number)
 
 
 class FormDialog(QtWidgets.QDialog):
+    data: Any
+    accion: str
+
     def __init__(
-        self,
-        data,
-        title="",
-        comment="",
-        icon=None,
-        parent=None,
-        if_default=True,
-        dispatch=None,
-        li_extra_options=None,
+            self,
+            data,
+            title="",
+            comment="",
+            icon=None,
+            parent=None,
+            if_default=True,
+            dispatch=None,
+            li_extra_options=None,
     ):
         super(FormDialog, self).__init__(parent, QtCore.Qt.WindowType.Dialog)
         flags = self.windowFlags()
-        flags &= ~QtCore.Qt.WindowContextHelpButtonHint
+        flags &= ~QtCore.Qt.WindowType.WindowContextHelpButtonHint
         self.setWindowFlags(flags)
 
         # Form
@@ -995,7 +990,7 @@ class FormDialog(QtWidgets.QDialog):
 
         self.setWindowTitle(title)
         if not isinstance(icon, QtGui.QIcon):
-            icon = QtWidgets.QWidget().style().standardIcon(QtWidgets.QStyle.SP_MessageBoxQuestion)
+            icon = QtWidgets.QWidget().style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MessageBoxQuestion)
         self.setWindowIcon(icon)
 
     def aceptar(self):
@@ -1020,16 +1015,16 @@ class FormDialog(QtWidgets.QDialog):
 
 
 def fedit(
-    data,
-    title="",
-    comment="",
-    icon=None,
-    parent=None,
-    if_default=False,
-    anchoMinimo=None,
-    dispatch=None,
-    font=None,
-    li_extra_options=None,
+        data,
+        title="",
+        comment="",
+        icon=None,
+        parent=None,
+        if_default=False,
+        minimum_width=None,
+        dispatch=None,
+        font=None,
+        li_extra_options=None,
 ):
     """
     Create form dialog and return result
@@ -1056,9 +1051,10 @@ def fedit(
     dialog = FormDialog(data, title, comment, icon, parent, if_default, dispatch, li_extra_options)
     if font:
         dialog.setFont(font)
-    if anchoMinimo:
-        dialog.setMinimumWidth(anchoMinimo)
+    if minimum_width:
+        dialog.setMinimumWidth(minimum_width)
     if dialog.exec():
         QtCore.QCoreApplication.processEvents()
         QtWidgets.QApplication.processEvents()
         return dialog.get()
+    return None
