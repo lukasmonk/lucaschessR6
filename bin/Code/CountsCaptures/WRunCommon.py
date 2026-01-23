@@ -5,7 +5,7 @@ from Code.QT import Colocacion, Controles, Iconos
 
 class EDCelda(Controles.ED):
     def focusOutEvent(self, event):
-        self.parent.focusOut(self)
+        self.parent.focus_out(self)
         Controles.ED.focusOutEvent(self, event)
 
 
@@ -47,14 +47,14 @@ class WEdMove(QtWidgets.QWidget):
         )
         self.setLayout(ly)
 
-    def focusOut(self, quien):
+    def focus_out(self, quien):
         self.owner.set_last_square(quien)
 
-    def activa(self):
+    def activate(self):
         self.setFocus()
         self.origen.setFocus()
 
-    def activaDestino(self):
+    def activate_destino(self):
         self.setFocus()
         self.destino.setFocus()
 
@@ -93,7 +93,7 @@ class WEdMove(QtWidgets.QWidget):
     def repetida(self):
         self.result.put_image(self.PM_REPEATED)
 
-    def pulsa_flecha(self, event):
+    def pulsa_flecha(self, _event):
         self.limpia()
 
 
@@ -118,10 +118,10 @@ class WEdMovePGN(QtWidgets.QWidget):
         ly = Colocacion.H().relleno().control(self.celda).espacio(2).control(self.result).margen(0).relleno()
         self.setLayout(ly)
 
-    def focusOut(self, quien):
+    def focus_out(self, quien):
         self.owner.set_last_square(quien)
 
-    def activa(self):
+    def activate(self):
         self.setFocus()
         self.celda.setFocus()
 

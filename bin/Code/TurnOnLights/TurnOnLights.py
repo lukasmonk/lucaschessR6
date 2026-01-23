@@ -3,7 +3,7 @@ import os
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Position
 
 QUALIFICATIONS = (
@@ -228,7 +228,7 @@ class TurnOnLights:
         return self.calculation_mode
 
     def recupera(self):
-        filepath = Util.opj(Code.configuration.paths.folder_results, "%s.tol" % self.name)
+        filepath = Util.opj(Code.configuration.paths.folder_results(), f"{self.name}.tol")
         tolr = Util.restore_pickle(filepath)
         if tolr is None:
             self.new()
@@ -343,7 +343,7 @@ class TurnOnLightsOneLine(TurnOnLights):
         self.li_tam_blocks = [k, 2 * k, 3 * k, num_pos]
 
     def recupera(self):
-        filepath = Util.opj(Code.configuration.paths.folder_results, "%s.tol" % self.name)
+        filepath = Util.opj(Code.configuration.paths.folder_results(), f"{self.name}.tol")
         try:
             tolr = Util.restore_pickle(filepath)
         except:
@@ -396,12 +396,12 @@ def read_tol(name, title, folder, li_tam_blocks):
 
 def write_tol(tol):
     tol.last_date = datetime.date.today()
-    filepath = Util.opj(Code.configuration.paths.folder_results, "%s.tol" % tol.name)
+    filepath = Util.opj(Code.configuration.paths.folder_results(), f"{tol.name}.tol")
     Util.save_pickle(filepath, tol)
 
 
 def remove_tol(tol):
-    filepath = Util.opj(Code.configuration.paths.folder_results, "%s.tol" % tol.name)
+    filepath = Util.opj(Code.configuration.paths.folder_results(), f"{tol.name}.tol")
     Util.remove_file(filepath)
 
 
@@ -419,7 +419,7 @@ def numColorMinimum(tol):
 
 
 def compruebaUweEasy(configuration, name):
-    file = Util.opj(configuration.paths.folder_results, "%s.tol" % name)
+    file = Util.opj(configuration.paths.folder_results(), f"{name}.tol")
     if Util.exist_file(file):
         return
     folderDest = configuration.temporary_folder()

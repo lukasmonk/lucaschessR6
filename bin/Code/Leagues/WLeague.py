@@ -3,7 +3,7 @@ import collections
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util, XRun
+from Code.Z import Util, XRun
 from Code.Base import Game
 from Code.Base.Constantes import RESULT_DRAW, RESULT_WIN_BLACK, RESULT_WIN_WHITE
 from Code.Databases import DBgames, WDB_GUtils
@@ -69,7 +69,7 @@ class WLeague(LCDialog.LCDialog):
         self.tb = QTDialogs.LCTB(self)
 
         self.tab = Controles.Tab(self).set_font_type(puntos=10).set_position("S")
-        self.tab.dispatchChange(self.tab_changed)
+        self.tab.dispatch_change(self.tab_changed)
         font = Controles.FontType(puntos=10)
 
         self.grid_games = None
@@ -122,7 +122,7 @@ class WLeague(LCDialog.LCDialog):
 
         self.tab.addTab(w, _("Classification"))
         self.tab.setIconSize(QtCore.QSize(32, 32))
-        self.tab.ponIcono(0, Iconos.Classification())
+        self.tab.set_icono(0, Iconos.Classification())
 
         # CROSSTABS ----------------------------------------------------------------------------------------------------
         ly = Colocacion.H()
@@ -136,7 +136,7 @@ class WLeague(LCDialog.LCDialog):
                 self,
                 o_col,
                 xid="CROSSTABS%d" % num_division,
-                siSelecFilas=False,
+                complete_row_select=False,
                 cab_vertical_font=180,
                 with_header_vertical=True,
             )
@@ -152,7 +152,7 @@ class WLeague(LCDialog.LCDialog):
 
         self.tab.addTab(w, _("Crosstabs"))
         self.tab.setIconSize(QtCore.QSize(32, 32))
-        self.tab.ponIcono(1, Iconos.Crosstable())
+        self.tab.set_icono(1, Iconos.Crosstable())
 
         # Matches -----------------------------------------------------------------------------------------------------
         o_col = Columnas.ListaColumnas()
@@ -160,7 +160,7 @@ class WLeague(LCDialog.LCDialog):
         o_col.nueva("WHITE", _("White"), 240)
         o_col.nueva("BLACK", _("Black"), 240)
         o_col.nueva("RESULT", _("Result"), 180, align_center=True)
-        self.grid_matches = Grid.Grid(self, o_col, siSelecFilas=True)
+        self.grid_matches = Grid.Grid(self, o_col, complete_row_select=True)
         self.register_grid(self.grid_matches)
         self.grid_matches.setFont(font)
 
@@ -180,7 +180,7 @@ class WLeague(LCDialog.LCDialog):
 
         fontd = Controles.FontType(puntos=12)
 
-        lb_journey = Controles.LB(self, _("Round") + ": ").set_font(fontd)
+        lb_journey = Controles.LB(self, f"{_('Round')}: ").set_font(fontd)
         self.sb_journey = Controles.SB(self, self.current_journey + 1, 1, self.max_journeys).set_font(fontd)
         self.sb_journey.setFixedWidth(50)
         self.sb_journey.capture_changes(self.change_sb)
@@ -190,11 +190,9 @@ class WLeague(LCDialog.LCDialog):
             Controles.LB(self, _("Current"))
             .set_font(Controles.FontType(puntos=16, peso=400))
             .align_center()
-            .anchoMinimo(400)
+            .minimum_width(400)
         )
-        self.lb_active.setStyleSheet(
-            "color: %s;background: %s;padding-left:5px;padding-right:5px;" % ("white", "#437FBC")
-        )
+        self.lb_active.setStyleSheet("color: white;background: #437FBC;padding-left:5px;padding-right:5px;")
 
         ly0 = (
             Colocacion.H()
@@ -241,7 +239,7 @@ class WLeague(LCDialog.LCDialog):
         o_col.nueva("WHITE", _("White"), 240)
         o_col.nueva("BLACK", _("Black"), 240)
         o_col.nueva("RESULT", _("Result"), 180, align_center=True)
-        self.grid_games = Grid.Grid(self, o_col, siSelecFilas=True)
+        self.grid_games = Grid.Grid(self, o_col, complete_row_select=True)
         self.register_grid(self.grid_games)
         self.grid_games.setFont(font)
         self.li_games = None
@@ -405,7 +403,7 @@ class WLeague(LCDialog.LCDialog):
 
     def set_toolbar(self):
         self.tb.clear()
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         if not self.season.is_finished():
             self.tb.new(_("Launch workers"), Iconos.Lanzamiento(), self.launch_worker)
             self.tb.new(_("Update"), Iconos.Update(), self.update_matches)
@@ -454,8 +452,8 @@ class WLeague(LCDialog.LCDialog):
         else:
             return len(self.li_matches)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         if grid in self.li_grids_divisions:
             num_division = self.li_grids_divisions.index(grid)
             return self.grid_dato_division(num_division, row, column)
@@ -488,8 +486,9 @@ class WLeague(LCDialog.LCDialog):
                 return self.dic_xid_name[xmatch.xid_black]
             elif column == "DIVISION":
                 return xmatch.label_division
+            return None
 
-    def grid_color_texto(self, grid, row, o_column):
+    def grid_color_texto(self, grid, row, _obj_column):
         if grid in self.li_grids_divisions:
             if self.season.is_finished():
                 migration = self.league.migration
@@ -501,14 +500,16 @@ class WLeague(LCDialog.LCDialog):
                     return self.color_win
                 elif order > (ndatos - migration):
                     return self.color_lost
+        return None
 
-    def grid_color_fondo(self, grid, row, o_column):
+    def grid_color_fondo(self, grid, row, obj_column):
         if grid in self.li_grids_divisions_crosstabs:
-            column = o_column.key
+            column = obj_column.key
             num_division = self.li_grids_divisions_crosstabs.index(grid)
             return self.grid_color_fondo_crosstabs(num_division, row, column)
+        return None
 
-    def grid_bold(self, grid, row, o_column):
+    def grid_bold(self, grid, row, _obj_column):
         if grid in self.li_grids_divisions_crosstabs:
             return True
         migration = self.league.migration
@@ -592,7 +593,7 @@ class WLeague(LCDialog.LCDialog):
             self.li_sorted_opponents[num_division].sort(key=func_order)
 
         elif grid == self.grid_games:
-            keyg = col.key + "G"
+            keyg = f"{col.key}G"
 
             order_prev = self.dic_order.get(keyg, False)
             self.dic_order[keyg] = order = not order_prev
@@ -631,7 +632,7 @@ class WLeague(LCDialog.LCDialog):
                 else:
                     func_order = order_classification_v
 
-                li_columnas = grid.oColumnasR.li_columns
+                li_columnas = grid.columns_displayables.li_columns
                 li_columnas.sort(key=func_order)
                 grid.refresh()
 
@@ -646,7 +647,7 @@ class WLeague(LCDialog.LCDialog):
             else:
                 return "%d" % dif
         if nom_column == "PTS":
-            cpts = "%0.02f" % d_panel[nom_column]
+            cpts = f"{d_panel[nom_column]:0.02f}"
             while cpts.endswith("0"):
                 cpts = cpts[:-1]
             if cpts.endswith("."):
@@ -685,19 +686,20 @@ class WLeague(LCDialog.LCDialog):
                 return _("Order")
             num_division = self.li_grids_divisions_crosstabs.index(grid)
             return self.li_sorted_opponents[num_division][col - 1].name()
-
         elif grid in self.li_grids_divisions:
             num_division = self.li_grids_divisions.index(grid)
             d_panel = self.li_panels[num_division][col]
             return " %2d " % self.dic_xid_order[d_panel["XID"]]
 
+        return None
+
     def grid_color_fondo_crosstabs(self, num_division, row, nom_column):
         if nom_column == "ORDER" or row == 0:
-            return
+            return None
         other_xid = nom_column
         op_xid = self.li_sorted_opponents[num_division][row - 1].xid
         if op_xid == other_xid:
-            return
+            return None
         result = self.li_panels_crosstabs[num_division][op_xid][other_xid]
         if result is None:
             return self.color_noresult
@@ -804,7 +806,7 @@ class WLeague(LCDialog.LCDialog):
             game.recno = 0
             self.game_tmp = None
 
-            def save_routine(recno, game_to_save):
+            def save_routine(_recno, game_to_save):
                 self.game_tmp = game_to_save
 
             Code.procesador.manager_game(self, game, True, False, None, save_routine=save_routine)
@@ -838,7 +840,7 @@ class WLeague(LCDialog.LCDialog):
             if other_xid == xmatch.xid_black:
                 self.show_match_done(xmatch)
 
-    def grid_right_button(self, grid, row, col, modif):
+    def grid_right_button(self, grid, row, obj_column, _modif):
         if grid == self.grid_matches:
             xmatch: Leagues.Match = self.li_matches[row]
             if xmatch.result and (xmatch.is_human_vs_engine(self.league) or xmatch.is_human_vs_human(self.league)):
@@ -858,15 +860,15 @@ class WLeague(LCDialog.LCDialog):
                         self.show_current_season()
                     return
             else:
-                if col.key in ("WHITE", "BLACK"):
-                    opponent: Leagues.Opponent = xmatch.get_engine(self.league, col.key == "WHITE")
+                if obj_column.key in ("WHITE", "BLACK"):
+                    opponent: Leagues.Opponent = xmatch.get_engine(self.league, obj_column.key == "WHITE")
                     if opponent.is_engine():
                         opponent.thinker.list_to_show(self)
-        self.grid_doble_click(grid, row, col)
+        self.grid_doble_click(grid, row, obj_column)
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, grid, row, obj_column):
         if grid in self.li_grids_divisions:
-            nom_column = o_column.key if o_column else None
+            nom_column = obj_column.key if obj_column else None
             if nom_column and nom_column[0] in "wb":
                 is_white = nom_column.startswith("w")
                 pos_other = int(nom_column[1:]) + 1
@@ -892,7 +894,7 @@ class WLeague(LCDialog.LCDialog):
                 self.consult_matches(grid, row)
 
         elif grid in self.li_grids_divisions_crosstabs:
-            self.consult_matches_crosstabs(grid, row, o_column.key)
+            self.consult_matches_crosstabs(grid, row, obj_column.key)
 
         elif grid == self.grid_games:
             dic = self.li_games[row]
@@ -909,7 +911,7 @@ class WLeague(LCDialog.LCDialog):
             game.recno = 0
             self.temporary_game = None
 
-            def save(recno, xgame):
+            def save(_recno, xgame):
                 self.temporary_game = xgame
 
             Code.procesador.manager_game(self, game, True, False, None, save_routine=save)
@@ -973,7 +975,7 @@ class WLeague(LCDialog.LCDialog):
             grid.refresh()
         self.grid_matches.refresh()
 
-    def terminar(self):
+    def finalize(self):
         self.terminated = True
         if self.timer:
             self.timer.stop()
@@ -1164,7 +1166,7 @@ class WLeague(LCDialog.LCDialog):
                                     valor = self.league.score_win if side == "w" else self.league.score_lost
                                 else:
                                     valor = self.league.score_lost if side == "w" else self.league.score_win
-                                cs = "%0.02f" % valor
+                                cs = f"{valor:0.02f}"
                                 while cs.endswith("0"):
                                     cs = cs[:-1]
                                 if cs.endswith("."):
@@ -1180,3 +1182,4 @@ def play_league(parent, league):
             return w.play_human
         elif w.result == REINIT:
             return play_league(parent, league)
+    return None

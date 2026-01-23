@@ -1,9 +1,13 @@
 import random
 import time
-from typing import Any, List, Optional
+from typing import Any, List, Optional, TYPE_CHECKING
 
 import Code
-from Code.Base import Game, Position
+
+if TYPE_CHECKING:
+    from Code.Base import Game
+
+from Code.Base import Position
 from Code.Base.Constantes import (
     ADJUST_BETTER,
     ADJUST_HIGH_LEVEL,
@@ -293,7 +297,7 @@ class MultiEngineResponse:
     lines: list
     _init_time_working: float
     cache_bound: dict
-    game: object
+    game: "Game.Game"
     fen_base: str
 
     def __init__(self, name, is_white):
@@ -593,6 +597,7 @@ class MultiEngineResponse:
         for pos, rm1 in enumerate(self.li_rm):
             if rm1.movimiento() == rm.movimiento():
                 return pos
+        return -1
 
     def check_best_move(self, bestmove):
         if len(self.dicMultiPV) > 1:
@@ -645,7 +650,7 @@ class MultiEngineResponse:
                 key = palabra
                 dato = ""
             else:
-                dato += " " + palabra
+                dato += f" {palabra}"
         if key:
             d_claves[key] = dato.strip()
         return d_claves
@@ -844,15 +849,15 @@ class MultiEngineResponse:
             fdbg.write(f"{_("Endgame") if tipo == "F" else _("Middlegame")}\n\n")
 
         # Variable a analizar
-        x_mpn = x("MOVERPEON" + tipo)
-        x_apz = x("AVANZARPIEZA" + tipo)
-        x_j = x("JAQUE" + tipo)
-        x_c = x("CAPTURAR" + tipo)
+        x_mpn = x(f"MOVERPEON{tipo}")
+        x_apz = x(f"AVANZARPIEZA{tipo}")
+        x_j = x(f"JAQUE{tipo}")
+        x_c = x(f"CAPTURAR{tipo}")
 
-        x2_b = x("2BPR" + tipo)
-        x_av_pr = x("AVANZARPR" + tipo)
-        x_jpr = x("JAQUEPR" + tipo)
-        x_cpr = x("CAPTURARPR" + tipo)
+        x2_b = x(f"2BPR{tipo}")
+        x_av_pr = x(f"AVANZARPR{tipo}")
+        x_jpr = x(f"JAQUEPR{tipo}")
+        x_cpr = x(f"CAPTURARPR{tipo}")
         side_engine: bool = cp.is_white
 
         # Miramos todas las propuestas
@@ -871,7 +876,7 @@ class MultiEngineResponse:
                 lip = []
                 other_side = not game.li_moves[0].is_white()
                 for move in game.li_moves:
-                    lip.append(move.pgnEN())
+                    lip.append(move.pgn_english())
                     if move.is_white() == other_side:
                         lip.append("-")
                 pgn = " ".join(lip)
@@ -912,7 +917,7 @@ class MultiEngineResponse:
                         fdbg.write(f"    {_("Make check")}: {x_j} -> {rm.puntos}\n")
 
             if x_c:
-                if first_move.siCaptura():
+                if first_move.is_capture():
                     rm.puntos += x_c
                     if dbg:
                         fdbg.write(f"    {_("Capture")}: {x_c} -> {rm.puntos}\n")
@@ -950,7 +955,7 @@ class MultiEngineResponse:
             if x_cpr:
                 n = True
                 for move in game.li_moves:
-                    if n and move.siCaptura():
+                    if n and move.is_capture():
                         rm.puntos += x_cpr
                         if dbg:
                             fdbg.write(f"    {_("Capture")}: {x_cpr} -> {rm.puntos}\n")
@@ -979,7 +984,7 @@ class MultiEngineResponse:
                 lip = []
                 other_side = not game.li_moves[0].is_white()
                 for move in game.li_moves:
-                    lip.append(move.pgnEN())
+                    lip.append(move.pgn_english())
                     if move.is_white() == other_side:
                         lip.append("-")
                 pgn = " ".join(lip)
@@ -1043,6 +1048,7 @@ class MultiEngineResponse:
             t += v
             if sel <= t:
                 return k
+        return 0
 
     def bestmov_adjusted_blunders_neg(self, mindifpuntos, maxmate):
         rm0 = self.li_rm[0]
@@ -1197,13 +1203,13 @@ class MultiEngineResponse:
 
             if n_tipo in (
                 ADJUST_SOMEWHAT_BETTER,
-                ADJUST_SOMEWHAT_BETTER_MORE,
                 ADJUST_SOMEWHAT_BETTER_MORE_MORE,
+                ADJUST_SOMEWHAT_BETTER_MORE,
             ):
                 nivel = {
                     ADJUST_SOMEWHAT_BETTER: 1,
-                    ADJUST_SOMEWHAT_BETTER_MORE: 2,
-                    ADJUST_SOMEWHAT_BETTER_MORE_MORE: 3,
+                    ADJUST_SOMEWHAT_BETTER_MORE_MORE: 2,
+                    ADJUST_SOMEWHAT_BETTER_MORE: 3,
                 }
                 if not si_personalidad:
                     mindifpuntos, maxmate = 200, 2

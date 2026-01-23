@@ -4,7 +4,7 @@ import os.path
 import shutil
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Books import DBPolyglot, WPolyglot
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
@@ -31,10 +31,10 @@ class WFactoryPolyglots(LCDialog.LCDialog):
         o_columnas.nueva("NAME", _("Name"), 200)
         o_columnas.nueva("MTIME", _("Last modification"), 160, align_center=True)
         o_columnas.nueva("SIZE", _("Moves"), 100, align_right=True)
-        self.glista = Grid.Grid(self, o_columnas, siSelecFilas=True, siSeleccionMultiple=True)
+        self.glista = Grid.Grid(self, o_columnas, complete_row_select=True, select_multiple=True)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Edit"), Iconos.Modificar(), self.edit),
             None,
@@ -55,7 +55,7 @@ class WFactoryPolyglots(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.anchoColumnas() + 20, default_height=324)
+        self.restore_video(default_width=self.glista.width_columns_displayables() + 20, default_height=324)
 
         self.glista.gotop()
 
@@ -64,7 +64,7 @@ class WFactoryPolyglots(LCDialog.LCDialog):
         if recno >= 0:
             self.run_edit(self.list_db[recno]["FILENAME"])
 
-    def grid_doble_click(self, grid, row, o_columna):
+    def grid_doble_click(self, _grid, _row, _o_columna):
         self.edit()
 
     def run_edit(self, filename):
@@ -76,30 +76,29 @@ class WFactoryPolyglots(LCDialog.LCDialog):
         while True:
             name = QTMessages.read_simple(self, _("New polyglot book"), _("Name"), name)
             if name:
-                path = Util.opj(self.configuration.paths.folder_polyglots_factory(), name + ".lcbin")
+                path = Util.opj(self.configuration.paths.folder_polyglots_factory(), f"{name}.lcbin")
                 if os.path.isfile(path):
-                    QTMessages.message_error(self, "%s\n%s" % (_("This file already exists"), path))
+                    QTMessages.message_error(self, f"{_('This file already exists')}\n{path}")
                 else:
                     return os.path.realpath(path)
             else:
                 return None
 
     def new(self):
-        path = self.get_new_path("")
-        if path:
+        if path := self.get_new_path(""):
             with DBPolyglot.DBPolyglot(path):  # To create the file
                 pass
             self.update(soft=True)
             self.run_edit(path)
 
-    def path_db(self, filename):
+    @staticmethod
+    def path_db(filename):
         return Util.opj(Code.configuration.paths.folder_polyglots_factory(), filename)
 
     def copy(self):
         recno = self.glista.recno()
         if recno >= 0:
-            path = self.get_new_path(self.list_db[recno]["FILENAME"][:-6])
-            if path:
+            if path := self.get_new_path(self.list_db[recno]["FILENAME"][:-6]):
                 folder = Code.configuration.paths.folder_polyglots_factory()
                 shutil.copy(
                     self.path_db(self.list_db[recno]["FILENAME"]),
@@ -112,14 +111,13 @@ class WFactoryPolyglots(LCDialog.LCDialog):
         recno = self.glista.recno()
         if recno >= 0:
             reg = self.list_db[recno]
-            path = self.get_new_path(reg["FILENAME"][:-6])
-            if path:
+            if path := self.get_new_path(reg["FILENAME"][:-6]):
                 os.rename(self.path_db(reg["FILENAME"]), path)
                 self.update()
                 self.glista.refresh()
 
     def borrar(self):
-        li = self.glista.recnosSeleccionados()
+        li = self.glista.list_selected_recnos()
         if len(li) > 0:
             mens = _("Do you want to delete all selected records?")
             mens += "\n"
@@ -132,10 +130,10 @@ class WFactoryPolyglots(LCDialog.LCDialog):
                 self.update(soft=True)
                 self.glista.refresh()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.list_db)
 
-    def grid_dato(self, grid, row, o_columna):
+    def grid_dato(self, _grid, row, o_columna):
         col = o_columna.key
 
         reg = self.list_db[row]
@@ -144,7 +142,8 @@ class WFactoryPolyglots(LCDialog.LCDialog):
         elif col == "NAME":
             return reg["FILENAME"][:-6]
         elif col == "SIZE":
-            return "{:,}".format(reg["SIZE"]).replace(",", ".")
+            return f"{reg['SIZE']:,}".replace(",", ".")
+        return None
 
     def update(self, soft=False):
         if soft:
@@ -157,7 +156,7 @@ class WFactoryPolyglots(LCDialog.LCDialog):
     def closeEvent(self, event):  # Cierre con X
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 

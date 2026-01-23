@@ -10,6 +10,8 @@ from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTUtils
 
 
 class WRunMate15(LCDialog.LCDialog):
+    time_base: float
+
     def __init__(self, owner, db_mate15, mate15, use_pgn):
 
         LCDialog.LCDialog.__init__(self, owner, _X(_("Mate in %1"), "1½"), Iconos.Mate15(), "runmate15")
@@ -23,7 +25,7 @@ class WRunMate15(LCDialog.LCDialog):
         conf_board = self.configuration.config_board("RUNMATE15", 64)
 
         self.board = Board2.BoardEstatico(self, conf_board)
-        self.board.crea()
+        self.board.draw_window()
 
         # Rotulo informacion
         self.lb_info = Controles.LB(self, "[%d] %s" % (self.mate15.pos + 1, self.mate15.info))
@@ -32,7 +34,7 @@ class WRunMate15(LCDialog.LCDialog):
 
         self.lb_first_move = Controles.LB(self).set_font_type(puntos=12, peso=500)
 
-        self.bt_check = Controles.PB(self, _("Verify"), self.verify, False).ponIcono(Iconos.Check(), icon_size=20)
+        self.bt_check = Controles.PB(self, _("Verify"), self.verify, False).set_icono(Iconos.Check(), icon_size=20)
 
         self.lb_result = Controles.LB(self).set_font_type(puntos=12, peso=500)
 
@@ -44,12 +46,12 @@ class WRunMate15(LCDialog.LCDialog):
             wm = WRunCommon.WEdMovePGN(self) if use_pgn else WRunCommon.WEdMove(self)
             self.li_lb_wm.append((lb, wm))
             ly.controld(lb, row, 0)
-            ly.columnaVacia(1, 20)
+            ly.empty_column(1, 20)
             ly.control(wm, row, 2)
             lb.hide()
             wm.hide()
 
-        ly.filaVacia(10, 20)
+        ly.empty_row(10, 20)
         ly.controlc(self.bt_check, 11, 0, num_columns=3)
         ly.controlc(self.lb_result, 12, 0, num_columns=3)
         self.gb = Controles.GB(self, _("Next moves and their solutions"), ly).set_font(
@@ -58,7 +60,7 @@ class WRunMate15(LCDialog.LCDialog):
         self.gb.hide()
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Begin"), Iconos.Empezar(), self.begin),
             (_("Restart"), Iconos.Reset(), self.restart),
@@ -70,7 +72,7 @@ class WRunMate15(LCDialog.LCDialog):
             style=QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
             icon_size=32,
         )
-        self.show_tb(self.terminar, self.begin)
+        self.show_tb(self.finalize, self.begin)
 
         ly_left = Colocacion.V().control(self.tb).control(self.board)
 
@@ -93,12 +95,12 @@ class WRunMate15(LCDialog.LCDialog):
 
         self.gb.setDisabled(True)
 
-        self.li_lb_wm[0][1].activa()
+        self.li_lb_wm[0][1].activate()
 
         self.last_square = None
 
     def set_position(self):
-        self.show_tb(self.terminar, self.restart)
+        self.show_tb(self.finalize, self.restart)
         self.lb_info.set_text("[%d] %s" % (self.mate15.pos + 1, self.mate15.info))
 
         fen = self.mate15.fen
@@ -107,7 +109,7 @@ class WRunMate15(LCDialog.LCDialog):
         self.board.set_position(cp)
 
         self.gb.show()
-        self.lb_first_move.set_text("%s: %s" % (_("First move"), cp.html(self.mate15.move)))
+        self.lb_first_move.set_text(f"{_('First move')}: {cp.html(self.mate15.move)}")
 
         self.bt_check.show()
 
@@ -130,7 +132,7 @@ class WRunMate15(LCDialog.LCDialog):
                 lb.hide()
 
         self.gb.setEnabled(True)
-        self.li_lb_wm[0][1].activa()
+        self.li_lb_wm[0][1].activate()
         self.time_base = time.time()
 
     def pulsada_celda(self, celda):
@@ -143,7 +145,7 @@ class WRunMate15(LCDialog.LCDialog):
             ucld = self.last_square
             for num, (lb, wm) in enumerate(self.li_lb_wm):
                 if wm.origen == ucld:
-                    wm.activaDestino()
+                    wm.activate_destino()
                     self.last_square = wm.destino
                     return
                 elif wm.destino == ucld:
@@ -152,7 +154,7 @@ class WRunMate15(LCDialog.LCDialog):
                     else:
                         x = 0
                     lb, wm = self.li_lb_wm[x]
-                    wm.activa()
+                    wm.activate()
                     self.last_square = wm.origen
                     return
 
@@ -165,7 +167,7 @@ class WRunMate15(LCDialog.LCDialog):
 
     def process_toolbar(self):
         accion = self.sender().key
-        if accion in ["terminar", "cancelar"]:
+        if accion in ["finalize", "cancelar"]:
             self.save_video()
             self.reject()
         elif accion == "comprobar":
@@ -173,7 +175,7 @@ class WRunMate15(LCDialog.LCDialog):
         elif accion == "seguir":
             self.seguir()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
@@ -226,8 +228,8 @@ class WRunMate15(LCDialog.LCDialog):
             self.bt_check.show()
         else:
             tiempo = time.time() - self.time_base
-            self.lb_result.set_text('%s: %.1f"' % (_("Time"), tiempo))
+            self.lb_result.set_text(f"{_('Time')}: {tiempo:.1f}\"")
             self.lb_result.show()
             self.mate15.append_try(tiempo)
             self.db_mate15.save(self.mate15)
-            self.show_tb(self.terminar, self.seguir)
+            self.show_tb(self.finalize, self.seguir)

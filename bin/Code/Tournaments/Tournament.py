@@ -2,7 +2,7 @@ import os
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     BLACK,
@@ -54,7 +54,7 @@ class EngineTournament(Engines.Engine):
         otro = EngineTournament()
         otro.restore(self.save())
         otro.pon_huella(torneo)
-        otro.alias += "-1"
+        otro.key += "-1"
         otro.win_white = []
         otro.win_black = []
         otro.lost_white = []
@@ -158,10 +158,10 @@ class GameTournament(object):
         if self.minutos:
 
             def wdec(x):
-                return ("%f" % x).rstrip("0").rstrip(".")
+                return (f"{x:f}").rstrip("0").rstrip(".")
 
             if self.seconds_per_move:
-                return "%s+%s" % (wdec(self.minutos * 60), wdec(self.seconds_per_move))
+                return f"{wdec(self.minutos * 60)}+{wdec(self.seconds_per_move)}"
             else:
                 return wdec(self.minutos * 60)
         else:
@@ -180,10 +180,10 @@ class GameTournament(object):
 
 
 class Tournament:
-    db_engines:  UtilSQL.DictObjSQL
-    db_games_queued:  UtilSQL.ListObjSQL
-    db_games_finished:  UtilSQL.ListObjSQL
-    
+    db_engines: UtilSQL.DictObjSQL
+    db_games_queued: UtilSQL.ListObjSQL
+    db_games_finished: UtilSQL.ListObjSQL
+
     def __init__(self, file):
         self.file = file
         self.open_databases()
@@ -242,7 +242,7 @@ class Tournament:
             with open(Code.path_resource("IntFiles", "40H-Openings.epd")) as f:
                 lista = [linea for linea in f.read().split("\n") if linea.strip()]
                 fen = random.choice(lista)
-            return fen + " 0 1"
+            return f"{fen} 0 1"
         return ""
 
     def resign(self, valor=None):
@@ -260,8 +260,8 @@ class Tournament:
     def adjudicator_active(self, valor=None):
         return self.config("adjudicator_active", valor, False)
 
-    def adjudicator(self, valor=None):
-        return self.config("adjudicator", valor, Code.configuration.tutor_default)
+    def move_evaluator(self, valor=None):
+        return self.config("move_evaluator", valor, Code.configuration.tutor_default)
 
     def adjudicator_time(self, valor=None):
         return self.config("adjudicator_time", valor, 5.0)

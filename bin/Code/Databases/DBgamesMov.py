@@ -1,6 +1,6 @@
 import sqlite3
 
-from Code import Util
+from Code.Z import Util
 from Code.Databases import DBgames
 from Code.Openings import OpeningsStd
 from Code.SQL import UtilSQL
@@ -9,7 +9,7 @@ from Code.SQL import UtilSQL
 class DBgamesMov:
     def __init__(self, dbgames: DBgames.DBgames):
         self.dbgames = dbgames
-        self.path = self.dbgames.path_file[:-5] + ".lcmv"
+        self.path = f"{self.dbgames.path_file[:-5]}.lcmv"
 
         self.dic_fen64_sequences = OpeningsStd.ap.dic_fen64()
 
@@ -71,9 +71,9 @@ class DBgamesMov:
                 t_g = sum(len(x.split(":")[0]) + 2 for x in g)
                 t_s = sum(len(x) + 2 for x in s)
                 if t_s * 3 < t_g:
-                    data = "S" + "|".join(s)
+                    data = f"S{'|'.join(s)}"
                 else:
-                    data = "G" + "|".join(g)
+                    data = f"G{'|'.join(g)}"
                 sql = "INSERT INTO POSITIONS( FEN64, DATA ) VALUES( ?, ? );"
                 conexion.execute(sql, (fen64, data))
             conexion.commit()

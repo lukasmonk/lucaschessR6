@@ -4,7 +4,7 @@ from typing import Callable, Optional
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Analysis import AnalysisIndexes
 from Code.Analysis.AnalysisGame import AnalysisGameSaveTrainings
 from Code.Base import Game
@@ -90,7 +90,7 @@ class AnalysisGame(QtCore.QObject):
         )
         self.bmt_listaBlunders = None
 
-        self.siTacticBlunders = False
+        self.si_tactic_blunders = False
 
         self.bmt_listaBrilliancies = None
 
@@ -238,77 +238,75 @@ class AnalysisGame(QtCore.QObject):
             self.run_one_analysis(game, wprogressbar, engine_manager, False)
 
     def run_one_analysis(self, game, wprogressbar, engine_manager, must_check_paused):
-            self._reset_training_flags()
+        self._reset_training_flags()
 
-            ap = self.analysis_params
-            si_bp2 = hasattr(wprogressbar, "bp2")
+        ap = self.analysis_params
+        si_bp2 = hasattr(wprogressbar, "bp2")
 
-            self._prepare_bmt_lists(ap)
+        self._prepare_bmt_lists(ap)
 
-            li_moves_to_analyze = self.get_moves(game)
+        li_moves_to_analyze = self.get_moves(game)
 
-            if si_bp2:
-                wprogressbar.set_total(2, len(li_moves_to_analyze))
+        if si_bp2:
+            wprogressbar.set_total(2, len(li_moves_to_analyze))
 
-            training_state = AnalysisState(
-                si_blunders=ap.pgnblunders or ap.oriblunders or ap.bmtblunders or self.tacticblunders,
-                si_brilliancies=ap.fnsbrilliancies or ap.pgnbrilliancies or ap.bmtbrilliancies,
-                si_bp2=si_bp2,
-                total_moves=len(li_moves_to_analyze),
-                cl_game=Util.huella(),
-            )
+        training_state = AnalysisState(
+            si_blunders=ap.pgnblunders or ap.oriblunders or ap.bmtblunders or self.tacticblunders,
+            si_brilliancies=ap.fnsbrilliancies or ap.pgnbrilliancies or ap.bmtbrilliancies,
+            si_bp2=si_bp2,
+            total_moves=len(li_moves_to_analyze),
+            cl_game=Util.huella(),
+        )
 
-            for pos, mad in enumerate(li_moves_to_analyze):
-                move = mad.game.move(mad.pos_in_game)
-                if must_check_paused:
-                    wprogressbar.check_paused()
+        for pos, mad in enumerate(li_moves_to_analyze):
+            move = mad.game.move(mad.pos_in_game)
+            if must_check_paused:
+                wprogressbar.check_paused()
 
-                self._update_progress(wprogressbar, training_state, mad, pos)
+            self._update_progress(wprogressbar, training_state, mad, pos)
 
-                if mad.is_main:
-                    position = pos, training_state.total_moves, mad.pos_in_table
-                    if not self.dispatcher(position=position):
-                        break
-
-                analysis_result = mad.ensure_analysis(engine_manager, self.dispatcher)
-                if analysis_result is None:
+            if mad.is_main:
+                position = pos, training_state.total_moves, mad.pos_in_table
+                if not self.dispatcher(position=position):
                     break
 
-                mrm, pos_act = analysis_result
-                if pos_act == -1:
-                    break
+            analysis_result = mad.ensure_analysis(engine_manager, self.dispatcher)
+            if analysis_result is None:
+                break
 
-                allow_add_variations = self._allow_add_variations(move, ap)
-                rm, nag = self._update_move_indexes(move, mrm, pos_act)
+            mrm, pos_act = analysis_result
+            if pos_act == -1:
+                break
 
-                if mad.is_main and (
-                    training_state.si_blunders or training_state.si_brilliancies or ap.include_variations
-                ):
-                    self._process_main_move(
-                        game,
-                        move,
-                        mrm,
-                        pos_act,
-                        mad,
-                        ap,
-                        training_state,
-                        allow_add_variations,
-                        rm,
-                        nag,
-                    )
+            allow_add_variations = self._allow_add_variations(move, ap)
+            rm, nag = self._update_move_indexes(move, mrm, pos_act)
 
-            self._finalize_outputs(ap, game, training_state)
+            if mad.is_main and (training_state.si_blunders or training_state.si_brilliancies or ap.include_variations):
+                self._process_main_move(
+                    game,
+                    move,
+                    mrm,
+                    pos_act,
+                    mad,
+                    ap,
+                    training_state,
+                    allow_add_variations,
+                    rm,
+                    nag,
+                )
 
-            if self.analysis_params.accuracy_tags:
-                game.add_accuracy_tags()
+        self._finalize_outputs(ap, game, training_state)
 
-            if self.themes_assign:
-                self.themes_assign.assign_game(game, self.with_themes_tags, self.themes_reset)
+        if self.analysis_params.accuracy_tags:
+            game.add_accuracy_tags()
+
+        if self.themes_assign:
+            self.themes_assign.assign_game(game, self.with_themes_tags, self.themes_reset)
 
     def _reset_training_flags(self):
         self.si_bmt_blunders = False
         self.si_bmt_brilliancies = False
-        self.siTacticBlunders = False
+        self.si_tactic_blunders = False
 
     def _prepare_bmt_lists(self, analysis_params):
         if analysis_params.bmtblunders and self.bmt_listaBlunders is None:
@@ -363,12 +361,12 @@ class AnalysisGame(QtCore.QObject):
         fen = move.position_before.fen()
 
         if analysis_params.include_variations and allow_add_variations:
-            if not move.analisis2variantes(self.analysis_params, analysis_params.delete_previous):
+            if not move.analysis_to_variations(self.analysis_params, analysis_params.delete_previous):
                 move.remove_all_variations()
 
         if training_state.si_blunders and nag in self.kblunders_condition_list:
             mj = mrm.li_rm[0]
-            self.siTacticBlunders = AnalysisGameSaveTrainings.graba_tactic(
+            self.si_tactic_blunders = AnalysisGameSaveTrainings.graba_tactic(
                 self.tacticblunders,
                 game,
                 move_data.pos_in_game,
@@ -440,8 +438,8 @@ class AnalysisGame(QtCore.QObject):
     def _finalize_outputs(analysis_params, game, training_state):
         if training_state.pgn_original_blunders and analysis_params.oriblunders:
             with open(analysis_params.pgnblunders, "at", encoding="utf-8", errors="ignore") as q:
-                q.write("\n%s\n\n" % game.pgn())
+                q.write(f"\n{game.pgn()}\n\n")
 
         if training_state.pgn_original_brilliancies and analysis_params.oribrilliancies:
             with open(analysis_params.pgnbrilliancies, "at", encoding="utf-8", errors="ignore") as q:
-                q.write("\n%s\n\n" % game.pgn())
+                q.write(f"\n{game.pgn()}\n\n")

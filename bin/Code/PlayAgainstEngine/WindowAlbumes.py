@@ -5,7 +5,7 @@ from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTMessages
 
 
 class WAlbum(LCDialog.LCDialog):
-    def __init__(self, wowner, procesador, album):
+    def __init__(self, wowner, album):
 
         self.album = album
         titulo = album.name
@@ -49,12 +49,12 @@ class WAlbum(LCDialog.LCDialog):
             if cromo.hecho:
                 icono = cromo.icono()
                 pixmap = icono.pixmap(64, 64)
-                icono.addPixmap(pixmap, QtGui.QIcon.Disabled)
+                icono.addPixmap(pixmap, QtGui.QIcon.Mode.Disabled)
                 pb.setEnabled(False)
             else:
                 icono = ico_caracol
 
-            pb.ponIcono(icono, 64)
+            pb.set_icono(icono, 64)
 
             lb = Controles.LB(self, cromo.name)
             lb.set_font_type(puntos=10, peso=75)
@@ -66,34 +66,36 @@ class WAlbum(LCDialog.LCDialog):
         mensaje = _("Select a slot to play against and get its image if you win") if pte else ""
         lb = Controles.LB(self, mensaje)
 
-        pbExit = Controles.PB(self, _("Close"), self.quit, plano=False).ponIcono(Iconos.MainMenu())
-        lyP = Colocacion.H().relleno().control(lb).relleno().control(pbExit)
+        pb_exit = Controles.PB(self, _("Close"), self.quit, plano=False).set_icono(Iconos.MainMenu())
+        ly_p = Colocacion.H().relleno().control(lb).relleno().control(pb_exit)
         if not pte:
-            pbRebuild = Controles.PB(self, _("Rebuild this album"), self.rebuild, plano=False).ponIcono(Iconos.Delete())
-            lyP.control(pbRebuild)
+            pb_rebuild = Controles.PB(self, _("Rebuild this album"), self.rebuild, plano=False).set_icono(
+                Iconos.Delete()
+            )
+            ly_p.control(pb_rebuild)
 
-        lyT = Colocacion.V().otro(layout).otro(lyP)
+        ly_t = Colocacion.V().otro(layout).otro(ly_p)
 
-        self.setLayout(lyT)
+        self.setLayout(ly_t)
 
         self.restore_video(with_tam=False)
 
         self.resultado = None, None
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
 
     def closeEvent(self, event):
-        self.terminar()
+        self.finalize()
 
     def quit(self):
-        self.terminar()
+        self.finalize()
         self.reject()
 
     def rebuild(self):
         if QTMessages.pregunta(self, _("Do you want to remove this album and create a new one?")):
             self.album.reset()
-            self.terminar()
+            self.finalize()
             self.resultado = None, True
             self.reject()
 
@@ -103,7 +105,7 @@ class WAlbum(LCDialog.LCDialog):
         self.accept()
 
 
-def eligeCromo(wowner, procesador, album):
-    w = WAlbum(wowner, procesador, album)
+def elige_cromo(wowner, album):
+    w = WAlbum(wowner, album)
     w.exec()
     return w.resultado

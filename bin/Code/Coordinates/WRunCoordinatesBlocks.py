@@ -31,8 +31,8 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
         conf_board = self.configuration.config_board("RUNCOORDINATESBLOCKS", self.configuration.size_base())
 
         self.board = Board2.BoardEstaticoMensaje(self, conf_board, None, 0.6)
-        self.board.crea()
-        self.board.bloqueaRotacion(True)
+        self.board.draw_window()
+        self.board.lock_rotation(True)
         if config.with_pieces:
             self.cp_initial = Position.Position()
             self.cp_initial.set_pos_initial()
@@ -44,42 +44,42 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
 
         font = Controles.FontType(puntos=14, peso=500)
 
-        lb_block_k = Controles.LB(self, _("Block") + ":").set_font(font)
+        lb_block_k = Controles.LB(self, f"{_('Block')}:").set_font(font)
         self.lb_block = Controles.LB(self).set_font(font)
 
-        lb_try_k = Controles.LB(self, _("Tries in this block") + ":").set_font(font)
+        lb_try_k = Controles.LB(self, f"{_('Tries in this block')}:").set_font(font)
         self.lb_try = Controles.LB(self).set_font(font)
 
-        lb_minimum_score_k = Controles.LB(self, _("Minimum score") + ":").set_font(font)
+        lb_minimum_score_k = Controles.LB(self, f"{_('Minimum score')}:").set_font(font)
         self.lb_minimum_score = Controles.LB(self).set_font(font)
 
-        lb_current_score_block_k = Controles.LB(self, _("Max score in block") + ":").set_font(font)
+        lb_current_score_block_k = Controles.LB(self, f"{_('Max score in block')}:").set_font(font)
         self.lb_current_score_block = Controles.LB(self).set_font(font)
         self.lb_current_score_enough = Controles.LB(self).put_image(Iconos.pmCorrecto())
         self.lb_current_score_enough.hide()
 
-        self.lb_active_score_k = Controles.LB(self, _("Active score") + ":").set_font(font)
+        self.lb_active_score_k = Controles.LB(self, f"{_('Active score')}:").set_font(font)
         self.lb_active_score = Controles.LB(self).set_font(font)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Begin"), Iconos.Empezar(), self.begin),
             (_("Continue"), Iconos.Pelicula_Seguir(), self.seguir),
         )
         self.tb = QTDialogs.LCTB(self, li_acciones)
-        self.show_tb(self.terminar, self.begin)
+        self.show_tb(self.finalize, self.begin)
 
         separacion = 20
         ly_info = Colocacion.G()
         ly_info.controld(lb_block_k, 0, 0).controld(self.lb_block, 0, 1)
-        ly_info.filaVacia(1, separacion)
+        ly_info.empty_row(1, separacion)
         ly_info.controld(lb_try_k, 2, 0).controld(self.lb_try, 2, 1)
-        ly_info.filaVacia(3, separacion)
+        ly_info.empty_row(3, separacion)
         ly_info.controld(lb_minimum_score_k, 4, 0).controld(self.lb_minimum_score, 4, 1)
-        ly_info.filaVacia(5, separacion)
+        ly_info.empty_row(5, separacion)
         ly_info.controld(lb_current_score_block_k, 6, 0).controld(self.lb_current_score_block, 6, 1)
-        ly_info.filaVacia(7, separacion)
+        ly_info.empty_row(7, separacion)
         ly_info.controld(self.lb_active_score_k, 8, 0).controld(self.lb_active_score, 8, 1)
 
         ly_right = Colocacion.V().control(self.tb).relleno().otro(ly_info).relleno()
@@ -102,7 +102,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
         if self.cp_initial:
             self.board.set_position(self.cp_initial)
         self.board.set_side_indicator(is_white)
-        self.lb_active_score_k.set_text(_("Active score") + ":")
+        self.lb_active_score_k.set_text(f"{_('Active score')}:")
         self.current_score = 0
         self.working = True
         self.time_ini = time.time()
@@ -122,7 +122,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
     def end_block(self):
         self.working = False
         self.board.pon_textos("", "", 1)
-        self.lb_active_score_k.set_text(_("Last score") + ":")
+        self.lb_active_score_k.set_text(f"{_('Last score')}:")
         si_pasa_block, si_final = self.coordinates.new_done(self.current_score)
         self.db_coordinates.save(self.coordinates)
         if si_final:
@@ -139,13 +139,13 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
             )
 
             QTMessages.message_result_win(self, mens)
-            self.terminar()
+            self.finalize()
             return
         else:
             if si_pasa_block:
                 QTMessages.message(self, _("Block ended"))
                 self.lb_active_score.set_text("")
-            self.show_tb(self.terminar, self.seguir)
+            self.show_tb(self.finalize, self.seguir)
         self.show_data()
 
     def comprueba_time(self):
@@ -162,7 +162,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
 
     def seguir(self):
         self.new_try()
-        self.show_tb(self.terminar)
+        self.show_tb(self.finalize)
         self.lb_active_score.set_text("0")
         self.show_data()
         self.go_next()
@@ -180,7 +180,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
                 self.lb_active_score.set_text("%d" % self.current_score)
                 self.go_next()
             else:
-                QTMessages.message_error(self, "%s: %s ≠ %s" % (_("Error"), celda, self.square_object))
+                QTMessages.message_error(self, f"{_('Error')}: {celda} ≠ {self.square_object}")
                 self.end_block()
 
     def closeEvent(self, event):
@@ -188,7 +188,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
         self.save_video()
         event.accept()
 
-    def terminar(self):
+    def finalize(self):
         self.working = False
         self.save_video()
         self.reject()

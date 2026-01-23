@@ -1,11 +1,12 @@
 import datetime
 import random
+from typing import Any
 
 from PySide6 import QtCore
 
 import Code
 import Code.SQL.Base as SQLBase
-from Code import Util
+from Code.Z import Util
 from Code.QT import QTMessages
 from Code.SQL import UtilSQL
 from Code.STS import STS
@@ -26,10 +27,10 @@ class RegWorkMap:
         for x in dir(self):
             if not x.startswith("_"):
                 v = getattr(self, x)
-                s += "[%s:%s]" % (x, str(v))
+                s += f"[{x}:{v!s}]"
         return s
 
-    def _save(self):
+    def save(self):
         dic = {}
         for x in dir(self):
             if not x.startswith("_"):
@@ -37,7 +38,7 @@ class RegWorkMap:
                 dic[x] = v
         return dic
 
-    def _restore(self, dic):
+    def restore(self, dic):
         for k, v in dic.items():
             setattr(self, k, v)
 
@@ -505,6 +506,8 @@ def ld_countries(mapa):
 
 
 class DBWorkMap(SQLBase.DBBase):
+    list_raws: list
+
     def __init__(self, fichdb):
         self.trDic = {
             "mate": _("Mate"),
@@ -535,10 +538,10 @@ class DBWorkMap(SQLBase.DBBase):
             cursor.close()
 
     def num_rows(self):
-        return len(self.listaRaws)
+        return len(self.list_raws)
 
     def dato(self, row, key):
-        return self.listaRaws[row][key]
+        return self.list_raws[row][key]
 
     def releer(self):
         cursor = self.conexion.cursor()
@@ -556,42 +559,42 @@ class DBWorkMap(SQLBase.DBBase):
                 "DCREATION": DCREATION[: DCREATION.rindex(":")],
                 "DEND": DEND[: DEND.rindex(":")] if DEND else "",
                 "DONE": DONE,
-                "TYPE": "%s - %s" % (self.trDic[TIPO], self.trDic.get(MODEL, MODEL)),
+                "TYPE": f"{self.trDic[TIPO]} - {self.trDic.get(MODEL, MODEL)}",
                 "XTIPO": TIPO,
                 "RESULT": INFO if INFO else "",
             }
             li.append(d)
-        self.listaRaws = li
+        self.list_raws = li
 
-    def dataActivo(self):
+    def data_activo(self):
         cursor = self.conexion.cursor()
         cursor.execute(
-            "SELECT ROWID, DCREATION, DEND, DONE, TIPO, MODEL, INFO, DATA " "FROM %s WHERE ACTIVE=1;" % self.tabla
+            f"SELECT ROWID, DCREATION, DEND, DONE, TIPO, MODEL, INFO, DATA FROM {self.tabla} WHERE ACTIVE=1;"
         )
         raw = cursor.fetchone()
         cursor.close()
         return raw
 
-    def activaROWID(self, row):
-        rowid = self.listaRaws[row]["ROWID"]
+    def activa_rowid(self, row):
+        rowid = self.list_raws[row]["ROWID"]
         cursor = self.conexion.cursor()
-        cursor.execute("UPDATE %s SET ACTIVE=0" % self.tabla)
+        cursor.execute(f"UPDATE {self.tabla} SET ACTIVE=0")
         self.conexion.commit()
         cursor.close()
         cursor = self.conexion.cursor()
-        cursor.execute("UPDATE %s SET ACTIVE=1 WHERE ROWID=?" % self.tabla, (rowid,))
+        cursor.execute(f"UPDATE {self.tabla} SET ACTIVE=1 WHERE ROWID=?", (rowid,))
         self.conexion.commit()
         cursor.close()
         self.releer()
 
     def nuevo(self, w):
         cursor = self.conexion.cursor()
-        cursor.execute("UPDATE %s SET ACTIVE=0" % self.tabla)
+        cursor.execute(f"UPDATE {self.tabla} SET ACTIVE=0")
         self.conexion.commit()
         cursor.close()
         cursor = self.conexion.cursor()
         cursor.execute(
-            "INSERT INTO %s (ACTIVE, DCREATION, DEND, DONE, TIPO, MODEL, DATA) VALUES(?,?,?,?,?,?,?);" % self.tabla,
+            f"INSERT INTO {self.tabla} (ACTIVE, DCREATION, DEND, DONE, TIPO, MODEL, DATA) VALUES(?,?,?,?,?,?,?);",
             (1, str(w.dcreation), "", w.done, w.tipo, w.model, w.save()),
         )
         self.conexion.commit()
@@ -600,42 +603,49 @@ class DBWorkMap(SQLBase.DBBase):
 
     def borra(self, rowid):
         cursor = self.conexion.cursor()
-        cursor.execute("DELETE FROM %s WHERE ROWID=?;" % self.tabla, (rowid,))
+        cursor.execute(f"DELETE FROM {self.tabla} WHERE ROWID=?;", (rowid,))
         self.conexion.commit()
         cursor.close()
         self.releer()
 
-    def saveWork(self, workmap):
-        rowid = [d["ROWID"] for d in self.listaRaws if d["ACTIVE"]][0]
+    def save_work(self, workmap):
+        rowid = [d["ROWID"] for d in self.list_raws if d["ACTIVE"]][0]
 
-        dend = workmap.endDate()
+        dend = workmap.end_date()
         done = "%d/%d" % workmap.get_done()
         info = workmap.get_info()
         data = workmap.save()
 
         cursor = self.conexion.cursor()
         cursor.execute(
-            "UPDATE %s SET DEND=?, DONE=?, INFO=?, DATA=? WHERE ROWID=?;" % self.tabla,
+            f"UPDATE {self.tabla} SET DEND=?, DONE=?, INFO=?, DATA=? WHERE ROWID=?;",
             (dend, done, info, data, rowid),
         )
         self.conexion.commit()
         cursor.close()
         self.releer()
 
-    def getTipo(self):
-        for d in self.listaRaws:
+    def get_tipo(self):
+        for d in self.list_raws:
             if d["ACTIVE"] == "X":
                 return d["TYPE"]
         return ""
 
 
 class WorkMap:
+    ln_done: tuple
+    ln_current: tuple
+    ln_border: tuple
+    ln_borderdone: tuple
+    listaGrid: list
+    widget: Any
+
     def __init__(self, mapa):
         self.mapa = mapa
 
-        self.svg, self.lineasSVG = self.leeSVG()
+        self.svg, self.lineasSVG = self.lee_svg()
 
-        self.db = DBWorkMap("%s/%s.db" % (Code.configuration.paths.folder_results, mapa))
+        self.db = DBWorkMap(f"{Code.configuration.paths.folder_results()}/{mapa}.db")
 
         self.current = None
         self.aim = None
@@ -657,7 +667,7 @@ class WorkMap:
         return dic[self.mapa]
 
     def data_activo(self):
-        raw = self.db.dataActivo()
+        raw = self.db.data_activo()
         if raw:
             (
                 self.rowid,
@@ -683,19 +693,19 @@ class WorkMap:
 
         if tipo == "sts":
             random.seed(model)
-            self.genSTS()
+            self.gen_sts()
         else:
-            self.genMate()
+            self.gen_mate()
         self.dcreation = datetime.datetime.now()
         self.dend = ""
         self.info = ""
         self.done = "%d/%d" % self.get_done()
         self.db.nuevo(self)
 
-    def leeSVG(self):
-        svg = Code.path_resource("IntFiles", "Maps", "%s.svg" % self.mapa)
+    def lee_svg(self):
+        svg = Code.path_resource("IntFiles", "Maps", f"{self.mapa}.svg")
         f = open(svg)
-        lineasSVG = []
+        lineas_svg = []
         for nlinea, linea in enumerate(f):
             linea = linea.strip()
             if linea.startswith("."):
@@ -707,14 +717,12 @@ class WorkMap:
                     self.ln_border = nlinea, linea
                 elif linea == ".BORDERDONE":
                     self.ln_borderdone = nlinea, linea
-            lineasSVG.append(linea)
+            lineas_svg.append(linea)
         f.close()
-        return svg, lineasSVG
+        return svg, lineas_svg
 
     def save(self):
-        dic_w = {}
-        dic_w["CURRENT"] = self.current
-        dic_w["DIC"] = {iso: reg._save() for iso, reg in self.dic.items()}
+        dic_w = {"CURRENT": self.current, "DIC": {iso: reg.save() for iso, reg in self.dic.items()}}
         return Util.var2zip(dic_w)
 
     def restore(self, xbin):
@@ -723,7 +731,7 @@ class WorkMap:
         d = {}
         for iso, v in dic_w["DIC"].items():
             reg = RegWorkMap()
-            reg._restore(v)
+            reg.restore(v)
             d[iso] = reg
         self.dic = d
 
@@ -736,7 +744,7 @@ class WorkMap:
             li = [v for k, v in self.dic.items()]
         for alm in li:
             alm.name = _F(alm.name)
-        self.listaGrid = sorted(li, key=lambda alm: alm.name)
+        self.listaGrid = sorted(li, key=lambda almt: almt.name)
 
     def set_widget(self, widget):
         self.widget = widget
@@ -755,12 +763,12 @@ class WorkMap:
         else:
             licurrent = liborder = liborderdone = []
 
-        def modif(x, lista):
+        def modif(rx, lista):
             for xiso in lista:
                 if xiso in self.dic:
                     lista.extend(self.dic[xiso].assoc)
-            line, default = x
-            self.lineasSVG[line] = "." + ",.".join(lista) if lista else default
+            line, default = rx
+            self.lineasSVG[line] = f".{',.'.join(lista)}" if lista else default
 
         modif(self.ln_done, lidone)
         modif(self.ln_current, licurrent)
@@ -785,7 +793,7 @@ class WorkMap:
         si_hecho = self.iso_done(self.aim)
         if si_hecho:
             self.current = self.aim
-        self.db.saveWork(self)
+        self.db.save_work(self)
         return si_hecho
 
     def get_aim(self):
@@ -794,7 +802,7 @@ class WorkMap:
     def iso_done(self, iso):
         return len(self.dic[iso].donePV) > 0
 
-    def fenAim(self):
+    def fen_aim(self):
         return self.dic[self.aim].fen
 
     def name_aim(self):
@@ -813,14 +821,14 @@ class WorkMap:
                     break
             if si_end:
                 self.dend = datetime.datetime.now()
-        self.info = self.calcINFO()
-        self.db.saveWork(self)
+        self.info = self.calc_info()
+        self.db.save_work(self)
         if si_end:
-            mensaje = _("Congratulations, goal achieved") + "<br><br>" + _("Finished") + ": " + self.name_map()
+            mensaje = f"{_('Congratulations, goal achieved')}<br><br>{_('Finished')}: {self.name_map()}"
             QTMessages.message_result_win(window, mensaje)
         return si_end
 
-    def calcINFO(self):
+    def calc_info(self):
         info = ""
         if self.tipo == "sts":
             sump = sumt = 0
@@ -840,7 +848,7 @@ class WorkMap:
             info = "%d/%d (%0.02f%%)" % (sum_u, sum_m, porc)
         return info
 
-    def nameCurrent(self):
+    def name_current(self):
         return self.dic[self.current].name if self.current else ""
 
     def total(self):
@@ -865,27 +873,27 @@ class WorkMap:
     def get_tipo(self):
         return self.tipo
 
-    def creationDate(self):
+    def creation_date(self):
         c = str(self.dcreation)
         return c[: c.rindex(":")]
 
-    def endDate(self):
+    def end_date(self):
         return str(self.dend) if self.dend else ""
 
-    def activaRowID(self, row):
-        self.db.activaROWID(row)
+    def activa_rowid(self, row):
+        self.db.activa_rowid(row)
         self.data_activo()
 
-    def genSTS(self):
+    def gen_sts(self):
         groups = STS.Groups()
 
         st = set()
         ngroup = 0
         ngroups = len(groups)
-        liGroups = groups.lista
-        random.shuffle(liGroups)
+        li_groups = groups.lista
+        random.shuffle(li_groups)
         for iso, alm in self.dic.items():
-            g = liGroups[ngroup]
+            g = li_groups[ngroup]
             pos = random.randint(0, 99)
             while (ngroup, pos) in st:
                 pos = random.randint(0, 99)
@@ -901,8 +909,8 @@ class WorkMap:
             if ngroup == ngroups:
                 ngroup = 0
 
-    def genMate(self):
-        dicMates = {}
+    def gen_mate(self):
+        dic_mates = {}
         for mate in range(1, 8):
             fich = Code.path_resource("Trainings", "Checkmates in GM games", "Mate in %d.fns" % mate)
             with open(fich) as f:
@@ -922,10 +930,10 @@ class WorkMap:
                                     k = x.split('"')[0].strip()
                                     dic[k] = r
                         g = dic.get
-                        txt = "<b>%s-%s</b><br>" % (g("White", ""), g("Black", ""))
-                        txt += ("%s/%s/%s" % (g("Event", ""), g("Site", ""), g("Date", ""))).strip("/")
-                        li.append("%s|%s" % (fen, txt))
-            dicMates[mate] = li
+                        txt = f"<b>{g('White', '')}-{g('Black', '')}</b><br>"
+                        txt += f"{g('Event', '')}/{g('Site', '')}/{g('Date', '')}".strip("/")
+                        li.append(f"{fen}|{txt}")
+            dic_mates[mate] = li
         if self.model == "basic":
             prob7 = {
                 15: (70, 20, 10, 0, 0, 0, 0),
@@ -943,34 +951,31 @@ class WorkMap:
                 27: (0, 0, 0, 0, 0, 30, 70),
             }
 
-            def levelElo(elo):
+            def level_elo(elo):
                 elo //= 100
-                li = []
-                for n, x in enumerate(prob7[elo]):
-                    if x:
-                        li.extend([n + 1] * x)
-                return random.choice(li)
+                lit = []
+                for n, xt in enumerate(prob7[elo]):
+                    if xt:
+                        li.extend([n + 1] * xt)
+                return random.choice(lit)
 
             for iso, alm in self.dic.items():
-                mate = levelElo(alm.elo)
-                alm.fen = random.choice(dicMates[mate])
+                mate = level_elo(alm.elo)
+                alm.fen = random.choice(dic_mates[mate])
                 alm.donePV = ""
                 alm.mate = mate
         else:
 
-            def sel(from_sq, to_sq):
-                st = set()
-                for iso, alm in self.dic.items():
-                    mate = random.randint(from_sq, to_sq)
-                    li = dicMates[mate]
-                    fen = random.choice(li)
-                    while fen in st:
-                        fen = random.choice(li)
-                    alm.fen = fen
-                    alm.donePV = ""
-                    alm.mate = mate
-                    st.add(fen)
-
             d = {"easy": (1, 2), "medium": (2, 5), "hard": (4, 7)}
             from_sq, to_sq = d[self.model]
-            sel(from_sq, to_sq)
+            st = set()
+            for iso, alm in self.dic.items():
+                mate = random.randint(from_sq, to_sq)
+                li = dic_mates[mate]
+                fen = random.choice(li)
+                while fen in st:
+                    fen = random.choice(li)
+                alm.fen = fen
+                alm.donePV = ""
+                alm.mate = mate
+                st.add(fen)

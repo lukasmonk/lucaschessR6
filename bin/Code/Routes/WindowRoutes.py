@@ -12,7 +12,7 @@ class WTranssiberian(LCDialog.LCDialog):
 
         route = self.route = Routes.Transsiberian(Code.configuration)
 
-        titulo = "%s (%s)" % (_("Transsiberian Railway"), TrListas.level(route.level))
+        titulo = f"{_('Transsiberian Railway')} ({TrListas.level(route.level)})"
         icono = Iconos.Train()
         extparam = "transsiberian"
         LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, icono, extparam)
@@ -22,39 +22,41 @@ class WTranssiberian(LCDialog.LCDialog):
         x = self.route.get_txt().encode("utf-8")
         wsvg.load(QtCore.QByteArray(x))
         wsvg.setFixedSize(762, int(762.0 * 658.0 / 1148.0))
-        lySVG = Colocacion.H().relleno(1).control(wsvg).relleno(1)
+        ly_svg = Colocacion.H().relleno(1).control(wsvg).relleno(1)
 
         # Title
-        lb_tit = self.LINE(_("Moscow"), _("Vladivostok"), 14, 500)
-        lb_km = self.KM(route.total_km, 12, 500)
+        lb_tit = self.line(_("Moscow"), _("Vladivostok"), 14, 500)
+        lb_km = self.km(route.total_km, 12, 500)
         color_foreground = Code.dic_colors["ROUTES_FOREGROUND"]
         color_background = Code.dic_colors["ROUTES_BACKGROUND"]
         self.set_style(color_foreground, color_background, lb_tit, lb_km)
-        lb_km_done = self.KM(route.km, 12, 500)
+        lb_km_done = self.km(route.km, 12, 500)
         self.set_border(lb_km_done)
         ly_title = Colocacion.H().control(lb_tit).control(lb_km).control(lb_km_done)
 
         if route.is_ended():
-            self.init_ended(route, ly_title, lySVG)
+            self.init_ended(route, ly_title, ly_svg)
         else:
-            self.init_working(route, ly_title, lySVG)
+            self.init_working(route, ly_title, ly_svg)
 
         self.restore_video(with_tam=False)
 
-    def LINE(self, st_from, st_to, puntos, peso=50):
+    def line(self, st_from, st_to, puntos, peso=50):
         return (
-            Controles.LB(_("From %s to %s") % (st_from, st_to)).align_center().set_font_type(puntos=puntos, peso=peso)
+            Controles.LB(self, _("From %s to %s") % (st_from, st_to)).align_center().
+            set_font_type(puntos=puntos, peso=peso)
         )
 
-    def KM(self, km, puntos, peso=50):
+    def km(self, km, puntos, peso=50):
         return (
-            Controles.LB(Routes.km_mi(km, self.route.is_miles))
+            Controles.LB(self, Routes.km_mi(km, self.route.is_miles))
             .align_center()
             .set_font_type(puntos=puntos, peso=peso)
             .relative_width(122)
         )
 
-    def set_border(self, *lb):
+    @staticmethod
+    def set_border(*lb):
         for xl in lb:
             xl.setStyleSheet("QWidget { border-style: groove; border-width: 2px; border-color: LightSlateGray ;}")
 
@@ -75,16 +77,16 @@ class WTranssiberian(LCDialog.LCDialog):
         lb_tip = Controles.LB(_("Stage") + " %d/%d" % (line.stage, route.num_stages)).set_font_type(puntos=11)
         lb_tip.relative_width(150).align_center()
         lb_tip.setToolTip(tt)
-        lb_tit = self.LINE(line.st_from.name, line.st_to.name, 11)
+        lb_tit = self.line(line.st_from.name, line.st_to.name, 11)
         lb_tit.setToolTip(tt)
-        lb_km = self.KM(line.km, 11)
+        lb_km = self.km(line.km, 11)
         fore, back = (
             Code.dic_colors["ROUTES_STAGE_FOREGROUND"],
             Code.dic_colors["ROUTES_STAGE_BACKGROUND"],
         )
         self.set_style(fore, back, lb_tip, lb_tit, lb_km)
         lb_km.setToolTip(tt)
-        lb_km_done = self.KM(line.km_done(route.km), 11)
+        lb_km_done = self.km(line.km_done(route.km), 11)
         self.set_border(lb_km_done)
         ly_line = Colocacion.H().control(lb_tip).control(lb_tit).control(lb_km).control(lb_km_done)
 
@@ -94,16 +96,16 @@ class WTranssiberian(LCDialog.LCDialog):
         lb_tip = Controles.LB(_("Track") + " %d/%d" % (route.num_track, line.num_stations))
         lb_tip.set_font_type(puntos=11).relative_width(150).align_center()
         lb_tip.setToolTip(tt)
-        lb_tit = self.LINE(st_from.name, st_to.name, 11)
+        lb_tit = self.line(st_from.name, st_to.name, 11)
         lb_tit.setToolTip(tt)
-        lb_km = self.KM(st_to.km - st_from.km, 11)
+        lb_km = self.km(st_to.km - st_from.km, 11)
         lb_km.setToolTip(tt)
         fore, back = (
             Code.dic_colors["ROUTES_TRACK_FOREGROUND"],
             Code.dic_colors["ROUTES_TRACK_BACKGROUND"],
         )
         self.set_style(fore, back, lb_tip, lb_tit, lb_km)
-        lb_km_done = self.KM(route.km - st_from.km, 11)
+        lb_km_done = self.km(route.km - st_from.km, 11)
         self.set_border(lb_km_done)
         ly_track = Colocacion.H().control(lb_tip).control(lb_tit).control(lb_km).control(lb_km_done)
 
@@ -134,10 +136,10 @@ class WTranssiberian(LCDialog.LCDialog):
         tb = QTDialogs.LCTB(self, with_text=True, icon_size=32)
         tb.new(_("Play"), Iconos.Empezar(), self.play)
         tb.new(_("Config"), Iconos.Configurar(), self.config)
-        tb.new(_("Close"), Iconos.MainMenu(), self.mainMenu)
+        tb.new(_("Close"), Iconos.MainMenu(), self.main_menu)
         tb.setFixedWidth(250)
 
-        lb_tim = Controles.LB("%s: %s" % (_("Time"), route.time())).set_font_type(puntos=11, peso=500)
+        lb_tim = Controles.LB(f"{_('Time')}: {route.time()}").set_font_type(puntos=11, peso=500)
         lb_tim.align_center()
         lb_tim.setToolTip(
             "%s %s\n%s %s\n%s %s\n%s %s"
@@ -177,32 +179,32 @@ class WTranssiberian(LCDialog.LCDialog):
             self.set_border(lbva)
             return Colocacion.H().control(lbrt).control(lbva)
 
-        lyDB = ly(_("Start date"), route.date_begin)
-        lyDE = ly(_("End date"), route.date_end)
+        ly_db = ly(_("Start date"), route.date_begin)
+        ly_de = ly(_("End date"), route.date_end)
 
         tb = QTDialogs.LCTB(self, with_text=True, icon_size=32)
         tb.new(_("Config"), Iconos.Configurar(), self.config)
-        tb.new(_("Close"), Iconos.MainMenu(), self.mainMenu)
+        tb.new(_("Close"), Iconos.MainMenu(), self.main_menu)
 
-        lyTT = ly(_("Total time"), route.time())
-        lyTP = ly(_("Games"), route.time(Routes.PLAYING))
-        lyTC = ly(_("Tactics"), route.time(Routes.BETWEEN))
-        lyTE = ly(_("Endings"), route.time(Routes.ENDING))
+        ly_tt = ly(_("Total time"), route.time())
+        ly_tp = ly(_("Games"), route.time(Routes.PLAYING))
+        ly_tc = ly(_("Tactics"), route.time(Routes.BETWEEN))
+        ly_te = ly(_("Endings"), route.time(Routes.ENDING))
 
-        lyT = Colocacion.V().otro(lyTT).otro(lyTP).otro(lyTC).otro(lyTE)
+        ly_t = Colocacion.V().otro(ly_tt).otro(ly_tp).otro(ly_tc).otro(ly_te)
 
-        lyD = Colocacion.V().otro(lyDB).otro(lyDE).control(tb)
+        ly_d = Colocacion.V().otro(ly_db).otro(ly_de).control(tb)
 
-        lyT_D = Colocacion.H().otro(lyT).otro(lyD)
+        ly_t_d = Colocacion.H().otro(ly_t).otro(ly_d)
 
-        ly = Colocacion.V().otro(ly_title).otro(ly_svg).otro(lyT_D).relleno(1)
+        ly = Colocacion.V().otro(ly_title).otro(ly_svg).otro(ly_t_d).relleno(1)
         self.setLayout(ly)
 
     def play(self):
         self.accept()
         self.procesador.playRoute(self.route)
 
-    def mainMenu(self):
+    def main_menu(self):
         self.reject()
 
     def config(self):
@@ -266,7 +268,7 @@ class WTranssiberian(LCDialog.LCDialog):
                 self.route.change_go_fast()
                 return
             elif resp.startswith("l"):
-                if QTMessages.pregunta(self, _("Change level") + "\n" + _("Are you sure?")):
+                if QTMessages.pregunta(self, f"{_('Change level')}\n{_('Are you sure?')}"):
                     self.route.write_with_level()
                     n = int(resp[1])
                     self.route.set_level(n)

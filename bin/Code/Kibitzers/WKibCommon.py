@@ -21,18 +21,18 @@ class WKibCommon(QtWidgets.QDialog):
         self.siPlay = True
         self.kibitzer = cpu.kibitzer
         self.type = cpu.tipo
-        self.dicVideo = self.cpu.dic_video
-        if not self.dicVideo:
-            self.dicVideo = {}
+        self.dic_video = self.cpu.dic_video
+        if not self.dic_video:
+            self.dic_video = {}
         self.game = None
         self.home_game = None
         self.li_moves = []
         self.is_black = True
         self.is_white = True
 
-        self.siTop = self.dicVideo.get("SITOP", True)
-        self.show_board = self.dicVideo.get("SHOW_BOARD", True)
-        self.nArrows = self.dicVideo.get("NARROWS", 1 if cpu.tipo == Kibitzers.KIB_THREATS else 2)
+        self.siTop = self.dic_video.get("SITOP", True)
+        self.show_board = self.dic_video.get("SHOW_BOARD", True)
+        self.nArrows = self.dic_video.get("NARROWS", 1 if cpu.tipo == Kibitzers.KIB_THREATS else 2)
 
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
@@ -44,11 +44,11 @@ class WKibCommon(QtWidgets.QDialog):
         self.setBackgroundRole(QtGui.QPalette.ColorRole.Light)
 
         Code.all_pieces = Piezas.AllPieces()
-        config_board = cpu.configuration.config_board("kib" + cpu.kibitzer.huella, 24)
+        config_board = cpu.configuration.config_board(f"kib{cpu.kibitzer.huella}", 24)
         self.board = Board.Board(self, config_board)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_dispatcher(self.mensajero)
-        Delegados.genera_pm(self.board.piezas)
+        Delegados.genera_pm(self.board.pieces)
         if not self.show_board:
             self.board.hide()
 
@@ -114,7 +114,7 @@ class WKibCommon(QtWidgets.QDialog):
 
             if hasattr(self, "grid"):
                 self.grid.restore_video(dic_video)
-                self.grid.releerColumnas()
+                self.grid.reread_columns()
 
     def config_board(self):
         self.show_board = not self.show_board
@@ -123,7 +123,7 @@ class WKibCommon(QtWidgets.QDialog):
 
     def mensajero(self, from_sq, to_sq, promocion=""):
         if not promocion and self.game.last_position.pawn_can_promote(from_sq, to_sq):
-            promocion = self.board.peonCoronando(self.game.last_position.is_white)
+            promocion = self.board.pawn_promoting(self.game.last_position.is_white)
             if promocion is None:
                 promocion = "q"
         FasterCode.set_fen(self.game.last_position.fen())
@@ -151,7 +151,7 @@ class WKibCommon(QtWidgets.QDialog):
         self.siTop = False
         self.set_flags()
 
-    def terminar(self):
+    def finalize(self):
         self.finalizar()
         self.accept()
 
@@ -207,7 +207,7 @@ class WKibCommon(QtWidgets.QDialog):
         menu.opcion("negras", _("Black"), ico(not self.is_white and self.is_black))
         menu.opcion(
             "blancasnegras",
-            "%s + %s" % (_("White"), _("Black")),
+            f"{_('White')} + {_('Black')}",
             ico(self.is_white and self.is_black),
         )
         resp = menu.lanza()

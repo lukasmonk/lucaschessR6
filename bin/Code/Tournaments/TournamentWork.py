@@ -50,9 +50,9 @@ class TournamentWork:
         with self.tournament() as torneo:
             return torneo.adjudicator_active()
 
-    def adjudicator(self):
+    def move_evaluator(self):
         with self.tournament() as torneo:
-            return torneo.adjudicator()
+            return torneo.move_evaluator()
 
     def adjudicator_time(self):
         with self.tournament() as torneo:

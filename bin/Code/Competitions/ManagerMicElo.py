@@ -1,8 +1,9 @@
 import datetime
 import random
+from typing import List, Optional, Tuple
 
 import Code
-from Code import Adjournments, Util
+from Code.Z import Adjournments, TimeControl, Util
 from Code.Base import Move
 from Code.Base.Constantes import (
     BOOK_RANDOM_PROPORTIONAL,
@@ -23,7 +24,7 @@ from Code.Base.Constantes import (
     TERMINATION_RESIGN,
 )
 from Code.Books import Books
-from Code.Engines import EngineResponse, Engines, EnginesMicElo
+from Code.Engines import EngineManagerPlay, EngineResponse, Engines, EnginesMicElo
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages, QTUtils
 from Code.SQL import UtilSQL
@@ -48,7 +49,7 @@ def lista():
     li = EnginesMicElo.all_engines()
     dic_elos = DicMicElos().dic()
     for mt in li:
-        k = mt.alias
+        k = mt.key
         if k in dic_elos:
             mt.elo = dic_elos[k]
 
@@ -57,9 +58,38 @@ def lista():
 
 
 class ManagerMicElo(Manager.Manager):
-    li_t = None
-
-    with_time = True
+    li_t: Optional[Tuple[Tuple[int, int, int], ...]] = None
+    with_time: bool = True
+    list_engines: List[EnginesMicElo.EngineTourneys]
+    engine_rival: EnginesMicElo.EngineTourneys
+    minutos: int
+    seconds: int
+    is_competitive: bool
+    resultado: Optional[int]
+    human_is_playing: bool
+    state: int
+    showed_result: bool
+    is_human_side_white: bool
+    is_engine_side_white: bool
+    lirm_engine: List[EngineResponse.EngineResponse]
+    next_test_resign: int
+    resign_limit: int
+    is_tutor_enabled: bool
+    ayudas_iniciales: int
+    hints: int
+    max_seconds: int
+    seconds_per_move: int
+    tc_player: TimeControl.TimeControl
+    tc_rival: TimeControl.TimeControl
+    book: Optional[Books.Book]
+    maxMoveBook: int
+    white_elo: int
+    black_elo: int
+    manager_rival: EngineManagerPlay.EngineManagerPlay
+    pte_tool_resigndraw: bool
+    maxPlyRendirse: int
+    rival: str
+    error: str
 
     @staticmethod
     def calc_dif_elo(elo_jugador, elo_rival, resultado):
@@ -105,9 +135,9 @@ class ManagerMicElo(Manager.Manager):
                 def rrot(res):
                     return self.calc_dif_elo(mt_elo, elo, res)
 
-                mt.pgana = rot(RS_WIN_PLAYER)
-                mt.ptablas = rot(RS_DRAW)
-                mt.ppierde = rot(RS_WIN_OPPONENT)
+                mt.points_win = rot(RS_WIN_PLAYER)
+                mt.points_draw = rot(RS_DRAW)
+                mt.points_lose = rot(RS_WIN_OPPONENT)
 
                 mt.rgana = rrot(RS_WIN_PLAYER)
                 mt.rtablas = rrot(RS_DRAW)
@@ -175,11 +205,11 @@ class ManagerMicElo(Manager.Manager):
 
         eloengine = self.engine_rival.elo
         eloplayer = self.configuration.micelo_current()
-        self.whiteElo = eloplayer if is_white else eloengine
-        self.blackElo = eloplayer if not is_white else eloengine
+        self.white_elo = eloplayer if is_white else eloengine
+        self.black_elo = eloplayer if not is_white else eloengine
 
         self.manager_rival = self.procesador.create_manager_engine(
-            self.engine_rival, None, None, has_multipv=self.engine_rival.multiPV > 0
+            self.engine_rival, 0, 0, 0, has_multipv=self.engine_rival.multiPV > 0
         )
         self.manager_rival.check_engine()
 
@@ -193,7 +223,7 @@ class ManagerMicElo(Manager.Manager):
         self.pon_toolbar()
 
         self.main_window.active_game(True, self.with_time)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.put_pieces_bottom(is_white)
         self.remove_hints(True, remove_back=True)
@@ -203,20 +233,20 @@ class ManagerMicElo(Manager.Manager):
 
         txt = "%s:%+d%s%s:%+d%s%s:%+d" % (
             _("Win"),
-            self.engine_rival.pgana,
+            self.engine_rival.points_win,
             nbsp,
             _("Draw"),
-            self.engine_rival.ptablas,
+            self.engine_rival.points_draw,
             nbsp,
             _("Loss"),
-            self.engine_rival.ppierde,
+            self.engine_rival.points_lose,
         )
-        self.set_label1("<center>%s</center>" % txt)
+        self.set_label1(f"<center>{txt}</center>")
         self.set_label2("")
         self.pgn_refresh(True)
         self.show_info_extra()
 
-        rival_name = Util.primera_mayuscula(self.engine_rival.alias)
+        rival_name = Util.primera_mayuscula(self.engine_rival.key)
         self.rival = "%s (%d)" % (rival_name, self.engine_rival.elo)
         white_name, black_name = self.configuration.nom_player(), rival_name
         white_elo, black_elo = self.configuration.micelo_current(), self.engine_rival.elo
@@ -235,7 +265,7 @@ class ManagerMicElo(Manager.Manager):
         black_player = black_name + " (%d)" % black_elo
 
         if self.with_time:
-            time_control = "%d" % int(self.max_seconds)
+            time_control = f"{int(self.max_seconds)}"
             if self.seconds_per_move:
                 time_control += "+%d" % self.seconds_per_move
             self.game.set_tag("TimeControl", time_control)
@@ -247,7 +277,7 @@ class ManagerMicElo(Manager.Manager):
             self.main_window.start_clock(self.set_clock, 1000)
 
         else:
-            self.set_label1("%s: <b>%s</b><br>%s: <b>%s</b>" % (_("White"), white_player, _("Black"), black_player))
+            self.set_label1(f"{_('White')}: <b>{white_player}</b><br>{_('Black')}: <b>{black_player}</b>")
 
         self.refresh()
 
@@ -298,10 +328,10 @@ class ManagerMicElo(Manager.Manager):
             "game_save": self.game.save(),
             "time_white": self.tc_white.save(),
             "time_black": self.tc_black.save(),
-            "pgana": self.engine_rival.pgana,
-            "ptablas": self.engine_rival.ptablas,
-            "ppierde": self.engine_rival.ppierde,
-            "alias": self.engine_rival.alias,
+            "points_win": self.engine_rival.points_win,
+            "points_draw": self.engine_rival.points_draw,
+            "points_lose": self.engine_rival.points_lose,
+            "alias": self.engine_rival.key,
             "human_side": self.is_human_side_white,
         }
 
@@ -310,10 +340,10 @@ class ManagerMicElo(Manager.Manager):
     def restore_state(self, dic):
         engine_rival = Engines.Engine()
         engine_rival.restore(dic["engine_rival"])
-        engine_rival.pgana = dic["pgana"]
-        engine_rival.ptablas = dic["ptablas"]
-        engine_rival.ppierde = dic["ppierde"]
-        engine_rival.alias = dic["alias"]
+        engine_rival.points_win = dic["points_win"]
+        engine_rival.points_draw = dic["points_draw"]
+        engine_rival.points_lose = dic["points_lose"]
+        engine_rival.key = dic["alias"]
 
         minutos = dic["minutos"]
         seconds = dic["seconds"]
@@ -332,7 +362,7 @@ class ManagerMicElo(Manager.Manager):
             dic = self.save_state()
 
             # se guarda en una bd Adjournments dic key = fecha y hora y tipo
-            label_menu = _("Tourney-Elo") + ". " + self.engine_rival.name
+            label_menu = f"{_('Tourney-Elo')}. {self.engine_rival.name}"
 
             self.state = ST_ENDGAME
 
@@ -356,7 +386,7 @@ class ManagerMicElo(Manager.Manager):
         if (len(self.game) > 0) and not self.pte_tool_resigndraw:
             if not QTMessages.pregunta(
                 self.main_window,
-                _("Do you want to resign?") + " (%d)" % self.engine_rival.ppierde,
+                _("Do you want to resign?") + " (%d)" % self.engine_rival.points_lose,
             ):
                 return False  # no abandona
             self.game.resign(self.is_human_side_white)
@@ -387,62 +417,66 @@ class ManagerMicElo(Manager.Manager):
         self.refresh()
 
         if is_rival_play:
-            self.tc_rival.start()
-            self.thinking(True)
-            self.disable_all()
-
-            si_encontrada = False
-            rm_rival = None
-
-            if self.book:
-                if self.game.last_position.num_moves >= self.maxMoveBook:
-                    self.book = None
-                else:
-                    fen = self.last_fen()
-                    pv = self.book.select_move_type(
-                        fen,
-                        (BOOK_RANDOM_UNIFORM if len(self.game) > 2 else BOOK_RANDOM_PROPORTIONAL),
-                    )
-                    if pv:
-                        rm_rival = EngineResponse.EngineResponse("Opening", self.is_engine_side_white)
-                        rm_rival.from_sq = pv[:2]
-                        rm_rival.to_sq = pv[2:4]
-                        rm_rival.promotion = pv[4:]
-                        si_encontrada = True
-                    else:
-                        self.book = None
-            if not si_encontrada:
-                if self.with_time:
-                    time_white = self.tc_white.pending_time
-                    time_black = self.tc_black.pending_time
-                else:
-                    time_white = int(5 * 60 * self.whiteElo / 1500)
-                    time_black = int(5 * 60 * self.blackElo / 1500)
-                rm_rival = self.manager_rival.play_time(self.game, time_white, time_black, self.seconds_per_move)
-                if rm_rival is None:
-                    self.thinking(False)
-                    return
-
-            self.thinking(False)
-            if self.rival_has_moved(rm_rival):
-                self.lirm_engine.append(rm_rival)
-                if self.evaluate_rival_rm():
-                    self.play_next_move()
-                else:
-                    if self.game.is_finished():
-                        self.show_result()
-                        return
-            else:
-                self.game.set_termination(TERMINATION_RESIGN, RS_WIN_PLAYER)
-                self.show_result()
-                return
+            self.play_rival()
         else:
             self.tc_player.start()
 
             self.human_is_playing = True
             self.activate_side(is_white)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def play_rival(self):
+        self.tc_rival.start()
+        self.thinking(True)
+        self.disable_all()
+
+        si_encontrada = False
+        rm_rival = None
+
+        if self.book:
+            if self.game.last_position.num_moves >= self.maxMoveBook:
+                self.book = None
+            else:
+                fen = self.last_fen()
+                pv = self.book.select_move_type(
+                    fen,
+                    (BOOK_RANDOM_UNIFORM if len(self.game) > 2 else BOOK_RANDOM_PROPORTIONAL),
+                )
+                if pv:
+                    rm_rival = EngineResponse.EngineResponse("Opening", self.is_engine_side_white)
+                    rm_rival.from_sq = pv[:2]
+                    rm_rival.to_sq = pv[2:4]
+                    rm_rival.promotion = pv[4:]
+                    si_encontrada = True
+                else:
+                    self.book = None
+
+        if not si_encontrada:
+            if self.with_time:
+                time_white = self.tc_white.pending_time
+                time_black = self.tc_black.pending_time
+            else:
+                time_white = int(5 * 60 * self.white_elo / 1500)
+                time_black = int(5 * 60 * self.black_elo / 1500)
+            self.manager_rival.update_time_run(time_white, time_black, self.seconds_per_move)
+            rm_rival = self.manager_rival.play_game(self.game)
+            if rm_rival is None:
+                self.thinking(False)
+                return
+
+        self.thinking(False)
+        if self.rival_has_moved(rm_rival):
+            self.lirm_engine.append(rm_rival)
+            if self.evaluate_rival_rm():
+                self.play_next_move()
+            else:
+                if self.game.is_finished():
+                    self.show_result()
+                    return
+        else:
+            self.game.set_termination(TERMINATION_RESIGN, RS_WIN_PLAYER)
+            self.show_result()
+
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             return False
@@ -451,7 +485,7 @@ class ManagerMicElo(Manager.Manager):
         move.set_time_ms(time_s * 1000)
         move.set_clock_ms(self.tc_player.pending_time * 1000)
 
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
 
         self.add_move(move, True)
         self.play_next_move()
@@ -469,7 +503,7 @@ class ManagerMicElo(Manager.Manager):
             move.set_time_ms(time_s * 1000)
             move.set_clock_ms(self.tc_rival.pending_time * 1000)
             self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
 
             self.error = ""
 
@@ -501,7 +535,7 @@ class ManagerMicElo(Manager.Manager):
         self.human_is_playing = False
         self.main_window.stop_clock()
 
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
 
         self.beep_result(beep)
         self.autosave()
@@ -510,26 +544,22 @@ class ManagerMicElo(Manager.Manager):
         elo = self.configuration.micelo_current()
         relo = self.engine_rival.elo
         if player_win:
-            difelo = self.engine_rival.pgana
+            difelo = self.engine_rival.points_win
 
         elif self.game.is_draw():
-            difelo = self.engine_rival.ptablas
+            difelo = self.engine_rival.points_draw
 
         else:
-            difelo = self.engine_rival.ppierde
+            difelo = self.engine_rival.points_lose
 
         nelo = elo + difelo
         if nelo < 0:
             nelo = 0
         self.configuration.set_current_micelo(nelo)
 
-        rnelo = relo - difelo
-        if rnelo < 100:
-            rnelo = 100
+        rnelo = max(relo - difelo, 100)
         dme = DicMicElos()
-        dme.cambia_elo(self.engine_rival.alias, rnelo)
-        # TODO en el mensaje poner el elo con el que queda el rival, self.rival incluye el elo antiguo, hay que indicar el elo nuevo
-
+        dme.cambia_elo(self.engine_rival.key, rnelo)
         self.historial(elo, nelo)
         self.configuration.graba()
 

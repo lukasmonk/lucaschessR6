@@ -25,12 +25,12 @@ class Icons:
         ]
 
     def read_bin(self):
-        file = self.dic_files[self.mode] + ".bin"
+        file = f"{self.dic_files[self.mode]}.bin"
         with open(Code.path_resource("IntFiles", file), "rb") as f:
             return f.read()
 
     def read_dic(self):
-        file = self.dic_files[self.mode] + ".dic"
+        file = f"{self.dic_files[self.mode]}.dic"
         with open(Code.path_resource("IntFiles", file), "rt") as f:
             d = {}
             for linea in f:
@@ -43,7 +43,7 @@ class Icons:
         return self.__getattr__(name)
 
     def pixmap(self, name):
-        return self.__getattr__("pm" + name)
+        return self.__getattr__(f"pm{name}")
 
     def get(self, name_icon):
         is_pixmap = name_icon[0] == "p"

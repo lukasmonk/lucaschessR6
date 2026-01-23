@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     TACTICS_BASIC,
     TACTICS_PERSONAL,
@@ -101,7 +101,7 @@ class TrainMenu(BaseMenu.RootMenu):
 
             nm = mem.nivel(x)
             if nm >= 0:
-                txt += " " + TrListas.level(nm + 1)
+                txt += f" {TrListas.level(nm + 1)}"
 
             submenu_memory.new(f"memory_{x}", txt, cat.icono(), enabled=mem.is_active(x), sep=False)
         submenu_memory.new("memory_results", _("Results"), Iconos.Estadisticas2())
@@ -315,7 +315,7 @@ class TrainMenu(BaseMenu.RootMenu):
                                     if len(tlista) > 1:
                                         t = ""
                                         for x in range(len(tlista) - 1):
-                                            t += "|%s" % tlista[x]
+                                            t += f"|{tlista[x]}"
                                             if t not in dmenu:
                                                 v_trad = dic_training.get(tlista[x], _F(tlista[x]))
                                                 dmenu[t] = actmenu.new_submenu(v_trad, nico_submenu.otro())
@@ -345,7 +345,7 @@ class TrainMenu(BaseMenu.RootMenu):
                 ico = Iconos.Delete()
                 submenu_remove = submenu_tactics_by_repetition.new_submenu(_("Remove"), ico)
                 for carpeta, name in lista:
-                    submenu_remove.new("remtactica|%s|%s" % (carpeta, name), tr_training(name), ico)
+                    submenu_remove.new(f"remtactica|{carpeta}|{name}", tr_training(name), ico)
 
     def run_select(self, resp):
         tm = TrainMenuRun.TrainMenuRun(self)

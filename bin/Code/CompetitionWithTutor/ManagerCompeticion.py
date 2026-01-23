@@ -1,5 +1,7 @@
+from typing import Optional
+
 import Code
-from Code import Adjournments
+from Code.Z import Adjournments
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_COMPETITION_WITH_TUTOR,
@@ -16,7 +18,7 @@ from Code.Base.Constantes import (
 )
 from Code.Books import Books
 from Code.CompetitionWithTutor import CompetitionWithTutor
-from Code.Engines import EngineResponse
+from Code.Engines import EngineResponse, Engines
 from Code.ManagerBase import Manager
 from Code.Openings import Opening
 from Code.QT import QTMessages
@@ -25,6 +27,21 @@ from Code.Tutor import Tutor
 
 
 class ManagerCompeticion(Manager.Manager):
+    li_reiniciar: list
+    dbm: CompetitionWithTutor.DBManagerCWT
+    is_human_side_white: bool
+    categorias: CompetitionWithTutor.Categorias
+    level_played: int
+    puntos: int
+    tutor_book: Books.BookGame
+    in_the_opening: bool
+    opening: Opening.OpeningPol
+    rival_conf: Engines.Engine
+    mrm_tutor: Optional[EngineResponse.MultiEngineResponse]
+    error: str
+    player_has_moved_move: Optional[Move.Move]
+    is_tutor_analysing: bool
+
     def start(self, categorias, categoria, nivel, is_white, puntos):
         self.base_inicio(categorias, categoria, nivel, is_white, puntos)
         self.play_next_move()
@@ -32,7 +49,7 @@ class ManagerCompeticion(Manager.Manager):
     def base_inicio(self, categorias, categoria, nivel, is_white, puntos):
         self.game_type = GT_COMPETITION_WITH_TUTOR
 
-        self.li_reiniciar = categoria, nivel, is_white
+        self.li_reiniciar = [categoria, nivel, is_white]
 
         self.dbm = CompetitionWithTutor.DBManagerCWT()
 
@@ -63,8 +80,7 @@ class ManagerCompeticion(Manager.Manager):
         self.opening = Opening.OpeningPol(nivel)  # lee las aperturas
 
         self.rival_conf = self.dbm.get_current_rival()
-        self.manager_rival = self.procesador.create_manager_engine(self.rival_conf, None, nivel)
-        self.is_maia = self.manager_rival.engine.name.lower().startswith("maia")
+        self.manager_rival = self.procesador.create_manager_engine(self.rival_conf, 0, nivel, 0)
 
         self.set_toolbar(
             (
@@ -78,7 +94,7 @@ class ManagerCompeticion(Manager.Manager):
             )
         )
         self.main_window.active_game(True, False)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.put_pieces_bottom(is_white)
         self.set_hints(self.hints)
@@ -100,7 +116,7 @@ class ManagerCompeticion(Manager.Manager):
         self.game.set_tag("Event", _("Competition with tutor"))
 
         player = self.configuration.nom_player()
-        other = "%s (%s)" % (self.manager_rival.engine.name, TrListas.level(self.level_played))
+        other = f"{self.manager_rival.engine.name} ({TrListas.level(self.level_played)})"
         w, b = (player, other) if self.is_human_side_white else (other, player)
         self.game.set_tag("White", w)
         self.game.set_tag("Black", b)
@@ -160,7 +176,7 @@ class ManagerCompeticion(Manager.Manager):
 
     def adjourn(self):
         if len(self.game) and QTMessages.pregunta(self.main_window, _("Do you want to adjourn the game?")):
-            label_menu = _("Competition with tutor") + ". " + self.manager_rival.engine.name
+            label_menu = f"{_('Competition with tutor')}. {self.manager_rival.engine.name}"
 
             dic = {
                 "ISWHITE": self.is_human_side_white,
@@ -229,17 +245,21 @@ class ManagerCompeticion(Manager.Manager):
         return False
 
     def takeback(self):
-        if self.hints and len(self.game) and self.in_end_of_line():
-            if QTMessages.pregunta(self.main_window, _("Do you want to go back in the last movement?")):
-                self.hints -= 1
-                self.set_hints(self.hints)
-                self.game.remove_last_move(self.is_human_side_white)
-                self.in_the_opening = False
-                self.game.assign_opening()
-                self.goto_end()
-                self.is_analyzed_by_tutor = False
-                self.refresh()
-                self.play_next_move()
+        if (
+            self.hints
+            and len(self.game)
+            and self.in_end_of_line()
+            and QTMessages.pregunta(self.main_window, _("Do you want to go back in the last movement?"))
+        ):
+            self.hints -= 1
+            self.set_hints(self.hints)
+            self.game.remove_last_move(self.is_human_side_white)
+            self.in_the_opening = False
+            self.game.assign_opening()
+            self.goto_end()
+            self.is_analyzed_by_tutor = False
+            self.refresh()
+            self.play_next_move()
 
     def play_next_move(self):
         if self.state == ST_ENDGAME:
@@ -255,10 +275,9 @@ class ManagerCompeticion(Manager.Manager):
             self.show_result()
             return
 
-        if self.hints == 0:
-            if self.categoria.sinAyudasFinal:
-                self.remove_hints()
-                self.is_tutor_enabled = False
+        if self.hints == 0 and self.categoria.sinAyudasFinal:
+            self.remove_hints()
+            self.is_tutor_enabled = False
 
         si_rival = is_white == self.is_engine_side_white
         self.set_side_indicator(is_white)
@@ -266,45 +285,43 @@ class ManagerCompeticion(Manager.Manager):
         self.refresh()
 
         if si_rival:
-            self.thinking(True)
-            self.disable_all()
-
-            si_pensar = True
-
-            if self.in_the_opening:
-
-                ok, from_sq, to_sq, promotion = self.opening.run_engine(self.last_fen())
-
-                if ok:
-                    self.rm_rival = EngineResponse.EngineResponse("Opening", self.is_engine_side_white)
-                    self.rm_rival.from_sq = from_sq
-                    self.rm_rival.to_sq = to_sq
-                    self.rm_rival.promotion = promotion
-                    si_pensar = False
-                else:
-                    self.in_the_opening = False
-
-            if si_pensar:
-                if self.is_maia:
-                    self.rm_rival = self.manager_rival.play_game_maia(self.game)
-                else:
-                    self.rm_rival = self.manager_rival.play_game(self.game)
-
-            self.thinking(False)
-
-            if self.rival_has_moved(self.rm_rival):
-                self.play_next_move()
+            self.play_rival()
         else:
-            self.human_is_playing = True
-            self.activate_side(is_white)
-            self.analyze_begin()
+            self.play_human(is_white)
+
+    def play_rival(self):
+        self.thinking(True)
+        self.disable_all()
+
+        si_pensar = True
+
+        if self.in_the_opening:
+
+            ok, from_sq, to_sq, promotion = self.opening.run_engine(self.last_fen())
+
+            if ok:
+                self.rm_rival = EngineResponse.EngineResponse("Opening", self.is_engine_side_white)
+                self.rm_rival.from_sq = from_sq
+                self.rm_rival.to_sq = to_sq
+                self.rm_rival.promotion = promotion
+                si_pensar = False
+            else:
+                self.in_the_opening = False
+
+        if si_pensar:
+            self.rm_rival = self.manager_rival.play_game(self.game)
+
+        self.thinking(False)
+
+        if self.rival_has_moved(self.rm_rival):
+            self.play_next_move()
 
     def show_result(self):
         self.state = ST_ENDGAME
         self.disable_all()
         self.human_is_playing = False
 
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
 
         self.beep_result(beep)
         if player_win:
@@ -331,23 +348,40 @@ class ManagerCompeticion(Manager.Manager):
         self.set_end_game()
         self.autosave()
 
+    def play_human(self, is_white):
+        self.player_has_moved_move = None
+        self.human_is_playing = True
+        self.activate_side(is_white)
+        self.analyze_begin()
+
     def analyze_begin(self):
-        self.is_analyzing = False
+        self.mrm_tutor = None
         self.is_analyzed_by_tutor = False
-        if self.is_tutor_enabled:
-            self.is_analyzed_by_tutor = False
-            if not self.is_finished():
-                self.is_analyzing = True
-                if self.continueTt:
-                    self.manager_tutor.ac_inicio(self.game)
-                else:
-                    self.manager_tutor.ac_inicio_limit(self.game)
+        self.is_tutor_analysing = False
+        if not self.is_tutor_enabled:
+            return
+
+        if not self.is_finished():
+            self.is_tutor_analysing = True
+            self.manager_tutor.analyze_tutor(self.game, self.analyze_bestmove_found, self.analyze_changedepth)
+
+    def analyze_bestmove_found(self, _bestmove):
+        if self.is_tutor_analysing:
+            self.mrm_tutor = self.manager_tutor.get_current_mrm()
+            self.is_tutor_analysing = False
+            self.main_window.pensando_tutor(False)
+            if self.player_has_moved_move:
+                move = self.player_has_moved_move
+                self.player_has_moved_move = None
+                self.player_has_moved(move)
+
+    def analyze_changedepth(self, mrm: EngineResponse.MultiEngineResponse):
+        if self.is_tutor_analysing:
+            self.mrm_tutor = mrm
 
     def analyze_end(self):
-        if self.is_analyzing:
-            self.mrm_tutor = self.manager_tutor.ac_final(-1)
-            self.is_analyzed_by_tutor = True
-            self.is_analyzing = False
+        if self.is_tutor_analysing:
+            self.manager_tutor.stop()
 
     def change_tutor_active(self):
         previous = self.is_tutor_enabled
@@ -358,59 +392,77 @@ class ManagerCompeticion(Manager.Manager):
         elif self.human_is_playing:
             self.analyze_begin()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
-        move = self.check_human_move(from_sq, to_sq, promotion)
+    def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, promotion: str = ""):
+        """Viene desde el board via MainWindow, es previo, ya que si está pendiente el análisis, sólo se indica que ha
+        elegido una jugada"""
+        move = self.check_human_move(from_sq, to_sq, promotion, not self.is_tutor_enabled)
         if not move:
             return False
-        movimiento = move.movimiento()
-        self.analyze_end()
 
-        check_tutor = self.is_tutor_enabled
-        if self.in_the_opening:
-            if self.opening.check_human(self.last_fen(), from_sq, to_sq):
-                check_tutor = False
+        if self.is_tutor_analysing:
+            self.thinking(True)
+            self.player_has_moved_move = move
+            if not self.manager_tutor.is_run_fixed():
+                self.analyze_end()
+            return None
 
-        if check_tutor:
-            if not self.is_analyzed_by_tutor:
-                self.mrm_tutor = self.analyze_with_tutor()
+        return self.player_has_moved(move)
 
-            if self.mrm_tutor is None:
-                self.continue_human()
-                return False
-            if not self.tutor_book.si_esta(self.last_fen(), movimiento):
-                if Tutor.launch_tutor_movimiento(self.mrm_tutor, movimiento):
-                    self.refresh()
-                    if not move.is_mate:
-                        tutor = Tutor.Tutor(self, move, from_sq, to_sq)
+    def player_has_moved(self, move: Move.Move):
+        self.thinking(False)
+        a1h8 = move.movimiento()
+        si_analisis = False
+        fen_base = self.last_fen()
 
-                        if self.in_the_opening:
-                            li_ap_posibles = self.listaOpeningsStd.list_possible_openings(self.game)
-                        else:
-                            li_ap_posibles = None
+        # TUTOR---------------------------------------------------------------------------------------------------------
+        is_mate = move.is_mate
+        self.analyze_end()  # tiene que acabar siempre
+        if not is_mate and self.is_tutor_enabled and not self.tutor_book.si_esta(fen_base, a1h8):
+            rm_user, n = self.mrm_tutor.search_rm(a1h8)
+            if not rm_user:
+                self.thinking(True)
+                self.is_tutor_analysing = True
+                self.is_analyzing = True
+                self.mrm_tutor = self.manager_tutor.analyze_tutor_move(self.game, a1h8)
+                self.thinking(False)
+                rm_user, n = self.mrm_tutor.search_rm(a1h8)
 
-                        if tutor.elegir(self.hints > 0, li_ap_posibles=li_ap_posibles):
-                            if self.hints > 0:  # doble entrada a tutor.
-                                self.set_piece_again(from_sq)
-                                self.hints -= 1
-                                from_sq = tutor.from_sq
-                                to_sq = tutor.to_sq
-                                promotion = tutor.promotion
-                                ok, mens, jg_tutor = Move.get_game_move(
-                                    self.game,
-                                    self.game.last_position,
-                                    from_sq,
-                                    to_sq,
-                                    promotion,
-                                )
-                                if ok:
-                                    move = jg_tutor
-                        if self.configuration.x_save_tutor_variations:
-                            tutor.add_variations_to_move(move, 1 + len(self.game) / 2)
+            si_analisis = True
 
-                        del tutor
+            if Tutor.launch_tutor(self.mrm_tutor, rm_user) and not move.is_mate:
+                self.beep_error()
+                tutor = Tutor.Tutor(self, move, move.from_sq, move.to_sq)
 
-        self.move_the_pieces(move.liMovs)
+                li_ap_posibles = self.listaOpeningsStd.list_possible_openings(self.game)
+
+                if tutor.elegir(self.hints > 0, li_ap_posibles=li_ap_posibles) and self.hints > 0:
+                    self.set_piece_again(move.from_sq)
+                    self.hints -= 1
+                    from_sq = tutor.from_sq
+                    to_sq = tutor.to_sq
+                    promotion = tutor.promotion
+                    ok, mens, jg_tutor = Move.get_game_move(
+                        self.game, self.game.last_position, from_sq, to_sq, promotion
+                    )
+                    if ok:
+                        move = jg_tutor
+                if self.configuration.x_save_tutor_variations:
+                    tutor.add_variations_to_move(move, 1 + len(self.game) / 2)
+
+                del tutor
+
+        # --------------------------------------------------------------------------------------------------------------
+        if si_analisis:
+            rm, n_pos = self.mrm_tutor.search_rm(move.movimiento())
+            if rm:
+                move.analysis = self.mrm_tutor, n_pos
+                nag, color = self.mrm_tutor.set_nag_color(rm)
+                move.add_nag(nag)
+
         self.add_move(move, True)
+        self.move_the_pieces(move.list_piece_moves, False)
+        self.beep_extended(True)
+
         self.play_next_move()
         return True
 
@@ -436,7 +488,7 @@ class ManagerCompeticion(Manager.Manager):
         if ok:
             self.error = ""
             self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
 
             return True
         else:

@@ -5,7 +5,7 @@ import sqlite3
 import FasterCode
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import QTMessages
 from Code.SQL import UtilSQL
 
@@ -57,8 +57,7 @@ class DBPolyglot:
         sql = "SELECT ROWID, WEIGHT, SCORE, DEPTH, LEARN FROM BOOK WHERE CKEY=? AND MOVE=?"
         ckey = FasterCode.int_str(entry.key)
         cursor = self.conexion.execute(sql, (ckey, entry.move))
-        row = cursor.fetchone()
-        if row:
+        if row := cursor.fetchone():
             rowid, weight, score, depth, learn = row
             if collisions == "add":
                 entry.weight += weight
@@ -82,19 +81,18 @@ class DBPolyglot:
     def save_entry(self, rowid, entry):
         if rowid == 0:
             rowid = self.insert_entry(entry)
+        elif entry.weight == 0:
+            self.delete(rowid)
+            rowid = 0
         else:
-            if entry.weight == 0:
-                self.delete(rowid)
-                rowid = 0
-            else:
-                self.update_entry(rowid, entry)
+            self.update_entry(rowid, entry)
         self.conexion.commit()
 
         return rowid
 
     def import_previous(self):
         old_folder = Util.opj(Code.configuration.paths.folder_polyglots_factory(), "old")
-        mkbin_path = self.path[:-5] + "mkbin"
+        mkbin_path = f"{self.path[:-5]}mkbin"
         if os.path.isfile(mkbin_path):
             pol_mkbin = FasterCode.Polyglot(mkbin_path)
             for entry in pol_mkbin:
@@ -104,7 +102,7 @@ class DBPolyglot:
             Util.create_folder(old_folder)
             shutil.move(mkbin_path, old_folder)
 
-        dbbin_path = self.path[:-5] + "dbbin"
+        dbbin_path = f"{self.path[:-5]}dbbin"
         if os.path.isfile(dbbin_path):
             db_ant = UtilSQL.DictSQL(dbbin_path)
             dic = db_ant.as_dictionary()
@@ -206,7 +204,7 @@ class IndexPolyglot:
             if entry_file.name.lower().endswith(".dbbin") or entry_file.name.lower().endswith(".mkbin"):  # antiguo
                 st_antiguos.add(entry_file.path[:-5])
         for st_antiguo in st_antiguos:
-            with DBPolyglot(st_antiguo + "lcbin"):
+            with DBPolyglot(f"{st_antiguo}lcbin"):
                 pass
         um.final()
 

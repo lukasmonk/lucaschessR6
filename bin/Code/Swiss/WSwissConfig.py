@@ -1,7 +1,7 @@
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
     BOOK_RANDOM_PROPORTIONAL,
@@ -67,21 +67,21 @@ class WSwissConfig(LCDialog.LCDialog):
             align_right=True,
             edicion=Delegados.LineaTexto(is_integer=True),
         )
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, is_editable=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, is_editable=True)
         self.register_grid(self.grid)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
-        self.bt_engines_more = Controles.PB(self, "++ " + _("Engines"), rutina=self.add_engines, plano=False).ponIcono(
+        self.bt_engines_more = Controles.PB(self, f"++ {_('Engines')}", rutina=self.add_engines, plano=False).set_icono(
             Iconos.Engines()
         )
         self.bt_engines_more.set_pordefecto(False)
 
-        self.bt_human_more = Controles.PB(self, "+ " + _("Human"), rutina=self.add_human, plano=False).ponIcono(
+        self.bt_human_more = Controles.PB(self, f"+ {_('Human')}", rutina=self.add_human, plano=False).set_icono(
             Iconos.Player()
         )
         self.bt_human_more.set_pordefecto(False)
 
-        self.bt_engine_more = Controles.PB(self, "+ " + _("Engine"), rutina=self.add_engine, plano=False).ponIcono(
+        self.bt_engine_more = Controles.PB(self, f"+ {_('Engine')}", rutina=self.add_engine, plano=False).set_icono(
             Iconos.Engine()
         )
         self.bt_engine_more.set_pordefecto(False)
@@ -95,37 +95,39 @@ class WSwissConfig(LCDialog.LCDialog):
             self,
             "%s (%s): " % (_("Minimum centipawns to assign winner"), "0=%s" % _("Disable")),
         )
-        self.ed_resign = Controles.ED(self).tipoInt(swiss.resign).relative_width(40)
-        bt_resign = Controles.PB(self, "", rutina=self.borra_resign).ponIcono(Iconos.Reciclar())
+        self.ed_resign = Controles.ED(self).type_integer(swiss.resign).relative_width(40)
+        bt_resign = Controles.PB(self, "", rutina=self.borra_resign).set_icono(Iconos.Reciclar())
 
         # Draw-plys
         lb_draw_min_ply = Controles.LB(
             self,
             "%s (%s): " % (_("Minimum movements to assign draw"), "0=%s" % _("Disable")),
         )
-        self.ed_draw_min_ply = Controles.ED(self).ponInt(swiss.draw_min_ply).relative_width(30).align_right()
+        self.ed_draw_min_ply = Controles.ED(self).set_integer(swiss.draw_min_ply).relative_width(30).align_right()
         # Draw-puntos
-        lb_draw_range = Controles.LB(self, _("Maximum centipawns to assign draw") + ": ")
-        self.ed_draw_range = Controles.ED(self).tipoInt(swiss.draw_range).relative_width(30)
-        bt_draw_range = Controles.PB(self, "", rutina=self.borra_draw_range).ponIcono(Iconos.Reciclar())
+        lb_draw_range = Controles.LB(self, f"{_('Maximum centipawns to assign draw')}: ")
+        self.ed_draw_range = Controles.ED(self).type_integer(swiss.draw_range).relative_width(30)
+        bt_draw_range = Controles.PB(self, "", rutina=self.borra_draw_range).set_icono(Iconos.Reciclar())
 
-        # adjudicator
+        # move_evaluator
         self.list_engines = Code.configuration.engines.list_name_alias_multipv10()
-        self.cb_jmotor, self.lb_jmotor = QTMessages.combobox_lb(self, self.list_engines, swiss.adjudicator, _("Engine"))
-        self.ed_jtiempo = Controles.ED(self).tipoFloat(swiss.adjudicator_time).relative_width(50)
+        self.cb_jmotor, self.lb_jmotor = QTMessages.combobox_lb(
+            self, self.list_engines, swiss.move_evaluator, _("Engine")
+        )
+        self.ed_jtiempo = Controles.ED(self).type_float(swiss.adjudicator_time).relative_width(50)
         self.lb_jtiempo = Controles.LB2P(self, _("Time in seconds"))
         ly = Colocacion.G()
         ly.controld(self.lb_jmotor, 3, 0).control(self.cb_jmotor, 3, 1)
         ly.controld(self.lb_jtiempo, 4, 0).control(self.ed_jtiempo, 4, 1)
-        self.gb_j = Controles.GB(self, _("Adjudicator"), ly)
+        self.gb_j = Controles.GB(self, _("MoveEvatualor"), ly)
 
-        lb_slow = Controles.LB(self, _("Slow down the movement of pieces") + ": ")
+        lb_slow = Controles.LB(self, f"{_('Slow down the movement of pieces')}: ")
         self.chb_slow = Controles.CHB(self, " ", swiss.slow_pieces)
 
         # Times
         minutes, seconds = self.swiss.time_engine_engine
         lb_minutes = Controles.LB2P(self, _("Total minutes"))
-        self.ed_minutes_eng_eng = Controles.ED(self).tipoFloat(minutes).relative_width(35)
+        self.ed_minutes_eng_eng = Controles.ED(self).type_float(minutes).relative_width(35)
         self.sb_seconds_eng_eng, lb_seconds = QTMessages.spinbox_lb(
             self, seconds, -999, 999, max_width=40, etiqueta=_("Seconds added per move")
         )
@@ -136,7 +138,7 @@ class WSwissConfig(LCDialog.LCDialog):
 
         minutes, seconds = self.swiss.time_engine_human
         lb_minutes = Controles.LB2P(self, _("Total minutes"))
-        self.ed_minutes_eng_human = Controles.ED(self).tipoFloat(minutes).relative_width(65)
+        self.ed_minutes_eng_human = Controles.ED(self).type_float(minutes).relative_width(65)
         self.sb_seconds_eng_human, lb_seconds = QTMessages.spinbox_lb(
             self, seconds, -999, 999, max_width=40, etiqueta=_("Seconds added per move")
         )
@@ -145,7 +147,7 @@ class WSwissConfig(LCDialog.LCDialog):
 
         minutes = self.swiss.time_added_human
         lb_added_human = Controles.LB2P(self, _("Extra minutes for the player"))
-        self.ed_added_human = Controles.ED(self).tipoFloat(minutes).relative_width(65)
+        self.ed_added_human = Controles.ED(self).type_float(minutes).relative_width(65)
         ly1 = Colocacion.H().control(lb_added_human).control(self.ed_added_human).relleno()
         ly2 = Colocacion.V().otro(ly).otro(ly1)
 
@@ -164,24 +166,24 @@ class WSwissConfig(LCDialog.LCDialog):
         ]
 
         self.cbBooksR = QTMessages.combobox_lb(self, li_books, lib_inicial)
-        self.btNuevoBookR = Controles.PB(self, "", self.new_book).ponIcono(Iconos.Mas())
+        self.btNuevoBookR = Controles.PB(self, "", self.new_book).set_icono(Iconos.Mas())
         self.cbBooksRR = QTMessages.combobox_lb(self, li_resp_book, self.swiss.book_rr)
         self.lbDepthBookR = Controles.LB2P(self, _("Max depth"))
-        self.edDepthBookR = Controles.ED(self).tipoInt(self.swiss.book_depth).relative_width(30)
+        self.edDepthBookR = Controles.ED(self).type_integer(self.swiss.book_depth).relative_width(30)
 
         hbox = Colocacion.H().control(self.cbBooksR).control(self.btNuevoBookR).control(self.cbBooksRR)
         hbox1 = Colocacion.H().control(self.lbDepthBookR).control(self.edDepthBookR).relleno()
         vbox = Colocacion.V().otro(hbox).otro(hbox1)
-        gb_book = Controles.GB(self, _("Engines") + " - " + _("Book"), vbox)
+        gb_book = Controles.GB(self, f"{_('Engines')} - {_('Book')}", vbox)
 
         lb_score_win = Controles.LB2P(self, _("Win"))
         lb_score_draw = Controles.LB2P(self, _("Draw"))
         lb_score_lost = Controles.LB2P(self, _("Loss"))
         lb_score_byes = Controles.LB2P(self, _("Byes"))
-        self.ed_score_win = Controles.ED(self).ponFloat(self.swiss.score_win).relative_width(40).align_right()
-        self.ed_score_draw = Controles.ED(self).ponFloat(self.swiss.score_draw).relative_width(40).align_right()
-        self.ed_score_lost = Controles.ED(self).ponFloat(self.swiss.score_lost).relative_width(40).align_right()
-        self.ed_score_byes = Controles.ED(self).ponFloat(self.swiss.score_byes).relative_width(40).align_right()
+        self.ed_score_win = Controles.ED(self).set_float(self.swiss.score_win).relative_width(40).align_right()
+        self.ed_score_draw = Controles.ED(self).set_float(self.swiss.score_draw).relative_width(40).align_right()
+        self.ed_score_lost = Controles.ED(self).set_float(self.swiss.score_lost).relative_width(40).align_right()
+        self.ed_score_byes = Controles.ED(self).set_float(self.swiss.score_byes).relative_width(40).align_right()
         ly_score = Colocacion.H().relleno()
         sep = 6
         ly_score.control(lb_score_win).espacio(-sep).control(self.ed_score_win).espacio(sep)
@@ -192,7 +194,7 @@ class WSwissConfig(LCDialog.LCDialog):
         self.gb_score = Controles.GB(self, _("System score"), ly_score)
 
         lb_matchdays = Controles.LB2P(self, _("Rounds"))
-        self.ed_matchdays = Controles.ED(self).ponInt(self.swiss.num_matchdays).relative_width(40).align_right()
+        self.ed_matchdays = Controles.ED(self).set_integer(self.swiss.num_matchdays).relative_width(40).align_right()
 
         ly_options = Colocacion.G().margen(20)
         ly_res = Colocacion.H().control(self.ed_resign).control(bt_resign).relleno()
@@ -289,7 +291,7 @@ class WSwissConfig(LCDialog.LCDialog):
             self.change_num_opponents()
 
     def name_elo(self, title, icon, name, elo):
-        form = FormLayout.FormLayout(self, title, icon, anchoMinimo=240)
+        form = FormLayout.FormLayout(self, title, icon, minimum_width=240)
 
         form.separador()
 
@@ -317,34 +319,34 @@ class WSwissConfig(LCDialog.LCDialog):
             self.change_num_opponents()
 
     def save(self):
-        self.swiss.resign = self.ed_resign.textoInt()
-        self.swiss.draw_min_ply = self.ed_draw_min_ply.textoInt()
-        self.swiss.draw_range = self.ed_draw_range.textoInt()
-        self.swiss.adjudicator = self.cb_jmotor.valor()
-        self.swiss.adjudicator_time = self.ed_jtiempo.textoFloat()
+        self.swiss.resign = self.ed_resign.text_to_integer()
+        self.swiss.draw_min_ply = self.ed_draw_min_ply.text_to_integer()
+        self.swiss.draw_range = self.ed_draw_range.text_to_integer()
+        self.swiss.move_evaluator = self.cb_jmotor.valor()
+        self.swiss.adjudicator_time = self.ed_jtiempo.text_to_float()
         self.swiss.adjudicator_active = True
         self.swiss.slow_pieces = self.chb_slow.valor()
-        mnt = self.ed_minutes_eng_eng.textoFloat()
+        mnt = self.ed_minutes_eng_eng.text_to_float()
         if mnt <= 0:
             mnt = 3.0
         self.swiss.time_engine_engine = (mnt, self.sb_seconds_eng_eng.valor())
         self.swiss.time_engine_human = (
-            self.ed_minutes_eng_human.textoFloat(),
+            self.ed_minutes_eng_human.text_to_float(),
             self.sb_seconds_eng_human.valor(),
         )
-        self.swiss.score_win = self.ed_score_win.textoFloat()
-        self.swiss.score_draw = self.ed_score_draw.textoFloat()
-        self.swiss.score_lost = self.ed_score_lost.textoFloat()
-        self.swiss.score_byes = self.ed_score_byes.textoFloat()
-        self.swiss.num_matchdays = self.ed_matchdays.textoInt()
-        self.swiss.time_added_human = self.ed_added_human.textoFloat()
+        self.swiss.score_win = self.ed_score_win.text_to_float()
+        self.swiss.score_draw = self.ed_score_draw.text_to_float()
+        self.swiss.score_lost = self.ed_score_lost.text_to_float()
+        self.swiss.score_byes = self.ed_score_byes.text_to_float()
+        self.swiss.num_matchdays = self.ed_matchdays.text_to_integer()
+        self.swiss.time_added_human = self.ed_added_human.text_to_float()
         self.swiss.book = self.cbBooksR.valor()
         self.swiss.book_rr = self.cbBooksRR.valor()
-        self.swiss.book_depth = self.edDepthBookR.textoInt()
+        self.swiss.book_depth = self.edDepthBookR.text_to_integer()
         self.swiss.save()
         if self.remove_seasons_delayed:
             self.swiss.remove_seasons()
-            Util.remove_file(self.swiss.path() + ".work")
+            Util.remove_file(f"{self.swiss.path()}.work")
 
         self.save_video()
         self.accept()
@@ -354,13 +356,13 @@ class WSwissConfig(LCDialog.LCDialog):
         self.reject()
 
     def borra_resign(self):
-        previo = self.ed_resign.textoInt()
-        self.ed_resign.tipoInt(0 if previo else 350)
+        previo = self.ed_resign.text_to_integer()
+        self.ed_resign.type_integer(0 if previo else 350)
 
     def borra_draw_range(self):
-        previo = self.ed_draw_range.textoInt()
-        self.ed_draw_range.tipoInt(0 if previo else 10)
-        self.ed_draw_min_ply.tipoInt(0 if previo else 50)
+        previo = self.ed_draw_range.text_to_integer()
+        self.ed_draw_range.type_integer(0 if previo else 10)
+        self.ed_draw_min_ply.type_integer(0 if previo else 50)
 
     @staticmethod
     def read():
@@ -381,8 +383,8 @@ class WSwissConfig(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return self.swiss.num_opponents()
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        key = obj_column.key
         if key == "ROW":
             return str(row + 1)
         opponent = self.swiss.opponent(row)
@@ -390,9 +392,9 @@ class WSwissConfig(LCDialog.LCDialog):
             return str(opponent.get_start_elo())
         return opponent.name()
 
-    def grid_setvalue(self, grid, row, o_column, value):
+    def grid_setvalue(self, grid, row, obj_column, value):
         opponent: Swiss.Opponent = self.swiss.opponent(row)
-        key = o_column.key
+        key = obj_column.key
         if key == "ELO":
             if value.isdigit():
                 elo = int(value)
@@ -436,7 +438,7 @@ class WSwissConfig(LCDialog.LCDialog):
     #         self.sortby = "elo"
     #     self.sort_list()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 

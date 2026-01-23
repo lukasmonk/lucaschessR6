@@ -28,6 +28,9 @@ KIB_BEFORE_MOVE, KIB_AFTER_MOVE = True, False
 
 
 class WKibitzers(LCDialog.LCDialog):
+    me_control: str
+    me_key: str
+
     def __init__(self, w_parent, kibitzers_manager):
         titulo = _("Kibitzers")
         icono = Iconos.Kibitzer()
@@ -46,7 +49,7 @@ class WKibitzers(LCDialog.LCDialog):
         self.grid_kibitzers = None
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("New"), Iconos.Nuevo(), self.nuevo),
             None,
@@ -72,10 +75,10 @@ class WKibitzers(LCDialog.LCDialog):
             "",
             30,
             align_center=True,
-            edicion=Delegados.PmIconosBMT(self, dicIconos=self.tipos.dicDelegado()),
+            edicion=Delegados.PmIconosBMT(self, dict_icons=self.tipos.dict_delegado()),
         )
         o_columns.nueva("NOMBRE", _("Kibitzer"), 209)
-        self.grid_kibitzers = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True, xid="kib")
+        self.grid_kibitzers = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True, xid="kib")
         self.grid_kibitzers.setAlternatingRowColors(False)
 
         p = self.grid_kibitzers.palette()
@@ -101,7 +104,7 @@ class WKibitzers(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("CAMPO", _("Label"), 152, align_right=True)
         o_columns.nueva("VALOR", _("Value"), 390, edicion=Delegados.MultiEditor(self))
-        self.grid_values = Grid.Grid(self, o_columns, siSelecFilas=False, xid="val", is_editable=True)
+        self.grid_values = Grid.Grid(self, o_columns, complete_row_select=False, xid="val", is_editable=True)
         # self.grid_values.font_type(puntos=self.configuration.x_pgn_fontpoints)
         self.register_grid(self.grid_values)
 
@@ -195,8 +198,9 @@ class WKibitzers(LCDialog.LCDialog):
             return editor.texto()
         elif self.me_control in ("cb", "sb"):
             return editor.valor()
+        return None
 
-    def grid_setvalue(self, grid, nfila, column, valor):
+    def grid_setvalue(self, _grid, _row, _obj_column, valor):
         nk = self.krecno()
         kibitzer = self.kibitzers.kibitzer(nk)
         if self.me_key == "name":
@@ -231,11 +235,11 @@ class WKibitzers(LCDialog.LCDialog):
     def ext_engines(self):
         self.procesador.external_engines()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
-    def closeEvent(self, QCloseEvent):
+    def closeEvent(self, event):
         self.save_video()
 
     def nuevo(self):
@@ -260,7 +264,7 @@ class WKibitzers(LCDialog.LCDialog):
             elif kib.tipo == KIB_INDEXES:
                 si_index = False
         if si_index:
-            menu.opcion(("index", None), _("Indexes") + " - RodentII", Iconos.Camara())
+            menu.opcion(("index", None), f"{_('Indexes')} - RodentII", Iconos.Camara())
             menu.separador()
         if si_gaviota:
             menu.opcion(("gaviota", None), _("Gaviota Tablebases"), Iconos.Finales())
@@ -284,13 +288,13 @@ class WKibitzers(LCDialog.LCDialog):
             if orden == "engine":
                 self.nuevo_engine()
             elif orden in "book":
-                num = self.kibitzers.nuevo_polyglot(extra)
+                num = self.kibitzers.new_polyglot(extra)
                 self.goto(num)
             elif orden == "gaviota":
-                num = self.kibitzers.nuevo_gaviota()
+                num = self.kibitzers.new_gaviota()
                 self.goto(num)
             elif orden == "index":
-                num = self.kibitzers.nuevo_index()
+                num = self.kibitzers.new_indexes()
                 self.goto(num)
             elif orden == "database":
                 num = self.kibitzers.nuevo_database(extra)
@@ -302,7 +306,7 @@ class WKibitzers(LCDialog.LCDialog):
         WBooks.registered_books(self)
 
     def nuevo_engine(self):
-        form = FormLayout.FormLayout(self, _("Kibitzer"), Iconos.Kibitzer(), anchoMinimo=340)
+        form = FormLayout.FormLayout(self, _("Kibitzer"), Iconos.Kibitzer(), minimum_width=340)
 
         form.edit(_("Name"), "")
         form.separador()
@@ -310,7 +314,7 @@ class WKibitzers(LCDialog.LCDialog):
         form.combobox(_("Engine"), self.configuration.engines.list_name_alias(), "stockfish")
         form.separador()
 
-        li_tipos = Kibitzers.Tipos().comboSinIndices()
+        li_tipos = Kibitzers.Tipos().comobo_with_indices()
         form.combobox(_("Type"), li_tipos, KIB_CANDIDATES)
         form.separador()
 
@@ -324,7 +328,7 @@ class WKibitzers(LCDialog.LCDialog):
         form.combobox(_("Point of view"), Kibitzers.cb_pointofview_options(), KIB_AFTER_MOVE)
         form.separador()
 
-        form.seconds("%s (0=%s)" % (_("Fixed time in seconds"), _("all the time thinking")), 0.0)
+        form.seconds(f"{_('Fixed time in seconds')} (0={_('all the time thinking')})", 0.0)
         form.separador()
 
         form.editbox(_("Fixed depth"), ancho=30, tipo=int, init_value=0)
@@ -341,14 +345,14 @@ class WKibitzers(LCDialog.LCDialog):
             if tipo == "I":
                 engine = "rodentii"
                 if not name:  # para que no repita rodent II
-                    name = _("Indexes") + " - RodentII"
+                    name = f"{_('Indexes')} - RodentII"
 
             name = name.strip()
             if not name:
                 for label, key in li_tipos:
                     if key == tipo:
-                        name = "%s: %s" % (label, engine)
-            num = self.kibitzers.nuevo_engine(name, engine, tipo, prioridad, pointofview, fixed_time, fixed_depth)
+                        name = f"{label}: {engine}"
+            num = self.kibitzers.new_engine(name, engine, tipo, prioridad, pointofview, fixed_time, fixed_depth)
             self.goto(num)
 
     def remove(self):
@@ -399,35 +403,37 @@ class WKibitzers(LCDialog.LCDialog):
             return len(self.kibitzers)
         return len(self.liKibActual)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         gid = grid.id
         if gid == "kib":
-            return self.gridDatoKibitzers(row, column)
+            return self.grid_data_kibitzers(row, column)
         elif gid == "val":
-            return self.gridDatoValores(row, column)
+            return self.grid_data_values(row, column)
+        return None
 
-    def gridDatoKibitzers(self, row, column):
+    def grid_data_kibitzers(self, row, column):
         me = self.kibitzers.kibitzer(row)
         if column == "NOMBRE":
             return me.name
         elif column == "TYPE":
             return me.tipo
+        return None
 
-    def gridDatoValores(self, row, column):
+    def grid_data_values(self, row, column):
         li = self.liKibActual[row]
         if column == "CAMPO":
             return li[0]
         else:
             return li[1]
 
-    def grid_cambiado_registro(self, grid, row, column):
+    def grid_cambiado_registro(self, grid, row, _obj_column):
         if grid.id == "kib":
             self.goto(row)
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, grid, row, _obj_column):
         if grid.id == "kib":
-            self.terminar()
+            self.finalize()
             kibitzer = self.kibitzers.kibitzer(row)
             self.kibitzers_manager.run_new(kibitzer.huella)
 
@@ -464,17 +470,26 @@ class WKibitzers(LCDialog.LCDialog):
 
             for num, opcion in enumerate(me.li_uci_options_editable()):
                 default = opcion.label_default()
-                label_default = " (%s)" % default if default else ""
+                label_default = f" ({default})" if default else ""
                 valor = str(opcion.valor)
                 if opcion.tipo in ("check", "button"):
                     valor = valor.lower()
-                self.liKibActual.append(("%s%s" % (opcion.name, label_default), valor, "opcion,%d" % num))
+                self.liKibActual.append((f"{opcion.name}{label_default}", valor, "opcion,%d" % num))
 
 
 class WKibitzerLive(LCDialog.LCDialog):
-    def __init__(self, w_parent, configuration, numkibitzer):
+    me_key: str
+    me_control: str
+    result_opciones: list
+    result_xprioridad: Priorities.Priorities
+    result_xpointofview: bool
+    # result_posicionBase: Position
+    result_max_time: float
+    result_max_depth: int
+
+    def __init__(self, w_parent, configuration, num_kibitzer):
         self.kibitzers = Kibitzers.Kibitzers()
-        self.kibitzer = self.kibitzers.kibitzer(numkibitzer)
+        self.kibitzer = self.kibitzers.kibitzer(num_kibitzer)
         titulo = self.kibitzer.name
         icono = Iconos.Kibitzer()
         extparam = "kibitzerlive"
@@ -482,8 +497,8 @@ class WKibitzerLive(LCDialog.LCDialog):
 
         self.configuration = configuration
 
-        self.li_options = self.leeOpciones()
-        self.liOriginal = self.leeOpciones()
+        self.li_options = self.read_options()
+        self.liOriginal = self.read_options()
 
         li_acciones = (
             (_("Save"), Iconos.Grabar(), self.grabar),
@@ -496,7 +511,7 @@ class WKibitzerLive(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("CAMPO", _("Label"), 152, align_right=True)
         o_columns.nueva("VALOR", _("Value"), 390, edicion=Delegados.MultiEditor(self))
-        self.grid_values = Grid.Grid(self, o_columns, siSelecFilas=False, xid="val", is_editable=True)
+        self.grid_values = Grid.Grid(self, o_columns, complete_row_select=False, xid="val", is_editable=True)
         self.grid_values.font_type(puntos=self.configuration.x_pgn_fontpoints)
         self.register_grid(self.grid_values)
 
@@ -509,19 +524,20 @@ class WKibitzerLive(LCDialog.LCDialog):
 
         # self.grid_values.resizeRowsToContents()
 
-    def leeOpciones(self):
-        li = []
-        li.append([_("Priority"), self.kibitzer.cpriority(), "prioridad"])
-        li.append([_("Point of view"), self.kibitzer.cpointofview(), "pointofview"])
-        li.append([_("Fixed time in seconds"), self.kibitzer.max_time, "max_time"])
-        li.append([_("Fixed depth"), self.kibitzer.max_depth, "max_depth"])
+    def read_options(self):
+        li = [
+            [_("Priority"), self.kibitzer.cpriority(), "prioridad"],
+            [_("Point of view"), self.kibitzer.cpointofview(), "pointofview"],
+            [_("Fixed time in seconds"), self.kibitzer.max_time, "max_time"],
+            [_("Fixed depth"), self.kibitzer.max_depth, "max_depth"],
+        ]
         for num, opcion in enumerate(self.kibitzer.li_uci_options_editable()):
             default = opcion.label_default()
-            label_default = " (%s)" % default if default else ""
+            label_default = f" ({default})" if default else ""
             valor = str(opcion.valor)
             if opcion.tipo in ("check", "button"):
                 valor = valor.lower()
-            li.append(["%s%s" % (opcion.name, label_default), valor, "%d" % num])
+            li.append([f"{opcion.name}{label_default}", valor, "%d" % num])
         return li
 
     def grabar(self):
@@ -529,7 +545,7 @@ class WKibitzerLive(LCDialog.LCDialog):
         lidif_opciones = []
         xprioridad = None
         xpointofview = None
-        xposicionBase = None
+        # xposicion_base = None
         xmax_time = self.kibitzer.max_time
         xmax_depth = self.kibitzer.max_depth
         for x in range(len(self.li_options)):
@@ -552,7 +568,7 @@ class WKibitzerLive(LCDialog.LCDialog):
         self.result_opciones = lidif_opciones
         self.result_xprioridad = xprioridad
         self.result_xpointofview = xpointofview
-        self.result_posicionBase = xposicionBase
+        # self.result_posicionBase = xposicion_base
         self.result_max_time = xmax_time
         self.result_max_depth = xmax_depth
         self.save_video()
@@ -620,8 +636,9 @@ class WKibitzerLive(LCDialog.LCDialog):
             return editor.texto()
         elif self.me_control in ("cb", "sb"):
             return editor.valor()
+        return None
 
-    def grid_setvalue(self, grid, nfila, column, valor):
+    def grid_setvalue(self, _grid, _row, _obj_column, valor):
         if self.me_key == "prioridad":
             self.kibitzer.prioridad = valor
             self.li_options[0][1] = self.kibitzer.cpriority()
@@ -649,11 +666,11 @@ class WKibitzerLive(LCDialog.LCDialog):
             self.li_options[nopcion + 4][1] = valor
             self.kibitzer.set_uci_option(opcion.name, valor)
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_options)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        column = obj_column.key
         li = self.li_options[row]
         if column == "CAMPO":
             return li[0]

@@ -3,7 +3,7 @@ import os
 import time
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import Iconos
 
 # Install: Wbase #90
@@ -44,9 +44,9 @@ class Eboard:
         import traceback
 
         with open("dgt.log", "at", encoding="utf-8", errors="ignore") as q:
-            q.write("\n[%s] %s\n" % (Util.today(), cad))
+            q.write(f"\n[{Util.today()}] {cad}\n")
             for line in traceback.format_stack():
-                q.write("    %s\n" % line.strip())
+                q.write(f"    {line.strip()}\n")
 
     def registerStatusFunc(self, dato):
         # assert prln("registerStatusFunc", dato)

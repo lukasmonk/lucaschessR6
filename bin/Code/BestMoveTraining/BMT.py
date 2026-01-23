@@ -63,14 +63,13 @@ class BMTUno:
     def condiciones(self):
         try:
             return "%s - %d %s" % (self.mrm.name, self.mrm.vtime / 1000, _("Second(s)")) if self.mrm.name else ""
-        except:
+        except Exception:
             return ""
 
     def update_state(self):
         self.state = 0
-        if self.finished:
-            if self.max_puntos:
-                self.state = int(7.0 * self.puntos / self.max_puntos) + 1
+        if self.finished and self.max_puntos:
+            self.state = int(7.0 * self.puntos / self.max_puntos) + 1
 
     def is_max_state(self):
         return self.state == 8
@@ -89,11 +88,7 @@ class BMTUno:
 
         dic = mrm.dicDepth
 
-        if len(dic) > 0:
-            prof = 1
-        else:
-            prof = 0
-
+        prof = 1 if len(dic) > 0 else 0
         for num, val in dic.items():
             for mm, pts in val.items():
                 if mm != best_move:
@@ -131,10 +126,7 @@ class BMTLista:
         return self.li_bmt_uno[num].finished
 
     def is_finished(self):
-        for bmt in self.li_bmt_uno:
-            if not bmt.finished:
-                return False
-        return True
+        return all(bmt.finished for bmt in self.li_bmt_uno)
 
     def check_game(self, cl_game, txt_game):
         if cl_game not in self.dic_games:
@@ -144,10 +136,7 @@ class BMTLista:
         return self.li_bmt_uno[num] if num < len(self.li_bmt_uno) else None
 
     def max_puntos(self):
-        mx = 0
-        for bmt in self.li_bmt_uno:
-            mx += bmt.max_puntos
-        return mx
+        return sum(bmt.max_puntos for bmt in self.li_bmt_uno)
 
     def reiniciar(self, debajo_state=INFINITE):
         for bmt in self.li_bmt_uno:
@@ -190,6 +179,6 @@ class BMTLista:
         return nv
 
     def borrar_fen_lista(self, borrar_fen_lista):
-        for num in range(0, len(self.li_bmt_uno)):
+        for num in range(len(self.li_bmt_uno)):
             while num < len(self.li_bmt_uno) and self.li_bmt_uno[num].fen in borrar_fen_lista:
                 del self.li_bmt_uno[num]

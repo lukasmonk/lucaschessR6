@@ -1,11 +1,10 @@
 import datetime
 import random
-import time
 
 import OSEngines
 
 import Code
-from Code import Adjournments, Util
+from Code.Z import Adjournments, Util
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_ELO,
@@ -27,12 +26,8 @@ from Code.Openings import Opening
 from Code.QT import QTDialogs, QTMessages
 from Code.SQL import UtilSQL
 
-# Se elimina cinnamon, se bloquea en los mates con profundidad fija
-# position startpos moves e2e4 d7d5 e4d5 d8d5 b1c3 d5e5 f1e2 c8g4 d2d4 g4e2 g1e2 e5f5 d1d3 f5d3 c2d3 b8c6 c1f4 e8c8 c3b5 g8f6 f4c7 d8d5 e2c3 d5g5 c7g3 e7e6 h2h4 g5f5 g3d6 g7g6 d6f8 f5b5 f8g7 h8g8 c3b5 g8g7 a1c1 f6d5 b5a7 c8d7 a7c6 b7c6 e1d2 g7g8 h1e1 g8b8 b2b3 b8a8 a2a4 d7d6 c1c5 a8b8 e1c1 b8b3 c5c6 d6d7 c6c8 b3b2 d2e1 d7d6 e1f1 h7h5 a4a5 d6d7 a5a6 b2a2 c8f8 a2a6 f8f7 d7d6 f7g7 d5f4 c1b1 a6a2 b1b6 d6d5
-# go depth 2
 
-
-def listaMotoresElo():
+def list_engines_play_elo():
     x = """amyan|1|1112|5461
 amyan|2|1360|6597
 amyan|3|1615|7010
@@ -155,7 +150,7 @@ umko|4|2081|7887"""
     return li
 
 
-# li = listaMotoresElo()
+# li = list_engines_play_elo()
 # li.sort(key=lambda x: x[0])
 # for x, y, z in li:
 #     pr int(x, y)
@@ -163,19 +158,18 @@ umko|4|2081|7887"""
 
 
 class MotorElo:
-    def __init__(self, elo, name, key, depth):
+    def __init__(self, elo, name, alias, depth):
         self.elo = elo
         self.name = name
-        self.key = key
         self.depth = depth
         self.max_depth = depth
         self.siInterno = depth == 0
         self.depthOpen = (elo / 100 - 8) if elo < 2100 else 100
-        if self.depthOpen < 2:
-            self.depthOpen = 2
-        self.alias = self.name
+        self.depthOpen = max(self.depthOpen, 2)
+        self.key = alias
         if self.depth:
-            self.alias += " %d" % self.depth
+            self.key += " %d" % self.depth
+        self.points_win = self.points_lose = self.points_draw = 0
 
     def label(self):
         resp = self.name
@@ -186,6 +180,17 @@ class MotorElo:
 
 
 class ManagerElo(Manager.Manager):
+    list_engines: list[MotorElo]
+    error: str
+    is_human_side_white: bool
+    in_the_opening: bool
+    white_elo: int
+    black_elo: int
+    is_child_engine: bool
+    datos_motor: MotorElo
+    opening: Opening.OpeningPol
+    pte_tool_resigndraw: bool
+
     def valores(self):
         li = QTDialogs.list_irina()
 
@@ -196,7 +201,7 @@ class ManagerElo(Manager.Manager):
         def m(xelo, xkey, xdepth):
             self.list_engines.append(MotorElo(xelo, Util.primera_mayuscula(xkey), xkey, xdepth))
 
-        for elo, key, depth in listaMotoresElo():
+        for elo, key, depth in list_engines_play_elo():
             m(elo, key, depth)
 
         for k, v in self.configuration.engines.dic_engines().items():
@@ -205,36 +210,20 @@ class ManagerElo(Manager.Manager):
 
         self.list_engines.sort(key=lambda x: x.elo)
 
-        self.li_t = (
-            (0, 50, 3),
-            (20, 53, 5),
-            (40, 58, 4),
-            (60, 62, 4),
-            (80, 66, 5),
-            (100, 69, 4),
-            (120, 73, 3),
-            (140, 76, 3),
-            (160, 79, 3),
-            (180, 82, 2),
-            (200, 84, 9),
-            (300, 93, 4),
-            (400, 97, 3),
-        )
-        self.liK = ((0, 60), (800, 50), (1200, 40), (1600, 30), (2000, 30), (2400, 10))
-
-    def calc_dif_elo(self, eloJugador, eloRival, resultado):
-        if resultado == RS_WIN_PLAYER:
+    @staticmethod
+    def calc_dif_elo(elo_player, elo_rival, result):
+        if result == RS_WIN_PLAYER:
             result = 1
-        elif resultado == RS_DRAW:
+        elif result == RS_DRAW:
             result = 0
         else:
             result = -1
-        return Util.fide_elo(eloJugador, eloRival, result)
+        return Util.fide_elo(elo_player, elo_rival, result)
 
     def list_engines(self, elo):
         self.valores()
         li = []
-        numX = len(self.list_engines)
+        total_emgines = len(self.list_engines)
         for num, mt in enumerate(self.list_engines):
             mt_elo = mt.elo
             mt.siOut = False
@@ -247,21 +236,22 @@ class ManagerElo(Manager.Manager):
                 def rot(res):
                     return self.calc_dif_elo(elo, mt_elo, res)
 
-                mt.pgana = rot(RS_WIN_PLAYER)
-                mt.ptablas = rot(RS_DRAW)
-                mt.ppierde = rot(RS_WIN_OPPONENT)
+                mt.points_win = rot(RS_WIN_PLAYER)
+                mt.points_draw = rot(RS_DRAW)
+                mt.points_lose = rot(RS_WIN_OPPONENT)
 
-                mt.number = numX - num
+                mt.number = total_emgines - num
 
                 li.append(mt)
 
         return li
 
-    def get_motor(self, key, depth):
+    def get_motor(self, alias, depth):
         self.valores()
-        for mt in self.list_engines:
-            if mt.key == key and mt.depth == depth:
-                return mt
+        return next(
+            (mt for mt in self.list_engines if mt.key == alias and mt.depth == depth),
+            None,
+        )
 
     def start(self, datos_motor):
         self.base_inicio(datos_motor)
@@ -293,52 +283,52 @@ class ManagerElo(Manager.Manager):
 
         self.in_the_opening = True
 
-        self.datosMotor = datos_motor
-        self.opening = Opening.OpeningPol(100, elo=self.datosMotor.elo)
+        self.datos_motor = datos_motor
+        self.opening = Opening.OpeningPol(100, elo=self.datos_motor.elo)
 
-        eloengine = self.datosMotor.elo
+        eloengine = self.datos_motor.elo
         eloplayer = self.configuration.elo_current()
-        self.whiteElo = eloplayer if is_white else eloengine
-        self.blackElo = eloplayer if not is_white else eloengine
+        self.white_elo = eloplayer if is_white else eloengine
+        self.black_elo = eloengine if is_white else eloplayer
 
-        self.siRivalInterno = self.datosMotor.siInterno
-        if self.siRivalInterno:
+        self.is_child_engine = self.datos_motor.siInterno
+        if self.is_child_engine:
             rival = self.configuration.engines.search("irina")
-            depth = 2 if self.datosMotor.key in ("Rat", "Snake") else 1
-            self.manager_rival = self.procesador.create_manager_engine(rival, None, depth)
-            self.manager_rival.set_option("Personality", self.datosMotor.key)
+            depth = 2 if self.datos_motor.key in ("Rat", "Snake") else 1
+            self.manager_rival = self.procesador.create_manager_engine(rival, 0, depth, 0)
+            self.manager_rival.set_option("Personality", self.datos_motor.key)
 
         else:
-            rival = self.configuration.engines.search(self.datosMotor.key)
-            self.manager_rival = self.procesador.create_manager_engine(rival, None, self.datosMotor.depth)
+            rival = self.configuration.engines.search(self.datos_motor.key)
+            self.manager_rival = self.procesador.create_manager_engine(rival, 0, self.datos_motor.depth, 0)
 
         self.pte_tool_resigndraw = True
 
         self.pon_toolbar()
 
         self.main_window.active_game(True, False)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.put_pieces_bottom(is_white)
         self.remove_hints(True, remove_back=True)
         self.show_side_indicator(True)
-        label = "%s: <b>%s</b>" % (_("Opponent"), self.datosMotor.label())
+        label = f'{_("Opponent")}: <b>{self.datos_motor.label()}</b>'
         self.set_label1(label)
 
         nbsp = "&nbsp;" * 3
 
         txt = "%s:%+d%s%s:%+d%s%s:%+d" % (
             _("Win"),
-            self.datosMotor.pgana,
+            self.datos_motor.points_win,
             nbsp,
             _("Draw"),
-            self.datosMotor.ptablas,
+            self.datos_motor.points_draw,
             nbsp,
             _("Loss"),
-            self.datosMotor.ppierde,
+            self.datos_motor.points_lose,
         )
 
-        self.set_label2("<center>%s</center>" % txt)
+        self.set_label2(f"<center>{txt}</center>")
         self.pgn_refresh(True)
         self.show_info_extra()
 
@@ -347,12 +337,12 @@ class ManagerElo(Manager.Manager):
         self.game.set_tag("Event", _("Lucas-Elo"))
 
         player = self.configuration.nom_player()
-        other = self.datosMotor.name
+        other = self.datos_motor.name
         w, b = (player, other) if self.is_human_side_white else (other, player)
         self.game.set_tag("White", w)
         self.game.set_tag("Black", b)
-        self.game.set_tag("WhiteElo", str(self.whiteElo))
-        self.game.set_tag("BlackElo", str(self.blackElo))
+        self.game.set_tag("WhiteElo", str(self.white_elo))
+        self.game.set_tag("BlackElo", str(self.black_elo))
 
         self.game.add_tag_timestart()
 
@@ -362,16 +352,16 @@ class ManagerElo(Manager.Manager):
             dic = {
                 "ISWHITE": self.is_human_side_white,
                 "GAME_SAVE": self.game.save(),
-                "CLAVE": self.datosMotor.key,
-                "DEPTH": self.datosMotor.depth,
-                "PGANA": self.datosMotor.pgana,
-                "PPIERDE": self.datosMotor.ppierde,
-                "PTABLAS": self.datosMotor.ptablas,
+                "CLAVE": self.datos_motor.key,
+                "DEPTH": self.datos_motor.depth,
+                "PGANA": self.datos_motor.points_win,
+                "PPIERDE": self.datos_motor.points_lose,
+                "PTABLAS": self.datos_motor.points_draw,
             }
 
-            label_menu = "%s. %s" % (_("Lucas-Elo"), self.datosMotor.name)
-            if self.datosMotor.depth:
-                label_menu += " - %d" % self.datosMotor.depth
+            label_menu = f'{_("Lucas-Elo")}. {self.datos_motor.name}'
+            if self.datos_motor.depth:
+                label_menu += " - %d" % self.datos_motor.depth
             with Adjournments.Adjournments() as adj:
                 adj.add(self.game_type, dic, label_menu)
                 adj.si_seguimos(self)
@@ -380,9 +370,9 @@ class ManagerElo(Manager.Manager):
         engine = self.get_motor(dic["CLAVE"], dic["DEPTH"])
         if engine is None:
             return
-        engine.pgana = dic["PGANA"]
-        engine.ppierde = dic["PPIERDE"]
-        engine.ptablas = dic["PTABLAS"]
+        engine.points_win = dic["PGANA"]
+        engine.points_lose = dic["PPIERDE"]
+        engine.points_draw = dic["PTABLAS"]
         self.base_inicio(engine)
         self.is_human_side_white = dic["ISWHITE"]
         self.is_engine_side_white = not self.is_human_side_white
@@ -396,16 +386,15 @@ class ManagerElo(Manager.Manager):
         self.play_next_move()
 
     def pon_toolbar(self):
-        liTool = (TB_CANCEL, TB_CONFIG, TB_UTILITIES)
-        if self.pte_tool_resigndraw:
-            if len(self.game) > 1:
-                if self.siRivalInterno:
-                    liTool = (TB_RESIGN, TB_ADJOURN, TB_CONFIG, TB_UTILITIES)
-                else:
-                    liTool = (TB_RESIGN, TB_DRAW, TB_ADJOURN, TB_CONFIG, TB_UTILITIES)
-                self.pte_tool_resigndraw = False
+        li_tool = (TB_CANCEL, TB_CONFIG, TB_UTILITIES)
+        if self.pte_tool_resigndraw and len(self.game) > 1:
+            if self.is_child_engine:
+                li_tool = (TB_RESIGN, TB_ADJOURN, TB_CONFIG, TB_UTILITIES)
+            else:
+                li_tool = (TB_RESIGN, TB_DRAW, TB_ADJOURN, TB_CONFIG, TB_UTILITIES)
+            self.pte_tool_resigndraw = False
 
-        self.set_toolbar(liTool)
+        self.set_toolbar(li_tool)
 
     def run_action(self, key):
         if key in (TB_RESIGN, TB_CANCEL):
@@ -438,7 +427,7 @@ class ManagerElo(Manager.Manager):
         if not self.pte_tool_resigndraw:
             if not QTMessages.pregunta(
                 self.main_window,
-                _("Do you want to resign?") + " (%d)" % self.datosMotor.ppierde,
+                _("Do you want to resign?") + " (%d)" % self.datos_motor.points_lose,
             ):
                 return False  # no abandona
             self.game.resign(self.is_human_side_white)
@@ -463,22 +452,18 @@ class ManagerElo(Manager.Manager):
             self.show_result()
             return
 
-        siRival = is_white == self.is_engine_side_white
+        is_rival = is_white == self.is_engine_side_white
         self.set_side_indicator(is_white)
 
         self.refresh()
 
-        if siRival:
+        if is_rival:
             self.thinking(True)
             self.disable_all()
 
-            iniT = time.time()
-
-            siPensar = True
+            rm_rival = None
 
             if self.in_the_opening:
-
-                dT, hT = 5, 5
 
                 ok, from_sq, to_sq, promotion = self.opening.run_engine(self.last_fen())
 
@@ -487,29 +472,11 @@ class ManagerElo(Manager.Manager):
                     rm_rival.from_sq = from_sq
                     rm_rival.to_sq = to_sq
                     rm_rival.promotion = promotion
-                    siPensar = False
 
-            if siPensar:
-                if self.siRivalInterno:
-                    rm_rival = self.manager_rival.play_game(self.game)
-                    dT, hT = 5, 15
-                else:
-                    nJugadas = len(self.game)
-                    if nJugadas > 30:
-                        tp = 300
-                    else:
-                        tp = 600
-                    rm_rival = self.manager_rival.play_time(self.game, tp, tp, 0)  # engloba juega + juega Tiempo
-                    pts = rm_rival.centipawns_abs()
-                    if pts > 100:
-                        dT, hT = 5, 15
-                    else:
-                        dT, hT = 10, 35
-
-            difT = time.time() - iniT
-            t = random.randint(dT * 10, hT * 10) * 0.01
-            if difT < t:
-                time.sleep(t - difT)
+            if rm_rival is None:
+                factor_humanize = 0.5 if self.is_child_engine else 0.8
+                self.manager_rival.humanize(factor_humanize, self.game, 600, 600, 0)
+                rm_rival = self.manager_rival.play_game(self.game)
 
             self.thinking(False)
             if self.rival_has_moved(rm_rival):
@@ -529,23 +496,22 @@ class ManagerElo(Manager.Manager):
         self.disable_all()
         self.human_is_playing = False
 
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
 
         self.beep_result(beep)
 
         elo = self.configuration.elo_current()
         if player_win:
-            difelo = self.datosMotor.pgana
+            difelo = self.datos_motor.points_win
 
         elif self.game.is_draw():
-            difelo = self.datosMotor.ptablas
+            difelo = self.datos_motor.points_draw
 
         else:
-            difelo = self.datosMotor.ppierde
+            difelo = self.datos_motor.points_lose
 
         nelo = elo + difelo
-        if nelo < 0:
-            nelo = 0
+        nelo = max(nelo, 0)
         self.configuration.set_current_elo(nelo)
 
         self.historial(elo, nelo)
@@ -560,7 +526,7 @@ class ManagerElo(Manager.Manager):
         self.set_end_game()
         self.autosave()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             return False
@@ -568,7 +534,7 @@ class ManagerElo(Manager.Manager):
         if self.in_the_opening:
             self.in_the_opening = self.opening.check_human(self.last_fen(), from_sq, to_sq)
 
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
 
         self.add_move(move, True)
         self.error = ""
@@ -600,7 +566,7 @@ class ManagerElo(Manager.Manager):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
             self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
 
             self.error = ""
 
@@ -612,7 +578,7 @@ class ManagerElo(Manager.Manager):
     def historial(self, elo, nelo):
         dic = {
             "FECHA": datetime.datetime.now(),
-            "RIVAL": self.datosMotor.label(),
+            "RIVAL": self.datos_motor.label(),
             "RESULTADO": self.resultado,
             "AELO": elo,
             "NELO": nelo,
@@ -624,14 +590,14 @@ class ManagerElo(Manager.Manager):
 
         dd = UtilSQL.DictSQL(self.configuration.paths.file_estad_elo(), tabla="color")
         key = "%s-%d" % (
-            self.datosMotor.name,
-            self.datosMotor.depth if self.datosMotor.depth else 0,
+            self.datos_motor.name,
+            self.datos_motor.depth or 0,
         )
         dd[key] = self.is_human_side_white
         dd.close()
 
-    def determina_side(self, datosMotor):
-        key = "%s-%d" % (datosMotor.key, datosMotor.depth if datosMotor.depth else 0)
+    def determina_side(self, engine_elo: MotorElo):
+        key = "%s-%d" % (engine_elo.key, engine_elo.depth or 0)
 
         with UtilSQL.DictSQL(self.configuration.paths.file_estad_elo(), tabla="color") as dd:
             return not dd.get(key, random.choice((True, False)))

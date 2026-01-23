@@ -3,7 +3,7 @@ import random
 import stat
 
 import Code
-from Code import ManagerSolo, Util
+from Code.Z import ManagerSolo, Util
 from Code.Base.Constantes import TB_QUIT
 from Code.Books import WBooks, WFactory, WPolyglot
 from Code.Databases import DBgames, WDB_GUtils, WindowDatabase
@@ -17,7 +17,8 @@ from Code.Openings import (
     WindowOpeningLines,
     WindowOpenings,
 )
-from Code.QT import Delegados, QTDialogs, QTMessages, QTUtils, ScreenUtils, SelectFiles, WindowManualSave
+from Code.QT import Delegados, QTDialogs, QTMessages, QTUtils, ScreenUtils, SelectFiles
+from Code.ZQT import WindowManualSave
 
 
 class ToolsMenuRun:
@@ -75,10 +76,10 @@ class ToolsMenuRun:
         if accion == "D":
             resp = QTDialogs.select_db(self.wparent, Code.configuration, True, False)
             if resp:
-                if QTMessages.pregunta(self.wparent, "%s\n%s" % (_("Do you want to remove?"), resp)):
+                if QTMessages.pregunta(self.wparent, f"{_('Do you want to remove?')}\n{resp}"):
                     Util.remove_file(resp)
-                    Util.remove_file(resp + ".st1")
-                    Util.remove_file(resp[:-5] + ".lcmv")
+                    Util.remove_file(f"{resp}.st1")
+                    Util.remove_file(f"{resp[:-5]}.lcmv")
             return
 
         if accion == "R":
@@ -93,7 +94,7 @@ class ToolsMenuRun:
                         if w.reiniciar:
                             self.database("R", Code.configuration.get_last_database())
             else:
-                Delegados.genera_pm(w.infoMove.board.piezas)
+                Delegados.genera_pm(w.infoMove.board.pieces)
                 w.show()
 
     def pgn_visor(self):
@@ -118,7 +119,7 @@ class ToolsMenuRun:
             for x in li_ant[10:]:
                 Util.remove_file(x.path)
 
-        file_db = Util.opj(path_temp_pgns, os.path.basename(fichero_pgn)[:-3] + "lcdb")
+        file_db = Util.opj(path_temp_pgns, f"{os.path.basename(fichero_pgn)[:-3]}lcdb")
 
         if Util.exist_file(file_db):
             create = False
@@ -150,7 +151,7 @@ class ToolsMenuRun:
             path = Code.configuration.temporary_file("pgn")
             texto = texto.strip()
             if not texto.startswith("["):
-                texto = '[Event "%s"]\n\n %s' % (_("Paste PGN"), texto)
+                texto = f"[Event \"{_('Paste PGN')}\"]\n\n {texto}"
             with open(path, "wt", encoding="utf-8", errors="ignore") as q:
                 q.write(texto)
             self.pgn_read(path)
@@ -170,10 +171,10 @@ class ToolsMenuRun:
         manager.start(dic)
 
     def openings_lines(self):
-        dicline = WindowOpeningLines.openingLines(self.procesador)
+        dicline = WindowOpeningLines.opening_lines(self.procesador)
         if dicline:
             if "TRAIN" in dicline:
-                resp = "tr_%s" % dicline["TRAIN"]
+                resp = f"tr_{dicline['TRAIN']}"
             else:
                 resp = WindowOpeningLine.study(dicline["file"])
             if resp is None:
@@ -215,7 +216,7 @@ class ToolsMenuRun:
         manager = ManagerOPLPositions.ManagerOpeningLinesPositions(self.procesador)
         manager.start(path_fichero)
 
-    def externDatabase(self, file):
+    def extern_database(self, file):
         # Code.configuration.ficheroDBgames = file
         self.database("R", file)
         self.procesador.run_action(TB_QUIT)
@@ -228,7 +229,7 @@ class ToolsMenuRun:
             cfecha_pgn = str(os.path.getmtime(fichero_pgn))
             cdir = Code.configuration.paths.folder_databases_pgn()
 
-            file_db = Util.opj(cdir, os.path.basename(fichero_pgn)[:-4] + ".lcdb")
+            file_db = Util.opj(cdir, f"{os.path.basename(fichero_pgn)[:-4]}.lcdb")
 
             if Util.exist_file(file_db):
                 create = False

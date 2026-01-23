@@ -8,7 +8,7 @@ import FasterCode
 from PySide6.QtCore import Qt
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import (
     ST_ENDGAME,
@@ -31,15 +31,15 @@ class ControlFindAllMoves:
             self.db: List[List[str]] = ast.literal_eval(f.read())
 
         mas = "P" if is_the_player else "R"
-        self.fichPuntos = f"{manager.configuration.paths.folder_results}/score60{mas}.dkv"
+        self.fichPuntos = f"{manager.configuration.paths.folder_results()}/score60{mas}.dkv"
 
         if os.path.isfile(self.fichPuntos):
-            self.liPuntos: List[List[Any]] = Util.restore_pickle(self.fichPuntos)
+            self.li_puntos: List[List[Any]] = Util.restore_pickle(self.fichPuntos)
         else:
-            self.liPuntos = [[0, 0] for _ in range(len(self.db))]
+            self.li_puntos = [[0, 0] for _ in range(len(self.db))]
 
     def guardar(self) -> None:
-        Util.save_pickle(self.fichPuntos, self.liPuntos)
+        Util.save_pickle(self.fichPuntos, self.li_puntos)
 
     def num_rows(self) -> int:
         return len(self.db)
@@ -47,14 +47,14 @@ class ControlFindAllMoves:
     def first_no_solved(self) -> int:
         nd = self.num_rows()
         for i in range(nd):
-            if self.liPuntos[i][0] == 0:
+            if self.li_puntos[i][0] == 0:
                 return i
         return nd - 1
 
     def pos_with_error(self) -> int:
         nd = self.num_rows()
         for i in range(nd):
-            if self.liPuntos[i][1] > 0:
+            if self.li_puntos[i][1] > 0:
                 return i
         return 999
 
@@ -73,7 +73,7 @@ class ControlFindAllMoves:
     def dato(self, row: int, key: str) -> str:
         if key == "LEVEL":
             return str(row + 1)
-        vtime, errors = self.liPuntos[row]
+        vtime, errors = self.li_puntos[row]
         if key == "TIME":
             if vtime == 0:
                 return "-"
@@ -91,8 +91,8 @@ class ControlFindAllMoves:
     def message_result(self, number: int, vtime: int, errors: int) -> Tuple[str, bool]:
         tm = vtime / (number + 1)
 
-        if self.liPuntos[number][0] > 0:
-            t0, e0 = self.liPuntos[number]
+        if self.li_puntos[number][0] > 0:
+            t0, e0 = self.li_puntos[number]
             si_record = False
             if e0 > errors:
                 si_record = True
@@ -109,20 +109,20 @@ class ControlFindAllMoves:
         )
         if si_record:
             mensaje += f"<br><br><b>{_('New record!')}</b><br>"
-            self.liPuntos[number] = [vtime, errors]
+            self.li_puntos[number] = [vtime, errors]
             self.guardar()
 
         return mensaje, si_record
 
     def remove_all(self) -> None:
         Util.remove_file(self.fichPuntos)
-        self.liPuntos = [[0, 0]] * len(self.db)
+        self.li_puntos = [[0, 0]] * len(self.db)
 
     def average_time(self) -> float:
         num = 0
         tm = 0.0
         for row in range(self.num_rows()):
-            vtime, errors = self.liPuntos[row]
+            vtime, errors = self.li_puntos[row]
             if vtime > 0:
                 num += row + 1
                 tm += vtime
@@ -148,7 +148,7 @@ class ManagerFindAllMoves(Manager.Manager):
 
         self.pgn = ControlFindAllMoves(self, is_the_player)
 
-        self.main_window.columnas60(True, cBlack=f"{_('Time')} / {_('Avg || Abrev. of Average')}")
+        self.main_window.columnas60(True, label_black=f"{_('Time')} / {_('Avg || Abrev. of Average')}")
 
         self.end_game()
 
@@ -158,10 +158,10 @@ class ManagerFindAllMoves(Manager.Manager):
         self.main_window.set_label2(None)
         self.show_side_indicator(False)
         self.put_pieces_bottom(True)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.pgn_refresh(True)
         self.main_window.base.pgn.gotop()
-        self.main_window.board.can_be_rotated_the_board = False
+        self.main_window.board.can_be_rotated = False
 
         self.board.do_pressed_number = None
         self.remove_info()
@@ -199,8 +199,8 @@ class ManagerFindAllMoves(Manager.Manager):
         if resp:
             if resp == "remove":
                 if QTMessages.pregunta(
-                        self.main_window,
-                        _("Are you sure you want to delete all results of all levels and start again from scratch?"),
+                    self.main_window,
+                    _("Are you sure you want to delete all results of all levels and start again from scratch?"),
                 ):
                     self.pgn.remove_all()
                     self.pgn_refresh(True)
@@ -208,7 +208,7 @@ class ManagerFindAllMoves(Manager.Manager):
                     self.pon_rotulotm()
 
     def fin60(self) -> None:
-        self.main_window.board.can_be_rotated_the_board = True
+        self.main_window.board.can_be_rotated = True
         self.board.remove_arrows()
         self.main_window.columnas60(False)
         self.procesador.start()
@@ -251,7 +251,7 @@ class ManagerFindAllMoves(Manager.Manager):
                 pos,
                 etiqueta=_("Level"),
                 pos=pos,
-                mensAdicional=f"<b><red>{mens}</red></b>",
+                additional_message=f"<b><red>{mens}</red></b>",
             )
             if number is None:
                 return
@@ -339,7 +339,7 @@ class ManagerFindAllMoves(Manager.Manager):
         self.procesador.start()
         return False
 
-    def player_has_moved(self, from_sq: str, to_sq: str, _promotion: str = "") -> bool:
+    def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, _promotion: str = "") -> bool:
         a1h8 = from_sq + to_sq
         if self.last_a1h8 == a1h8:
             return False
@@ -351,7 +351,7 @@ class ManagerFindAllMoves(Manager.Manager):
             if (mov.xfrom() + mov.xto()) == a1h8:
                 if not mov.is_selected:
                     if mov.piece() == self.order_pz[0]:
-                        # self.board.creaFlechaMulti(a1h8, False, opacity=0.4)
+                        # self.board.create_arrow_multi(a1h8, False, opacity=0.4)
                         mov.is_selected = True
                         self.order_pz = self.order_pz[1:]
                         if len(self.order_pz) == 0:
@@ -379,11 +379,7 @@ class ManagerFindAllMoves(Manager.Manager):
             QTMessages.message(self.main_window, mens)
         else:
             QTMessages.temporary_message(
-                self.main_window,
-                mensaje,
-                10,
-                background="#ffa13b" if si_record else None,
-                with_image=False
+                self.main_window, mensaje, 10, background="#ffa13b" if si_record else None, with_image=False
             )
 
     def analize_position(self, row: int, key: str) -> None:
@@ -401,7 +397,7 @@ class ManagerFindAllMoves(Manager.Manager):
             self.play(row)
 
     def move_according_key(self, tipo: str) -> None:
-        row, col = self.main_window.pgnPosActual()
+        row, col = self.main_window.pgn_pos_actual()
         if tipo == "+":
             if row > 0:
                 row -= 1

@@ -8,7 +8,7 @@ from deep_translator import GoogleTranslator
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Config import Configuration
 from Code.QT import (
     Colocacion,
@@ -106,7 +106,7 @@ class WTranslate(LCDialog.LCDialog):
         self.grid = Grid.Grid(
             self,
             o_columns,
-            altoFila=Code.configuration.x_pgn_rowheight,
+            heigh_row=Code.configuration.x_pgn_rowheight,
             is_editable=True,
         )
         self.grid.font_type(puntos=10)
@@ -126,7 +126,7 @@ class WTranslate(LCDialog.LCDialog):
         layout = Colocacion.V().otro(laytb).control(self.grid).otro(ly_seek).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.anchoColumnas() + 28, default_height=640)
+        self.restore_video(default_width=self.grid.width_columns_displayables() + 28, default_height=640)
         self.grid.setFocus()
 
         self.set_porcentage()
@@ -153,7 +153,7 @@ class WTranslate(LCDialog.LCDialog):
             if dic["TRANS"] or dic["NEW"]:
                 traducidos += 1
 
-        self.lb_porcentage.setText("%0.02f%%" % (traducidos * 100 / total))
+        self.lb_porcentage.setText(f"{traducidos * 100 / total:0.02f}%")
 
     def change_new(self, key, new_value):
         trans = self.dic_translate[key]["TRANS"]
@@ -226,7 +226,7 @@ class WTranslate(LCDialog.LCDialog):
                 return
             for k in li_porc:
                 if ori_dic[k] != tra_dic[k]:
-                    QTMessages.message_error(self, "The command %s does not xmatch the English text." % k)
+                    QTMessages.message_error(self, f"The command {k} does not xmatch the English text.")
                     self.automatic_reorder = auto_reorder
                     return
             if "||" in value:
@@ -247,15 +247,15 @@ class WTranslate(LCDialog.LCDialog):
 
         self.automatic_reorder = auto_reorder
 
-    def grid_color_texto(self, grid, row, o_column):
-        if o_column.key == "CURRENT":
+    def grid_color_texto(self, grid, row, obj_column):
+        if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             if dic["NEW"]:
                 return self.color_new
 
-    def grid_color_fondo(self, grid, row, o_column):
-        if o_column.key == "BASE":
+    def grid_color_fondo(self, grid, row, obj_column):
+        if obj_column.key == "BASE":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             if (
@@ -265,8 +265,8 @@ class WTranslate(LCDialog.LCDialog):
             ):
                 return self.color_ult
 
-    def grid_bold(self, grid, row, o_column):
-        if o_column.key == "CURRENT":
+    def grid_bold(self, grid, row, obj_column):
+        if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             return dic["NEW"]
@@ -281,12 +281,12 @@ class WTranslate(LCDialog.LCDialog):
         menu.separador()
         submenu = menu.submenu("Show sentences in the same code file", Iconos.Carpeta())
         for txt, linea in li_occur:
-            submenu.opcion(txt, "%s %s" % (txt, linea))
+            submenu.opcion(txt, f"{txt} {linea}")
         rut = menu.lanza()
         if rut == "edit":
             self.editar()
         elif rut:
-            where = "|%s|" % rut
+            where = f"|{rut}|"
             if where not in self.ult_where:
                 del self.ult_where[0]
                 self.ult_where.append(where)
@@ -315,7 +315,7 @@ class WTranslate(LCDialog.LCDialog):
 
         def l80(xtxt):
             if len(xtxt) > 80:
-                return xtxt[:76] + " ..."
+                return f"{xtxt[:76]} ..."
             return xtxt
 
         key = self.li_labels[row]
@@ -364,7 +364,7 @@ class WTranslate(LCDialog.LCDialog):
             if ask:
                 ok = QTMessages.pregunta(
                     self,
-                    "Do you want to replace current translation?\n\nChange to:\n%s" % txt,
+                    f"Do you want to replace current translation?\n\nChange to:\n{txt}",
                 )
 
             if ok:
@@ -373,12 +373,12 @@ class WTranslate(LCDialog.LCDialog):
 
         self.automatic_reorder = auto
 
-    def grid_right_button(self, grid, row, o_column, modificadores):
+    def grid_right_button(self, grid, row, obj_column, modificadores):
         if row < 0:
             return
-        if o_column.key == "CURRENT":
+        if obj_column.key == "CURRENT":
             self.menu_occurrences(row)
-        elif o_column.key == "BASE":
+        elif obj_column.key == "BASE":
             self.menu_secondary(row)
 
     def order_by_type(self, key_col):
@@ -401,25 +401,25 @@ class WTranslate(LCDialog.LCDialog):
                 trans = self.dic_translate[key]["TRANS"].upper()
 
                 if new:
-                    orden = "B" + new
+                    orden = f"B{new}"
                 else:
                     # primero los que no tienen nada
                     if not trans:
-                        orden = "A" + key
+                        orden = f"A{key}"
                     else:
-                        orden = "C" + trans
+                        orden = f"C{trans}"
                 return orden
 
             def order_current_new(key):
                 new = self.dic_translate[key]["NEW"].upper()
                 trans = self.dic_translate[key]["TRANS"].upper()
                 if new:
-                    orden = "A" + new
+                    orden = f"A{new}"
                 else:
                     if not trans:
-                        orden = "B" + key
+                        orden = f"B{key}"
                     else:
-                        orden = "C" + trans
+                        orden = f"C{trans}"
                 return orden
 
             if order == 0:
@@ -467,12 +467,12 @@ class WTranslate(LCDialog.LCDialog):
         li_ref = [("By default", "")]
         li_ref.extend(li_trans)
         for trad, key in li_ref:
-            subsubmenu.opcion("main" + key, trad, is_checked=key == self.main_reference)
+            subsubmenu.opcion(f"main{key}", trad, is_checked=key == self.main_reference)
 
         submenu.separador()
         subsubmenu = submenu.submenu("Secondary reference", Iconos.PuntoAmarillo())
         for trad, key in li_trans:
-            subsubmenu.opcion("sec" + key, trad, is_checked=key in self.secondary_references)
+            subsubmenu.opcion(f"sec{key}", trad, is_checked=key in self.secondary_references)
 
         resp = menu.lanza()
         if not resp:
@@ -558,7 +558,7 @@ class WTranslate(LCDialog.LCDialog):
             self,
             "Translate",
             Iconos.WorldMap(),
-            anchoMinimo=500,
+            minimum_width=500,
             font_txt=Controles.FontType(puntos=10),
         )
         form.apart("Original")
@@ -619,7 +619,7 @@ class WTranslate(LCDialog.LCDialog):
             folder = os.path.dirname(path_po)
             self.configuration.write_variables("PATH_PO", folder)
             self.create_po(path_po)
-            QTMessages.message(self, "Created\n%s" % path_po)
+            QTMessages.message(self, f"Created\n{path_po}")
             Util.startfile(folder)
 
     def import_mo(self):
@@ -657,7 +657,7 @@ class WTranslate(LCDialog.LCDialog):
 
             self.li_labels = list(self.dic_translate.keys())
             self.grid.refresh()
-            QTMessages.message(self, "Changed\n%s" % path_mo)
+            QTMessages.message(self, f"Changed\n{path_mo}")
 
     def get_param(self, key, default):
         dic = self.configuration.read_variables(self.TRANSLATION_HELP)
@@ -696,7 +696,7 @@ class WTranslate(LCDialog.LCDialog):
                 dic = self.dic_translate[key]
                 dic["WHERE"] = where
                 dic["WHEN"] = datetime.datetime.now()
-                where = "|%s|" % where
+                where = f"|{where}|"
                 if where not in self.ult_where:
                     del self.ult_where[0]
                     self.ult_where.append(where)
@@ -751,7 +751,7 @@ def run_wtranslation(path_db):
 
     app.setStyle(QtWidgets.QStyleFactory.create(configuration.x_style))
     QtWidgets.QApplication.setPalette(QtWidgets.QApplication.style().standardPalette())
-    path = Code.path_resource("Styles", configuration.x_style_mode + ".qss")
+    path = Code.path_resource("Styles", f"{configuration.x_style_mode}.qss")
     with open(path) as f:
         app.setStyleSheet(f.read())
 

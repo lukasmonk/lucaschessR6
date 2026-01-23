@@ -1,14 +1,12 @@
 import pickle
-import random
 import sqlite3
-import threading
 from typing import Any, Dict, List, Optional, Tuple, Iterator, Type
 
 import psutil
 import sortedcontainers
 
 import Code
-from Code import Util
+from Code.Z import Util
 
 
 class DictSQL(object):
@@ -19,11 +17,14 @@ class DictSQL(object):
         self.cache: Dict[str, Any] = {}
 
         self.conexion = sqlite3.connect(path_db)
+        self.conexion.execute("PRAGMA page_size = 4096")
+        self.conexion.execute("PRAGMA synchronous = NORMAL")
 
         self.conexion.execute(f"CREATE TABLE IF NOT EXISTS {tabla}( KEY TEXT PRIMARY KEY, VALUE BLOB );")
 
         cursor = self.conexion.execute(f"SELECT KEY FROM {self.tabla}")
         self.li_keys: List[str] = [reg[0] for reg in cursor.fetchall()]
+        cursor.close()
 
         self.normal_save_mode = True
         self.pending_commit = False
@@ -167,7 +168,7 @@ class DictSQL(object):
     def __exit__(self, xtype, value, traceback) -> None:
         self.close()
 
-    def copy_from(self, dbdict: Dict[str, Any]) -> None:
+    def copy_from(self, dbdict: "DictSQL") -> None:
         mode = self.normal_save_mode
         self.set_faster_mode()
         for key in dbdict.keys():
@@ -185,11 +186,14 @@ class DictSQLRawExclusive(object):
     def __init__(self, path_db: str, tabla: str = "Data"):
         self.tabla = tabla
         self.conexion = sqlite3.connect(path_db, isolation_level="EXCLUSIVE")
+        self.conexion.execute("PRAGMA page_size = 4096")
+        self.conexion.execute("PRAGMA synchronous = NORMAL")
 
         self.conexion.execute(f"CREATE TABLE IF NOT EXISTS {tabla}( KEY TEXT PRIMARY KEY, VALUE BLOB );")
 
         cursor = self.conexion.execute(f"SELECT KEY FROM {self.tabla}")
         self.li_keys: List[str] = [reg[0] for reg in cursor.fetchall()]
+        cursor.close()
 
     def execute(
         self, sql: str, args: Optional[Tuple] = None, is_all: Optional[int] = None, commit: bool = False
@@ -207,10 +211,11 @@ class DictSQLRawExclusive(object):
                     return cursor.fetchone()
                 if commit:
                     self.conexion.commit()
-                return
+                return None
 
             except sqlite3.OperationalError:
                 tries -= 1
+        return None
 
     def exist(self, key: str) -> bool:
         sql = f"SELECT VALUE FROM {self.tabla} WHERE KEY= ?"
@@ -326,7 +331,7 @@ class DictObjSQL(DictSQL):
             yield self.__getitem__(key)
 
     def as_dictionary(self):
-        sql = "SELECT KEY,VALUE FROM %s" % self.tabla
+        sql = f"SELECT KEY,VALUE FROM {self.tabla}"
         cursor = self.conexion.execute(sql)
         dic = {}
         for key, dato in cursor.fetchall():
@@ -342,13 +347,15 @@ class DictRawSQL(DictSQL):
 
 
 class ListSQL:
-    def __init__(self, path_file: str, tabla: str = "LISTA", max_cache: int = 2048, reversed: bool = False):
+    def __init__(self, path_file: str, tabla: str = "LISTA", max_cache: int = 2048, is_reversed: bool = False):
         self.path_file = path_file
         self._conexion = sqlite3.connect(path_file)
+        self._conexion.execute("PRAGMA page_size = 4096")
+        self._conexion.execute("PRAGMA synchronous = NORMAL")
         self.tabla = tabla
         self.max_cache = max_cache
         self.cache: Dict[int, Any] = {}
-        self.reversed = reversed
+        self.is_reversed = is_reversed
 
         self._conexion.execute(f"CREATE TABLE IF NOT EXISTS {tabla}( DATO BLOB );")
 
@@ -362,7 +369,7 @@ class ListSQL:
 
     def read_rowids(self) -> List[int]:
         sql = f"SELECT ROWID FROM {self.tabla}"
-        if self.reversed:
+        if self.is_reversed:
             sql += " ORDER BY ROWID DESC"
         cursor = self._conexion.execute(sql)
         return [rowid for rowid, in cursor.fetchall()]
@@ -384,7 +391,7 @@ class ListSQL:
         cursor = self._conexion.execute(sql, (memoryview(obj),))
         self._conexion.commit()
         lastrowid = cursor.lastrowid
-        if self.reversed:
+        if self.is_reversed:
             self.li_row_ids.insert(0, lastrowid)
         else:
             self.li_row_ids.append(lastrowid)
@@ -492,7 +499,7 @@ class ListSQLBig(object):
 
     def lista(self, rev: bool) -> Iterator[str]:
         self._conexion.commit()
-        cursor = self._conexion.execute(f"SELECT DATA FROM {self.tabla} ORDER BY DATA" + " DESC;" if rev else ";")
+        cursor = self._conexion.execute(f"SELECT DATA FROM {self.tabla} ORDER BY DATA DESC;" if rev else ";")
         while True:
             row = cursor.fetchone()
             if row:
@@ -503,10 +510,15 @@ class ListSQLBig(object):
 
 class ListObjSQL(ListSQL):
     def __init__(
-        self, path_file: str, class_storage: Type, tabla: str = "datos", max_cache: int = 2048, reversed: bool = False
+        self,
+        path_file: str,
+        class_storage: Type,
+        tabla: str = "datos",
+        max_cache: int = 2048,
+        is_reversed: bool = False,
     ):
         self.class_storage = class_storage
-        ListSQL.__init__(self, path_file, tabla, max_cache, reversed)
+        ListSQL.__init__(self, path_file, tabla, max_cache, is_reversed)
 
     def append(self, obj: Any, with_cache: bool = False, with_commit: bool = True) -> None:
         sql = f"INSERT INTO {self.tabla}( DATO ) VALUES( ? )"
@@ -515,7 +527,7 @@ class ListObjSQL(ListSQL):
         if with_commit:
             self._conexion.commit()
         lastrowid = cursor.lastrowid
-        if self.reversed:
+        if self.is_reversed:
             self.li_row_ids.insert(0, lastrowid)
         else:
             self.li_row_ids.append(lastrowid)
@@ -542,6 +554,7 @@ class ListObjSQL(ListSQL):
                 pass
             self.add_cache(rowid, obj)
             return obj
+        return None
 
     def __setitem__(self, pos: int, obj: Any) -> None:
         if pos < len(self.li_row_ids):
@@ -572,14 +585,15 @@ class IPC(object):
 
     def pop(self) -> Any:
         nk = self.key + 1
-        sql = f"SELECT dato FROM DATOS WHERE ROWID = {nk}"
-        cursor = self._conexion.execute(sql)
+        sql = "SELECT dato FROM DATOS WHERE ROWID = ?"
+        cursor = self._conexion.execute(sql, (nk,))
         reg = cursor.fetchone()
         if reg:
             valor = pickle.loads(reg[0])
             self.key = nk
         else:
             valor = None
+        cursor.close()
         return valor
 
     def read_again(self) -> None:
@@ -587,9 +601,10 @@ class IPC(object):
 
     def has_more_data(self) -> bool:
         nk = self.key + 1
-        sql = f"SELECT dato FROM DATOS WHERE ROWID = {nk}"
-        cursor = self._conexion.execute(sql)
+        sql = "SELECT dato FROM DATOS WHERE ROWID = ?"
+        cursor = self._conexion.execute(sql, (nk,))
         reg = cursor.fetchone()
+        cursor.close()
         return reg is not None
 
     def push(self, valor: Any) -> None:
@@ -606,20 +621,20 @@ class IPC(object):
 
 class DictBig(object):
     def __init__(self) -> None:
-        self.dict: Dict[Any, Any] = sortedcontainers.SortedDict()
+        self.dic: Dict[Any, Any] | None = sortedcontainers.SortedDict()
         self.db: Optional[DictBigDB] = None
         self.test_mem = 100_000
 
     def __contains__(self, key: Any) -> bool:
-        if key in self.dict:
+        if key in self.dic:
             return True
         elif self.db is not None:
             return key in self.db
         return False
 
     def __getitem__(self, key: Any) -> Any:
-        if key in self.dict:
-            return self.dict[key]
+        if key in self.dic:
+            return self.dic[key]
         elif self.db is not None:
             return self.db[key]
         return None
@@ -632,35 +647,35 @@ class DictBig(object):
             self.test_mem = 50_000
 
     def __setitem__(self, key: Any, value: Any) -> None:
-        if key in self.dict:
-            self.dict[key] = value
+        if key in self.dic:
+            self.dic[key] = value
         elif self.db is not None:
             self.db[key] = value
         else:
-            self.dict[key] = value
+            self.dic[key] = value
             self.test_mem -= 1
             if self.test_mem == 0:
                 self.test_memory()
 
     def __delitem__(self, key: Any) -> None:
-        if key in self.dict:
-            del self.dict[key]
+        if key in self.dic:
+            del self.dic[key]
         elif self.db is not None:
             del self.db[key]
 
     def __len__(self) -> int:
-        tam = len(self.dict)
+        tam = len(self.dic)
         if self.db is not None:
             tam += len(self.db)
         return tam
 
     def close(self) -> None:
-        if self.dict:
-            del self.dict
+        if self.dic:
+            del self.dic
             if self.db is not None:
                 self.db.close()
                 self.db = None
-            self.dict = None
+            self.dic = None
 
     def get(self, key: Any, default: Any) -> Any:
         valor = self.__getitem__(key)
@@ -676,7 +691,7 @@ class DictBig(object):
 
     def items(self) -> Iterator[Tuple[Any, Any]]:
         if self.db is None:
-            for k, v in self.dict.items():
+            for k, v in self.dic.items():
                 yield k, v
             return
 
@@ -684,7 +699,7 @@ class DictBig(object):
 
         kg = vg = None
 
-        for k, v in self.dict.items():
+        for k, v in self.dic.items():
             while g_db is not None:
                 if kg is None:
                     try:
@@ -717,8 +732,9 @@ class DictBigDB(object):
     def __init__(self) -> None:
         self.conexion = sqlite3.connect(Code.configuration.temporary_file("dbdb"))
         self.conexion.execute("CREATE TABLE IF NOT EXISTS DATA( KEY TEXT PRIMARY KEY, VALUE BLOB );")
-        self.conexion.execute("PRAGMA journal_mode=REPLACE")
-        self.conexion.execute("PRAGMA synchronous=OFF")
+        self.conexion.execute("PRAGMA journal_mode=DELETE")
+        self.conexion.execute("PRAGMA page_size = 4096")
+        self.conexion.execute("PRAGMA synchronous=NORMAL")
         self.conexion.execute("PRAGMA locking_mode=EXCLUSIVE")
         self.conexion.commit()
 
@@ -817,11 +833,14 @@ class DictTextSQL(object):
         self.cache: Dict[str, str] = {}
 
         self.conexion = sqlite3.connect(path_db)
+        self.conexion.execute("PRAGMA page_size = 4096")
+        self.conexion.execute("PRAGMA synchronous = NORMAL")
 
         self.conexion.execute(f"CREATE TABLE IF NOT EXISTS {tabla}( KEY TEXT PRIMARY KEY, VALUE TEXT );")
 
         cursor = self.conexion.execute(f"SELECT KEY FROM {self.tabla}")
         self.li_keys: List[str] = [reg[0] for reg in cursor.fetchall()]
+        cursor.close()
 
         self.normal_save_mode = True
         self.pending_commit = False

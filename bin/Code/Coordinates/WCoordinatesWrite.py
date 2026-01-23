@@ -1,5 +1,5 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import BLACK, WHITE
 from Code.Coordinates import CoordinatesWrite, WRunCoordinatesWrite
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
@@ -26,12 +26,12 @@ class WCoordinatesWrite(LCDialog.LCDialog):
         o_columns.nueva("DONE", _("Done"), 120, align_center=True)
         o_columns.nueva("ERRORS", _("Errors"), 90, align_center=True)
         o_columns.nueva("TIME", _("Time"), 140, align_center=True)
-        self.glista = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
+        self.glista = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
         f = Controles.FontType(puntos=configuration.x_font_points)
         self.glista.set_font(f)
 
         self.tb = QTDialogs.LCTB(self)
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         self.tb.new(_("New"), Iconos.Pelicula_Seguir(), self.xplay, sep=False)
         self.tb.new(_("Continue"), Iconos.Pelicula_Pausa(), self.xcontinue)
         self.tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
@@ -52,7 +52,7 @@ class WCoordinatesWrite(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.anchoColumnas() + 30, default_height=540)
+        self.restore_video(default_width=self.glista.width_columns_displayables() + 30, default_height=540)
 
         self.glista.gotop()
         self.glista.refresh()
@@ -86,14 +86,14 @@ class WCoordinatesWrite(LCDialog.LCDialog):
         self.glista.refresh()
         self.changes()
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, row, _obj_column):
         if row == 0:
             coord = self.db.coordinate(row)
             if coord.pending():
                 self.xcontinue()
 
     def borrar(self):
-        li = self.glista.recnosSeleccionados()
+        li = self.glista.list_selected_recnos()
         if len(li) > 0:
             mens = _("Do you want to delete all selected records?")
             if QTMessages.pregunta(self, mens):
@@ -104,12 +104,12 @@ class WCoordinatesWrite(LCDialog.LCDialog):
                     self.glista.gotop()
                 self.changes()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.db)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         coordinate: CoordinatesWrite.CoordinatesWrite = self.db.coordinate(row)
-        col = o_column.key
+        col = obj_column.key
         if col == "DATE":
             mens = "🏆" if coordinate.is_record else ""
             return Util.dtostr_hm(coordinate.date) + mens
@@ -119,10 +119,11 @@ class WCoordinatesWrite(LCDialog.LCDialog):
             return f"{coordinate.errors}"
         elif col == "TIME":
             return coordinate.str_time()
+        return None
 
     def closeEvent(self, event):  # Cierre con X
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()

@@ -3,7 +3,7 @@ import os
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import BLACK, WHITE
 from Code.Openings import OpeningLines
@@ -66,7 +66,7 @@ class LabelTreeDelegate(QtWidgets.QStyledItemDelegate):
             document = QtGui.QTextDocument()
             document.setDefaultFont(self.font)
             if color:
-                number = '<font color="%s">%s</font>' % (color, number)
+                number = f'<font color="{color}">{number}</font>'
             document.setHtml(number)
             painter.save()
             painter.translate(x, y)
@@ -77,7 +77,7 @@ class LabelTreeDelegate(QtWidgets.QStyledItemDelegate):
         document_pgn = QtGui.QTextDocument()
         document_pgn.setDefaultFont(self.font)
         if color:
-            pgn = '<font color="%s">%s</font>' % (color, pgn)
+            pgn = f'<font color="{color}">{pgn}</font>'
         document_pgn.setHtml(pgn)
         w_pgn = document_pgn.idealWidth()
         h_pgn = document_pgn.size().height()
@@ -118,7 +118,7 @@ class LabelTreeDelegate(QtWidgets.QStyledItemDelegate):
             document_resto = QtGui.QTextDocument()
             document_resto.setDefaultFont(self.font)
             if color:
-                resto = '<font color="%s">%s</font>' % (color, resto)
+                resto = f'<font color="{color}">{resto}</font>'
             document_resto.setHtml(resto)
             painter.save()
             painter.translate(x, y)
@@ -181,8 +181,8 @@ class TabTree(QtWidgets.QWidget):
         if Code.configuration.x_pgn_withfigurines:
             self.tree.setItemDelegate(LabelTreeDelegate())
 
-        bt_act = Controles.PB(self, _("Update"), self.bt_update, plano=False).ponIcono(Iconos.Actualiza(), 16)
-        bt_act.relative_width(ScreenUtils.get_width_text(bt_act, " " + _("Update")) + 50)
+        bt_act = Controles.PB(self, _("Update"), self.bt_update, plano=False).set_icono(Iconos.Actualiza(), 16)
+        bt_act.relative_width(ScreenUtils.get_width_text(bt_act, f" {_('Update')}") + 50)
 
         gamebase = self.tabsAnalisis.dbop.getgamebase()
         if Code.configuration.x_pgn_withfigurines:
@@ -230,13 +230,13 @@ class TabTree(QtWidgets.QWidget):
             levelbase = len(dbop.basePV.split(" "))
 
             def haz(trdata, iparent, nivel):
-                if um.is_canceled():
+                if um.canceled():
                     return False
                 for xmove, xhijo in trdata.dicHijos.items():
-                    if um.is_canceled():
+                    if um.canceled():
                         return False
                     item = QtWidgets.QTreeWidgetItem(iparent)
-                    txt = xhijo.pgn + " " * (8 - len(xhijo.pgn)) + f"{max(xhijo.elements, 1):2d}"
+                    txt = f"{xhijo.pgn}{' ' * (8 - len(xhijo.pgn))}{max(xhijo.elements, 1):2d}"
                     if xhijo.opening:
                         txt += f"  {xhijo.opening}"
                     item.setText(0, txt)
@@ -266,7 +266,7 @@ class TabTree(QtWidgets.QWidget):
     def stop(self):
         pass
 
-    def setData(self, data, pv):
+    def set_data(self, data, pv):
         pass
 
     def menu_context(self, position):
@@ -342,7 +342,7 @@ class TabTree(QtWidgets.QWidget):
         with QTMessages.one_moment_please(self.parent().parent().parent(), with_cancel=True) as um:
 
             def work(xdata):
-                if um.is_canceled():
+                if um.canceled():
                     return False
                 xitem = xdata.item
                 if xitem:
@@ -386,7 +386,7 @@ class TabTree(QtWidgets.QWidget):
                 if found:
                     show_data(found)
                     return
-            # vamos al siguiente hermano ... hermano de padre ....
+            # vamos al siguiente hermano ... hermano de father ....
             data_active = data_active.next_in_parent()
 
         QTMessages.message(self, _("Ended"))
@@ -412,9 +412,9 @@ class TabTree(QtWidgets.QWidget):
         if filename.endswith(".opk"):
             filename = filename[:-4]
         list_openings = OpeningLines.ListaOpenings()
-        path_opening = Util.opj(list_openings.folder, filename + ".opk")
+        path_opening = Util.opj(list_openings.folder, f"{filename}.opk")
         if os.path.isfile(path_opening):
-            QTMessages.message_error(self, "%s\n%s" % (_("This file already exists"), filename + ".opk"))
+            QTMessages.message_error(self, f"{_('This file already exists')}\n{f"{filename}.opk"}")
             return
         with QTMessages.one_moment_please(self):
             dbop_current: OpeningLines.Opening = self.tabsAnalisis.dbop
@@ -422,8 +422,8 @@ class TabTree(QtWidgets.QWidget):
             game = Game.pv_game(None, a1h8)
             dbop_new.import_other(dbop_current.path_file, game)
             dbop_new.close()
-            list_openings.new(filename + ".opk", a1h8, name, lines=len(dbop_new))
-        QTMessages.message_bold(self, _("Created") + ": " + name)
+            list_openings.new(f"{filename}.opk", a1h8, name, lines=len(dbop_new))
+        QTMessages.message_bold(self, f"{_('Created')}: {name}")
 
     def remove_branch(self, item: QtWidgets.QTreeWidgetItem):
         data_item = self.dicItems[str(item)]

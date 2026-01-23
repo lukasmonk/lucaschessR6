@@ -3,21 +3,20 @@ import os.path
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import Controles
 
 
 def init_app_style(app, configuration):
     app.setStyle(QtWidgets.QStyleFactory.create(configuration.x_style))
-
     file = configuration.x_style_mode
-    path = Code.path_resource("Styles", file + ".qss")
+    path = Code.path_resource("Styles", f"{file}.qss")
     if not os.path.isfile(path):
         configuration.x_style_mode = "By default"
         configuration.graba()
-        path = Code.path_resource("Styles", configuration.x_style_mode + ".qss")
+        path = Code.path_resource("Styles", f"{configuration.x_style_mode}.qss")
 
-    path_colors = Code.path_resource("Styles", file + ".colors")
+    path_colors = Code.path_resource("Styles", f"{file}.colors")
     Code.dic_colors = Util.ini_base2dic(path_colors)
     dic_personal = Util.ini_base2dic(configuration.paths.file_colors(), rfind_equal=True)
     Code.dic_colors.update(dic_personal)
@@ -41,8 +40,8 @@ def init_app_style(app, configuration):
                     except:
                         continue
                     key = key.strip()
-                    color = "#" + value.split("#")[1][:6]
-                    key_gen = "%s|%s" % (current, key)
+                    color = f"#{value.split('#')[1][:6]}"
+                    key_gen = f"{current}|{key}"
                     if key_gen in Code.dic_colors:
                         line = line.replace(color, Code.dic_colors[key_gen])
             li_lines.append(line)
@@ -61,7 +60,7 @@ color: %s;
         #     configuration.style_sheet_default = style_sheet
 
     qpalette = QtWidgets.QApplication.style().standardPalette()
-    qpalette.setColor(QtGui.QPalette.Link, Code.dic_qcolors["LINKS"])
+    qpalette.setColor(QtGui.QPalette.ColorRole.Link, Code.dic_qcolors["LINKS"])
     app.setPalette(qpalette)
 
     app.setEffectEnabled(QtCore.Qt.UIEffect.UI_AnimateMenu)

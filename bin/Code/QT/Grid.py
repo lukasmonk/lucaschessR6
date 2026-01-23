@@ -29,7 +29,7 @@ class ControlGrid(QtCore.QAbstractTableModel):
     num_cols: int = 0
     num_rows: int = 0
 
-    def __init__(self, grid, w_parent, oColumnasR):
+    def __init__(self, grid, w_parent, columns_displayables):
         QtCore.QAbstractTableModel.__init__(self, w_parent)
         self.grid = grid
         self.w_parent = w_parent
@@ -44,7 +44,7 @@ class ControlGrid(QtCore.QAbstractTableModel):
             self.bfont = QtGui.QFont(self.font)
             self.bfont.setBold(True)
 
-        self.oColumnasR = oColumnasR
+        self.columns_displayables = columns_displayables
 
     def rowCount(self, parent):
         """
@@ -69,7 +69,7 @@ class ControlGrid(QtCore.QAbstractTableModel):
             self.num_rows = nue_ndatos
 
         ant_ncols = self.num_cols
-        nue_ncols = self.oColumnasR.num_columns()
+        nue_ncols = self.columns_displayables.num_columns()
         if ant_ncols != nue_ncols:
             if ant_ncols < nue_ncols:
                 self.insertColumns(0, nue_ncols - ant_ncols)
@@ -82,7 +82,7 @@ class ControlGrid(QtCore.QAbstractTableModel):
         """
         Llamada interna, solicitando el number de columnas.
         """
-        self.num_cols = self.oColumnasR.num_columns()
+        self.num_cols = self.columns_displayables.num_columns()
         return self.num_cols
 
     def data(self, index, role):
@@ -92,7 +92,7 @@ class ControlGrid(QtCore.QAbstractTableModel):
         if not index.isValid():
             return None
 
-        column = self.oColumnasR.column(index.column())
+        column = self.columns_displayables.column(index.column())
 
         if role == QtCore.Qt.ItemDataRole.TextAlignmentRole:
             if self.siAlineacion:
@@ -122,28 +122,32 @@ class ControlGrid(QtCore.QAbstractTableModel):
 
         return None
 
-    def getAlineacion(self, index):
-        column = self.oColumnasR.column(index.column())
+    def get_alignment(self, index):
+        column = self.columns_displayables.column(index.column())
         return self.w_parent.grid_alineacion(self.grid, index.row(), column)
 
-    def getFondo(self, index):
-        column = self.oColumnasR.column(index.column())
+    def get_background(self, index):
+        column = self.columns_displayables.column(index.column())
         return self.w_parent.grid_color_fondo(self.grid, index.row(), column)
 
     def flags(self, index):
         """
-        Llamada interna, solicitando mas informacion sobre las carcateristicas del campo actual.
+        Llamada interna, solicitando más información sobre las características del campo actual.
         """
         if not index.isValid():
             return QtCore.Qt.ItemFlag.ItemIsEnabled
 
-        flag = QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
-        column = self.oColumnasR.column(index.column())
+        flag = QtCore.Qt.ItemFlag.ItemIsEnabled
+        flag |= QtCore.Qt.ItemFlag.ItemIsSelectable
+
+        column = self.columns_displayables.column(index.column())
+
         if column.is_editable:
             flag |= QtCore.Qt.ItemFlag.ItemIsEditable
 
         if column.is_checked:
             flag |= QtCore.Qt.ItemFlag.ItemIsUserCheckable
+
         return flag
 
     def setData(self, index, valor, role=QtCore.Qt.ItemDataRole.EditRole):
@@ -154,7 +158,7 @@ class ControlGrid(QtCore.QAbstractTableModel):
         if not index.isValid():
             return None
         if role == QtCore.Qt.ItemDataRole.EditRole or role == QtCore.Qt.ItemDataRole.CheckStateRole:
-            column = self.oColumnasR.column(index.column())
+            column = self.columns_displayables.column(index.column())
             nfila = index.row()
             self.w_parent.grid_setvalue(self.grid, nfila, column, valor)
             index2 = self.createIndex(nfila, 1)
@@ -169,7 +173,7 @@ class ControlGrid(QtCore.QAbstractTableModel):
         """
         if role == QtCore.Qt.ItemDataRole.DisplayRole:
             if orientation == QtCore.Qt.Orientation.Horizontal:
-                column = self.oColumnasR.column(col)
+                column = self.columns_displayables.column(col)
                 return column.head
             if self.grid.with_header_vertical and orientation == QtCore.Qt.Orientation.Vertical:
                 return self.w_parent.grid_get_header_vertical(self.grid, col)
@@ -181,36 +185,36 @@ class ControlGrid(QtCore.QAbstractTableModel):
 
 
 class Header(QtWidgets.QHeaderView):
-    def __init__(self, tvParent, siCabeceraMovible):
+    def __init__(self, tv_parent, is_column_header_movable):
         QtWidgets.QHeaderView.__init__(self, QtCore.Qt.Orientation.Horizontal)
-        self.setSectionsMovable(siCabeceraMovible)
+        self.setSectionsMovable(is_column_header_movable)
         self.setSectionsClickable(True)
-        self.tvParent = tvParent
+        self.tv_parent = tv_parent
         self.setMinimumSectionSize(10)
 
     def mouseDoubleClickEvent(self, event):
-        numColumna = self.logicalIndexAt(event.x(), event.y())
-        self.tvParent.dobleClickCabecera(numColumna)
+        num_column = self.logicalIndexAt(event.x(), event.y())
+        self.tv_parent.double_click_header(num_column)
         return QtWidgets.QHeaderView.mouseDoubleClickEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         QtWidgets.QHeaderView.mouseReleaseEvent(self, event)
-        numColumna = self.logicalIndexAt(event.x(), event.y())
-        self.tvParent.mouseCabecera(numColumna)
+        num_column = self.logicalIndexAt(event.x(), event.y())
+        self.tv_parent.mouse_header(num_column)
 
     def set_tooltip(self, tooltip):
         self.setToolTip(tooltip)
 
 
 class HeaderFixedHeight(Header):
-    def __init__(self, tvParent, siCabeceraMovible, height):
-        Header.__init__(self, tvParent, siCabeceraMovible)
+    def __init__(self, tv_parent, is_column_header_movable, height):
+        Header.__init__(self, tv_parent, is_column_header_movable)
         self.height = height
 
     def sizeHint(self):
-        baseSize = Header.sizeHint(self)
-        baseSize.setHeight(self.height)
-        return baseSize
+        base_size = Header.sizeHint(self)
+        base_size.setHeight(self.height)
+        return base_size
 
 
 class HeaderFontVertical(Header):
@@ -255,15 +259,15 @@ class HeaderVertical(QtWidgets.QHeaderView):
     Se crea esta clase para poder implementar el doble click en la head.
     """
 
-    def __init__(self, tvParent):
+    def __init__(self, tv_parent):
         QtWidgets.QHeaderView.__init__(self, QtCore.Qt.Orientation.Vertical)
         self.setSectionsMovable(False)
         self.setSectionsClickable(False)
-        self.tvParent = tvParent
+        self.tv_parent = tv_parent
 
     def mouseDoubleClickEvent(self, event):
         num_col = self.logicalIndexAt(event.x(), event.y())
-        self.tvParent.dobleClickCabeceraVertical(num_col)
+        self.tv_parent.double_click_header_vertical(num_col)
         return QtWidgets.QHeaderView.mouseDoubleClickEvent(self, event)
 
     def set_tooltip(self, tooltip):
@@ -279,17 +283,17 @@ class Grid(QtWidgets.QTableView):
         self,
         w_parent,
         o_columns,
-        dicVideo=None,
-        altoFila=None,
-        siSelecFilas=False,
-        siSeleccionMultiple=False,
-        siLineas=True,
+        dic_video=None,
+        heigh_row=None,
+        complete_row_select=False,
+        select_multiple=False,
+        with_lines=True,
         is_editable=False,
-        siCabeceraMovible=True,
+        is_column_header_movable=True,
         xid=None,
         background="",
-        siCabeceraVisible=True,
-        altoCabecera=None,
+        header_visible=True,
+        header_heigh=None,
         alternate=True,
         cab_vertical_font=None,
         with_header_vertical=False,
@@ -297,7 +301,7 @@ class Grid(QtWidgets.QTableView):
         """
         @param w_parent: ventana propietaria
         @param o_columns: configuration de las columnas.
-        @param altoFila: altura de todas las filas.
+        @param heigh_row: altura de todas las filas.
         """
         self.with_header_vertical = with_header_vertical
 
@@ -309,34 +313,34 @@ class Grid(QtWidgets.QTableView):
         self.setFont(QtWidgets.QApplication.font())
         self.id = xid
 
-        self.siCabeceraMovible = siCabeceraMovible
+        self.is_column_header_movable = is_column_header_movable
 
         self.o_columns = o_columns
-        if dicVideo:
-            self.restore_video(dicVideo)
-        self.oColumnasR = self.o_columns.displayable_columns(self)  # Necesario tras recuperar video
+        if dic_video:
+            self.restore_video(dic_video)
+        self.columns_displayables = self.o_columns.displayable_columns(self)  # Necesario tras recuperar video
 
-        self.cg = ControlGrid(self, w_parent, self.oColumnasR)
+        self.cg = ControlGrid(self, w_parent, self.columns_displayables)
 
         self.setModel(self.cg)
-        self.setShowGrid(siLineas)
+        self.setShowGrid(with_lines)
         self.setWordWrap(False)
         self.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
 
         if background is not None:
-            self.setStyleSheet("QTableView {background: %s;}" % background)
+            self.setStyleSheet(f"QTableView {{background: {background};}}")
 
         if alternate:
-            self.coloresAlternados()
+            self.alternate_colors()
 
-        if altoCabecera:
-            hh = HeaderFixedHeight(self, siCabeceraMovible, altoCabecera)
+        if header_heigh:
+            hh = HeaderFixedHeight(self, is_column_header_movable, header_heigh)
         elif cab_vertical_font:
             hh = HeaderFontVertical(self)  # , height=cab_vertical_font
         else:
-            hh = Header(self, siCabeceraMovible)
+            hh = Header(self, is_column_header_movable)
         self.setHorizontalHeader(hh)
-        if not siCabeceraVisible:
+        if not header_visible:
             hh.setVisible(False)
 
         if with_header_vertical:
@@ -345,19 +349,19 @@ class Grid(QtWidgets.QTableView):
 
         self.cabecera = hh
 
-        self.ponAltoFila(altoFila)
+        self.set_height_row(heigh_row)
 
-        self.seleccionaFilas(siSelecFilas, siSeleccionMultiple)
+        self.how_select_rows(complete_row_select, select_multiple)
 
-        self.set_widthsColumnas()  # es necesario llamarlo from_sq aqui
+        self.set_widths_columns()  # es necesario llamarlo from_sq aqui
 
         self.is_editable = is_editable
         self.starting = False
 
         self.right_button_without_rows = False
 
-        self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
 
     def set_headervertical_alinright(self):
         self.verticalHeader().setDefaultAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
@@ -368,43 +372,47 @@ class Grid(QtWidgets.QTableView):
     def set_tooltip_header(self, message):
         self.cabecera.set_tooltip(message)
 
-    def buscaCabecera(self, key):
+    def sekk_header(self, key):
         return self.o_columns.locate_column(key)
 
     def selectAll(self):
         if self.w_parent.grid_num_datos(self) > 20000:
             if not QTMessages.pregunta(
                 self,
-                _("This process takes a very long time") + ".<br><br>" + _("What do you want to do?"),
+                f'{_("This process takes a very long time")}.<br><br>{_("What do you want to do?")}',
                 label_yes=_("Continue"),
                 label_no=_("Cancel"),
             ):
                 return
         QtWidgets.QTableView.selectAll(self)
 
-    def coloresAlternados(self):
+    def alternate_colors(self):
         self.setAlternatingRowColors(True)
 
-    def seleccionaFilas(self, siSelecFilas, siSeleccionMultiple):
-        sel = QtWidgets.QAbstractItemView.SelectRows if siSelecFilas else QtWidgets.QAbstractItemView.SelectItems
-        if siSeleccionMultiple:
-            selMode = QtWidgets.QAbstractItemView.ExtendedSelection
+    def how_select_rows(self, complete_row_select, select_multiple):
+        if complete_row_select:
+            sel = QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows
         else:
-            selMode = QtWidgets.QAbstractItemView.SingleSelection
-        self.setSelectionMode(selMode)
+            sel = QtWidgets.QAbstractItemView.SelectionBehavior.SelectItems
         self.setSelectionBehavior(sel)
+        
+        if select_multiple:
+            sel_mode = QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection
+        else:
+            sel_mode = QtWidgets.QAbstractItemView.SelectionMode.SingleSelection
+        self.setSelectionMode(sel_mode)
 
-    def releerColumnas(self):
+    def reread_columns(self):
         """
         Cuando se cambia la configuration de las columnas, se vuelven a releer y se indican al control de datos.
         """
-        self.oColumnasR = self.o_columns.displayable_columns(self)
-        self.cg.oColumnasR = self.oColumnasR
+        self.columns_displayables = self.o_columns.displayable_columns(self)
+        self.cg.columns_displayables = self.columns_displayables
         self.cg.refresh()
-        self.set_widthsColumnas()
+        self.set_widths_columns()
 
-    def set_widthsColumnas(self):
-        for numCol, column in enumerate(self.oColumnasR.li_columns):
+    def set_widths_columns(self):
+        for numCol, column in enumerate(self.columns_displayables.li_columns):
             self.setColumnWidth(numCol, column.ancho)
             if column.edicion and column.must_show:
                 self.setItemDelegateForColumn(numCol, column.edicion)
@@ -491,7 +499,7 @@ class Grid(QtWidgets.QTableView):
             elif hasattr(self.w_parent, "grid_left_button"):
                 self.w_parent.grid_left_button(self, fil, col)
 
-    def dobleClickCabecera(self, numColumna):
+    def double_click_header(self, num_column):
         """
         Se gestiona este evento, ante la posibilidad de que la ventana quiera controlar,
         los doble clicks sobre la head , normalmente para cambiar el orden de la column,
@@ -499,9 +507,9 @@ class Grid(QtWidgets.QTableView):
         argumento del objeto column
         """
         if hasattr(self.w_parent, "grid_doubleclick_header"):
-            self.w_parent.grid_doubleclick_header(self, self.oColumnasR.column(numColumna))
+            self.w_parent.grid_doubleclick_header(self, self.columns_displayables.column(num_column))
 
-    def dobleClickCabeceraVertical(self, numFila):
+    def double_click_header_vertical(self, num_row):
         """
         Se gestiona este evento, ante la posibilidad de que la ventana quiera controlar,
         los doble clicks sobre la head , normalmente para cambiar el orden de la column,
@@ -509,17 +517,17 @@ class Grid(QtWidgets.QTableView):
         argumento del objeto column
         """
         if hasattr(self.w_parent, "grid_doubleclick_header_vertical"):
-            self.w_parent.grid_doubleclick_header_vertical(self, numFila)
+            self.w_parent.grid_doubleclick_header_vertical(self, num_row)
 
-    def mouseCabecera(self, numColumna):
+    def mouse_header(self, num_column):
         """
         Se gestiona este evento, ante la posibilidad de que la ventana quiera controlar,
         los doble clicks sobre la head , normalmente para cambiar el orden de la column,
         llamando a la rutina correspondiente si existe (grid_doubleclick_header) y con el
         argumento del objeto column
         """
-        if hasattr(self.w_parent, "grid_pulsada_cabecera"):
-            self.w_parent.grid_pulsada_cabecera(self, self.oColumnasR.column(numColumna))
+        if hasattr(self.w_parent, "grid_pressed_header"):
+            self.w_parent.grid_pressed_header(self, self.columns_displayables.column(num_column))
 
     def save_video(self, dic):
         """
@@ -528,7 +536,7 @@ class Grid(QtWidgets.QTableView):
         @param dic: diccionario de video donde se guarda la configuration de las columnas
         """
         st_claves = set()
-        for n, column in enumerate(self.oColumnasR.li_columns):
+        for n, column in enumerate(self.columns_displayables.li_columns):
             column.ancho = self.columnWidth(n)
             column.position = self.columnViewportPosition(n)
             column.save_configuration(dic, self)
@@ -542,7 +550,7 @@ class Grid(QtWidgets.QTableView):
     def list_columns(self, only_visible):
         li = []
         if only_visible:
-            for n, column in enumerate(self.oColumnasR.li_columns):
+            for n, column in enumerate(self.columns_displayables.li_columns):
                 column.ancho = self.columnWidth(n)
                 column.position = self.columnViewportPosition(n)
                 li.append(column)
@@ -556,25 +564,32 @@ class Grid(QtWidgets.QTableView):
         for column in self.o_columns.li_columns:
             column.restore_configuration(dic, self)
 
-        if self.siCabeceraMovible:
+        if self.is_column_header_movable:
             self.o_columns.li_columns.sort(key=lambda xcol: xcol.position)
 
     def columnas(self):
-        for n, column in enumerate(self.oColumnasR.li_columns):
+        for n, column in enumerate(self.columns_displayables.li_columns):
             column.ancho = self.columnWidth(n)
             column.position = self.columnViewportPosition(n)
-        if self.siCabeceraMovible:
+        if self.is_column_header_movable:
             self.o_columns.li_columns.sort(key=lambda xcol: xcol.position)
         return self.o_columns
 
-    def anchoColumnas(self):
+    def width_columns_displayables(self) -> int:
         """
-        Calcula el ancho que corresponde a todas las columnas mostradas.
-        """
-        return sum(self.columnWidth(n) for n in range(len(self.oColumnasR.li_columns)))
+        Devuelve la suma del ancho de todas las columnas visibles.
 
-    def fixMinWidth(self):
-        n_ancho = self.anchoColumnas() + 24
+        Retorna:
+            int: ancho total en píxeles.
+        """
+        columnas = self.columns_displayables.li_columns
+        if not columnas:
+            return 0
+
+        return sum(self.columnWidth(i) for i in range(len(columnas)))
+
+    def fix_min_width(self):
+        n_ancho = self.width_columns_displayables() + 24
         self.setMinimumWidth(n_ancho)
         return n_ancho
 
@@ -583,19 +598,19 @@ class Grid(QtWidgets.QTableView):
         Devuelve la row actual.
         """
         n = self.currentIndex().row()
-        nX = self.cg.num_rows - 1
-        return n if n <= nX else nX
+        n_x = self.cg.num_rows - 1
+        return n if n <= n_x else n_x
 
     def reccount(self):
         return self.cg.num_rows
 
-    def recnosSeleccionados(self):
+    def list_selected_recnos(self):
         if self.cg.num_rows:
-            li = []
+            st = set()
             for x in self.selectionModel().selectedIndexes():
-                li.append(x.row())
+                st.add(x.row())
 
-            return list(set(li))
+            return list(st)
         return []
 
     def goto(self, row, col):
@@ -632,10 +647,10 @@ class Grid(QtWidgets.QTableView):
 
         @return: tupla con ( num row, objeto column )
         """
-        column = self.oColumnasR.column(self.currentIndex().column())
+        column = self.columns_displayables.column(self.currentIndex().column())
         return self.recno(), column
 
-    def posActualN(self):
+    def current_position_num(self):
         """
         Devuelve la position actual.
 
@@ -660,14 +675,7 @@ class Grid(QtWidgets.QTableView):
             tachado = 1 if is_striked else 0
             if not name:
                 name = font.defaultFamily()
-            txt = "%s,%d,-1,5,%d,%d,%d,%d,0,0" % (
-                name,
-                puntos,
-                peso,
-                cursiva,
-                subrayado,
-                tachado,
-            )
+            txt = f"{name},{puntos},-1,5,{peso},{cursiva},{subrayado},{tachado},0,0"
         font.fromString(txt)
         self.set_font(font)
 
@@ -676,9 +684,9 @@ class Grid(QtWidgets.QTableView):
         hh = self.horizontalHeader()
         hh.setFont(font)
 
-    def ponAltoFila(self, altoFila):
-        if altoFila:
+    def set_height_row(self, heigh_row):
+        if heigh_row:
             vh = self.verticalHeader()
-            vh.setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
-            vh.setDefaultSectionSize(altoFila)
+            vh.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Fixed)
+            vh.setDefaultSectionSize(heigh_row)
             vh.setVisible(self.with_header_vertical)

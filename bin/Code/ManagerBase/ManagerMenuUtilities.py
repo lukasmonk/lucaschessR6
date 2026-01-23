@@ -1,6 +1,6 @@
 import os
 
-from Code import Util
+from Code.Z import Util
 from Code.Analysis import AI
 from Code.Base import Game
 from Code.Base.Constantes import (
@@ -19,8 +19,8 @@ from Code.QT import (
     QTMessages,
     QTUtils,
     SelectFiles,
-    WindowSavePGN,
 )
+from Code.ZQT import WindowSavePGN
 from Code.Themes import AssignThemes
 
 
@@ -58,7 +58,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
 
         menu_save.opcion(
             "lcsbfichero",
-            "%s -> %s" % (_("lcsb Format"), _("Create your own game")),
+            f"{_('lcsb Format')} -> {_('Create your own game')}",
             Iconos.JuegaSolo(),
         )
 
@@ -85,7 +85,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
 
             kibitzers = Kibitzers.Kibitzers()
             for huella, name, ico in kibitzers.lista_menu():
-                menu_kibitzers.opcion("kibitzer_%s" % huella, name, ico)
+                menu_kibitzers.opcion(f"kibitzer_{huella}", name, ico)
             menu_kibitzers.separador()
             menu_kibitzers.opcion("kibitzer_edit", _("Maintenance"), Iconos.ModificarP())
 
@@ -115,15 +115,14 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
             menu.opcion("replay", _("Replay game"), Iconos.Pelicula())
 
         # Juega por mi + help to move
-        if self.manager.active_play_instead_of_me():
-            if hasattr(self.manager, "play_instead_of_me"):
-                menu.separador()
-                menu.opcion(
-                    "play_instead_of_me",
-                    _("Play instead of me"),
-                    Iconos.JuegaPorMi(),
-                    shortcut='Ctrl+1',
-                )
+        if self.manager.active_play_instead_of_me() and hasattr(self.manager, "play_instead_of_me"):
+            menu.separador()
+            menu.opcion(
+                "play_instead_of_me",
+                _("Play instead of me"),
+                Iconos.JuegaPorMi(),
+                shortcut='Ctrl+1',
+            )
 
         if self.manager.active_help_to_move():
             if hasattr(self.manager, "help_to_move"):
@@ -152,7 +151,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
             menu.separador()
             menu.opcion(
                 "learn_mem",
-                _("Learn") + " - " + _("Memorizing their moves"),
+                f"{_('Learn')} - {_('Memorizing their moves')}",
                 Iconos.LearnGame(),
             )
 
@@ -278,17 +277,17 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         return None
 
     def borrar(self):
-        form = FormLayout.FormLayout(self.main_window, _("Remove"), Iconos.Delete(), anchoMinimo=300)
+        form = FormLayout.FormLayout(self.main_window, _("Remove"), Iconos.Delete(), minimum_width=300)
         form.apart_np(_("Information"))
         form.checkbox(_("All"), False)
         form.separador()
         form.checkbox(_("Variations"), False)
-        form.checkbox(_("Ratings") + " (NAGs)", False)
+        form.checkbox(f"{_('Ratings')} (NAGs)", False)
         form.checkbox(_("Comments"), False)
         form.checkbox(_("Analysis"), False)
         form.checkbox(_("Themes"), False)
-        form.checkbox(_("Time used") + " (%emt)", False)
-        form.checkbox(_("Pending time") + " (%clk)", False)
+        form.checkbox(f"{_('Time used')} (%emt)", False)
+        form.checkbox(f"{_('Pending time')} (%clk)", False)
         form.separador()
 
         num_moves, nj, row, is_white = self.manager.current_move()
@@ -368,9 +367,9 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
                 name = os.path.basename(file)
                 if Util.save_pickle(file, dic):
                     QTMessages.temporary_message(self.main_window, _X(_("Saved to %1"), name), 0.8)
-                    return
+                    return None
                 else:
-                    QTMessages.message_error(self.main_window, "%s: %s" % (_("Unable to save"), name))
+                    QTMessages.message_error(self.main_window, f"{_('Unable to save')}: {name}")
 
             break
 
@@ -408,7 +407,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
                             return
                         if yn:
                             modo = "a"
-                            dato = "\n" + dato
+                            dato = f"\n{dato}"
                     with open(resp, modo, encoding="utf-8", errors="ignore") as q:
                         q.write(dato)
                     QTMessages.message_bold(self.main_window, _X(_("Saved to %1"), resp))
@@ -464,7 +463,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         resp = db.insert(pc)
         db.close()
         if resp:
-            QTMessages.message_bold(self.main_window, _("Saved") + ": " + db.path_file)
+            QTMessages.message_bold(self.main_window, f"{_('Saved')}: {db.path_file}")
         else:
             QTMessages.message_error(self.main_window, _("This game already exists."))
 
@@ -496,7 +495,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
             if themes:
                 delete_previous = QTMessages.pregunta(
                     self.main_window,
-                    _("Pre-delete the following themes?") + f"<br><br>{themes}",
+                    f"{_('Pre-delete the following themes?')}<br><br>{themes}",
                 )
             else:
                 delete_previous = False

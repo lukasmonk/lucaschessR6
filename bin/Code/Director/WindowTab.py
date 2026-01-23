@@ -38,11 +38,11 @@ class SelectUna(Controles.LB):
             if self.seleccionada
             else Code.dic_colors["DIRECTOR_BANDA_BORDER_DISABLE"]
         )
-        self.setStyleSheet("border: 2px solid %s; padding:2px;" % color)
+        self.setStyleSheet(f"border: 2px solid {color}; padding:2px;")
 
     def mousePressEvent(self, event):
         if self.add_text:
-            self.owner.addText()
+            self.owner.add_text()
         else:
             eb = event.button()
             if self.id is None or eb == QtCore.Qt.MouseButton.RightButton:
@@ -53,6 +53,8 @@ class SelectUna(Controles.LB):
 
 
 class SelectBanda(QtWidgets.QWidget):
+    set_control: set
+
     def __init__(self, owner):
         QtWidgets.QWidget.__init__(self)
 
@@ -73,12 +75,12 @@ class SelectBanda(QtWidgets.QWidget):
         for n in range(num_elem):
             lb_f = Controles.LB("F%d" % (n + 1,))
             lb_f.relative_width(32)
-            lb_f.altoFijo(40)
+            lb_f.fixed_height(40)
             lb_f.align_center()
             layout.controlc(lb_f, n, 1)
             if n == 9:
                 lb = SelectUna(self, Iconos.pmTexto().scaled(ancho, ancho), True)
-                lb.addText = True
+                lb.add_text = True
             else:
                 lb = SelectUna(self, self.pm_empty, False)
                 if n < 9:
@@ -106,13 +108,13 @@ class SelectBanda(QtWidgets.QWidget):
             self.liLB.append(lb)
             self.liLB_F.append(lb_f)
             layout.controlc(lb, n, 0)
-        lb_f = Controles.LB("%s F10\n%s" % (_("CTRL"), _("Changes")))
+        lb_f = Controles.LB(f"{_('CTRL')} F10\n{_('Changes')}")
         lb_f.setToolTip(_("Shift-Alt with right button to create/remove pieces"))
-        # Activa la posibilidad de mover las piezas con el ratón
-        lb_f.altoFijo(36)
+        # Activa la posibilidad de mover las pieces con el ratón
+        lb_f.fixed_height(36)
         lb_f.align_center()
         self.lb_change_graphics = lb_f
-        lb_f.mousePressEvent = self.mousePressEventGraphics
+        lb_f.mousePressEvent = self.mouse_press_event_graphics
         layout.controlc(lb_f, num_elem, 0, 1, 2)
         self.dic_data = collections.OrderedDict()
         self.setLayout(layout)
@@ -139,7 +141,7 @@ class SelectBanda(QtWidgets.QWidget):
             (_("Markers"), Iconos.Markers(), self.owner.markers),
         )
 
-    def mousePressEventGraphics(self, event):
+    def mouse_press_event_graphics(self, _event):
         self.seleccionar(None)
 
     def menu(self, lb, li_more=None):
@@ -192,7 +194,7 @@ class SelectBanda(QtWidgets.QWidget):
         resp = self.menu(lb)
         if resp is not None:
             if resp == -1:
-                self.owner.editBanda(lb.id)
+                self.owner.edit_band(lb.id)
                 return
             if resp == -2:
                 lb.pon(self.pm_empty, None, None)
@@ -206,7 +208,7 @@ class SelectBanda(QtWidgets.QWidget):
             lb.pon(pm, nom, resp)
             self.seleccionar(lb)
 
-    def menuParaExterior(self, li_more=None):
+    def menu_for_extern(self, li_more=None):
         resp = self.menu(None, li_more)
         if resp is not None:
             for txt, ico, rut in self.li_tipos:
@@ -215,18 +217,18 @@ class SelectBanda(QtWidgets.QWidget):
                     return None
         return resp
 
-    def iniActualizacion(self):
-        self.setControl = set()
+    def init_update(self):
+        self.set_control = set()
         self.dic_data = {}
 
     def actualiza(self, xid, name, pixmap, tipo):
         self.dic_data[xid] = (name, pixmap, tipo)
-        self.setControl.add(xid)
+        self.set_control.add(xid)
 
-    def finActualizacion(self):
+    def end_update(self):
         st = set()
         for xid in self.dic_data:
-            if xid not in self.setControl:
+            if xid not in self.set_control:
                 st.add(xid)
         for xid in st:
             del self.dic_data[xid]
@@ -245,11 +247,11 @@ class SelectBanda(QtWidgets.QWidget):
                 lb = self.liLB[pos_en_banda]
                 lb.pon(pm, nom, xid)
 
-    def idLB(self, num):
-        if 0 <= num < len(self.liLB):
-            return self.liLB[num].id
-        else:
-            return None
+    # def idLB(self, num):
+    #     if 0 <= num < len(self.liLB):
+    #         return self.liLB[num].id
+    #     else:
+    #         return None
 
     def guardar(self):
         li = [(lb.id, n) for n, lb in enumerate(self.liLB) if lb.id is not None]
@@ -271,17 +273,17 @@ class SelectBanda(QtWidgets.QWidget):
         self.seleccionada = lb
         self.owner.seleccionar(lb)
 
-    def addText(self):
-        self.owner.addText()
+    def add_text(self):
+        self.owner.add_text()
 
-    def numSeleccionada(self):
+    def num_selected(self):
         for n in range(10):
             lbt = self.liLB[n]
             if lbt == self.seleccionada:
                 return n
         return None
 
-    def seleccionarNum(self, num):
+    def select_number(self, num):
         lb = self.liLB[num]
         if lb.pixmap:
             self.seleccionar(lb)
@@ -319,11 +321,13 @@ class DragUna(Controles.LB):
 
         else:
             if eb == QtCore.Qt.MouseButton.LeftButton:
-                self.owner.startDrag(self)
+                self.owner.start_drag(self)
 
 
 class DragBanda(QtWidgets.QWidget):
-    def __init__(self, owner, liElem, ancho, margen=None):
+    set_control: set
+
+    def __init__(self, owner, li_elem, ancho, margen=None):
         QtWidgets.QWidget.__init__(self)
 
         self.owner = owner
@@ -335,7 +339,7 @@ class DragBanda(QtWidgets.QWidget):
         if ancho != 32:
             pm = pm.scaled(ancho, ancho)
         self.pm_empty = pm
-        for row, numElem in enumerate(liElem):
+        for row, numElem in enumerate(li_elem):
             for n in range(numElem):
                 lb = DragUna(self, self.pm_empty)
                 self.liLB.append(lb)
@@ -392,7 +396,7 @@ class DragBanda(QtWidgets.QWidget):
         resp = menu.lanza()
         if resp is not None:
             if resp == -1:
-                self.owner.editBanda(lb.id)
+                self.owner.edit_band(lb.id)
                 return
             if resp == -2:
                 lb.pon(self.pm_empty, None, None)
@@ -404,7 +408,7 @@ class DragBanda(QtWidgets.QWidget):
             nom, pm, tp = self.dic_data[resp]
             lb.pon(pm, nom, resp)
 
-    def menuParaExterior(self, masOpciones):
+    def menu_for_extern(self, more_options):
         if not self.dic_data:
             return None
 
@@ -422,7 +426,7 @@ class DragBanda(QtWidgets.QWidget):
                 dicmenu[tp] = menu.submenu(tp, Iconos.PuntoVerde())
                 menu.separador()
             dicmenu[tp].opcion((xid, tp), nom, QtGui.QIcon(pm))
-        for key, name, icono in masOpciones:
+        for key, name, icono in more_options:
             menu.separador()
             menu.opcion(key, name, icono)
 
@@ -430,17 +434,17 @@ class DragBanda(QtWidgets.QWidget):
 
         return resp
 
-    def iniActualizacion(self):
-        self.setControl = set()
+    def init_update(self):
+        self.set_control = set()
 
     def actualiza(self, xid, name, pixmap, tipo):
         self.dic_data[xid] = (name, pixmap, tipo)
-        self.setControl.add(xid)
+        self.set_control.add(xid)
 
-    def finActualizacion(self):
+    def end_update(self):
         st = set()
         for xid in self.dic_data:
-            if xid not in self.setControl:
+            if xid not in self.set_control:
                 st.add(xid)
         for xid in st:
             del self.dic_data[xid]
@@ -459,11 +463,11 @@ class DragBanda(QtWidgets.QWidget):
                 lb = self.liLB[a]
                 lb.pon(pm, nom, xid)
 
-    def idLB(self, num):
-        if 0 <= num < len(self.liLB):
-            return self.liLB[num].id
-        else:
-            return None
+    # def idLB(self, num):
+    #     if 0 <= num < len(self.liLB):
+    #         return self.liLB[num].id
+    #     else:
+    #         return None
 
     def guardar(self):
         li = [(lb.id, n) for n, lb in enumerate(self.liLB) if lb.id is not None]
@@ -473,7 +477,7 @@ class DragBanda(QtWidgets.QWidget):
         for xid, a in li:
             self.pon(xid, a)
 
-    def startDrag(self, lb):
+    def start_drag(self, lb):
         pixmap = lb.pixmap
         dato = lb.id
         item_data = QtCore.QByteArray(str(dato))

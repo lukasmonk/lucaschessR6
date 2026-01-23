@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, ScreenUtils
 
 
@@ -17,7 +17,7 @@ class WColors(LCDialog.LCDialog):
         self.qforeground_none = QtGui.QColor("#030303")
 
         file = "By default" if self.configuration.x_style_mode is None else self.configuration.x_style_mode
-        path_original = Code.path_resource("Styles", file + ".colors")
+        path_original = Code.path_resource("Styles", f"{file}.colors")
         dic = Util.ini_base2dic(path_original)
         self.dic_original = {key: ScreenUtils.qt_color(value) for key, value in dic.items()}
 
@@ -93,17 +93,12 @@ class WColors(LCDialog.LCDialog):
         o_columns.nueva("NAME", _("Name"), 340)
         o_columns.nueva("ORIGINAL", _("Original"), 120, align_center=True)
         o_columns.nueva("PERSONAL", _("Current"), 120, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, alternate=False, siCabeceraMovible=False)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columns, alternate=False, is_column_header_movable=False)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         status = Controles.LB(
             self,
-            "%s\n%s\n%s"
-            % (
-                _("[Mouse Double click] in column CURRENT to change color"),
-                _("[Mouse double click] in column ORIGINAL to change all with this color"),
-                _("[DEL key] in column CURRENT to remove change"),
-            ),
+            f"{ _('[Mouse Double click] in column CURRENT to change color')}\n{ _('[Mouse double click] in column ORIGINAL to change all with this color')}\n{ _('[DEL key] in column CURRENT to remove change')}",
         )
 
         # Tool bar
@@ -121,7 +116,7 @@ class WColors(LCDialog.LCDialog):
         self.register_grid(self.grid)
         self.grid.resizeColumnToContents(0)
         self.restore_video(
-            default_width=self.grid.anchoColumnas() + 24,
+            default_width=self.grid.width_columns_displayables() + 24,
             default_height=ScreenUtils.desktop_height() * 2 // 3,
         )
 
@@ -178,31 +173,31 @@ class WColors(LCDialog.LCDialog):
             return "l"
         return "d"
 
-    def grid_color_texto(self, grid, row, o_column):
+    def grid_color_texto(self, grid, row, obj_column):
         is_head, key, value = self.li_colors[row]
         if is_head:
             return ScreenUtils.qt_color("white")
-        elif o_column.key == "PERSONAL":
+        elif obj_column.key == "PERSONAL":
             return self.qforeground_none
 
-    def grid_bold(self, grid, row, o_column):
+    def grid_bold(self, grid, row, obj_column):
         is_head, key, value = self.li_colors[row]
         return is_head
 
-    def grid_color_fondo(self, grid, row, o_column):
+    def grid_color_fondo(self, grid, row, obj_column):
         is_head, key, value = self.li_colors[row]
         if is_head:
             return ScreenUtils.qt_color("darkcyan")
-        if o_column.key == "ORIGINAL":
+        if obj_column.key == "ORIGINAL":
             return self.dic_original[key]
-        elif o_column.key == "PERSONAL":
+        elif obj_column.key == "PERSONAL":
             return self.dic_personal.get(key, self.qbackground_none)
 
     def grid_num_datos(self, grid):
         return len(self.li_colors)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        col = obj_column.key
         is_head, key, value = self.li_colors[row]
         if col == "NAME":
 
@@ -214,7 +209,7 @@ class WColors(LCDialog.LCDialog):
                 for c in "|+ ":
                     if x.count(c) == 1:
                         uno, dos = x.split(c)
-                        return trans(uno) + " - " + trans(dos)
+                        return f"{trans(uno)} - {trans(dos)}"
                 return _F(x)
 
             return trans(value)
@@ -279,7 +274,7 @@ class WColors(LCDialog.LCDialog):
 
     def read_qss(self):
         style = "By default" if self.configuration.x_style_mode is None else self.configuration.x_style_mode
-        path_qss = Code.path_resource("Styles", style + ".qss")
+        path_qss = Code.path_resource("Styles", f"{style}.qss")
         li = []
         with open(path_qss, "rt") as f:
             current = None
@@ -295,8 +290,8 @@ class WColors(LCDialog.LCDialog):
                     elif "#" in line:
                         key, value = line.split(":")
                         key = key.strip()
-                        color = "#" + value.split("#")[1][:6]
-                        key_gen = "%s|%s" % (current, key)
+                        color = f"#{value.split('#')[1][:6]}"
+                        key_gen = f"{current}|{key}"
                         if style == "By default" and "[" not in current:
                             continue
                         if not with_elements:

@@ -4,7 +4,7 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util, XRun
+from Code.Z import Util, XRun
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
@@ -28,8 +28,8 @@ from Code.QT import (
     QTUtils,
     ScreenUtils,
     SelectFiles,
-    WindowSavePGN,
 )
+from Code.ZQT import WindowSavePGN
 from Code.Tournaments import Tournament
 from Code.Voyager import Voyager
 
@@ -59,70 +59,70 @@ class WTournament(LCDialog.LCDialog):
 
         # Toolbar
         tb = Controles.TBrutina(self, icon_size=24)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("Launch workers"), Iconos.Lanzamiento(), self.gm_launch)
 
         # Tabs
         self.tab = tab = Controles.Tab()
-        tab.dispatchChange(self.tab_changed)
+        tab.dispatch_change(self.tab_changed)
 
         # Tab-configuration --------------------------------------------------
         w = QtWidgets.QWidget()
 
-        # Adjudicator
+        # MoveEvatualor
         lb_resign = Controles.LB(
             self,
             "%s (%s): " % (_("Minimum centipawns to assign winner"), "0=%s" % _("Disable")),
         )
-        self.ed_resign = Controles.ED(self).tipoInt(torneo.resign()).relative_width(30)
-        bt_resign = Controles.PB(self, "", rutina=self.borra_resign).ponIcono(Iconos.Reciclar())
+        self.ed_resign = Controles.ED(self).type_integer(torneo.resign()).relative_width(30)
+        bt_resign = Controles.PB(self, "", rutina=self.borra_resign).set_icono(Iconos.Reciclar())
 
         # Draw-plys
         lb_draw_min_ply = Controles.LB(
             self,
             "%s (%s): " % (_("Minimum movements to assign draw"), "0=%s" % _("Disable")),
         )
-        self.ed_draw_min_ply = Controles.ED(self).ponInt(torneo.draw_min_ply()).relative_width(30).align_right()
+        self.ed_draw_min_ply = Controles.ED(self).set_integer(torneo.draw_min_ply()).relative_width(30).align_right()
         # Draw-puntos
-        lb_draw_range = Controles.LB(self, _("Maximum centipawns to assign draw") + ": ")
-        self.ed_draw_range = Controles.ED(self).tipoInt(torneo.draw_range()).relative_width(30)
-        bt_draw_range = Controles.PB(self, "", rutina=self.borra_draw_range).ponIcono(Iconos.Reciclar())
+        lb_draw_range = Controles.LB(self, f"{_('Maximum centipawns to assign draw')}: ")
+        self.ed_draw_range = Controles.ED(self).type_integer(torneo.draw_range()).relative_width(30)
+        bt_draw_range = Controles.PB(self, "", rutina=self.borra_draw_range).set_icono(Iconos.Reciclar())
 
-        # adjudicator
+        # move_evaluator
         self.list_engines = self.configuration.engines.list_name_alias_multipv10()
         self.cbJmotor, self.lbJmotor = QTMessages.combobox_lb(
-            self, self.list_engines, torneo.adjudicator(), _("Engine")
+            self, self.list_engines, torneo.move_evaluator(), _("Engine")
         )
-        self.edJtiempo = Controles.ED(self).tipoFloat(torneo.adjudicator_time()).relative_width(50)
+        self.edJtiempo = Controles.ED(self).type_float(torneo.adjudicator_time()).relative_width(50)
         self.lbJtiempo = Controles.LB2P(self, _("Time in seconds"))
         layout = Colocacion.G()
         layout.controld(self.lbJmotor, 3, 0).control(self.cbJmotor, 3, 1)
         layout.controld(self.lbJtiempo, 4, 0).control(self.edJtiempo, 4, 1)
-        self.gbJ = Controles.GB(self, _("Adjudicator"), layout)
+        self.gbJ = Controles.GB(self, _("MoveEvatualor"), layout)
         self.gbJ.setCheckable(True)
         self.gbJ.setChecked(torneo.adjudicator_active())
 
-        lb_book = Controles.LB(self, _("Opening book") + ": ")
+        lb_book = Controles.LB(self, f"{_('Opening book')}: ")
         self.list_books = Books.ListBooks()
         li = [(x.name, x.path) for x in self.list_books.lista]
         li.insert(0, (f'<{_("None")}>', "-"))
         self.cbBooks = Controles.CB(self, li, torneo.book())
-        bt_nuevo_book = Controles.PB(self, "", self.new_book, plano=False).ponIcono(Iconos.Nuevo(), icon_size=16)
+        bt_nuevo_book = Controles.PB(self, "", self.new_book, plano=False).set_icono(Iconos.Nuevo(), icon_size=16)
         ly_book = Colocacion.H().control(self.cbBooks).control(bt_nuevo_book).relleno()
 
-        lb_book_depth = Controles.LB(self, _("Max depth of book (0=Maximum)") + ": ")
+        lb_book_depth = Controles.LB(self, f"{_('Max depth of book (0=Maximum)')}: ")
         self.sbBookDepth = Controles.SB(self, torneo.book_depth(), 0, 200)
 
-        lb_slow = Controles.LB(self, _("Slow down the movement of pieces") + ": ")
+        lb_slow = Controles.LB(self, f"{_('Slow down the movement of pieces')}: ")
         self.chb_slow = Controles.CHB(self, " ", self.torneo.slow_pieces())
 
         # Posicion inicial
-        lb_fen = Controles.LB(self, _("Initial position") + ": ")
+        lb_fen = Controles.LB(self, f"{_('Initial position')}: ")
         self.fen = torneo.fen()
-        self.btPosicion = Controles.PB(self, " " * 5 + _("Change") + " " * 5, self.position_edit).ponPlano(False)
-        self.btPosicionQuitar = Controles.PB(self, "", self.position_remove).ponIcono(Iconos.Motor_No())
+        self.btPosicion = Controles.PB(self, " " * 5 + _("Change") + " " * 5, self.position_edit).set_flat(False)
+        self.btPosicionQuitar = Controles.PB(self, "", self.position_remove).set_icono(Iconos.Motor_No())
         self.btPosicionPegar = (
-            Controles.PB(self, "", self.position_paste).ponIcono(Iconos.Pegar16()).ponToolTip(_("Paste FEN position"))
+            Controles.PB(self, "", self.position_paste).set_icono(Iconos.Pegar16()).set_tooltip(_("Paste FEN position"))
         )
         ly_fen = (
             Colocacion.H()
@@ -175,7 +175,7 @@ class WTournament(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NUM", _("N."), 50, align_center=True)
         o_columns.nueva("ALIAS", _("Alias"), 209)
-        self.gridEnginesAlias = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True, xid=GRID_ALIAS)
+        self.gridEnginesAlias = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True, xid=GRID_ALIAS)
         self.register_grid(self.gridEnginesAlias)
 
         w = QtWidgets.QWidget()
@@ -186,7 +186,7 @@ class WTournament(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("CAMPO", _("Label"), 200, align_right=True)
         o_columns.nueva("VALOR", _("Value"), 286)
-        self.gridEnginesValores = Grid.Grid(self, o_columns, siSelecFilas=False, xid=GRID_VALUES)
+        self.gridEnginesValores = Grid.Grid(self, o_columns, complete_row_select=False, xid=GRID_VALUES)
         self.register_grid(self.gridEnginesValores)
 
         w = QtWidgets.QWidget()
@@ -216,8 +216,8 @@ class WTournament(LCDialog.LCDialog):
         self.gridGamesQueued = Grid.Grid(
             self,
             o_columns,
-            siSelecFilas=True,
-            siSeleccionMultiple=True,
+            complete_row_select=True,
+            select_multiple=True,
             xid=GRID_GAMES_QUEUED,
         )
         self.register_grid(self.gridGamesQueued)
@@ -239,9 +239,9 @@ class WTournament(LCDialog.LCDialog):
         )
         tb_en_gt.new(_("Remove"), Iconos.Borrar(), self.gm_borrar_finished)
         tb_en_gt.new(_("Show"), Iconos.PGN(), self.gm_show_finished)
-        tb_en_gt.new(_("Save") + "(%s)" % _("PGN"), Iconos.GrabarComo(), self.gm_save_pgn)
+        tb_en_gt.new(f"{_('Save')}({_('PGN')})", Iconos.GrabarComo(), self.gm_save_pgn)
         tb_en_gt.new(
-            _("Save") + "(%s)" % _("Database"),
+            f"{_('Save')}({_('Database')})",
             Iconos.GrabarComo(),
             self.gm_save_database,
         )
@@ -257,8 +257,8 @@ class WTournament(LCDialog.LCDialog):
         self.gridGamesFinished = Grid.Grid(
             self,
             o_columns,
-            siSelecFilas=True,
-            siSeleccionMultiple=True,
+            complete_row_select=True,
+            select_multiple=True,
             xid=GRID_GAMES_FINISHED,
         )
         self.register_grid(self.gridGamesFinished)
@@ -278,18 +278,18 @@ class WTournament(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NUM", _("N."), 35, align_center=True)
         o_columns.nueva("ENGINE", _("Engine"), 120, align_center=True)
-        o_columns.nueva("SCORE", _("Score") + "%", 50, align_center=True)
+        o_columns.nueva("SCORE", f"{_('Score')}%", 50, align_center=True)
         o_columns.nueva("WIN", _("Wins"), 50, align_center=True)
         o_columns.nueva("DRAW", _("Draws"), 50, align_center=True)
         o_columns.nueva("LOST", _("Losses"), 50, align_center=True)
-        o_columns.nueva("WIN-WHITE", "%s %s" % (wh, _("Wins")), 60, align_center=True)
-        o_columns.nueva("DRAW-WHITE", "%s %s" % (wh, _("Draws")), 60, align_center=True)
-        o_columns.nueva("LOST-WHITE", "%s %s" % (wh, _("Losses")), 60, align_center=True)
-        o_columns.nueva("WIN-BLACK", "%s %s" % (bl, _("Wins")), 60, align_center=True)
-        o_columns.nueva("DRAW-BLACK", "%s %s" % (bl, _("Draws")), 60, align_center=True)
-        o_columns.nueva("LOST-BLACK", "%s %s" % (bl, _("Losses")), 60, align_center=True)
+        o_columns.nueva("WIN-WHITE", f"{wh} {_('Wins')}", 60, align_center=True)
+        o_columns.nueva("DRAW-WHITE", f"{wh} {_('Draws')}", 60, align_center=True)
+        o_columns.nueva("LOST-WHITE", f"{wh} {_('Losses')}", 60, align_center=True)
+        o_columns.nueva("WIN-BLACK", f"{bl} {_('Wins')}", 60, align_center=True)
+        o_columns.nueva("DRAW-BLACK", f"{bl} {_('Draws')}", 60, align_center=True)
+        o_columns.nueva("LOST-BLACK", f"{bl} {_('Losses')}", 60, align_center=True)
         o_columns.nueva("GAMES", _("Games"), 50, align_center=True)
-        self.gridResults = Grid.Grid(self, o_columns, siSelecFilas=True, xid=GRID_RESULTS)
+        self.gridResults = Grid.Grid(self, o_columns, complete_row_select=True, xid=GRID_RESULTS)
         self.register_grid(self.gridResults)
 
         self.qt_color = {
@@ -323,7 +323,7 @@ class WTournament(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.cerrar()
 
-    def terminar(self):
+    def finalize(self):
         self.cerrar()
         self.accept()
 
@@ -363,18 +363,18 @@ class WTournament(LCDialog.LCDialog):
             tt = ww + wb + dw + db + lw + lb
             p = (ww + wb) * 2 + (dw + db) * 1
             score = (p * 50 / tt) if tt > 0 else 0
-            self.li_results.append((eng.alias, score, ww, wb, dw, db, lw, lb))
+            self.li_results.append((eng.key, score, ww, wb, dw, db, lw, lb))
         self.li_results.sort(key=lambda x: x[1], reverse=True)
         self.gridResults.refresh()
 
     def borra_resign(self):
-        previo = self.ed_resign.textoInt()
-        self.ed_resign.tipoInt(0 if previo else 350)
+        previo = self.ed_resign.text_to_integer()
+        self.ed_resign.type_integer(0 if previo else 350)
 
     def borra_draw_range(self):
-        previo = self.ed_draw_range.textoInt()
-        self.ed_draw_range.tipoInt(0 if previo else 10)
-        self.ed_draw_min_ply.tipoInt(0 if previo else 50)
+        previo = self.ed_draw_range.text_to_integer()
+        self.ed_draw_range.type_integer(0 if previo else 10)
+        self.ed_draw_min_ply.type_integer(0 if previo else 50)
 
     def show_position(self):
         if self.fen:
@@ -422,7 +422,7 @@ class WTournament(LCDialog.LCDialog):
             b = Books.Book("P", name, fbin, False)
             self.list_books.nuevo(b)
             li = [(x.name, x.path) for x in self.list_books.lista]
-            li.insert(0, ("* " + _("By default"), "*"))
+            li.insert(0, (f"* {_('By default')}", "*"))
             self.cbBooks.rehacer(li, b.path)
 
     def grid_num_datos(self, grid):
@@ -438,8 +438,8 @@ class WTournament(LCDialog.LCDialog):
         elif gid == GRID_RESULTS:
             return self.torneo.num_engines()
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         gid = grid.id
         if gid == GRID_ALIAS:
             return self.grid_dato_engines_alias(row, column)
@@ -457,7 +457,7 @@ class WTournament(LCDialog.LCDialog):
     def grid_dato_engines_alias(self, row, column):
         me = self.torneo.engine(row)
         if column == "ALIAS":
-            return me.alias
+            return me.key
         elif column == "NUM":
             return str(row + 1)
 
@@ -475,7 +475,7 @@ class WTournament(LCDialog.LCDialog):
         elif column == "ENGINE":
             return key
         elif column == "SCORE":
-            return "%.1f" % score if score > 0 else "0"
+            return f"{score:.1f}" if score > 0 else "0"
         elif column == "WIN":
             return "%d" % (ww + wb)
         elif column == "LOST":
@@ -495,7 +495,7 @@ class WTournament(LCDialog.LCDialog):
         elif column == "DRAW-BLACK":
             return "%d" % db
         elif column == "GAMES":
-            return "%s" % (ww + wb + lw + lb + dw + db)
+            return f"{ww + wb + lw + lb + dw + db}"
 
     def grid_dato_games_queued(self, row, column):
         gm = self.torneo.game_queued(row)
@@ -503,10 +503,10 @@ class WTournament(LCDialog.LCDialog):
             return str(row + 1)
         elif column == "WHITE":
             en = self.torneo.search_hengine(gm.hwhite)
-            return en.alias if en else "???"
+            return en.key if en else "???"
         elif column == "BLACK":
             en = self.torneo.search_hengine(gm.hblack)
-            return en.alias if en else "???"
+            return en.key if en else "???"
         # elif column == "STATE":
         #     return _("Working...") if gm.worker else ""
         elif column == "TIME":
@@ -522,12 +522,12 @@ class WTournament(LCDialog.LCDialog):
             return str(row + 1)
         elif column == "WHITE":
             en = self.torneo.search_hengine(gm.hwhite)
-            return en.alias if en else "???"
+            return en.key if en else "???"
         elif column == "BLACK":
             en = self.torneo.search_hengine(gm.hblack)
-            return en.alias if en else "???"
+            return en.key if en else "???"
         elif column == "RESULT":
-            return gm.result + " (%s)" % game.get_tag("Termination")
+            return f"{gm.result} ({game.get_tag('Termination')})"
         elif column == "TIME":
             return gm.label_time()
         elif column == "PLYCOUNT":
@@ -573,7 +573,7 @@ class WTournament(LCDialog.LCDialog):
 
         self.li_data_current_engine.append((_("Opening book"), pbook))
         if mode:
-            self.li_data_current_engine.append(("⤷   " + _("Mode"), mode))
+            self.li_data_current_engine.append((f"⤷   {_('Mode')}", mode))
 
         for opcion in me.li_uci_options():
             self.li_data_current_engine.append((opcion.name, str(opcion.valor)))
@@ -607,17 +607,17 @@ class WTournament(LCDialog.LCDialog):
     def comprueba_cambios(self):
         if self.torneo:
             changed = (
-                self.torneo.resign() != self.ed_resign.textoInt()
-                or self.torneo.draw_min_ply() != self.ed_draw_min_ply.textoInt()
-                or self.torneo.draw_range() != self.ed_draw_range.textoInt()
+                self.torneo.resign() != self.ed_resign.text_to_integer()
+                or self.torneo.draw_min_ply() != self.ed_draw_min_ply.text_to_integer()
+                or self.torneo.draw_range() != self.ed_draw_range.text_to_integer()
                 or self.torneo.fen() != self.fen
                 or self.torneo.norman() != self.chbNorman.valor()
                 or self.torneo.slow_pieces() != self.chb_slow.valor()
                 or self.torneo.book() != self.cbBooks.valor()
                 or self.torneo.book_depth() != self.sbBookDepth.valor()
                 or self.torneo.adjudicator_active() != self.gbJ.isChecked()
-                or self.torneo.adjudicator() != self.cbJmotor.valor()
-                or self.torneo.adjudicator_time() != self.edJtiempo.textoFloat()
+                or self.torneo.move_evaluator() != self.cbJmotor.valor()
+                or self.torneo.adjudicator_time() != self.edJtiempo.text_to_float()
             )
             if changed:
                 self.grabar()
@@ -635,17 +635,17 @@ class WTournament(LCDialog.LCDialog):
 
     def grabar(self):
         if self.torneo:
-            self.torneo.resign(self.ed_resign.textoInt())
-            self.torneo.draw_min_ply(self.ed_draw_min_ply.textoInt())
-            self.torneo.draw_range(self.ed_draw_range.textoInt())
+            self.torneo.resign(self.ed_resign.text_to_integer())
+            self.torneo.draw_min_ply(self.ed_draw_min_ply.text_to_integer())
+            self.torneo.draw_range(self.ed_draw_range.text_to_integer())
             self.torneo.fen(self.fen)
             self.torneo.norman(self.chbNorman.valor())
             self.torneo.slow_pieces(self.chb_slow.valor())
             self.torneo.book(self.cbBooks.valor())
             self.torneo.book_depth(self.sbBookDepth.valor())
             self.torneo.adjudicator_active(self.gbJ.isChecked())
-            self.torneo.adjudicator(self.cbJmotor.valor())
-            self.torneo.adjudicator_time(self.edJtiempo.textoFloat())
+            self.torneo.move_evaluator(self.cbJmotor.valor())
+            self.torneo.adjudicator_time(self.edJtiempo.text_to_float())
 
     def eng_new(self):
         # Pedimos el ejecutable
@@ -683,7 +683,7 @@ class WTournament(LCDialog.LCDialog):
     #             me = Tournament.EngineTournament()
     #             me.pon_huella(self.torneo)
     #             me.read_exist_engine(key)
-    #             me.alias = key + " - depth %d" % depth
+    #             me.key = key + " - depth %d" % depth
     #             me.depth = depth
     #             me.elo = 1500
     #             self.torneo.save_engine(me)
@@ -704,11 +704,11 @@ class WTournament(LCDialog.LCDialog):
         me.pon_huella(self.torneo)
         me.restore(resp.save())
         if me.is_type_external():
-            me.alias = me.alias
+            me.key = me.key
         else:
-            me.alias = me.alias = me.name
+            me.key = me.key = me.name
 
-        me.alias = me.alias
+        me.key = me.key
         me.depth = me.max_depth
 
         self.torneo.save_engine(me)
@@ -759,12 +759,12 @@ class WTournament(LCDialog.LCDialog):
             self.gridResults.refresh()
 
     def eng_remove(self):
-        li = self.gridEnginesAlias.recnosSeleccionados()
+        li = self.gridEnginesAlias.list_selected_recnos()
         if li:
             clista = ",".join([self.torneo.engine(pos).name for pos in li])
             if QTMessages.pregunta(
                 self,
-                _("Do you want to delete all selected records?") + "\n\n%s" % clista,
+                f"{_('Do you want to delete all selected records?')}\n\n{clista}",
             ):
                 self.torneo.remove_engines(li)
                 self.gridEnginesAlias.refresh()
@@ -816,7 +816,7 @@ class WTournament(LCDialog.LCDialog):
         li_groups = Util.div_list(li_engines, 20)
         for ngroup, group in enumerate(li_groups):
             for en in group:
-                form.checkbox(en.alias, get(en.huella, True))
+                form.checkbox(en.key, get(en.huella, True))
             form.add_tab(_("Engines"))
 
         resp = form.run()
@@ -882,7 +882,7 @@ class WTournament(LCDialog.LCDialog):
         self.rotulos_tabs()
 
     def gm_borrar_queued(self):
-        li = self.gridGamesQueued.recnosSeleccionados()
+        li = self.gridGamesQueued.list_selected_recnos()
         if li:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 with QTMessages.one_moment_please(self):
@@ -892,7 +892,7 @@ class WTournament(LCDialog.LCDialog):
                     self.rotulos_tabs()
 
     def gm_borrar_finished(self):
-        li = self.gridGamesFinished.recnosSeleccionados()
+        li = self.gridGamesFinished.list_selected_recnos()
         if li:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 with QTMessages.one_moment_please(self):
@@ -901,7 +901,7 @@ class WTournament(LCDialog.LCDialog):
                     self.rotulos_tabs()
 
     def gm_show_finished(self):
-        li = self.gridGamesFinished.recnosSeleccionados()
+        li = self.gridGamesFinished.list_selected_recnos()
         if li:
             pos = li[0]
             with QTMessages.one_moment_please(self, _("Reading the game")):

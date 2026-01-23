@@ -3,12 +3,16 @@ import time
 import FasterCode
 
 import Code
+from Code.Base import Position, Move
 from Code.Board import Board2
 from Code.CountsCaptures import WRunCommon
 from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 
 
 class WRunCaptures(LCDialog.LCDialog):
+    move_base: Move.Move
+    position_obj: Position.Position
+
     def __init__(self, owner, db_captures, capture):
 
         LCDialog.LCDialog.__init__(
@@ -26,7 +30,7 @@ class WRunCaptures(LCDialog.LCDialog):
         conf_board = self.configuration.config_board("RUNCAPTURES", 64)
 
         self.board = Board2.BoardEstaticoMensaje(self, conf_board, None)
-        self.board.crea()
+        self.board.draw_window()
 
         # Rotulo informacion
         self.lb_info_game = Controles.LB(self, self.capture.game.titulo("DATE", "EVENT", "WHITE", "BLACK", "RESULT"))
@@ -70,14 +74,14 @@ class WRunCaptures(LCDialog.LCDialog):
         )
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Begin"), Iconos.Empezar(), self.begin),
             (_("Verify"), Iconos.Check(), self.verify),
             (_("Continue"), Iconos.Pelicula_Seguir(), self.seguir),
         )
         self.tb = QTDialogs.LCTB(self, li_acciones, icon_size=32)
-        self.show_tb(self.terminar, self.begin)
+        self.show_tb(self.finalize, self.begin)
 
         ly_right = (
             Colocacion.V()
@@ -106,7 +110,7 @@ class WRunCaptures(LCDialog.LCDialog):
         self.gb_captures.setDisabled(True)
         self.gb_threats.setDisabled(True)
 
-        self.liwm_captures[0].activa()
+        self.liwm_captures[0].activate()
 
         self.last_square = None
 
@@ -146,7 +150,7 @@ class WRunCaptures(LCDialog.LCDialog):
             for liwm in (self.liwm_captures, self.liwm_threats):
                 for num, wm in enumerate(liwm):
                     if wm.origen == ucld:
-                        wm.activaDestino()
+                        wm.activate_destino()
                         self.last_square = wm.destino
                         return
                     elif wm.destino == ucld:
@@ -155,7 +159,7 @@ class WRunCaptures(LCDialog.LCDialog):
                         else:
                             x = 0
                         wm = liwm[x]
-                        wm.activa()
+                        wm.activate()
                         self.last_square = wm.origen
                         return
 
@@ -195,7 +199,7 @@ class WRunCaptures(LCDialog.LCDialog):
         self.save_video()
         event.accept()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
@@ -245,7 +249,7 @@ class WRunCaptures(LCDialog.LCDialog):
                 QTUtils.refresh_gui()
 
         # Ponemos el toolbar
-        self.show_tb(self.verify, self.terminar)
+        self.show_tb(self.verify, self.finalize)
 
         # Activamos capturas
         self.gb_captures.setEnabled(True)
@@ -254,7 +258,7 @@ class WRunCaptures(LCDialog.LCDialog):
         # Marcamos el tiempo
         self.time_base = time.time()
 
-        self.liwm_captures[0].activa()
+        self.liwm_captures[0].activate()
 
     def verify(self):
         tiempo = time.time() - self.time_base
@@ -262,7 +266,7 @@ class WRunCaptures(LCDialog.LCDialog):
         def test(liwm, si_mb):
             st_busca = {mv.xfrom() + mv.xto() for mv in FasterCode.get_captures(self.position_obj.fen(), si_mb)}
             st_sel = set()
-            ok = True
+            resp = True
             for wm in liwm:
                 wm.deshabilita()
                 mv = wm.movimiento()
@@ -274,10 +278,10 @@ class WRunCaptures(LCDialog.LCDialog):
                         st_sel.add(mv)
                     else:
                         wm.error()
-                        ok = False
-            if ok:
-                ok = (len(st_busca) == len(st_sel)) or st_sel == 16
-            return ok
+                        resp = False
+            if resp:
+                resp = (len(st_busca) == len(st_sel)) or st_sel == 16
+            return resp
 
         ok_captures = test(self.liwm_captures, True)
         ok_threats = test(self.liwm_threats, False)
@@ -291,10 +295,10 @@ class WRunCaptures(LCDialog.LCDialog):
             if (self.capture.current_posmove + self.capture.current_depth) >= (len(self.capture.game) + 1):
                 QTMessages.message_result_win(
                     self,
-                    _("Training finished") + "<br><br>" + _('Congratulations, goal achieved'),
+                    f"{_('Training finished')}<br><br>{_('Congratulations, goal achieved')}",
                 )
                 self.db_captures.change_count_capture(self.capture)
-                self.terminar()
+                self.finalize()
                 return
             self.lb_result.set_text(
                 "%s (%d)"
@@ -325,4 +329,4 @@ class WRunCaptures(LCDialog.LCDialog):
             self.board.set_position(self.position_obj)
 
         self.db_captures.change_count_capture(self.capture)
-        self.show_tb(self.terminar, self.seguir)
+        self.show_tb(self.finalize, self.seguir)

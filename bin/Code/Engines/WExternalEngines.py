@@ -4,7 +4,7 @@ import os
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Engines import Engines, WEngines
 from Code.QT import (
     Colocacion,
@@ -21,6 +21,9 @@ from Code.QT import (
 
 
 class WExternalEngines(LCDialog.LCDialog):
+    me_control: str
+    me_key: str
+
     def __init__(self, owner):
         icono = Iconos.Engine()
         titulo = _("External engines")
@@ -38,7 +41,7 @@ class WExternalEngines(LCDialog.LCDialog):
         o_columns.nueva("OPTION", _("UCI option"), 180)
         o_columns.nueva("VALUE", _("Value"), 200, edicion=Delegados.MultiEditor(self))
         o_columns.nueva("DEFAULT", _("By default"), 90)
-        self.grid_conf = Grid.Grid(self, o_columns, siSelecFilas=False, is_editable=True)
+        self.grid_conf = Grid.Grid(self, o_columns, complete_row_select=False, is_editable=True)
         self.register_grid(self.grid_conf)
 
         # Layout
@@ -128,8 +131,9 @@ class WExternalEngines(LCDialog.LCDialog):
             return editor.texto()
         elif self.me_control in ("cb", "sb"):
             return editor.valor()
+        return None
 
-    def grid_setvalue(self, grid, nfila, column, valor):
+    def grid_setvalue(self, _grid, nfila, _column, valor):
         opcion = self.li_uci_options[nfila]
         self.engine.set_uci_option(opcion.name, valor)
         self.wexternals.set_changed()
@@ -138,18 +142,18 @@ class WExternalEngines(LCDialog.LCDialog):
         self.wexternals.save()
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save()
         self.accept()
 
     def closeEvent(self, event):
         self.save()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_uci_options) if self.engine else 0
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         op = self.li_uci_options[row]
         if key == "OPTION":
             if op.minimo != op.maximo:
@@ -172,12 +176,14 @@ class WExternalEngines(LCDialog.LCDialog):
             valor = str(valor)
             return valor.lower() if op.tipo == "check" else valor
 
-    def grid_bold(self, grid, row, o_column):
+    def grid_bold(self, _grid, row, _obj_column):
         op = self.li_uci_options[row]
         return str(op.default).strip().lower() != str(op.valor).strip().lower()
 
 
 class WConfExternals(QtWidgets.QWidget):
+    engine: Engines.Engine
+
     def __init__(self, owner):
         QtWidgets.QWidget.__init__(self, owner)
 
@@ -189,7 +195,7 @@ class WConfExternals(QtWidgets.QWidget):
 
         # Toolbar
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), owner.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), owner.finalize)
         tb.new(_("New"), Iconos.TutorialesCrear(), self.nuevo)
         tb.new(_("Modify"), Iconos.Modificar(), self.modificar)
         tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
@@ -209,7 +215,7 @@ class WConfExternals(QtWidgets.QWidget):
 
         self.grid = None
 
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
         self.owner.register_grid(self.grid)
 
         layout = Colocacion.V().control(tb).control(self.grid).margen(0)
@@ -229,7 +235,7 @@ class WConfExternals(QtWidgets.QWidget):
     def set_changed(self):
         self.is_changed = True
 
-    def grid_setvalue(self, grid, nfila, column, valor):
+    def grid_setvalue(self, _grid, nfila, _column, valor):
         opcion = self.engine.li_uci_options_editable()[nfila]
         self.engine.set_uci_option(opcion.name, valor)
         self.set_changed()
@@ -241,27 +247,28 @@ class WConfExternals(QtWidgets.QWidget):
             Util.save_pickle(Code.configuration.paths.file_external_engines(), li)
             Code.configuration.relee_engines()
 
-    def grid_cambiado_registro(self, grid, row, o_column):
+    def grid_cambiado_registro(self, grid, row, _obj_column):
         if grid == self.grid:
             if row >= 0:
                 self.owner.set_engine(self.lista_motores[row])
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.lista_motores)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         me = self.lista_motores[row]
         if key == "AUTOR":
             return me.autor
         elif key == "ALIAS":
-            return me.alias
+            return me.key
         elif key == "ENGINE":
             return me.name
         elif key == "INFO":
             return me.id_info.replace("\n", ", ")
         elif key == "ELO":
             return str(me.elo) if me.elo else "-"
+        return None
 
     def command(self):
         separador = FormLayout.separador
@@ -278,22 +285,22 @@ class WConfExternals(QtWidgets.QWidget):
             li_gen,
             title=_("Command"),
             parent=self,
-            anchoMinimo=600,
+            minimum_width=600,
             icon=Iconos.Terminal(),
         )
         if resultado:
             nada, resp = resultado
             command = resp[0]
-            liArgs = []
+            li_args = []
             if not command or not os.path.isfile(command):
-                return
+                return None
             for x in range(1, len(resp)):
                 arg = resp[x].strip()
                 if arg:
-                    liArgs.append(arg)
+                    li_args.append(arg)
 
             with QTMessages.one_moment_please(self):
-                me = Engines.Engine(path_exe=command, args=liArgs)
+                me = Engines.Engine(path_exe=command, args=li_args)
                 me.read_uci_options()
 
             if not me.li_uci_options_editable() and not me.id_name:
@@ -313,6 +320,7 @@ class WConfExternals(QtWidgets.QWidget):
                 self.grid.refresh()
                 self.grid.gobottom(0)
                 self.set_changed()
+        return None
 
     def nuevo(self):
         me = WEngines.select_engine(self)
@@ -327,8 +335,8 @@ class WConfExternals(QtWidgets.QWidget):
             self.grid.gobottom(0)
             self.set_changed()
 
-    def grid_doubleclick_header(self, grid, o_column):
-        key = o_column.key
+    def grid_doubleclick_header(self, _grid, obj_column):
+        key = obj_column.key
         if key == "ALIAS":
             key = "key"
         elif key == "ENGINE":
@@ -353,7 +361,7 @@ class WConfExternals(QtWidgets.QWidget):
                     self.grid.refresh()
                     self.set_changed()
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.modificar()
 
     def arriba(self):
@@ -447,19 +455,19 @@ class WEngineFast(QtWidgets.QDialog):
         tb = QTDialogs.tb_accept_cancel(self)
 
         lb_alias = Controles.LB2P(self, _("Alias"))
-        self.edAlias = Controles.ED(self, engine.alias).anchoMinimo(360)
+        self.edAlias = Controles.ED(self, engine.key).minimum_width(360)
 
         if not self.imported:
             lb_nombre = Controles.LB2P(self, _("Name"))
-            self.edNombre = Controles.ED(self, engine.name).anchoMinimo(360)
+            self.edNombre = Controles.ED(self, engine.name).minimum_width(360)
 
-        lb_info = Controles.LB(self, _("Information") + ": ")
-        self.emInfo = Controles.EM(self, engine.id_info, siHTML=False).anchoMinimo(360).altoFijo(60)
+        lb_info = Controles.LB(self, f"{_('Information')}: ")
+        self.emInfo = Controles.EM(self, engine.id_info, is_html=False).minimum_width(360).fixed_height(60)
 
         lb_elo = Controles.LB(self, "ELO: ")
         self.sbElo = Controles.SB(self, engine.elo, 0, 4000)
 
-        lb_exe = Controles.LB(self, "%s: %s" % (_("File"), Code.relative_root(engine.path_exe)))
+        lb_exe = Controles.LB(self, f"{_('File')}: {Code.relative_root(engine.path_exe)}")
 
         # Layout
         ly = Colocacion.G()
@@ -484,7 +492,7 @@ class WEngineFast(QtWidgets.QDialog):
 
         # Comprobamos que no se repita el alias
         for engine in self.list_engines:
-            if (self.external_engine != engine) and (engine.alias == alias):
+            if (self.external_engine != engine) and (engine.key == alias):
                 QTMessages.message_error(
                     self,
                     _(

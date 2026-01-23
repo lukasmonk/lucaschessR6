@@ -31,19 +31,19 @@ def dic_keys():
 
 class WaitingMessage(QtWidgets.QWidget):
     def __init__(
-            self,
-            parent,
-            mensaje,
-            with_cancel=False,
-            opacity=0.91,
-            physical_pos="c",
-            fixed_size=None,
-            tit_cancel=None,
-            background=None,
-            pm_image=None,
-            puntos=None,
-            with_image=True,
-            if_parent_none=False,
+        self,
+        parent,
+        mensaje,
+        with_cancel=False,
+        opacity=0.91,
+        physical_pos="c",
+        fixed_size=None,
+        tit_cancel=None,
+        background=None,
+        pm_image=None,
+        puntos=None,
+        with_image=True,
+        if_parent_none=False,
     ):
         # No se indica parent cuando le afecta el disable general, cuando se analiza posicion por ejemplo
         super(WaitingMessage, self).__init__(None if if_parent_none else parent)
@@ -61,7 +61,7 @@ class WaitingMessage(QtWidgets.QWidget):
         if puntos is None:
             puntos = Code.configuration.x_sizefont_messages
 
-        self.setStyleSheet("QWidget, QLabel { background: %s }" % background)
+        self.setStyleSheet(f"QWidget, QLabel {{ background: {background} }}")
 
         lbi = None
         if with_image:
@@ -90,7 +90,7 @@ class WaitingMessage(QtWidgets.QWidget):
             if not tit_cancel:
                 tit_cancel = _("Cancel")
             self.btCancelar = (
-                Controles.PB(self, tit_cancel, rutina=self.cancelar, plano=False).ponIcono(Iconos.Cancelar())
+                Controles.PB(self, tit_cancel, rutina=self.cancelar, plano=False).set_icono(Iconos.Cancelar())
                 # .relative_width(100)
             )
             self.btCancelar.setStyleSheet(
@@ -223,17 +223,17 @@ def analizando(owner, with_cancel=False):
 
 
 def temporary_message(
-        main_window,
-        mensaje,
-        seconds,
-        background=None,
-        pm_image=None,
-        physical_pos="c",
-        fixed_size=None,
-        with_cancel=None,
-        tit_cancel=None,
-        puntos=None,
-        with_image=True
+    main_window,
+    mensaje,
+    seconds,
+    background=None,
+    pm_image=None,
+    physical_pos="c",
+    fixed_size=None,
+    with_cancel=None,
+    tit_cancel=None,
+    puntos=None,
+    with_image=True,
 ):
     if with_cancel is None:
         with_cancel = seconds > 3.0
@@ -249,7 +249,7 @@ def temporary_message(
         tit_cancel=tit_cancel,
         physical_pos=physical_pos,
         fixed_size=fixed_size,
-        with_image=with_image
+        with_image=with_image,
     )
     if seconds:
         me.time(seconds)
@@ -287,7 +287,7 @@ class TwoProgressBars(QtWidgets.QDialog):
         self.gb2 = Controles.GB(self, "", ly)
 
         # cancelar
-        bt = Controles.PB(self, _("Cancel"), self.cancelar, plano=False)  # .ponIcono( Iconos.Delete() )
+        bt = Controles.PB(self, _("Cancel"), self.cancelar, plano=False)  # .set_icono( Iconos.Delete() )
         ly_bt = Colocacion.H().relleno()
 
         # pausa
@@ -529,7 +529,7 @@ class ProgressBarSimple(QtWidgets.QProgressDialog):
 
 
 def resalta(mens, tipo=4):
-    return ("<h%d>%s</h%d>" % (tipo, mens, tipo)).replace("\n", "<br>")
+    return f"<h{tipo}>{mens}</h{tipo}>".replace("\n", "<br>")
 
 
 def lines_type():
@@ -547,11 +547,11 @@ def lines_type():
 def list_zvalues():
     li = []
     for k in range(5, 30):
-        txt = "%2d" % (k - 4,)
+        txt = f"{k - 4:2d}"
         if k == ZVALUE_PIECE:
-            txt += " ≥ " + _("Piece")
+            txt += f" ≥ {_('Piece')}"
         elif k == ZVALUE_PIECE_MOVING:
-            txt += " ≥ " + _("Moving piece")
+            txt += f" ≥ {_('Moving piece')}"
 
         li.append((txt, k))
     return li
@@ -564,7 +564,7 @@ def spinbox_lb(owner, valor, from_sq, to_sq, etiqueta=None, max_width=None, fuen
     if max_width:
         ed.relative_width(max_width)
     if etiqueta:
-        label = Controles.LB(owner, etiqueta + ": ")
+        label = Controles.LB(owner, f"{etiqueta}: ")
         if fuente:
             label.setFont(fuente)
         return ed, label
@@ -575,21 +575,21 @@ def spinbox_lb(owner, valor, from_sq, to_sq, etiqueta=None, max_width=None, fuen
 def combobox_lb(parent, li_options, valor, etiqueta=None):
     cb = Controles.CB(parent, li_options, valor)
     if etiqueta:
-        return cb, Controles.LB(parent, etiqueta + ": ")
+        return cb, Controles.LB(parent, f"{etiqueta}: ")
     else:
         return cb
 
 
 def message(
-        owner,
-        texto,
-        explanation=None,
-        titulo=None,
-        pixmap=None,
-        px=None,
-        py=None,
-        si_bold=False,
-        delayed=False,
+    owner,
+    texto,
+    explanation=None,
+    titulo=None,
+    pixmap=None,
+    px=None,
+    py=None,
+    si_bold=False,
+    delayed=False,
 ):
     def send():
         msg = QtWidgets.QMessageBox(owner)
@@ -648,7 +648,7 @@ def message_bold(owner, mens, titulo=None, delayed=False):
 def message_information(window, txt):
     message(
         window,
-        "<br><br><b><big><b>%s</b></big>" % txt,
+        f"<br><br><b><big><b>{txt}</b></big>",
         titulo=_("Information"),
         pixmap=Iconos.pmCheck(),
     )
@@ -657,7 +657,7 @@ def message_information(window, txt):
 def message_result_win(window, txt):
     message(
         window,
-        "<br><br><b><big><b>%s</b></big>" % txt,
+        f"<br><br><b><big><b>{txt}</b></big>",
         titulo=_("Result"),
         pixmap=Iconos.pmTrophy(),
     )
@@ -758,7 +758,7 @@ def message_menu(owner, main, the_message, delayed, zzpos=True, dont_show=False)
                 continue
             for i in range(tb.layout().lineCount()):
                 line = tb.layout().lineAt(i)
-                ret.append(block_text[line.textStart(): line.textStart() + line.textLength()])
+                ret.append(block_text[line.textStart() : line.textStart() + line.textLength()])
             tb = tb.next()
 
         for linea in ret:
@@ -803,7 +803,7 @@ class SimpleWindow(QtWidgets.QDialog):
             | QtCore.Qt.WindowType.WindowTitleHint
         )
 
-        lb_clave = Controles.LB(self, label + ": ")
+        lb_clave = Controles.LB(self, f"{label}: ")
         self.with_list_values = li_values is not None
         if self.with_list_values:
             li_values = [(value, value) for value in li_values]
@@ -820,9 +820,9 @@ class SimpleWindow(QtWidgets.QDialog):
 
         lb_mas_info = Controles.LB(self, mas_info if mas_info else "").align_center()
 
-        bt_aceptar = Controles.PB(self, _("Accept"), self.aceptar, plano=False).ponIcono(Iconos.AceptarPeque())
+        bt_aceptar = Controles.PB(self, _("Accept"), self.aceptar, plano=False).set_icono(Iconos.AceptarPeque())
         bt_aceptar.setDefault(True)
-        bt_cancelar = Controles.PB(self, _("Cancel"), self.reject, plano=False).ponIcono(Iconos.CancelarPeque())
+        bt_cancelar = Controles.PB(self, _("Cancel"), self.reject, plano=False).set_icono(Iconos.CancelarPeque())
 
         ly0 = Colocacion.H().relleno().control(lb_clave).control(field).relleno()
         ly = Colocacion.V().otro(ly0).control(lb_mas_info)
@@ -845,14 +845,14 @@ class SimpleWindow(QtWidgets.QDialog):
 
 
 def read_simple(
-        owner,
-        title,
-        label,
-        value,
-        mas_info=None,
-        width=None,
-        in_cursor=False,
-        li_values=None,
+    owner,
+    title,
+    label,
+    value,
+    mas_info=None,
+    width=None,
+    in_cursor=False,
+    li_values=None,
 ):
     v = SimpleWindow(owner, title, label, value, mas_info, width, in_cursor, li_values)
     if v.exec():

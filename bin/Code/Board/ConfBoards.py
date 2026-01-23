@@ -152,14 +152,14 @@ class ConfigTabBase(JS):
 
 
 class ConfigBoard(JS):
-    def __init__(self, xid, ancho_pieza, padre="BASE"):
+    def __init__(self, xid, ancho_pieza, father="BASE"):
         self._id = xid
         self.x_anchoPieza = ancho_pieza
         self._anchoPiezaDef = ancho_pieza
         self.o_tema = ConfigTabTema()
         self.o_tema.x_siTemaDefecto = xid != "BASE"
         self.o_base = ConfigTabBase()
-        self._padre = padre
+        self._padre = father
         self._confPadre = None
         self.is_base = xid == "BASE"
 
@@ -184,7 +184,7 @@ class ConfigBoard(JS):
     def ponDefAnchoPieza(self):
         return self.width_piece(self._anchoPiezaDef)
 
-    def cambiaPiezas(self, nomPiezas):
+    def change_the_pieces(self, nomPiezas):
         self.o_base.x_nomPiezas = nomPiezas
 
     def nomPiezas(self):

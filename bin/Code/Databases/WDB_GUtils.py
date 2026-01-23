@@ -2,7 +2,7 @@ import os
 
 from PySide6 import QtCore, QtWidgets
 
-from Code import Util
+from Code.Z import Util
 from Code.Databases import DBgames
 from Code.QT import (
     Colocacion,
@@ -37,7 +37,7 @@ class WOptionsDatabase(QtWidgets.QDialog):
         def d_false(key):
             return dic_data.get(key, False)
 
-        title = _("New database") if self.new else "%s: %s" % (_("Database"), d_str("NAME"))
+        title = _("New database") if self.new else f"{_('Database')}: {d_str('NAME')}"
         self.setWindowTitle(title)
         self.setWindowIcon(Iconos.DatabaseMas())
         self.setWindowFlags(
@@ -74,14 +74,14 @@ class WOptionsDatabase(QtWidgets.QDialog):
         lb_group = Controles.LB2P(self, _("Group"))
         self.ed_group = Controles.ED(self, group).controlrx(valid_rx)
         self.bt_group = (
-            Controles.PB(self, "", self.check_group).ponIcono(Iconos.BuscarC(), 16).ponToolTip(_("Group lists"))
+            Controles.PB(self, "", self.check_group).set_icono(Iconos.BuscarC(), 16).set_tooltip(_("Group lists"))
         )
         ly_group = Colocacion.H().control(lb_group).control(self.ed_group).espacio(-5).control(self.bt_group).relleno(1)
 
         lb_subgroup_l1 = Controles.LB2P(self, _("Subgroup"))
         self.ed_subgroup_l1 = Controles.ED(self, subgroup1).controlrx(valid_rx)
         self.bt_subgroup_l1 = (
-            Controles.PB(self, "", self.check_subgroup_l1).ponIcono(Iconos.BuscarC(), 16).ponToolTip(_("Group lists"))
+            Controles.PB(self, "", self.check_subgroup_l1).set_icono(Iconos.BuscarC(), 16).set_tooltip(_("Group lists"))
         )
         ly_subgroup_l1 = (
             Colocacion.H()
@@ -93,10 +93,10 @@ class WOptionsDatabase(QtWidgets.QDialog):
             .relleno(1)
         )
 
-        lb_subgroup_l2 = Controles.LB2P(self, "%s → %s" % (_("Subgroup"), _("Subgroup")))
+        lb_subgroup_l2 = Controles.LB2P(self, f"{_('Subgroup')} → {_('Subgroup')}")
         self.ed_subgroup_l2 = Controles.ED(self, subgroup2).controlrx(valid_rx)
         self.bt_subgroup_l2 = (
-            Controles.PB(self, "", self.check_subgroup_l2).ponIcono(Iconos.BuscarC(), 16).ponToolTip(_("Group lists"))
+            Controles.PB(self, "", self.check_subgroup_l2).set_icono(Iconos.BuscarC(), 16).set_tooltip(_("Group lists"))
         )
         ly_subgroup_l2 = (
             Colocacion.H()
@@ -117,11 +117,11 @@ class WOptionsDatabase(QtWidgets.QDialog):
             self.lb_import_pgn = Controles.LB2P(self, f'{_("Import")}/{_("PGN")}')
             self.pb_select_import_pgn = Controles.PB(self, "", self.select_pgn, False)
             self.pb_select_import_pgn.setSizePolicy(
-                QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+                QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             )
             ly_import_pgn = Colocacion.H().control(self.lb_import_pgn).control(self.pb_select_import_pgn)
 
-        gb_group = Controles.GB(self, "%s (%s)" % (_("Group"), _("optional")), ly_group)
+        gb_group = Controles.GB(self, f"{_('Group')} ({_('optional')})", ly_group)
 
         lb_summary = Controles.LB2P(self, _("Opening explorer depth (0=disable)"))
         self.sb_summary = Controles.SB(self, dic_data.get("SUMMARY_DEPTH", 12), 0, 999)
@@ -131,9 +131,9 @@ class WOptionsDatabase(QtWidgets.QDialog):
         lb_external = Controles.LB2P(self, _("Store in an external folder"))
         self.bt_external = Controles.PB(self, self.external_folder, self.select_external, False)
         self.bt_external.setSizePolicy(
-            QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         )
-        bt_remove_external = Controles.PB(self, "", self.remove_external).ponIcono(Iconos.Remove1(), 16)
+        bt_remove_external = Controles.PB(self, "", self.remove_external).set_icono(Iconos.Remove1(), 16)
         ly_external = (
             Colocacion.H().control(lb_external).control(self.bt_external).espacio(-8).control(bt_remove_external)
         )
@@ -226,6 +226,7 @@ class WOptionsDatabase(QtWidgets.QDialog):
                 for direc in li:
                     menu.opcion(direc, direc, rondo.otro())
                 return menu.lanza()
+        return None
 
     def check_group(self):
         resp = self.menu_groups(self.configuration.paths.folder_databases())
@@ -267,10 +268,10 @@ class WOptionsDatabase(QtWidgets.QDialog):
                 if subgroup_l2:
                     folder = Util.opj(folder, subgroup_l2)
         if not Util.check_folders(folder):
-            QTMessages.message_error(self, "%s\n%s" % (_("Unable to create the folder"), folder))
+            QTMessages.message_error(self, f"{_('Unable to create the folder')}\n{folder}")
             return
 
-        filename = "%s.lcdb" % name
+        filename = f"{name}.lcdb"
         if self.external_folder:
             filepath_with_data = Util.opj(self.external_folder, filename)
         else:
@@ -284,12 +285,12 @@ class WOptionsDatabase(QtWidgets.QDialog):
         if test_exist and Util.exist_file(filepath_with_data):
             QTMessages.message_error(
                 self,
-                "%s\n%s" % (_("This database already exists."), filepath_with_data),
+                f"{_('This database already exists.')}\n{filepath_with_data}",
             )
             return
 
         if self.external_folder:
-            filepath_in_databases = Util.opj(folder, "%s.lcdblink" % name)
+            filepath_in_databases = Util.opj(folder, f"{name}.lcdblink")
             with open(filepath_in_databases, "wt", encoding="utf-8", errors="ignore") as q:
                 q.write(filepath_with_data)
         else:
@@ -335,7 +336,7 @@ def new_database(owner, configuration, with_import_pgn=False, name=""):
 
 
 class WTags(LCDialog.LCDialog):
-    def __init__(self, owner, dbgames: [DBgames.DBgames]):
+    def __init__(self, owner, dbgames: DBgames.DBgames):
         LCDialog.LCDialog.__init__(self, owner, _("Tags"), Iconos.Tags(), "tagsedition")
         self.dbgames = dbgames
         self.dic_cambios = None
@@ -404,18 +405,18 @@ class WTags(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.gtags)
-        self.restore_video(default_width=self.gtags.anchoColumnas() + 20, default_height=400)
+        self.restore_video(default_width=self.gtags.width_columns_displayables() + 20, default_height=400)
 
         self.gtags.gotop()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_data)
 
-    def grid_dato(self, grid, row, ocol):
+    def grid_dato(self, _grid, row, ocol):
         return self.li_data[row][ocol.key]
 
-    def grid_setvalue(self, grid, row, o_column, value):
-        key = o_column.key
+    def grid_setvalue(self, _grid, row, obj_column, value):
+        key = obj_column.key
         dic: dict = self.li_data[row]
         value = value.strip()
         if key == "VALUE" and value:

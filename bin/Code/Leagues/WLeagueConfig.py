@@ -1,7 +1,7 @@
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
     BOOK_RANDOM_PROPORTIONAL,
@@ -26,10 +26,11 @@ from Code.QT import (
 
 class WLeagueConfig(LCDialog.LCDialog):
     MAX_DIVISIONS = 20
+    list_leagues: list
 
     def __init__(self, w_parent, league: Leagues.League):
 
-        titulo = "%s: %s" % (_("League"), league.name())
+        titulo = f"{_('League')}: {league.name()}"
         icono = Iconos.League()
         extparam = "leagueConfiguration"
         LCDialog.LCDialog.__init__(self, w_parent, titulo, icono, extparam)
@@ -76,21 +77,21 @@ class WLeagueConfig(LCDialog.LCDialog):
             align_right=True,
             edicion=Delegados.LineaTexto(is_integer=True),
         )
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, is_editable=True)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, is_editable=True)
         self.register_grid(self.grid)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
-        self.bt_engines_more = Controles.PB(self, "++ " + _("Engines"), rutina=self.add_engines, plano=False).ponIcono(
+        self.bt_engines_more = Controles.PB(self, f"++ {_('Engines')}", rutina=self.add_engines, plano=False).set_icono(
             Iconos.Engines()
         )
         self.bt_engines_more.set_pordefecto(False)
 
-        self.bt_human_more = Controles.PB(self, "+ " + _("Human"), rutina=self.add_human, plano=False).ponIcono(
+        self.bt_human_more = Controles.PB(self, f"+ {_('Human')}", rutina=self.add_human, plano=False).set_icono(
             Iconos.Player()
         )
         self.bt_human_more.set_pordefecto(False)
 
-        self.bt_engine_more = Controles.PB(self, "+ " + _("Engine"), rutina=self.add_engine, plano=False).ponIcono(
+        self.bt_engine_more = Controles.PB(self, f"+ {_('Engine')}", rutina=self.add_engine, plano=False).set_icono(
             Iconos.Engine()
         )
         self.bt_engine_more.set_pordefecto(False)
@@ -109,37 +110,39 @@ class WLeagueConfig(LCDialog.LCDialog):
             self,
             "%s (%s): " % (_("Minimum centipawns to assign winner"), "0=%s" % _("Disable")),
         )
-        self.ed_resign = Controles.ED(self).tipoInt(league.resign).relative_width(40)
-        bt_resign = Controles.PB(self, "", rutina=self.borra_resign).ponIcono(Iconos.Reciclar())
+        self.ed_resign = Controles.ED(self).type_integer(league.resign).relative_width(40)
+        bt_resign = Controles.PB(self, "", rutina=self.borra_resign).set_icono(Iconos.Reciclar())
 
         # Draw-plys
         lb_draw_min_ply = Controles.LB(
             self,
             "%s (%s): " % (_("Minimum movements to assign draw"), "0=%s" % _("Disable")),
         )
-        self.ed_draw_min_ply = Controles.ED(self).ponInt(league.draw_min_ply).relative_width(30).align_right()
+        self.ed_draw_min_ply = Controles.ED(self).set_integer(league.draw_min_ply).relative_width(30).align_right()
         # Draw-puntos
-        lb_draw_range = Controles.LB(self, _("Maximum centipawns to assign draw") + ": ")
-        self.ed_draw_range = Controles.ED(self).tipoInt(league.draw_range).relative_width(30)
-        bt_draw_range = Controles.PB(self, "", rutina=self.borra_draw_range).ponIcono(Iconos.Reciclar())
+        lb_draw_range = Controles.LB(self, f"{_('Maximum centipawns to assign draw')}: ")
+        self.ed_draw_range = Controles.ED(self).type_integer(league.draw_range).relative_width(30)
+        bt_draw_range = Controles.PB(self, "", rutina=self.borra_draw_range).set_icono(Iconos.Reciclar())
 
-        # adjudicator
+        # move_evaluator
         self.list_engines = Code.configuration.engines.list_name_alias_multipv10()
-        self.cbJmotor, self.lbJmotor = QTMessages.combobox_lb(self, self.list_engines, league.adjudicator, _("Engine"))
-        self.edJtiempo = Controles.ED(self).tipoFloat(league.adjudicator_time).relative_width(50)
+        self.cbJmotor, self.lbJmotor = QTMessages.combobox_lb(
+            self, self.list_engines, league.move_evaluator, _("Engine")
+        )
+        self.edJtiempo = Controles.ED(self).type_float(league.adjudicator_time).relative_width(50)
         self.lbJtiempo = Controles.LB2P(self, _("Time in seconds"))
         ly = Colocacion.G()
         ly.controld(self.lbJmotor, 3, 0).control(self.cbJmotor, 3, 1)
         ly.controld(self.lbJtiempo, 4, 0).control(self.edJtiempo, 4, 1)
         self.gbJ = Controles.GB(self, _("Adjudicator"), ly)
 
-        lb_slow = Controles.LB(self, _("Slow down the movement of pieces") + ": ")
+        lb_slow = Controles.LB(self, f"{_('Slow down the movement of pieces')}: ")
         self.chb_slow = Controles.CHB(self, " ", league.slow_pieces)
 
         # Times
         minutes, seconds = self.league.time_engine_engine
         lb_minutes = Controles.LB2P(self, _("Total minutes"))
-        self.ed_minutes_eng_eng = Controles.ED(self).tipoFloat(minutes).relative_width(35)
+        self.ed_minutes_eng_eng = Controles.ED(self).type_float(minutes).relative_width(35)
         self.sb_seconds_eng_eng, lb_seconds = QTMessages.spinbox_lb(
             self, seconds, -999, 999, max_width=40, etiqueta=_("Seconds added per move")
         )
@@ -150,7 +153,7 @@ class WLeagueConfig(LCDialog.LCDialog):
 
         minutes, seconds = self.league.time_engine_human
         lb_minutes = Controles.LB2P(self, _("Total minutes"))
-        self.ed_minutes_eng_human = Controles.ED(self).tipoFloat(minutes).relative_width(65)
+        self.ed_minutes_eng_human = Controles.ED(self).type_float(minutes).relative_width(65)
         self.sb_seconds_eng_human, lb_seconds = QTMessages.spinbox_lb(
             self, seconds, -999, 999, max_width=40, etiqueta=_("Seconds added per move")
         )
@@ -159,7 +162,7 @@ class WLeagueConfig(LCDialog.LCDialog):
 
         minutes = self.league.time_added_human
         lb_added_human = Controles.LB2P(self, _("Extra minutes for the player"))
-        self.ed_added_human = Controles.ED(self).tipoFloat(minutes).relative_width(65)
+        self.ed_added_human = Controles.ED(self).type_float(minutes).relative_width(65)
         ly1 = Colocacion.H().control(lb_added_human).control(self.ed_added_human).relleno()
         ly2 = Colocacion.V().otro(ly).otro(ly1)
 
@@ -178,15 +181,15 @@ class WLeagueConfig(LCDialog.LCDialog):
         ]
 
         self.cbBooksR = QTMessages.combobox_lb(self, li_books, lib_inicial)
-        self.btNuevoBookR = Controles.PB(self, "", self.new_book).ponIcono(Iconos.Mas())
+        self.btNuevoBookR = Controles.PB(self, "", self.new_book).set_icono(Iconos.Mas())
         self.cbBooksRR = QTMessages.combobox_lb(self, li_resp_book, self.league.book_rr)
         self.lbDepthBookR = Controles.LB2P(self, _("Max depth"))
-        self.edDepthBookR = Controles.ED(self).tipoInt(self.league.book_depth).relative_width(30)
+        self.edDepthBookR = Controles.ED(self).type_integer(self.league.book_depth).relative_width(30)
 
         hbox = Colocacion.H().control(self.cbBooksR).control(self.btNuevoBookR).control(self.cbBooksRR)
         hbox1 = Colocacion.H().control(self.lbDepthBookR).control(self.edDepthBookR).relleno()
         vbox = Colocacion.V().otro(hbox).otro(hbox1)
-        gb_book = Controles.GB(self, _("Engines") + " - " + _("Book"), vbox)
+        gb_book = Controles.GB(self, f"{_('Engines')} - {_('Book')}", vbox)
 
         self.sb_migration, lb_migration = QTMessages.spinbox_lb(
             self,
@@ -198,12 +201,12 @@ class WLeagueConfig(LCDialog.LCDialog):
         )
         self.sb_migration.capture_changes(self.set_num_elements)
 
-        lb_score_win = Controles.LB(self, _("Win") + ":")
-        lb_score_draw = Controles.LB(self, _("Draw") + ":")
-        lb_score_lost = Controles.LB(self, _("Loss") + ":")
-        self.ed_score_win = Controles.ED(self).ponFloat(self.league.score_win).relative_width(40).align_right()
-        self.ed_score_draw = Controles.ED(self).ponFloat(self.league.score_draw).relative_width(40).align_right()
-        self.ed_score_lost = Controles.ED(self).ponFloat(self.league.score_lost).relative_width(40).align_right()
+        lb_score_win = Controles.LB(self, f"{_('Win')}:")
+        lb_score_draw = Controles.LB(self, f"{_('Draw')}:")
+        lb_score_lost = Controles.LB(self, f"{_('Loss')}:")
+        self.ed_score_win = Controles.ED(self).set_float(self.league.score_win).relative_width(40).align_right()
+        self.ed_score_draw = Controles.ED(self).set_float(self.league.score_draw).relative_width(40).align_right()
+        self.ed_score_lost = Controles.ED(self).set_float(self.league.score_lost).relative_width(40).align_right()
         ly_score = Colocacion.H().relleno()
         ly_score.control(lb_score_win).control(self.ed_score_win)
         ly_score.control(lb_score_draw).control(self.ed_score_draw)
@@ -280,7 +283,7 @@ class WLeagueConfig(LCDialog.LCDialog):
             else:
                 foreground = "green"
                 color = "white"
-            lb.setStyleSheet("color: %s;background: %s;padding-left:5px;padding-right:5px;" % (color, foreground))
+            lb.setStyleSheet(f"color: {color};background: {foreground};padding-left:5px;padding-right:5px;")
 
         for division in range(self.MAX_DIVISIONS):
             self.li_lb[division].setVisible(division <= mx)
@@ -304,7 +307,7 @@ class WLeagueConfig(LCDialog.LCDialog):
             self.sort_list()
 
     def name_elo(self, title, icon, name, elo):
-        form = FormLayout.FormLayout(self, title, icon, anchoMinimo=240)
+        form = FormLayout.FormLayout(self, title, icon, minimum_width=240)
 
         form.separador()
 
@@ -317,6 +320,7 @@ class WLeagueConfig(LCDialog.LCDialog):
             accion, li_resp = resp
             name, elo = li_resp
             return name, elo
+        return None
 
     def add_human(self):
         player = Code.configuration.x_player
@@ -330,34 +334,34 @@ class WLeagueConfig(LCDialog.LCDialog):
             self.sort_list()
 
     def save(self):
-        self.league.resign = self.ed_resign.textoInt()
-        self.league.draw_min_ply = self.ed_draw_min_ply.textoInt()
-        self.league.draw_range = self.ed_draw_range.textoInt()
-        self.league.adjudicator = self.cbJmotor.valor()
-        self.league.adjudicator_time = self.edJtiempo.textoFloat()
+        self.league.resign = self.ed_resign.text_to_integer()
+        self.league.draw_min_ply = self.ed_draw_min_ply.text_to_integer()
+        self.league.draw_range = self.ed_draw_range.text_to_integer()
+        self.league.move_evaluator = self.cbJmotor.valor()
+        self.league.adjudicator_time = self.edJtiempo.text_to_float()
         self.league.adjudicator_active = True
         self.league.slow_pieces = self.chb_slow.valor()
-        mnt = self.ed_minutes_eng_eng.textoFloat()
+        mnt = self.ed_minutes_eng_eng.text_to_float()
         if mnt <= 0:
             mnt = 3.0
         self.league.time_engine_engine = (mnt, self.sb_seconds_eng_eng.valor())
         self.league.time_engine_human = (
-            self.ed_minutes_eng_human.textoFloat(),
+            self.ed_minutes_eng_human.text_to_float(),
             self.sb_seconds_eng_human.valor(),
         )
-        self.league.time_added_human = self.ed_added_human.textoFloat()
+        self.league.time_added_human = self.ed_added_human.text_to_float()
         self.league.book = self.cbBooksR.valor()
         self.league.book_rr = self.cbBooksRR.valor()
-        self.league.book_depth = self.edDepthBookR.textoInt()
+        self.league.book_depth = self.edDepthBookR.text_to_integer()
 
         self.league.migration = self.sb_migration.valor()
-        self.league.score_win = self.ed_score_win.textoFloat()
-        self.league.score_draw = self.ed_score_draw.textoFloat()
-        self.league.score_lost = self.ed_score_lost.textoFloat()
+        self.league.score_win = self.ed_score_win.text_to_float()
+        self.league.score_draw = self.ed_score_draw.text_to_float()
+        self.league.score_lost = self.ed_score_lost.text_to_float()
         self.league.save()
         if self.remove_seasons_delayed:
             self.league.remove_seasons()
-            Util.remove_file(self.league.path() + ".work")
+            Util.remove_file(f"{self.league.path()}.work")
 
         self.save_video()
         self.accept()
@@ -367,13 +371,13 @@ class WLeagueConfig(LCDialog.LCDialog):
         self.reject()
 
     def borra_resign(self):
-        previo = self.ed_resign.textoInt()
-        self.ed_resign.tipoInt(0 if previo else 350)
+        previo = self.ed_resign.text_to_integer()
+        self.ed_resign.type_integer(0 if previo else 350)
 
     def borra_draw_range(self):
-        previo = self.ed_draw_range.textoInt()
-        self.ed_draw_range.tipoInt(0 if previo else 10)
-        self.ed_draw_min_ply.tipoInt(0 if previo else 50)
+        previo = self.ed_draw_range.text_to_integer()
+        self.ed_draw_range.type_integer(0 if previo else 10)
+        self.ed_draw_min_ply.type_integer(0 if previo else 50)
 
     @staticmethod
     def read():
@@ -391,11 +395,11 @@ class WLeagueConfig(LCDialog.LCDialog):
     def nom_league_pos(self, row):
         return self.list_leagues[row][0][:-4]
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return self.league.num_opponents()
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         if key == "ROW":
             return str(row + 1)
         opponent = self.league.opponent(row)
@@ -405,9 +409,9 @@ class WLeagueConfig(LCDialog.LCDialog):
             return str(opponent.elo())
         return opponent.name()
 
-    def grid_setvalue(self, grid, row, o_column, value):
+    def grid_setvalue(self, _grid, row, obj_column, value):
         opponent: Leagues.Opponent = self.league.opponent(row)
-        key = o_column.key
+        key = obj_column.key
         if key == "ELO":
             if value.isdigit():
                 elo = int(value)
@@ -433,15 +437,15 @@ class WLeagueConfig(LCDialog.LCDialog):
 
         self.grid.refresh()
 
-    def grid_color_fondo(self, grid, row, col):
+    def grid_color_fondo(self, _grid, row, _obj_column):
         opponent: Leagues.Opponent = self.league.opponent(row)
         return self.li_colors[opponent.initialdivision % 3]
 
-    def grid_bold(self, grid, row, column):
+    def grid_bold(self, _grid, row, _obj_column):
         opponent: Leagues.Opponent = self.league.opponent(row)
         return opponent.is_human()
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, _grid, k, _is_shift, _is_control, _is_alt):
         if k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             row = self.grid.recno()
             if row >= 0:
@@ -450,7 +454,7 @@ class WLeagueConfig(LCDialog.LCDialog):
                 return False
         return True
 
-    def grid_doubleclick_header(self, grid, col):
+    def grid_doubleclick_header(self, _grid, col):
         key = col.key
         if key == "DIVISION":
             self.sortby = "division"
@@ -458,12 +462,12 @@ class WLeagueConfig(LCDialog.LCDialog):
             self.sortby = "elo"
         self.sort_list()
 
-    def grid_right_button(self, grid, row, col, modif):
+    def grid_right_button(self, _grid, row, _obj_column, _modif):
         opponent: Leagues.Opponent = self.league.opponent(row)
         if opponent.is_engine():
             opponent.thinker.list_to_show(self)
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 

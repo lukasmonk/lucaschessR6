@@ -7,7 +7,7 @@ import traceback
 import polib
 
 import Code
-from Code import XRun
+from Code.Z import XRun
 
 
 class WorkTranslate(object):
@@ -49,7 +49,7 @@ class WorkTranslate(object):
                 li = li[li.index("bin") + 1 :]
                 where = "\\".join(li)[:-3]
                 if where.startswith("Code"):
-                    where = "." + where[4:] + ".py"
+                    where = f".{where[4:]}.py"
                 self.send_to_wtranslate(english_text, where)
                 self.last_50.append(english_text)
                 if len(self.last_50) > 70:
@@ -166,7 +166,7 @@ class WorkTranslate(object):
                 self.dic_wtranslate[entry.msgid] = {
                     "TRANS": trans,
                     "NEW": new,
-                    "WHERE": "|%s|" % where,
+                    "WHERE": f"|{where}|",
                     "LI_OCCURRENCES": li_occurrences,
                     "WHEN": now,
                 }

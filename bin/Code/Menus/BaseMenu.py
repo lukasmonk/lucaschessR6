@@ -4,7 +4,9 @@ from typing import List, Optional, Union
 from PySide6.QtGui import QIcon
 
 import Code
+from Code.Base.Constantes import ExitProgram
 from Code.QT import Controles, QTDialogs
+from Code.QT import QTUtils
 
 
 @dataclass(frozen=True)
@@ -142,3 +144,8 @@ class RootMenu(RootMenuBase):
 
     def run_select(self, resp):
         pass
+
+    def reiniciar(self):
+        self.wparent.final_processes()
+        self.wparent.accept()
+        QTUtils.exit_application(ExitProgram.REINIT)

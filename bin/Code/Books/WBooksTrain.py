@@ -1,5 +1,5 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
     BOOK_RANDOM_PROPORTIONAL,
@@ -12,6 +12,13 @@ from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs
 
 class WBooksTrain(LCDialog.LCDialog):
     ISWHITE, BOOK_PLAYER, BOOK_RIVAL, ALWAYS_HIGHEST, RESP_RIVAL, SHOW_MENU = range(6)
+
+    is_white: bool
+    book_player: Books.Book
+    player_highest: bool
+    book_rival: Books.Book
+    rival_resp: str
+    show_menu: bool
 
     def __init__(self, procesador):
         w_parent = procesador.main_window
@@ -75,8 +82,7 @@ class WBooksTrain(LCDialog.LCDialog):
         # Rival
         book_rival = book_player
 
-        nom_book_rival = dic_data.get(self.BOOK_RIVAL)
-        if nom_book_rival:
+        if nom_book_rival := dic_data.get(self.BOOK_RIVAL):
             for nom, book in li:
                 if nom == nom_book_rival:
                     book_rival = book
@@ -142,7 +148,7 @@ class WBooksTrain(LCDialog.LCDialog):
 
     def restore(self):
         resp = Util.restore_pickle(self.configuration.paths.file_train_books())
-        return resp if resp else {}
+        return resp or {}
 
     def save(self):
         dic = {

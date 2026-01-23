@@ -112,8 +112,8 @@ class LCDialog(QtWidgets.QDialog):
 
             for grid in self.liGrids:
                 grid.restore_video(dic)
-                if hasattr(grid, "releerColumnas"):
-                    grid.releerColumnas()
+                if hasattr(grid, "reread_columns"):
+                    grid.reread_columns()
 
             for sp, name in self.liSplitters:
                 k = f"SP_{name}"

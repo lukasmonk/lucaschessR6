@@ -1,10 +1,10 @@
 import random
 import time
+from typing import Optional, Any
 
 import FasterCode
 
 import Code
-from Code import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
     BOOK_RANDOM_UNIFORM,
@@ -27,11 +27,12 @@ from Code.ManagerBase import Manager
 from Code.QT import QTMessages, QTUtils
 from Code.Routes import Routes
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class GREngine:
     def __init__(self, procesador, nlevel):
-        self._label = "%s - %s" % (_("Engine"), TrListas.level(nlevel))
+        self._label = f"{_('Engine')} - {TrListas.level(nlevel)}"
         self.configuration = Code.configuration
         self.level = nlevel
         if nlevel == 0:
@@ -50,13 +51,13 @@ class GREngine:
                     if nlevel > 6:
                         nlevel = 1
             rival = self.configuration.engines.search(engine_name)
-            self.manager = procesador.create_manager_engine(rival, None, depth)
+            self.manager = procesador.create_manager_engine(rival, 0, depth, 0)
             self._name = "%s %s %d" % (rival.name, _("Depth"), depth)
             self._label += "\n%s\n%s: %d" % (self._name, _("Estimated elo"), elo)
 
     def close(self):
         if self.manager and self.manager != self:
-            self.manager.terminar()
+            self.manager.close()
             self.manager = None
 
     @property
@@ -97,7 +98,7 @@ class GREngine:
             if engine_name in self.configuration.engines.dic_engines():
                 d[tp].append((engine_name, xdepth, xelo))
 
-        li_engines = ManagerElo.listaMotoresElo()  # list (elo, key, depth)
+        li_engines = ManagerElo.list_engines_play_elo()  # list (elo, key, depth)
         for elo, key, depth in li_engines:
             mas(key, depth, elo)
         return d
@@ -105,8 +106,8 @@ class GREngine:
 
 class ManagerRoutes(Manager.Manager):
     time_start: float = 0.0
-    route = None
-    route_state = 0
+    route: Any
+    route_state: int = 0
 
     def start(self, route):
         self.route = route
@@ -143,7 +144,18 @@ class ManagerRoutes(Manager.Manager):
 
 
 class ManagerRoutesPlay(ManagerRoutes):
-    engine = None
+    engine: Optional[GREngine] = None
+    liPVopening: list[str] = []
+    posOpening: int = 0
+    is_opening: bool = False
+    book: Optional[Books.Book] = None
+    must_win: bool = False
+    is_rival_thinking: bool = False
+    human_is_playing: bool = False
+    state: int = ST_PLAYING
+    is_human_side_white: bool = False
+    is_engine_side_white: bool = False
+    ayudas_iniciales: int = 0
 
     def start(self, route):
         ManagerRoutes.start(self, route)
@@ -183,7 +195,7 @@ class ManagerRoutesPlay(ManagerRoutes):
         if self.must_win:
             self.set_label2(_("You must win to pass this step."))
 
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.put_pieces_bottom(is_white)
@@ -279,10 +291,10 @@ class ManagerRoutesPlay(ManagerRoutes):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, pv[:2], pv[2:4], pv[4:])
         self.thinking(False)
         self.add_move(move, False)
-        self.move_the_pieces(move.liMovs, True)
+        self.move_the_pieces(move.list_piece_moves, True)
         self.play_next_move()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move_sel = self.check_human_move(from_sq, to_sq, promotion)
         if not move_sel:
             return False
@@ -298,11 +310,7 @@ class ManagerRoutesPlay(ManagerRoutes):
                 else:
                     QTMessages.message_error(
                         self.main_window,
-                        "%s\n%s"
-                        % (
-                            _("Wrong move"),
-                            _("Right move: %s") % Game.pv_san(fen, op_pv),
-                        ),
+                        f"{_("Wrong move")}\n{_("Right move: %s") % Game.pv_san(fen, op_pv)}"
                     )
                     self.continue_human()
                 return False
@@ -310,10 +318,9 @@ class ManagerRoutesPlay(ManagerRoutes):
             if self.posOpening == len(self.liPVopening):
                 self.is_opening = False
 
-        self.move_the_pieces(move_sel.liMovs)
+        self.move_the_pieces(move_sel.list_piece_moves)
 
         self.add_move(move_sel, True)
-        self.error = ""
 
         self.play_next_move()
         return True
@@ -329,7 +336,7 @@ class ManagerRoutesPlay(ManagerRoutes):
         last_move = self.game.last_jg()
 
         siwin = (last_move.is_white() == self.is_human_side_white) and not last_move.is_draw
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
 
         self.beep_result(beep)
 
@@ -338,11 +345,11 @@ class ManagerRoutesPlay(ManagerRoutes):
         if siwin:
             if self.route.end_playing():
                 mensaje = (
-                    _("Congratulations, goal achieved")
-                    + "<br><br>"
-                    + _("Level %d") % self.route.level
-                    + ": "
-                    + _("Finished")
+                        _("Congratulations, goal achieved")
+                        + "<br><br>"
+                        + _("Level %d") % self.route.level
+                        + ": "
+                        + _("Finished")
                 )
                 QTMessages.message_result_win(self.main_window, mensaje)
             else:
@@ -359,6 +366,20 @@ class ManagerRoutesPlay(ManagerRoutes):
 
 
 class ManagerRoutesEndings(ManagerRoutes):
+    is_guided: bool = False
+    t4: Optional[LibChess.T4] = None
+    fen: str = ""
+    li_pv: list[str] = []
+    posPV: int = 0
+    is_rival_thinking: bool = False
+    warnings: int = 0
+    max_warnings: int = 5
+    human_is_playing: bool = False
+    state: int = ST_PLAYING
+    is_human_side_white: bool = False
+    is_engine_side_white: bool = False
+    ayudas_iniciales: int = 0
+
     def start(self, route):
         ManagerRoutes.start(self, route)
 
@@ -372,7 +393,7 @@ class ManagerRoutesEndings(ManagerRoutes):
         else:
             self.is_guided = False
             self.t4 = LibChess.T4(self.configuration)
-            self.fen = ending + " - - 0 1"
+            self.fen = f"{ending} - - 0 1"
             label = None
 
         self.is_rival_thinking = False
@@ -404,7 +425,7 @@ class ManagerRoutesEndings(ManagerRoutes):
 
         self.main_window.active_game(True, False)
         self.main_window.remove_hints(True)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.put_pieces_bottom(is_white)
@@ -417,7 +438,7 @@ class ManagerRoutesEndings(ManagerRoutes):
         self.check_boards_setposition()
 
         if self.is_guided:
-            self.set_label1("<b>%s</b>" % label)
+            self.set_label1(f"<b>{label}</b>")
 
         self.play_next_move()
 
@@ -494,7 +515,7 @@ class ManagerRoutesEndings(ManagerRoutes):
     def show_error(self, mens):
         QTMessages.temporary_message(
             self.main_window,
-            "   %s    " % mens,
+            f"   {mens}    ",
             1,
             background="#FF9B00",
             physical_pos=TOP_RIGHT,
@@ -503,7 +524,7 @@ class ManagerRoutesEndings(ManagerRoutes):
     def show_mens(self, mens):
         QTMessages.temporary_message(self.main_window, mens, 4, physical_pos=ON_TOOLBAR, background="#C3D6E8")
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move_sel = self.check_human_move(from_sq, to_sq, promotion)
         if not move_sel:
             return False
@@ -540,10 +561,9 @@ class ManagerRoutesEndings(ManagerRoutes):
                 return False
 
         self.add_time()
-        self.move_the_pieces(move_sel.liMovs)
+        self.move_the_pieces(move_sel.list_piece_moves)
 
         self.add_move(move_sel, True)
-        self.error = ""
 
         self.play_next_move()
         return True
@@ -551,7 +571,7 @@ class ManagerRoutesEndings(ManagerRoutes):
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         self.add_move(move, False)
-        self.move_the_pieces(move.liMovs, True)
+        self.move_the_pieces(move.list_piece_moves, True)
         return True
 
     def get_help(self, is_warning=True):
@@ -561,7 +581,7 @@ class ManagerRoutesEndings(ManagerRoutes):
         else:
             li = self.t4.better_moves(self.game.last_position.fen(), None)
         li_movs = [(pv[:2], pv[2:4], n == 0) for n, pv in enumerate(li)]
-        self.board.ponFlechasTmp(li_movs)
+        self.board.show_arrows_temp(li_movs)
         if is_warning:
             self.warnings += self.max_warnings
             self.set_warnings()
@@ -575,7 +595,7 @@ class ManagerRoutesEndings(ManagerRoutes):
 
         last_move = self.game.last_jg()
         if last_move.is_draw:
-            mensaje = "%s<br>%s" % (_("Draw"), _("You must repeat the puzzle."))
+            mensaje = f"{_('Draw')}<br>{_('You must repeat the puzzle.')}"
             self.message_on_pgn(mensaje)
             self.start(self.route)
         elif self.warnings <= self.max_warnings:
@@ -583,23 +603,23 @@ class ManagerRoutesEndings(ManagerRoutes):
             self.message_on_pgn(_("Done"))
             self.route.end_ending()
         else:
-            mensaje = "%s<br>%s" % (
-                _("Done with errors."),
-                _("You must repeat the puzzle."),
-            )
+            mensaje = f"{_('Done with errors.')}<br>{_('You must repeat the puzzle.')}"
             self.message_on_pgn(mensaje)
             self.start(self.route)
 
     def current_pgn(self):
-        resp = '[Event "%s"]\n' % _("Transsiberian Railway")
-        resp += '[FEN "%s"\n' % self.game.first_position.fen()
+        resp = f"[Event \"{_('Transsiberian Railway')}\"]\n"
+        resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
-        resp += "\n" + self.game.pgn_base()
+        resp += f"\n{self.game.pgn_base()}"
 
         return resp
 
 
 class ManagerRoutesTactics(ManagerRoutes):
+    game_objetivo: Game.Game
+    is_rival_thinking: bool
+
     def start(self, route):
         ManagerRoutes.start(self, route)
 
@@ -634,7 +654,7 @@ class ManagerRoutesTactics(ManagerRoutes):
 
         self.main_window.active_game(True, False)
         self.main_window.remove_hints(True)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.put_pieces_bottom(is_white)
@@ -702,7 +722,7 @@ class ManagerRoutesTactics(ManagerRoutes):
             self.human_is_playing = True
             self.activate_side(is_white)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move_sel = self.check_human_move(from_sq, to_sq, promotion)
         if not move_sel:
             return False
@@ -727,10 +747,9 @@ class ManagerRoutesTactics(ManagerRoutes):
             self.continue_human()
             return False
 
-        self.move_the_pieces(move_sel.liMovs)
+        self.move_the_pieces(move_sel.list_piece_moves)
 
         self.add_move(move_sel, True)
-        self.error = ""
 
         self.add_time()
 
@@ -740,7 +759,7 @@ class ManagerRoutesTactics(ManagerRoutes):
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         self.add_move(move, False)
-        self.move_the_pieces(move.liMovs, True)
+        self.move_the_pieces(move.list_piece_moves, True)
         return True
 
     def get_help(self, remove_points=True):
@@ -749,7 +768,7 @@ class ManagerRoutesTactics(ManagerRoutes):
         for variation in move_obj.variations.li_variations:
             jg0 = variation.move(0)
             li_movs.append((jg0.from_sq, jg0.to_sq, False))
-        self.board.ponFlechasTmp(li_movs)
+        self.board.show_arrows_temp(li_movs)
         if remove_points:
             self.route.error_tactic(self.game_objetivo.num_moves())
             self.set_label2(self.route.mens_tactic(False))
@@ -774,9 +793,9 @@ class ManagerRoutesTactics(ManagerRoutes):
             self.set_label2(self.route.mens_tactic(True))
 
     def current_pgn(self):
-        resp = '[Event "%s"]\n' % _("Transsiberian Railway")
-        resp += '[FEN "%s"\n' % self.game.first_position.fen()
+        resp = f"[Event \"{_('Transsiberian Railway')}\"]\n"
+        resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
-        resp += "\n" + self.game.pgn_base()
+        resp += f"\n{self.game.pgn_base()}"
 
         return resp

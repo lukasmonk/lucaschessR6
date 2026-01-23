@@ -2,7 +2,7 @@ import random
 import time
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Position
 from Code.QT import Controles, Iconos, QTDialogs, QTMessages
 
@@ -58,8 +58,8 @@ class ManagerChallenge101:
         self.cp.read_fen(self.fen)
 
         self.is_white = self.cp.is_white
-        self.board.bloqueaRotacion(False)
-        self.board.set_dispatcher(self.player_has_moved)
+        self.board.lock_rotation(False)
+        self.board.set_dispatcher(self.player_has_moved_dispatcher)
         self.board.set_position(self.cp)
         self.board.set_side_bottom(self.is_white)
         self.board.activate_side(self.is_white)
@@ -115,7 +115,7 @@ class ManagerChallenge101:
         icono = Iconos.PuntoAzul()
 
         menu.separador()
-        titulo = ("** %s **" % _("Challenge 101")).center(30)
+        titulo = f"** {_('Challenge 101')} **".center(30)
         if self.pendientes == 0:
             menu.opcion("close", titulo, Iconos.Terminar())
         else:
@@ -178,7 +178,7 @@ class ManagerChallenge101:
 
         return not (resp == "close" or self.pendientes == 0)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         self.save_position()  # Solo cuando ha hecho un intento
         self.puntos_ultimo = 0
         if from_sq + to_sq == self.result:  # No hay promotiones
@@ -209,7 +209,7 @@ class ManagerChallenge101:
                     0.5,
                     puntos=20,
                     background="#ffd985",
-                    with_image=False
+                    with_image=False,
                 )
             else:
                 self.board.set_position(self.cp)
@@ -220,20 +220,10 @@ class ManagerChallenge101:
         return False
 
     def save_position(self):
-        line = "%s|%s|%s|%s\n" % (
-            self.fen,
-            str(self.key)[:19],
-            self.pgn_result,
-            self.pgn,
-        )
+        line = f"{self.fen}|{str(self.key)[:19]}|{self.pgn_result}|{self.pgn}\n"
         if line not in self.st_lines:
             self.st_lines.add(line)
             fich = self.configuration.paths.file_singular_moves_save()
             with open(fich, "at") as q:
-                line = "%s|%s|%s|%s\n" % (
-                    self.fen,
-                    str(self.key)[:19],
-                    self.pgn_result,
-                    self.pgn,
-                )
+                line = f"{self.fen}|{str(self.key)[:19]}|{self.pgn_result}|{self.pgn}\n"
                 q.write(line)

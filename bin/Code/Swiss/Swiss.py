@@ -3,7 +3,7 @@ import math
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     BLACK,
@@ -378,12 +378,12 @@ class Swiss:
     def __init__(self, name):
         self.li_opponents = []
         self.__name = name
-        self.__path: str = str(Util.opj(Code.configuration.paths.folder_swisses(), name + ".swiss"))
+        self.__path: str = str(Util.opj(Code.configuration.paths.folder_swisses(), f"{name}.swiss"))
         self.resign = 350
         self.slow_pieces = False
         self.draw_min_ply = 50
         self.draw_range = 10
-        self.adjudicator = Code.configuration.analyzer_default
+        self.move_evaluator = Code.configuration.analyzer_default
         self.adjudicator_time = 5.0
         self.time_engine_human = (15.0, 6)
         self.time_engine_engine = (3.0, 0)
@@ -406,7 +406,7 @@ class Swiss:
         self.restore()
 
     def remove_work(self):
-        Util.remove_file(self.__path + ".work")
+        Util.remove_file(f"{self.__path}.work")
 
     def path(self):
         return self.__path
@@ -418,7 +418,7 @@ class Swiss:
             "DRAW_MIN_PLY": self.draw_min_ply,
             "DRAW_RANGE": self.draw_range,
             "ADJUDICATOR_ACTIVE": True,  # self.adjudicator_active,
-            "ADJUDICATOR": self.adjudicator,
+            "ADJUDICATOR": self.move_evaluator,
             "ADJUDICATOR_TIME": self.adjudicator_time,
             "TIME_ENGINE_HUMAN": self.time_engine_human,
             "TIME_ENGINE_ENGINE": self.time_engine_engine,
@@ -446,7 +446,7 @@ class Swiss:
         self.slow_pieces = dic_data.get("SLOW_PIECES", self.slow_pieces)
         self.draw_min_ply = dic_data.get("DRAW_MIN_PLY", self.draw_min_ply)
         self.draw_range = dic_data.get("DRAW_RANGE", self.draw_range)
-        self.adjudicator = dic_data.get("ADJUDICATOR", self.adjudicator)
+        self.move_evaluator = dic_data.get("ADJUDICATOR", self.move_evaluator)
         self.adjudicator_time = dic_data.get("ADJUDICATOR_TIME", self.adjudicator_time)
         self.time_engine_human = dic_data.get("TIME_ENGINE_HUMAN", self.time_engine_human)
         self.time_engine_engine = dic_data.get("TIME_ENGINE_ENGINE", self.time_engine_engine)

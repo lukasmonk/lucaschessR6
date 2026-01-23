@@ -2,7 +2,7 @@ import webbrowser
 
 import Code
 import Code.Nags.Nags
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.QT import Colocacion, Columnas, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 from Code.SQL import UtilSQL
@@ -38,16 +38,26 @@ class Prompt:
 
 
 def add_default(db):
-    prompt = """Act as an International Master of chess.
-Analyze a chess game move by move, explaining what happened in each move, and the result should be displayed in a pgn file where the comments are in each move and in braces, following the pgn standard.
-The writing style should be instructive and detailed aimed at an intermediate player.
-Consider the following context: The analysis should include intermediate comments, covering both the player's and the opponent's moves. Additionally, it should include an evaluation of the positions after each move, focusing on both tactics and strategy.
+    prompt = (
+        "Act as an International Master of chess.\n"
+        "Analyze a chess game move by move, explaining what happened in each move, "
+        "and the result should be displayed in a pgn file where the comments are in "
+        "each move and in braces, following the pgn standard.\n"
+        "The writing style should be instructive and detailed aimed at an intermediate player.\n"
+        "Consider the following context: The analysis should include intermediate comments, "
+        "covering both the player's and the opponent's moves. "
+        "Additionally, it should include an evaluation of the positions after each move, "
+        "focusing on both tactics and strategy.\n\n"
+        "Here is the final prompt:\n"
+        "Analyze the following chess game move by move, providing detailed comments "
+        "for each move and displaying the result in a pgn file. "
+        "The comments should be in braces and follow the pgn standard. "
+        "The comments should be intermediate, covering both the player's and the opponent's moves, "
+        "and including an evaluation of the positions after each move. "
+        "The analysis should focus on both tactics and strategy.\n"
+    )
 
-Here is the final prompt:
-
-Analyze the following chess game move by move, providing detailed comments for each move and displaying the result in a pgn file. The comments should be in braces and follow the pgn standard. The comments should be intermediate, covering both the player's and the opponent's moves, and including an evaluation of the positions after each move. The analysis should focus on both tactics and strategy.
-"""
-    if Code.configuration.x_translator != "en":
+    if Code.configuration.x_translator != ")en":
         prompt += f"The answer must be in {Code.configuration.language()}.\n"
     oprompt = Prompt(name=_("Basic"), prompt=prompt, xid=Util.huella())
     key = oprompt.key()
@@ -69,11 +79,10 @@ def add_submenu(submenu_base):
 
 
 def run_menu(main_window, key: str, game: Game.Game):
-    key = key[3:]
-    if not key:
-        maintenance(main_window, game)
-    else:
+    if key := key[3:]:
         launch(main_window, key, game)
+    else:
+        maintenance(main_window, game)
 
 
 def launch(main_window, key: str, game: Game.Game):
@@ -90,7 +99,7 @@ def launch_prompt(main_window, oprompt: Prompt, game: Game.Game):
     game_new = Game.Game()
     game_new.assign_other_game(game)
     game_new.remove_info_moves()
-    prompt = prompt.strip() + f"\nThe game is:\n{game.pgn()}"
+    prompt = f"{prompt.strip()}\nThe game is:\n{game.pgn()}"
     QTUtils.set_clipboard(prompt)
 
     QTMessages.temporary_message(
@@ -120,8 +129,8 @@ class WPrompts(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("name", _("Name"), 300)
         o_columns.nueva("web", _("Web"), 300)
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Close"), Iconos.MainMenu(), self.aceptar)
@@ -154,11 +163,11 @@ class WPrompts(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.end_tasks()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_keys)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         key = self.li_keys[row]
         prompt: Prompt = self.db[key]
         return getattr(prompt, col)
@@ -200,7 +209,7 @@ class WPrompts(LCDialog.LCDialog):
         name, prompt, web = oprompt.name, oprompt.prompt, oprompt.web
         error = None
         while True:
-            form = FormLayout.FormLayout(self, _("New try"), Iconos.AI(), anchoMinimo=640)
+            form = FormLayout.FormLayout(self, _("New try"), Iconos.AI(), minimum_width=640)
             form.separador()
             form.edit(_("Name"), name)
             form.separador()
@@ -220,15 +229,16 @@ class WPrompts(LCDialog.LCDialog):
             name, prompt, web = li_resp
             web = web.strip()
             if not name:
-                error = _("Name") + "???"
+                error = f"{_('Name')}???"
                 continue
             if not prompt:
-                error = _("Prompt") + "???"
+                error = f"{_('Prompt')}???"
                 continue
             oprompt.name = name.replace(SEPARADOR_KEY, "-")
             oprompt.prompt = prompt.replace(SEPARADOR_KEY, "-")
             oprompt.web = web
-            return True
+            break
+        return True
 
     def copy(self):
         row = self.grid.recno()
@@ -276,7 +286,7 @@ class WPrompts(LCDialog.LCDialog):
         self.refresh_all()
         self.grid.goto(row + 1, 0)
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.modify()
 
     def remove(self):

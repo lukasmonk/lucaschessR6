@@ -24,8 +24,8 @@ class BoardEstaticoMensajeK(Board2.BoardEstatico):
         self.size_factor = 1.0 if size_factor is None else size_factor
         Board2.BoardEstatico.__init__(self, parent, config_board)
 
-    def rehaz(self):
-        Board.Board.rehaz(self)
+    def redraw(self):
+        Board.Board.redraw(self)
         self.mens = BoardTypes.Texto()
         pts = min(self.width_square * self.size_factor, 24)
         self.mens.font_type = BoardTypes.FontType(puntos=pts, peso=300)
@@ -61,7 +61,7 @@ class BoardEstaticoMensajeK(Board2.BoardEstatico):
                 self.keys_dispatch([])
                 return
         if self.active_keys:
-            q = QtCore.Qt
+            q = QtCore.Qt.Key
             k = event.key()
             if k in (q.Key_Delete, q.Key_Backspace, q.Key_Escape):
                 self.li_keys = []
@@ -124,8 +124,8 @@ class BoardEstaticoMensajeK(Board2.BoardEstatico):
         reg_svg.siMovible = False
         reg_svg.physical_pos.orden = 25
         reg_svg.opacity = 50
-        svg = self.creaMarker(reg_svg)
-        self.registraMovible(svg)
+        svg = self.create_marker(reg_svg)
+        self.register_movable(svg)
 
     def show_svg_sq_blue(self, sq):
         self.show_svg_sq(sq, "#3bace2", "#3b93e2")
@@ -165,8 +165,8 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
         conf_board = Code.configuration.config_board("RUNCOORDINATESWRITE", Code.configuration.size_base())
 
         self.board = BoardEstaticoMensajeK(self, conf_board, 0.1)
-        self.board.crea()
-        self.board.bloqueaRotacion(True)
+        self.board.draw_window()
+        self.board.lock_rotation(True)
         self.board.set_side_bottom(self.db_coordinates.side)
         self.board.show_coordinates(True)
         self.board.set_side_indicator(self.db_coordinates.side)
@@ -177,7 +177,7 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
         self.lb_info = Controles.LB(self).set_font(font).set_wrap().align_center()
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
 
         ly_right = Colocacion.V().control(tb).relleno().controlc(self.lb_info).relleno()
 
@@ -227,7 +227,7 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
                 if self.coord.is_record:
                     mens += f'<h2>{_("New record!")}<h2>'
             QTMessages.message_bold(self, mens)
-            self.terminar()
+            self.finalize()
             return
         position = Position.Position()
         self.board.set_active_keys(True)
@@ -265,7 +265,7 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
         self.end_tasks()
         event.accept()
 
-    def terminar(self):
+    def finalize(self):
         self.end_tasks()
         self.reject()
 

@@ -3,7 +3,7 @@ import os
 import random
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.SQL import UtilSQL
 
@@ -23,7 +23,7 @@ class WLine:
         li = line.strip().split("|")
         self.fen, self.label, pgn_moves = li[0], li[1], li[2]
 
-        self.pgn = '[FEN "%s"]\n\n%s' % (self.fen, pgn_moves)
+        self.pgn = f'[FEN "{self.fen}"]\n\n{pgn_moves}'
         ok, p = Game.pgn_game(self.pgn)
         self.pv = p.pv()
         self.limoves = self.pv.split(" ")
@@ -64,7 +64,7 @@ class WEngine:
         if st == REPLAY:
             return _("Replay the game")
         if st == TACTICS:
-            return "%s (%d)" % (_("Play tactics"), len(self.liNumTactics))
+            return f"{_('Play tactics')} ({len(self.liNumTactics)})"
         if st == ENDED:
             return _("Finished")
 
@@ -79,7 +79,7 @@ class WEngine:
             return "-"
 
     def cindex(self):
-        return "%0.02f" % self.index()
+        return f"{self.index():0.02f}"
         # x = self.elo - self.hints*5 - self.games*47
         # return x*100.0/self.elo if x > 0 else 0.0
 
@@ -92,7 +92,7 @@ class WEngine:
     def restoreGame(self, db):
         return db[self.keyGame()]
 
-    def saveGame(self, db, game):
+    def save_game(self, db, game):
         db[self.keyGame()] = game
 
     def toDic(self):
@@ -172,7 +172,7 @@ class Washing:
                     if (m.key, color) not in st:
                         engine = WEngine(m.key, m.name, m.elo, color)
                         li.append(engine)
-        li.sort(key=lambda x: "%4d%s" % (x.elo, "0" if x.color else "1"))
+        li.sort(key=lambda x: f'{x.elo:4d}{"0" if x.color else "1"}')
         if li:
             eng = li[0]
             self.liEngines.append(eng)
@@ -184,9 +184,9 @@ class Washing:
         db["POSTACTICS"] = self.posTactics
 
     def restore(self, db):
-        liE = db.get("ENGINES", [])
+        li_e = db.get("ENGINES", [])
         li = []
-        for dic in liE:
+        for dic in li_e:
             eng = WEngine()
             eng.fromDic(dic)
             li.append(eng)
@@ -223,13 +223,13 @@ class Washing:
         else:
             eng.state = ENDED
 
-    def saveGame(self, db, game, is_end):
+    def save_game(self, db, game, is_end):
         eng = self.liEngines[-1]
         if is_end:
             self.assign_tactics(eng)
             if eng.state == ENDED:
                 eng.assign_date()
-        eng.saveGame(db, game)
+        eng.save_game(db, game)
         self.save(db)
 
     def create_tactics(self, db, tipo):
@@ -290,7 +290,7 @@ class Washing:
                 linea = linea.strip()
                 if linea:
                     fen, a8, mov, pgn, dif = linea.split("|")
-                    li.append("%s|%s %s|%s" % (fen, _("Difficulty"), dif, mov))
+                    li.append(f"{fen}|{_('Difficulty')} {dif}|{mov}")
 
         li = random.sample(li, 1000)
         self.li_tactics = li
@@ -306,8 +306,7 @@ class Washing:
 class DBWashing:
     def __init__(self, configuration):
         self.configuration = configuration
-        self.filename = "washing.wsm"
-        self.file = Util.opj(configuration.paths.folder_results, self.filename)
+        self.file = configuration.paths.file_washing_machine()
         self.washing = self.restore()
 
     def new(self, tactic):
@@ -340,9 +339,9 @@ class DBWashing:
         self.washing.add_game()
         self.save()
 
-    def saveGame(self, game, is_end):
+    def save_game(self, game, is_end):
         with UtilSQL.DictRawSQL(self.file) as db:
-            self.washing.saveGame(db, game, is_end)
+            self.washing.save_game(db, game, is_end)
             if is_end:
                 db.pack()
 

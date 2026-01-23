@@ -1,15 +1,13 @@
-import os
-
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Board import BoardTypes
 from Code.Director import (
     TabVisual,
     WindowTab,
+    WindowTabVArrows,
     WindowTabVCircles,
-    WindowTabVFlechas,
     WindowTabVMarcos,
     WindowTabVMarkers,
     WindowTabVSVGs,
@@ -26,12 +24,19 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
     QTUtils,
-    SelectFiles,
 )
+from Code.SQL import UtilSQL
 from Code.Translations import TrListas
 
 
 class WPanelDirector(LCDialog.LCDialog):
+    db_config: UtilSQL.DictSQL
+    db_arrows: UtilSQL.DictSQL
+    db_marcos: UtilSQL.DictSQL
+    db_circles: UtilSQL.DictSQL
+    db_svgs: UtilSQL.DictSQL
+    db_markers: UtilSQL.DictSQL
+
     def __init__(self, owner, board):
         self.owner = owner
         self.position = board.last_position
@@ -41,7 +46,7 @@ class WPanelDirector(LCDialog.LCDialog):
         self.origin_new = None
 
         self.dbManager = board.dbVisual
-        self.leeRecursos()
+        self.read_resources()
 
         titulo = _("Director")
         icono = Iconos.Script()
@@ -54,7 +59,7 @@ class WPanelDirector(LCDialog.LCDialog):
 
         # Guion
         li_acciones = [
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             (_("Save"), Iconos.Grabar(), self.grabar),
             (_("New"), Iconos.Nuevo(), self.gnuevo),
             (_("Insert"), Iconos.Insertar(), self.ginsertar),
@@ -62,13 +67,13 @@ class WPanelDirector(LCDialog.LCDialog):
                 _("Remove"),
                 Iconos.Remove1(),
                 self.gborrar,
-                _("Remove") + " - %s" % _("Backspace key"),
+                f"{_("Remove")} - {_("Backspace key")}",
             ),
             (
                 _("Remove all"),
                 Iconos.Borrar(),
-                self.borraTodos,
-                _("Remove all") + " - %s" % _("Delete key"),
+                self.remove_all,
+                f"{_("Remove all")} - {_("Delete key")}",
             ),
             None,
             (_("Up"), Iconos.Arriba(), self.garriba),
@@ -98,15 +103,15 @@ class WPanelDirector(LCDialog.LCDialog):
         self.g_guion = Grid.Grid(
             self,
             o_columns,
-            siCabeceraMovible=False,
+            is_column_header_movable=False,
             is_editable=True,
-            siSeleccionMultiple=True,
+            select_multiple=True,
         )
 
         self.register_grid(self.g_guion)
 
         self.chbSaveWhenFinished = Controles.CHB(
-            self, _("Save when finished"), self.dbConfig.get("SAVEWHENFINISHED", False)
+            self, _("Save when finished"), self.db_config.get("SAVEWHENFINISHED", False)
         )
 
         # Visuales
@@ -123,28 +128,28 @@ class WPanelDirector(LCDialog.LCDialog):
         self.recuperar()
         self.ant_foto = self.foto()
 
-        self.actualizaBandas()
-        li = self.dbConfig["SELECTBANDA"]
+        self.update_bands()
+        li = self.db_config["SELECTBANDA"]
         if li:
             self.selectBanda.recuperar(li)
-        num_lb = self.dbConfig["SELECTBANDANUM"]
+        num_lb = self.db_config["SELECTBANDANUM"]
         if num_lb is not None:
-            self.selectBanda.seleccionarNum(num_lb)
+            self.selectBanda.select_number(num_lb)
 
         self.ultDesde = "d4"
         self.ultHasta = "e5"
 
         self.g_guion.gotop()
 
-    def addText(self):
-        self.guion.cierraPizarra()
-        tarea = TabVisual.GT_Texto(self.guion)
-        row = self.guion.nuevaTarea(tarea, -1)
-        self.ponMarcado(row, True)
+    def add_text(self):
+        self.guion.close_pizarra()
+        tarea = TabVisual.GTTexto(self.guion)
+        row = self.guion.new_task(tarea, -1)
+        self.set_marked(row, True)
         self.guion.pizarra.show()
         self.guion.pizarra.mensaje.setFocus()
 
-    def cambiadaPosicion(self):
+    def position_changed(self):
         self.position = self.board.last_position
         self.fenm2 = self.position.fenm2()
         self.origin_new = None
@@ -152,10 +157,10 @@ class WPanelDirector(LCDialog.LCDialog):
 
     def seleccionar(self, lb):
         if lb is None:
-            self.owner.setChange(True)
+            self.owner.set_change(True)
             self.board.enable_all()
         else:
-            self.owner.setChange(False)
+            self.owner.set_change(False)
             self.board.disable_all()
 
     def funcion(self, number, is_ctrl=False):
@@ -164,22 +169,22 @@ class WPanelDirector(LCDialog.LCDialog):
                 self.selectBanda.seleccionar(None)
             else:
                 if self.guion.pizarra:
-                    self.guion.cierraPizarra()
+                    self.guion.close_pizarra()
                 else:
-                    self.addText()
+                    self.add_text()
         elif number == 0 and is_ctrl:  # Ctrl+F1
-            self.borraUltimo()
+            self.remove_last()
         elif number == 1 and is_ctrl:  # Ctrl+F2
-            self.borraTodos()
+            self.remove_all()
         else:
-            self.selectBanda.seleccionarNum(number)
+            self.selectBanda.select_number(number)
 
     def save(self):
         if self.guion is not None:
             li = self.guion.guarda()
         else:
             li = None
-        self.board.dbVisual_save(self.fenm2, li)
+        self.board.dbvisual_save(self.fenm2, li)
 
     def grabar(self):
         self.save()
@@ -190,16 +195,16 @@ class WPanelDirector(LCDialog.LCDialog):
         self.ant_foto = self.foto()
         self.refresh_guion()
 
-    def boardCambiadoTam(self):
-        self.layout().setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-        self.show()
-        QTUtils.refresh_gui()
-        self.layout().setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+    # def boardCambiadoTam(self):
+    #     self.layout().setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetFixedSize)
+    #     self.show()
+    #     QTUtils.refresh_gui()
+    #     self.layout().setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         if key == "NUMBER":
-            return "%d" % (row + 1,)
+            return f"{row + 1}"
         if key == "MARCADO":
             return self.guion.marcado(row)
         elif key == "TYPE":
@@ -208,117 +213,118 @@ class WPanelDirector(LCDialog.LCDialog):
             return self.guion.name(row)
         elif key == "INFO":
             return self.guion.info(row)
+        return None
 
-    def creaTareaBase(self, tp, xid, a1h8, row):
+    def create_task_base(self, tp, xid, a1h8, row):
         tpid = tp, xid
         if tp == "P":
-            tarea = TabVisual.GT_PiezaMueve(self.guion)
+            tarea = TabVisual.GTPieceMove(self.guion)
             from_sq, to_sq = a1h8[:2], a1h8[2:]
-            borra = self.board.dameNomPiezaEn(to_sq)
-            tarea.desdeHastaBorra(from_sq, to_sq, borra)
+            borra = self.board.get_name_piece_at(to_sq)
+            tarea.remove_from_to(from_sq, to_sq, borra)
             self.board.enable_all()
         elif tp == "C":
-            tarea = TabVisual.GT_PiezaCrea(self.guion)
-            borra = self.board.dameNomPiezaEn(a1h8)
+            tarea = TabVisual.GTPieceCreate(self.guion)
+            borra = self.board.get_name_piece_at(a1h8)
             tarea.from_sq(a1h8, borra)
             tarea.pieza(xid)
             self.board.enable_all()
         elif tp == "B":
-            tarea = TabVisual.GT_PiezaBorra(self.guion)
+            tarea = TabVisual.GTPieceRemove(self.guion)
             tarea.from_sq(a1h8)
             tarea.pieza(xid)
         else:
             xid = str(xid)
             if tp == TabVisual.TP_FLECHA:
-                dic_arrow = self.dbFlechas[xid]
+                dic_arrow = self.db_arrows[xid]
                 if dic_arrow is None:
                     return None, None
                 reg_arrow = BoardTypes.Flecha()
                 reg_arrow.restore_dic(dic_arrow)
                 reg_arrow.tpid = tpid
                 reg_arrow.a1h8 = a1h8
-                sc = self.board.creaFlecha(reg_arrow)
-                tarea = TabVisual.GT_Flecha(self.guion)
+                sc = self.board.create_arrow(reg_arrow)
+                tarea = TabVisual.GTArrow(self.guion)
             elif tp == TabVisual.TP_MARCO:
-                dic_marco = self.dbMarcos[xid]
+                dic_marco = self.db_marcos[xid]
                 if dic_marco is None:
                     return None, None
                 reg_marco = BoardTypes.Marco()
                 reg_marco.restore_dic(dic_marco)
                 reg_marco.tpid = tpid
                 reg_marco.a1h8 = a1h8
-                sc = self.board.creaMarco(reg_marco)
-                tarea = TabVisual.GT_Marco(self.guion)
+                sc = self.board.create_marco(reg_marco)
+                tarea = TabVisual.GTMarco(self.guion)
             elif tp == TabVisual.TP_CIRCLE:
-                dic_circle = self.dbCircles[xid]
+                dic_circle = self.db_circles[xid]
                 if dic_circle is None:
                     return None, None
                 reg_circle = BoardTypes.Circle()
                 reg_circle.restore_dic(dic_circle)
                 reg_circle.tpid = tpid
                 reg_circle.a1h8 = a1h8
-                sc = self.board.creaCircle(reg_circle)
-                tarea = TabVisual.GT_Circle(self.guion)
+                sc = self.board.create_circle(reg_circle)
+                tarea = TabVisual.GTCircle(self.guion)
             elif tp == TabVisual.TP_SVG:
-                dic_svg = self.dbSVGs[xid]
+                dic_svg = self.db_svgs[xid]
                 if dic_svg is None:
                     return None, None
                 reg_svg = BoardTypes.SVG()
                 reg_svg.restore_dic(dic_svg)
                 reg_svg.tpid = tpid
                 reg_svg.a1h8 = a1h8
-                sc = self.board.creaSVG(reg_svg, siEditando=True)
-                tarea = TabVisual.GT_SVG(self.guion)
+                sc = self.board.create_svg(reg_svg, is_editing=True)
+                tarea = TabVisual.GTSvg(self.guion)
             elif tp == TabVisual.TP_MARKER:
-                dic_marker = self.dbMarkers[xid]
+                dic_marker = self.db_markers[xid]
                 if dic_marker is None:
                     return None, None
                 reg_marker = BoardTypes.Marker()
                 reg_marker.restore_dic(dic_marker)
                 reg_marker.tpid = tpid
                 reg_marker.a1h8 = a1h8
-                sc = self.board.creaMarker(reg_marker, siEditando=True)
-                tarea = TabVisual.GT_Marker(self.guion)
+                sc = self.board.create_marker(reg_marker, is_editing=True)
+                tarea = TabVisual.GTMarker(self.guion)
             else:
-                return
+                return None, None
             sc.set_routine_if_pressed(None, tarea.id())
-            tarea.itemSC(sc)
+            tarea.item_sc(sc)
 
         tarea.marcado(True)
         tarea.registro((tp, xid, a1h8))
         if self.guion is None:
             row = 0
         else:
-            row = self.guion.nuevaTarea(tarea, row)
+            row = self.guion.new_task(tarea, row)
 
         return tarea, row
 
-    def creaTarea(self, tp, xid, a1h8, row):
-        tarea, row = self.creaTareaBase(tp, xid, a1h8, row)
+    def create_task(self, tp, xid, a1h8, row):
+        tarea, row = self.create_task_base(tp, xid, a1h8, row)
         if tarea is None:
             return None, None
         tarea.registro((tp, xid, a1h8))
 
         self.g_guion.goto(row, 0)
 
-        self.ponMarcado(row, True)
+        self.set_marked(row, True)
 
         return tarea, row
 
-    def editaNombre(self, name):
-        li_gen = [(None, None)]
-        config = FormLayout.Editbox(_("Name"), ancho=160)
-        li_gen.append((config, name))
-        ico = Iconos.Grabar()
+    # def editaNombre(self, name):
+    #     li_gen: List[Tuple[Any, Any]] = [(None, None)]
+    #     config = FormLayout.Editbox(_("Name"), ancho=160)
+    #     li_gen.append((config, name))
+    #     ico = Iconos.Grabar()
+    #
+    #     resultado = FormLayout.fedit(li_gen, title=_("Name"), parent=self, icon=ico)
+    #     if resultado:
+    #         accion, li_resp = resultado
+    #         name = li_resp[0]
+    #         return name
+    #     return None
 
-        resultado = FormLayout.fedit(li_gen, title=_("Name"), parent=self, icon=ico)
-        if resultado:
-            accion, li_resp = resultado
-            name = li_resp[0]
-            return name
-        return None
-
-    def borrarPizarraActiva(self):
+    def remove_pizarra_active(self):
         for n in range(len(self.guion)):
             tarea = self.guion.tarea(n)
             if tarea and tarea.tp() == TabVisual.TP_TEXTO:
@@ -334,7 +340,7 @@ class WPanelDirector(LCDialog.LCDialog):
             menu.opcion(2, _("None"), Iconos.PuntoNaranja())
             resp = menu.lanza()
             if resp:
-                siTodos = resp == 1
+                si_todos = resp == 1
                 for n in range(len(self.guion)):
                     tarea = self.guion.tarea(n)
                     if tarea.tp() in (
@@ -343,16 +349,16 @@ class WPanelDirector(LCDialog.LCDialog):
                         TabVisual.TP_CONFIGURATION,
                     ):
                         continue
-                    siMarcado = tarea.marcado()
-                    if siTodos:
-                        if not siMarcado:
+                    si_marcado = tarea.marcado()
+                    if si_todos:
+                        if not si_marcado:
                             self.grid_setvalue(None, n, None, True)
                     else:
-                        if siMarcado:
+                        if si_marcado:
                             self.grid_setvalue(None, n, None, False)
                 self.refresh_guion()
 
-    def desdeHasta(self, titulo, from_sq, to_sq):
+    def fromsq_tosq(self, titulo, from_sq, to_sq):
         li_gen = [(None, None)]
 
         config = FormLayout.Casillabox(_("From square"))
@@ -385,7 +391,7 @@ class WPanelDirector(LCDialog.LCDialog):
                 self,
                 _("Are you sure you want to reset graphics in Director to factory defaults?"),
             ):
-                # self.cierraRecursos()
+                # self.close_resources()
                 fich_recursos = Code.configuration.paths.file_resources()
                 fmt_recursos = fich_recursos.replace(".dbl", "%d.dbl")
                 pos = 0
@@ -394,53 +400,53 @@ class WPanelDirector(LCDialog.LCDialog):
                 Util.file_copy(Code.configuration.paths.file_resources(), fmt_recursos % pos)
                 self.close()
                 self.board.dbVisual.reset()
-                self.board.lanzaDirector()
+                self.board.launch_director()
 
         if resp == "remfen":
             if QTMessages.pregunta(
                 self,
                 _("Are you sure you want to remove all graphics associated with positions?"),
             ):
-                self.borraTodos()
-                self.cierraRecursos()
+                self.remove_all()
+                self.close_resources()
                 self.close()
                 self.board.dbVisual.remove_fens()
-                self.board.lanzaDirector()
+                self.board.launch_director()
 
     def gmas(self, insert):
-        ta = TabVisual.GT_Action(None)
-        li_actions = [(_F(txt), Iconos.PuntoRojo(), "GTA_%s" % action) for action, txt in ta.dicTxt.items()]
+        ta = TabVisual.GTAction(None)
+        li_actions = [(_F(txt), Iconos.PuntoRojo(), f"GTA_{action}") for action, txt in ta.dicTxt.items()]
 
         li_more = [
             (_("Text"), Iconos.Texto(), TabVisual.TP_TEXTO),
             (_("Actions"), Iconos.Run(), li_actions),
         ]
-        resp = self.selectBanda.menuParaExterior(li_more)
+        resp = self.selectBanda.menu_for_extern(li_more)
         if resp:
             xid = resp
             row = self.g_guion.recno() if insert else -1
             if xid == TabVisual.TP_TEXTO:
-                tarea = TabVisual.GT_Texto(self.guion)
-                row = self.guion.nuevaTarea(tarea, row)
-                self.ponMarcado(row, True)
+                tarea = TabVisual.GTTexto(self.guion)
+                row = self.guion.new_task(tarea, row)
+                self.set_marked(row, True)
             elif resp.startswith("GTA_"):
-                self.creaAction(resp[4:], row)
+                self.create_action(resp[4:], row)
             else:
                 li = xid.split("_")
                 tp = li[1]
                 xid = li[2]
-                from_sq, to_sq = self.desdeHasta(_("Director"), self.ultDesde, self.ultHasta)
+                from_sq, to_sq = self.fromsq_tosq(_("Director"), self.ultDesde, self.ultHasta)
                 if from_sq:
-                    self.creaTarea(tp, xid, from_sq + to_sq, row)
+                    self.create_task(tp, xid, from_sq + to_sq, row)
             if insert:
                 self.g_guion.goto(row, 0)
             else:
                 self.g_guion.gobottom()
 
-    def creaAction(self, action, row):
-        tarea = TabVisual.GT_Action(self.guion)
+    def create_action(self, action, row):
+        tarea = TabVisual.GTAction(self.guion)
         tarea.action(action)
-        row = self.guion.nuevaTarea(tarea, row)
+        self.guion.new_task(tarea, row)
         self.refresh_guion()
 
     def gnuevo(self):
@@ -449,38 +455,39 @@ class WPanelDirector(LCDialog.LCDialog):
     def ginsertar(self):
         self.gmas(True)
 
-    def borraUltimo(self):
+    def remove_last(self):
         row = len(self.guion) - 1
         if row >= 0:
             lista = [row]
             self.borrar_lista(lista)
 
-    def borraTodos(self):
+    def remove_all(self):
         num = len(self.guion)
         if num:
             self.borrar_lista(list(range(num)))
 
     def borrar_lista(self, lista=None):
-        li = self.g_guion.recnosSeleccionados() if lista is None else lista
+        li = self.g_guion.list_selected_recnos() if lista is None else lista
         if li:
             li.sort(reverse=True)
             for row in li:
-                self.ponMarcado(row, False)
-                sc = self.guion.itemTarea(row)
+                self.set_marked(row, False)
+                sc = self.guion.item_of_task(row)
                 if sc:
-                    self.board.borraMovible(sc)
+                    self.board.remove_movable(sc)
                 else:
                     tarea = self.guion.tarea(row)
                     if tarea and tarea.tp() == TabVisual.TP_TEXTO:
-                        self.guion.cierraPizarra()
+                        self.guion.close_pizarra()
                 self.guion.borra(row)
+            row = len(li)
             if row >= len(self.guion):
                 row = len(self.guion) - 1
             self.g_guion.goto(row, 0)
             self.refresh_guion()
 
     def gborrar(self):
-        li = self.g_guion.recnosSeleccionados()
+        li = self.g_guion.list_selected_recnos()
         if li:
             self.borrar_lista(li)
 
@@ -496,28 +503,29 @@ class WPanelDirector(LCDialog.LCDialog):
             self.g_guion.goto(row + 1, 0)
             self.refresh_guion()
 
-    def grid_doble_click(self, grid, row, col):
+    def grid_doble_click(self, _grid, row, col):
         key = col.key
         if key == "INFO":
             tarea = self.guion.tarea(row)
             if tarea is None:
                 return
-            sc = self.guion.itemTarea(row)
+            sc = self.guion.item_of_task(row)
             if sc:
                 if tarea.tp() == TabVisual.TP_SVG:
                     return
 
                 else:
                     a1h8 = tarea.a1h8()
-                    from_sq, to_sq = self.desdeHasta(tarea.txt_tipo() + " " + tarea.name(), a1h8[:2], a1h8[2:])
+                    from_sq, to_sq = self.fromsq_tosq(f"{tarea.txt_tipo()} {tarea.name()}", a1h8[:2], a1h8[2:])
                     if from_sq:
-                        sc = tarea.itemSC()
+                        sc = tarea.item_sc()
                         sc.set_a1h8(from_sq + to_sq)
                         self.board.refresh()
 
-            mo = tarea.marcadoOwner()
-            if mo:
-                self.ponMarcadoOwner(row, mo)
+            tarea.marked_owner()
+            # mo = tarea.marked_owner()
+            # if mo:
+            #     self.ponMarcadoOwner(row, mo)
             self.refresh_guion()
 
     def keyPressEvent(self, event):
@@ -541,161 +549,161 @@ class WPanelDirector(LCDialog.LCDialog):
                     self.ant_foto = nueva
                     break
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.guion) if self.guion else 0
 
-    def clonaItemTarea(self, row):
-        tarea = self.guion.tarea(row)
-        bloqueDatos = tarea.bloqueDatos()
-        tp = tarea.tp()
-        if tp == TabVisual.TP_FLECHA:
-            sc = self.board.creaFlecha(bloqueDatos)
-        elif tp == TabVisual.TP_MARCO:
-            sc = self.board.creaMarco(bloqueDatos)
-        elif tp == TabVisual.TP_CIRCLE:
-            sc = self.board.creaCircle(bloqueDatos)
-        elif tp == TabVisual.TP_SVG:
-            sc = self.board.creaSVG(bloqueDatos)
-        elif tp == TabVisual.TP_MARKER:
-            sc = self.board.creaMarker(bloqueDatos)
-        else:
-            return None
-        return sc
+    # def clonaItemTarea(self, row):
+    #     tarea = self.guion.tarea(row)
+    #     block_data = tarea.block_data()
+    #     tp = tarea.tp()
+    #     if tp == TabVisual.TP_FLECHA:
+    #         sc = self.board.create_arrow(block_data)
+    #     elif tp == TabVisual.TP_MARCO:
+    #         sc = self.board.create_marco(block_data)
+    #     elif tp == TabVisual.TP_CIRCLE:
+    #         sc = self.board.create_circle(block_data)
+    #     elif tp == TabVisual.TP_SVG:
+    #         sc = self.board.create_svg(block_data)
+    #     elif tp == TabVisual.TP_MARKER:
+    #         sc = self.board.create_marker(block_data)
+    #     else:
+    #         return None
+    #     return sc
 
-    def ponMarcado(self, row, si_marcado):
+    def set_marked(self, row, si_marcado):
         if self.guion:
             if row < len(self.guion.liGTareas):
-                self.guion.cambiaMarcaTarea(row, si_marcado)
-                item_sc = self.guion.itemTarea(row)
-                self.ponMarcadoItem(row, self.board, item_sc, si_marcado)
+                self.guion.change_mark_task(row, si_marcado)
+                item_sc = self.guion.item_of_task(row)
+                self.set_marked_item(row, self.board, item_sc, si_marcado)
             self.refresh_guion()
 
-    def ponMarcadoItem(self, row, board, itemSC, siMarcado):
-        if itemSC:
-            itemSC.setVisible(siMarcado)
+    def set_marked_item(self, row, board, item_sc, is_marked):
+        if item_sc:
+            item_sc.setVisible(is_marked)
 
         else:
             tarea = self.guion.tarea(row)
-            if isinstance(tarea, TabVisual.GT_PiezaMueve):
-                from_sq, to_sq, borra = tarea.desdeHastaBorra()
-                if siMarcado:
+            if isinstance(tarea, TabVisual.GTPieceMove):
+                from_sq, to_sq, borra = tarea.remove_from_to()
+                if is_marked:
                     board.move_piece(from_sq, to_sq)
                     board.put_arrow_sc(from_sq, to_sq)
                 else:
                     board.move_piece(to_sq, from_sq)
                     if borra:
-                        board.creaPieza(borra, to_sq)
+                        board.create_piece(borra, to_sq)
                     if board.arrow_sc:
                         board.arrow_sc.hide()
                 board.enable_all()
 
-            elif isinstance(tarea, TabVisual.GT_PiezaCrea):
+            elif isinstance(tarea, TabVisual.GTPieceCreate):
                 from_sq, pz_borrada = tarea.from_sq()
-                if siMarcado:
+                if is_marked:
                     board.change_piece(from_sq, tarea.pieza())
                 else:
                     board.remove_piece(from_sq)
                     if pz_borrada:
-                        board.creaPieza(pz_borrada, from_sq)
+                        board.create_piece(pz_borrada, from_sq)
                 board.enable_all()
 
-            elif isinstance(tarea, TabVisual.GT_PiezaBorra):
-                if siMarcado:
+            elif isinstance(tarea, TabVisual.GTPieceRemove):
+                if is_marked:
                     board.remove_piece(tarea.from_sq())
                 else:
                     board.change_piece(tarea.from_sq(), tarea.pieza())
                 board.enable_all()
 
-            elif isinstance(tarea, TabVisual.GT_Texto):
-                self.guion.cierraPizarra()
-                if siMarcado:
-                    self.guion.writePizarra(tarea)
+            elif isinstance(tarea, TabVisual.GTTexto):
+                self.guion.close_pizarra()
+                if is_marked:
+                    self.guion.write_pizarra(tarea)
                 for recno in range(len(self.guion)):
                     tarea = self.guion.tarea(recno)
                     if tarea.tp() == TabVisual.TP_TEXTO and row != recno:
-                        self.guion.cambiaMarcaTarea(recno, False)
+                        self.guion.change_mark_task(recno, False)
 
-            elif isinstance(tarea, TabVisual.GT_Action):
-                if siMarcado:
+            elif isinstance(tarea, TabVisual.GTAction):
+                if is_marked:
                     tarea.run()
-                    self.guion.cambiaMarcaTarea(row, False)
+                    self.guion.change_mark_task(row, False)
 
-    def grid_setvalue(self, grid, row, o_column, valor):
-        key = o_column.key if o_column else "MARCADO"
+    def grid_setvalue(self, _grid, row, obj_column, valor):
+        key = obj_column.key if obj_column else "MARCADO"
         if key == "MARCADO":
-            self.ponMarcado(row, valor > 0)
+            self.set_marked(row, valor > 0)
         elif key == "NOMBRE":
             tarea = self.guion.tarea(row)
             tarea.name(valor.strip())
 
-    def editBanda(self, cid):
+    def edit_band(self, cid):
         li = cid.split("_")
         tp = li[1]
         xid = li[2]
         if tp == TabVisual.TP_FLECHA:
-            reg_arrow = BoardTypes.Flecha(dic=self.dbFlechas[xid])
-            w = WindowTabVFlechas.WTV_Flecha(self, reg_arrow, True)
+            reg_arrow = BoardTypes.Flecha(dic=self.db_arrows[xid])
+            w = WindowTabVArrows.WTVArrow(self, reg_arrow, True)
             if w.exec():
-                self.dbFlechas[xid] = w.regFlecha.save_dic()
+                self.db_arrows[xid] = w.reg_arrow.save_dic()
         elif tp == TabVisual.TP_MARCO:
-            regMarco = BoardTypes.Marco(dic=self.dbMarcos[xid])
-            w = WindowTabVMarcos.WTV_Marco(self, regMarco)
+            reg_marco = BoardTypes.Marco(dic=self.db_marcos[xid])
+            w = WindowTabVMarcos.WTVMarco(self, reg_marco)
             if w.exec():
-                self.dbMarcos[xid] = w.regMarco.save_dic()
+                self.db_marcos[xid] = w.reg_marco.save_dic()
         elif tp == TabVisual.TP_CIRCLE:
-            reg_circle = BoardTypes.Circle(dic=self.dbCircles[xid])
-            w = WindowTabVCircles.WTV_Circle(self, reg_circle)
+            reg_circle = BoardTypes.Circle(dic=self.db_circles[xid])
+            w = WindowTabVCircles.WTVCircle(self, reg_circle)
             if w.exec():
-                self.dbCircles[xid] = w.reg_circle.save_dic()
+                self.db_circles[xid] = w.reg_circle.save_dic()
         elif tp == TabVisual.TP_SVG:
-            reg_svg = BoardTypes.SVG(dic=self.dbSVGs[xid])
-            w = WindowTabVSVGs.WTV_SVG(self, reg_svg)
+            reg_svg = BoardTypes.SVG(dic=self.db_svgs[xid])
+            w = WindowTabVSVGs.WTVSvg(self, reg_svg)
             if w.exec():
-                self.dbSVGs[xid] = w.regSVG.save_dic()
+                self.db_svgs[xid] = w.regSVG.save_dic()
         elif tp == TabVisual.TP_MARKER:
-            reg_marker = BoardTypes.Marker(dic=self.dbMarkers[xid])
-            w = WindowTabVMarkers.WTV_Marker(self, reg_marker)
+            reg_marker = BoardTypes.Marker(dic=self.db_markers[xid])
+            w = WindowTabVMarkers.WTVMarker(self, reg_marker)
             if w.exec():
-                self.dbMarkers[xid] = w.regMarker.save_dic()
+                self.db_markers[xid] = w.regMarker.save_dic()
 
-    def test_siGrabar(self):
+    def check_if_save(self):
         if self.chbSaveWhenFinished.valor():
             self.save()
 
     def closeEvent(self, event):
-        self.cierraRecursos()
+        self.close_resources()
 
-    def terminar(self):
-        self.cierraRecursos()
+    def finalize(self):
+        self.close_resources()
         self.close()
 
     def cancelar(self):
-        self.terminar()
+        self.finalize()
 
     def portapapeles(self):
         self.board.save_as_img()
         txt = _("Clipboard")
         QTMessages.temporary_message(self, _X(_("Saved to %1"), txt), 0.8)
 
-    def grabarFichero(self):
-        dir_salvados = self.configuration.save_folder()
-        resp = SelectFiles.salvaFichero(self, _("File to save"), dir_salvados, "png", False)
-        if resp:
-            self.board.save_as_img(resp, "png")
-            txt = resp
-            QTMessages.temporary_message(self, _X(_("Saved to %1"), txt), 0.8)
-            direc = os.path.dirname(resp)
-            if direc != dir_salvados:
-                self.configuration.set_save_folder(direc)
+    # def grabarFichero(self):
+    #     dir_salvados = self.configuration.save_folder()
+    #     resp = SelectFiles.salvaFichero(self, _("File to save"), dir_salvados, "png", False)
+    #     if resp:
+    #         self.board.save_as_img(resp, "png")
+    #         txt = resp
+    #         QTMessages.temporary_message(self, _X(_("Saved to %1"), txt), 0.8)
+    #         direc = os.path.dirname(resp)
+    #         if direc != dir_salvados:
+    #             self.configuration.set_save_folder(direc)
 
     def flechas(self):
-        w = WindowTabVFlechas.WTV_Flechas(self, self.list_arrows(), self.dbFlechas)
+        w = WindowTabVArrows.WTVArrows(self, self.db_arrows)
         w.exec()
-        self.actualizaBandas()
+        self.update_bands()
         QTUtils.refresh_gui()
 
     def list_arrows(self):
-        dic = self.dbFlechas.as_dictionary()
+        dic = self.db_arrows.as_dictionary()
         li = []
         for k, dicFlecha in dic.items():
             arrow = BoardTypes.Flecha(dic=dicFlecha)
@@ -706,19 +714,19 @@ class WPanelDirector(LCDialog.LCDialog):
         return li
 
     def marcos(self):
-        w = WindowTabVMarcos.WTV_Marcos(self, self.list_boxes(), self.dbMarcos)
+        w = WindowTabVMarcos.WTVMarcos(self, self.list_boxes(), self.db_marcos)
         w.exec()
-        self.actualizaBandas()
+        self.update_bands()
         QTUtils.refresh_gui()
 
     def circles(self):
-        w = WindowTabVCircles.WTV_Circles(self, self.list_circles(), self.dbCircles)
+        w = WindowTabVCircles.WTVCircles(self, self.list_circles(), self.db_circles)
         w.exec()
-        self.actualizaBandas()
+        self.update_bands()
         QTUtils.refresh_gui()
 
     def list_boxes(self):
-        dic = self.dbMarcos.as_dictionary()
+        dic = self.db_marcos.as_dictionary()
         li = []
         for k, dicMarco in dic.items():
             box = BoardTypes.Marco(dic=dicMarco)
@@ -728,7 +736,7 @@ class WPanelDirector(LCDialog.LCDialog):
         return li
 
     def list_circles(self):
-        dic = self.dbCircles.as_dictionary()
+        dic = self.db_circles.as_dictionary()
         li = []
         for k, dicCircle in dic.items():
             circle = BoardTypes.Circle(dic=dicCircle)
@@ -738,13 +746,13 @@ class WPanelDirector(LCDialog.LCDialog):
         return li
 
     def svgs(self):
-        w = WindowTabVSVGs.WTV_SVGs(self, self.list_svgs(), self.dbSVGs)
+        w = WindowTabVSVGs.WTVSvgs(self, self.list_svgs(), self.db_svgs)
         w.exec()
-        self.actualizaBandas()
+        self.update_bands()
         QTUtils.refresh_gui()
 
     def list_svgs(self):
-        dic = self.dbSVGs.as_dictionary()
+        dic = self.db_svgs.as_dictionary()
         li = []
         for k, dicSVG in dic.items():
             if not isinstance(dicSVG, dict):
@@ -756,13 +764,13 @@ class WPanelDirector(LCDialog.LCDialog):
         return li
 
     def markers(self):
-        w = WindowTabVMarkers.WTV_Markers(self, self.list_markers(), self.dbMarkers)
+        w = WindowTabVMarkers.WTVMarkers(self, self.list_markers(), self.db_markers)
         w.exec()
-        self.actualizaBandas()
+        self.update_bands()
         QTUtils.refresh_gui()
 
     def list_markers(self):
-        dic = self.dbMarkers.as_dictionary()
+        dic = self.db_markers.as_dictionary()
         li = []
         for k, dic_marker in dic.items():
             marker = BoardTypes.Marker(dic=dic_marker)
@@ -771,36 +779,36 @@ class WPanelDirector(LCDialog.LCDialog):
         li.sort(key=lambda x: x.ordenVista)
         return li
 
-    def leeRecursos(self):
-        self.dbConfig = self.dbManager.dbConfig
-        self.dbFlechas = self.dbManager.dbFlechas
-        self.dbMarcos = self.dbManager.dbMarcos
-        self.dbCircles = self.dbManager.dbCircles
-        self.dbSVGs = self.dbManager.dbSVGs
-        self.dbMarkers = self.dbManager.dbMarkers
+    def read_resources(self):
+        self.db_config = self.dbManager.db_config
+        self.db_arrows = self.dbManager.db_arrows
+        self.db_marcos = self.dbManager.db_marcos
+        self.db_circles = self.dbManager.db_circles
+        self.db_svgs = self.dbManager.db_svgs
+        self.db_markers = self.dbManager.db_markers
 
-    def cierraRecursos(self):
+    def close_resources(self):
         if self.guion is not None:
-            self.guion.cierraPizarra()
-            if not self.dbConfig.is_closed():
-                self.dbConfig["SELECTBANDA"] = self.selectBanda.guardar()
-                self.dbConfig["SELECTBANDANUM"] = self.selectBanda.numSeleccionada()
-                self.dbConfig["SAVEWHENFINISHED"] = self.chbSaveWhenFinished.valor()
+            self.guion.close_pizarra()
+            if not self.db_config.is_closed():
+                self.db_config["SELECTBANDA"] = self.selectBanda.guardar()
+                self.db_config["SELECTBANDANUM"] = self.selectBanda.num_selected()
+                self.db_config["SAVEWHENFINISHED"] = self.chbSaveWhenFinished.valor()
             self.dbManager.close()
 
-            self.test_siGrabar()
+            self.check_if_save()
             self.save_video()
-            self.guion.restoreBoard()
+            self.guion.restore_board()
             self.guion = None
 
-    def actualizaBandas(self):
-        self.selectBanda.iniActualizacion()
+    def update_bands(self):
+        self.selectBanda.init_update()
 
         tipo = _("Arrows")
         for arrow in self.list_arrows():
             pm = QtGui.QPixmap()
             pm.loadFromData(arrow.png, "PNG")
-            xid = "_F_%s" % arrow.id
+            xid = f"_F_{arrow.id}"
             name = arrow.name
             self.selectBanda.actualiza(xid, name, pm, tipo)
 
@@ -808,7 +816,7 @@ class WPanelDirector(LCDialog.LCDialog):
         for box in self.list_boxes():
             pm = QtGui.QPixmap()
             pm.loadFromData(box.png, "PNG")
-            xid = "_M_%s" % box.id
+            xid = f"_M_{box.id}"
             name = box.name
             self.selectBanda.actualiza(xid, name, pm, tipo)
 
@@ -816,7 +824,7 @@ class WPanelDirector(LCDialog.LCDialog):
         for circle in self.list_circles():
             pm = QtGui.QPixmap()
             pm.loadFromData(circle.png, "PNG")
-            xid = "_D_%s" % circle.id
+            xid = f"_D_{circle.id}"
             name = circle.name
             self.selectBanda.actualiza(xid, name, pm, tipo)
 
@@ -824,7 +832,7 @@ class WPanelDirector(LCDialog.LCDialog):
         for svg in self.list_svgs():
             pm = QtGui.QPixmap()
             pm.loadFromData(svg.png, "PNG")
-            xid = "_S_%s" % svg.id
+            xid = f"_S_{svg.id}"
             name = svg.name
             self.selectBanda.actualiza(xid, name, pm, tipo)
 
@@ -832,11 +840,11 @@ class WPanelDirector(LCDialog.LCDialog):
         for marker in self.list_markers():
             pm = QtGui.QPixmap()
             pm.loadFromData(marker.png, "PNG")
-            xid = "_X_%s" % marker.id
+            xid = f"_X_{marker.id}"
             name = marker.name
             self.selectBanda.actualiza(xid, name, pm, tipo)
 
-        self.selectBanda.finActualizacion()
+        self.selectBanda.end_update()
 
         dic_campos = {
             TabVisual.TP_FLECHA: (
@@ -877,14 +885,14 @@ class WPanelDirector(LCDialog.LCDialog):
             TabVisual.TP_MARKER: ("name", "opacity"),
         }
         dic_db = {
-            TabVisual.TP_FLECHA: self.dbFlechas,
-            TabVisual.TP_MARCO: self.dbMarcos,
-            TabVisual.TP_CIRCLE: self.dbCircles,
-            TabVisual.TP_SVG: self.dbSVGs,
-            TabVisual.TP_MARKER: self.dbMarkers,
+            TabVisual.TP_FLECHA: self.db_arrows,
+            TabVisual.TP_MARCO: self.db_marcos,
+            TabVisual.TP_CIRCLE: self.db_circles,
+            TabVisual.TP_SVG: self.db_svgs,
+            TabVisual.TP_MARKER: self.db_markers,
         }
-        for k, sc in self.board.dicMovibles.items():
-            bd = sc.bloqueDatos
+        for k, sc in self.board.dic_movables.items():
+            bd = sc.block_data
             try:
                 tp, xid = bd.tpid
                 bdn = dic_db[tp][xid]
@@ -896,12 +904,12 @@ class WPanelDirector(LCDialog.LCDialog):
         self.refresh_guion()
 
     def move_piece(self, from_sq, to_sq):
-        self.creaTarea("P", None, from_sq + to_sq, -1)
+        self.create_task("P", None, from_sq + to_sq, -1)
         self.board.move_piece(from_sq, to_sq)
 
-    def boardPress(self, event, origin, siRight, is_shift, is_alt, is_ctrl):
+    def board_press(self, event, origin, is_right, is_shift, is_alt, is_ctrl):
         if origin:
-            if not siRight:
+            if not is_right:
                 lb_sel = self.selectBanda.seleccionada
             else:
                 if is_ctrl:
@@ -923,27 +931,27 @@ class WPanelDirector(LCDialog.LCDialog):
                 nada, tp, nid = lb_sel.id.split("_")
                 if nid.isdigit():
                     nid = int(nid)
-                if tp == TabVisual.TP_FLECHA:
-                    self.siGrabarInicio = True
-                self.datos_new = self.creaTarea(tp, nid, origin + origin, -1)
+                # if tp == TabVisual.TP_FLECHA:
+                #     self.siGrabarInicio = True
+                self.datos_new = self.create_task(tp, nid, origin + origin, -1)
                 self.tp_new = tp
                 if tp in (TabVisual.TP_FLECHA, TabVisual.TP_MARCO):
                     self.origin_new = origin
-                    sc = self.datos_new[0].itemSC()
+                    sc = self.datos_new[0].item_sc()
                     sc.mouse_press_ext(event)
                 else:
                     self.origin_new = None
 
-    def boardMove(self, event):
+    def board_move(self, event):
         if self.origin_new:
-            sc = self.datos_new[0].itemSC()
-            sc.mouseMoveExt(event)
+            sc = self.datos_new[0].item_sc()
+            sc.mouse_move_ext(event)
 
-    def boardRelease(self, a1, is_right, is_shift, is_alt, is_ctrl):
+    def board_release(self, a1, is_right, is_shift, is_alt, is_ctrl):
         if self.origin_new:
             tarea, row = self.datos_new
-            sc = tarea.itemSC()
-            sc.mouseReleaseExt()
+            sc = tarea.item_sc()
+            sc.mouse_release_ext()
             self.g_guion.goto(row, 0)
             if is_right:
                 if a1 == self.origin_new and not is_ctrl:
@@ -959,14 +967,9 @@ class WPanelDirector(LCDialog.LCDialog):
                         return
                     nada, tp, nid = lb.id.split("_")
                     nid = int(nid)
-                    self.datos_new = self.creaTarea(tp, nid, a1 + a1, -1)
+                    self.datos_new = self.create_task(tp, nid, a1 + a1, -1)
                     self.tp_new = tp
                 self.refresh_guion()
-                # li = self.guion.borraRepeticionUltima()
-                # if li:
-                #     self.borrar_lista(li)
-                #     self.origin_new = None
-                #     return
 
             else:
                 if a1 is None or (a1 == self.origin_new and self.tp_new == TabVisual.TP_FLECHA):
@@ -977,11 +980,11 @@ class WPanelDirector(LCDialog.LCDialog):
 
             self.origin_new = None
 
-    def boardRemove(self, itemSC):
-        tarea, n = self.guion.tareaItem(itemSC)
-        if tarea:
-            self.g_guion.goto(n, 0)
-            self.borrar_lista()
+    # def boardRemove(self, item_sc):
+    #     tarea, n = self.guion.tasks_item(item_sc)
+    #     if tarea:
+    #         self.g_guion.goto(n, 0)
+    #         self.borrar_lista()
 
 
 class Director:
@@ -997,24 +1000,24 @@ class Director:
     def show(self):
         self.w.show()
 
-    def cambiadaPosicionAntes(self):
-        self.guion.cierraPizarra()
-        self.w.test_siGrabar()
+    def changed_position_before(self):
+        self.guion.close_pizarra()
+        self.w.check_if_save()
 
-    def cambiadaPosicionDespues(self):
-        self.w.cambiadaPosicion()
-        self.guion.saveBoard()
+    def changed_position_after(self):
+        self.w.position_changed()
+        self.guion.save_board()
 
-    def cambiadoMensajero(self):
-        self.w.test_siGrabar()
-        self.w.terminar()
+    def mensajero_changed(self):
+        self.w.check_if_save()
+        self.w.finalize()
 
     def move_piece(self, from_sq, to_sq, promotion=""):
-        self.w.creaTarea("P", None, from_sq + to_sq, -1)
+        self.w.create_task("P", None, from_sq + to_sq, -1)
         self.board.move_piece(from_sq, to_sq)
         return True
 
-    def setChange(self, ok):
+    def set_change(self, ok):
         self.director = ok
         self.ultTareaSelect = None
         self.directorItemSC = None
@@ -1024,10 +1027,10 @@ class Director:
         is_ctrl = (m & QtCore.Qt.KeyboardModifier.ControlModifier.value) > 0
         k = event.key()
         if k == QtCore.Qt.Key.Key_Backspace:
-            self.w.borraUltimo()
+            self.w.remove_last()
             return True
         if k == QtCore.Qt.Key.Key_Delete:
-            self.w.borraTodos()
+            self.w.remove_all()
             return True
         if QtCore.Qt.Key.Key_F1 <= k <= QtCore.Qt.Key.Key_F10:
             f = k - QtCore.Qt.Key.Key_F1
@@ -1053,13 +1056,13 @@ class Director:
         is_shift = (m & QtCore.Qt.KeyboardModifier.ShiftModifier.value) > 0
         is_alt = (m & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0
 
-        li_tareas = self.guion.tareasPosicion(p)
+        li_tareas = self.guion.tasks_in_position(p)
 
         if is_right and is_shift and is_alt:
-            pz_borrar = self.board.dameNomPiezaEn(a1h8)
+            pz_borrar = self.board.get_name_piece_at(a1h8)
             menu = QTDialogs.LCMenu(self.board)
             dic_pieces = TrListas.dic_nom_pieces()
-            ico_piece = self.board.piezas.icono
+            ico_piece = self.board.pieces.icono
 
             if pz_borrar or len(li_tareas):
                 mrem = menu.submenu(_("Remove"), Iconos.Delete())
@@ -1068,11 +1071,7 @@ class Director:
                     mrem.opcion(("rem_pz", None), label, ico_piece(pz_borrar))
                     mrem.separador()
                 for pos_guion, tarea in li_tareas:
-                    label = "%s - %s - %s" % (
-                        tarea.txt_tipo(),
-                        tarea.name(),
-                        tarea.info(),
-                    )
+                    label = f"{tarea.txt_tipo()} - {tarea.name()} - {tarea.info()}"
                     mrem.opcion(("rem_gr", pos_guion), label, Iconos.Delete())
                     mrem.separador()
                 menu.separador()
@@ -1089,22 +1088,22 @@ class Director:
                     self.w.g_guion.goto(arg, 0)
                     self.w.borrar_lista()
                 elif orden == "rem_pz":
-                    self.w.creaTarea("B", pz_borrar, a1h8, -1)
+                    self.w.create_task("B", pz_borrar, a1h8, -1)
 
                 elif orden == "create":
-                    self.w.creaTarea("C", arg, a1h8, -1)
+                    self.w.create_task("C", arg, a1h8, -1)
             return True
 
         if self.director:
-            return self.mousePressEvent_Drop(event)
+            return self.mouse_press_event_drop(event)
 
-        self.w.boardPress(event, a1h8, is_right, is_shift, is_alt, is_ctrl)
+        self.w.board_press(event, a1h8, is_right, is_shift, is_alt, is_ctrl)
 
         return True
 
-    def mousePressEvent_Drop(self, event):
+    def mouse_press_event_drop(self, event):
         p = event.pos()
-        li_tareas = self.guion.tareasPosicion(p)  # (pos_guion, tarea)...
+        li_tareas = self.guion.tasks_in_position(p)  # (pos_guion, tarea)...
         nli_tareas = len(li_tareas)
         if nli_tareas > 0:
             if nli_tareas > 1:  # Guerra
@@ -1125,10 +1124,10 @@ class Director:
             tarea_elegida = li_tareas[posic][1]
 
             if self.ultTareaSelect:
-                self.ultTareaSelect.itemSC().activa(False)
+                self.ultTareaSelect.item_sc().activate(False)
             self.ultTareaSelect = tarea_elegida
-            item_sc = self.ultTareaSelect.itemSC()
-            item_sc.activa(True)
+            item_sc = self.ultTareaSelect.item_sc()
+            item_sc.activate(True)
             item_sc.mouse_press_ext(event)
             self.directorItemSC = item_sc
 
@@ -1138,8 +1137,8 @@ class Director:
             return False
 
     def punto2a1h8(self, punto):
-        xc = 1 + int(float(punto.x() - self.board.margenCentro) / self.board.width_square)
-        yc = 1 + int(float(punto.y() - self.board.margenCentro) / self.board.width_square)
+        xc = 1 + int(float(punto.x() - self.board.margin_center) / self.board.width_square)
+        yc = 1 + int(float(punto.y() - self.board.margin_center) / self.board.width_square)
 
         if self.board.is_white_bottom:
             yc = 9 - yc
@@ -1159,14 +1158,14 @@ class Director:
             if self.directorItemSC:
                 self.directorItemSC.mouseMoveEvent(event)
             return False
-        self.w.boardMove(event)
+        self.w.board_move(event)
         return True
 
     def mouseReleaseEvent(self, event):
         if self.director:
             if self.directorItemSC:
-                self.directorItemSC.mouseReleaseExt()
-                self.directorItemSC.activa(False)
+                self.directorItemSC.mouse_release_ext()
+                self.directorItemSC.activate(False)
                 self.directorItemSC = None
                 self.w.refresh_guion()
                 return True
@@ -1180,10 +1179,10 @@ class Director:
             is_shift = (m & QtCore.Qt.KeyboardModifier.ShiftModifier.value) > 0
             is_alt = (m & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0
             is_ctrl = (m & QtCore.Qt.KeyboardModifier.ControlModifier.value) > 0
-            self.w.boardRelease(a1h8, is_right, is_shift, is_alt, is_ctrl)
+            self.w.board_release(a1h8, is_right, is_shift, is_alt, is_ctrl)
         return True
 
-    def terminar(self):
+    def finalize(self):
         if self.w:
-            self.w.terminar()
+            self.w.finalize()
             self.w = None

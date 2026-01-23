@@ -59,11 +59,15 @@ def get_clipboard():
 
 
 def keyboard_modifiers():
-    modifiers = QtWidgets.QApplication.keyboardModifiers()
-    is_shift = (modifiers.value & QtCore.Qt.KeyboardModifier.ShiftModifier.value) > 0
-    is_control = (modifiers.value & QtCore.Qt.KeyboardModifier.ControlModifier.value) > 0
-    is_alt = (modifiers.value & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0
-    return is_shift, is_control, is_alt
+    flags = QtWidgets.QApplication.keyboardModifiers()
+    return parse_keyboard_modifiers(flags)
+
+
+def parse_keyboard_modifiers(flags):
+    is_ctrl = bool(flags & QtCore.Qt.KeyboardModifier.ControlModifier)
+    is_alt = bool(flags & QtCore.Qt.KeyboardModifier.AltModifier)
+    is_shift = bool(flags & QtCore.Qt.KeyboardModifier.ShiftModifier)
+    return is_shift, is_ctrl, is_alt
 
 
 def is_control_pressed() -> bool:
@@ -79,3 +83,7 @@ def is_shift_pressed() -> bool:
 def is_alt_pressed() -> bool:
     modifiers = QtWidgets.QApplication.keyboardModifiers()
     return (modifiers.value & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0
+
+
+def deferred_call(mstime: int, called):
+    QtCore.QTimer.singleShot(mstime, called)

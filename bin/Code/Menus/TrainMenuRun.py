@@ -16,7 +16,8 @@ from Code.Expeditions import WindowEverest
 from Code.GM import ManagerGM, WindowGM
 from Code.Mate15 import WMate15
 from Code.Memory import Memory
-from Code.QT import Iconos, QTMessages, WindowDailyTest, WindowHorses, WindowPotencia, WindowPuente, WindowVisualiza
+from Code.QT import Iconos, QTMessages
+from Code.ZQT import WindowVisualiza, WindowPuente, WindowPotencia, WindowHorses, WindowDailyTest
 from Code.Resistance import ManagerResistance, Resistance, WindowResistance
 from Code.Tactics import ManagerTactics, Tactics, WindowTactics
 from Code.TrainPositions import TrainPositions
@@ -136,7 +137,7 @@ class TrainMenuRun:
 
     def tacticas(self, tipo, name, carpeta, ini, ntactic):
         tacticas = Tactics.Tactics(tipo, name, carpeta, ini)
-        tactica = tacticas.eligeTactica(ntactic, Code.configuration.paths.folder_results)
+        tactica = tacticas.eligeTactica(ntactic, Code.configuration.paths.folder_results())
         if tactica:
             self.tactics_train(tactica)
 
@@ -192,7 +193,7 @@ class TrainMenuRun:
         self.train_book()
 
     def train_book_ol(self):
-        self.train_book_ol()
+        self.procesador.train_book_ol()
 
     def gaviota_endings(self):
         WEndingsGTB.train_gtb(self.procesador.main_window)
@@ -220,7 +221,7 @@ class TrainMenuRun:
     def turn_on_lights(self, name):
         one_line = False
         if name.startswith("uned_easy"):
-            title = "%s (%s)" % (_("UNED chess school"), _("Initial"))
+            title = f"{_('UNED chess school')} ({_('Initial')})"
             folder = Code.path_resource("Trainings", "Tactics by UNED chess school")
             icono = Iconos.Uned()
             li_tam_blocks = (4, 6, 9, 12, 18, 36)
@@ -230,7 +231,7 @@ class TrainMenuRun:
             icono = Iconos.Uned()
             li_tam_blocks = (6, 12, 20, 30, 60)
         elif name.startswith("uwe_easy"):
-            title = "%s (%s)" % (_("Uwe Auerswald"), _("Initial"))
+            title = f"{_('Uwe Auerswald')} ({_('Initial')})"
             TurnOnLights.compruebaUweEasy(Code.configuration, name)
             folder = Code.configuration.temporary_folder()
             icono = Iconos.Uwe()

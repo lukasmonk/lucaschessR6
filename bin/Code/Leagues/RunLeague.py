@@ -3,7 +3,7 @@ import sys
 from PySide6 import QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Config import Configuration
 from Code.Leagues import Leagues, LeaguesWork
@@ -21,7 +21,7 @@ class LeagueWorker(RunWorker.RunWorker):
         self.name = self.league.name()
         self.key_video = "LEAGUEYPLAY"
         self.adjudicator_active = self.league.adjudicator_active()
-        self.adjudicator = self.league.adjudicator
+        self.move_evaluator = self.league.move_evaluator
         self.adjudicator_time = self.league.adjudicator_time
         self.draw_range = self.league.draw_range
         self.draw_min_ply = self.league.draw_min_ply

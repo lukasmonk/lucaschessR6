@@ -32,8 +32,8 @@ class WConfAnalysis(LCDialog.LCDialog):
         o_columns.nueva("MIN", _("Minimum"), 80, align_center=True)
         o_columns.nueva("MAX", _("Maximum"), 80, align_center=True)
         o_columns.nueva("TYPE", _("Type"), 80, align_center=True)
-        self.grid_keys = Grid.Grid(self, o_columns, xid="keys", siSelecFilas=False, is_editable=True)
-        self.grid_keys.setFixedWidth(self.grid_keys.anchoColumnas() + 20)
+        self.grid_keys = Grid.Grid(self, o_columns, xid="keys", complete_row_select=False, is_editable=True)
+        self.grid_keys.setFixedWidth(self.grid_keys.width_columns_displayables() + 20)
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Quit"), Iconos.FinPartida(), self.close)
@@ -60,18 +60,18 @@ class WConfAnalysis(LCDialog.LCDialog):
     def default(self):
         if QTMessages.pregunta(self, _("Are you sure you want to set the default configuration?")):
             for key, value in self.dic_eval_default.items():
-                setattr(self.configuration, "x_eval_%s" % key, value)
+                setattr(self.configuration, f"x_eval_{key}", value)
             self.configuration.graba()
             self.dic_eval = self.configuration.read_eval()
             self.grid_keys.refresh()
             if self.manager:
                 self.manager.refresh_analysis()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_keys)
 
-    def grid_dato(self, grid, row, o_column):
-        field = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        field = obj_column.key
         key = self.li_keys[row]
         if field == "KEY":
             return key
@@ -82,23 +82,24 @@ class WConfAnalysis(LCDialog.LCDialog):
                 if xtype == "int":
                     return str(int(v))
                 else:
-                    return "%0.02f" % v
+                    return f"{v:0.02f}"
             if field == "MIN":
                 return str(xfrom)
             if field == "MAX":
                 return str(xto)
             if field == "TYPE":
                 return xtype
+            return None
 
-    def grid_bold(self, grid, row, o_column):
-        field = o_column.key
+    def grid_bold(self, _grid, row, obj_column):
+        field = obj_column.key
         if field == "VALUE":
             key = self.li_keys[row]
             return self.dic_eval[key] != self.dic_eval_default[key]
 
         return False
 
-    def grid_setvalue(self, grid, row, o_column, valor):
+    def grid_setvalue(self, _grid, row, _obj_column, valor):
         key = self.li_keys[row]
         try:
             valor = float(valor)
@@ -112,7 +113,7 @@ class WConfAnalysis(LCDialog.LCDialog):
         if valor > xto or valor < xfrom:
             return
 
-        setattr(self.configuration, "x_eval_" + key, valor)
+        setattr(self.configuration, f"x_eval_{key}", valor)
         self.dic_eval[key] = valor
         self.configuration.graba()
         if self.manager:

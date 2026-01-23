@@ -11,6 +11,8 @@ from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTD
 
 
 class WDatos(QtWidgets.QDialog):
+    nivel: int
+
     def __init__(self, w_parent, txtcategoria, max_level):
         super(WDatos, self).__init__(w_parent)
 
@@ -31,7 +33,7 @@ class WDatos(QtWidgets.QDialog):
             max_level,
             1,
             max_level,
-            etiqueta=txtcategoria + " " + _("Level"),
+            etiqueta=f"{txtcategoria} {_('Level')}",
             max_width=40,
         )
         lb.set_font(f)
@@ -47,12 +49,12 @@ class WDatos(QtWidgets.QDialog):
         self.accept()
 
 
-def paramMemoria(parent, txtCategoria, max_level):
+def param_memory(parent, txt_categoria, max_level):
     if max_level == 1:
         return 1
 
     # Datos
-    w = WDatos(parent, txtCategoria, max_level)
+    w = WDatos(parent, txt_categoria, max_level)
     if w.exec():
         return w.nivel
     else:
@@ -60,7 +62,14 @@ def paramMemoria(parent, txtCategoria, max_level):
 
 
 class WMemoria(LCDialog.LCDialog):
-    def __init__(self, procesador, txtcategoria, nivel, seconds, listaFen, record):
+    fen_user: str
+    fen_aim: str
+    vtime: float
+    initial_time: float
+    squares: dict
+    nivel: int
+
+    def __init__(self, procesador, txtcategoria, nivel, seconds, lista_fen, record):
 
         titulo = _("Check your memory on a chessboard")
         icono = Iconos.Memoria()
@@ -80,21 +89,21 @@ class WMemoria(LCDialog.LCDialog):
         # Board
         config_board = self.configuration.config_board("MEMORIA", 48)
 
-        self.listaFen = listaFen
+        self.listaFen = lista_fen
 
         self.position = Position.Position()
 
         self.board = Board2.PosBoard(self, config_board)
-        self.board.crea()
-        self.board.set_dispatch_drop(self.dispatchDrop)
+        self.board.draw_window()
+        self.board.set_dispatch_drop(self.dispatch_drop)
         self.board.baseCasillasSC.setAcceptDrops(True)
         self.ultimaPieza = "P"
-        self.piezas = self.board.piezas
+        self.pieces = self.board.pieces
         self.ini_time_target = None
 
-        tamPiezas = max(16, int(32 * self.board.config_board.width_piece() / 48))
-        self.listaPiezasW = QTDialogs.ListaPiezas(self, WHITE, self.board, tamPiezas, margen=0)
-        self.listaPiezasB = QTDialogs.ListaPiezas(self, BLACK, self.board, tamPiezas, margen=0)
+        width_pieces = max(16, int(32 * self.board.config_board.width_piece() / 48))
+        self.listaPiezasW = QTDialogs.ListaPiezas(self, WHITE, self.board, width_pieces, margen=0)
+        self.listaPiezasB = QTDialogs.ListaPiezas(self, BLACK, self.board, width_pieces, margen=0)
 
         # Ayuda
         lb_ayuda = Controles.LB(
@@ -150,7 +159,7 @@ class WMemoria(LCDialog.LCDialog):
         self.rotuloDispone1.hide()
 
         tbmenu = Controles.TBrutina(self)
-        tbmenu.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tbmenu.new(_("Close"), Iconos.MainMenu(), self.finalize)
 
         # Toolbar
         li_acciones = (
@@ -198,11 +207,11 @@ class WMemoria(LCDialog.LCDialog):
         for lb in (lb_ayuda, self.rotuloDispone1, self.rotuloDispone):
             lb.relative_width(420)
 
-        self.encenderExtras(False)
+        self.activate_extras(False)
 
         self.restore_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
@@ -258,7 +267,7 @@ class WMemoria(LCDialog.LCDialog):
         )
 
         for txt, pieza in li_options:
-            icono = self.board.piezas.icono(pieza)
+            icono = self.board.pieces.icono(pieza)
 
             accion = QtGui.QAction(icono, txt, menu)
             accion.key = pieza
@@ -267,26 +276,26 @@ class WMemoria(LCDialog.LCDialog):
         resp = menu.exec(QtGui.QCursor.pos())
         if resp:
             pieza = resp.key
-            self.ponPieza(from_sq, pieza)
+            self.ensure_piece_at(from_sq, pieza)
 
-    def repitePieza(self, from_sq):
+    def repeat_piece(self, from_sq):
         self.squares[from_sq] = self.ultimaPieza
-        pieza = self.board.creaPieza(self.ultimaPieza, from_sq)
-        pieza.activa(True)
+        pieza = self.board.create_piece(self.ultimaPieza, from_sq)
+        pieza.activate(True)
 
-    def ponPieza(self, from_sq, pieza):
+    def ensure_piece_at(self, from_sq, pieza):
         antultimo = self.ultimaPieza
         self.ultimaPieza = pieza
-        self.repitePieza(from_sq)
+        self.repeat_piece(from_sq)
         if pieza == "K":
             self.ultimaPieza = antultimo
         if pieza == "k":
             self.ultimaPieza = antultimo
 
-    def dispatchDrop(self, from_sq, pieza):
+    def dispatch_drop(self, from_sq, pieza):
         if self.squares.get(from_sq):
             self.clean_square(from_sq)
-        self.ponPieza(from_sq, pieza)
+        self.ensure_piece_at(from_sq, pieza)
 
     def new_try(self):
         self.empezar(True)
@@ -313,7 +322,7 @@ class WMemoria(LCDialog.LCDialog):
         # Elegimos el fen de la lista
         if new:
             n_pos = random.randint(0, len(self.listaFen) - 1)
-            self.fenObjetivo = self.listaFen[n_pos]
+            self.fen_aim = self.listaFen[n_pos]
             del self.listaFen[n_pos]
             self.repetitions = 0
             self.cumulative_time = 0
@@ -323,7 +332,7 @@ class WMemoria(LCDialog.LCDialog):
                 self.cumulative_time += time.time() - self.ini_time_target
 
         self.ini_time_target = None
-        self.position.read_fen(self.fenObjetivo)
+        self.position.read_fen(self.fen_aim)
         self.board.set_position(self.position)
         self.board.disable_all()
         self.squares = self.position.squares
@@ -360,9 +369,9 @@ class WMemoria(LCDialog.LCDialog):
         self.stop_clock()
 
         self.board.set_dispatcher(self.mueve)
-        self.board.mensBorrar = self.clean_square
-        self.board.mensCrear = self.rightmouse_square
-        self.board.mensRepetir = self.repitePieza
+        self.board.message_to_delete = self.clean_square
+        self.board.create_message = self.rightmouse_square
+        self.board.repeat_message = self.repeat_piece
 
         # Quitamos seguir y ponemos comprobar
         self.pon_toolbar(
@@ -379,57 +388,57 @@ class WMemoria(LCDialog.LCDialog):
         )
         self.rotuloDispone.setVisible(False)
 
-        self.iniTiempo = time.time()
+        self.initial_time = time.time()
 
         for k in self.squares:
             self.squares[k] = None
         self.board.set_position(self.position)
 
-        self.encenderExtras(True)
+        self.activate_extras(True)
 
         self.rotuloDispone1.show()
 
-    def encenderExtras(self, si):
+    def activate_extras(self, si):
         self.gbAyuda.setVisible(si)
         self.listaPiezasW.setEnabled(si)
         self.listaPiezasB.setEnabled(si)
 
-    def ponCursor(self):
-        cursor = self.piezas.cursor(self.ultimaPieza)
+    def show_cursor(self):
+        cursor = self.pieces.cursor(self.ultimaPieza)
         for item in self.board.escena.items():
             item.setCursor(cursor)
         self.board.setCursor(cursor)
 
     def comprobar(self):
-        self.vtime = time.time() - self.iniTiempo
+        self.vtime = time.time() - self.initial_time
         self.cumulative_time += self.vtime
 
         fen_nuevo = self.position.fen()
         fen_nuevo = fen_nuevo[: fen_nuevo.index(" ")]
-        fen_comprobar = self.fenObjetivo
+        fen_comprobar = self.fen_aim
         fen_comprobar = fen_comprobar[: fen_comprobar.index(" ")]
 
         if fen_comprobar == fen_nuevo:
             mens = _X(_("Right, it took %1 seconds."), f"{self.cumulative_time: 0.02f}")
             if self.cumulative_time < self.record or self.record == 0:
-                mens += "<br>" + _("New record!")
+                mens += f"<br>{_('New record!')}"
             QTMessages.message_bold(self, mens)
             self.accept()
             return
 
         QTMessages.message_bold(self, _("The position is incorrect."))
 
-        self.fenNuestro = self.position.fen()
+        self.fen_user = self.position.fen()
 
         self.board.set_dispatcher(None)
-        self.board.mensBorrar = None
-        self.board.mensCrear = None
-        self.board.mensRepetir = None
+        self.board.message_to_delete = None
+        self.board.create_message = None
+        self.board.repeat_message = None
         self.board.disable_all()
 
         self.gbTiempo.hide()
 
-        self.encenderExtras(False)
+        self.activate_extras(False)
 
         # Quitamos comprobar y ponemos el resto
         li = [self.repetir, self.target, self.wrong]
@@ -447,7 +456,7 @@ class WMemoria(LCDialog.LCDialog):
 
     def target(self):
         self.ini_time_target = time.time()
-        self.position.read_fen(self.fenObjetivo)
+        self.position.read_fen(self.fen_aim)
         self.board.set_position(self.position)
         self.board.disable_all()
         # self.quita_repetir()
@@ -456,7 +465,7 @@ class WMemoria(LCDialog.LCDialog):
         if self.ini_time_target:
             self.cumulative_time += time.time() - self.ini_time_target
             self.ini_time_target = None
-        self.position.read_fen(self.fenNuestro)
+        self.position.read_fen(self.fen_user)
         self.board.set_position(self.position)
         self.board.disable_all()
         # self.quita_repetir()
@@ -525,34 +534,34 @@ class WMemoryResults(LCDialog.LCDialog):
             cat = memory.categorias.number(num_cat)
             o_columns.nueva(f"cat_{num_cat}", cat.name(), 140, align_center=True)
             o_columns.nueva(f"inc_{num_cat}", "∆", 60, align_center=True)
-        grid = Grid.Grid(self, o_columns, siSelecFilas=True, altoFila=24)
-        grid.coloresAlternados()
+        grid = Grid.Grid(self, o_columns, complete_row_select=True, heigh_row=24)
+        grid.alternate_colors()
         self.register_grid(grid)
 
         tb = Controles.TBrutina(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
 
         layout = Colocacion.V().control(tb).control(grid).margen(3)
 
         self.setLayout(layout)
 
-        self.restore_video(default_width=grid.anchoColumnas() + 24, default_height=720)
+        self.restore_video(default_width=grid.width_columns_displayables() + 24, default_height=720)
         grid.gotop()
         grid.setFocus()
 
     def closeEvent(self, event):
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
     @staticmethod
-    def grid_num_datos(grid):
+    def grid_num_datos(_grid):
         return 25
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         level = row
         if key == "level":
             return str(level + 1)

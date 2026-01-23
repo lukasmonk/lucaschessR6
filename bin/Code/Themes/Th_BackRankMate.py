@@ -40,7 +40,7 @@ class BackRankMate(CheckTheme.CheckTheme):
         if pz_mate.lower() not in "qr":
             return False
 
-        # No hay piezas entre la pz_mate y el rey (que no haya una descubierta)
+        # No hay pieces entre la pz_mate y el rey (que no haya una descubierta)
         c_king, r_king = self.cr_col_row(cr_king)
         c_mate, r_mate = self.cr_col_row(cr_mate)
         if abs(c_king - c_mate) > 1:
@@ -50,7 +50,7 @@ class BackRankMate(CheckTheme.CheckTheme):
                 if position.get_pz(cr):
                     return False
 
-        # que esté bloqueado por sus propias piezas
+        # que esté bloqueado por sus propias pieces
         row_pzs = 6 if is_white else 1
         for df in (-1, 0, +1):
             c_pz = c_king + df

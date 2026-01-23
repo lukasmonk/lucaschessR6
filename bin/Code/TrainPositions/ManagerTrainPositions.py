@@ -3,7 +3,7 @@ from typing import Optional
 
 from PySide6.QtCore import Qt
 
-from Code import FNSLine, Util
+from Code.Z import FNSLine, Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GT_POSITIONS,
@@ -59,7 +59,7 @@ class ManagerTrainPositions(Manager.Manager):
     show_comments: bool
     mrm_tutor: Optional[EngineResponse.MultiEngineResponse] = None
     is_tutor_enabled: bool = False
-    is_tutor_analyzing: bool = False
+    is_tutor_analysing: bool = False
     player_has_moved_a1h8: Optional[Move.Move] = None
     wsolve: WindowSolve.WSolve
 
@@ -77,16 +77,16 @@ class ManagerTrainPositions(Manager.Manager):
             db[self.entreno] = data
 
     def start(
-            self,
-            pos_training: int,
-            num_trainings: int,
-            title_training: str,
-            li_trainings: list[tuple[str, int]],
-            is_tutor_enabled: bool,
-            is_automatic_jump: bool,
-            remove_solutions: bool,
-            show_comments: bool,
-            advanced: bool,
+        self,
+        pos_training: int,
+        num_trainings: int,
+        title_training: str,
+        li_trainings: list[tuple[str, int]],
+        is_tutor_enabled: bool,
+        is_automatic_jump: bool,
+        remove_solutions: bool,
+        show_comments: bool,
+        advanced: bool,
     ) -> None:
         """Start the training session.
 
@@ -103,8 +103,8 @@ class ManagerTrainPositions(Manager.Manager):
         """
 
         self.game_type = GT_POSITIONS
-        if self.board.blindfold:
-            self.board.blindfoldChange()
+        if self.board.blindfold_something():
+            self.board.blindfold_change()
 
         self.main_window.active_game(True, False)
         self.main_window.remove_hints(False, False)
@@ -125,16 +125,16 @@ class ManagerTrainPositions(Manager.Manager):
         )
 
     def the_next(
-            self,
-            pos_training: int,
-            num_trainings: int,
-            title_training: str,
-            li_trainings: list[tuple[str, int]],
-            is_tutor_enabled: Optional[bool],
-            is_automatic_jump: bool,
-            remove_solutions: bool,
-            show_comments: bool,
-            advanced: bool,
+        self,
+        pos_training: int,
+        num_trainings: int,
+        title_training: str,
+        li_trainings: list[tuple[str, int]],
+        is_tutor_enabled: Optional[bool],
+        is_automatic_jump: bool,
+        remove_solutions: bool,
+        show_comments: bool,
+        advanced: bool,
     ) -> None:
         """Load and prepare the next position in the training sequence.
 
@@ -398,7 +398,7 @@ class ManagerTrainPositions(Manager.Manager):
             if self.current_helps == 1:
                 self.board.mark_position(from_sq)
             else:
-                self.board.ponFlechasTmp(([from_sq, to_sq, True],))
+                self.board.show_arrows_temp(([from_sq, to_sq, True],))
                 if promotion and promotion.upper() != "Q":
                     dic = TrListas.dic_nom_pieces()
                     QTMessages.temporary_message(self.main_window, dic[promotion.upper()], 2.0)
@@ -557,20 +557,20 @@ class ManagerTrainPositions(Manager.Manager):
     def analyze_begin(self):
         self.mrm_tutor = None
         self.is_analyzed_by_tutor = False
-        self.is_tutor_analyzing = False
+        self.is_tutor_analysing = False
         if not self.is_tutor_enabled:
             return
         if self.is_playing_gameobj():
             return
 
         if not self.is_finished():
-            self.is_tutor_analyzing = True
+            self.is_tutor_analysing = True
             self.manager_tutor.analyze_tutor(self.game, self.analyze_bestmove_found, self.analyze_changedepth)
 
     def analyze_bestmove_found(self, bestmove):
-        if self.is_tutor_analyzing:
+        if self.is_tutor_analysing:
             self.mrm_tutor = self.manager_tutor.get_current_mrm()
-            self.is_tutor_analyzing = False
+            self.is_tutor_analysing = False
             self.main_window.pensando_tutor(False)
             if self.player_has_moved_a1h8:
                 move = self.player_has_moved_a1h8
@@ -578,17 +578,17 @@ class ManagerTrainPositions(Manager.Manager):
                 self.player_has_moved(move, False)
 
     def analyze_changedepth(self, mrm: EngineResponse.MultiEngineResponse):
-        if self.is_tutor_analyzing:
+        if self.is_tutor_analysing:
             self.mrm_tutor = mrm
 
     def analyze_end(self):
-        if self.is_tutor_analyzing:
+        if self.is_tutor_analysing:
             self.manager_tutor.stop()
 
     def analyze_terminate(self):
         self.player_has_moved_a1h8 = None
-        if self.is_tutor_analyzing:
-            self.is_tutor_analyzing = False
+        if self.is_tutor_analysing:
+            self.is_tutor_analysing = False
             self.manager_tutor.stop()
 
     def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, promotion: str = ""):
@@ -603,7 +603,7 @@ class ManagerTrainPositions(Manager.Manager):
         is_playing_gameobj = self.is_playing_gameobj()
         if is_playing_gameobj:
             move_obj = self.game_obj.move(self.pos_obj)
-            is_main, is_var = move_obj.test_a1h8(a1h8)
+            is_main, is_var = move_obj.check_a1h8(a1h8)
             if is_main:
                 ok = True
                 self.pos_obj += 1
@@ -620,13 +620,13 @@ class ManagerTrainPositions(Manager.Manager):
                     (move.from_sq, move.to_sq, False),
                     (move_obj.from_sq, move_obj.to_sq, True),
                 ]
-                self.board.ponFlechasTmp(li_movs)
+                self.board.show_arrows_temp(li_movs)
             if not ok:
                 self.beep_error()
                 self.continue_human()
                 return False
 
-        if self.is_tutor_analyzing:
+        if self.is_tutor_analysing:
             self.main_window.pensando_tutor(True)
 
             self.player_has_moved_a1h8 = move
@@ -649,7 +649,7 @@ class ManagerTrainPositions(Manager.Manager):
                     rm_user, n = self.mrm_tutor.search_rm(a1h8)
                     if not rm_user:
                         self.main_window.pensando_tutor(True)
-                        self.is_tutor_analyzing = True
+                        self.is_tutor_analysing = True
                         self.is_analyzing = True
                         self.mrm_tutor = self.manager_tutor.analyze_tutor_move(self.game, a1h8)
                         self.state = ST_PLAYING
@@ -677,7 +677,7 @@ class ManagerTrainPositions(Manager.Manager):
                     del tutor
         self.mrm_tutor = None
 
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
         self.add_move(move, True)
 
         if self.game_obj and self.pos_obj >= len(self.game_obj):
@@ -718,7 +718,7 @@ class ManagerTrainPositions(Manager.Manager):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         self.is_analyzed_by_tutor = False
 
-        self.move_the_pieces(move.liMovs, True)
+        self.move_the_pieces(move.list_piece_moves, True)
         self.add_move(move, False)
 
         if is_obj and len(self.game_obj) == self.pos_obj:
@@ -784,7 +784,7 @@ class ManagerTrainPositions(Manager.Manager):
             self.pon_help(False)
 
     def pon_resultado(self) -> None:
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
 
         QTUtils.refresh_gui()
         QTMessages.message(self.main_window, mensaje)

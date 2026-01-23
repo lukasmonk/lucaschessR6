@@ -4,7 +4,7 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import BLACK, LI_BASIC_TAGS, WHITE
 from Code.Board import Board, Board2
@@ -95,7 +95,7 @@ class DBLearnGame(UtilSQL.DictSQL):
         self.regKeys = self.keys(True, True)
 
     def reset(self):
-        cursor = self.conexion.execute("SELECT KEY FROM %s" % self.tabla)
+        cursor = self.conexion.execute(f"SELECT KEY FROM {self.tabla}")
         self.li_keys = [reg[0] for reg in cursor.fetchall()]
         self.cache = {}
 
@@ -122,11 +122,11 @@ class WLearnBase(LCDialog.LCDialog):
         for key in li:
             label = TrListas.pgn_label(key)
             crea_col(key, label, key != "EVENT")
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Learn"), Iconos.Empezar(), self.empezar),
             None,
@@ -151,18 +151,18 @@ class WLearnBase(LCDialog.LCDialog):
 
         self.grid.gotop()
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.empezar()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.db)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         dic = self.db.read_dic_register(row)
         return dic.get(col)
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.db.close()
         self.accept()
@@ -191,7 +191,7 @@ class WLearnBase(LCDialog.LCDialog):
             self.grid.gotop()
 
     def borrar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 self.db.remove_list(li)
@@ -199,7 +199,7 @@ class WLearnBase(LCDialog.LCDialog):
         self.grid.refresh()
 
     def empezar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             w = WLearn1(self, self.db, li[0])
             w.exec()
@@ -240,7 +240,7 @@ class WLearn1(LCDialog.LCDialog):
         self.db = db
         self.procesador = Code.procesador
         self.configuration = Code.configuration
-        self.numRegistro = num_registro
+        self.num_record = num_registro
         self.registro = self.db.read_data_register(num_registro)
 
         self.game = Game.Game()
@@ -261,12 +261,12 @@ class WLearn1(LCDialog.LCDialog):
         o_columns.nueva("ERRORS", _("Errors"), 80, align_center=True)
         o_columns.nueva("HINTS", _("Hints"), 80, align_center=True)
         o_columns.nueva("TIME", _("Time"), 80, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        self.grid.setMinimumWidth(self.grid.anchoColumnas() + 20)
+        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         # Tool bar
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Train"), Iconos.Empezar(), self.empezar),
             None,
@@ -288,19 +288,13 @@ class WLearn1(LCDialog.LCDialog):
 
     def label(self):
         x = self.game.get_tag
-        return "%s-%s : %s %s %s" % (
-            x("WHITE"),
-            x("BLACK"),
-            x("DATE"),
-            x("EVENT"),
-            x("SITE"),
-        )
+        return f"{x('WHITE')}-{x('BLACK')} : {x('DATE')} {x('EVENT')} {x('SITE')}"
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liIntentos)
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         reg = self.liIntentos[row]
 
         if col == "DATE":
@@ -315,7 +309,7 @@ class WLearn1(LCDialog.LCDialog):
             elif c == "w":
                 return _("White")
             else:
-                return _("White") + "+" + _("Black")
+                return f"{_('White')}+{_('Black')}"
         if col == "ERRORS":
             return str(reg["ERRORS"])
         if col == "HINTS":
@@ -328,20 +322,21 @@ class WLearn1(LCDialog.LCDialog):
         if col == "TYPE":
             is_random = reg.get("TYPE", "s") == "r"
             return _("Random") if is_random else _("Sequential")
+        return None
 
     def guardar(self, dic):
         self.liIntentos.insert(0, dic)
         self.grid.refresh()
         self.grid.gotop()
         self.registro["LIINTENTOS"] = self.liIntentos
-        self.db.change_value(self.numRegistro, self.registro)
+        self.db.change_value(self.num_record, self.registro)
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
     def borrar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
                 li.sort()
@@ -351,14 +346,14 @@ class WLearn1(LCDialog.LCDialog):
         self.grid.gotop()
         self.grid.refresh()
         self.registro["LIINTENTOS"] = self.liIntentos
-        self.db.change_value(self.numRegistro, self.registro)
+        self.db.change_value(self.num_record, self.registro)
 
     def empezar(self):
         dic = self.configuration.read_variables("MEMORIZING_GAME")
         if self.liIntentos:
             dic.update(self.liIntentos[0])
 
-        form = FormLayout.FormLayout(self, _("New try"), Iconos.LearnGame(), anchoMinimo=300)
+        form = FormLayout.FormLayout(self, _("New try"), Iconos.LearnGame(), minimum_width=300)
 
         form.separador()
         form.apart(_("Second board"))
@@ -464,29 +459,29 @@ class WLearnPuente(LCDialog.LCDialog):
         config_board = self.configuration.config_board("LEARNPGN", 48)
 
         self.boardIni = Board.Board(self, config_board)
-        self.boardIni.crea()
+        self.boardIni.draw_window()
         if side == BLACK:
             self.boardIni.set_side_bottom(BLACK)
-        self.boardIni.set_dispatcher(self.player_has_moved, None)
+        self.boardIni.set_dispatcher(self.player_has_moved_dispatcher, None)
         self.lbIni = (
             Controles.LB(self)
             .align_center()
             .set_foreground_backgound("#076C9F", "#EFEFEF")
-            .anchoMinimo(self.boardIni.ancho)
+            .minimum_width(self.boardIni.ancho)
         )
         ly_ini = Colocacion.V().control(self.boardIni).control(self.lbIni)
 
         ly_fin = None
         if self.nivel > 0:
             self.boardFin = Board2.BoardEstatico(self, config_board)
-            self.boardFin.crea()
+            self.boardFin.draw_window()
             if side == BLACK:
                 self.boardFin.set_side_bottom(BLACK)
             self.lbFin = (
                 Controles.LB(self)
                 .align_center()
                 .set_foreground_backgound("#076C9F", "#EFEFEF")
-                .anchoMinimo(self.boardFin.ancho)
+                .minimum_width(self.boardFin.ancho)
             )
             self.boardFin.disable_eboard_here()
             ly_fin = Colocacion.V().control(self.boardFin).control(self.lbFin)
@@ -498,9 +493,9 @@ class WLearnPuente(LCDialog.LCDialog):
             .set_font(f)
             .align_center()
             .set_foreground_backgound("#076C9F", "#EFEFEF")
-            .anchoMinimo(200)
+            .minimum_width(200)
         )
-        self.lbReloj.setFrameStyle(QtWidgets.QFrame.Box or QtWidgets.QFrame.Raised)
+        self.lbReloj.setFrameStyle(QtWidgets.QFrame.Shape.Box or QtWidgets.QFrame.Shadow.Raised)
 
         # Movimientos
         flb = Controles.FontType(puntos=11)
@@ -675,7 +670,7 @@ class WLearnPuente(LCDialog.LCDialog):
 
     def show_info(self):
         njg = self.replay_num_move if self.repWorking else self.current_num_move - 1
-        txt_pgn = self.game.pgn_translated(hastaJugada=njg)
+        txt_pgn = self.game.pgn_translated(until_move=njg)
         if self.is_random:
             txt_pgn = ""
         texto = "<big><center><b>%s</b>: %d<br><b>%s</b>: %d</center><br><br>%s</big>" % (
@@ -715,12 +710,12 @@ class WLearnPuente(LCDialog.LCDialog):
         else:
             self.siguiente()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.game.move(self.current_num_move)
 
         # Peon coronando
         if not promotion and move.position_before.pawn_can_promote(from_sq, to_sq):
-            promotion = self.boardIni.peonCoronando(move.position_before.is_white)
+            promotion = self.boardIni.pawn_promoting(move.position_before.is_white)
 
         if from_sq == move.from_sq and to_sq == move.to_sq and promotion.lower() == move.promotion.lower():
             self.boardIni.put_arrow_sc(from_sq, to_sq)
@@ -729,7 +724,7 @@ class WLearnPuente(LCDialog.LCDialog):
         else:
             if to_sq != from_sq:
                 self.errors += 1
-                self.boardIni.ponFlechasTmp([(move.from_sq, move.to_sq, False)])
+                self.boardIni.show_arrows_temp([(move.from_sq, move.to_sq, False)])
             self.show_info()
             return False
 
@@ -766,9 +761,10 @@ class WLearnPuente(LCDialog.LCDialog):
 
         self.pon_toolbar(self.FINAL_JUEGO)
 
-        texto = ('<hr><center><span style="color: red; font-weight: bold;' ' font-size: 18pt;">%s</center><hr>') % _(
-            "Ended"
-        ) + self.lbInfo.text()
+        texto = (
+            f'<hr><center><span style="color: red; font-weight: bold; font-size: 18pt;">{_("Ended")}</center>'
+            f'<hr>{self.lbInfo.text()}'
+        )
         self.lbInfo.set_text(texto)
 
     def final(self):

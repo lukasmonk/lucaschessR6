@@ -3,7 +3,7 @@ import ssl
 import sys
 from typing import Optional
 
-from Code import Util
+from Code.Z import Util, Debug
 
 Util.randomize()
 
@@ -18,7 +18,6 @@ platform = "windows" if sys.platform == "win32" else "linux"
 folder_code_os = Util.opj(current_dir, "Code", "OS", platform)
 sys.path.insert(0, folder_code_os)
 sys.path.insert(0, os.path.realpath(os.curdir))
-
 
 folder_root = os.path.realpath("..")
 folder_resources = Util.opj(folder_root, "Resources")
@@ -74,7 +73,6 @@ garbage_collector = None
 
 engines_has_been_checked = False
 
-
 web = "https://lucaschess.pythonanywhere.com"
 blog = "https://lucaschess.blogspot.com"
 github = "https://github.com/lukasmonk/lucaschessR2"
@@ -102,12 +100,10 @@ def relative_root(path):
     return path
 
 
-BASE_VERSION = "C"  # For controlling updates that require a complete reinstallation
-VERSION = "R 6.0.02"
+BASE_VERSION = "C"
+VERSION = "R 6.0.0.3"
 
 if __debug__:
-
-    from Code import Debug
 
     Debug.prln("Modo debug activado", color="green")
     if Debug.DEBUG_ENGINES:

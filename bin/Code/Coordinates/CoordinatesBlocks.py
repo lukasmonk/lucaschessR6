@@ -1,3 +1,5 @@
+from typing import Optional
+
 import datetime
 import random
 
@@ -34,7 +36,7 @@ class GenTry:
 
 class CoordinatesBlocks:
     date_ini: datetime.datetime
-    date_end: [datetime.datetime, None]
+    date_end: Optional[datetime.datetime]
     min_score: int
     tries: int
     current_block: int
@@ -151,6 +153,9 @@ class CoordinatesBlocks:
 
 
 class DBCoordinatesBlocks:
+    li_data: list
+    path: str
+
     def __init__(self, path):
         self.path = path
         self.refresh()

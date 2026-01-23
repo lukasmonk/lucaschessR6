@@ -7,8 +7,7 @@ from Code.Translations import TrListas
 
 
 def datos(w_parent):
-    resp = dame_categoria(w_parent)
-    if resp:
+    if resp := dame_categoria(w_parent):
         rival, categorias, categoria = resp
     else:
         return None
@@ -70,15 +69,12 @@ def dame_categoria(w_parent):
         submenu = submenu_rival.submenu(name, ico_g)
 
         for rv in grupo.li_rivales:
-            si_actual = rv.alias == rival.alias
+            si_actual = rv.key == rival.key
             ico = ico_actual if si_actual else ico_m
-            if rv.is_type_external():
-                name = rv.nombre_ext()
-            else:
-                name = rv.name
+            name = rv.nombre_ext() if rv.is_type_external() else rv.name
             submenu.opcion(
-                "MT_" + rv.alias,
-                "%s: [%d %s]" % (name, dbm.get_puntos_rival(rv.alias), _("pts")),
+                f"MT_{rv.key}",
+                "%s: [%d %s]" % (name, dbm.get_puntos_rival(rv.key), _("pts")),
                 ico,
                 si_des or si_actual,
             )
@@ -94,7 +90,7 @@ def dame_categoria(w_parent):
         nh = cat.hecho
 
         if nm > 0:
-            txt += " %s" % TrListas.level(nm)
+            txt += f" {TrListas.level(nm)}"
         if nh:
             if "B" in nh:
                 txt += " +%s:%d" % (_("White"), nm + 1)
@@ -157,7 +153,7 @@ class WDatos(QtWidgets.QDialog):
         self.puntos = 0
 
         self.ed = Controles.SB(self, self.max_level, 1, self.max_level).relative_width(40)
-        lb = Controles.LB(self, categoria.name() + " " + _("Level"))
+        lb = Controles.LB(self, f"{categoria.name()} {_('Level')}")
 
         lb.set_font(f)
         self.lbPuntos = Controles.LB(self).align_right()
@@ -174,22 +170,13 @@ class WDatos(QtWidgets.QDialog):
 
         # Rival
         lb_r_motor = (
-            Controles.LB(self, "<b>%s</b> : %s" % (_("Engine"), rival.name))
-            .set_font(flb)
-            .set_wrap()
-            .relative_width(400)
+            Controles.LB(self, f'<b>{_("Engine")}</b> : {rival.name}').set_font(flb).set_wrap().relative_width(400)
         )
         lb_r_autor = (
-            Controles.LB(self, "<b>%s</b> : %s" % (_("Author"), rival.autor))
-            .set_font(flb)
-            .set_wrap()
-            .relative_width(400)
+            Controles.LB(self, f'<b>{_("Author")}</b> : {rival.autor}').set_font(flb).set_wrap().relative_width(400)
         )
         lb_r_web = (
-            Controles.LB(
-                self,
-                '<b>%s</b> : <a href="%s">%s</a>' % (_("Web"), rival.url, rival.url),
-            )
+            Controles.LB(self, f'<b>{_("Web")}</b> : <a href="{rival.url}">{rival.url}</a>')
             .set_wrap()
             .relative_width(400)
             .set_font(flb)
@@ -201,25 +188,16 @@ class WDatos(QtWidgets.QDialog):
         # Tutor
         tutor = Code.configuration.engines.engine_tutor()
         lb_t_motor = (
-            Controles.LB(self, "<b>%s</b> : %s" % (_("Engine"), tutor.name))
-            .set_font(flb)
-            .set_wrap()
-            .relative_width(400)
+            Controles.LB(self, f'<b>{_("Engine")}</b> : {tutor.name}').set_font(flb).set_wrap().relative_width(400)
         )
         lb_t_autor = (
-            Controles.LB(self, "<b>%s</b> : %s" % (_("Author"), tutor.autor))
-            .set_font(flb)
-            .set_wrap()
-            .relative_width(400)
+            Controles.LB(self, f'<b>{_("Author")}</b> : {tutor.autor}').set_font(flb).set_wrap().relative_width(400)
         )
         ly = Colocacion.V().control(lb_t_motor).control(lb_t_autor)
 
         if hasattr(tutor, "url"):
             lb_t_web = (
-                Controles.LB(
-                    self,
-                    '<b>%s</b> : <a href="%s">%s</a>' % ("Web", tutor.url, tutor.url),
-                )
+                Controles.LB(self, f'<b>Web</b> : <a href="{tutor.url}">{tutor.url}</a>')
                 .set_wrap()
                 .relative_width(400)
                 .set_font(flb)
@@ -257,7 +235,7 @@ class WDatos(QtWidgets.QDialog):
         self.is_white = self.rb_white.isChecked()
         self.accept()
 
-    def level_changed(self, nuevo):
+    def level_changed(self, _nuevo):
         self.set_max_score()
 
     def set_max_score(self):
@@ -266,20 +244,19 @@ class WDatos(QtWidgets.QDialog):
             color = "B" if self.rb_white.isChecked() else "N"
             if color not in self.maxNivelHecho:
                 p = self.max_puntos
-        self.lbPuntos.setText("%d %s" % (p, _("points")))
+        self.lbPuntos.setText(f'{p} {_("points")}')
         self.puntos = p
 
 
-def edit_training_position(w_parent, titulo, to_sq, etiqueta=None, pos=None, mensAdicional=None):
-    w = WNumEntrenamiento(w_parent, titulo, to_sq, etiqueta, pos, mensAdicional)
-    if w.exec():
-        return w.number
-    else:
-        return None
+def edit_training_position(w_parent, titulo, to_sq, etiqueta=None, pos=None, additional_message=None):
+    w = WNumEntrenamiento(w_parent, titulo, to_sq, etiqueta, pos, additional_message)
+    return w.number if w.exec() else None
 
 
 class WNumEntrenamiento(QtWidgets.QDialog):
-    def __init__(self, w_parent, titulo, to_sq, etiqueta=None, pos=None, mensAdicional=None):
+    number: int
+
+    def __init__(self, w_parent, titulo, to_sq, etiqueta=None, pos=None, additional_message=None):
         super(WNumEntrenamiento, self).__init__(w_parent)
 
         self.setFont(Controles.FontType(puntos=Code.configuration.x_sizefont_infolabels))
@@ -298,17 +275,17 @@ class WNumEntrenamiento(QtWidgets.QDialog):
         self.ed, lb = QTMessages.spinbox_lb(self, pos, 1, to_sq, etiqueta=etiqueta, max_width=60)
         lb1 = Controles.LB(self, "/ %d" % to_sq)
 
-        lyH = Colocacion.H().relleno().control(lb).control(self.ed).control(lb1).relleno().margen(15)
+        ly_h = Colocacion.H().relleno().control(lb).control(self.ed).control(lb1).relleno().margen(15)
 
-        lyV = Colocacion.V().control(tb).otro(lyH)
-        if mensAdicional:
-            lb2 = Controles.LB(self, mensAdicional)
-            lb2.set_wrap().anchoMinimo(250)
+        ly_v = Colocacion.V().control(tb).otro(ly_h)
+        if additional_message:
+            lb2 = Controles.LB(self, additional_message)
+            lb2.set_wrap().minimum_width(250)
             lyb2 = Colocacion.H().control(lb2).margen(15)
-            lyV.otro(lyb2)
-        lyV.margen(3)
+            ly_v.otro(lyb2)
+        ly_v.margen(3)
 
-        self.setLayout(lyV)
+        self.setLayout(ly_v)
 
         self.resultado = None
 

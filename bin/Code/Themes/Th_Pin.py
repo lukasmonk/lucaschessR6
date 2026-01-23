@@ -50,7 +50,7 @@ class Pin(CheckTheme.CheckTheme):
         if pz_attacker.lower() == "k":
             return False
 
-        # Todos los movimientos posibles de las piezas rivales, no hay ninguno que sea la captura de esa pieza
+        # Todos los movimientos posibles de las pieces rivales, no hay ninguno que sea la captura de esa pieza
         pin_absolute = True
         exmoves = position.get_exmoves()
         for exmove in exmoves:
@@ -61,7 +61,7 @@ class Pin(CheckTheme.CheckTheme):
             return True
 
         # Si se puede capturar
-        # miramos todas nuestras piezas que atacan sq_pinned
+        # miramos todas nuestras pieces que atacan sq_pinned
         li_attacked_sq_pz = self.square_attacked(position, sq_pz_moved, is_white)
 
         pos_pinned = FasterCode.a1_pos(sq_pinned)
@@ -102,7 +102,7 @@ class Pin(CheckTheme.CheckTheme):
         sq_pz_moved = move.to_sq
         pz_moved = position.get_pz(sq_pz_moved)
 
-        # Solo piezas de largo recorrido
+        # Solo pieces de largo recorrido
         if pz_moved.lower() not in ("q", "r", "b"):
             return False
 

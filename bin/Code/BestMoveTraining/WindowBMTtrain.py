@@ -1,8 +1,9 @@
 import time
+from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
-from Code import ControlPGN, Util
+from Code.Z import ControlPGN, Util
 from Code.Analysis import Analysis
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
@@ -15,17 +16,20 @@ from Code.Base.Constantes import (
     GT_BMT,
 )
 from Code.Board import Board
-from Code.QT import Colocacion, Columnas, Controles, Delegados, FormLayout, Grid, Iconos, LCDialog, QTMessages, QTUtils
+from Code.QT import Colocacion, Columnas, Controles, Delegados
+from Code.QT import FormLayout, Grid, Iconos, LCDialog, QTMessages, QTUtils, QTDialogs
 
 
 class WTrainBMT(LCDialog.LCDialog):
+    bmt_uno: object | None
+
     def __init__(self, owner, dbf):
 
         # Variables
         self.procesador = owner.procesador
         self.configuration = owner.configuration
 
-        self.iniTiempo = None
+        self.initial_time = None
         self.antTxtSegundos = ""
 
         dic_var = self.configuration.read_variables("BMT_OPTIONS")
@@ -73,8 +77,8 @@ class WTrainBMT(LCDialog.LCDialog):
         config_board = self.configuration.config_board("BMT", 32)
 
         self.board = Board.Board(self, config_board)
-        self.board.crea()
-        self.board.set_dispatcher(self.player_has_moved)
+        self.board.draw_window()
+        self.board.set_dispatcher(self.player_has_moved_dispatcher)
         self.board.dbvisual_set_show_always(False)
 
         # Info -------------------------------------------------------------------
@@ -83,11 +87,11 @@ class WTrainBMT(LCDialog.LCDialog):
         n_ancho_labels = width_pgn // 2 - 4
 
         # color_fondo = ScreenUtils.qt_color(config_board.colorNegras())
-        self.trPuntos = "<big><b>" + _("Score") + "<br>%s</b></big>"
-        self.trSegundos = "<big><b>" + _("Time") + "<br>%s</b></big>"
-        self.lbPuntos = Controles.LB(self, "").align_center().anchoMinimo(n_ancho_labels).set_font(f)
+        self.trPuntos = f"<big><b>{_('Score')}<br>%s</b></big>"
+        self.trSegundos = f"<big><b>{_('Time')}<br>%s</b></big>"
+        self.lbPuntos = Controles.LB(self, "").align_center().minimum_width(n_ancho_labels).set_font(f)
         self.configuration.set_property(self.lbPuntos, "white")
-        self.lb_segundos = Controles.LB(self, "").align_center().anchoMinimo(n_ancho_labels).set_font(f)
+        self.lb_segundos = Controles.LB(self, "").align_center().minimum_width(n_ancho_labels).set_font(f)
         self.configuration.set_property(self.lb_segundos, "black")
         self.texto_lbPrimera = _("* indicates actual move played in game")
         self.ptsMejor = 0
@@ -113,8 +117,8 @@ class WTrainBMT(LCDialog.LCDialog):
             100,
             edicion=Delegados.EtiquetaPGN(False if with_figurines else None),
         )
-        self.pgn = Grid.Grid(self, o_columns, siCabeceraMovible=False)
-        n_ancho_pgn = self.pgn.anchoColumnas() + 20
+        self.pgn = Grid.Grid(self, o_columns, is_column_header_movable=False)
+        n_ancho_pgn = self.pgn.width_columns_displayables() + 20
         self.pgn.setMinimumWidth(n_ancho_pgn)
 
         self.pgn.setVisible(False)
@@ -122,7 +126,7 @@ class WTrainBMT(LCDialog.LCDialog):
         # BT posiciones ---------------------------------------------------------------
         self.liBT = []
         n_salto = (self.board.ancho + 34) // 26
-        self.dicIconos = {
+        self.dict_icons = {
             0: Iconos.PuntoBlanco(),
             1: Iconos.PuntoNegro(),
             2: Iconos.PuntoAmarillo(),
@@ -143,7 +147,7 @@ class WTrainBMT(LCDialog.LCDialog):
             bt.number = number
             number += 1
             estado = self.bmt_lista.state(bmt_lista)
-            bt.ponIcono(self.dicIconos[estado])
+            bt.set_icono(self.dict_icons[estado])
             self.liBT.append(bt)
 
             ly_bt.controlc(bt, nfila, ncolumna)
@@ -164,15 +168,15 @@ class WTrainBMT(LCDialog.LCDialog):
         number = 0
         self.height_bt = self.configuration.x_font_points + 20
         self.width_bt = 160 + max((self.configuration.x_font_points - 10) * 16, 0)
-        for bmt_lista in range(16):
+        for __ in range(16):
             w = QtWidgets.QWidget(self)
-            bt_rm = Controles.PB(self, "", rutina=self.pulsadoRM).ponPlano(True)
-            bt_rm.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+            bt_rm = Controles.PB(self, "", rutina=self.pressed_rm).set_flat(True)
+            bt_rm.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             bt_rm.setMinimumWidth(self.width_bt)
             bt_rm.setMinimumHeight(self.height_bt)
             bt_rm.number = number
             bt_rm.setEnabled(False)
-            lb = Controles.LB(self).anchoMinimo(24).align_right()
+            lb = Controles.LB(self).minimum_width(24).align_right()
             w.bt = bt_rm
             w.lb = lb
             ly = Colocacion.H().control(lb).control(bt_rm).margen(0)
@@ -189,17 +193,15 @@ class WTrainBMT(LCDialog.LCDialog):
         self.gbRM = Controles.GB(self, _("Moves"), ly_rm)
 
         # Tool bar ---------------------------------------------------------------
-        li_acciones = (
-            (_("Close"), Iconos.MainMenu(), "terminar"),
-            (_("Repeat"), Iconos.Pelicula_Repetir(), "repetir"),
-            (_("Resign"), Iconos.Abandonar(), "abandonar"),
-            (_("Remove"), Iconos.Borrar(), "borrar"),
-            (_("Options"), Iconos.Opciones(), "opciones"),
-            (_("Start"), Iconos.Empezar(), "empezar"),
-            (_("Actual game"), Iconos.PartidaOriginal(), "original"),
-            (_("Next"), Iconos.Siguiente(), "seguir"),
-        )
-        self.tb = Controles.TB(self, li_acciones)
+        self.tb = QTDialogs.LCTB(self)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        self.tb.new(_("Repeat"), Iconos.Pelicula_Repetir(), self.repetir)
+        self.tb.new(_("Resign"), Iconos.Abandonar(), self.abandonar)
+        self.tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
+        self.tb.new(_("Options"), Iconos.Opciones(), self.opciones)
+        self.tb.new(_("Start"), Iconos.Empezar(), self.empezar)
+        self.tb.new(_("Actual game"), Iconos.PartidaOriginal(), self.original)
+        self.tb.new(_("Next"), Iconos.Siguiente(), self.seguir)
 
         self.restore_video(with_tam=False)
 
@@ -222,11 +224,11 @@ class WTrainBMT(LCDialog.LCDialog):
         if self.is_finished:
             self.empezar()
         else:
-            self.pon_toolbar(["terminar", "empezar"])
+            self.pon_toolbar(self.finalize, self.empezar)
 
-        self.muestraControles(False)
+        self.show_controls(False)
 
-    def muestraControles(self, si):
+    def show_controls(self, si):
         for control in (
             self.lbJuegan,
             self.board,
@@ -241,14 +243,14 @@ class WTrainBMT(LCDialog.LCDialog):
             control.setVisible(si)
 
     def seguir(self):
-        self.muestraControles(True)
+        self.show_controls(True)
         pos = self.actualP + 1
         if pos >= len(self.liBT):
             pos = 0
-        self.buscaPrimero(pos)
+        self.search_first(pos)
 
     def opciones(self):
-        form = FormLayout.FormLayout(self, "Training settings", Iconos.Opciones(), anchoMinimo=500)
+        form = FormLayout.FormLayout(self, "Training settings", Iconos.Opciones(), minimum_width=500)
         form.separador()
         form.editbox(
             _("Tolerance: How many centipawns below the best move are accepted"),
@@ -267,7 +269,7 @@ class WTrainBMT(LCDialog.LCDialog):
 
     def abandonar(self):
         self.bmt_uno.puntos = 0
-        self.activaJugada(0)
+        self.activate_move(0)
         self.set_score(0)
         self.pon_toolbar()
 
@@ -277,39 +279,18 @@ class WTrainBMT(LCDialog.LCDialog):
             QTMessages.message(self, _("This position will be deleted on exit."))
             self.seguir()
 
-    def process_toolbar(self):
-        accion = self.sender().key
-        if accion == "terminar":
-            self.terminar()
-            self.accept()
-        elif accion == "seguir":
-            self.seguir()
-        elif accion == "abandonar":
-            self.abandonar()
-        elif accion == "borrar":
-            self.borrar()
-        elif accion == "repetir":
-            self.muestraControles(True)
-            self.repetir()
-        elif accion == "empezar":
-            self.muestraControles(True)
-            self.empezar()
-        elif accion == "original":
-            self.original()
-        elif accion == "opciones":
-            self.opciones()
-
     def closeEvent(self, event):
-        self.terminar()
+        self.finalize(False)
 
     def empezar(self):
-        self.buscaPrimero(0)
+        self.show_controls(True)
+        self.search_first(0)
         self.set_score(0)
-        self.ponSegundos()
+        self.set_time_seconds()
         self.set_clock()
 
-    def terminar(self):
-        self.finalizaTiempo()
+    def finalize(self, with_accept=True):
+        self.end_time()
 
         if len(self.borrar_fen_lista) > 0:
             self.bmt_lista.borrar_fen_lista(self.borrar_fen_lista)
@@ -341,27 +322,23 @@ class WTrainBMT(LCDialog.LCDialog):
                 reg.HISTORIAL = Util.var2zip(self.historial)
                 reg.REPE = len(self.historial)
 
-            if self.is_finished:
-                if not self.siTerminadaAntes:
-                    reg.ESTADO = str(t_estado / total)
-                    reg.FFINAL = Util.dtos(Util.today())
+            if self.is_finished and not self.siTerminadaAntes:
+                reg.ESTADO = str(t_estado / total)
+                reg.FFINAL = Util.dtos(Util.today())
 
             self.dbf.modificarReg(self.recnoActual, reg)
 
         self.save_video()
+        if with_accept:
+            self.accept()
 
     def repetir(self):
-        # # Opcion de repetir solo las posiciones dificiles
-        # Contamos las posiciones debajo un cierto state para el combobox
-
-        num_pos_estate = {}
-        for y in range(0, 9):
-            num_pos_estate[y] = 0
-
+        self.show_controls(True)
+        num_pos_estate = {y: 0 for y in range(9)}
         nposic = len(self.bmt_lista)
         for x in range(nposic):
             estado = self.bmt_lista.state(x)
-            for y in range(0, 9):
+            for y in range(9):
                 if estado < y:
                     num_pos_estate[y] += 1
 
@@ -375,34 +352,33 @@ class WTrainBMT(LCDialog.LCDialog):
             4: _("Acceptable"),
         }
 
-        li_gen = [(None, None)]
         li_j = []
 
         for x in reversed(range(4, 10)):
             if num_pos_estate[x] > 0:
-                label = "%s (%s)" % (labels_score[x], num_pos_estate[x])
+                label = f"{labels_score[x]} ({num_pos_estate[x]})"
                 li_j.append((label, x))
 
         config = FormLayout.Combobox(_("Repeat only below score"), li_j)
-        li_gen.append((config, 9))
-
-        titulo = "%s" % (_("Do you want to repeat this training?"))
-        resultado = FormLayout.fedit(li_gen, title=titulo, parent=self, anchoMinimo=560, icon=Iconos.Opciones())
+        li_gen = [(None, None), (config, 9)]
+        titulo = _("Do you want to repeat this training?")
+        resultado = FormLayout.fedit(li_gen, title=titulo, parent=self, minimum_width=560, icon=Iconos.Opciones())
         if not resultado:
             return
 
         accion, li_gen = resultado
         reiniciar_debajo_state = li_gen[0]
 
-        self.quitaReloj()
+        self.remove_clock()
 
         total, hechos, t_puntos, t_segundos, t_estado = self.bmt_lista.calc_thpse()
 
-        dic = {}
-        dic["FFINAL"] = self.dbf.FFINAL if self.siTerminadaAntes else Util.dtos(Util.today())
-        dic["STATE"] = str(t_estado / total)
-        dic["PUNTOS"] = t_puntos
-        dic["SEGUNDOS"] = t_segundos
+        dic = {
+            "FFINAL": (self.dbf.FFINAL if self.siTerminadaAntes else Util.dtos(Util.today())),
+            "STATE": str(t_estado / total),
+            "PUNTOS": t_puntos,
+            "SEGUNDOS": t_segundos,
+        }
 
         self.historial.append(dic)
 
@@ -410,10 +386,10 @@ class WTrainBMT(LCDialog.LCDialog):
 
         for x in range(nposic):
             estado = self.bmt_lista.state(x)
-            self.liBT[x].ponIcono(self.dicIconos[estado])
+            self.liBT[x].set_icono(self.dict_icons[estado])
 
         # for bt in self.liBT:
-        #    bt.ponIcono(self.dicIconos[0])
+        #    bt.set_icono(self.dict_icons[0])
 
         self.siTerminadaAntes = self.is_finished = False
         self.board.set_position(Position.Position().logo())
@@ -427,9 +403,9 @@ class WTrainBMT(LCDialog.LCDialog):
         self.lbJuegan.set_text("")
         self.lbPrimera.set_text(self.texto_lbPrimera)
         self.lbPrimera.setVisible(False)
-        self.pon_toolbar(["terminar", "empezar"])
+        self.pon_toolbar(self.finalize, self.empezar)
         # Ahora la ventana se queda vacia - por eso lo cierro
-        self.terminar()
+        self.finalize()
         self.accept()
 
     def disable_all(self):  # compatibilidad ControlPGN
@@ -443,14 +419,11 @@ class WTrainBMT(LCDialog.LCDialog):
     def set_position(self, position, variation_history=None):
         self.board.set_position(position)
 
-    def put_arrow_sc(self, from_sq, to_sq, liVar=None):  # liVar incluido por compatibilidad
+    def put_arrow_sc(self, from_sq, to_sq, li_var=None):  # li_var incluido por compatibilidad
         self.board.put_arrow_sc(from_sq, to_sq)
 
-    def grid_num_datos(self, grid):
-        if self.siMostrarPGN:
-            return self.controlPGN.num_rows()
-        else:
-            return 0
+    def grid_num_datos(self, _grid):
+        return self.controlPGN.num_rows() if self.siMostrarPGN else 0
 
     def goto_firstposition(self):
         self.board.set_position(self.game.first_position)
@@ -469,28 +442,28 @@ class WTrainBMT(LCDialog.LCDialog):
     def keyPressEvent(self, event):
         self.key_pressed("V", event.key())
 
-    def board_wheel_event(self, nada, forward):
+    def board_wheel_event(self, _nada, forward):
         forward = self.configuration.wheel_board(forward)
         self.key_pressed("T", QtCore.Qt.Key.Key_Left if forward else QtCore.Qt.Key.Key_Right)
 
-    def grid_dato(self, grid, row, o_column):
-        return self.controlPGN.dato(row, o_column.key)
+    def grid_dato(self, _grid, row, obj_column):
+        return self.controlPGN.dato(row, obj_column.key)
 
-    def grid_left_button(self, grid, row, column):
+    def grid_left_button(self, _grid, row, column):
         self.goto_pgn_base(row, column.key)
 
-    def grid_right_button(self, grid, row, column, modificadores):
+    def grid_right_button(self, _grid, row, column, _modificadores):
         self.goto_pgn_base(row, column.key)
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, row, column):
         if column.key == "NUMBER":
             return
         self.analize_position(row, column.key)
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, _grid, k, _is_shift, _is_control, _is_alt):
         self.key_pressed("G", k)
 
-    def grid_wheel_event(self, ogrid, forward):
+    def grid_wheel_event(self, _grid, forward):
         self.key_pressed("T", QtCore.Qt.Key.Key_Left if forward else QtCore.Qt.Key.Key_Right)
 
     def key_pressed(self, tipo, tecla):
@@ -549,9 +522,8 @@ class WTrainBMT(LCDialog.LCDialog):
             row = ult_fila
             is_white = not game.last_position.is_white
 
-        if row == ult_fila:
-            if si_ult_blancas and not is_white:
-                return
+        if row == ult_fila and (si_ult_blancas and not is_white):
+            return
 
         if row < 0 or row > ult_fila:
             self.refresh()
@@ -559,39 +531,38 @@ class WTrainBMT(LCDialog.LCDialog):
         if row == 0 and is_white and starts_with_black:
             is_white = False
 
-        self.pgnColocate(row, is_white)
+        self.place_on_pgn_table(row, is_white)
         self.goto_pgn_base(row, "WHITE" if is_white else "BLACK")
 
-    def pgnColocate(self, fil, is_white):
+    def place_on_pgn_table(self, fil, is_white):
         col = 1 if is_white else 2
         self.pgn.goto(fil, col)
 
     def number(self):
         bt = self.sender()
-        self.activaPosicion(bt.number)
+        self.activate_position(bt.number)
         return 0
 
-    def pulsadoRM(self):
+    def pressed_rm(self):
         if self.siMostrarPGN:
             bt = self.sender()
             self.muestra(bt.number)
 
-    def pon_toolbar(self, li=None):
+    def pon_toolbar(self, *li):
         if not li:
-            li = ["terminar"]
+            li: list[Any] = [self.finalize]
 
             if not self.bmt_uno.finished:
-                li.append("abandonar")
+                li.append(self.abandonar)
 
-            li.append("borrar")
-            li.append("opciones")
+            li.extend((self.borrar, self.opciones))
 
             if self.bmt_uno.finished:
                 if self.is_finished:
-                    li.append("repetir")
+                    li.append(self.repetir)
                 if self.bmt_uno.cl_game:
-                    li.append("original")
-            li.append("seguir")
+                    li.append(self.original)
+            li.append(self.seguir)
 
         self.tb.clear()
         for k in li:
@@ -604,31 +575,27 @@ class WTrainBMT(LCDialog.LCDialog):
 
     def set_score(self, descontar):
         self.bmt_uno.puntos -= descontar
-        if self.bmt_uno.puntos < 0:
-            self.bmt_uno.puntos = 0
+        self.bmt_uno.puntos = max(self.bmt_uno.puntos, 0)
         self.bmt_uno.update_state()
 
         eti = "%d/%d" % (self.bmt_uno.puntos, self.bmt_uno.max_puntos)
         self.lbPuntos.set_text(self.trPuntos % eti)
 
-    def ponSegundos(self):
+    def set_time_seconds(self):
         seconds = self.bmt_uno.seconds
-        if self.iniTiempo:
-            seconds += int(time.time() - self.iniTiempo)
+        if self.initial_time:
+            seconds += int(time.time() - self.initial_time)
         minutos = seconds // 60
         seconds -= minutos * 60
 
-        if minutos:
-            eti = "%d'%d\"" % (minutos, seconds)
-        else:
-            eti = '%d"' % (seconds,)
+        eti = "%d'%d\"" % (minutos, seconds) if minutos else '%d"' % (seconds,)
         eti = self.trSegundos % eti
 
         if eti != self.antTxtSegundos:
             self.antTxtSegundos = eti
             self.lb_segundos.set_text(eti)
 
-    def buscaPrimero(self, from_sq):
+    def search_first(self, from_sq):
         # Buscamos el primero que no se ha terminado
         n = len(self.bmt_lista)
         for x in range(n):
@@ -636,12 +603,12 @@ class WTrainBMT(LCDialog.LCDialog):
             if t >= n:
                 t = 0
             if not self.bmt_lista.finished(t):
-                self.activaPosicion(t)
+                self.activate_position(t)
                 return
 
-        self.activaPosicion(from_sq)
+        self.activate_position(from_sq)
 
-    def activaJugada1(self, num):
+    def activate_move1(self, num):
         rm = self.bmt_uno.mrm.li_rm[num]
         if num == 0:
             self.ptsMejor = rm.centipawns_abs()
@@ -651,50 +618,42 @@ class WTrainBMT(LCDialog.LCDialog):
         w = self.liBTrm[num]
         w.lb.set_text(f"{rm.nivelBMT + 1:2d}")
         txt = game.move(0).pgn_translated()
-        mas = rm.abbrev_text()
-        if mas:
-            txt += " = %s" % rm.abbrev_text_base()
+        if rm.abbrev_text():
+            txt += f" = {rm.abbrev_text_base()}"
         if rm.siPrimero:
-            txt = "%s *" % txt
+            txt = f"{txt} *"
             self.lbPrimera.setVisible(True)
             self.ptsPrimero = rm.centipawns_abs()
 
         w.bt.set_text(txt)
         w.bt.setEnabled(True)
-        w.bt.ponPlano(False)
+        w.bt.set_flat(False)
 
-    def activaJugada(self, num):
+    def activate_move(self, num):
         rm = self.bmt_uno.mrm.li_rm[num]
         mm = self.bmt_uno.mrm.li_rm[0]
         if rm.nivelBMT == 0 or abs(rm.centipawns_abs() - mm.centipawns_abs()) <= self.pts_tolerance:
-            self.finalizaTiempo()
+            self.end_time()
             for n in range(len(self.bmt_uno.mrm.li_rm)):
-                self.activaJugada1(n)
+                self.activate_move1(n)
             self.bmt_uno.finished = True
             diferencia_pts_primero = self.ptsPrimero - self.ptsMejor
-            self.lbPrimera.set_text(
-                "%s (%s %s)"
-                % (
-                    self.texto_lbPrimera,
-                    "%0.2f" % (-diferencia_pts_primero / 100.0),
-                    _("pws lost"),
-                )
-            )
+            self.lbPrimera.set_text(f"{self.texto_lbPrimera} ({-diferencia_pts_primero / 100.0:0.02f} {_("pws lost")})")
             self.muestra(num)
             self.set_score(0)
             bt = self.liBT[self.actualP]
-            bt.ponIcono(self.dicIconos[self.bmt_uno.state])
+            bt.set_icono(self.dict_icons[self.bmt_uno.state])
 
             self.is_finished = self.bmt_lista.is_finished()
 
             self.pon_toolbar()
 
         else:
-            self.activaJugada1(num)
+            self.activate_move1(num)
 
-    def activaPosicion(self, num):
-        self.finalizaTiempo()  # Para que guarde el vtime, si no es el primero
-        self.muestraControles(True)
+    def activate_position(self, num):
+        self.end_time()  # Para que guarde el vtime, si no es el primero
+        self.show_controls(True)
         bmt_uno = self.bmt_lista.dame_uno(num)
         if bmt_uno is None:
             return
@@ -704,7 +663,7 @@ class WTrainBMT(LCDialog.LCDialog):
         mrm = bmt_uno.mrm
         tm = mrm.max_time
         dp = mrm.max_depth
-        txt_engine = mrm.name + " "
+        txt_engine = f"{mrm.name} "
         if tm > 0:
             txt_engine += "%d %s" % (tm / 1000, _("Second(s)"))
         elif dp > 0:
@@ -729,25 +688,25 @@ class WTrainBMT(LCDialog.LCDialog):
 
             enr = menr(c_k, c_q)
             if enr:
-                mens += "  %s : %s" % (color, enr)
+                mens += f"  {color} : {enr}"
             enr = menr(c_kr, c_qr)
             if enr:
-                mens += "  %s : %s" % (color_r, enr)
+                mens += f"  {color_r} : {enr}"
         if self.position.en_passant != "-":
-            mens += "\n%s : %s" % (_("En passant"), self.position.en_passant)
+            mens += f"\n{_('En passant')} : {self.position.en_passant}"
 
         if mens:
             mens = mens.strip()
 
-        self.lb_conditions.set_text(txt_engine + "\n" + mens)
+        self.lb_conditions.set_text(f"{txt_engine}\n{mens}")
         self.lb_game.set_text("")
         self.lbPrimera.set_text(self.texto_lbPrimera)
 
         self.board.dbvisual_set_show_always(False)
         self.board.set_position(self.position)
 
-        self.liBT[self.actualP].ponPlano(True)
-        self.liBT[num].ponPlano(False)
+        self.liBT[self.actualP].set_flat(True)
+        self.liBT[num].set_flat(False)
         self.actualP = num
 
         nli_rm = len(mrm.li_rm)
@@ -757,7 +716,7 @@ class WTrainBMT(LCDialog.LCDialog):
             if x < nli_rm:
                 rm = mrm.li_rm[x]
                 w.setVisible(True)
-                w.bt.ponPlano(not rm.siElegida)
+                w.bt.set_flat(not rm.siElegida)
                 base_txt = ""  # str(rm.nivelBMT + 1)
                 if rm.siElegida:
                     game.set_position(self.position)
@@ -768,25 +727,25 @@ class WTrainBMT(LCDialog.LCDialog):
                 w.setVisible(False)
 
         self.set_score(0)
-        self.ponSegundos()
+        self.set_time_seconds()
 
         self.pon_toolbar()
         if bmt_uno.finished:
-            self.activaJugada(0)
+            self.activate_move(0)
             self.muestra(0)
         else:
             self.lbPrimera.setVisible(False)
-            self.iniciaTiempo()
+            self.init_time()
             self.continue_human()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         self.stop_human()
 
         movimiento = from_sq + to_sq
 
         # Peon coronando
         if not promotion and self.position.pawn_can_promote(from_sq, to_sq):
-            promotion = self.board.peonCoronando(self.position.is_white)
+            promotion = self.board.pawn_promoting(self.position.is_white)
         if promotion:
             movimiento += promotion
 
@@ -801,7 +760,7 @@ class WTrainBMT(LCDialog.LCDialog):
         self.set_score(puntos_descontar)
 
         if n_elegido is not None:
-            self.activaJugada(n_elegido)
+            self.activate_move(n_elegido)
 
         if not self.bmt_uno.finished:
             self.continue_human()
@@ -822,16 +781,16 @@ class WTrainBMT(LCDialog.LCDialog):
 
     def set_clock(self):
         self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.enlaceReloj)
+        self.timer.timeout.connect(self.link_to_clock)
         self.timer.start(500)
 
-    def quitaReloj(self):
+    def remove_clock(self):
         if self.timer:
             self.timer.stop()
             self.timer = None
 
-    def enlaceReloj(self):
-        self.ponSegundos()
+    def link_to_clock(self):
+        self.set_time_seconds()
 
     def original(self):
         self.siMostrarPGN = True
@@ -841,24 +800,23 @@ class WTrainBMT(LCDialog.LCDialog):
 
         def tag(ctag):
             t = self.game.get_tag(ctag)
-            if t:
-                if "?" in t:
-                    if t != "?":
-                        t = t.replace("?", "")
-                        t = t.strip(".")
-                    else:
-                        t = ""
+            if t and "?" in t:
+                if t != "?":
+                    t = t.replace("?", "")
+                    t = t.strip(".")
+                else:
+                    t = ""
             return t
 
         event = tag("EVENT")
         site = tag("SITE")
         result = tag("RESULT")
         white = tag("WHITE")
-        white = "%s: %s" % (_("White"), white) if white else ""
+        white = f'{_("White")}: {white}' if white else ""
         black = tag("BLACK")
-        black = "%s: %s" % (_("Black"), black) if black else ""
+        black = f'{_("Black")}: {black}' if black else ""
         date = tag("DATE")
-        info = event + " " + site + " " + date + "\n" + white + " - " + black + " " + result
+        info = f"{event} {site} {date}\n{white} - {black} {result}"
         info = info.strip()
         while "  " in info:
             info = info.replace("  ", " ")
@@ -903,17 +861,17 @@ class WTrainBMT(LCDialog.LCDialog):
 
         self.pgn.refresh()
 
-    def iniciaTiempo(self):
-        self.iniTiempo = time.time()
+    def init_time(self):
+        self.initial_time = time.time()
         if not self.timer:
             self.set_clock()
 
-    def finalizaTiempo(self):
-        if self.iniTiempo:
-            vtime = time.time() - self.iniTiempo
+    def end_time(self):
+        if self.initial_time:
+            vtime = time.time() - self.initial_time
             self.bmt_uno.seconds += int(vtime)
-        self.iniTiempo = None
-        self.quitaReloj()
+        self.initial_time = None
+        self.remove_clock()
 
     def get_movement(self, row, key):
         is_white = key != "BLACK"
@@ -925,7 +883,7 @@ class WTrainBMT(LCDialog.LCDialog):
             pos -= 1
         tam_lj = len(self.game)
         if tam_lj == 0:
-            return
+            return None
         si_ultimo = (pos + 1) >= tam_lj
 
         move = self.game.move(pos)

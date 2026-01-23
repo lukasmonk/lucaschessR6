@@ -2,7 +2,7 @@ import random
 import time
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
     ST_ENDGAME,
@@ -131,6 +131,12 @@ class LevelMate:
 
 
 class ControlMate:
+    work_block: BlockMate
+    work_num_block: int
+    work_li_fen_info: list
+    work_current_pos: int
+    work_time_init: float
+
     def __init__(self, manager, mate):
         self.manager = manager
         self.mate = mate
@@ -260,11 +266,11 @@ class ControlMate:
         return self.num_levels
 
     @staticmethod
-    def analysis(row, key):  # compatibilidad
+    def analysis(_row, _key):  # compatibilidad
         return ""
 
     @staticmethod
-    def only_move(row, key):  # compatibilidad
+    def only_move(_row, _key):  # compatibilidad
         return None
 
     # @staticmethod
@@ -272,7 +278,7 @@ class ControlMate:
     #     return None
 
     @staticmethod
-    def mueve(row, key):  # compatibilidad
+    def mueve(_row, _key):  # compatibilidad
         return False
 
     def dato(self, row, key):
@@ -282,8 +288,8 @@ class ControlMate:
             mate_bloque = self.level_active.block(row)
 
             if key == "ERRORS":
-                errores = mate_bloque.num_errors()
-                return "-" if errores is None else str(errores)
+                errors = mate_bloque.num_errors()
+                return "-" if errors is None else str(errors)
             if key == "TIME":
                 vtime = mate_bloque.num_seconds()
                 return "-" if vtime is None else str(vtime)
@@ -294,7 +300,7 @@ class ControlMate:
         self.work_num_block = num_block
 
         self.work_li_fen_info = self.work_block.list_positions()
-        self.work_current_position = -1
+        self.work_current_pos = -1
 
         self.work_time_init = time.time()
 
@@ -309,14 +315,14 @@ class ControlMate:
         return si_record, seconds
 
     def work_next_fen(self):
-        self.work_current_position += 1
-        if self.work_current_position == self.num_positions_block:
+        self.work_current_pos += 1
+        if self.work_current_pos == self.num_positions_block:
             return None
         else:
-            return self.work_block.position(self.work_current_position)
+            return self.work_block.position(self.work_current_pos)
 
     def work_repeat(self):
-        self.work_current_position -= 1
+        self.work_current_pos -= 1
         return self.work_next_fen()
 
     def info_levels(self):
@@ -328,7 +334,7 @@ class ControlMate:
             if s > 0:
                 txt = "%5d %s" % (s, _("Second(s)"))
                 if level.is_done():
-                    txt += " - %s" % _("Done")
+                    txt += f" - {_('Done')}"
                 else:
                     all_done = False
             else:
@@ -342,7 +348,13 @@ class ControlMate:
 
 
 class ManagerMate(Manager.Manager):
-    lbNivel = None
+    lb_level = None
+    mate: int
+    control_mate: ControlMate
+    with_help: bool
+    is_human_side_white: bool
+    num_mov: int
+    errors: int
 
     def start(self, mate):
 
@@ -350,31 +362,31 @@ class ManagerMate(Manager.Manager):
 
         self.control_mate = self.pgn = ControlMate(self, mate)  # El pgn lo usamos para mostrar el nivel actual
 
-        self.main_window.columnas60(True, cNivel=_("Blk"))
+        self.main_window.columnas60(True, label_level=_("Blk"))
 
         self.main_window.active_game(True, False)
         self.remove_hints(True, False)
         self.remove_captures()
         self.put_pieces_bottom(True)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.pgn_refresh(True)
         self.main_window.base.pgn.gotop()
 
         self.main_window.set_label1("<center><h1>%s</h1></center>" % _X(_("Mate in %1"), str(mate)))
         self.board.do_pressed_number = None
 
-        self.lbNivel = self.main_window.base.lb_player_white.set_foreground_backgound(
+        self.lb_level = self.main_window.base.lb_player_white.set_foreground_backgound(
             Code.dic_colors["MANAGERMATE_FOREGROUND"],
             Code.dic_colors["MANAGERMATE_BACKGROUND"],
         )
 
-        self.finJuego()
+        self.end_game()
 
         rival = self.configuration.engines.search(self.configuration.tutor_default)
         rival.set_multipv(0, 0)
 
         li_depth = [0, 3, 5, 6, 7, 8, 10, 12]
-        self.manager_rival = self.procesador.create_manager_engine(rival, None, li_depth[self.mate])
+        self.manager_rival = self.procesador.create_manager_engine(rival, 0, li_depth[self.mate])
 
         self.remove_info()
 
@@ -386,42 +398,42 @@ class ManagerMate(Manager.Manager):
     def run_action(self, key):
 
         if key == TB_CLOSE:  # No es al modo estandar porque hay una game dentro de la game
-            self.finJuego()
-
-        elif key == TB_QUIT:
             self.end_game()
 
+        elif key == TB_QUIT:
+            self.terminate_training()
+
         elif key == TB_LEVEL:
-            self.cambiarJuego()
+            self.change_game()
 
         elif key == TB_CONFIG:
             self.config()
 
         elif key == TB_RESIGN:
-            self.finJuego()
+            self.end_game()
 
         elif key == TB_REINIT:
-            self.repiteMate(False, self.numMov > 0)
+            self.repeat_mate(False, self.num_mov > 0)
 
         elif key == TB_ADVICE:
-            self.ayudaMate()
+            self.help_mate()
 
         else:
             self.routine_default(key)
 
     def final_x(self):
-        self.end_game()
+        self.terminate_training()
         return False
 
-    def end_game(self):
-        self.lbNivel.set_foreground_backgound("black", "white")
+    def terminate_training(self):
+        self.lb_level.set_foreground_backgound("black", "white")
         self.board.remove_arrows()
         self.main_window.columnas60(False)
         self.procesador.start()
 
-    def finJuego(self):
-        self.ponRotuloNivel()
-        self.ponRotuloBloque(False)
+    def end_game(self):
+        self.set_label_level()
+        self.set_label_block(False)
         self.main_window.base.pgn.show()
 
         self.set_toolbar((TB_QUIT, TB_LEVEL, TB_CONFIG))
@@ -429,14 +441,14 @@ class ManagerMate(Manager.Manager):
         self.state = ST_ENDGAME
         self.refresh()
 
-    def cambiarJuego(self):
+    def change_game(self):
         menu = QTDialogs.LCMenuRondo(self.main_window)
         menu.set_font_type(name=Code.font_mono, puntos=12)
         li_info, all_done = self.control_mate.info_levels()
         for num_level, info, enabled in li_info:
             menu.opcion(
                 num_level,
-                "%s %s" % (TrListas.level(num_level), info),
+                f"{TrListas.level(num_level)} {info}",
                 is_disabled=not enabled,
             )
         num_level = menu.lanza()
@@ -444,7 +456,7 @@ class ManagerMate(Manager.Manager):
             return
         self.control_mate.set_level(num_level - 1)
         self.refresh()
-        self.ponRotuloNivel()
+        self.set_label_level()
 
     def config(self):
         menu = QTDialogs.LCMenu(self.main_window)
@@ -453,12 +465,12 @@ class ManagerMate(Manager.Manager):
         if resp == "reset":
             if QTMessages.pregunta(
                 self.main_window,
-                "%s\n%s" % (_("Recreate all levels and start over"), _("Are you sure?")),
+                f"{_('Recreate all levels and start over')}\n{_('Are you sure?')}",
             ):
                 Util.remove_file(self.control_mate.file_path)
                 self.start(self.mate)
 
-    def ponRotuloNivel(self):
+    def set_label_level(self):
         nivel = self.control_mate.current_level()
 
         txt = "%s : %d/%d" % (
@@ -467,72 +479,72 @@ class ManagerMate(Manager.Manager):
             self.control_mate.max_levels(),
         )
 
-        self.lbNivel.set_text(txt)
-        self.lbNivel.show()
+        self.lb_level.set_text(txt)
+        self.lb_level.show()
 
-    def ponRotuloBloque(self, siPoner):
+    def set_label_block(self, si_poner):
         txt = "<center><h1>%s</h1>" % _X(_("Mate in %1"), str(self.mate))
-        if siPoner:
+        if si_poner:
             bloque = self.control_mate.work_num_block + 1
-            position = self.control_mate.work_current_position + 1
-            errores = self.errores
+            position = self.control_mate.work_current_pos + 1
+            errors = self.errors
             tot_positions = self.control_mate.num_positions_block
 
             txt += "<h3>%s : %d </h3><h3> %s : %d </h3><h3> %d / %d</h3>" % (
                 _("Block"),
                 bloque,
                 _("Errors"),
-                errores,
+                errors,
                 position,
                 tot_positions,
             )
-        self.main_window.set_label1(txt + "</center>")
+        self.main_window.set_label1(f"{txt}</center>")
 
-    def siguienteMate(self):
+    def next_mate(self):
         position_mate = self.control_mate.work_next_fen()
         if position_mate is None:
             # Hemos terminado el bloque
-            siRecord, vtime = self.control_mate.work_end(self.errores)
+            si_record, vtime = self.control_mate.work_end(self.errors)
             txt = "<center><h3> %s : %d</h3><h3>%s : %d </h3></center>" % (
                 _("Errors"),
-                self.errores,
+                self.errors,
                 _("Second(s)"),
                 vtime,
             )
 
-            if siRecord:
-                txt += "<h3>%s</h3>" % _("Congratulations you have achieved a new record in this block.")
+            if si_record:
+                txt += f"<h3>{_('Congratulations you have achieved a new record in this block.')}</h3>"
 
             self.message_on_pgn(txt)
-            self.finJuego()
+            self.end_game()
 
         else:
 
-            self.iniciaPosicion(position_mate)
+            self.init_position(position_mate)
 
-    def repiteMate(self, siMensaje, siError):
-        if siMensaje:
-            QTMessages.message_error_control(self.main_window, _("Incorrect. Try again."), self.lbNivel)
-        if siError:
-            self.errores += 1
+    def repeat_mate(self, si_mensaje, si_error):
+        if si_mensaje:
+            QTMessages.message_error_control(self.main_window, _("Incorrect. Try again."), self.lb_level)
+        if si_error:
+            self.errors += 1
         position_mate = self.control_mate.work_repeat()
-        self.iniciaPosicion(position_mate)
+        self.init_position(position_mate)
 
-    def ayudaMate(self):
-        self.errores += 1
-        self.ponRotuloBloque(True)
-        self.siAyuda = True
+    def help_mate(self):
+        self.errors += 1
+        self.set_label_block(True)
+        self.with_help = True
 
-        mate_buscar = self.mate - self.numMov
+        mate_buscar = self.mate - self.num_mov
         with QTMessages.one_moment_please(self.main_window):
             li_rm = self.manager_analyzer.busca_mate(self.game, mate_buscar)
         if li_rm:
             for rm in li_rm:
                 self.board.show_arrow_mov(rm.from_sq, rm.to_sq, "m")
         else:
-            self.repiteMate(True, False)
+            self.repeat_mate(True, False)
 
-    def iniciaPosicion(self, position_mate):
+    def init_position(self, position_mate):
         cp = Position.Position()
         cp.read_fen(position_mate.fen)
         self.activate_side(cp.is_white)
@@ -548,29 +560,29 @@ class ManagerMate(Manager.Manager):
             li.append(TB_REINIT)
         li.append(TB_ADVICE)
         self.set_toolbar(li)
-        self.numMov = 0
-        self.siAyuda = False
+        self.num_mov = 0
+        self.with_help = False
 
-        self.ponRotuloBloque(True)
+        self.set_label_block(True)
         self.refresh()
 
     def jugar(self, num_block):
         if self.state == ST_PLAYING:
             self.state = ST_ENDGAME
             self.disable_all()
-            self.finJuego()
+            self.end_game()
             return
 
         self.control_mate.work_start(num_block)
-        self.errores = 0
+        self.errors = 0
 
         self.state = ST_PLAYING
 
         self.main_window.base.pgn.hide()
 
-        self.siguienteMate()
+        self.next_mate()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         self.human_is_playing = True  # necesario
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
@@ -578,20 +590,20 @@ class ManagerMate(Manager.Manager):
 
         self.game.add_move(move)
         self.game.verify()
-        if self.siAyuda:
+        if self.with_help:
             self.board.remove_arrows()
-        self.move_the_pieces(move.liMovs, False)
+        self.move_the_pieces(move.list_piece_moves, False)
         if self.game.is_finished():
             if move.is_mate:
-                self.siguienteMate()
+                self.next_mate()
             else:
-                self.repiteMate(True, True)
-            return
+                self.repeat_mate(True, True)
+            return False
 
-        self.numMov += 1
-        if self.numMov == self.mate:
-            self.repiteMate(True, True)
-            return
+        self.num_mov += 1
+        if self.num_mov == self.mate:
+            self.repeat_mate(True, True)
+            return False
 
         # Juega rival con depth 3
         rm = self.manager_rival.play_game(self.game)
@@ -602,18 +614,19 @@ class ManagerMate(Manager.Manager):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         self.game.add_move(move)
         self.put_arrow_sc(move.from_sq, move.to_sq)
-        self.move_the_pieces(move.liMovs, False)
+        self.move_the_pieces(move.list_piece_moves, False)
         if self.is_finished():
-            self.repiteMate(True, True)
-            return
-        self.activate_side(self.is_human_side_white)  # Caso en que hay promotion, sino no se activa la dama
+            self.repeat_mate(True, True)
+        else:
+            self.activate_side(self.is_human_side_white)  # Caso en que hay promotion, sino no se activate la dama
+        return False
 
     def analize_position(self, row, key):
         # Doble click lanza el bloque
         if self.state == ST_PLAYING:
-            self.finJuego()
-            return
-        self.jugar(row)
+            self.end_game()
+        else:
+            self.jugar(row)
 
     def current_move(self):
         """Necesario para que funcionen los shortcuts de ratón"""

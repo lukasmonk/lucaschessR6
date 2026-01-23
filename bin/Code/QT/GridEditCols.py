@@ -66,7 +66,7 @@ class EditCols(LCDialog.LCDialog):
         layout = Colocacion.V().control(tb).control(self.grid).margen(3)
         self.setLayout(layout)
 
-        self.resize(self.grid.anchoColumnas() + 48, 360)
+        self.resize(self.grid.width_columns_displayables() + 48, 360)
         self.grid.goto(0, 1)
 
         self.restore_video()
@@ -129,7 +129,7 @@ class EditCols(LCDialog.LCDialog):
                     if name in dic_conf:
                         if not QTMessages.pregunta(
                             self,
-                            name + "<br>" + _("This name already exists, what do you want to do?"),
+                            f"{name}<br>{_('This name already exists, what do you want to do?')}",
                             label_yes=_("Overwrite"),
                             label_no=_("Cancel"),
                         ):
@@ -177,9 +177,9 @@ class EditCols(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.o_columns.li_columns)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, grid, row, obj_column):
         column = self.o_columns.li_columns[row]
-        key = o_column.key
+        key = obj_column.key
         if key == "SIMOSTRAR":
             return column.must_show
         elif key == "CLAVE":
@@ -194,9 +194,9 @@ class EditCols(LCDialog.LCDialog):
 
         return _("Test")
 
-    def grid_setvalue(self, grid, row, o_column, value):
+    def grid_setvalue(self, grid, row, obj_column, value):
         column = self.o_columns.li_columns[row]
-        key = o_column.key
+        key = obj_column.key
         if key == "SIMOSTRAR":
             column.must_show = not column.must_show
         elif key == "CABECERA":

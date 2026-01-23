@@ -23,17 +23,18 @@ class WAbout(QtWidgets.QDialog):
 
         f = Controles.FontType(puntos=10)  # 0, peso=75 )
 
-        head = '<span style="font-size:30pt; font-weight="700"; font-family:arial; >%s</span><br>' % Code.lucas_chess
-        head += '<span style="font-size:15pt;">%s</span><br>' % _X(_("version %1"), Code.VERSION)
-        head += '<span style="font-size:10pt;>%s: %s</span>' % (
-            _("Author"),
-            '<a href="mailto:lukasmonk@gmail.com">Lucas Monge</a>',
+        head = f'<span style="font-size:30pt; font-weight="700"; font-family:arial; >{Code.lucas_chess}</span><br>'
+        head += f'<span style="font-size:15pt;">{_X(_("version %1"), Code.VERSION)}</span><br>'
+        head += (
+            f'<span style="font-size:10pt;>{_("Author")}: '
+            f'<a href="mailto:lukasmonk@gmail.com">Lucas Monge</a></span>'
         )
-        head += ' - <a style="font-size:10pt;" href="%s">%s</a>' % (Code.web, Code.web)
-        head += ' - <a style="font-size:10pt;" href="%s">Blog : Fresh news</a>' % (Code.blog,)
-        head += ' - <a style="font-size:10pt;" href="%s">Sources: github</a>' % (Code.github,)
-        head += '<br>%s <a style="font-size:10pt;" href="https://www.gnu.org/licenses/gpl-3.0.html">GPL 3.0</a>' % _(
-            "License"
+        head += f' - <a style="font-size:10pt;" href="{Code.web}">{Code.web}</a>'
+        head += f' - <a style="font-size:10pt;" href="{Code.blog}">Blog : Fresh news</a>'
+        head += f' - <a style="font-size:10pt;" href="{Code.github}">Sources: github</a>'
+        head += (
+            f'<br>{_("License")} <a style="font-size:10pt;" '
+            f'href="https://www.gnu.org/licenses/gpl-3.0.html">GPL 3.0</a>'
         )
 
         lb_ico = Controles.LB(self).put_image(Iconos.pmAplicacion64())
@@ -58,7 +59,7 @@ class WAbout(QtWidgets.QDialog):
                     # sub_tab.set_position("S")
                     tab.addTab(sub_tab, _("Engines"))
                 lm = ib.list_engines(num)
-                titulo = lm[0][0].split(" ")[1] + " - " + lm[-1][0].split(" ")[1]
+                titulo = f"{lm[0][0].split(' ')[1]} - {lm[-1][0].split(' ')[1]}"
                 sub_tab.addTab(lb, titulo)
             else:
                 tab.addTab(lb, titulo)

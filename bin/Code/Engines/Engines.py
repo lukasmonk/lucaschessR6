@@ -4,7 +4,7 @@ import os.path
 from PySide6 import QtCore
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import BOOK_BEST_MOVE, ENG_EXTERNAL
 from Code.QT import QTDialogs
 from Code.SQL import UtilSQL
@@ -14,8 +14,8 @@ class Engine:
     uci_options_sqlite = "uci_options.sqlite"
 
     def __init__(self, alias="", autor="", version="", url="", path_exe="", args=None):
-        # self.alias = key
-        self.alias = alias
+        # self.key = key
+        self.key = alias
         self._name = None
         self.autor = autor
         self.args = [] if args is None else args
@@ -95,8 +95,7 @@ class Engine:
         if is_extern:
             self.set_extern()
         if self.parent_external:
-            conf_parent = Code.configuration.engines.dic_engines().get(self.parent_external)
-            if conf_parent:
+            if conf_parent := Code.configuration.engines.dic_engines().get(self.parent_external):
                 self.path_exe = conf_parent.path_exe
         previous = os.path.abspath(os.curdir)
         try:
@@ -118,7 +117,7 @@ class Engine:
     def nombre_ext(self, ext_with_symbol=True):
         name = self.name
         if self.is_type_external():
-            name = self.alias
+            name = self.key
             if ext_with_symbol:
                 name += " 📡"
 
@@ -134,7 +133,7 @@ class Engine:
 
     def debug(self, txt):
         self.siDebug = True
-        self.nomDebug = self.alias + "-" + txt
+        self.nomDebug = f"{self.key}-{txt}"
 
     def reset_uci_options(self):
         li_uci_options = self.li_uci_options()
@@ -182,21 +181,19 @@ class Engine:
         self.maxMultiPV = int(maximo) if maximo else 1
 
     def set_multipv_var(self, xmultipv: str | int):
-        if xmultipv == "PD":
+        if xmultipv == "MX":
+            self.multiPV = self.maxMultiPV
+        elif xmultipv == "PD":
             multi_pv = min(self.maxMultiPV, 10)
-            multi_pv = max(multi_pv, self.multiPV)
-            for comando, valor in self.liUCI:
-                if comando == "MultiPV":
-                    multi_pv = int(valor)
-                    break
+            multi_pv = next(
+                (int(valor) for comando, valor in self.liUCI if comando == "MultiPV"),
+                max(multi_pv, self.multiPV),
+            )
             self.multiPV = multi_pv
 
-        elif xmultipv == "MX":
-            self.multiPV = self.maxMultiPV
         else:
             self.multiPV = int(xmultipv)
-            if self.multiPV > self.maxMultiPV:
-                self.multiPV = self.maxMultiPV
+            self.multiPV = min(self.multiPV, self.maxMultiPV)
         if self.multiPV < 1:
             self.multiPV = self.maxMultiPV
 
@@ -207,11 +204,11 @@ class Engine:
         return self.maxMultiPV >= 218 and not self.is_maia()
 
     def is_maia(self):
-        return self.alias.startswith("maia-")
+        return self.key.startswith("maia-")
 
     def level_maia(self):
         try:
-            level = int(self.alias[5:])
+            level = int(self.key[5:])
         except ValueError:
             level = 0
         return level
@@ -223,7 +220,7 @@ class Engine:
     def name(self):
         if self._name:
             return self._name
-        alias = Util.primera_mayuscula(self.alias)
+        alias = Util.primera_mayuscula(self.key)
         if not alias.endswith(self.version):
             alias += f" {self.version}"
         return alias
@@ -242,15 +239,14 @@ class Engine:
                 del dbuci[self.key_engine()]
 
     def key_engine(self):
-        if self.type == ENG_EXTERNAL:
-            stat = os.stat(self.path_exe)
-            return f"{os.path.basename(self.path_exe)}_{stat.st_size}_{stat.st_mtime}"
-        else:
-            return "maia" if self.alias.startswith("maia") else self.alias
+        if self.type != ENG_EXTERNAL:
+            return "maia" if self.key.startswith("maia") else self.key
+        stat = os.stat(self.path_exe)
+        return f"{os.path.basename(self.path_exe)}_{stat.st_size}_{stat.st_mtime}"
 
     def read_uci_options(self):
         if self.type == ENG_EXTERNAL:
-            path_uci_options = os.path.join(Code.configuration.paths.folder_config, self.uci_options_sqlite)
+            path_uci_options = os.path.join(Code.configuration.paths.folder_config(), self.uci_options_sqlite)
         else:
             path_uci_options = os.path.join(Code.folder_os, self.uci_options_sqlite)
 
@@ -302,42 +298,40 @@ class Engine:
     def assign_name(self):
         if self.id_name:
             li = self.id_name.split(" ")
-            self.alias = li[0]
-            self.version = li[-1] if len(li) > 0 else self.alias
-            self.alias = self.alias
+            self.key = li[0]
+            self.version = li[-1] if len(li) > 0 else self.key
+            self.key = self.key
             self._name = self.id_name
 
     def li_uci_options_editable(self):
         return [op for op in self.li_uci_options() if op.tipo != "button"]
 
     def has_multipv(self):
-        for op in self.li_uci_options_editable():
-            if op.name == "MultiPV":
-                return op.maximo > 3
-        return False
+        return next(
+            (op.maximo > 3 for op in self.li_uci_options_editable() if op.name == "MultiPV"),
+            False,
+        )
 
     def current_multipv(self):
-        for op in self.li_uci_options_editable():
-            if op.name == "MultiPV":
-                return int(op.valor)
-        return self.multiPV
+        return next(
+            (int(op.valor) for op in self.li_uci_options_editable() if op.name == "MultiPV"),
+            self.multiPV,
+        )
 
     def list_uci_changed(self):
         return self.liUCI
 
     def xhash(self):
-        return hash(self.alias + self.alias)
+        return hash(self.key + self.key)
 
     def list_to_show(self, wowner):
-        li: list = [f'{_("Name")} = {self.name}', f'{_("Key")} = {self.alias}']
-        if self.alias != self.alias:
-            li.append(f'{_("Alias")} = {self.alias}')
+        li: list = [f'{_("Name")} = {self.name}', f'{_("Key")} = {self.key}']
+        if self.key != self.key:
+            li.append(f'{_("Alias")} = {self.key}')
         li.append(f'{self.path_exe}')
-        dic_options = {uci.name: uci.valor for uci in self.li_uci_options() if uci.valor}
-        if dic_options:
+        if dic_options := {uci.name: uci.valor for uci in self.li_uci_options() if uci.valor}:
             li_opt = []
-            for name, valor in dic_options.items():
-                li_opt.append(f"{name} = {valor}")
+            li_opt.extend(f"{name} = {valor}" for name, valor in dic_options.items())
             li.append((_("Options"), li_opt))
         if self.multiPV:
             li.append(f'{_("Number of variations evaluated by the engine (MultiPV)")} = {self.multiPV}')
@@ -456,7 +450,7 @@ class OpcionUCI:
         try:
             idx_default = li.index("default")
             if idx_default < len(li) - 1:
-                self.default = " ".join(li[idx_default + 1:])
+                self.default = " ".join(li[idx_default + 1 :])
                 if self.default == "<empty>":
                     self.default = ""
             else:
@@ -485,7 +479,7 @@ class OpcionUCI:
                 else:
                     c = self.li_vars[nvar]
                     if c:
-                        c += " " + x
+                        c += f" {x}"
                     else:
                         c = x
                     self.li_vars[nvar] = c

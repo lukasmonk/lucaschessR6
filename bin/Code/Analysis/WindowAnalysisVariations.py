@@ -31,16 +31,16 @@ class WAnalisisVariations(QtWidgets.QDialog):
 
         config_board = Code.configuration.config_board("ANALISISVARIANTES", 32)
         self.board = Board.Board(self, config_board)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_side_bottom(is_white)
 
         self.boardT = Board.Board(self, config_board)
-        self.boardT.crea()
+        self.boardT.draw_window()
         self.boardT.set_side_bottom(is_white)
 
-        bt_terminar = Controles.PB(self, _("Close"), self.close).ponPlano(False)
-        bt_reset = Controles.PB(self, _("Another change"), o_base.reset).ponIcono(Iconos.MoverLibre()).ponPlano(False)
-        li_mas_acciones = (("FEN: %s" % _("Copy to clipboard"), "MoverFEN", Iconos.Clipboard()),)
+        bt_terminar = Controles.PB(self, _("Close"), self.close).set_flat(False)
+        bt_reset = Controles.PB(self, _("Another change"), o_base.reset).set_icono(Iconos.MoverLibre()).set_flat(False)
+        li_mas_acciones = ((f'FEN: {_("Copy to clipboard")}', "MoverFEN", Iconos.Clipboard()),)
         lytb_tutor, self.tb = QTDialogs.ly_mini_buttons(self, "", siLibre=True, liMasAcciones=li_mas_acciones)
 
         self.seconds, lb_segundos = QTMessages.spinbox_lb(
@@ -73,7 +73,7 @@ class WAnalisisVariations(QtWidgets.QDialog):
         self.lbPuntuacionNueva.set_text(pts)
 
     def process_toolbar(self):
-        self.oBase.process_toolbar(self.sender().key)
+        self.oBase.process_toolbar(getattr(self.sender(), "key"))
 
     def start_clock(self, funcion):
         if self.timer is None:
@@ -92,17 +92,17 @@ class WAnalisisVariations(QtWidgets.QDialog):
     def keyPressEvent(self, event):
         k = event.key()
         if k == QtCore.Qt.Key.Key_Down:  # abajo
-            key = "MoverAtras"
+            key = "move_back"
         elif k == QtCore.Qt.Key.Key_Up:  # arriba
-            key = "MoverAdelante"
+            key = "move_forward"
         elif k == QtCore.Qt.Key.Key_Left:  # izda
-            key = "MoverAtras"
+            key = "move_back"
         elif k == QtCore.Qt.Key.Key_Right:  # dcha
-            key = "MoverAdelante"
+            key = "move_forward"
         elif k == QtCore.Qt.Key.Key_Home:  # start
-            key = "MoverInicio"
+            key = "move_to_beginning"
         elif k == QtCore.Qt.Key.Key_End:  # final
-            key = "MoverFinal"
+            key = "move_to_end"
         elif k == QtCore.Qt.Key.Key_Escape:  # esc
             self.stop_clock()
             self.accept()

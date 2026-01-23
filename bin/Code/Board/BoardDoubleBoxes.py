@@ -4,8 +4,6 @@ from Code.Board import BoardBlocks, BoardTypes
 
 
 class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
-    expX: float
-    expY: float
 
     def __init__(self, escena, bloque_flecha, routine_if_pressed=None):
 
@@ -16,7 +14,7 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
 
         self.distBordes = 0.20 * bloque_flecha.width_square
 
-        self.siMove = False
+        self.is_move = False
         self.tpSize = None
 
         self.bloquebox_from = BoardTypes.Marco()
@@ -44,7 +42,7 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
 
     def reset(self):
         self.physical_pos2xy()
-        bm = self.bloqueDatos
+        bm = self.block_data
         self.setOpacity(bm.opacity)
         self.setZValue(bm.physical_pos.orden)
         self.update()
@@ -96,10 +94,13 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
         self.xy2physical_pos_bm(self.bloquebox_to)
 
     def set_a1h8(self, a1h8):
-        self.bloqueDatos.a1h8 = a1h8
+        self.block_data.a1h8 = a1h8
         self.bloquebox_from.a1h8 = a1h8[:2] * 2
         self.bloquebox_to.a1h8 = a1h8[2:4] * 2
         self.physical_pos2xy()
+
+    def get_a1h8(self):
+        return self.block_data.a1h8
 
     @staticmethod
     def name():
@@ -110,17 +111,17 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
         self.mouse_press_ext(event)
 
         p = event.scenePos()
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
     def mouse_press_ext(self, event):
         """Needed in Scripts"""
         p = event.pos()
         p = self.mapFromScene(p)
-        self.expX = p.x()
-        self.expY = p.y()
+        self.exp_x = p.x()
+        self.exp_y = p.y()
 
-    def paint_bm(self, bm, painter, option, widget):
+    def paint_bm(self, bm, painter, _option, _widget):
         painter.setOpacity(bm.opacity)
         xk = float(self.board.width_square / 32.0)
 
@@ -181,5 +182,5 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
         ancho = abs(dx_from - dx_to) + physical_pos.ancho
         alto = abs(dy_from - dy_to) + physical_pos.alto
         self.rect = QtCore.QRectF(dx, dy, ancho, alto)
-        x = self.bloqueDatos.grosor
+        x = self.block_data.grosor
         return QtCore.QRectF(self.rect).adjusted(-x, -x, x * 2, x * 2)

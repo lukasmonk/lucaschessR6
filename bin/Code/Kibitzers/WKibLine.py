@@ -3,7 +3,7 @@ import sys
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Move
 from Code.Engines import EngineRun
 from Code.Kibitzers import WindowKibitzers
@@ -92,12 +92,12 @@ class WKibLine(QtWidgets.QMainWindow):
         self.setFont(f)
 
         def add_bt(tooltip, icon, rutine):
-            bt = Controles.PB(self, "", rutine, True).ponIcono(icon, 24)
+            bt = Controles.PB(self, "", rutine, True).set_icono(icon, 24)
             bt.setToolTip(tooltip)
             bt.setFixedWidth(26)
             return bt
 
-        bt_quit = add_bt(_("Quit"), Iconos.Kibitzer_Close(), self.terminar)
+        bt_quit = add_bt(_("Quit"), Iconos.Kibitzer_Close(), self.finalize)
         self.bt_continue = add_bt(_("Continue"), Iconos.Kibitzer_Play(), self.play)
         self.bt_pause = add_bt(_("Pause"), Iconos.Kibitzer_Pause(), self.pause)
         bt_side = add_bt(_("Analyze color"), Iconos.Kibitzer_Side(), self.color)
@@ -197,14 +197,14 @@ class WKibLine(QtWidgets.QMainWindow):
                 # pgn = f"{rm.depth:02d}: {pgn}"
                 cdepth = f"<small>{rm.depth:02d}</small>"
 
-            self.em.ponHtml(pgn)
+            self.em.set_html(pgn)
             self.lb_depth.set_text(cdepth)
 
         self.cpu.check_input()
 
     def change_options(self):
         self.pause()
-        w = WindowKibitzers.WKibitzerLive(self, self.cpu.configuration, self.cpu.numkibitzer)
+        w = WindowKibitzers.WKibitzerLive(self, self.cpu.configuration, self.cpu.num_kibitzer)
         if w.exec():
             self.kibitzer = self.cpu.reset_kibitzer()
             self.engine_run.close()
@@ -233,7 +233,7 @@ class WKibLine(QtWidgets.QMainWindow):
         self.siTop = False
         self.set_flags()
 
-    def terminar(self):
+    def finalize(self):
         self.finalizar()
         self.close()
 
@@ -256,7 +256,7 @@ class WKibLine(QtWidgets.QMainWindow):
     def launch_engine(self):
         exe = self.kibitzer.path_exe
         if not Util.exist_file(exe):
-            QTMessages.message_error(self, "%s:\n  %s" % (_("Engine not found"), exe))
+            QTMessages.message_error(self, f"{_('Engine not found')}:\n  {exe}")
             sys.exit()
 
         self.run_engine_params = EngineRun.RunEngineParams()
@@ -293,7 +293,7 @@ class WKibLine(QtWidgets.QMainWindow):
         if self.valid_to_play() and not self.stopped:
             self.need_refresh_data = True
 
-    def bestmove_from_engine(self, bestmove):
+    def bestmove_from_engine(self, _bestmove):
         if not self.engine_run:
             return
         if self.valid_to_play() and not self.stopped:
@@ -315,7 +315,7 @@ class WKibLine(QtWidgets.QMainWindow):
         menu.opcion("negras", _("Black"), ico(not self.is_white and self.is_black))
         menu.opcion(
             "blancasnegras",
-            "%s + %s" % (_("White"), _("Black")),
+            f"{_('White')} + {_('Black')}",
             ico(self.is_white and self.is_black),
         )
         resp = menu.lanza()
@@ -418,7 +418,7 @@ class WKibLine(QtWidgets.QMainWindow):
             new_width = max(self.minimumWidth(), self._initial_width + delta)
             self.resize(new_width, self.height())
 
-    def _handle_release(self, event):
+    def _handle_release(self, _event):
         self._resizing = False
 
     # ------------------------------------------------------------------

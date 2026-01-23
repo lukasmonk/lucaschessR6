@@ -1,6 +1,16 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import ENG_MICGM, ENG_MICPER
+from Code.Engines import Engines
+
+
+class EngineTourneys(Engines.Engine):
+    points_win: int
+    points_draw: int
+    points_lose: int
+
+    def read_engine(self, engine: Engines.Engine):
+        self.restore(engine.save())
 
 
 def read_mic_engines():
@@ -19,16 +29,17 @@ def read_mic_engines():
 
         engine = configuration.engines.dic_engines().get(nom_base_engine)
         if engine:
-            eng = engine.clone()
+            eng = EngineTourneys()
+            eng.read_engine(engine)
             eng.name = Util.primeras_mayusculas(alias)
             eng.id_info = id_info
-            eng.alias = alias
+            eng.key = alias
             eng.elo = elo
             eng.liUCI = li_uci
             if alias.isupper():
                 eng.name = Util.primera_mayuscula(alias)
-                eng.alias = eng.name
-                eng.book = Code.path_resource("Openings", "Players", "%s.bin" % alias.lower())
+                eng.key = eng.name
+                eng.book = Code.path_resource("Openings", "Players", f"{alias.lower()}.bin")
                 eng.type = ENG_MICGM
             else:
                 eng.book = None

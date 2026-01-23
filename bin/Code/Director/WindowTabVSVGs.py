@@ -4,7 +4,7 @@ import os
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Board import Board, BoardTypes
 from Code.Director import TabVisual
 from Code.QT import (
@@ -22,14 +22,14 @@ from Code.QT import (
 )
 
 estrellaSVG = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<!-- Created with Inkscape (https://www.inkscape.org/) -->
 
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
+   xmlns:dc="https://purl.org/dc/elements/1.1/"
+   xmlns:cc="https://creativecommons.org/ns#"
+   xmlns:rdf="https://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="https://www.w3.org/2000/svg"
+   xmlns="https://www.w3.org/2000/svg"
    version="1.1"
    width="64"
    height="64"
@@ -43,7 +43,7 @@ estrellaSVG = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
          rdf:about="">
         <dc:format>image/svg+xml</dc:format>
         <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+           rdf:resource="https://purl.org/dc/dcmitype/StillImage" />
         <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
@@ -59,8 +59,8 @@ estrellaSVG = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 </svg>"""
 
 
-class WTV_SVG(QtWidgets.QDialog):
-    def __init__(self, owner, regSVG, xml=None, name=None):
+class WTVSvg(QtWidgets.QDialog):
+    def __init__(self, owner, reg_svg, xml=None, name=None):
 
         QtWidgets.QDialog.__init__(self, owner)
 
@@ -73,11 +73,11 @@ class WTV_SVG(QtWidgets.QDialog):
 
         self.configuration = Code.configuration
 
-        if not regSVG:
-            regSVG = TabVisual.PSVG()
-            regSVG.xml = xml
+        if not reg_svg:
+            reg_svg = TabVisual.PSVG()
+            reg_svg.xml = xml
             if name:
-                regSVG.name = name
+                reg_svg.name = name
 
         tb = Controles.TBrutina(self)
         tb.new(_("Save"), Iconos.Aceptar(), self.grabar)
@@ -86,7 +86,7 @@ class WTV_SVG(QtWidgets.QDialog):
         # Board
         config_board = owner.board.config_board
         self.board = Board.Board(self, config_board, with_director=False)
-        self.board.crea()
+        self.board.draw_window()
         self.board.copia_posicion_de(owner.board)
 
         # Datos generales
@@ -94,19 +94,19 @@ class WTV_SVG(QtWidgets.QDialog):
 
         # name del svg que se usara en los menus del tutorial
         config = FormLayout.Editbox(_("Name"), ancho=120)
-        li_gen.append((config, regSVG.name))
+        li_gen.append((config, reg_svg.name))
 
         # ( "opacity", "n", 1.0 ),
         config = FormLayout.Dial(_("Degree of transparency"), 0, 99)
-        li_gen.append((config, 100 - int(regSVG.opacity * 100)))
+        li_gen.append((config, 100 - int(reg_svg.opacity * 100)))
 
         # ( "psize", "n", 100 ),
-        config = FormLayout.Spinbox(_("Size") + " %", 1, 1600, 50)
-        li_gen.append((config, regSVG.psize))
+        config = FormLayout.Spinbox(f"{_('Size')} %", 1, 1600, 50)
+        li_gen.append((config, reg_svg.psize))
 
         # orden
         config = FormLayout.Combobox(_("Order concerning other items"), QTMessages.list_zvalues())
-        li_gen.append((config, regSVG.physical_pos.orden))
+        li_gen.append((config, reg_svg.physical_pos.orden))
 
         self.form = FormLayout.FormWidget(li_gen, dispatch=self.cambios)
 
@@ -116,19 +116,19 @@ class WTV_SVG(QtWidgets.QDialog):
         self.setLayout(layout1)
 
         # Ejemplos
-        liMovs = ["b4c4", "e2e2", "e4g7"]
+        li_movs = ["b4c4", "e2e2", "e4g7"]
         self.liEjemplos = []
-        for a1h8 in liMovs:
-            regSVG.a1h8 = a1h8
-            regSVG.siMovible = True
-            svg = self.board.creaSVG(regSVG, siEditando=True)
+        for a1h8 in li_movs:
+            reg_svg.a1h8 = a1h8
+            reg_svg.siMovible = True
+            svg = self.board.create_svg(reg_svg, is_editing=True)
             self.liEjemplos.append(svg)
 
     def cambios(self):
         if hasattr(self, "form"):
             li = self.form.get()
             for n, svg in enumerate(self.liEjemplos):
-                reg_svg = svg.bloqueDatos
+                reg_svg = svg.block_data
                 reg_svg.name = li[0]
                 reg_svg.opacity = (100.0 - float(li[1])) / 100.0
                 reg_svg.psize = li[2]
@@ -140,24 +140,24 @@ class WTV_SVG(QtWidgets.QDialog):
             QTUtils.refresh_gui()
 
     def grabar(self):
-        reg_svg = self.liEjemplos[0].bloqueDatos
+        reg_svg = self.liEjemplos[0].block_data
         name = reg_svg.name.strip()
         if name == "":
             QTMessages.message_error(self, _("Name missing"))
             return
 
-        self.regSVG = reg_svg
+        self.reg_svg = reg_svg
 
-        pm = self.liEjemplos[0].pixmapX()
+        pm = self.liEjemplos[0].get_pixmap()
         bf = QtCore.QBuffer()
         pm.save(bf, "PNG")
-        self.regSVG.png = bytes(bf.data().data())
+        self.reg_svg.png = bytes(bf.data().data())
 
         self.accept()
 
 
-class WTV_SVGs(LCDialog.LCDialog):
-    def __init__(self, owner, list_svgs, dbSVGs):
+class WTVSvgs(LCDialog.LCDialog):
+    def __init__(self, owner, list_svgs, db_svgs):
 
         titulo = _("Images")
         icono = Iconos.SVGs()
@@ -170,17 +170,17 @@ class WTV_SVGs(LCDialog.LCDialog):
 
         self.configuration = Code.configuration
         self.liPSVGs = list_svgs
-        self.dbSVGs = dbSVGs
+        self.db_svgs = db_svgs
 
         # Lista
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NUMBER", _("N."), 60, align_center=True)
         o_columns.nueva("NOMBRE", _("Name"), 256)
 
-        self.grid = Grid.Grid(self, o_columns, xid="M", siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, xid="M", complete_row_select=True)
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("New"), Iconos.Nuevo(), self.mas)
         tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
         tb.new(_("Modify"), Iconos.Modificar(), self.modificar)
@@ -194,7 +194,7 @@ class WTV_SVGs(LCDialog.LCDialog):
         # Board
         config_board = Code.configuration.config_board("EDIT_GRAPHICS", 48)
         self.board = Board.Board(self, config_board, with_director=False)
-        self.board.crea()
+        self.board.draw_window()
         self.board.copia_posicion_de(owner.board)
 
         # Layout
@@ -202,14 +202,14 @@ class WTV_SVGs(LCDialog.LCDialog):
         self.setLayout(layout)
 
         # Ejemplos
-        liMovs = ["g4h3", "e2e2", "d6f4"]
+        li_movs = ["g4h3", "e2e2", "d6f4"]
         self.liEjemplos = []
-        regSVG = BoardTypes.SVG()
-        for a1h8 in liMovs:
-            regSVG.a1h8 = a1h8
-            regSVG.xml = estrellaSVG
-            regSVG.siMovible = True
-            svg = self.board.creaSVG(regSVG, siEditando=True)
+        reg_svg = BoardTypes.SVG()
+        for a1h8 in li_movs:
+            reg_svg.a1h8 = a1h8
+            reg_svg.xml = estrellaSVG
+            reg_svg.siMovible = True
+            svg = self.board.create_svg(reg_svg, is_editing=True)
             self.liEjemplos.append(svg)
 
         self.grid.gotop()
@@ -218,32 +218,33 @@ class WTV_SVGs(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.close()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liPSVGs)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         if key == "NUMBER":
             return str(row + 1)
         elif key == "NOMBRE":
             return self.liPSVGs[row].name
+        return None
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.modificar()
 
-    def grid_cambiado_registro(self, grid, row, o_column):
+    def grid_cambiado_registro(self, _grid, row, _obj_column):
         if row >= 0:
-            regSVG = self.liPSVGs[row]
+            reg_svg = self.liPSVGs[row]
             for ejemplo in self.liEjemplos:
-                a1h8 = ejemplo.bloqueDatos.a1h8
-                bd = copy.deepcopy(regSVG)
+                a1h8 = ejemplo.block_data.a1h8
+                bd = copy.deepcopy(reg_svg)
                 bd.a1h8 = a1h8
                 bd.width_square = self.board.width_square
-                ejemplo.bloqueDatos = bd
+                ejemplo.block_data = bd
                 ejemplo.reset()
             self.board.escena.update()
 
@@ -253,25 +254,25 @@ class WTV_SVGs(LCDialog.LCDialog):
 
         def look_folder(submenu, base, dr):
             if base:
-                pathCarpeta = base + dr + "/"
+                path_folder = f"{base}{dr}/"
                 smenu = submenu.submenu(dr, Iconos.Carpeta())
             else:
-                pathCarpeta = dr + "/"
+                path_folder = f"{dr}/"
                 smenu = submenu
             li = []
-            for fich in os.listdir(pathCarpeta):
-                pathFich = pathCarpeta + fich
-                if os.path.isdir(pathFich):
-                    look_folder(smenu, pathCarpeta, fich)
-                elif pathFich.lower().endswith(".svg"):
-                    li.append((pathFich, fich))
+            for fich in os.listdir(path_folder):
+                path_file = path_folder + fich
+                if os.path.isdir(path_file):
+                    look_folder(smenu, path_folder, fich)
+                elif path_file.lower().endswith(".svg"):
+                    li.append((path_file, fich))
 
-            for pathFich, fich in li:
-                ico = QTDialogs.fsvg2ico(pathFich, 32)
+            for path_file, fich in li:
+                ico = QTDialogs.fsvg2ico(path_file, 32)
                 if ico:
-                    smenu.opcion(pathFich, fich[:-4], ico)
+                    smenu.opcion(path_file, fich[:-4], ico)
 
-        look_folder(menu, Code.folder_resources + "/", "imgs")
+        look_folder(menu, f"{Code.folder_resources}/", "imgs")
 
         menu.separador()
 
@@ -296,12 +297,12 @@ class WTV_SVGs(LCDialog.LCDialog):
         with open(file, "rt", encoding="utf-8", errors="ignore") as f:
             contenido = f.read()
         name = os.path.basename(file)[:-4]
-        w = WTV_SVG(self, None, xml=contenido, name=name)
+        w = WTVSvg(self, None, xml=contenido, name=name)
         if w.exec():
-            reg_svg = w.regSVG
+            reg_svg = w.reg_svg
             reg_svg.id = Util.huella()
             reg_svg.ordenVista = (self.liPSVGs[-1].ordenVista + 1) if self.liPSVGs else 1
-            self.dbSVGs[reg_svg.id] = reg_svg.save_dic()
+            self.db_svgs[reg_svg.id] = reg_svg.save_dic()
             self.liPSVGs.append(reg_svg)
             self.grid.refresh()
             self.grid.gobottom()
@@ -311,22 +312,22 @@ class WTV_SVGs(LCDialog.LCDialog):
         row = self.grid.recno()
         if row >= 0:
             if QTMessages.pregunta(self, _X(_("Delete %1?"), self.liPSVGs[row].name)):
-                regSVG = self.liPSVGs[row]
-                str_id = regSVG.id
+                reg_svg = self.liPSVGs[row]
+                str_id = reg_svg.id
                 del self.liPSVGs[row]
-                del self.dbSVGs[str_id]
+                del self.db_svgs[str_id]
                 self.grid.refresh()
                 self.grid.setFocus()
 
     def modificar(self):
         row = self.grid.recno()
         if row >= 0:
-            w = WTV_SVG(self, self.liPSVGs[row])
+            w = WTVSvg(self, self.liPSVGs[row])
             if w.exec():
-                regSVG = w.regSVG
-                str_id = regSVG.id
-                self.liPSVGs[row] = regSVG
-                self.dbSVGs[str_id] = regSVG.save_dic()
+                reg_svg = w.reg_svg
+                str_id = reg_svg.id
+                self.liPSVGs[row] = reg_svg
+                self.db_svgs[str_id] = reg_svg.save_dic()
                 self.grid.refresh()
                 self.grid.setFocus()
                 self.grid_cambiado_registro(self.grid, row, None)
@@ -334,24 +335,24 @@ class WTV_SVGs(LCDialog.LCDialog):
     def copiar(self):
         row = self.grid.recno()
         if row >= 0:
-            regSVG = copy.deepcopy(self.liPSVGs[row])
+            reg_svg = copy.deepcopy(self.liPSVGs[row])
             n = 1
 
-            def siEstaNombre(name):
+            def exist_name(xname):
                 for rf in self.liPSVGs:
-                    if rf.name == name:
+                    if rf.name == xname:
                         return True
                 return False
 
-            name = "%s-%d" % (regSVG.name, n)
-            while siEstaNombre(name):
+            name = "%s-%d" % (reg_svg.name, n)
+            while exist_name(name):
                 n += 1
-                name = "%s-%d" % (regSVG.name, n)
-            regSVG.name = name
-            regSVG.id = Util.huella()
-            regSVG.ordenVista = self.liPSVGs[-1].ordenVista + 1
-            self.dbSVGs[regSVG.id] = regSVG
-            self.liPSVGs.append(regSVG)
+                name = "%s-%d" % (reg_svg.name, n)
+            reg_svg.name = name
+            reg_svg.id = Util.huella()
+            reg_svg.ordenVista = self.liPSVGs[-1].ordenVista + 1
+            self.db_svgs[reg_svg.id] = reg_svg
+            self.liPSVGs.append(reg_svg)
             self.grid.refresh()
             self.grid.setFocus()
 
@@ -361,8 +362,8 @@ class WTV_SVGs(LCDialog.LCDialog):
             reg_svg2.ordenVista,
             reg_svg1.ordenVista,
         )
-        self.dbSVGs[reg_svg1.id] = reg_svg1.save_dic()
-        self.dbSVGs[reg_svg2.id] = reg_svg2.save_dic()
+        self.db_svgs[reg_svg1.id] = reg_svg1.save_dic()
+        self.db_svgs[reg_svg2.id] = reg_svg2.save_dic()
         self.liPSVGs[fila1], self.liPSVGs[fila2] = (
             self.liPSVGs[fila2],
             self.liPSVGs[fila1],

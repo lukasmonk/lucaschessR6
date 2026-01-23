@@ -102,20 +102,20 @@ class ManagerMotorAlbum:
 
 class Cromo:
     def __init__(
-            self,
-            key,
-            name,
-            nivel,
-            bien,
-            aleatorio,
-            captura,
-            esquivo,
-            similar,
-            dif_puntos,
-            aterrizaje,
-            mate,
-            engine,
-            opening,
+        self,
+        key,
+        name,
+        nivel,
+        bien,
+        aleatorio,
+        captura,
+        esquivo,
+        similar,
+        dif_puntos,
+        aterrizaje,
+        mate,
+        engine,
+        opening,
     ):
         self.key = key
         self.name = name
@@ -154,13 +154,13 @@ class Cromo:
 class Album:
     def __init__(self, clavedb, alias):
         self.claveDB = clavedb
-        self.alias = alias
+        self.key = alias
         self.liCromos = []
         self.hecho = False
         self.ficheroDB = Code.configuration.paths.file_albums()
 
     def icono(self):
-        return Iconos.icono(self.alias)
+        return Iconos.icono(self.key)
 
     def __len__(self):
         return len(self.liCromos)
@@ -168,9 +168,9 @@ class Album:
     @property
     def name(self):
         for cromo in self.liCromos:
-            if cromo.key == self.alias:
+            if cromo.key == self.key:
                 return cromo.name
-        return _F(self.alias)
+        return _F(self.key)
 
     def get_cromo(self, pos):
         return self.liCromos[pos]
@@ -225,7 +225,7 @@ class Albums:
         return {}
 
     def create_album(self, alias):
-        album = Album(self.preClave + "_" + alias, alias)
+        album = Album(f"{self.preClave}_{alias}", alias)
 
         for nivel, cuantos in enumerate(self.dicAlbumes[alias]):
             if cuantos:
@@ -242,7 +242,7 @@ class Albums:
         return album
 
     def get_album(self, alias):
-        key_db = self.preClave + "_" + alias
+        key_db = f"{self.preClave}_{alias}"
         dic = self.get_db(key_db)
         if dic:
             dig = {}
@@ -268,7 +268,7 @@ class Albums:
                 album.siguiente = li[n + 1] if n + 1 < len(li) else None
                 if album.siguiente:
                     dic_db = self.get_db(ALBUMSHECHOS)
-                    if dic_db and dic_db.get(self.preClave + "_" + alias):
+                    if dic_db and dic_db.get(f"{self.preClave}_{alias}"):
                         album.siguiente = None  # Para que no avise de que esta hecho
                 break
         return album
@@ -293,7 +293,7 @@ class Albums:
             dic_db = {}
         dic = collections.OrderedDict()
         for uno in self.dicAlbumes:
-            key = self.preClave + "_" + uno
+            key = f"{self.preClave}_{uno}"
             dic[uno] = dic_db.get(key, False)
         return dic
 

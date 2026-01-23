@@ -3,7 +3,7 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Variations
+from Code.Z import Variations
 from Code.Analysis import Analysis
 from Code.Base import Game, Position
 from Code.Nags import Nags, WNags
@@ -14,8 +14,8 @@ from Code.QT import (
     Iconos,
     QTDialogs,
     QTMessages,
-    ShowPGN,
 )
+from Code.ZQT import ShowPGN
 from Code.Themes import WThemes
 
 
@@ -60,7 +60,7 @@ class Information(QtWidgets.QWidget):
         self.lb_cpws_lost.hide()
         self.lb_cpws_lost.setStyleSheet("*{ border: 1px solid lightgray; padding:1px; background: #f7f2f0}")
         sp = QtWidgets.QSizePolicy()
-        sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Expanding)
+        sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Expanding)
         self.lb_cpws_lost.setSizePolicy(sp)
 
         self.lb_time = Controles.LB(self).set_font(font7).set_wrap().align_center()
@@ -80,13 +80,13 @@ class Information(QtWidgets.QWidget):
         ly_rating.otro(ly_pw_tm)
 
         bt_rating = (
-            Controles.PB(self, _("Rating") + " (NAG)", rutina=self.edit_rating, plano=False)
-            .ponIcono(Iconos.Mas(), 16)
+            Controles.PB(self, f"{_('Rating')} (NAG)", rutina=self.edit_rating, plano=False)
+            .set_icono(Iconos.Mas(), 16)
             .set_font(font_bold)
         )
         bt_theme = (
             Controles.PB(self, _("Theme"), rutina=self.edit_theme, plano=False)
-            .ponIcono(Iconos.MasR(), 16)
+            .set_icono(Iconos.MasR(), 16)
             .set_font(font_bold)
         )
         ly_rt = Colocacion.H().control(bt_rating).relleno().control(bt_theme)
@@ -107,7 +107,7 @@ class Information(QtWidgets.QWidget):
 
         # Comentarios
         self.comment = (
-            Controles.EM(self, siHTML=False).capturaCambios(self.comment_changed).set_font(font).anchoMinimo(200)
+            Controles.EM(self, is_html=False).capture_changes(self.comment_changed).set_font(font).minimum_width(200)
         )
         ly = Colocacion.H().control(self.comment).margen(3)
         self.gb_comments = Controles.GB(self, _("Comments"), ly).set_font(font_bold)
@@ -122,7 +122,7 @@ class Information(QtWidgets.QWidget):
         splitter.setSizes([1, 1])
         self.sp_sizes = None
 
-        def save_sizes_splitter(xx, zz):
+        def save_sizes_splitter(_x, _y):
             self.sp_sizes = self.splitter.sizes()
 
         splitter.splitterMoved.connect(save_sizes_splitter)
@@ -168,8 +168,8 @@ class Information(QtWidgets.QWidget):
                     else:
                         str_cpws_lost = f'M↓{abs(mate)}'
                 else:
-                    str_cpws_lost = img + " %.02f %s" % (cpws_lost / 100.0, _("pws"))
-                str_cpws_lost += " (%s %s)" % (_("Depth"), analysis_depth)
+                    str_cpws_lost = f"{img} {cpws_lost / 100.0:.02f} {_('pws')}"
+                str_cpws_lost += f" ({_('Depth')} {analysis_depth})"
                 self.lb_cpws_lost.set_text(str_cpws_lost)
                 visible = True
 
@@ -186,14 +186,14 @@ class Information(QtWidgets.QWidget):
                     scs = time_scs - minutes * 60
                     str_time = "%d' %.01f\"" % (minutes, scs)
                 elif time_scs >= 10.0:
-                    str_time = '%.01f"' % time_scs
+                    str_time = f'{time_scs:.01f}"'
                 elif time_scs < 1.0:
-                    str_time = '%.03f"' % time_scs
+                    str_time = f'{time_scs:.03f}"'
                 else:
-                    str_time = '%.02f"' % time_scs
+                    str_time = f'{time_scs:.02f}"'
                 if str_time.endswith(".0\""):
-                    str_time = str_time[:-3] + '"'
-                return " " + str_time + " "
+                    str_time = f"{str_time[:-3]}\""
+                return f" {str_time} "
 
             if self.move.time_ms:
                 self.lb_time.set_text(txt_ms(self.move.time_ms))
@@ -259,7 +259,7 @@ class Information(QtWidgets.QWidget):
             self.variantes.set_move(move)
 
         else:
-            self.gb_comments.set_text("%s - %s" % (_("Game"), _("Comments")))
+            self.gb_comments.set_text(f"{_('Game')} - {_('Comments')}")
             if game is not None:
                 self.comment.set_text(game.first_comment)
 
@@ -303,9 +303,9 @@ class Information(QtWidgets.QWidget):
     def restore_width(self):
         self.width_saved, self.parent_width_saved = self.saved_width
         if self.isVisible():
-            self.activa(True)
+            self.activate(True)
 
-    def activa(self, to_activate):
+    def activate(self, to_activate):
         if to_activate:
             if not self.w_parent.isMaximized():
                 if self.width_saved:
@@ -325,24 +325,24 @@ class WVariations(QtWidgets.QWidget):
 
         QtWidgets.QWidget.__init__(self, self.owner)
 
-        bt_mas = Controles.PB(self, "", self.tb_mas_variation).ponIcono(Iconos.Mas(), 16).ponToolTip(_("Add"))
+        bt_mas = Controles.PB(self, "", self.tb_mas_variation).set_icono(Iconos.Mas(), 16).set_tooltip(_("Add"))
         bt_mas_engine = (
             Controles.PB(self, "", self.tb_mas_variation_r)
-            .ponIcono(Iconos.MasR(), 16)
-            .ponToolTip(f'{_("Add")}+{_("Play against an engine")}')
+            .set_icono(Iconos.MasR(), 16)
+            .set_tooltip(f'{_("Add")}+{_("Play against an engine")}')
         )
         bt_edit = (
             Controles.PB(self, "", self.tb_edit_variation)
-            .ponIcono(Iconos.EditVariation(), 16)
-            .ponToolTip(_("Edit in other board"))
+            .set_icono(Iconos.EditVariation(), 16)
+            .set_tooltip(_("Edit in other board"))
         )
         bt_remove = (
-            Controles.PB(self, "", self.tb_remove_variation).ponIcono(Iconos.Borrar(), 16).ponToolTip(_("Remove"))
+            Controles.PB(self, "", self.tb_remove_variation).set_icono(Iconos.Borrar(), 16).set_tooltip(_("Remove"))
         )
         bt_add_analysis = (
             Controles.PB(self, "", self.tb_add_analysis)
-            .ponIcono(Iconos.AddAnalysis(), 16)
-            .ponToolTip(f'{_("Add")}/{_("Result of analysis")}')
+            .set_icono(Iconos.AddAnalysis(), 16)
+            .set_tooltip(f'{_("Add")}/{_("Result of analysis")}')
         )
 
         self.em = ShowPGN.ShowPGN(self, puntos, self.with_figurines)
@@ -422,7 +422,7 @@ class WVariations(QtWidgets.QWidget):
             is_num_variation = not is_num_variation
         return variation, var_move
 
-    def analyze_move(self, num_move, num_variation, num_move_variation):
+    def analyze_move(self, _num_move, num_variation, num_move_variation):
         variation = self.move.variations.get(num_variation)
         move_var = variation.move(num_move_variation)
         xanalyzer = Code.procesador.get_manager_analyzer()
@@ -446,7 +446,7 @@ class WVariations(QtWidgets.QWidget):
         num_line = int(li_variation_move[-2])
         game: Game.Game = self.move.variations.li_variations[num_line]
         pgn = game.pgn_base_raw(translated=True)
-        if QTMessages.pregunta(self, pgn + "<br><br>" + _("Are you sure you want to delete this line?")):
+        if QTMessages.pregunta(self, f"{pgn}<br><br>{_('Are you sure you want to delete this line?')}"):
             li_variation_move = li_variation_move[:-2]
             selected_link = "|".join(li_variation_move)
             variation, var_move = self.det_variation_move(li_variation_move)
@@ -511,7 +511,7 @@ class WVariations(QtWidgets.QWidget):
         li_variation_move = self.selected_link.split("|")
         variation, var_move = self.det_variation_move(li_variation_move)
         previo = var_move.comment
-        form = FormLayout.FormLayout(self, _("Comments"), Iconos.ComentarioEditar(), anchoMinimo=640)
+        form = FormLayout.FormLayout(self, _("Comments"), Iconos.ComentarioEditar(), minimum_width=640)
         form.separador()
 
         config = FormLayout.Editbox(_("Comment"), alto=5)
@@ -555,7 +555,7 @@ class WVariations(QtWidgets.QWidget):
         menu.separador()
         menu.opcion(
             None,
-            "  " + title,
+            f"  {title}",
             is_disabled=True,
             font_type=Controles.FontType(puntos=16),
         )
@@ -727,7 +727,7 @@ class WVariations(QtWidgets.QWidget):
         else:
             game: Game.Game = self.move.variations.li_variations[num]
             pgn = game.pgn_base_raw(translated=True)
-            if QTMessages.pregunta(self, pgn + "<br><br>" + _("Are you sure you want to delete this line?")):
+            if QTMessages.pregunta(self, f"{pgn}<br><br>{_('Are you sure you want to delete this line?')}"):
                 self.move.variations.remove(num)
                 if self.selected_link:
                     selected_link = (

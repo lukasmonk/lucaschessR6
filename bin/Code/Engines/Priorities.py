@@ -1,6 +1,6 @@
 import psutil
 
-from Code import Util
+from Code.Z import Util
 
 
 class Priorities:
@@ -27,7 +27,8 @@ class Priorities:
     def value(self, priority):
         return self.values[priority] if priority in range(5) else self.values[self.normal]
 
-    def labels(self):
+    @staticmethod
+    def labels():
         return [_("Normal"), _("Low"), _("Very low"), _("High"), _("Very high")]
 
     def combo(self):

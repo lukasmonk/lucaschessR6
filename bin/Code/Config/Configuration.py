@@ -5,8 +5,7 @@ from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 
 import Code
-from Code import Util
-from Code.Config import ConfigEngines, ConfigPaths
+from Code.Z import Util
 from Code.Analysis import AnalysisEval
 from Code.Base.Constantes import (
     DBSHOW_INITIAL_POSITION,
@@ -18,6 +17,7 @@ from Code.Base.Constantes import (
     POS_TUTOR_HORIZONTAL,
 )
 from Code.Board import ConfBoards
+from Code.Config import ConfigEngines, ConfigPaths
 from Code.Engines import Priorities
 from Code.QT import IconosBase, ScreenUtils
 from Code.SQL import UtilSQL
@@ -25,15 +25,19 @@ from Code.Translations import Translate, TrListas
 
 
 def int_toolbutton(xint):
-    for tbi in (
-        Qt.ToolButtonStyle.ToolButtonIconOnly,
-        Qt.ToolButtonStyle.ToolButtonTextOnly,
-        Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+    return next(
+        (
+            tbi
+            for tbi in (
+                Qt.ToolButtonStyle.ToolButtonIconOnly,
+                Qt.ToolButtonStyle.ToolButtonTextOnly,
+                Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+                Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+            )
+            if xint == tbi.value
+        ),
         Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
-    ):
-        if xint == tbi.value:
-            return tbi
-    return Qt.ToolButtonStyle.ToolButtonTextUnderIcon
+    )
 
 
 def toolbutton_int(qt_tbi):
@@ -90,8 +94,6 @@ class Configuration:
         self.x_save_pgn_folder = ""
         self.x_save_lcsb = ""
         self.x_translator = ""
-
-        self.x_enable_highdpiscaling = False
 
         self.x_show_effects = False
         self.x_pieces_speed = 100
@@ -257,17 +259,17 @@ class Configuration:
         self.x_dbshow_positions = DBSHOW_INITIAL_POSITION
         self.x_dbshow_completegames = DBSHOW_LAST_MOVE
 
-        self.x_msrefresh_poll_engines = 20
+        self.x_msrefresh_poll_engines = 50
 
         self._dic_books = None
 
         self.__theme_num = 1  # 1=red 2=old
 
-        self.engines = ConfigEngines.ConfigEngines(self)
+        self.engines: ConfigEngines.ConfigEngines = ConfigEngines.ConfigEngines(self)
         self.dic_conf_boards_pk = {}
 
     def get_folder_default(self, folder):
-        return folder if folder else self.paths.folder_userdata()
+        return folder or self.paths.folder_userdata()
 
     def save_folder(self):
         return self.get_folder_default(self.x_save_folder)
@@ -279,31 +281,26 @@ class Configuration:
     @property
     def dic_books(self):
         if self._dic_books is None:
-            if self._dic_books is None:
-                self._dic_books = {}
+            self._dic_books = {}
 
-                def add_folder(folder):
-                    entry: os.DirEntry
-                    for entry in os.scandir(folder):
-                        if entry.is_dir():
-                            add_folder(entry.path)
-                        elif entry.name.endswith(".bin"):
-                            self._dic_books[entry.name] = entry.path
+            def add_folder(folder):
+                entry: os.DirEntry
+                for entry in os.scandir(folder):
+                    if entry.is_dir():
+                        add_folder(entry.path)
+                    elif entry.name.endswith(".bin"):
+                        self._dic_books[entry.name] = entry.path
 
-                add_folder(Code.path_resource("Openings"))
-                for engine in ("foxcub", "fox", "maia", "irina", "rodentii"):
-                    add_folder(Util.opj(Code.folder_engines, engine))
+            add_folder(Code.path_resource("Openings"))
+            for engine in ("foxcub", "fox", "maia", "irina", "rodentii"):
+                add_folder(Util.opj(Code.folder_engines, engine))
         return self._dic_books
 
     def path_book(self, alias):
         return self.dic_books[alias]
 
     def read_eval(self):
-        d = {}
-        for key in dir(self):
-            if key.startswith("x_eval_"):
-                d[key[7:]] = getattr(self, key)
-        return d
+        return {key[7:]: getattr(self, key) for key in dir(self) if key.startswith("x_eval_")}
 
     @staticmethod
     def dic_eval_keys():
@@ -333,10 +330,10 @@ class Configuration:
     def folder_save_lcsb(self, nuevo=None):
         if nuevo:
             self.x_save_lcsb = nuevo
-        return self.x_save_lcsb if self.x_save_lcsb else self.paths.folder_userdata()
+        return self.x_save_lcsb or self.paths.folder_userdata()
 
     def nom_player(self):
-        return _("Player") if not self.x_player else self.x_player
+        return self.x_player or _("Player")
 
     @staticmethod
     def carpeta_gaviota_defecto():
@@ -361,7 +358,7 @@ class Configuration:
         self.x_player = value
 
     def translator(self):
-        return self.x_translator if self.x_translator else "en"
+        return self.x_translator or "en"
 
     def language(self):
         tr_actual = self.translator()
@@ -411,33 +408,27 @@ class Configuration:
 
     @staticmethod
     def estilos():
-        li = [(x, x) for x in QtWidgets.QStyleFactory.keys()]
-        return li
+        return [(x, x) for x in QtWidgets.QStyleFactory.keys()]
 
     def graba(self):
-        dic = {}
-        for x in dir(self):
-            if x.startswith("x_"):
-                dic[x] = getattr(self, x)
+        dic = {x: getattr(self, x) for x in dir(self) if x.startswith("x_")}
         # dic["PALETTE"] = self.palette
         dic["PERSONALITIES"] = self.li_personalities
         Util.save_pickle(self.paths.file, dic)
 
     def lee(self):
-        dic = Util.restore_pickle(self.paths.file)
-        if dic:
+        if dic := Util.restore_pickle(self.paths.file):
             for x in dir(self):
-                if x.startswith("x_"):
-                    if x in dic:
-                        setattr(self, x, dic[x])
+                if x.startswith("x_") and x in dic:
+                    setattr(self, x, dic[x])
             if "x_sizefont_players" not in dic:
                 self.x_sizefont_players = self.x_sizefont_infolabels + 2
             # self.palette = dic.get("PALETTE", self.palette)
             self.li_personalities = dic.get("PERSONALITIES", self.li_personalities)
 
-        for x in os.listdir("../.."):
+        for x in os.listdir(Code.current_dir):
             if x.endswith(".pon"):
-                os.remove("../%s" % x)
+                os.remove(os.path.join(Code.current_dir, x))
                 self.x_translator = x[:2]
         self.load_translation()
 
@@ -452,9 +443,7 @@ class Configuration:
         return dic.get("LAST_DATABASE", "")
 
     def set_last_database(self, last_database):
-        dic = self.read_variables("DATABASE")
-        dic["LAST_DATABASE"] = last_database
-        self.write_variables("DATABASE", dic)
+        self._write_variables_key("DATABASE", "LAST_DATABASE", last_database)
 
     def load_translation(self):
         dlang = Code.path_resource("Locale")
@@ -483,8 +472,7 @@ class Configuration:
                     )
                 else:
                     li.append((uno.name, dic["NAME"], int(dic["%"]), dic.get("AUTHOR", "")))
-        li = sorted(li, key=lambda lng: "AAA" + lng[0] if lng[1] > "Z" else lng[1])
-        return li
+        return sorted(li, key=lambda lng: f"AAA{lng[0]}" if lng[1] > "Z" else lng[1])
 
     def elo_current(self):
         return self.x_elo
@@ -523,7 +511,7 @@ class Configuration:
         self.x_lichess = elo
 
     def po_saved(self):
-        return Util.opj(self.folder_translations(), "%s.po" % self.x_translator)
+        return Util.opj(self.paths.folder_translations(), f"{self.x_translator}.po")
 
     def temporary_folder(self):
         dir_tmp = Util.opj(self.paths.folder_userdata(), "tmp")
@@ -555,11 +543,16 @@ class Configuration:
     def read_variables(self, key_var):
         with UtilSQL.DictSQL(self.paths.file_vars()) as db:
             resp = db[key_var]
-        return resp if resp else {}
+        return resp or {}
 
     def write_variables(self, key_var, dic_valores):
         with UtilSQL.DictSQL(self.paths.file_vars()) as db:
             db[key_var] = dic_valores
+
+    def _write_variables_key(self, key_var, key_val, value):
+        dic = self.read_variables(key_var)
+        dic[key_val] = value
+        self.write_variables(key_var, dic)
 
     def change_theme_num(self, num):
         self.__theme_num = num
@@ -607,18 +600,17 @@ class Configuration:
         return self.config_board(key, size_default)
 
     def change_conf_board(self, config_board):
-        xid = config_board.id()
-        if xid:
+        if xid := config_board.id():
             db = UtilSQL.DictSQL(self.paths.file_conf_boards())
             self.dic_conf_boards_pk[xid] = db[xid] = config_board.graba()
             db.close()
             self.read_conf_boards()
 
-    def config_board(self, xid, tam_def, padre="BASE"):
+    def config_board(self, xid, tam_def, father="BASE"):
         if xid == "BASE":
             ct = ConfBoards.ConfigBoard(xid, tam_def)
         else:
-            ct = ConfBoards.ConfigBoard(xid, tam_def, padre=padre)
+            ct = ConfBoards.ConfigBoard(xid, tam_def, father=father)
             ct.width_piece(tam_def)
 
         if xid in self.dic_conf_boards_pk:

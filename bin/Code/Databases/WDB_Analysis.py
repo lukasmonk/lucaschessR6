@@ -155,12 +155,12 @@ class WDBAnalisis:
             rotulo = mrm.name
             if alm.vtime:
                 secs = alm.vtime / 1000.0
-                rotulo += ' %.0f"' % secs
+                rotulo += f' {secs:.0f}"'
             if alm.depth:
                 rotulo += " %d^" % alm.depth
 
             mrm.rotulo = rotulo
 
-            xengine.terminar()
+            xengine.finalize()
 
         self.db_analysis().new(pv, mrm)

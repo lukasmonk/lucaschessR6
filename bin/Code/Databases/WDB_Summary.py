@@ -1,3 +1,5 @@
+from typing import Any, List
+
 from PySide6 import QtCore, QtWidgets
 
 import Code
@@ -8,7 +10,10 @@ from Code.QT import Colocacion, Columnas, Controles, Delegados, FormLayout, Grid
 
 
 class WSummary(QtWidgets.QWidget):
-    def __init__(self, procesador, wb_database, db_games, siMoves=True):
+    reccount: int
+    allmoves: bool
+
+    def __init__(self, procesador, wb_database, db_games, with_moves=True):
         QtWidgets.QWidget.__init__(self)
 
         self.wb_database = wb_database
@@ -17,20 +22,20 @@ class WSummary(QtWidgets.QWidget):
         self.infoMove = None  # <-- set_info_move
         self.wmoves = None  # <-- setwmoves
         self.liMoves = []
-        self.siMoves = siMoves
+        self.with_moves = with_moves
         self.procesador = procesador
         self.configuration = Code.configuration
         self.foreground = Code.dic_qcolors["SUMMARY_FOREGROUND"]
 
         self.wdb_analysis = WDB_Analysis.WDBAnalisis(self)
 
-        self.leeConfig()
+        self.read_config()
 
         self.aperturasStd = OpeningsStd.ap
 
         self.with_figurines = self.configuration.x_pgn_withfigurines
 
-        self.pvBase = ""
+        self.pv_base = ""
 
         self.orden = ["games", False]
 
@@ -39,9 +44,9 @@ class WSummary(QtWidgets.QWidget):
             .set_wrap()
             .align_center()
             .set_foreground_backgound("white", "#4E5A65")
-            .set_font_type(puntos=10 if siMoves else 16)
+            .set_font_type(puntos=10 if with_moves else 16)
         )
-        if not siMoves:
+        if not with_moves:
             self.lbName.hide()
 
         # Grid
@@ -51,22 +56,22 @@ class WSummary(QtWidgets.QWidget):
         o_columns.nueva("move", _("Move"), 60, edicion=self.delegadoMove)
         o_columns.nueva("analysis", _("Analysis"), 60, align_right=True)
         o_columns.nueva("games", _("Games"), 70, align_right=True)
-        o_columns.nueva("pgames", "% " + _("Games"), 70, align_right=True)
+        o_columns.nueva("pgames", f"% {_('Games')}", 70, align_right=True)
         o_columns.nueva("win", _("Win"), 70, align_right=True)
         o_columns.nueva("draw", _("Draw"), 70, align_right=True)
         o_columns.nueva("lost", _("Loss"), 70, align_right=True)
-        o_columns.nueva("pwin", "% " + _("Win"), 60, align_right=True)
-        o_columns.nueva("pdraw", "% " + _("Draw"), 60, align_right=True)
-        o_columns.nueva("plost", "% " + _("Loss"), 60, align_right=True)
-        o_columns.nueva("pdrawwin", "%% %s" % _("W+D"), 60, align_right=True)
-        o_columns.nueva("pdrawlost", "%% %s" % _("L+D"), 60, align_right=True)
+        o_columns.nueva("pwin", f"% {_('Win')}", 60, align_right=True)
+        o_columns.nueva("pdraw", f"% {_('Draw')}", 60, align_right=True)
+        o_columns.nueva("plost", f"% {_('Loss')}", 60, align_right=True)
+        o_columns.nueva("pdrawwin", f"% {_('W+D')}", 60, align_right=True)
+        o_columns.nueva("pdrawlost", f"% {_('L+D')}", 60, align_right=True)
 
-        self.grid = Grid.Grid(self, o_columns, xid="summary", siSelecFilas=True)
-        self.grid.ponAltoFila(self.configuration.x_pgn_rowheight)
+        self.grid = Grid.Grid(self, o_columns, xid="summary", complete_row_select=True)
+        self.grid.set_height_row(self.configuration.x_pgn_rowheight)
         self.grid.font_type(puntos=self.configuration.x_pgn_fontpoints)
 
         # ToolBar
-        self.tb = QTDialogs.LCTB(self, with_text=not self.siMoves)
+        self.tb = QTDialogs.LCTB(self, with_text=not self.with_moves)
         self.tb.new(_("Close"), Iconos.MainMenu(), wb_database.tw_terminar)
         self.tb.new(_("Basic position"), Iconos.Inicio(), self.start)
         self.tb.new(_("Previous"), Iconos.AnteriorF(), self.anterior, sep=False)
@@ -74,14 +79,14 @@ class WSummary(QtWidgets.QWidget):
         self.tb.new(_("Analyze"), Iconos.Analizar(), self.analizar)
         self.tb.new(_("Rebuild"), Iconos.Reindexar(), self.reindexar)
         self.tb.new(_("Config"), Iconos.Configurar(), self.config)
-        if self.siMoves:
+        if self.with_moves:
             self.tb.vertical()
 
         layout = Colocacion.V().control(self.lbName)
-        if not self.siMoves:
+        if not self.with_moves:
             layout.control(self.tb)
         layout.control(self.grid)
-        if self.siMoves:
+        if self.with_moves:
             layout = Colocacion.H().control(self.tb).otro(layout)
 
         layout.margen(1)
@@ -93,8 +98,8 @@ class WSummary(QtWidgets.QWidget):
             self.wdb_analysis.close()
             self.wdb_analysis = None
 
-    def grid_doubleclick_header(self, grid, o_column):
-        key = o_column.key
+    def grid_doubleclick_header(self, _grid, obj_column):
+        key = obj_column.key
 
         if key == "analysis":
 
@@ -132,16 +137,16 @@ class WSummary(QtWidgets.QWidget):
     def focusInEvent(self, event):
         self.wb_database.ultFocus = self
 
-    def set_info_move(self, infoMove):
-        self.infoMove = infoMove
+    def set_info_move(self, info_move):
+        self.infoMove = info_move
 
     def setwmoves(self, wmoves):
         self.wmoves = wmoves
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liMoves)
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, _grid, k, _is_shift, _is_control, _is_alt):
         if k in (
             QtCore.Qt.Key.Key_Enter,
             QtCore.Qt.Key.Key_Return,
@@ -152,12 +157,13 @@ class WSummary(QtWidgets.QWidget):
             self.anterior()
         else:
             return True  # que siga con el resto de teclas
+        return False
 
-    def grid_dato(self, grid, nfila, ocol):
+    def grid_dato(self, _grid, nfila, ocol):
         key = ocol.key
 
         # Last=Totals
-        if self.siFilaTotales(nfila):
+        if self.is_row_with_totals(nfila):
             if key in ("number", "analysis", "pgames"):
                 return ""
             elif key == "move":
@@ -171,7 +177,7 @@ class WSummary(QtWidgets.QWidget):
             return ""
         v = self.liMoves[nfila][key]
         if key.startswith("p"):
-            return "%.01f %%" % v
+            return f"{v:.01f} %"
         elif key == "analysis":
             return v.abbrev_text_base() if v else ""
         elif key == "number":
@@ -181,8 +187,8 @@ class WSummary(QtWidgets.QWidget):
         else:
             return str(v)
 
-    def posicionFila(self, nfila):
-        dic = self.liMoves[nfila]
+    def row_position(self, nrow):
+        dic: dict = self.liMoves[nrow]
         li = [[k, dic[k]] for k in ("win", "draw", "lost")]
         li = sorted(li, key=lambda x: x[1], reverse=True)
         d = {}
@@ -199,25 +205,28 @@ class WSummary(QtWidgets.QWidget):
             d["win"] = d["draw"] = d["lost"] = -1
         return d
 
-    def grid_color_fondo(self, grid, nfila, ocol):
+    def grid_color_fondo(self, _grid, nfila, ocol):
         key = ocol.key
-        if self.siFilaTotales(nfila) and key not in ("number", "analysis"):
+        if self.is_row_with_totals(nfila) and key not in ("number", "analysis"):
             return Code.dic_qcolors["SUMMARY_TOTAL"]
         if key in ("pwin", "pdraw", "plost"):
-            dic = self.posicionFila(nfila)
+            dic = self.row_position(nfila)
             n = dic[key[1:]]
             if n == 0:
                 return Code.dic_qcolors["SUMMARY_WIN"]
             if n == 2:
                 return Code.dic_qcolors["SUMMARY_LOST"]
+        return None
 
-    def grid_color_texto(self, grid, nfila, ocol):
+    def grid_color_texto(self, _grid, nfila, ocol):
         if self.foreground:
             key = ocol.key
-            if self.siFilaTotales(nfila) or key in ("pwin", "pdraw", "plost"):
+            if self.is_row_with_totals(nfila) or key in ("pwin", "pdraw", "plost"):
                 return self.foreground
+        return None
 
-    def popPV(self, pv):
+    @staticmethod
+    def pop_pv(pv):
         if pv:
             rb = pv.rfind(" ")
             if rb == -1:
@@ -227,42 +236,42 @@ class WSummary(QtWidgets.QWidget):
         return pv
 
     def analizar(self):
-        self.wdb_analysis.menu(self.pvBase)
-        self.actualizaPV(self.pvBase)
+        self.wdb_analysis.menu(self.pv_base)
+        self.update_pv(self.pv_base)
 
     def start(self):
-        self.actualizaPV("")
-        self.cambiaInfoMove()
+        self.update_pv("")
+        self.change_infomove()
 
     def anterior(self):
-        if self.pvBase:
-            pv = self.popPV(self.pvBase)
+        if self.pv_base:
+            pv = self.pop_pv(self.pv_base)
 
-            self.actualizaPV(pv)
-            self.cambiaInfoMove()
+            self.update_pv(pv)
+            self.change_infomove()
 
-    def rehazActual(self):
+    def redo_current(self):
         recno = self.grid.recno()
         if recno >= 0:
-            dic = self.liMoves[recno]
+            dic: dict = self.liMoves[recno]
             if "pv" in dic:
                 pv = dic["pv"]
                 if pv:
                     li = pv.split(" ")
                     pv = " ".join(li[:-1])
-                self.actualizaPV(pv)
-                self.cambiaInfoMove()
+                self.update_pv(pv)
+                self.change_infomove()
 
     def siguiente(self):
         recno = self.grid.recno()
         if recno >= 0:
-            dic = self.liMoves[recno]
+            dic: dict = self.liMoves[recno]
             if "pv" in dic:
                 pv = dic["pv"]
                 if pv.count(" ") > 0:
-                    pv = "%s %s" % (self.pvBase, dic["pvmove"])
-                self.actualizaPV(pv)
-                self.cambiaInfoMove()
+                    pv = f"{self.pv_base} {dic['pvmove']}"
+                self.update_pv(pv)
+                self.change_infomove()
 
     def reindexar(self):
         return self.reindexar_question(self.db_games.depth_stat(), True)
@@ -270,20 +279,15 @@ class WSummary(QtWidgets.QWidget):
     def reindexar_question(self, depth, question):
         if not self.db_games.has_result_field():
             QTMessages.message_error(self, _("This database does not have a RESULT field"))
-            return
+            return None
 
         if question or self.wb_database.is_temporary:
-            # if not QTMessages.pregunta(self, _("Do you want to rebuild stats?")):
-            #     return
 
-            li_gen = [(None, None)]
-            li_gen.append(
-                (
-                    None,
-                    _("Select the number of half-moves <br> for each game to be considered"),
-                )
-            )
-            li_gen.append((None, None))
+            li_gen: List[tuple[Any, Any]] = [
+                (None, None),
+                (None, _("Select the number of half-moves <br> for each game to be considered")),
+                (None, None),
+            ]
 
             config = FormLayout.Spinbox(_("Depth"), 0, 999, 50)
             li_gen.append((config, self.db_games.depth_stat()))
@@ -296,84 +300,86 @@ class WSummary(QtWidgets.QWidget):
 
             depth = li_resp[0]
 
-        self.RECCOUNT = 0
+        self.reccount = 0
 
-        bpTmp = QTMessages.ProgressBarWithTime(self, _("Rebuilding"))
-        bpTmp.mostrar()
+        bp_tmp = QTMessages.ProgressBarWithTime(self, _("Rebuilding"))
+        bp_tmp.mostrar()
 
         def dispatch(recno, reccount):
-            if reccount != self.RECCOUNT:
-                self.RECCOUNT = reccount
-                bpTmp.set_total(reccount)
-            bpTmp.pon(recno)
-            return not bpTmp.is_canceled()
+            if reccount != self.reccount:
+                self.reccount = reccount
+                bp_tmp.set_total(reccount)
+            bp_tmp.pon(recno)
+            return not bp_tmp.is_canceled()
 
         self.db_games.rebuild_stat(dispatch, depth)
-        bpTmp.cerrar()
+        bp_tmp.cerrar()
         self.start()
 
-    def movActivo(self):
+        return None
+
+    def active_move(self):
         recno = self.grid.recno()
         if recno >= 0:
             return self.liMoves[recno]
         else:
             return None
 
-    def siFilaTotales(self, nfila):
+    def is_row_with_totals(self, nfila):
         return nfila == len(self.liMoves) - 1
 
-    def noFilaTotales(self, nfila):
+    def isnt_row_with_totals(self, nfila):
         return nfila < len(self.liMoves) - 1
 
-    def grid_doble_click(self, grid, fil, col):
-        if self.noFilaTotales(fil):
+    def grid_doble_click(self, _grid, fil, _col):
+        if self.isnt_row_with_totals(fil):
             self.siguiente()
 
-    def gridActualiza(self):
+    def grid_update(self):
         nfila = self.grid.recno()
         if nfila > -1:
             self.grid_cambiado_registro(None, nfila, None)
 
     def actualiza(self):
-        movActual = self.infoMove.movActual
-        pvBase = self.popPV(movActual.allPV())
-        self.actualizaPV(pvBase)
-        if movActual:
-            pv = movActual.allPV()
+        mov_actual = self.infoMove.movActual
+        pv_base = self.pop_pv(mov_actual.allPV())
+        self.update_pv(pv_base)
+        if mov_actual:
+            pv = mov_actual.allPV()
             for n in range(len(self.liMoves) - 1):
                 if self.liMoves[n]["pv"] == pv:
                     self.grid.goto(n, 0)
                     return
 
-    def actualizaPV(self, pvBase):
-        self.pvBase = pvBase
-        if not pvBase:
-            pvMirar = ""
+    def update_pv(self, pv_base):
+        self.pv_base = pv_base
+        if not pv_base:
+            pv_mirar = ""
         else:
-            pvMirar = self.pvBase
+            pv_mirar = self.pv_base
 
         dic_analisis = {}
-        analisisMRM = self.wdb_analysis.mrm(pvMirar)
-        if analisisMRM:
-            for rm in analisisMRM.li_rm:
+        analysis_mrm = self.wdb_analysis.mrm(pv_mirar)
+        if analysis_mrm:
+            for rm in analysis_mrm.li_rm:
                 dic_analisis[rm.movimiento()] = rm
-        self.liMoves = self.db_games.get_summary(pvMirar, dic_analisis, self.with_figurines, self.allmoves)
+        self.liMoves = self.db_games.get_summary(pv_mirar, dic_analisis, self.with_figurines, self.allmoves)
 
         self.grid.refresh()
         self.grid.gotop()
 
     def reset(self):
-        self.actualizaPV(None)
+        self.update_pv(None)
         self.grid.refresh()
         self.grid.gotop()
 
-    def grid_cambiado_registro(self, grid, row, oCol):
+    def grid_cambiado_registro(self, _grid, _row, _col):
         if self.grid.hasFocus() or self.hasFocus():
-            self.cambiaInfoMove()
+            self.change_infomove()
 
-    def cambiaInfoMove(self):
+    def change_infomove(self):
         row = self.grid.recno()
-        if row >= 0 and self.noFilaTotales(row):
+        if row >= 0 and self.isnt_row_with_totals(row):
             pv = self.liMoves[row]["pv"]
             p = Game.Game()
             p.read_pv(pv)
@@ -383,21 +389,21 @@ class WSummary(QtWidgets.QWidget):
             self.setFocus()
             self.grid.setFocus()
 
-    def showActiveName(self, name):
-        # Llamado de WBG_Games -> setNameToolbar
-        self.lbName.set_text(_("Opening explorer of %s") % name)
+    # def showActiveName(self, name):
+    # Llamado de WBG_Games -> setNameToolbar
+    # self.lbName.set_text(_("Opening explorer of %s") % name)
 
-    def leeConfig(self):
-        dicConfig = self.configuration.read_variables("DBSUMMARY")
-        if not dicConfig:
-            dicConfig = {"allmoves": False}
-        self.allmoves = dicConfig["allmoves"]
-        return dicConfig
+    def read_config(self):
+        dic_config = self.configuration.read_variables("DBSUMMARY")
+        if not dic_config:
+            dic_config = {"allmoves": False}
+        self.allmoves = dic_config["allmoves"]
+        return dic_config
 
-    def grabaConfig(self):
-        dicConfig = {"allmoves": self.allmoves}
-        self.configuration.write_variables("DBSUMMARY", dicConfig)
-        self.configuration.graba()
+    # def grabaConfig(self):
+    #     dic_config = {"allmoves": self.allmoves}
+    #     self.configuration.write_variables("DBSUMMARY", dic_config)
+    #     self.configuration.graba()
 
     def config(self):
         menu = QTDialogs.LCMenu(self)
@@ -407,10 +413,12 @@ class WSummary(QtWidgets.QWidget):
             return
         self.allmoves = not self.allmoves
 
-        self.actualizaPV(self.pvBase)
+        self.update_pv(self.pv_base)
 
 
 class WSummaryBase(QtWidgets.QWidget):
+    pv_base: str
+
     def __init__(self, procesador, db_stat):
         QtWidgets.QWidget.__init__(self)
 
@@ -430,17 +438,17 @@ class WSummaryBase(QtWidgets.QWidget):
         self.delegadoMove = Delegados.EtiquetaPGN(True if self.with_figurines else None)
         o_columns.nueva("move", _("Move"), 60, edicion=self.delegadoMove)
         o_columns.nueva("games", _("Games"), 70, align_right=True)
-        o_columns.nueva("pgames", "% " + _("Games"), 70, align_right=True, align_center=True)
+        o_columns.nueva("pgames", f"% {_('Games')}", 70, align_right=True, align_center=True)
         o_columns.nueva("win", _("Win"), 70, align_right=True)
         o_columns.nueva("draw", _("Draw"), 70, align_right=True)
         o_columns.nueva("lost", _("Loss"), 70, align_right=True)
-        o_columns.nueva("pwin", "% " + _("Win"), 60, align_right=True)
-        o_columns.nueva("pdraw", "% " + _("Draw"), 60, align_right=True)
-        o_columns.nueva("plost", "% " + _("Loss"), 60, align_right=True)
-        o_columns.nueva("pdrawwin", "%% %s" % _("W+D"), 60, align_right=True)
-        o_columns.nueva("pdrawlost", "%% %s" % _("L+D"), 60, align_right=True)
+        o_columns.nueva("pwin", f"% {_('Win')}", 60, align_right=True)
+        o_columns.nueva("pdraw", f"% {_('Draw')}", 60, align_right=True)
+        o_columns.nueva("plost", f"% {_('Loss')}", 60, align_right=True)
+        o_columns.nueva("pdrawwin", f"% {_('W+D')}", 60, align_right=True)
+        o_columns.nueva("pdrawlost", f"% {_('L+D')}", 60, align_right=True)
 
-        self.grid = Grid.Grid(self, o_columns, xid="summarybase", siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, xid="summarybase", complete_row_select=True)
 
         layout = Colocacion.V()
         layout.control(self.grid)
@@ -448,8 +456,8 @@ class WSummaryBase(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-    def grid_doubleclick_header(self, grid, o_column):
-        key = o_column.key
+    def grid_doubleclick_header(self, _grid, obj_column):
+        key = obj_column.key
 
         if key == "move":
 
@@ -476,14 +484,14 @@ class WSummaryBase(QtWidgets.QWidget):
         self.liMoves = li
         self.grid.refresh()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liMoves)
 
-    def grid_dato(self, grid, nfila, ocol):
+    def grid_dato(self, _grid, nfila, ocol):
         key = ocol.key
 
         # Last=Totals
-        if self.siFilaTotales(nfila):
+        if self.is_row_with_totals(nfila):
             if key in ("number", "pgames"):
                 return ""
             elif key == "move":
@@ -493,7 +501,7 @@ class WSummaryBase(QtWidgets.QWidget):
             return ""
         v = self.liMoves[nfila][key]
         if key.startswith("p"):
-            return "%.01f %%" % v
+            return f"{v:.01f} %"
         elif key == "number":
             if self.with_figurines:
                 self.delegadoMove.setWhite("..." not in v)
@@ -501,8 +509,8 @@ class WSummaryBase(QtWidgets.QWidget):
         else:
             return str(v)
 
-    def posicionFila(self, nfila):
-        dic = self.liMoves[nfila]
+    def row_position(self, nfila):
+        dic: dict = self.liMoves[nfila]
         li = [[k, dic[k]] for k in ("win", "draw", "lost")]
         li = sorted(li, key=lambda x: x[1], reverse=True)
         d = {}
@@ -519,44 +527,46 @@ class WSummaryBase(QtWidgets.QWidget):
             d["win"] = d["draw"] = d["lost"] = -1
         return d
 
-    def grid_color_fondo(self, grid, nfila, ocol):
+    def grid_color_fondo(self, _grid, nfila, ocol):
         key = ocol.key
-        if self.siFilaTotales(nfila) and key not in ("number", "analysis"):
+        if self.is_row_with_totals(nfila) and key not in ("number", "analysis"):
             return Code.dic_qcolors["SUMMARY_TOTAL"]
         if key in ("pwin", "pdraw", "plost"):
-            dic = self.posicionFila(nfila)
+            dic = self.row_position(nfila)
             n = dic[key[1:]]
             if n == 0:
                 return Code.dic_qcolors["SUMMARY_WIN"]
             if n == 2:
                 return Code.dic_qcolors["SUMMARY_LOST"]
+        return None
 
-    def grid_color_texto(self, grid, nfila, ocol):
+    def grid_color_texto(self, _grid, nfila, ocol):
         if self.foreground:
             key = ocol.key
-            if self.siFilaTotales(nfila) or key in ("pwin", "pdraw", "plost"):
+            if self.is_row_with_totals(nfila) or key in ("pwin", "pdraw", "plost"):
                 return self.foreground
+        return None
 
-    def siFilaTotales(self, nfila):
+    def is_row_with_totals(self, nfila):
         return nfila == len(self.liMoves) - 1
 
-    def noFilaTotales(self, nfila):
+    def isnt_row_with_totals(self, nfila):
         return nfila < len(self.liMoves) - 1
 
-    def actualizaPV(self, pvBase):
-        self.pvBase = pvBase
-        if not pvBase:
-            pvMirar = ""
+    def update_pv(self, pv_base):
+        self.pv_base = pv_base
+        if not pv_base:
+            pv_mirar = ""
         else:
-            pvMirar = self.pvBase
+            pv_mirar = self.pv_base
 
-        self.liMoves = self.db_stat.get_summary(pvMirar, {}, self.with_figurines, False)
+        self.liMoves = self.db_stat.get_summary(pv_mirar, {}, self.with_figurines, False)
 
         self.grid.refresh()
         self.grid.gotop()
 
-    def grid_right_button(self, grid, row, column, modificadores):
-        if self.siFilaTotales(row):
+    def grid_right_button(self, _grid, row, _column, _modificadores):
+        if self.is_row_with_totals(row):
             return
         alm = self.liMoves[row]["rec"]
         if not alm or not hasattr(alm, "LIALMS") or len(alm.LIALMS) < 2:
@@ -569,21 +579,21 @@ class WSummaryBase(QtWidgets.QWidget):
             menu.separador()
         resp = menu.lanza()
         if resp:
-            self.actualizaPV(resp.PV)
+            self.update_pv(resp.PV)
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, _grid, k, _is_shift, _is_control, _is_alt):
         if k in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
             self.siguiente()
 
-    def grid_doble_click(self, grid, fil, col):
+    def grid_doble_click(self, _grid, _fil, _col):
         self.siguiente()
 
     def siguiente(self):
         recno = self.grid.recno()
-        if recno >= 0 and self.noFilaTotales(recno):
+        if recno >= 0 and self.isnt_row_with_totals(recno):
             dic = self.liMoves[recno]
             if "pv" in dic:
                 pv = dic["pv"]
                 if pv.count(" ") > 0:
-                    pv = "%s %s" % (self.pvBase, dic["pvmove"])
-                self.actualizaPV(pv)
+                    pv = f"{self.pv_base} {dic['pvmove']}"
+                self.update_pv(pv)

@@ -60,21 +60,21 @@ class WAnalisisGraph(LCDialog.LCDialog):
             return o_columns
 
         self.dicLiJG = {"A": self.alm.lijg, "W": self.alm.lijgW, "B": self.alm.lijgB}
-        grid_all = Grid.Grid(self, xcol(), siSelecFilas=True, xid="A", siCabeceraMovible=False)
-        ancho_grid = grid_all.anchoColumnas()
+        grid_all = Grid.Grid(self, xcol(), complete_row_select=True, xid="A", is_column_header_movable=False)
+        ancho_grid = grid_all.width_columns_displayables()
         self.register_grid(grid_all)
-        grid_w = Grid.Grid(self, xcol(), siSelecFilas=True, xid="W", siCabeceraMovible=False)
-        ancho_grid = max(grid_w.anchoColumnas(), ancho_grid)
+        grid_w = Grid.Grid(self, xcol(), complete_row_select=True, xid="W", is_column_header_movable=False)
+        ancho_grid = max(grid_w.width_columns_displayables(), ancho_grid)
         self.register_grid(grid_w)
-        grid_b = Grid.Grid(self, xcol(), siSelecFilas=True, xid="B", siCabeceraMovible=False)
-        ancho_grid = max(grid_b.anchoColumnas(), ancho_grid) + 24
+        grid_b = Grid.Grid(self, xcol(), complete_row_select=True, xid="B", is_column_header_movable=False)
+        ancho_grid = max(grid_b.width_columns_displayables(), ancho_grid) + 24
         self.register_grid(grid_b)
 
         font = Controles.FontType(puntos=Code.configuration.x_sizefont_infolabels)
 
         self.emIndexes = Controles.EM(self, alm.indexesHTML).read_only().set_font(font)
-        pb_save = Controles.PB(self, _("Save to game comments"), self.saveIndexes, plano=False)
-        pb_save.ponIcono(Iconos.Grabar())
+        pb_save = Controles.PB(self, _("Save to game comments"), self.save_indexes, plano=False)
+        pb_save.set_icono(Iconos.Grabar())
         ly0 = Colocacion.H().control(pb_save).relleno()
         ly = Colocacion.V().control(self.emIndexes).otro(ly0)
         w_idx = QtWidgets.QWidget()
@@ -103,18 +103,18 @@ class WAnalisisGraph(LCDialog.LCDialog):
         tab_grid.new_tab(w_elo, _("Elo"))
         tab_grid.new_tab(w_moves, _("Moves analyzed"))
         # tab_grid.new_tab(w_moves_old, _("Summary"))
-        tab_grid.dispatchChange(self.tabChanged)
+        tab_grid.dispatch_change(self.tab_changed)
         self.tabActive = 0
 
         config_board = Code.configuration.config_board("ANALISISGRAPH", 60)
         self.board = Board.Board(self, config_board)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_side_bottom(alm.is_white_bottom)
 
-        self.rbShowValues = Controles.RB(self, _("Values"), rutina=self.cambiadoShow).activa(True)
-        self.rbShowElo = Controles.RB(self, _("Elo average"), rutina=self.cambiadoShow)
-        self.chbShowLostPoints = Controles.CHB(self, _("Show pawns lost"), self.getShowLostPoints()).capture_changes(
-            self, self.showLostPointsChanged
+        self.rbShowValues = Controles.RB(self, _("Values"), rutina=self.show_changed).activate(True)
+        self.rbShowElo = Controles.RB(self, _("Elo average"), rutina=self.show_changed)
+        self.chbShowLostPoints = Controles.CHB(self, _("Show pawns lost"), self.get_show_lost_points()).capture_changes(
+            self.show_lost_points_changed
         )
         ly_rb = (
             Colocacion.H()
@@ -182,30 +182,30 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
         self.scale_init()
 
-    def valorShowLostPoints(self):
+    def show_lost_points_value(self):
         # Llamada from_sq histogram
         return self.chbShowLostPoints.valor()
 
-    def showLostPointsChanged(self):
-        dic = {"SHOWLOSTPOINTS": self.valorShowLostPoints()}
+    def show_lost_points_changed(self):
+        dic = {"SHOWLOSTPOINTS": self.show_lost_points_value()}
         self.configuration.write_variables("ANALISIS_GRAPH", dic)
-        self.cambiadoShow()
+        self.show_changed()
 
-    def getShowLostPoints(self):
+    def get_show_lost_points(self):
         dic = self.configuration.read_variables("ANALISIS_GRAPH")
         return dic.get("SHOWLOSTPOINTS", True) if dic else True
 
-    def cambiadoShow(self):
-        self.tabChanged(self.tab_grid.currentIndex())
+    def show_changed(self):
+        self.tab_changed(self.tab_grid.currentIndex())
 
     # def boardSizeChanged(self):
     #     th = self.board.height()
     #     self.tab_grid.setFixedHeight(th)
     #     self.emIndexes.setFixedHeight(th - 72)
     #     self.adjustSize()
-    #     self.cambiadoShow()
+    #     self.show_changed()
 
-    def tabChanged(self, ntab):
+    def tab_changed(self, ntab):
         QtWidgets.QApplication.processEvents()
         tab_vis = 0 if ntab >= 3 else ntab
         if self.rbShowElo.isChecked():
@@ -219,11 +219,11 @@ class WAnalisisGraph(LCDialog.LCDialog):
     def grid_cambiado_registro(self, grid, row, column):
         self.grid_left_button(grid, row, column)
 
-    def saveIndexes(self):
-        self.manager.game.set_first_comment(self.alm.indexesRAW)
+    def save_indexes(self):
+        self.manager.game.set_first_comment(self.alm.indexesRAW, False)
         QTMessages.temporary_message(self, _("Saved"), 1.8)
 
-    def grid_left_button(self, grid, row, column):
+    def grid_left_button(self, grid, row, _column):
         self.board.remove_arrows()
         move = self.dicLiJG[grid.id][row]
         self.board.set_position(move.position)
@@ -231,13 +231,13 @@ class WAnalisisGraph(LCDialog.LCDialog):
         rm = mrm.li_rm[pos]
         self.board.put_arrow_sc(rm.from_sq, rm.to_sq)
         rm = mrm.li_rm[0]
-        self.board.creaFlechaMulti(rm.movimiento(), False)
+        self.board.create_arrow_multi(rm.movimiento(), False)
         grid.setFocus()
         ta = self.tabActive if self.tabActive < 3 else 0
-        self.htotal[ta].setPointActive(row)
-        self.htotal[ta + 3].setPointActive(row)
+        self.htotal[ta].set_point_active(row)
+        self.htotal[ta + 3].set_point_active(row)
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, grid, row, _column):
         move = self.dicLiJG[grid.id][row]
         mrm, pos = move.analysis
         self.show_analysis(
@@ -250,7 +250,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
             must_save=False,
         )
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, grid, k, _is_shift, _is_control, _is_alt):
         nrecno = grid.recno()
         if k in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
             self.grid_doble_click(grid, nrecno, None)
@@ -262,8 +262,9 @@ class WAnalisisGraph(LCDialog.LCDialog):
                 grid.goto(nrecno - 1, 0)
         else:
             return True  # que siga con el resto de teclas
+        return False
 
-    def grid_color_texto(self, grid, row, o_column):
+    def grid_color_texto(self, grid, row, obj_column):
         if grid.id == "A":
             move = self.alm.lijg[row]
         elif grid.id == "W":
@@ -273,8 +274,9 @@ class WAnalisisGraph(LCDialog.LCDialog):
         if hasattr(move, "nag_color") and move.nag_color and len(move.nag_color) == 2:
             nagc = move.nag_color[1]
             return Nags.nag_qcolor(nagc)
+        return None
 
-    def grid_alineacion(self, grid, row, o_column):
+    def grid_alineacion(self, grid, row, obj_column):
         if grid.id == "A":
             move = self.alm.lijg[row]
             return "i" if move.xsiW else "d"
@@ -283,68 +285,71 @@ class WAnalisisGraph(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.dicLiJG[grid.id])
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         move = self.dicLiJG[grid.id][row]
 
         if column == "NUM":
-            return " %s " % move.xnum
+            return f" {move.xnum} "
 
         elif column in ("MOVE", "BEST"):
-            if self.with_figurines:
-                delegado = o_column.edicion
-                delegado.setWhite(move.is_white())
-            mrm, pos = move.analysis
-            rm0 = mrm.li_rm[pos if column == "MOVE" else 0]
-            pv1 = rm0.pv.split(" ")[0]
-            from_sq = pv1[:2]
-            to_sq = pv1[2:4]
-            promotion = pv1[4] if len(pv1) == 5 else ""
-            txt = rm0.abbrev_text_base()
-
-            color = None
-            if column == "MOVE":
-                fenm2 = move.position.fenm2()
-                nagc = move.nag_color[1]
-                color = Nags.nag_color(nagc)
-            else:
-                fenm2 = move.position_before.get_fenm2()
-            is_book = OpeningsStd.ap.is_book_fenm2(fenm2)
-            book = "O" if is_book else None
-
-            return (
-                move.position_before.pgn(from_sq, to_sq, promotion),
-                color,
-                txt,
-                book,
-                None,
-            )
+            return self._grid_dato_moves_best(obj_column, column, move)
 
         elif column == "TIME":
             ms = move.time_ms
-            return '%0.02f"' % (ms / 1000,) if ms else ""
+            return f'{ms / 1000:0.02f}"' if ms else ""
 
         elif column == "DIF":
-            mrm, pos = move.analysis
-            rm0 = mrm.li_rm[0]
-            rm1 = mrm.li_rm[pos]
-            if rm0.mate:
-                if rm1.mate:
-                    return "" if rm0.mate == rm1.mate else "M↓%d" % (-rm0.mate + rm1.mate,)
-                else:
-                    return "M↓%d" % rm0.mate
-            elif rm1.mate:
-                return "⨠M"
-
-            pts = rm0.score_abs5() - rm1.score_abs5()
-            pts /= 100.0
-            return "%0.2f" % pts
+            return self._grid_dato_dif(move)
 
         elif column == "PORC":
             return "%3d%%" % move.porcentaje
 
         elif column == "ELO":
             return "%3d" % move.elo if move.elo else ""
+
+        return None
+
+    def _grid_dato_moves_best(self, obj_column, column, move):
+        if self.with_figurines:
+            delegado = obj_column.edicion
+            delegado.setWhite(move.is_white())
+        mrm, pos = move.analysis
+        rm0 = mrm.li_rm[pos if column == "MOVE" else 0]
+        pv1 = rm0.pv.split(" ")[0]
+        from_sq = pv1[:2]
+        to_sq = pv1[2:4]
+        promotion = pv1[4] if len(pv1) == 5 else ""
+        txt = rm0.abbrev_text_base()
+
+        color = None
+        if column == "MOVE":
+            fenm2 = move.position.fenm2()
+            nagc = move.nag_color[1]
+            color = Nags.nag_color(nagc)
+        else:
+            fenm2 = move.position_before.get_fenm2()
+        is_book = OpeningsStd.ap.is_book_fenm2(fenm2)
+        book = "O" if is_book else None
+
+        return move.position_before.pgn(from_sq, to_sq, promotion), color, txt, book, None
+
+    @staticmethod
+    def _grid_dato_dif(move):
+        mrm, pos = move.analysis
+        rm0 = mrm.li_rm[0]
+        rm1 = mrm.li_rm[pos]
+        if rm0.mate:
+            if rm1.mate:
+                return "" if rm0.mate == rm1.mate else "M↓%d" % (-rm0.mate + rm1.mate,)
+            else:
+                return "M↓%d" % rm0.mate
+        elif rm1.mate:
+            return "⨠M"
+
+        pts = rm0.score_abs5() - rm1.score_abs5()
+        pts /= 100.0
+        return f"{pts:0.2f}" if pts else ""
 
     def closeEvent(self, event):
         self.save_video()

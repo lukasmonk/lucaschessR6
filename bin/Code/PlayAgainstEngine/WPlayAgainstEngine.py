@@ -4,7 +4,7 @@ from typing import Optional, List, Any
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     ADJUST_BETTER,
@@ -45,13 +45,12 @@ from Code.Voyager import Voyager
 
 
 class WPlayAgainstEngine(LCDialog.LCDialog):
-
     # Fields in table in Advanced, to manage various types
     me_control: str
     me_key: Optional[str]
 
     rival: Engines.Engine
-    
+
     fen: str
 
     opening_block: Optional[OpeningsStd.Opening]
@@ -82,7 +81,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         # Tab
         self.tab = Controles.Tab()
         self.tab.set_font_type(puntos=self.configuration.x_menu_points, peso=700)
-        self.tab.dispatchChange(self.cambiada_tab)
+        self.tab.dispatch_change(self.cambiada_tab)
 
         self.tab_advanced = 4
         self.tab_advanced_active = False
@@ -100,7 +99,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.li_preferred_openings = []
         self.bt_openings_fav.hide()
 
-        file = self.configuration.paths.file_play_engine() if self.direct_option else self.configuration.paths.file_play_engine_extern()
+        file = (
+            self.configuration.paths.file_play_engine()
+            if self.direct_option
+            else self.configuration.paths.file_play_engine_extern()
+        )
         if not os.path.isfile(file):
             file = self.configuration.paths.file_play_engine()
         dic = Util.restore_pickle(file)
@@ -136,7 +139,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.tb = QTDialogs.LCTB(self)
         else:
             self.tb.clear()
-        self.tb.new("&" + _("Accept"), Iconos.Aceptar(), self.aceptar)
+        self.tb.new(f"&{_('Accept')}", Iconos.Aceptar(), self.aceptar)
         self.tb.new(_("Cancel"), Iconos.Cancelar(), self.cancelar)
         if len(self.read_configurations()) > 0:
             self.tb.new(_("Restore"), Iconos.Engine2(), self.restore_configuration)
@@ -148,18 +151,20 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         font = self.font_dialog
 
         self.rival = self.select_engines.busca(ENG_INTERNAL, self.configuration.x_rival_inicial)
-        self.bt_rival = Controles.PB(self, "", self.select_engine, plano=False).set_font(font).altoFijo(48)
+        self.bt_rival = Controles.PB(self, "", self.select_engine, plano=False).set_font(font).fixed_height(48)
 
         self.lb_rtime = Controles.LB2P(self, _("Fixed time in seconds")).set_font(font)
-        self.ed_rtime = Controles.ED(self).tipoFloat().anchoMaximo(80).set_font(font).capture_changes(self.change_time)
-        self.bt_cancel_rtime = Controles.PB(self, "", rutina=self.cancelar_tiempo).ponIcono(Iconos.S_Cancelar())
+        self.ed_rtime = (
+            Controles.ED(self).type_float().ancho_maximo(80).set_font(font).capture_changes(self.change_time)
+        )
+        self.bt_cancel_rtime = Controles.PB(self, "", rutina=self.cancelar_tiempo).set_icono(Iconos.S_Cancelar())
         ly_tiempo = Colocacion.H().control(self.ed_rtime).control(self.bt_cancel_rtime).relleno(1)
 
         self.lb_depth = Controles.LB2P(self, _("Fixed depth")).set_font(font)
-        self.ed_rdepth = Controles.ED(self).tipoInt().anchoMaximo(80).set_font(font).capture_changes(self.change_depth)
+        self.ed_rdepth = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(self.change_depth)
         tooltip = _("If time and depth are given, the depth is attempted and the time becomes a maximum.")
         self.ed_rdepth.setToolTip(tooltip)
-        self.bt_cancel_rdepth = Controles.PB(self, "", rutina=self.cancelar_depth).ponIcono(Iconos.S_Cancelar())
+        self.bt_cancel_rdepth = Controles.PB(self, "", rutina=self.cancelar_depth).set_icono(Iconos.S_Cancelar())
         ly_depth = Colocacion.H().control(self.ed_rdepth).control(self.bt_cancel_rdepth).relleno(1)
 
         self.lb_unlimited = Controles.LB2P(self, _("The engine's thinking has no limit, select its response")).set_font(
@@ -175,10 +180,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.cb_unlimited = Controles.CB(self, li_unlimited, 10).set_font(font)
 
         self.lb_nodes = Controles.LB2P(self, _("Fixed nodes")).set_font(font)
-        self.ed_nodes = Controles.ED(self).tipoInt().anchoMaximo(80).set_font(font).capture_changes(self.change_nodes)
+        self.ed_nodes = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(self.change_nodes)
         tooltip = _("If time and nodes are given, the nodes is attempted and the time becomes a maximum.")
         self.ed_nodes.setToolTip(tooltip)
-        self.bt_cancel_nodes = Controles.PB(self, "", rutina=self.cancelar_nodes).ponIcono(Iconos.S_Cancelar())
+        self.bt_cancel_nodes = Controles.PB(self, "", rutina=self.cancelar_nodes).set_icono(Iconos.S_Cancelar())
         ly_nodes = Colocacion.H().control(self.ed_nodes).control(self.bt_cancel_nodes).relleno(1)
 
         ly = Colocacion.G()
@@ -197,7 +202,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         # # Side
         nom_pieces = self.procesador.main_window.board.config_board.nomPiezas()
-        self.rb_white = Controles.RB(self, "").activa()
+        self.rb_white = Controles.RB(self, "").activate()
         self.rb_white.setIcon(Code.all_pieces.icono("P", nom_pieces))
         self.rb_white.setIconSize(QtCore.QSize(32, 32))
         self.rb_black = Controles.RB(self, "")
@@ -224,7 +229,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         if Code.eboard:
             self.chb_eboard = Controles.CHB(
                 self,
-                "%s: %s" % (_("Activate e-board"), self.configuration.x_digital_board),
+                f"{_('Activate e-board')}: {self.configuration.x_digital_board}",
                 False,
             ).set_font(font)
             ly.control(self.chb_eboard)
@@ -272,7 +277,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             (_("4 movements"), 4),
             (_("All"), 9999),
         ]
-        lb_thought_tt = Controles.LB(self, _("Show") + ":").set_font(font)
+        lb_thought_tt = Controles.LB(self, f"{_('Show')}:").set_font(font)
         self.cbThoughtTt = Controles.CB(self, li_thinks, -1).set_font(font)
 
         lb_arrows = Controles.LB2P(self, _("Arrows with the best movements")).set_font(font)
@@ -295,14 +300,14 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                 _("The game also ends after playing a bad move"),
             ),
         ).set_font(font)
-        self.ed_limit_pww = Controles.ED(self).tipoIntPositive(90).set_font(font).relative_width(50)
+        self.ed_limit_pww = Controles.ED(self).type_integer_positive(90).set_font(font).relative_width(50)
 
         ly = Colocacion.H().control(lb).control(self.ed_limit_pww).relleno()
         self.gb_pww = Controles.GB(self, _("Play as long as you make no mistakes"), ly)
         self.gb_pww.to_connect(self.gb_pww_pressed)
         self.configuration.set_property(self.gb_pww, "1")
 
-        lb = Controles.LB(self, _("Show") + ":").set_font(font)
+        lb = Controles.LB(self, f"{_('Show')}:").set_font(font)
         self.cbThoughtOp = Controles.CB(self, li_thinks, -1).set_font(font)
         lb_arrows = Controles.LB2P(self, _("Arrows to show")).set_font(font)
         self.sbArrows = Controles.SB(self, 0, 0, 999).relative_width(50).set_font(font)
@@ -322,8 +327,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def _init_tab_time(self):
         font = self.font_dialog
-        self.lb_minutos = Controles.LB(self, _("Total minutes") + ":").set_font(font)
-        self.ed_minutos = Controles.ED(self).tipoFloat(10.0).set_font(font).relative_width(70)
+        self.lb_minutos = Controles.LB(self, f"{_('Total minutes')}:").set_font(font)
+        self.ed_minutos = Controles.ED(self).type_float(10.0).set_font(font).relative_width(70)
         self.ed_segundos, self.lb_segundos = QTMessages.spinbox_lb(
             self,
             6,
@@ -373,14 +378,14 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         font = self.font_dialog
 
         self.btPosicion = (
-            Controles.PB(self, " " * 5 + _("Change") + " " * 5, self.position_edit).ponPlano(False).set_font(font)
+            Controles.PB(self, " " * 5 + _("Change") + " " * 5, self.position_edit).set_flat(False).set_font(font)
         )
         self.fen = ""
-        self.btPosicionQuitar = Controles.PB(self, "", self.position_remove).ponIcono(Iconos.Motor_No()).set_font(font)
+        self.btPosicionQuitar = Controles.PB(self, "", self.position_remove).set_icono(Iconos.Motor_No()).set_font(font)
         self.btPosicionPegar = (
-            Controles.PB(self, "", self.position_paste).ponIcono(Iconos.Pegar16()).ponToolTip(_("Paste FEN position"))
+            Controles.PB(self, "", self.position_paste).set_icono(Iconos.Pegar16()).set_tooltip(_("Paste FEN position"))
         ).set_font(font)
-        self.bt_chessvariants = Controles.PB(self, _("Variants"), self.chess_variants).ponPlano(False).set_font(font)
+        self.bt_chessvariants = Controles.PB(self, _("Variants"), self.chess_variants).set_flat(False).set_font(font)
         hbox = (
             Colocacion.H()
             .relleno(2)
@@ -393,13 +398,13 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         gb_start_position = self._new_groupbox(_("Start position"), hbox)
 
         self.bt_opening = (
-            Controles.PB(self, " " * 5 + _("Undetermined") + " " * 5, self.opening_edit).ponPlano(False).set_font(font)
+            Controles.PB(self, " " * 5 + _("Undetermined") + " " * 5, self.opening_edit).set_flat(False).set_font(font)
         )
         self.opening_block = None
-        self.bt_openings_fav = Controles.PB(self, "", self.openings_preferred).ponIcono(Iconos.Favoritos())
-        self.bt_opening_remove = Controles.PB(self, "", self.opening_remove).ponIcono(Iconos.Motor_No())
+        self.bt_openings_fav = Controles.PB(self, "", self.openings_preferred).set_icono(Iconos.Favoritos())
+        self.bt_opening_remove = Controles.PB(self, "", self.opening_remove).set_icono(Iconos.Motor_No())
         self.bt_opening_paste = (
-            Controles.PB(self, "", self.opening_paste).ponIcono(Iconos.Pegar16()).ponToolTip(_("Paste PGN"))
+            Controles.PB(self, "", self.opening_paste).set_icono(Iconos.Pegar16()).set_tooltip(_("Paste PGN"))
         ).set_font(font)
         hbox = (
             Colocacion.H()
@@ -414,13 +419,13 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         self.bt_opening_line = (
             Controles.PB(self, " " * 5 + _("Undetermined") + " " * 5, self.opening_line_edit)
-            .ponPlano(False)
+            .set_flat(False)
             .set_font(font)
         )
         self.opening_line = None
-        self.bt_opening_line_remove = Controles.PB(self, "", self.opening_line_remove).ponIcono(Iconos.Motor_No())
+        self.bt_opening_line_remove = Controles.PB(self, "", self.opening_line_remove).set_icono(Iconos.Motor_No())
         hbox = Colocacion.H().relleno().control(self.bt_opening_line_remove).control(self.bt_opening_line).relleno()
-        gb_opening_line = self._new_groupbox("%s: %s" % (_("Opening lines"), self.configuration.nom_player()), hbox)
+        gb_opening_line = self._new_groupbox(f"{_('Opening lines')}: {self.configuration.nom_player()}", hbox)
 
         li_books = [(x.name, x) for x in self.list_books.lista]
         lib_inicial = li_books[0][1] if li_books else None
@@ -433,10 +438,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         ]
 
         self.cbBooksR = QTMessages.combobox_lb(self, li_books, lib_inicial).set_font(font)
-        self.btNuevoBookR = Controles.PB(self, "", self.new_book).ponIcono(Iconos.Mas())
+        self.btNuevoBookR = Controles.PB(self, "", self.new_book).set_icono(Iconos.Mas())
         self.cbBooksRR = QTMessages.combobox_lb(self, li_resp_book, BOOK_BEST_MOVE).set_font(font)
         self.lbDepthBookR = Controles.LB2P(self, _("Max depth")).set_font(font)
-        self.edDepthBookR = Controles.ED(self).set_font(font).tipoInt(0).relative_width(30)
+        self.edDepthBookR = Controles.ED(self).set_font(font).type_integer(0).relative_width(30)
 
         hbox = (
             Colocacion.H()
@@ -448,12 +453,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             .control(self.lbDepthBookR)
             .control(self.edDepthBookR)
         )
-        self.gb_book_rival = self._new_groupbox("%s: %s" % (_("Activate book"), _("Opponent")), hbox, checkable=True)
+        self.gb_book_rival = self._new_groupbox(f"{_('Activate book')}: {_('Opponent')}", hbox, checkable=True)
 
         self.cbBooksP = QTMessages.combobox_lb(self, li_books, lib_inicial).set_font(font)
-        self.btNuevoBookP = Controles.PB(self, "", self.new_book).ponIcono(Iconos.Mas())
+        self.btNuevoBookP = Controles.PB(self, "", self.new_book).set_icono(Iconos.Mas())
         self.lbDepthBookP = Controles.LB2P(self, _("Max depth")).set_font(font)
-        self.edDepthBookP = Controles.ED(self).set_font(font).tipoInt(0).relative_width(30)
+        self.edDepthBookP = Controles.ED(self).set_font(font).type_integer(0).relative_width(30)
         hbox = (
             Colocacion.H()
             .control(self.cbBooksP)
@@ -463,7 +468,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             .control(self.edDepthBookP)
         )
         self.gb_book_player = self._new_groupbox(
-            "%s: %s" % (_("Activate book"), self.configuration.nom_player()),
+            f"{_('Activate book')}: {self.configuration.nom_player()}",
             hbox,
             checkable=True,
         )
@@ -488,7 +493,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         lb_ajustar_rival = Controles.LB2P(self, _("Set strength")).set_font(font)
         self.bt_ajustar_rival = (
             Controles.PB(self, _("Personality"), self.change_personalities, plano=True)
-            .ponIcono(Iconos.Mas(), icon_size=16)
+            .set_icono(Iconos.Mas(), icon_size=16)
             .set_font(font)
         )
 
@@ -561,8 +566,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
     def grid_num_datos(self, _grid):
         return len(self.rival.li_uci_options_editable()) if self.tab_advanced_active else 0
 
-    def grid_dato(self, _grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         op = self.rival.li_uci_options_editable()[row]
         if col == "OPTION":
             if op.minimo != op.maximo:
@@ -636,7 +641,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                     self.rival.set_uci_option(opcion.name, opcion.default)
             self.grid_uci.refresh()
 
-    def grid_bold(self, _grid, row, _o_column):
+    def grid_bold(self, _grid, row, _obj_column):
         op = self.rival.li_uci_options_editable()[row]
         name = op.name
         valor = op.valor
@@ -692,35 +697,35 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.show_rival()
 
     def show_rival(self):
-        self.ed_rtime.ponFloat(0.0)
-        self.ed_rdepth.ponInt(0)
-        self.ed_nodes.ponInt(0)
+        self.ed_rtime.set_float(0.0)
+        self.ed_rdepth.set_integer(0)
+        self.ed_nodes.set_integer(0)
 
         def time_depth(show):
             for obj in (
-                    self.lb_depth,
-                    self.ed_rdepth,
-                    self.bt_cancel_rdepth,
-                    self.lb_rtime,
-                    self.ed_rtime,
-                    self.bt_cancel_rtime,
+                self.lb_depth,
+                self.ed_rdepth,
+                self.bt_cancel_rdepth,
+                self.lb_rtime,
+                self.ed_rtime,
+                self.bt_cancel_rtime,
             ):
                 obj.setVisible(show)
             if not show:
-                self.ed_rtime.ponFloat(0.0)
-                self.ed_rdepth.ponInt(0)
+                self.ed_rtime.set_float(0.0)
+                self.ed_rdepth.set_integer(0)
 
         is_maia = self.rival.is_maia()
-        if is_maia and self.ed_nodes.textoInt() == 0:
-            self.ed_nodes.ponInt(self.rival.nodes)
+        if is_maia and self.ed_nodes.text_to_integer() == 0:
+            self.ed_nodes.set_integer(self.rival.nodes)
 
         if self.rival.is_type_external():
-            name = self.rival.alias
+            name = self.rival.key
             if self.rival.elo:
                 name = f"{name} ({self.rival.elo})"
         elif self.rival.type == ENG_MICPER:
             name = Util.primera_mayuscula(
-                self.rival.alias + " (%d, %s)" % (self.rival.elo, self.rival.id_info.replace("\n", ", "))
+                self.rival.key + " (%d, %s)" % (self.rival.elo, self.rival.id_info.replace("\n", ", "))
             )
         elif self.rival.type == ENG_WICKER:
             name = self.rival.name + " (%d, %s)" % (
@@ -730,10 +735,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         else:
             name = self.rival.name
         if len(name) > 70:
-            name = name[:70] + "..."
+            name = f"{name[:70]}..."
 
-        self.bt_rival.set_text("   %s   " % name)
-        self.bt_rival.ponIcono(self.select_engines.dicIconos[self.rival.type])
+        self.bt_rival.set_text(f"   {name}   ")
+        self.bt_rival.set_icono(self.select_engines.dict_icons[self.rival.type])
         self.si_edit_uci = False
         si_multi = False
         hide_time_depth = False
@@ -745,8 +750,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             hide_time_depth = True
 
         elif self.rival.type == ENG_ELO:
-            self.ed_rtime.ponFloat(0.0)
-            self.ed_rdepth.ponInt(self.rival.max_depth)
+            self.ed_rtime.set_float(0.0)
+            self.ed_rdepth.set_integer(self.rival.max_depth)
             hide_time_depth = True
 
         elif self.rival.type == ENG_MICGM:
@@ -761,9 +766,9 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         elif self.rival.type == ENG_EXTERNAL:
             si_multi = self.rival.has_multipv()
             if self.rival.max_depth or self.rival.max_time or self.rival.nodes:
-                self.ed_rdepth.ponInt(self.rival.max_depth)
-                self.ed_rtime.ponFloat(self.rival.max_time)
-                self.ed_nodes.ponInt(self.rival.nodes)
+                self.ed_rdepth.set_integer(self.rival.max_depth)
+                self.ed_rtime.set_float(self.rival.max_time)
+                self.ed_nodes.set_integer(self.rival.nodes)
 
         hide_nodes = not self.rival.is_nodes_compatible()
         self.ed_nodes.setVisible(not hide_nodes)
@@ -799,7 +804,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.grid_uci.refresh()
 
     def change_personalities(self):
-        si_rehacer = self.personalidades.lanzaMenu()
+        si_rehacer = self.personalidades.lanza_menu()
         if si_rehacer:
             actual = self.cbAjustarRival.valor()
             self.cbAjustarRival.rehacer(self.personalidades.list_personalities(True), actual)
@@ -810,45 +815,45 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.cbAjustarRival.set_value(ADJUST_HIGH_LEVEL)
 
     def change_depth(self):
-        num = self.ed_rdepth.textoInt()
+        num = self.ed_rdepth.text_to_integer()
         if num > 0:
-            #     self.ed_rtime.ponFloat(0.0)
-            self.ed_nodes.ponInt(0)
+            #     self.ed_rtime.set_float(0.0)
+            self.ed_nodes.set_integer(0)
         self.test_unlimited()
 
     def change_nodes(self):
-        nodes = self.ed_nodes.textoInt()
+        nodes = self.ed_nodes.text_to_integer()
         # if nodes > 0:
-        #     self.ed_rtime.ponFloat(0.0)
-        #     self.ed_rdepth.ponInt(0)
+        #     self.ed_rtime.set_float(0.0)
+        #     self.ed_rdepth.set_integer(0)
         # elif self.rival.is_maia():
         #     self.cancelar_nodes()
         if nodes > 0:
-            #     self.ed_rtime.ponFloat(0.0)
-            self.ed_rdepth.ponInt(0)
+            #     self.ed_rtime.set_float(0.0)
+            self.ed_rdepth.set_integer(0)
         elif self.rival.is_maia():
             self.cancelar_nodes()
 
         self.test_unlimited()
 
     def change_time(self):
-        # num = self.ed_rtime.textoFloat()
+        # num = self.ed_rtime.text_to_float()
         # if num > 0.0:
-        #     self.ed_rdepth.ponInt(0)
-        #     self.ed_nodes.ponInt(0)
+        #     self.ed_rdepth.set_integer(0)
+        #     self.ed_nodes.set_integer(0)
         self.test_unlimited()
 
     def cancelar_tiempo(self):
-        self.ed_rtime.ponFloat(0.0)
+        self.ed_rtime.set_float(0.0)
         self.change_time()
 
     def cancelar_depth(self):
-        self.ed_rdepth.ponInt(0)
+        self.ed_rdepth.set_integer(0)
         self.change_depth()
 
     def cancelar_nodes(self):
         if self.rival.is_maia():
-            nodos_ant = self.ed_nodes.textoInt()
+            nodos_ant = self.ed_nodes.text_to_integer()
             nodos_def = self.rival.nodes
             if nodos_ant == nodos_def:
                 nodos = 1
@@ -856,24 +861,24 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                 nodos = nodos_def
         else:
             nodos = 0
-        self.ed_nodes.ponInt(nodos)
+        self.ed_nodes.set_integer(nodos)
         self.change_nodes()
 
     def test_unlimited(self):
         visible = (
-                self.ed_rdepth.textoInt() == 0
-                and self.ed_rtime.textoFloat() == 0
-                and self.ed_nodes.textoInt() == 0
-                and not self.gb_time.isChecked()
+            self.ed_rdepth.text_to_integer() == 0
+            and self.ed_rtime.text_to_float() == 0
+            and self.ed_nodes.text_to_integer() == 0
+            and not self.gb_time.isChecked()
         )
         self.lb_unlimited.setVisible(visible)
         self.cb_unlimited.setVisible(visible)
 
-        if self.ed_rdepth.textoInt() > 0 or self.ed_nodes.textoInt() > 0:
+        if self.ed_rdepth.text_to_integer() > 0 or self.ed_nodes.text_to_integer() > 0:
             label = _("Maximum time in seconds")
         else:
             label = _("Fixed time in seconds")
-        self.lb_rtime.set_text(label + ":")
+        self.lb_rtime.set_text(f"{label}:")
 
     def position_edit(self):
         cp = Position.Position()
@@ -906,26 +911,26 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         chess18 = menu.submenu(tr_chess("18"), rondo_main.otro())
         for pos, uno in enumerate(
-                (
-                        "rbbqknnr",
-                        "rqbbknnr",
-                        "rbbnkqnr",
-                        "rnbbkqnr",
-                        "rbbnknqr",
-                        "rnbbknqr",
-                        "rqbnkbnr",
-                        "rnbnkbqr",
-                        "rnnbkqbr",
-                        "rbnnkqbr",
-                        "rqnbknbr",
-                        "rnqbknbr",
-                        "rbqnknbr",
-                        "rbnqknbr",
-                        "rnnqkbbr",
-                        "rnqnkbbr",
-                        "rqnnkbbr",
-                ),
-                1,
+            (
+                "rbbqknnr",
+                "rqbbknnr",
+                "rbbnkqnr",
+                "rnbbkqnr",
+                "rbbnknqr",
+                "rnbbknqr",
+                "rqbnkbnr",
+                "rnbnkbqr",
+                "rnnbkqbr",
+                "rbnnkqbr",
+                "rqnbknbr",
+                "rnqbknbr",
+                "rbqnknbr",
+                "rbnqknbr",
+                "rnnqkbbr",
+                "rnqnkbbr",
+                "rqnnkbbr",
+            ),
+            1,
         ):
             fen = f"{uno}/pppppppp/8/8/8/8/PPPPPPPP/{uno.upper()} w KQkq - 0 1"
             chess18.opcion(fen, f"{pos}. {uno}", rondo.otro())
@@ -956,7 +961,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                     number = QTMessages.read_simple(
                         self,
                         tr_chess("2880"),
-                        _("Select position") + " 1...2879",
+                        f"{_('Select position')} 1...2879",
                         o2880.get_last_manual(),
                     )
                     if not number:
@@ -979,7 +984,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                     number = QTMessages.read_simple(
                         self,
                         tr_chess("324"),
-                        _("Select position") + " 1...323",
+                        f"{_('Select position')} 1...323",
                         o324.get_last_manual(),
                     )
                     if not number:
@@ -1036,30 +1041,30 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                 self.li_preferred_openings[nli] = bloque
             menu.opcion(
                 (nli, bloque),
-                bloque.tr_name + " (%s)" % bloque.pgn,
+                f"{bloque.tr_name} ({bloque.pgn})",
                 Iconos.PuntoVerde(),
             )
             n_pos += 1
 
         resp = menu.lanza()
         if resp:
-            if menu.siIzq:
+            if menu.is_left:
                 pos, self.opening_block = resp
                 self.opening_show()
-            elif menu.siDer:
+            elif menu.is_right:
                 pos, opening_block = resp
                 if QTMessages.pregunta(
-                        self,
-                        _X(
-                            _("Do you want to delete the opening %1 from the list of favourite openings?"),
-                            opening_block.tr_name,
-                        ),
+                    self,
+                    _X(
+                        _("Do you want to delete the opening %1 from the list of favourite openings?"),
+                        opening_block.tr_name,
+                    ),
                 ):
                     del self.li_preferred_openings[pos]
 
     def opening_show(self):
         if self.opening_block:
-            label = self.opening_block.tr_name + "\n" + self.opening_block.pgn
+            label = f"{self.opening_block.tr_name}\n{self.opening_block.pgn}"
             self.bt_opening_remove.show()
         else:
             label = " " * 3 + _("Undetermined") + " " * 3
@@ -1080,7 +1085,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         if self.opening_line:
             label = self.opening_line["title"]
             if "folder" in self.opening_line:
-                label = "%s/%s" % (self.opening_line["folder"], label)
+                label = f"{self.opening_line['folder']}/{label}"
             self.bt_opening_line_remove.show()
         else:
             label = _("Undetermined")
@@ -1142,14 +1147,14 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         dic["SIDE"] = "B" if self.rb_white.isChecked() else ("N" if self.rb_black.isChecked() else "R")
 
         dr = dic["RIVAL"] = {}
-        dr["ENGINE"] = self.rival.alias
+        dr["ENGINE"] = self.rival.key
         dr["TYPE"] = self.rival.type
-        dr["ALIAS"] = self.rival.alias
+        dr["ALIAS"] = self.rival.key
         dr["LIUCI"] = self.current_values_uci()
 
-        dr["ENGINE_TIME"] = int(self.ed_rtime.textoFloat() * 10)
-        dr["ENGINE_DEPTH"] = self.ed_rdepth.textoInt()
-        dr["ENGINE_NODES"] = self.ed_nodes.textoInt()
+        dr["ENGINE_TIME"] = int(self.ed_rtime.text_to_float() * 10)
+        dr["ENGINE_DEPTH"] = self.ed_rdepth.text_to_integer()
+        dr["ENGINE_NODES"] = self.ed_nodes.text_to_integer()
         dr["ENGINE_UNLIMITED"] = self.cb_unlimited.valor()
 
         dic["LEVEL_HUMANIZE"] = self.cb_humanize.valor()
@@ -1172,12 +1177,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         dic["TAKEBACK"] = self.chbTakeback.isChecked()
 
         dic["WITH_LIMIT_PWW"] = self.gb_pww.isChecked()
-        dic["LIMIT_PWW"] = self.ed_limit_pww.textoInt()
+        dic["LIMIT_PWW"] = self.ed_limit_pww.text_to_integer()
 
         # Tiempo
         dic["WITHTIME"] = self.gb_time.isChecked()
         if dic["WITHTIME"]:
-            dic["MINUTES"] = self.ed_minutos.textoFloat()
+            dic["MINUTES"] = self.ed_minutos.text_to_float()
             dic["SECONDS"] = self.ed_segundos.value()
             dic["MINEXTRA"] = self.edMinExtra.value()
             dic["DISABLEUSERTIME"] = self.chb_disable_usertime.valor()
@@ -1193,11 +1198,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         is_book = self.gb_book_rival.isChecked()
         dic["BOOKR"] = self.cbBooksR.valor() if is_book else None
         dic["BOOKRR"] = self.cbBooksRR.valor() if is_book else None
-        dic["BOOKRDEPTH"] = self.edDepthBookR.textoInt() if is_book else None
+        dic["BOOKRDEPTH"] = self.edDepthBookR.text_to_integer() if is_book else None
 
         is_book = self.gb_book_player.isChecked()
         dic["BOOKP"] = self.cbBooksP.valor() if is_book else None
-        dic["BOOKPDEPTH"] = self.edDepthBookP.textoInt() if is_book else None
+        dic["BOOKPDEPTH"] = self.edDepthBookP.text_to_integer() if is_book else None
 
         # Avanzado
         dic["ADJUST"] = self.cbAjustarRival.valor()
@@ -1208,9 +1213,9 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
     def restore_dic(self, dic):
         # Básico
         color = dic.get("SIDE", "B")
-        self.rb_white.activa(color == "B")
-        self.rb_black.activa(color == "N")
-        self.rb_random.activa(color == "R")
+        self.rb_white.activate(color == "B")
+        self.rb_black.activate(color == "N")
+        self.rb_random.activate(color == "R")
 
         dr = dic.get("RIVAL", {})
         engine = dr.get("ENGINE", self.configuration.x_rival_inicial)
@@ -1222,10 +1227,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.show_rival()
 
         tm_s = float(dr.get("ENGINE_TIME", 0)) / 10.0
-        self.ed_rtime.ponFloat(tm_s)
-        self.ed_rdepth.ponInt(dr.get("ENGINE_DEPTH", 0))
+        self.ed_rtime.set_float(tm_s)
+        self.ed_rdepth.set_integer(dr.get("ENGINE_DEPTH", 0))
         nodes_def = self.rival.nodes if self.rival.is_maia() else 0
-        self.ed_nodes.ponInt(dr.get("ENGINE_NODES", nodes_def))
+        self.ed_nodes.set_integer(dr.get("ENGINE_NODES", nodes_def))
 
         self.cb_unlimited.set_value(dr.get("ENGINE_UNLIMITED", 10))
 
@@ -1244,7 +1249,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.gb_pww.setChecked(False)
         else:
             self.gb_pww.setChecked(dic.get("WITH_LIMIT_PWW", False))
-        self.ed_limit_pww.ponInt(dic.get("LIMIT_PWW", 90))
+        self.ed_limit_pww.set_integer(dic.get("LIMIT_PWW", 90))
         self.cbThoughtOp.set_value(dic.get("THOUGHTOP", -1))
         self.cbThoughtTt.set_value(dic.get("THOUGHTTT", -1))
         self.sbArrowsTt.set_value(dic.get("ARROWSTT", 0))
@@ -1255,7 +1260,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         # Tiempo
         if dic.get("WITHTIME", False):
             self.gb_time.setChecked(True)
-            self.ed_minutos.ponFloat(float(dic["MINUTES"]))
+            self.ed_minutos.set_float(float(dic["MINUTES"]))
             self.ed_segundos.setValue(dic["SECONDS"])
             self.edMinExtra.setValue(dic.get("MINEXTRA", 0))
             self.chb_disable_usertime.set_value(dic.get("DISABLEUSERTIME", False))
@@ -1268,12 +1273,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.gb_book_rival.setChecked(True)
             self.cbBooksR.set_value(dic["BOOKR"])
             self.cbBooksRR.set_value(dic["BOOKRR"])
-            self.edDepthBookR.ponInt(dic["BOOKRDEPTH"])
+            self.edDepthBookR.set_integer(dic["BOOKRDEPTH"])
 
         if dic.get("BOOKP"):
             self.gb_book_player.setChecked(True)
             self.cbBooksP.set_value(dic["BOOKP"])
-            self.edDepthBookP.ponInt(dic["BOOKPDEPTH"])
+            self.edDepthBookP.set_integer(dic["BOOKPDEPTH"])
 
         self.opening_line = dic.get("OPENING_LINE", None)
 
@@ -1306,7 +1311,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                     break
             self.cbBooksR.set_value(book_r)
             self.cbBooksRR.set_value(book_rr)
-            self.edDepthBookR.ponInt(dic.get("BOOKRDEPTH", 0))
+            self.edDepthBookR.set_integer(dic.get("BOOKRDEPTH", 0))
 
         book_p = dic.get("BOOKP", None)
         self.gb_book_player.setChecked(book_p is not None)
@@ -1316,7 +1321,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                     book_p = bk
                     break
             self.cbBooksP.set_value(book_p)
-            self.edDepthBookP.ponInt(dic.get("BOOKPDEPTH", 0))
+            self.edDepthBookP.set_integer(dic.get("BOOKPDEPTH", 0))
 
         # Avanzado
         self.cbAjustarRival.set_value(dic.get("ADJUST", ADJUST_BETTER))
@@ -1329,7 +1334,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def aceptar(self):
         self.dic_saved = self.save_dic()
-        file = self.configuration.paths.file_play_engine() if self.direct_option else self.configuration.paths.file_play_engine_extern()
+        file = (
+            self.configuration.paths.file_play_engine()
+            if self.direct_option
+            else self.configuration.paths.file_play_engine_extern()
+        )
         Util.save_pickle(file, self.dic_saved)
 
         # Info para el manager, después de grabar, para que no haga falta salvar esto
@@ -1373,9 +1382,9 @@ def play_position(procesador, titulo, is_white):
     w.position_remove()
     w.btPosicion.setDisabled(True)
     if is_white:
-        w.rb_white.activa()
+        w.rb_white.activate()
     else:
-        w.rb_black.activa()
+        w.rb_black.activate()
     if w.exec():
         return w.dic_saved
     else:
@@ -1407,7 +1416,7 @@ class WCambioRival(QtWidgets.QDialog):
         tb.new(_("Cancel"), Iconos.Cancelar(), self.reject)
 
         # Blancas o negras
-        self.rb_white = Controles.RB(self, _("White")).activa()
+        self.rb_white = Controles.RB(self, _("White")).activate()
         self.rb_black = Controles.RB(self, _("Black"))
 
         # Motores
@@ -1422,20 +1431,20 @@ class WCambioRival(QtWidgets.QDialog):
         self.bt_rival = Controles.PB(self, "", self.change_rival, plano=False)
         lb_time = Controles.LB2P(self, _("Time"))
         ancho = 50
-        self.ed_time = Controles.ED(self).tipoFloat().anchoMaximo(ancho).capture_changes(self.change_time)
+        self.ed_time = Controles.ED(self).type_float().ancho_maximo(ancho).capture_changes(self.change_time)
         lb_depth = Controles.LB2P(self, _("Depth"))
-        self.ed_depth = Controles.ED(self).tipoInt().anchoMaximo(ancho).capture_changes(self.change_depth)
+        self.ed_depth = Controles.ED(self).type_integer().ancho_maximo(ancho).capture_changes(self.change_depth)
         self.lb_nodes = Controles.LB2P(self, _("Fixed nodes"))
-        self.ed_nodes = Controles.ED(self).tipoInt().anchoMaximo(ancho * 2).capture_changes(self.change_nodes)
+        self.ed_nodes = Controles.ED(self).type_integer().ancho_maximo(ancho * 2).capture_changes(self.change_nodes)
 
         # # Ajustar rival
         li_ajustes = self.personalidades.list_personalities(True)
         self.cbAjustarRival = Controles.CB(self, li_ajustes, ADJUST_BETTER).capture_changes(self.changed_adjust)
         self.lbAjustarRival = Controles.LB2P(self, _("Set strength"))
-        self.btAjustarRival = Controles.PB(self, "", self.change_personalities, plano=False).ponIcono(
+        self.btAjustarRival = Controles.PB(self, "", self.change_personalities, plano=False).set_icono(
             Iconos.Nuevo(), icon_size=16
         )
-        self.btAjustarRival.ponToolTip(_("Personalities"))
+        self.btAjustarRival.set_tooltip(_("Personalities"))
 
         # Layout
         # Color
@@ -1485,8 +1494,8 @@ class WCambioRival(QtWidgets.QDialog):
             self.show_rival()
 
     def show_rival(self):
-        self.bt_rival.set_text("   %s   " % self.rival.name)
-        self.bt_rival.ponIcono(self.select_engines.dicIconos[self.rival.type])
+        self.bt_rival.set_text(f"   {self.rival.name}   ")
+        self.bt_rival.set_icono(self.select_engines.dict_icons[self.rival.type])
         visible = False
         if not self.si_manager_solo:
             if self.rival.can_be_tutor_analyzer():
@@ -1515,23 +1524,23 @@ class WCambioRival(QtWidgets.QDialog):
                     field.set_text("")
 
     def change_time(self, _num):
-        self.change_fields(self.ed_time, self.ed_time.textoFloat())
+        self.change_fields(self.ed_time, self.ed_time.text_to_float())
 
     def change_depth(self, _num):
-        self.change_fields(self.ed_depth, self.ed_depth.textoInt())
+        self.change_fields(self.ed_depth, self.ed_depth.text_to_integer())
 
     def change_nodes(self, _num):
-        self.change_fields(self.ed_nodes, self.ed_nodes.textoInt())
+        self.change_fields(self.ed_nodes, self.ed_nodes.text_to_integer())
 
     def aceptar(self):
         dic = self.dic_saved
         dic["ISWHITE"] = self.rb_white.isChecked()
 
         dr = dic["RIVAL"] = {}
-        dr["ENGINE"] = self.rival.alias
-        dr["ENGINE_TIME"] = self.ed_time.textoFloat() * 10
-        dr["ENGINE_DEPTH"] = self.ed_depth.textoInt()
-        dr["ENGINE_NODES"] = self.ed_nodes.textoInt()
+        dr["ENGINE"] = self.rival.key
+        dr["ENGINE_TIME"] = self.ed_time.text_to_float() * 10
+        dr["ENGINE_DEPTH"] = self.ed_depth.text_to_integer()
+        dr["ENGINE_NODES"] = self.ed_nodes.text_to_integer()
         dr["CM"] = self.rival
         dr["TYPE"] = self.rival.type
 
@@ -1542,8 +1551,8 @@ class WCambioRival(QtWidgets.QDialog):
     def restore_dic(self):
         dic = self.dic_saved
         is_white = dic.get("ISWHITE", True)
-        self.rb_white.activa(is_white)
-        self.rb_black.activa(not is_white)
+        self.rb_white.activate(is_white)
+        self.rb_black.activate(not is_white)
 
         dr = dic.get("RIVAL", {})
         engine = dr.get("ENGINE", self.configuration.x_tutor_clave)
@@ -1551,13 +1560,13 @@ class WCambioRival(QtWidgets.QDialog):
         self.rival = self.select_engines.busca(tipo, engine)
         self.show_rival()
 
-        self.ed_time.ponFloat(float(dr.get("ENGINE_TIME", self.configuration.x_tutor_mstime / 100)) / 10.0)
-        self.ed_depth.ponInt(dr.get("ENGINE_DEPTH", 0))
-        self.ed_nodes.ponInt(dr.get("ENGINE_NODES", 0))
+        self.ed_time.set_float(float(dr.get("ENGINE_TIME", self.configuration.x_tutor_mstime / 100)) / 10.0)
+        self.ed_depth.set_integer(dr.get("ENGINE_DEPTH", 0))
+        self.ed_nodes.set_integer(dr.get("ENGINE_NODES", 0))
         self.cbAjustarRival.set_value(dic.get("ADJUST", ADJUST_BETTER))
 
     def change_personalities(self):
-        si_rehacer = self.personalidades.lanzaMenu()
+        si_rehacer = self.personalidades.lanza_menu()
         if si_rehacer:
             actual = self.cbAjustarRival.valor()
             self.cbAjustarRival.rehacer(self.personalidades.list_personalities(True), actual)

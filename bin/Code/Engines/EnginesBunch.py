@@ -13,7 +13,7 @@ def lee_dic_afinidades():
         return ast.literal_eval(f.read())
 
 
-def lista(dic_engines):
+def lista():
     dic_relac_total = lee_dic_afinidades()
     li = list(dic_relac_total.keys())
     li.sort()

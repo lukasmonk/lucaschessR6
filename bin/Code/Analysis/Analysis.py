@@ -39,16 +39,15 @@ class ControlAnalysis:
 
     def time_label(self):
         if self.mrm.max_time:
-            t = "%0.2f" % (float(self.mrm.max_time) / 1000.0,)
+            t = f"{float(self.mrm.max_time) / 1000.0:0.2f}"
             t = t.rstrip("0")
             if t[-1] == ".":
                 t = t[:-1]
-            eti_t = "%s: %s" % (_("Second(s)"), t)
+            return f'{_("Second(s)")}: {t}'
         elif self.mrm.max_depth:
-            eti_t = "%s: %d" % (_("Depth"), self.mrm.max_depth)
+            return "%s: %d" % (_("Depth"), self.mrm.max_depth)
         else:
-            eti_t = ""
-        return eti_t
+            return ""
 
     def do_lirm(self) -> List[Tuple[EngineResponse.EngineResponse, str, int]]:
         li = []
@@ -65,9 +64,8 @@ class ControlAnalysis:
                 else pb.pgn_translated(from_sq, to_sq, promotion)
             )
             if name:
-                txt = rm.abbrev_text_base()
-                if txt:
-                    name += "(%s)" % txt
+                if txt := rm.abbrev_text_base():
+                    name += f"({txt})"
                 li.append((rm, name, rm.centipawns_abs()))
 
         return li
@@ -92,10 +90,10 @@ class ControlAnalysis:
         self.pos_mov_active = 0
 
     def pgn_active(self):
-        num_mov = self.game.primeraJugada()
-        style_number = "color:%s; font-weight: bold;" % Code.dic_colors["PGN_NUMBER"]
-        style_select = "color:%s;font-weight: bold;" % Code.dic_colors["PGN_SELECT"]
-        style_moves = "color:%s;" % Code.dic_colors["PGN_MOVES"]
+        num_mov = self.game.first_num_move()
+        style_number = f'color:{Code.dic_colors["PGN_NUMBER"]}; font-weight: bold;'
+        style_select = f'color:{Code.dic_colors["PGN_SELECT"]};font-weight: bold;'
+        style_moves = f'color:{Code.dic_colors["PGN_MOVES"]};'
         li_pgn = []
         if self.game.starts_with_black:
             li_pgn.append('<span style="%s">%d...</span>' % (style_number, num_mov))
@@ -110,11 +108,11 @@ class ControlAnalysis:
 
             xp = move.pgn_html(self.with_figurines)
             if n == self.pos_mov_active:
-                xp = '<span style="%s">%s</span>' % (style_select, xp)
+                xp = f'<span style="{style_select}">{xp}</span>'
             else:
-                xp = '<span style="%s">%s</span>' % (style_moves, xp)
+                xp = f'<span style="{style_moves}">{xp}</span>'
 
-            li_pgn.append('<a href="%d" style="text-decoration:none;">%s</a> ' % (n, xp))
+            li_pgn.append(f'<a href="{n:d}" style="text-decoration:none;">{xp}</a> ')
 
         return " ".join(li_pgn)
 
@@ -124,8 +122,7 @@ class ControlAnalysis:
 
     def score_active_depth(self):
         rm = self.list_rm_name[self.pos_rm_active][0]
-        txt = "%s   -   %s: %d" % (rm.texto(), _("Depth"), rm.depth)
-        return txt
+        return f"{rm.texto()}   -   {_('Depth')}: {rm.depth:d}"
 
     def complexity(self):
         return AnalysisIndexes.get_complexity(self.move.position_before, self.mrm)
@@ -142,7 +139,7 @@ class ControlAnalysis:
     def piecesactivity(self):
         return AnalysisIndexes.get_piecesactivity(self.move.position_before, self.mrm)
 
-    def active_position(self):
+    def activate_position(self):
         n_movs = len(self.game)
         if self.pos_mov_active >= n_movs:
             self.pos_mov_active = n_movs - 1
@@ -187,11 +184,11 @@ class ControlAnalysis:
         return self.pos_mov_active >= len(self.game) - 1
 
     def fen_active(self):
-        move = self.game.move(self.pos_mov_active if self.pos_mov_active > 0 else 0)
+        move = self.game.move(max(self.pos_mov_active, 0))
         return move.position.fen()
 
     def external_analysis(self, wowner, is_white):
-        move = self.game.move(self.pos_mov_active if self.pos_mov_active >= 0 else 0)
+        move = self.game.move(max(self.pos_mov_active, 0))
         pts = self.score_active()
         AnalisisVariations(wowner, self.xengine, move, is_white, pts)
 
@@ -201,7 +198,7 @@ class ControlAnalysis:
         variation = game.copia() if is_complete else game.copia(0)
 
         if len(variation) > 0:
-            comment = "%s %s %s" % (rm.abbrev_text(), name, vtime)
+            comment = f"{rm.abbrev_text()} {name} {vtime}"
             variation.move(0).set_comment(comment.strip())
         self.move.add_variation(variation)
 
@@ -222,8 +219,9 @@ class CreateAnalysis:
     def create_initial_show(self, main_window, xengine: EngineManagerAnalysis.EngineManagerAnalysis):
         move: Move.Move = self.move
         if move.analysis is None:
-            with QTMessages.WaitingMessage(main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT,
-                                           with_cancel=True) as me:
+            with QTMessages.WaitingMessage(
+                main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT, with_cancel=True
+            ) as me:
 
                 game = move.game
                 mrm, pos = xengine.analyze_move(game, game.move_pos(move), me.dispatcher_analysis)
@@ -257,7 +255,7 @@ class CreateAnalysis:
 
         with QTMessages.WaitingMessage(main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
             mrm, pos = xengine.analysis_move(self.move, alm.vtime, alm.depth)
-            xengine.terminar()
+            xengine.finalize()
 
         tab_analysis = ControlAnalysis(self, mrm, pos, self.li_tabs_analysis[-1].number + 1, xengine)
         self.li_tabs_analysis.append(tab_analysis)
@@ -265,13 +263,13 @@ class CreateAnalysis:
 
 
 def show_analysis(
-        manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis,
-        move: Move.Move,
-        is_white: bool,
-        pos_move: int,
-        main_window=None,
-        must_save: bool = True,
-        subanalysis: bool = False,
+    manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis,
+    move: Move.Move,
+    is_white: bool,
+    pos_move: int,
+    main_window=None,
+    must_save: bool = True,
+    subanalysis: bool = False,
 ):
     main_window = Code.procesador.main_window if main_window is None else main_window
 
@@ -289,14 +287,13 @@ def show_analysis(
         wa.exec()
         busca = True
         for uno in ma.li_tabs_analysis:
-            if busca:
-                if uno.is_active:
-                    move.analysis = uno.mrm, uno.pos_selected
+            if busca and uno.is_active:
+                move.analysis = uno.mrm, uno.pos_selected
 
-                    busca = False
+                busca = False
             xengine = uno.xengine
-            if not manager_analyzer or xengine.engine.alias != manager_analyzer.engine.alias:
-                xengine.terminar()
+            if not manager_analyzer or xengine.engine.key != manager_analyzer.engine.key:
+                xengine.finalize()
 
 
 class AnalisisVariations:
@@ -334,14 +331,14 @@ class AnalisisVariations:
     def reset(self):
         self.w.board.set_position(self.position_before)
         self.w.board.put_arrow_sc(self.move.from_sq, self.move.to_sq)
-        self.w.board.set_dispatcher(self.player_has_moved)
+        self.w.board.set_dispatcher(self.player_has_moved_dispatcher)
         self.w.board.activate_side(not self.move.position.is_white)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
 
         # Peon coronando
         if not promotion and self.position_before.pawn_can_promote(from_sq, to_sq):
-            promotion = self.w.board.peonCoronando(not self.move.position.is_white)
+            promotion = self.w.board.pawn_promoting(not self.move.position.is_white)
             if promotion is None:
                 return False
 
@@ -350,7 +347,7 @@ class AnalisisVariations:
         if si_bien:
             game = Game.Game(self.position_before)
             game.add_move(new_move)
-            self.move_the_pieces(new_move.liMovs)
+            self.move_the_pieces(new_move.list_piece_moves)
             self.w.board.put_arrow_sc(new_move.from_sq, new_move.to_sq)
             self.analysis_move(new_move)
             return True
@@ -378,7 +375,7 @@ class AnalisisVariations:
 
     def move_the_pieces(self, li_movs):
         """
-        Hace los movimientos de piezas en el board
+        Hace los movimientos de pieces en el board
         """
         for movim in li_movs:
             if movim[0] == "b":
@@ -396,15 +393,15 @@ class AnalisisVariations:
 
     def process_toolbar(self, accion):
         if self.rm:
-            if accion == "MoverAdelante":
+            if accion == "move_forward":
                 self.moving_analyzer(n_saltar=1)
-            elif accion == "MoverAtras":
+            elif accion == "move_back":
                 self.moving_analyzer(n_saltar=-1)
-            elif accion == "MoverInicio":
+            elif accion == "move_to_beginning":
                 self.moving_analyzer(si_inicio=True)
-            elif accion == "MoverFinal":
+            elif accion == "move_to_end":
                 self.moving_analyzer(si_final=True)
-            elif accion == "MoverTiempo":
+            elif accion == "move_timed":
                 self.move_timed()
             elif accion == "MoverLibre":
                 self.external_analysis()
@@ -444,7 +441,7 @@ class AnalisisVariations:
 
         def otros_tb(si_habilitar):
             for accion in self.w.tb.li_acciones:
-                if not accion.key.endswith("MoverTiempo"):
+                if not accion.key.endswith("move_timed"):
                     accion.setEnabled(si_habilitar)
 
         self.time_function = self.moving_analyzer

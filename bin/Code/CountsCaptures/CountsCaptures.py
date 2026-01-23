@@ -1,6 +1,6 @@
 import datetime
 
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.SQL import UtilSQL
 
@@ -64,7 +64,7 @@ class CountCapture:
             if ok:
                 nok += 1
         porc = min(nok * 100.0 / ntries, 100.0)
-        return "%.01f%%" % porc
+        return f"{porc:.01f}%"
 
     def label_time(self) -> str:
         tm = 0.0
@@ -72,13 +72,13 @@ class CountCapture:
             tm += tiempo
         total = self.current_posmove + self.current_depth
         media = tm / total if total else 0.0
-        return '%.01f"/%.01f"' % (media, tm)
+        return f'{media:.01f}"/{tm:.01f}"'
 
     def label_time_used(self) -> str:
         tm = 0.0
         for posmove, depth, ok, tiempo in self.tries:
             tm += tiempo
-        return '%.01f"' % tm
+        return f'{tm:.01f}"'
 
     def label_time_avg(self) -> str:
         tm = 0.0
@@ -86,7 +86,7 @@ class CountCapture:
             tm += tiempo
         total = self.current_posmove + self.current_depth
         media = tm / total if total else 0.0
-        return '%.01f"' % media
+        return f'{media:.01f}"'
 
     def copy(self):
         capt_copy = CountCapture(self.is_captures)

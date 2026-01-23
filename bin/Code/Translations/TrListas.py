@@ -162,12 +162,12 @@ def dic_training():
         "Pawn endings": _("Pawn endings"),
         "Singular moves to equalize": _("Singular moves to equalize"),
         "Singular moves to win": _("Singular moves to win"),
-        "Queen + Rook": "%s + %s" % (_("Queen"), _("Rook")),
-        "Queen + Bishop": "%s + %s" % (_("Queen"), _("Bishop")),
-        "Queen + Knight": "%s + %s" % (_("Queen"), _("Knight")),
-        "Rook + Bishop": "%s + %s" % (_("Rook"), _("Bishop")),
-        "Rook + Knight": "%s + %s" % (_("Rook"), _("Knight")),
-        "Knight + Bishop": "%s + %s" % (_("Knight"), _("Bishop")),
+        "Queen + Rook": f"{_('Queen')} + {_('Rook')}",
+        "Queen + Bishop": f"{_('Queen')} + {_('Bishop')}",
+        "Queen + Knight": f"{_('Queen')} + {_('Knight')}",
+        "Rook + Bishop": f"{_('Rook')} + {_('Bishop')}",
+        "Rook + Knight": f"{_('Rook')} + {_('Knight')}",
+        "Knight + Bishop": f"{_('Knight')} + {_('Bishop')}",
     }
 
     for n in range(1, 10):

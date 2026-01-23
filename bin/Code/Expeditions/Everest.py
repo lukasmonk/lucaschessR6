@@ -2,7 +2,7 @@ import ast
 
 import FasterCode
 
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.SQL import Base
 
@@ -34,9 +34,17 @@ def pos_lidistribution(lidistribution, pos):
         if from_sq <= pos <= to_sq:
             return n, pos - from_sq
         from_sq = to_sq + 1
+    return None, None
 
 
 class Expedition:
+    name: str
+    is_white: bool
+    tolerances: list
+    max_tries: int
+    tolerance: int
+    tries_used: int
+
     def __init__(self, configuration, recno):
         ex = Expeditions(configuration)
         self.reg = ex.goto(recno)
@@ -58,8 +66,7 @@ class Expedition:
         xcurrent = None
         xtrayecto = ""
         for x in range(12):
-            d = {}
-            d["ROUTE"] = "%s - %s" % (li_p[x][4], li_p[x + 1][4])
+            d = {"ROUTE": f"{li_p[x][4]} - {li_p[x + 1][4]}"}
             xc = li_distribution[x]
             d["GAMES"] = str(xc)
             done = xgame if xc >= xgame else xc
@@ -78,7 +85,7 @@ class Expedition:
             d["MPOINTS"] = "%d" % (int(times[x][1] / done) if done else 0)
             li_routes.append(d)
 
-        label = (self.reg.NAME, xtrayecto, "%s: %d" % (_("Altitude"), int(height)))
+        label = (self.reg.NAME, xtrayecto, f"{_('Altitude')}: {int(height)}")
 
         return li_routes, xcurrent, svg, label
 
@@ -113,12 +120,12 @@ class Expedition:
                 fen = value
         txt = ""
         if date:
-            txt += "%s " % date
+            txt += f"{date} "
         if event or site:
-            txt += "%s - %s" % (event, site)
-            txt = txt.strip().strip("-") + "\n"
+            txt += f"{event} - {site}"
+            txt = f"{txt.strip().strip('-')}\n"
         if white or black:
-            txt += "%s - %s\n" % (white, black)
+            txt += f"{white} - {black}\n"
         self.label_base = txt
 
         # color
@@ -207,7 +214,7 @@ class Expeditions:
         self.db = Base.DBBase(path_file)
         self.tabla = "Expeditions"
         if not self.db.existeTabla(self.tabla):
-            self.creaTabla()
+            self.create_table()
 
         li_fields = (
             "DATE_INIT",
@@ -237,7 +244,7 @@ class Expeditions:
     def reccount(self):
         return self.dbf.reccount()
 
-    def creaTabla(self):
+    def create_table(self):
         tb = Base.TablaBase(self.tabla)
         tb.nuevoCampo("DATE_INIT", "VARCHAR", notNull=True, primaryKey=True)
         tb.nuevoCampo("NAME", "VARCHAR")
@@ -338,7 +345,7 @@ class Everest:
 
     def _svg(self, height):
         c_svg = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="517.48px" width="1169.9px" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 1169.8729 517.47516">
+<svg xmlns:rdf="https://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="https://www.w3.org/2000/svg" height="517.48px" width="1169.9px" version="1.1" xmlns:cc="https://creativecommons.org/ns#" xmlns:dc="https://purl.org/dc/elements/1.1/" viewBox="0 0 1169.8729 517.47516">
  <defs>
   <linearGradient id="linearGradient4458" x1="593.87" gradientUnits="userSpaceOnUse" y1="908.21" gradientTransform="matrix(1.0069 0 0 .99999 -11.397 -884.63)" x2="593.87" y2="1402.4">
    <stop stop-color="#9dc7da" offset="0"/>
@@ -360,7 +367,7 @@ class Everest:
   <rdf:RDF>
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
-    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:type rdf:resource="https://purl.org/dc/dcmitype/StillImage"/>
     <dc:title/>
    </cc:Work>
   </rdf:RDF>
@@ -430,7 +437,7 @@ class Everest:
         x += x_dif
         y += y_dif
 
-        nv = "%0.02f %0.02f" % (x, y)
+        nv = f"{x:0.02f} {y:0.02f}"
         return c_svg.replace("116.4 477.94", nv).encode("utf-8")
 
     def svg(self, distribution, done_game):
@@ -443,3 +450,4 @@ class Everest:
                 h = h_0 + (h_1 - h_0) * num_game / num
                 return h, self._svg(h)
             num_game -= num
+        return 0, None

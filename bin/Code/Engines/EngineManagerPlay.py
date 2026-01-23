@@ -15,9 +15,10 @@ class PlayBook:
     book: Optional[Books.Book] = None
     num_tries: int = 0
     active: bool = False
+    name: str
 
     def __init__(self, path, resp_type, max_tries, max_depth):
-        self.name = os.path.basename(path)[:-4]
+        self.name = str(os.path.basename(path)[:-4])
         self.path = path
         self.num_tries_max = max_tries
         self.select_type = resp_type
@@ -206,12 +207,12 @@ class EngineManagerPlay(EngineManager.EngineManager):
         return self.mrm.best_rm_ordered()
 
     def humanize(
-        self, factor_humanize: int, game: Game.Game, seconds_white: float, seconds_black: float, seconds_move: int
+        self, factor_humanize: float, game: Game.Game, seconds_white: float, seconds_black: float, seconds_move: int
     ):
         # Hay que tener en cuenta
         # Si estamos en la apertura -> mas rápido
         # Si hay muchas opciones -> mas lento
-        # Si hay pocas piezas
+        # Si hay pocas pieces
         # Si son las primeras 20 jugadas, el procentaje aumenta de 1 a 100
         # para el resto
         movestogo = 40

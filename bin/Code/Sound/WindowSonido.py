@@ -4,7 +4,7 @@ import time
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Board import BoardElements, BoardTypes
 from Code.QT import (
     Colocacion,
@@ -24,11 +24,18 @@ from Code.SQL import UtilSQL
 
 
 class MesaSonido(QtWidgets.QGraphicsView):
+    cajonSC: BoardElements.CajaSC
+    txtInicio: BoardElements.TiempoSC
+    txtFinal: BoardElements.TiempoSC
+    txtActual: BoardElements.TiempoSC
+    txtDuracion: BoardElements.TiempoSC
+    linMain: BoardElements.CajaSC
+    
     def __init__(self, parent):
         QtWidgets.QGraphicsView.__init__(self)
 
-        self.setRenderHint(QtGui.QPainter.Antialiasing)
-        self.setRenderHint(QtGui.QPainter.TextAntialiasing)
+        self.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        self.setRenderHint(QtGui.QPainter.RenderHint.TextAntialiasing)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setTransformationAnchor(self.ViewportAnchor.NoAnchor)
@@ -51,7 +58,7 @@ class MesaSonido(QtWidgets.QGraphicsView):
 
         self.cajonSC = BoardElements.CajaSC(self.escena, cajon)
 
-        def tiempoSC(x, y, linea, minim, maxim, rutina, color):
+        def tiempo_sc(x, y, linea, minim, maxim, rutina, color):
             tt = BoardTypes.Texto()
             tt.font_type = BoardTypes.FontType(Code.font_mono, 10)
             tt.physical_pos.ancho = 68
@@ -66,13 +73,13 @@ class MesaSonido(QtWidgets.QGraphicsView):
             tt.max = x + maxim
             tt.rutina = rutina
             sc = BoardElements.TiempoSC(self.escena, tt)
-            sc.ponCentesimas(0)
+            sc.set_hundreds_of_second(0)
             return sc
 
-        self.txtInicio = tiempoSC(2, 40, "d", 0, 400, self.mv_inicio, 4294242784)
-        self.txtFinal = tiempoSC(ancho - 6 - 68, 40, "i", -400, 0, self.mv_final, 4294242784)
-        self.txtActual = tiempoSC(68 + 2, 10, "a", 0, 400, None, 4294242784)
-        self.txtDuracion = tiempoSC(236, 78, None, 0, 0, None, 4289509046)
+        self.txtInicio = tiempo_sc(2, 40, "d", 0, 400, self.mv_inicio, 4294242784)
+        self.txtFinal = tiempo_sc(ancho - 6 - 68, 40, "i", -400, 0, self.mv_final, 4294242784)
+        self.txtActual = tiempo_sc(68 + 2, 10, "a", 0, 400, None, 4294242784)
+        self.txtDuracion = tiempo_sc(236, 78, None, 0, 0, None, 4289509046)
 
         tf = BoardTypes.Caja()
         tf.physical_pos.orden = 2
@@ -107,39 +114,43 @@ class MesaSonido(QtWidgets.QGraphicsView):
     def mv_inicio(self, posx):
         self.txtFinal.minimo = self.txtFinal.inicialx - 400 + posx
         self.txtActual.minimo = self.txtActual.inicialx + posx
-        self.txtActual.compruebaPos()
+        self.txtActual.check_position()
 
-        self.txtDuracion.ponCentesimas(self.txtFinal.calcCentesimas() - self.txtInicio.calcCentesimas())
+        self.txtDuracion.set_hundreds_of_second(
+            self.txtFinal.calc_hundreds_of_second() - self.txtInicio.calc_hundreds_of_second()
+        )
 
     def mv_final(self, posx):
         self.txtInicio.maximo = self.txtInicio.inicialx + 400 + posx
         self.txtActual.maximo = self.txtActual.inicialx + 400 + posx
-        self.txtActual.compruebaPos()
+        self.txtActual.check_position()
 
-        self.txtDuracion.ponCentesimas(self.txtFinal.calcCentesimas() - self.txtInicio.calcCentesimas())
+        self.txtDuracion.set_hundreds_of_second(
+            self.txtFinal.calc_hundreds_of_second() - self.txtInicio.calc_hundreds_of_second()
+        )
 
-    def ponCentesimas(self, centesimas):
+    def set_hundreds_of_second(self, hundreds_of_second):
         for x in (self.txtActual, self.txtDuracion, self.txtFinal, self.txtInicio):
-            x.ponCentesimas(centesimas)
-            if centesimas == 0:
-                x.posInicial()
+            x.set_hundreds_of_second(hundreds_of_second)
+            if hundreds_of_second == 0:
+                x.initial_position()
         self.escena.update()
 
-    def ponCentesimasActual(self, centesimas):
-        self.txtActual.setphysical_pos(centesimas)
+    def pon_centesimas_actual(self, hundreds_of_second):
+        self.txtActual.setphysical_pos(hundreds_of_second)
         self.escena.update()
 
     def limites(self):
-        to_sq = self.txtFinal.calcCentesimas()
-        from_sq = self.txtActual.calcCentesimas()
+        to_sq = self.txtFinal.calc_hundreds_of_second()
+        from_sq = self.txtActual.calc_hundreds_of_second()
         return from_sq, to_sq
 
-    def siHayQueRecortar(self):
-        return self.txtInicio.siMovido() or self.txtFinal.siMovido()
+    def si_hay_que_recortar(self):
+        return self.txtInicio.has_moved() or self.txtFinal.has_moved()
 
-    def activaEdicion(self, siActivar):
+    def activa_edicion(self, activate):
         for x in (self.txtActual, self.txtFinal, self.txtInicio):
-            x.activa(siActivar)
+            x.activate(activate)
 
 
 class WEdicionSonido(LCDialog.LCDialog):
@@ -156,8 +167,11 @@ class WEdicionSonido(LCDialog.LCDialog):
         ks_limpiar,
         ks_grabar,
     ) = range(11)
+    siPlay: bool
+    hundreds_of_second: int
+    dic_toolbar: dict
 
-    def __init__(self, owner, titulo, wav=None, maxTime=None, name=None):
+    def __init__(self, owner, titulo, wav=None, max_time=None, name=None):
 
         # titulo = _("Sound edition" )
         icono = Iconos.S_Play()
@@ -173,31 +187,31 @@ class WEdicionSonido(LCDialog.LCDialog):
         self.prepare_toolbar()
 
         # Nombre
-        siNombre = name is not None
-        if siNombre:
-            lbNom = Controles.LB(self, _("Name") + ":")
-            self.edNom = Controles.ED(self, name).anchoMinimo(180)
-            lyNom = Colocacion.H().control(lbNom).control(self.edNom).relleno()
+        si_nombre = name is not None
+        if si_nombre:
+            lb_nom = Controles.LB(self, f"{_('Name')}:")
+            self.edNom = Controles.ED(self, name).minimum_width(180)
+            ly_nom = Colocacion.H().control(lb_nom).control(self.edNom).relleno()
 
         # MesaSonido
         self.mesa = MesaSonido(self)
         self.taller = Sound.TallerSonido(self, wav)
 
-        self.mesa.ponCentesimas(self.taller.centesimas)
+        self.mesa.set_hundreds_of_second(self.taller.hundreds_of_second)
 
         self.siGrabando = False
         self.is_canceled = False
 
-        self.maxTime = maxTime if maxTime else 300.0  # seconds=5 minutos
+        self.max_time = max_time if max_time else 300.0  # seconds=5 minutos
 
         layout = Colocacion.V().control(self.tb)
-        if siNombre:
-            layout.otro(lyNom)
+        if si_nombre:
+            layout.otro(ly_nom)
         layout.control(self.mesa).margen(3)
 
         self.setLayout(layout)
 
-        self.ponBaseTB()
+        self.pon_base_tb()
 
         self.restore_video(with_tam=False)
 
@@ -209,14 +223,14 @@ class WEdicionSonido(LCDialog.LCDialog):
         self.is_canceled = True
         self.save_video()
 
-    def ponBaseTB(self):
+    def pon_base_tb(self):
         li = [self.ks_aceptar, self.ks_cancelar, None]
         if self.taller.with_data():
             li.extend([self.ks_limpiar, None, self.ks_play, None, self.ks_grabar])
-            self.mesa.activaEdicion(True)
+            self.mesa.activa_edicion(True)
         else:
             li.extend([self.ks_microfono, None, self.ks_wav])
-            self.mesa.activaEdicion(False)
+            self.mesa.activa_edicion(False)
         self.pon_toolbar(li)
 
     def prepare_toolbar(self):
@@ -240,7 +254,7 @@ class WEdicionSonido(LCDialog.LCDialog):
             accion = QtGui.QAction(titulo, self.tb)
             accion.setIcon(icono)
             accion.setIconText(titulo)
-            accion.triggered.connect(self.procesaTB)
+            accion.triggered.connect(self.procesa_tb)
             accion.key = key
             self.dic_toolbar[key] = accion
 
@@ -258,18 +272,18 @@ class WEdicionSonido(LCDialog.LCDialog):
         self.tb.li_acciones = li_acciones
         self.tb.update()
 
-    def habilitaTB(self, kopcion, siHabilitar):
-        self.dic_toolbar[kopcion].setEnabled(siHabilitar)
+    def enable_tb(self, kopcion, activate):
+        self.dic_toolbar[kopcion].setEnabled(activate)
 
-    def procesaTB(self):
+    def procesa_tb(self):
         accion = self.sender().key
         if accion == self.ks_aceptar:
             self.is_canceled = True
-            if self.mesa.siHayQueRecortar():
+            if self.mesa.si_hay_que_recortar():
                 from_sq, to_sq = self.mesa.limites()
                 self.taller.recorta(from_sq, to_sq)
             self.wav = self.taller.wav
-            self.centesimas = self.taller.centesimas
+            self.hundreds_of_second = self.taller.hundreds_of_second
             self.accept()
             self.save_video()
             return
@@ -285,10 +299,10 @@ class WEdicionSonido(LCDialog.LCDialog):
         elif accion == self.ks_cancelmic:
             self.siGrabando = False
             self.is_canceled = True
-            self.ponBaseTB()
+            self.pon_base_tb()
 
         elif accion == self.ks_record:
-            self.micRecord()
+            self.mic_record()
         elif accion == self.ks_stopmic:
             self.siGrabando = False
         elif accion == self.ks_wav:
@@ -303,39 +317,39 @@ class WEdicionSonido(LCDialog.LCDialog):
     def microfono(self):
         self.pon_toolbar((self.ks_cancelmic, None, self.ks_record))
 
-    def micRecord(self):
+    def mic_record(self):
         self.pon_toolbar((self.ks_cancelmic, None, self.ks_stopmic))
         self.siGrabando = True
         self.is_canceled = False
 
-        self.mesa.ponCentesimas(0)
+        self.mesa.set_hundreds_of_second(0)
 
         self.taller.mic_start()
 
-        iniTime = time.time()
+        ini_time = time.time()
 
         while self.siGrabando:
             self.taller.mic_record()
             QTUtils.refresh_gui()
-            t = time.time() - iniTime
-            self.mesa.ponCentesimas(t * 100)
-            if t > self.maxTime:
+            t = time.time() - ini_time
+            self.mesa.set_hundreds_of_second(t * 100)
+            if t > self.max_time:
                 break
 
         self.siGrabando = False
         self.taller.mic_end()
         if self.is_canceled:
             self.taller.reset_to_0()
-            self.mesa.ponCentesimas(0)
+            self.mesa.set_hundreds_of_second(0)
         else:
-            self.mesa.ponCentesimas(self.taller.centesimas)
+            self.mesa.set_hundreds_of_second(self.taller.hundreds_of_second)
 
-        self.ponBaseTB()
+        self.pon_base_tb()
 
     def reset_to_0(self):
         self.taller.reset_to_0()
-        self.mesa.ponCentesimas(0)
-        self.ponBaseTB()
+        self.mesa.set_hundreds_of_second(0)
+        self.pon_base_tb()
 
     def wav(self):
         carpeta = Util.restore_pickle(self.confich)
@@ -344,40 +358,40 @@ class WEdicionSonido(LCDialog.LCDialog):
             carpeta = os.path.dirname(file)
             Util.save_pickle(self.confich, carpeta)
             if self.taller.read_wav_from_disk(file):
-                self.mesa.ponCentesimas(self.taller.centesimas)
+                self.mesa.set_hundreds_of_second(self.taller.hundreds_of_second)
             else:
                 QTMessages.message_error(self, _("It is impossible to read this file, it is not compatible."))
-            self.ponBaseTB()
+            self.pon_base_tb()
 
     def grabar(self):
         carpeta = Util.restore_pickle(self.confich)
         file = SelectFiles.salvaFichero(self, _("Save wav"), carpeta, "wav", True)
         if file:
             if not file.lower().endswith(".wav"):
-                file = file + ".wav"
+                file = f"{file}.wav"
             carpeta = os.path.dirname(file)
             Util.save_pickle(self.confich, carpeta)
             with open(file, "wb") as q:
                 q.write(self.taller.wav)
-            self.ponBaseTB()
+            self.pon_base_tb()
 
     def play(self):
-        self.mesa.activaEdicion(False)
+        self.mesa.activa_edicion(False)
         self.pon_toolbar((self.ks_stopplay,))
 
-        centDesde, centHasta = self.mesa.limites()
+        cent_desde, cent_hasta = self.mesa.limites()
         self.siPlay = True
-        self.taller.play(centDesde, centHasta)
+        self.taller.play(cent_desde, cent_hasta)
 
         QTUtils.refresh_gui()
 
-        self.ponBaseTB()
+        self.pon_base_tb()
 
 
-def editSonido(owner, titulo, wav):
+def edit_sonido(owner, titulo, wav):
     w = WEdicionSonido(owner, titulo, wav)
     if w.exec():
-        return w.wav, w.centesimas
+        return w.wav, w.hundreds_of_second
     else:
         return None
 
@@ -407,7 +421,7 @@ class WSonidos(LCDialog.LCDialog):
 
         # Toolbar
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Modify"), Iconos.Modificar(), self.modificar),
             None,
@@ -423,8 +437,8 @@ class WSonidos(LCDialog.LCDialog):
         self.grid = Grid.Grid(
             self,
             o_columns,
-            siSelecFilas=True,
-            altoFila=Code.configuration.x_pgn_rowheight,
+            complete_row_select=True,
+            heigh_row=Code.configuration.x_pgn_rowheight,
         )
 
         # Layout
@@ -439,12 +453,12 @@ class WSonidos(LCDialog.LCDialog):
         self.register_grid(self.grid)
 
         if not self.restore_video():
-            self.resize(self.grid.anchoColumnas() + 30, 600)
+            self.resize(self.grid.width_columns_displayables() + 30, 600)
 
     def closeEvent(self, event):
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
         self.db.close()
@@ -452,10 +466,10 @@ class WSonidos(LCDialog.LCDialog):
     def modificar(self):
         self.grid_doble_click(None, self.grid.recno(), None)
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_sounds)
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, row, _obj_column):
         self.siPlay = False
 
         cl = self.li_sounds[row][0]
@@ -464,7 +478,7 @@ class WSonidos(LCDialog.LCDialog):
 
         wav = self.db[cl]
 
-        resp = editSonido(self, self.li_sounds[row][1], wav)
+        resp = edit_sonido(self, self.li_sounds[row][1], wav)
         if resp is not None:
             wav, cent = resp
             if wav is None:
@@ -477,8 +491,8 @@ class WSonidos(LCDialog.LCDialog):
                 Code.runSound.save_wav(cl, wav)
             self.grid.refresh()
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         li = self.li_sounds[row]
         if key == "DURACION":
             if li[0] is None:
@@ -492,7 +506,7 @@ class WSonidos(LCDialog.LCDialog):
                         t = 0
                     else:
                         ts = Sound.TallerSonido(self, wav)
-                        t = ts.centesimas
+                        t = ts.hundreds_of_second
                 return "%02d:%02d:%02d" % Sound.msc(t)
 
         else:
@@ -503,14 +517,15 @@ class WSonidos(LCDialog.LCDialog):
         if li[0]:
             Code.runSound.play_key(li[0])
 
-    def grid_color_fondo(self, grid, row, o_column):
+    def grid_color_fondo(self, _grid, row, _obj_column):
         li = self.li_sounds[row]
         if li[0] is None:
             return ScreenUtils.qt_color(4294836181)
         else:
             return None
 
-    def create_soundslist(self):
+    @staticmethod
+    def create_soundslist():
         dic_relations = Code.runSound.relations
         li_sounds = []
 
@@ -518,7 +533,7 @@ class WSonidos(LCDialog.LCDialog):
             li_sounds.append([key, dic_relations[key]["NAME"], None])
 
         def xapart(txt):
-            li_sounds.append([None, "- " + txt + " -", None])
+            li_sounds.append([None, f"- {txt} -", None])
 
         xadd("MC")
         xadd("ERROR")

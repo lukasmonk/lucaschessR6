@@ -13,7 +13,7 @@ def path_saveas_odt(owner, name):
     key_var = "ODT"
     dic = configuration.read_variables(key_var)
     folder = dic.get("FOLDER_SAVE", configuration.paths.folder_userdata())
-    carpeta = "%s/%s.odt" % (folder, name)
+    carpeta = f"{folder}/{name}.odt"
 
     path = SelectFiles.salvaFichero(owner, _("File to save"), carpeta, "odt", True)
     if path:
@@ -24,7 +24,7 @@ def path_saveas_odt(owner, name):
 
 class WOdt(LCDialog.LCDialog):
     def __init__(self, owner, path_odt):
-        title = "%s: %s" % (_("Export to"), path_odt)
+        title = f"{_('Export to')}: {path_odt}"
         LCDialog.LCDialog.__init__(self, owner, title, Iconos.ODT(), "ODT")
 
         self.configuration = Code.configuration
@@ -39,7 +39,7 @@ class WOdt(LCDialog.LCDialog):
         conf_board = self.configuration.config_board("ODT", 64)
 
         self.board = Board2.BoardEstatico(self, conf_board)
-        self.board.crea()
+        self.board.draw_window()
 
         li_acciones = (
             (_("Export"), Iconos.ODT(), self.begin),

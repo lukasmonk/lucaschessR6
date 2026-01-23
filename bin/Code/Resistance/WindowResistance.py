@@ -11,18 +11,18 @@ class WResistance(LCDialog.LCDialog):
         titulo = _("Resistance Test")
         tipo = resistance.tipo
         if tipo:
-            titulo += "-" + _("Blindfold chess")
+            titulo += f"-{_('Blindfold chess')}"
             if tipo == "p1":
-                titulo += "-" + _("Hide only our pieces")
+                titulo += f"-{_('Hide only our pieces')}"
             elif tipo == "p2":
-                titulo += "-" + _("Hide only opponent pieces")
+                titulo += f"-{_('Hide only opponent pieces')}"
         extparam = "boxing"
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
         # self.setStyleSheet("QWidget { background: #AFC3D7 }")
 
         # Tool bar ---------------------------------------------------------------
         li_acciones = [
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Remove data"), Iconos.Borrar(), self.borrar),
             None,
@@ -41,8 +41,8 @@ class WResistance(LCDialog.LCDialog):
         o_columns.nueva("WHITE", _("White"), 200, align_center=True)
         o_columns.nueva("BLACK", _("Black"), 200, align_center=True)
 
-        self.grid = grid = Grid.Grid(self, o_columns, siSelecFilas=True, background=None)
-        self.grid.coloresAlternados()
+        self.grid = grid = Grid.Grid(self, o_columns, complete_row_select=True, background=None)
+        self.grid.alternate_colors()
         self.register_grid(grid)
 
         # Layout
@@ -60,15 +60,14 @@ class WResistance(LCDialog.LCDialog):
     def set_textAyuda(self):
         txt = self.resistance.rotuloActual(True)
         self.lb.set_text(
-            '<center><b>%s<br><font color="red">%s</red></b></center>'
-            % (txt, _("Double click in any cell to begin to play"))
+            f'<center><b>{txt}<br><font color="red">{_("Double click in any cell to begin to play")}</red></b></center>'
         )
 
     def grid_num_datos(self, grid):
         return self.resistance.num_engines()
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        key = obj_column.key
         if key == "ENGINE":
             return self.resistance.dameEtiEngine(row)
         else:
@@ -92,7 +91,7 @@ class WResistance(LCDialog.LCDialog):
         ):
             self.resistance.borraRegistros(num_engine)
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.accept()
 
@@ -104,7 +103,7 @@ class WResistance(LCDialog.LCDialog):
         li_gen = [separador]
 
         config = FormLayout.Spinbox(
-            _("Time engines think in seconds") + ":\n %s=5.0" % _("By default"),
+            f"{_('Time engines think in seconds')}:\n {_('By default')}=5.0",
             1,
             99999,
             80,
@@ -114,7 +113,7 @@ class WResistance(LCDialog.LCDialog):
         li_gen.append(separador)
 
         config = FormLayout.Spinbox(
-            _("Max lost centipawns in total") + ":\n %s= 100" % _("By default"),
+            f"{_('Max lost centipawns in total')}:\n {_('By default')}= 100",
             10,
             99999,
             80,
@@ -124,8 +123,7 @@ class WResistance(LCDialog.LCDialog):
         li_gen.append(separador)
 
         config = FormLayout.Spinbox(
-            _("Max lost centipawns in a single move")
-            + ":\n%s= %s" % (_("By default"), _("0 = not consider this limit")),
+            _("Max lost centipawns in a single move") + f":\n{_('By default')}= {_('0 = not consider this limit')}",
             0,
             1000,
             80,

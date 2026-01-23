@@ -8,8 +8,9 @@ class ListEngineManagers:
 
     def append(self, engine_manager):
         if __debug__:
-            import Code.Debug
-            Code.Debug.prln("appending", engine_manager.engine.name, engine_manager.huella, color="green")
+            import Code.Z.Debug
+
+            Code.Z.Debug.prln("appending", engine_manager.engine.name, engine_manager.huella, color="green")
         self.lista.append(engine_manager)
         if self.with_logs:
             engine_manager.log_open()

@@ -21,8 +21,8 @@ class WebExternalImporter:
         self.from_date = None
         self.to_date = None
 
-        self.message_import = _("Games Loaded") + ": %d"
-        self.message_import_initial = _("Reading") + "..."
+        self.message_import = f"{_('Games Loaded')}: %d"
+        self.message_import_initial = f"{_('Reading')}..."
 
     def params(self):
         w = WParams(self.owner, self.title, self.icon, self.url)
@@ -173,27 +173,27 @@ class WParams(LCDialog.LCDialog):
 
         tb = QTDialogs.tb_accept_cancel(self)
 
-        lb_user = Controles.LB(self, _("User") + ":")
+        lb_user = Controles.LB(self, f"{_('User')}:")
         self.ed_user = Controles.ED(self, "")
 
-        lb_from = Controles.LB(self, _("From") + ":")
+        lb_from = Controles.LB(self, f"{_('From')}:")
         date = datetime.date(year=2000, month=1, day=1)
         self.dt_from = Controles.GetDate(self, date)
 
-        lb_to = Controles.LB(self, _("To") + ":")
+        lb_to = Controles.LB(self, f"{_('To')}:")
         date = datetime.date.today()
         self.dt_to = Controles.GetDate(self, date)
 
         lb_url = Controles.LB(self, f'<a href="{url}">{url}</a>')
 
         layout = Colocacion.G()
-        layout.filaVacia(0, 20)
+        layout.empty_row(0, 20)
         layout.controld(lb_user, 1, 0).control(self.ed_user, 1, 1)
-        layout.filaVacia(2, 20)
+        layout.empty_row(2, 20)
         layout.controld(lb_from, 3, 0).control(self.dt_from, 3, 1)
-        layout.filaVacia(4, 20)
+        layout.empty_row(4, 20)
         layout.controld(lb_to, 5, 0).control(self.dt_to, 5, 1)
-        layout.filaVacia(6, 20)
+        layout.empty_row(6, 20)
         layout.control(lb_url, 7, 0)
 
         layout_gen = Colocacion.V()

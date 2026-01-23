@@ -1,5 +1,5 @@
 import Code
-from Code import Adjournments, Util
+from Code.Z import Adjournments, Util
 from Code.Base.Constantes import (
     BLACK,
     GT_HUMAN,
@@ -73,7 +73,7 @@ class ManagerPlayHuman(Manager.Manager):
             self.tc_white.config_clock(self.max_seconds, self.seconds_per_move, 0, 0)
             self.tc_black.config_clock(self.max_seconds, self.seconds_per_move, 0, 0)
 
-            time_control = "%d" % int(self.max_seconds)
+            time_control = f"{int(self.max_seconds)}"
             if self.seconds_per_move:
                 time_control += "+%d" % self.seconds_per_move
             self.game.set_tag("TimeControl", time_control)
@@ -82,7 +82,7 @@ class ManagerPlayHuman(Manager.Manager):
 
         self.main_window.active_game(True, self.timed)
 
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.remove_hints(remove_back=False)
@@ -208,7 +208,7 @@ class ManagerPlayHuman(Manager.Manager):
                 li_movs = self.consult_books(si_en_vivo)
                 if li_movs and si_en_vivo:
                     from_sq, to_sq, promotion = li_movs[-1]
-                    self.player_has_moved(from_sq, to_sq, promotion)
+                    self.player_has_moved_dispatcher(from_sq, to_sq, promotion)
             elif resp == "play":
                 self.play_current_position()
 
@@ -242,8 +242,8 @@ class ManagerPlayHuman(Manager.Manager):
 
         self.goto_end()
 
-    def reiniciar(self, siPregunta):
-        if siPregunta:
+    def reiniciar(self, to_ask):
+        if to_ask:
             if not QTMessages.pregunta(self.main_window, _("Restart the game?")):
                 return
         if self.timed:
@@ -264,7 +264,7 @@ class ManagerPlayHuman(Manager.Manager):
             dic = self.save_state()
 
             # se guarda en una bd Adjournments dic key = fecha y hora y tipo
-            label_menu = _("Play human vs human") + ". " + self.white + " - " + self.black
+            label_menu = f"{_('Play human vs human')}. {self.white} - {self.black}"
 
             self.state = ST_ENDGAME
 
@@ -311,8 +311,7 @@ class ManagerPlayHuman(Manager.Manager):
     def finalizar(self):
         if self.state == ST_ENDGAME:
             return True
-        siJugadas = len(self.game) > 0
-        if siJugadas:
+        if len(self.game) > 0:
             if not QTMessages.pregunta(self.main_window, _("End game?")):
                 return False  # no abandona
             if self.timed:
@@ -346,7 +345,7 @@ class ManagerPlayHuman(Manager.Manager):
                 player = self.white if self.game.last_position.is_white else self.black
                 if not QTMessages.pregunta(
                     self.main_window,
-                    f"<big>{player}</big><br>" + _("Do you want to resign?"),
+                    f"<big>{player}</big><br>{_('Do you want to resign?')}",
                 ):
                     return False  # no abandona
             self.game.set_termination(
@@ -414,7 +413,7 @@ class ManagerPlayHuman(Manager.Manager):
     def disable_toolbar(self):
         self.main_window.toolbar_enable(False)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             return False
@@ -430,10 +429,8 @@ class ManagerPlayHuman(Manager.Manager):
         move.set_time_ms(time_s * 1000)
         move.set_clock_ms(tc.pending_time * 1000)
         self.add_move(move)
-        self.move_the_pieces(move.liMovs, False)
+        self.move_the_pieces(move.list_piece_moves, False)
         self.beep_extended(True)
-
-        self.error = ""
 
         self.enable_toolbar()
         self.play_next_move()
@@ -465,7 +462,7 @@ class ManagerPlayHuman(Manager.Manager):
             self.muestra_resultado_delayed()
 
     def muestra_resultado_delayed(self):
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
         player = self.white if self.is_human_side_white else self.black
 
         mensaje = f"{player}. {mensaje}"

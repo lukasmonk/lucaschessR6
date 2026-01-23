@@ -4,7 +4,7 @@ import os
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Board import Board
 from Code.Director import TabVisual
 from Code.QT import (
@@ -22,8 +22,8 @@ from Code.QT import (
 )
 
 
-class WTV_Marker(QtWidgets.QDialog):
-    def __init__(self, owner, regMarker, xml=None, name=None):
+class WTVMarker(QtWidgets.QDialog):
+    def __init__(self, owner, reg_marker, xml=None, name=None):
 
         QtWidgets.QDialog.__init__(self, owner)
 
@@ -36,11 +36,11 @@ class WTV_Marker(QtWidgets.QDialog):
 
         self.configuration = Code.configuration
 
-        if regMarker is None:
-            regMarker = TabVisual.PMarker()
-            regMarker.xml = xml
+        if reg_marker is None:
+            reg_marker = TabVisual.PMarker()
+            reg_marker.xml = xml
             if name:
-                regMarker.name = name
+                reg_marker.name = name
 
         li_acciones = [
             (_("Save"), Iconos.Aceptar(), self.grabar),
@@ -53,7 +53,7 @@ class WTV_Marker(QtWidgets.QDialog):
         # Board
         config_board = owner.board.config_board
         self.board = Board.Board(self, config_board, with_director=False)
-        self.board.crea()
+        self.board.draw_window()
         self.board.copia_posicion_de(owner.board)
 
         # Datos generales
@@ -61,29 +61,29 @@ class WTV_Marker(QtWidgets.QDialog):
 
         # name del svg que se usara en los menus del tutorial
         config = FormLayout.Editbox(_("Name"), ancho=120)
-        li_gen.append((config, regMarker.name))
+        li_gen.append((config, reg_marker.name))
 
         # ( "opacity", "n", 1.0 ),
         config = FormLayout.Dial(_("Degree of transparency"), 0, 99)
-        li_gen.append((config, 100 - int(regMarker.opacity * 100)))
+        li_gen.append((config, 100 - int(reg_marker.opacity * 100)))
 
         # ( "psize", "n", 100 ),
-        config = FormLayout.Spinbox(_("Size") + " %", 1, 1600, 50)
-        li_gen.append((config, regMarker.psize))
+        config = FormLayout.Spinbox(f"{_('Size')} %", 1, 1600, 50)
+        li_gen.append((config, reg_marker.psize))
 
         # ( "poscelda", "n", 1 ),
         li = (
-            ("%s-%s" % (_("Top"), _("Left")), 0),
-            ("%s-%s" % (_("Top"), _("Right")), 1),
-            ("%s-%s" % (_("Bottom"), _("Left")), 2),
-            ("%s-%s" % (_("Bottom"), _("Right")), 3),
+            (f"{_('Top')}-{_('Left')}", 0),
+            (f"{_('Top')}-{_('Right')}", 1),
+            (f"{_('Bottom')}-{_('Left')}", 2),
+            (f"{_('Bottom')}-{_('Right')}", 3),
         )
         config = FormLayout.Combobox(_("Position in the square"), li)
-        li_gen.append((config, regMarker.poscelda))
+        li_gen.append((config, reg_marker.poscelda))
 
         # orden
         config = FormLayout.Combobox(_("Order concerning other items"), QTMessages.list_zvalues())
-        li_gen.append((config, regMarker.physical_pos.orden))
+        li_gen.append((config, reg_marker.physical_pos.orden))
 
         self.form = FormLayout.FormWidget(li_gen, dispatch=self.cambios)
 
@@ -93,19 +93,19 @@ class WTV_Marker(QtWidgets.QDialog):
         self.setLayout(layout1)
 
         # Ejemplos
-        liMovs = ["b4c4", "e2e2", "e4g7"]
+        li_movs = ["b4c4", "e2e2", "e4g7"]
         self.liEjemplos = []
-        for a1h8 in liMovs:
-            regMarker.a1h8 = a1h8
-            regMarker.siMovible = True
-            marker = self.board.creaMarker(regMarker, siEditando=True)
+        for a1h8 in li_movs:
+            reg_marker.a1h8 = a1h8
+            reg_marker.siMovible = True
+            marker = self.board.create_marker(reg_marker, is_editing=True)
             self.liEjemplos.append(marker)
 
     def cambios(self):
         if hasattr(self, "form"):
             li = self.form.get()
             for n, marker in enumerate(self.liEjemplos):
-                reg_marker = marker.bloqueDatos
+                reg_marker = marker.block_data
                 reg_marker.name = li[0]
                 reg_marker.opacity = (100.0 - float(li[1])) / 100.0
                 reg_marker.psize = li[2]
@@ -118,13 +118,13 @@ class WTV_Marker(QtWidgets.QDialog):
             QTUtils.refresh_gui()
 
     def grabar(self):
-        reg_marker = self.liEjemplos[0].bloqueDatos
+        reg_marker = self.liEjemplos[0].block_data
         name = reg_marker.name.strip()
         if name == "":
             QTMessages.message_error(self, _("Name missing"))
             return
 
-        pm = self.liEjemplos[0].pixmapX()
+        pm = self.liEjemplos[0].get_pixmap()
         bf = QtCore.QBuffer()
         pm.save(bf, "PNG")
         reg_marker.png = bytes(bf.data().data())
@@ -133,8 +133,8 @@ class WTV_Marker(QtWidgets.QDialog):
         self.accept()
 
 
-class WTV_Markers(LCDialog.LCDialog):
-    def __init__(self, owner, list_markers, dbMarkers):
+class WTVMarkers(LCDialog.LCDialog):
+    def __init__(self, owner, list_markers, db_markers):
 
         titulo = _("Markers")
         icono = Iconos.Markers()
@@ -147,17 +147,17 @@ class WTV_Markers(LCDialog.LCDialog):
 
         self.configuration = Code.configuration
         self.liPMarkers = list_markers
-        self.dbMarkers = dbMarkers
+        self.db_markers = db_markers
 
         # Lista
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NUMBER", _("N."), 60, align_center=True)
         o_columns.nueva("NOMBRE", _("Name"), 256)
 
-        self.grid = Grid.Grid(self, o_columns, xid="M", siSelecFilas=True)
+        self.grid = Grid.Grid(self, o_columns, xid="M", complete_row_select=True)
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("New"), Iconos.Nuevo(), self.mas)
         tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
         tb.new(_("Modify"), Iconos.Modificar(), self.modificar)
@@ -171,7 +171,7 @@ class WTV_Markers(LCDialog.LCDialog):
         # Board
         config_board = self.configuration.config_board("EDIT_GRAPHICS", 48)
         self.board = Board.Board(self, config_board, with_director=False)
-        self.board.crea()
+        self.board.draw_window()
         self.board.copia_posicion_de(owner.board)
 
         # Layout
@@ -184,45 +184,46 @@ class WTV_Markers(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.save_video()
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.close()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liPMarkers)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         if key == "NUMBER":
             return str(row + 1)
         elif key == "NOMBRE":
             return self.liPMarkers[row].name
+        return None
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.modificar()
 
-    def grid_cambiado_registro(self, grid, row, o_column):
+    def grid_cambiado_registro(self, _grid, row, _obj_column):
         if row >= 0:
-            regMarker = self.liPMarkers[row]
-            self.board.borraMovibles()
+            reg_marker = self.liPMarkers[row]
+            self.board.remove_movables()
             # Ejemplos
-            liMovs = ["g4h3", "e2e4", "d6f4"]
-            for a1h8 in liMovs:
-                regMarker.a1h8 = a1h8
-                regMarker.siMovible = True
-                self.board.creaMarker(regMarker, siEditando=True)
+            li_movs = ["g4h3", "e2e4", "d6f4"]
+            for a1h8 in li_movs:
+                reg_marker.a1h8 = a1h8
+                reg_marker.siMovible = True
+                self.board.create_marker(reg_marker, is_editing=True)
             self.board.escena.update()
 
     def mas(self):
 
         menu = QTDialogs.LCMenu(self)
 
-        def seek_folder(submenu, folder):
-            for entry in os.scandir(folder):
+        def seek_folder(submenu, xfolder):
+            for entry in os.scandir(xfolder):
                 if entry.is_dir():
                     smenu = submenu.submenu(entry.name, Iconos.Carpeta())
                     seek_folder(smenu, entry.path)
-            for entry in os.scandir(folder):
+            for entry in os.scandir(xfolder):
                 if entry.is_file() and entry.name.lower().endswith(".svg"):
                     ico = QTDialogs.fsvg2ico(entry.path, 32)
                     if ico:
@@ -253,12 +254,12 @@ class WTV_Markers(LCDialog.LCDialog):
         with open(file, "rt", encoding="utf-8", errors="ignore") as f:
             contenido = f.read()
         name = os.path.basename(file)[:-4]
-        w = WTV_Marker(self, None, xml=contenido, name=name)
+        w = WTVMarker(self, None, xml=contenido, name=name)
         if w.exec():
             reg_marker = w.regMarker
             reg_marker.id = Util.huella()
             reg_marker.ordenVista = (self.liPMarkers[-1].ordenVista + 1) if self.liPMarkers else 1
-            self.dbMarkers[reg_marker.id] = reg_marker.save_dic()
+            self.db_markers[reg_marker.id] = reg_marker.save_dic()
             self.liPMarkers.append(reg_marker)
             self.grid.refresh()
             self.grid.gobottom()
@@ -271,19 +272,19 @@ class WTV_Markers(LCDialog.LCDialog):
                 reg_marker = self.liPMarkers[row]
                 str_id = reg_marker.id
                 del self.liPMarkers[row]
-                del self.dbMarkers[str_id]
+                del self.db_markers[str_id]
                 self.grid.refresh()
                 self.grid.setFocus()
 
     def modificar(self):
         row = self.grid.recno()
         if row >= 0:
-            w = WTV_Marker(self, self.liPMarkers[row])
+            w = WTVMarker(self, self.liPMarkers[row])
             if w.exec():
-                regMarker = w.regMarker
-                str_id = regMarker.id
-                self.liPMarkers[row] = regMarker
-                self.dbMarkers[str_id] = regMarker.save_dic()
+                reg_marker = w.regMarker
+                str_id = reg_marker.id
+                self.liPMarkers[row] = reg_marker
+                self.db_markers[str_id] = reg_marker.save_dic()
                 self.grid.refresh()
                 self.grid.setFocus()
                 self.grid_cambiado_registro(self.grid, row, None)
@@ -291,24 +292,24 @@ class WTV_Markers(LCDialog.LCDialog):
     def copiar(self):
         row = self.grid.recno()
         if row >= 0:
-            regMarker = copy.deepcopy(self.liPMarkers[row])
+            reg_marker = copy.deepcopy(self.liPMarkers[row])
             n = 1
 
-            def siEstaNombre(name):
+            def exist_name(xname):
                 for rf in self.liPMarkers:
-                    if rf.name == name:
+                    if rf.name == xname:
                         return True
                 return False
 
-            name = "%s-%d" % (regMarker.name, n)
-            while siEstaNombre(name):
+            name = "%s-%d" % (reg_marker.name, n)
+            while exist_name(name):
                 n += 1
-                name = "%s-%d" % (regMarker.name, n)
-            regMarker.name = name
-            regMarker.id = Util.huella()
-            regMarker.ordenVista = self.liPMarkers[-1].ordenVista + 1
-            self.dbMarkers[regMarker.id] = regMarker
-            self.liPMarkers.append(regMarker)
+                name = "%s-%d" % (reg_marker.name, n)
+            reg_marker.name = name
+            reg_marker.id = Util.huella()
+            reg_marker.ordenVista = self.liPMarkers[-1].ordenVista + 1
+            self.db_markers[reg_marker.id] = reg_marker
+            self.liPMarkers.append(reg_marker)
             self.grid.refresh()
             self.grid.setFocus()
 
@@ -318,8 +319,8 @@ class WTV_Markers(LCDialog.LCDialog):
             reg_marker2.ordenVista,
             reg_marker1.ordenVista,
         )
-        self.dbMarkers[reg_marker1.id] = reg_marker1.save_dic()
-        self.dbMarkers[reg_marker2.id] = reg_marker2.save_dic()
+        self.db_markers[reg_marker1.id] = reg_marker1.save_dic()
+        self.db_markers[reg_marker2.id] = reg_marker2.save_dic()
         self.liPMarkers[fila1], self.liPMarkers[fila2] = (
             self.liPMarkers[fila2],
             self.liPMarkers[fila1],

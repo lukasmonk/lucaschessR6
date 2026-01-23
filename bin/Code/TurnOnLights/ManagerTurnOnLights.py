@@ -39,7 +39,7 @@ class ManagerTurnOnLights(Manager.Manager):
         self.av_seconds = self.block.av_seconds()
         if self.av_seconds:
             cat, ico = self.block.cqualification(self.calculation_mode)
-            self.lb_previous = '%s - %0.2f"' % (cat, self.av_seconds)
+            self.lb_previous = f'{cat} - {self.av_seconds:0.2f}"'
         else:
             self.lb_previous = None
         self.num_line = 0
@@ -61,7 +61,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
         self.main_window.active_game(True, False)
         self.main_window.remove_hints(True, True)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.show_side_indicator(True)
 
         self.reiniciando = False
@@ -70,10 +70,10 @@ class ManagerTurnOnLights(Manager.Manager):
 
     def pon_rotulos(self, next):
         r1 = _("Calculation mode") if self.calculation_mode else _("Memory mode")
-        r1 += "<br>%s" % self.line.label
+        r1 += f"<br>{self.line.label}"
 
         if self.lb_previous:
-            r1 += "<br><b>%s</b>" % self.lb_previous
+            r1 += f"<br><b>{self.lb_previous}</b>"
         if self.num_line:
             av_secs, txt = self.block.calc_current(
                 self.num_line - 1,
@@ -82,7 +82,7 @@ class ManagerTurnOnLights(Manager.Manager):
                 self.hints,
                 self.calculation_mode,
             )
-            r1 += '<br><b>%s: %s - %0.2f"' % (_("Current"), txt, av_secs)
+            r1 += f"<br><b>{_('Current')}: {txt} - {av_secs:0.2f}\""
         self.set_label1(r1)
         if next is not None:
             r2 = "<b>%d/%d</b>" % (self.num_line + next, self.num_lines)
@@ -193,7 +193,7 @@ class ManagerTurnOnLights(Manager.Manager):
                 self.ini_time = self.base_time
             self.activate_side(is_white)
             if self.calculation_mode:
-                self.board.setDispatchMove(self.dispatchMove)
+                self.board.set_dispatch_move(self.dispatchMove)
 
     def dispatchMove(self):
         if self.ini_time is None:
@@ -224,15 +224,15 @@ class ManagerTurnOnLights(Manager.Manager):
             txt_more_line = ""
             txt_more_global = ""
             if ant_tm is None or tm < ant_tm:
-                txt_more_time = '<span style="color:red">%s</span>' % _("New record")
+                txt_more_time = f"<span style=\"color:red\">{_('New record')}</span>"
                 done = self.tol.done_level()
                 if done and (not ant_done):
                     if not self.tol.islast_level():
-                        txt_more_line = "%s<hr>" % _("Open the next level")
+                        txt_more_line = f"{_('Open the next level')}<hr>"
                 if cat_level != ant_cat_level:
-                    txt_more_cat = '<span style="color:red">%s</span>' % _("New")
+                    txt_more_cat = f"<span style=\"color:red\">{_('New')}</span>"
                 if cat_global != ant_cat_global:
-                    txt_more_global = '<span style="color:red">%s</span>' % _("New")
+                    txt_more_global = f"<span style=\"color:red\">{_('New')}</span>"
 
             cErrores = (
                 '<tr><td align=right> %s </td><td> %d (x%d"=%d")</td></tr>'
@@ -260,13 +260,13 @@ class ManagerTurnOnLights(Manager.Manager):
                 "<hr><center><big>"
                 + _("You have finished this block of positions")
                 + "<hr><table>"
-                + '<tr><td align=right> %s </td><td> %0.2f"</td></tr>' % (_("Time used"), self.total_time_used)
+                + f"<tr><td align=right> {_('Time used')} </td><td> {self.total_time_used:0.2f}\"</td></tr>"
                 + cErrores
                 + cAyudas
-                + '<tr><td align=right> %s: </td><td> %0.2f" %s</td></tr>' % (_("Time assigned"), ta, txt_more_time)
+                + f"<tr><td align=right> {_('Time assigned')}: </td><td> {ta:0.2f}\" {txt_more_time}</td></tr>"
                 + "<tr><td align=right> %s: </td><td> %d</td></tr>" % (_("Total moves"), num_moves)
-                + '<tr><td align=right> %s: </td><td> %0.2f"</td></tr>' % (_("Average time"), tm)
-                + "<tr><td align=right> %s: </td><td> %s</td></tr>" % (_("Block qualification"), cat_block)
+                + f"<tr><td align=right> {_('Average time')}: </td><td> {tm:0.2f}\"</td></tr>"
+                + f"<tr><td align=right> {_('Block qualification')}: </td><td> {cat_block}</td></tr>"
                 + "<tr><td align=right> %s: </td><td> %s %s</td></tr>"
                 % (_("Level qualification"), cat_level, txt_more_cat)
                 + "<tr><td align=right> %s: </td><td> %s %s</td></tr>"
@@ -295,7 +295,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
         self.set_toolbar(li_options)
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         if self.ini_time is None:
             self.ini_time = self.base_time
         end_time = time.time()
@@ -305,7 +305,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
         movimiento = move.movimiento().lower()
         if movimiento == self.line.get_move(self.num_move).lower():
-            self.move_the_pieces(move.liMovs)
+            self.move_the_pieces(move.list_piece_moves)
             self.add_move(move, True)
             self.error = ""
             self.total_time_used += end_time - self.ini_time
@@ -329,7 +329,7 @@ class ManagerTurnOnLights(Manager.Manager):
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         self.add_move(move, False)
-        self.move_the_pieces(move.liMovs, True)
+        self.move_the_pieces(move.list_piece_moves, True)
         self.error = ""
 
     def get_help(self):
@@ -353,10 +353,10 @@ class ManagerTurnOnLights(Manager.Manager):
         return False
 
     def current_pgn(self):
-        resp = '[Event "%s"]\n' % _("Turn on the lights")
-        resp += '[Site "%s"]\n' % self.line.label.replace("<br>", " ").strip()
-        resp += '[FEN "%s"\n' % self.game.first_position.fen()
+        resp = f"[Event \"{_('Turn on the lights')}\"]\n"
+        resp += f"[Site \"{self.line.label.replace('<br>', ' ').strip()}\"]\n"
+        resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
-        resp += "\n" + self.game.pgn_base()
+        resp += f"\n{self.game.pgn_base()}"
 
         return resp

@@ -4,7 +4,7 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import CPU, ControlPGN, TimeControl, Util
+from Code.Z import ControlPGN, CPU, TimeControl, Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     BLACK,
@@ -38,8 +38,8 @@ class Worker(QtWidgets.QWidget):
     grid_pgn: Grid.Grid
     lb_player: dict
     lb_clock: dict
-    lbRotulo2: Controles.LB
-    lbRotulo3: Controles.LB
+    lb_rotulo2: Controles.LB
+    lb_rotulo3: Controles.LB
     seconds_per_move: int
     max_seconds: int
     xmatch = None
@@ -62,8 +62,8 @@ class Worker(QtWidgets.QWidget):
 
         conf_board = Code.configuration.config_board(run_worker.key_video, 36)
         self.board = Board.Board(self, conf_board)
-        self.board.crea()
-        Delegados.genera_pm(self.board.piezas)
+        self.board.draw_window()
+        Delegados.genera_pm(self.board.pieces)
 
         ct = self.board.config_board
         self.antiguoAnchoPieza = ct.width_piece()
@@ -143,11 +143,11 @@ class Worker(QtWidgets.QWidget):
             n_ancho_color,
             edicion=Delegados.EtiquetaPGN(False if with_figurines else None),
         )
-        self.grid_pgn = Grid.Grid(self, o_columnas, siCabeceraMovible=False)
+        self.grid_pgn = Grid.Grid(self, o_columnas, is_column_header_movable=False)
         self.grid_pgn.setMinimumWidth(n_ancho_pgn)
         self.grid_pgn.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.grid_pgn.font_type(puntos=configuration.x_pgn_fontpoints)
-        self.grid_pgn.ponAltoFila(configuration.x_pgn_rowheight)
+        self.grid_pgn.set_height_row(configuration.x_pgn_rowheight)
 
         # # Blancas y negras
         f = Controles.FontType(puntos=configuration.x_sizefont_players, peso=75)
@@ -165,17 +165,17 @@ class Worker(QtWidgets.QWidget):
 
         self.lb_clock = {}
         for side in (WHITE, BLACK):
-            self.lb_clock[side] = Controles.LB(self, "00:00").set_font(f).align_center().anchoMinimo(n_ancho_labels)
+            self.lb_clock[side] = Controles.LB(self, "00:00").set_font(f).align_center().minimum_width(n_ancho_labels)
             self.lb_clock[side].setFrameStyle(QtWidgets.QFrame.Shape.Box | QtWidgets.QFrame.Shadow.Raised)
             self.configuration.set_property(self.lb_clock[side], "clock")
 
         # Rotulos de informacion
         f = Controles.FontType(puntos=configuration.x_pgn_fontpoints)
-        self.lbRotulo2 = Controles.LB(self)
-        self.lbRotulo2.setStyleSheet("border: 1px solid gray;")
-        self.lbRotulo3 = Controles.LB(self).set_wrap().set_fixed_lines(2).set_font(f).align(top=True)
-        self.lbRotulo2.set_text("")
-        self.lbRotulo2.hide()
+        self.lb_rotulo2 = Controles.LB(self)
+        self.lb_rotulo2.setStyleSheet("border: 1px solid gray;")
+        self.lb_rotulo3 = Controles.LB(self).set_wrap().set_fixed_lines(2).set_font(f).align(top=True)
+        self.lb_rotulo2.set_text("")
+        self.lb_rotulo2.hide()
 
         # Layout
         ly_color = Colocacion.G()
@@ -184,14 +184,14 @@ class Worker(QtWidgets.QWidget):
 
         # Abajo
         ly_abajo = Colocacion.V()
-        ly_abajo.control(self.lbRotulo3)
+        ly_abajo.control(self.lb_rotulo3)
 
         ly_v = (
             Colocacion.V()
             .otro(ly_color)
             .control(self.grid_pgn)
-            .control(self.lbRotulo2)
-            .control(self.lbRotulo3)
+            .control(self.lb_rotulo2)
+            .control(self.lb_rotulo3)
             .margen(3)
         )
 
@@ -219,7 +219,7 @@ class Worker(QtWidgets.QWidget):
         self.configurar()
 
     def crea_adjudicator(self):
-        engine = Code.configuration.engines.search(self.run_worker.adjudicator)
+        engine = Code.configuration.engines.search(self.run_worker.move_evaluator)
 
         run_engine_params = EngineRun.RunEngineParams()
         run_engine_params.update(engine, int(self.run_worker.adjudicator_time * 1000), 0, 0, 1)
@@ -233,7 +233,7 @@ class Worker(QtWidgets.QWidget):
         except sqlite3.IntegrityError:
             self.xmatch = None
         if self.xmatch is None:
-            self.terminar()
+            self.finalize()
             return
         self.procesa_match()
         if not self.is_closed:
@@ -306,9 +306,9 @@ class Worker(QtWidgets.QWidget):
             if h > h_max:
                 h_max = h
         for side in (WHITE, BLACK):
-            self.lb_player[side].altoFijo(h_max)
+            self.lb_player[side].fixed_height(h_max)
 
-        time_control = "%d" % int(self.max_seconds)
+        time_control = f"{int(self.max_seconds)}"
         if self.seconds_per_move:
             time_control += "+%d" % self.seconds_per_move
         self.game.set_tag("TimeControl", time_control)
@@ -352,7 +352,7 @@ class Worker(QtWidgets.QWidget):
 
         self.run_worker.put_match_done(self.game)
 
-    def terminar(self):
+    def finalize(self):
         self.is_closed = True
 
         self.analysis_bar.activate(False)
@@ -364,11 +364,11 @@ class Worker(QtWidgets.QWidget):
         self.is_closed = True
         Code.list_engine_managers.close_all()
         self.run_worker.cancel_match()
-        self.terminar()
+        self.finalize()
 
     def closeEvent(self, event):
         self.cancel_match()
-        self.terminar()
+        self.finalize()
 
     def pausa(self):
         self.pause_clock(self.current_side)
@@ -428,7 +428,7 @@ class Worker(QtWidgets.QWidget):
 
     def set_clock_label(self, side, tm, tm2):
         if tm2 is not None:
-            tm += '<br><FONT SIZE="-4">' + tm2
+            tm += f"<br><FONT SIZE=\"-4\">{tm2}"
         self.lb_clock[side].set_text(tm)
 
     def set_clock_white(self, tm, tm2):
@@ -446,13 +446,13 @@ class Worker(QtWidgets.QWidget):
             if opening:
                 nom_opening = opening.tr_name
                 if opening.eco:
-                    nom_opening += " (%s)" % opening.eco
-                self.lbRotulo2.set_text(nom_opening)
-                self.lbRotulo2.show()
+                    nom_opening += f" ({opening.eco})"
+                self.lb_rotulo2.set_text(nom_opening)
+                self.lb_rotulo2.show()
         else:
-            self.lbRotulo2.hide()
+            self.lb_rotulo2.hide()
 
-        self.board.borraMovibles()
+        self.board.remove_movables()
         self.board.put_arrow_sc(move.from_sq, move.to_sq)
         self.grid_pgn.refresh()
         self.grid_pgn.gobottom(2 if self.game.last_position.is_white else 1)
@@ -492,7 +492,7 @@ class Worker(QtWidgets.QWidget):
         return True
 
     def play_next_move(self):
-        if self.test_is_finished():
+        if self.check_is_finished():
             return False
 
         self.current_side = is_white = self.game.is_white()
@@ -510,7 +510,7 @@ class Worker(QtWidgets.QWidget):
         self.start_clock(is_white)
         rm = engine_manager.play(game=self.game, dispacher=self.gui_dispatch)
         if self.state == ST_PAUSE:
-            self.board.borraMovibles()
+            self.board.remove_movables()
             return True
         time_seconds = self.stop_clock(is_white)
         clock_seconds = self.tc_white.pending_time if is_white else self.tc_black.pending_time
@@ -536,7 +536,7 @@ class Worker(QtWidgets.QWidget):
         if clock_seconds:
             move.set_clock_ms(clock_seconds * 1000.0)
         self.add_move(move)
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
         self.sound(move)
 
         return True
@@ -550,16 +550,16 @@ class Worker(QtWidgets.QWidget):
             if self.configuration.x_sound_move:
                 run_sound.play_list(move.sounds_list())
             if self.configuration.x_sound_beep:
-                run_sound.playBeep()
+                run_sound.play_beep()
 
     def sudden_end(self, is_white):
         result = RESULT_WIN_BLACK if is_white else RESULT_WIN_WHITE
         self.game.set_termination(TERMINATION_ENGINE_MALFUNCTION, result)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, grid, row, obj_column):
         control_pgn = self.pgn
 
-        col = o_column.key
+        col = obj_column.key
         if col == "NUMBER":
             return control_pgn.dato(row, col)
 
@@ -589,7 +589,7 @@ class Worker(QtWidgets.QWidget):
                 pts = rm.puntos
                 if not si_w:
                     pts = -pts
-                info = "%+0.2f" % float(pts / 100.0)
+                info = f"{float(pts / 100.0):+0.2f}"
 
             nag, color_nag = mrm.set_nag_color(rm)
             st_nags.add(nag)
@@ -608,12 +608,8 @@ class Worker(QtWidgets.QWidget):
             p = Game.Game(self.game.last_position)
             p.read_pv(rm.pv)
             rm.is_white = self.game.last_position.is_white
-            txt = "<b>[%s]</b> (%s) %s" % (
-                rm.name,
-                rm.abbrev_text(),
-                p.pgn_translated(),
-            )
-            self.lbRotulo3.set_text(txt)
+            txt = f"<b>[{rm.name}]</b> ({rm.abbrev_text()}) {p.pgn_translated()}"
+            self.lb_rotulo3.set_text(txt)
             self.show_pv(rm.pv, 1)
         return self.set_clock()
 
@@ -626,7 +622,7 @@ class Worker(QtWidgets.QWidget):
             return True
         return False
 
-    def test_is_finished(self):
+    def check_is_finished(self):
         if self.clocks_finished():
             return True
 
@@ -664,18 +660,17 @@ class Worker(QtWidgets.QWidget):
         # Draw
         dr = self.run_worker.draw_range
         dmp = self.run_worker.draw_min_ply
-        if dmp and dr > 0 and num_moves >= dmp:
-            if abs(p_ult) <= dr and abs(p_ant) <= dr:
-                p_tut = adjudicator_score()
-                if abs(p_tut) <= dr:
-                    self.game.set_termination(TERMINATION_ADJUDICATION, RESULT_DRAW)
-                    return True
-                return False
+        if dmp and dr > 0 and num_moves >= dmp and (abs(p_ult) <= dr and abs(p_ant) <= dr):
+            p_tut = adjudicator_score() if self.manager_adjudicator else 0
+            if abs(p_tut) <= dr:
+                self.game.set_termination(TERMINATION_ADJUDICATION, RESULT_DRAW)
+                return True
+            return False
 
         # Resign
         rs = self.run_worker.resign
         if 0 < rs <= abs(p_ult) or 0 < rs <= abs(p_ant):
-            p_tut = adjudicator_score()
+            p_tut = adjudicator_score() if self.manager_adjudicator else rs  # si no hay manager que pase el control
             if abs(p_tut) >= rs:
                 is_white = self.game.last_position.is_white
                 if p_tut > 0:
@@ -714,7 +709,7 @@ class Worker(QtWidgets.QWidget):
             for movim in li_movs:
                 if movim[0] == "b":
                     n = cpu.wait(seconds * 0.80 / rapidez)
-                    cpu.remove_piece(movim[1], padre=n)
+                    cpu.remove_piece(movim[1], father=n)
 
             # tercero los cambios
             for movim in li_movs:

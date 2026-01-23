@@ -1,6 +1,8 @@
 import time
+from pathlib import Path
+from typing import Optional, Dict, List, Any
 
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GT_OPENING_LINES,
@@ -22,11 +24,35 @@ from Code.QT import Iconos, QTMessages
 
 
 class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
-    def start(self, pathFichero, modo, num_linea):
-        self.board.saveVisual()
+    file_path: Optional[Path] = None
+    dbop: Optional[OpeningLines.Opening] = None
+    game_type: str = ""
+    modo: str = ""
+    training: Optional[Dict[str, Any]] = None
+    liGames: Optional[List[Dict[str, Any]]] = None
+    num_linea: int = 0
+    game_info: Optional[Dict[str, Any]] = None
+    li_pv: Optional[List[str]] = None
+    numPV: int = 0
+    dict_fenm2: Optional[Dict[str, List[str]]] = None
+    dic_comments: Optional[Dict] = None
+    li_mens_basic: List[str] = []
+    with_help: bool = False
+    hints: int = 9999
+    is_human_side_white: bool = False
+    is_engine_side_white: bool = False
+    game: Optional[Game.Game] = None
+    errores: int = 0
+    ini_time: float = 0.0
+    tm: int = 0
+    rm_rival: Optional[EngineResponse.EngineResponse] = None
+    error: str
 
-        self.pathFichero = pathFichero
-        dbop = OpeningLines.Opening(pathFichero)
+    def start(self, file_path, modo, num_linea):
+        self.board.save_visual_state()
+
+        self.file_path = file_path
+        dbop = OpeningLines.Opening(file_path)
         self.board.dbvisual_set_file(dbop.path_file)
         self.reinicio(dbop, modo, num_linea)
 
@@ -38,27 +64,27 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         self.num_linea = num_linea
 
         self.training = self.dbop.training()
-        self.liGames = self.training["LIGAMES_%s" % modo.upper()]
+        self.liGames = self.training[f"LIGAMES_{modo.upper()}"]
         self.game_info = self.liGames[num_linea]
         self.li_pv = self.game_info["LIPV"]
         self.numPV = len(self.li_pv)
 
-        self.calc_totalTiempo()
+        self.calc_total_time()
 
-        self.dicFENm2 = self.training["DICFENM2"]
+        self.dict_fenm2 = self.training["DICFENM2"]
         self.dic_comments = self.dbop.dic_fen_comments()
 
         li = self.dbop.get_numlines_pv(self.li_pv)
         if len(li) > 10:
-            mens_lines = ",".join(["%d" % line for line in li[:10]]) + ", ..."
+            mens_lines = f"{','.join([str(line) for line in li[:10]])}, ..."
         else:
-            mens_lines = ",".join(["%d" % line for line in li])
-        self.liMensBasic = []
+            mens_lines = ",".join([str(line) for line in li])
+        self.li_mens_basic = []
         if self.modo != "sequential":
-            self.liMensBasic.append("%d/%d" % (self.num_linea + 1, len(self.liGames)))
-        self.liMensBasic.append("%s: %s" % (_("Lines") if len(li) > 1 else _("Line"), mens_lines))
+            self.li_mens_basic.append(f"{self.num_linea + 1}/{len(self.liGames)}")
+        self.li_mens_basic.append(f"{_('Lines') if len(li) > 1 else _('Line')}: {mens_lines}")
 
-        self.siAyuda = False
+        self.with_help = False
         self.board.dbvisual_set_show_always(False)
 
         self.game = Game.Game()
@@ -70,7 +96,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
 
         self.tb_with_comments([TB_CLOSE, TB_ADVICE, TB_REINIT])
         self.main_window.active_game(True, False)
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.remove_hints()
@@ -88,23 +114,22 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         self.show_labels()
         self.play_next_move()
 
-    def calc_totalTiempo(self):
+    def calc_total_time(self):
         self.tm = 0
         for game_info in self.liGames:
             for tr in game_info["TRIES"]:
                 self.tm += tr["TIME"]
 
     def get_help(self):
-        self.siAyuda = True
+        self.with_help = True
         self.board.dbvisual_set_show_always(True)
 
         self.show_help()
         self.show_labels()
 
     def show_labels(self):
-        li = []
-        li.append("%s: %d" % (_("Errors"), self.errores))
-        if self.siAyuda:
+        li = [f"{_('Errors')}: {self.errores}"]
+        if self.with_help:
             li.append(_("Help activated"))
         self.set_label1("\n".join(li))
 
@@ -112,25 +137,25 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         for tr in self.game_info["TRIES"]:
             tgm += tr["TIME"]
 
-        mens = "\n" + "\n".join(self.liMensBasic)
-        mens += "\n%s:\n    %s %s\n    %s %s" % (
-            _("Working time"),
-            time.strftime("%H:%M:%S", time.gmtime(tgm)),
-            _("Current"),
-            time.strftime("%H:%M:%S", time.gmtime(self.tm)),
-            _("Total"),
+        mens = f"\n{'\n'.join(self.li_mens_basic)}\n"
+        mens += (
+            f"\n{_('Working time')}:\n"
+            f"    {time.strftime('%H:%M:%S', time.gmtime(tgm))}\n"
+            f"{_('Current')}:\n"
+            f"    {time.strftime('%H:%M:%S', time.gmtime(self.tm))}\n"
+            f"{_('Total')}:\n"
         )
 
         self.set_label2(mens)
 
-    def game_finished(self, is_complete):
+    def game_finished(self, is_complete: bool) -> None:
         self.state = ST_ENDGAME
         tm = time.time() - self.ini_time
         li = [_("Line completed")]
-        if self.siAyuda:
+        if self.with_help:
             li.append(_("Help activated"))
         if self.errores > 0:
-            li.append("%s: %d" % (_("Errors"), self.errores))
+            li.append(f"{_('Errors')}: {self.errores}")
 
         if is_complete:
             mensaje = "\n".join(li)
@@ -138,7 +163,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         dictry = {
             "DATE": Util.today(),
             "TIME": tm,
-            "AYUDA": self.siAyuda,
+            "AYUDA": self.with_help,
             "ERRORS": self.errores,
         }
         self.game_info["TRIES"].append(dictry)
@@ -146,7 +171,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         for move in self.game.li_moves:
             fenm2 = move.position.fenm2()
             if fenm2 in self.dic_comments:
-                reg = self.dic_comments[fenm2]
+                reg: dict = self.dic_comments[fenm2]
                 if "COMENTARIO" in reg:
                     move.set_comment(reg["COMENTARIO"])
                 if "VENTAJA" in reg:
@@ -155,14 +180,14 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
                     move.add_nag(reg["VALORACION"])
         self.pgn_refresh(self.is_human_side_white)
 
-        sinError = self.errores == 0 and not self.siAyuda
+        sin_error = self.errores == 0 and not self.with_help
         if is_complete:
-            if sinError:
+            if sin_error:
                 self.game_info["NOERROR"] += 1
                 if self.modo == "sequential":
-                    liNuevo = self.liGames[1:]
-                    liNuevo.append(self.game_info)
-                    self.training["LIGAMES_SEQUENTIAL"] = liNuevo
+                    li_nuevo = self.liGames[1:]
+                    li_nuevo.append(self.game_info)
+                    self.training["LIGAMES_SEQUENTIAL"] = li_nuevo
                     self.main_window.pon_toolbar((TB_CLOSE, TB_NEXT))
                 else:
                     self.set_toolbar((TB_CLOSE, TB_REINIT, TB_CONFIG, TB_UTILITIES))
@@ -171,24 +196,24 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
 
                 self.set_toolbar((TB_CLOSE, TB_REINIT, TB_CONFIG, TB_UTILITIES))
         else:
-            if not sinError:
+            if not sin_error:
                 self.game_info["NOERROR"] -= 1
         self.game_info["NOERROR"] = max(0, self.game_info["NOERROR"])
 
-        self.dbop.setTraining(self.training)
+        self.dbop.set_training(self.training)
         self.state = ST_ENDGAME
-        self.calc_totalTiempo()
+        self.calc_total_time()
         self.show_labels()
 
-    def show_help(self):
+    def show_help(self) -> None:
         pv = self.li_pv[len(self.game)]
         self.board.show_arrow_mov(pv[:2], pv[2:4], "mt", opacity=0.80)
         fenm2 = self.game.last_position.fenm2()
-        for pv1 in self.dicFENm2[fenm2]:
+        for pv1 in self.dict_fenm2[fenm2]:
             if pv1 != pv:
                 self.board.show_arrow_mov(pv1[:2], pv1[2:4], "ms", opacity=0.40)
 
-    def run_action(self, key):
+    def run_action(self, key: str) -> None:
         if key == TB_CLOSE:
             self.end_game()
 
@@ -213,26 +238,26 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         else:
             self.routine_default(key)
 
-    def final_x(self):
+    def final_x(self) -> bool:
         return self.end_game()
 
-    def end_game(self):
+    def end_game(self) -> bool:
         self.dbop.close()
-        self.board.restoreVisual()
+        self.board.restore_visual_state()
         self.procesador.start()
         if self.modo == "static":
-            self.procesador.openings_training_static(self.pathFichero)
+            self.procesador.openings_training_static(self.file_path)
         else:
-            self.procesador.openings()
+            self.procesador.openings_lines()
         return False
 
-    def reiniciar(self):
+    def reiniciar(self) -> None:
         if len(self.game) > 0 and self.state != ST_ENDGAME:
             self.game_finished(False)
         self.main_window.active_information_pgn(False)
         self.reinicio(self.dbop, self.modo, self.num_linea)
 
-    def play_next_move(self):
+    def play_next_move(self) -> None:
         self.show_labels()
         if self.state == ST_ENDGAME:
             return
@@ -247,7 +272,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         self.set_side_indicator(is_white)
         self.refresh()
 
-        siRival = is_white == self.is_engine_side_white
+        si_rival = is_white == self.is_engine_side_white
 
         num_moves = len(self.game)
         if num_moves >= self.numPV:
@@ -255,7 +280,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
             return
         pv = self.li_pv[num_moves]
 
-        if siRival:
+        if si_rival:
             self.disable_all()
 
             self.rm_rival = EngineResponse.EngineResponse("Opening", self.is_engine_side_white)
@@ -269,24 +294,24 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         else:
             self.activate_side(is_white)
             self.human_is_playing = True
-            # if self.siAyuda:
+            # if self.with_help:
             #     self.show_help()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             self.beep_error()
             return False
         if promotion:
             pass
-        pvSel = move.movimiento().lower()
-        pvObj = self.li_pv[len(self.game)]
+        pv_sel = move.movimiento().lower()
+        pv_obj = self.li_pv[len(self.game)]
 
-        if pvSel != pvObj:
+        if pv_sel != pv_obj:
             self.beep_error()
             fenm2 = move.position_before.fenm2()
-            li = self.dicFENm2.get(fenm2, set())
-            if pvSel in li:
+            li = self.dict_fenm2.get(fenm2, set())
+            if pv_sel in li:
                 mens = _("You have selected a correct move, but this line uses another one.")
                 QTMessages.temporary_message(
                     self.main_window,
@@ -299,7 +324,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
                 return False
 
             self.errores += 1
-            mens = "%s: %d" % (_("Error"), self.errores)
+            mens = f"{_('Error')}: {self.errores}"
             QTMessages.temporary_message(
                 self.main_window,
                 mens,
@@ -313,7 +338,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
             return False
 
         self.add_move(move, True)
-        self.move_the_pieces(move.liMovs)
+        self.move_the_pieces(move.list_piece_moves)
 
         self.play_next_move()
         return True
@@ -327,7 +352,7 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
             self.add_move(move, False)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
 
             self.error = ""
 

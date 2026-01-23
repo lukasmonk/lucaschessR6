@@ -63,7 +63,7 @@ class BodenMate(CheckTheme.CheckTheme):
             drow = 1 if row_destino > row_origen else -1
             dcol = 1 if col_destino > col_origen else -1
 
-            # Recorrer la diagonal para buscar piezas bloqueadoras
+            # Recorrer la diagonal para buscar pieces bloqueadoras
             row_actual, col_actual = row_origen + drow, col_origen + dcol
             while (row_actual, col_actual) != (row_destino, col_destino):
                 cr = self.col_row_cr(col_actual, row_actual)

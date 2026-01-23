@@ -20,7 +20,7 @@ class EnginesMenu(BaseMenu.RootMenu):
         label = _("Save engines log")
         if is_engines_log_active:
             icono = Iconos.LogActive()
-            label += " ...%s" % _("Working...")
+            label += f" ...{_('Working...')}"
             key = "log_close"
         else:
             icono = Iconos.LogInactive()

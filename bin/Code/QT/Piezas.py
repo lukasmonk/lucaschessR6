@@ -6,7 +6,8 @@ from PySide6 import QtCore, QtGui, QtSvg
 from PySide6.QtSvgWidgets import QSvgWidget
 
 import Code
-from Code import Util
+import itertools
+from Code.Z import Util
 from Code.Base.Constantes import BLINDFOLD_BLACK, BLINDFOLD_CONFIG, BLINDFOLD_WHITE
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs
 from Code.Translations import TrListas
@@ -38,7 +39,7 @@ class ConjuntoPiezas:
                 fich = Code.path_resource(
                     "Pieces",
                     name,
-                    "%s%s.svg" % ("w" if pieza.isupper() else "b", pieza.lower()),
+                    f"{'w' if pieza.isupper() else 'b'}{pieza.lower()}.svg",
                 )
                 with open(fich, "rb") as f:
                     qb = QtCore.QByteArray(f.read())
@@ -85,6 +86,10 @@ class ConjuntoPiezas:
     def cursor(self, pieza):
         return QtGui.QCursor(self.pixmap(pieza))
 
+    def change_set(self, new):
+        self.name = new
+        self.dic_pieces = self.read_pieces(new)
+
 
 class AllPieces:
     def __init__(self):
@@ -105,19 +110,10 @@ class AllPieces:
         return QtGui.QIcon(pm)
 
     def pixmap(self, pieza, name, width):
-        fich = Code.path_resource(
-            "Pieces",
-            name,
-            "%s%s.svg" % ("w" if pieza.isupper() else "b", pieza.lower()),
-        )
-        try:
-            with open(fich, "rb") as f:
-                qb = QtCore.QByteArray(f.read())
-        except FileNotFoundError:
-            return self.icono(pieza, DEFAULT_PIECES)
+        fich = Code.path_resource("Pieces", name, f'{"w" if pieza.isupper() else "b"}{pieza.lower()}.svg')
         pm = QtGui.QPixmap(width, width)
         pm.fill(QtCore.Qt.GlobalColor.transparent)
-        render = QtSvg.QSvgRenderer(qb)
+        render = QtSvg.QSvgRenderer(fich)
         painter = QtGui.QPainter()
         painter.begin(pm)
         render.render(painter)
@@ -135,23 +131,17 @@ class AllPieces:
             name = DEFAULT_PIECES
         folder_to_save = Code.configuration.paths.folder_pieces_png()
 
-        for pieza in "pnbrqk":
-            for color in "wb":
-                fich = Code.path_resource("Pieces", name, "%s%s.svg" % (color, pieza))
-                try:
-                    with open(fich, "rb") as f:
-                        qb = QtCore.QByteArray(f.read())
-                except FileNotFoundError:
-                    return self.save_all_png(DEFAULT_PIECES, px)
-                pm = QtGui.QPixmap(px, px)
-                pm.fill(QtCore.Qt.GlobalColor.transparent)
-                render = QtSvg.QSvgRenderer(qb)
-                painter = QtGui.QPainter()
-                painter.begin(pm)
-                render.render(painter)
-                painter.end()
-                path = Util.opj(folder_to_save, f"{color}{pieza}.png")
-                pm.save(path, "PNG")
+        for pieza, color in itertools.product("pnbrqk", "wb"):
+            path_file = Code.path_resource("Pieces", name, f"{color}{pieza}.svg")
+            render = QtSvg.QSvgRenderer(path_file)
+            painter = QtGui.QPainter()
+            pm = QtGui.QPixmap(px, px)
+            pm.fill(QtCore.Qt.GlobalColor.transparent)
+            painter.begin(pm)
+            render.render(painter)
+            painter.end()
+            path = Util.opj(folder_to_save, f"{color}{pieza}.png")
+            pm.save(path, "PNG")
 
 
 HIDE, GREY, CHECKER, SHOW = range(4)
@@ -174,7 +164,7 @@ class BlindfoldConfig:
         tipo = self.dic_pieces[pz_t]
         if tipo == SHOW:
             pz = ("w" if is_white else "b") + pz
-            return Code.path_resource("Pieces", self.nom_pieces_ori, pz + ".svg")
+            return Code.path_resource("Pieces", self.nom_pieces_ori, f"{pz}.svg")
         if tipo == HIDE:
             fich = "h"
         elif tipo == GREY:
@@ -200,16 +190,16 @@ class BlindfoldConfig:
         return [k[1:] for k in self.dic_pieces if k.startswith("_")]
 
     def remove(self, name):
-        del self.dic_pieces["_" + name]
+        del self.dic_pieces[f"_{name}"]
         Code.configuration.write_variables("BLINDFOLD", self.dic_pieces)
 
     def add_current(self, name):
         kdic = {k: v for k, v in self.dic_pieces.items() if not k.startswith("_")}
-        self.dic_pieces["_" + name] = kdic
+        self.dic_pieces[f"_{name}"] = kdic
         Code.configuration.write_variables("BLINDFOLD", self.dic_pieces)
 
     def saved(self, name):
-        return self.dic_pieces["_" + name]
+        return self.dic_pieces[f"_{name}"]
 
 
 class Blindfold(ConjuntoPiezas):
@@ -227,7 +217,7 @@ class Blindfold(ConjuntoPiezas):
         for pieza in "rnbqkpRNBQKP":
             fich = Util.opj(
                 self.carpetaBF,
-                "%s%s.svg" % ("w" if pieza.isupper() else "b", pieza.lower()),
+                f"{'w' if pieza.isupper() else 'b'}{pieza.lower()}.svg",
             )
             with open(fich, "rb") as f:
                 qb = QtCore.QByteArray(f.read())
@@ -255,7 +245,7 @@ class Blindfold(ConjuntoPiezas):
             for pieza in "rnbqkp":
                 ori = self.config_bf.base_file(pieza, siWhite)
                 bs = "w" if siWhite else "b"
-                dest = Util.opj(self.carpetaBF, "%s%s.svg" % (bs, pieza))
+                dest = Util.opj(self.carpetaBF, f"{bs}{pieza}.svg")
                 shutil.copy(ori, dest)
 
         self.dic_pieces = self.read_pieces()
@@ -264,7 +254,7 @@ class Blindfold(ConjuntoPiezas):
 class WBlindfold(LCDialog.LCDialog):
     def __init__(self, owner, nom_pieces_ori):
 
-        titulo = _("Blindfold chess") + " - " + _("Configuration")
+        titulo = f"{_('Blindfold chess')} - {_('Configuration')}"
         icono = Iconos.Ojo()
         extparam = "wblindfold"
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
@@ -330,7 +320,7 @@ class WBlindfold(LCDialog.LCDialog):
             ly.control(cb_pz_b, row, 4)
             row += 1
 
-        ly.filaVacia(row, 20)
+        ly.empty_row(row, 20)
         row += 1
 
         ly.controld(bt_all_w, row, 0, 1, 2)
@@ -385,13 +375,13 @@ class WBlindfold(LCDialog.LCDialog):
                     cb_pz_b.set_value(dpz[pz])
                 self.reset()
             else:
-                li_gen = [(None, None), (_("Name") + ":", "")]
+                li_gen = [(None, None), (f"{_('Name')}:", "")]
 
                 resultado = FormLayout.fedit(
                     li_gen,
                     title=_("Save current configuration"),
                     parent=self,
-                    anchoMinimo=460,
+                    minimum_width=460,
                     icon=Iconos.TutorialesCrear(),
                 )
                 if resultado is None:
@@ -446,7 +436,7 @@ class WBlindfold(LCDialog.LCDialog):
     #                 li_gen,
     #                 title=_("Save current configuration"),
     #                 parent=self,
-    #                 anchoMinimo=460,
+    #                 minimum_width=460,
     #                 icon=Iconos.TutorialesCrear(),
     #             )
     #             if resultado is None:

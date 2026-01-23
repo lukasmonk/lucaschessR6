@@ -29,7 +29,7 @@ class WTurnOnLights(LCDialog.LCDialog):
             self.tol = TurnOnLights.read_tol(name, title, folder, li_tam_blocks)
         self.reinit = False
 
-        titulo = _("Turn on the lights") + ": " + title
+        titulo = f"{_('Turn on the lights')}: {title}"
         if self.tol.is_calculation_mode():
             tipo = _("Calculation mode")
             background = "#88AA3A"
@@ -49,7 +49,7 @@ class WTurnOnLights(LCDialog.LCDialog):
 
         # Toolbar
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         anterior, siguiente, terminado = self.tol.prev_next()
         if anterior:
             tb.new(_("Previous"), Iconos.Anterior(), self.goto_previous)
@@ -66,9 +66,9 @@ class WTurnOnLights(LCDialog.LCDialog):
         o_columns.nueva("THEME", _("Level %d/%d") % (work_level, self.tol.num_levels), 175)
 
         edicion_iconos = Delegados.PmIconosColor()
-        self.dicIconos = {}
+        self.dict_icons = {}
         for k, pm in edicion_iconos.dicpmIconos.items():
-            self.dicIconos[k] = QtGui.QIcon(pm)
+            self.dict_icons[k] = QtGui.QIcon(pm)
 
         for x in range(self.tol.num_blocks):
             o_columns.nueva(
@@ -79,10 +79,10 @@ class WTurnOnLights(LCDialog.LCDialog):
                 edicion=edicion_iconos,
             )
 
-        self.grid = grid = Grid.Grid(self, o_columns, altoFila=42, background="white")
+        self.grid = grid = Grid.Grid(self, o_columns, heigh_row=42, background="white")
         self.grid.setAlternatingRowColors(False)
         self.grid.font_type(puntos=10, peso=500)
-        n_ancho_pgn = self.grid.anchoColumnas() + 20
+        n_ancho_pgn = self.grid.width_columns_displayables() + 20
         self.grid.setMinimumWidth(n_ancho_pgn)
         self.register_grid(grid)
 
@@ -94,29 +94,29 @@ class WTurnOnLights(LCDialog.LCDialog):
         alto = self.tol.num_themes * 42 + 146
         self.restore_video(with_tam=True, default_height=alto, default_width=max(n_ancho_pgn, 480))
 
-    def terminar(self):
+    def finalize(self):
         self.save_video()
         self.reject()
 
     def grid_num_datos(self, grid):
         return self.tol.num_themes
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        col = obj_column.key
         if col == "THEME":
-            return "  " + self.tol.nom_theme(row)
+            return f"  {self.tol.nom_theme(row)}"
         elif col.startswith("BLOCK"):
             block = int(col[5:])
             return self.tol.val_block(row, block)
 
-    def grid_color_fondo(self, grid, row, o_column):
-        col = o_column.key
+    def grid_color_fondo(self, grid, row, obj_column):
+        col = obj_column.key
         if col == "THEME":
             return self.colorTheme
         return None
 
-    def grid_doble_click(self, grid, row, o_column):
-        col = o_column.key
+    def grid_doble_click(self, grid, row, obj_column):
+        col = obj_column.key
         if col.startswith("BLOCK"):
             block = int(col[5:])
             self.num_theme = row
@@ -124,8 +124,8 @@ class WTurnOnLights(LCDialog.LCDialog):
             self.save_video()
             self.accept()
 
-    def grid_right_button(self, grid, row, o_column, modificadores):
-        col = o_column.key
+    def grid_right_button(self, grid, row, obj_column, modificadores):
+        col = obj_column.key
         num_theme = row
         if col.startswith("BLOCK"):
             num_block = int(col[5:])
@@ -198,7 +198,7 @@ class WTurnOnLights(LCDialog.LCDialog):
                     time_used,
                     txt,
                 ),
-                self.dicIconos[ico],
+                self.dict_icons[ico],
             )
             tt += time_used
             te += errores
@@ -304,10 +304,10 @@ class WTurnOnLights(LCDialog.LCDialog):
         snum = str(num)
         think_mode = self.tol.is_calculation_mode()
         for txt, key, secs, secsThink in TurnOnLights.QUALIFICATIONS:
-            label = '%s < %0.2f"' % (_F(txt), secsThink if think_mode else secs)
+            label = f'{_F(txt)} < {(secsThink if think_mode else secs):0.2f}"'
             if key == snum and not ultimo:
-                label += " = %s" % _("Minimum to access next level")
-            menu.opcion(None, label, self.dicIconos[key])
+                label += f" = {_('Minimum to access next level')}"
+            menu.opcion(None, label, self.dict_icons[key])
             menu.separador()
         menu.lanza()
 
@@ -327,7 +327,7 @@ class WConfigOneLineTOL(LCDialog.LCDialog):
     def __init__(self, owner, procesador):
 
         title = _("In one line")
-        titulo = _("Turn on the lights") + ": " + title
+        titulo = f"{_('Turn on the lights')}: {title}"
         extparam = "tolconfoneline"
         icono = Iconos.TOLchange()
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)

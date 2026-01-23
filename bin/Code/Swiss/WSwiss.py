@@ -3,7 +3,7 @@ import collections
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import XRun
+from Code.Z import XRun
 from Code.Base import Game
 from Code.Base.Constantes import RESULT_DRAW, RESULT_WIN_BLACK, RESULT_WIN_WHITE
 from Code.Databases import DBgames, WDB_GUtils
@@ -19,7 +19,7 @@ class WSwiss(LCDialog.LCDialog):
 
         self.swiss: Swiss.Swiss = swiss
         self.season = swiss.read_season()
-        titulo = swiss.name() + " - " + _("Season") + " " + str(self.season.num_season + 1)
+        titulo = f"{swiss.name()} - {_('Season')} {self.season.num_season + 1!s}"
         icono = Iconos.Swiss()
         extparam = "swiss"
         LCDialog.LCDialog.__init__(self, w_parent, titulo, icono, extparam)
@@ -54,7 +54,7 @@ class WSwiss(LCDialog.LCDialog):
         self.tb = QTDialogs.LCTB(self)
 
         self.tab = Controles.Tab(self).set_font_type(puntos=10).set_position("S")
-        self.tab.dispatchChange(self.tab_changed)
+        self.tab.dispatch_change(self.tab_changed)
         font = Controles.FontType(puntos=10)
 
         self.grid_games = None
@@ -82,7 +82,7 @@ class WSwiss(LCDialog.LCDialog):
 
         self.tab.addTab(self.grid_classification, _("Classification"))
         self.tab.setIconSize(QtCore.QSize(32, 32))
-        self.tab.ponIcono(0, Iconos.Classification())
+        self.tab.set_icono(0, Iconos.Classification())
 
         # CROSSTABS ----------------------------------------------------------------------------------------------------
         ly = Colocacion.H()
@@ -94,7 +94,7 @@ class WSwiss(LCDialog.LCDialog):
             self,
             o_col,
             xid="CROSSTABS",
-            siSelecFilas=False,
+            complete_row_select=False,
             cab_vertical_font=180,
             with_header_vertical=True,
         )
@@ -108,14 +108,14 @@ class WSwiss(LCDialog.LCDialog):
 
         self.tab.addTab(w, _("Crosstabs"))
         self.tab.setIconSize(QtCore.QSize(32, 32))
-        self.tab.ponIcono(1, Iconos.Crosstable())
+        self.tab.set_icono(1, Iconos.Crosstable())
 
         # Matches -----------------------------------------------------------------------------------------------------
         o_col = Columnas.ListaColumnas()
         o_col.nueva("WHITE", _("White"), 240)
         o_col.nueva("BLACK", _("Black"), 240)
         o_col.nueva("RESULT", _("Result"), 180, align_center=True)
-        self.grid_matches = Grid.Grid(self, o_col, siSelecFilas=True)
+        self.grid_matches = Grid.Grid(self, o_col, complete_row_select=True)
         self.register_grid(self.grid_matches)
         self.grid_matches.setFont(font)
 
@@ -135,7 +135,7 @@ class WSwiss(LCDialog.LCDialog):
 
         fontd = Controles.FontType(puntos=12)
 
-        lb_journey = Controles.LB(self, _("Round") + ": ").set_font(fontd)
+        lb_journey = Controles.LB(self, f"{_('Round')}: ").set_font(fontd)
         self.sb_journey = Controles.SB(self, self.current_journey + 1, 1, self.max_journeys).set_font(fontd)
         self.sb_journey.setFixedWidth(50)
         self.sb_journey.capture_changes(self.change_sb)
@@ -145,11 +145,9 @@ class WSwiss(LCDialog.LCDialog):
             Controles.LB(self, _("Current"))
             .set_font(Controles.FontType(puntos=16, peso=400))
             .align_center()
-            .anchoMinimo(400)
+            .minimum_width(400)
         )
-        self.lb_active.setStyleSheet(
-            "color: %s;background: %s;padding-left:5px;padding-right:5px;" % ("white", "#437FBC")
-        )
+        self.lb_active.setStyleSheet("color: white;background: #437FBC;padding-left:5px;padding-right:5px;")
 
         ly0 = (
             Colocacion.H()
@@ -192,7 +190,7 @@ class WSwiss(LCDialog.LCDialog):
         o_col.nueva("WHITE", _("White"), 240)
         o_col.nueva("BLACK", _("Black"), 240)
         o_col.nueva("RESULT", _("Result"), 180, align_center=True)
-        self.grid_games = Grid.Grid(self, o_col, siSelecFilas=True)
+        self.grid_games = Grid.Grid(self, o_col, complete_row_select=True)
         self.register_grid(self.grid_games)
         self.grid_games.setFont(font)
         self.li_matches_played = []  # se determinan al entrar en la pestaña de Games
@@ -313,7 +311,7 @@ class WSwiss(LCDialog.LCDialog):
 
     def set_toolbar(self):
         self.tb.clear()
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         if not self.season.is_finished():
             self.tb.new(_("Launch workers"), Iconos.Lanzamiento(), self.launch_worker)
             self.tb.new(_("Update"), Iconos.Update(), self.update_matches)
@@ -362,8 +360,8 @@ class WSwiss(LCDialog.LCDialog):
         else:
             return len(self.li_matches)
 
-    def grid_dato(self, grid, row, o_column):
-        column = o_column.key
+    def grid_dato(self, grid, row, obj_column):
+        column = obj_column.key
         if grid == self.grid_classification:
             return self.grid_dato_classification(row, column)
         elif grid == self.grid_crosstabs:
@@ -392,9 +390,9 @@ class WSwiss(LCDialog.LCDialog):
             elif column == "BLACK":
                 return self.dic_xid_name[xmatch.xid_black]
 
-    def grid_color_fondo(self, grid, row, o_column):
+    def grid_color_fondo(self, grid, row, obj_column):
         if grid == self.grid_crosstabs:
-            column = o_column.key
+            column = obj_column.key
             return self.grid_color_fondo_crosstabs(row, column)
 
     def grid_doubleclick_header(self, grid, col):
@@ -468,7 +466,7 @@ class WSwiss(LCDialog.LCDialog):
             self.li_sorted_opponents.sort(key=func_order)
 
         elif grid == self.grid_games:
-            keyg = col.key + "G"
+            keyg = f"{col.key}G"
 
             order_prev = self.dic_order.get(keyg, False)
             self.dic_order[keyg] = order = not order_prev
@@ -505,7 +503,7 @@ class WSwiss(LCDialog.LCDialog):
                 else:
                     func_order = order_classification_v
 
-                li_columnas = grid.oColumnasR.li_columns
+                li_columnas = grid.columns_displayables.li_columns
                 li_columnas.sort(key=func_order)
                 grid.refresh()
 
@@ -520,7 +518,7 @@ class WSwiss(LCDialog.LCDialog):
             else:
                 return "%d" % dif
         if nom_column == "PTS":
-            cpts = "%0.02f" % d_panel[nom_column]
+            cpts = f"{d_panel[nom_column]:0.02f}"
             while cpts.endswith("0"):
                 cpts = cpts[:-1]
             if cpts.endswith("."):
@@ -657,7 +655,7 @@ class WSwiss(LCDialog.LCDialog):
             self.play_human = self.swiss, xmatch
             self.result = PLAY_HUMAN
             grid.refresh()
-            self.terminar()
+            self.finalize()
 
         elif xmatch.is_human_vs_human(self.swiss):
             game = Game.Game()
@@ -745,9 +743,9 @@ class WSwiss(LCDialog.LCDialog):
         else:
             self.grid_doble_click(grid, row, col)
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, grid, row, obj_column):
         if grid == self.grid_classification:
-            nom_column = o_column.key if o_column else None
+            nom_column = obj_column.key if obj_column else None
             if nom_column and nom_column[0] in "wb":
                 is_white = nom_column.startswith("w")
                 row_other = int(nom_column[1:])
@@ -769,7 +767,7 @@ class WSwiss(LCDialog.LCDialog):
                 self.consult_matches(grid, row)
 
         elif grid == self.grid_crosstabs:
-            self.consult_matches_crosstabs(grid, row, o_column.key)
+            self.consult_matches_crosstabs(grid, row, obj_column.key)
 
         elif grid == self.grid_games:
             match = self.li_matches_played[row]
@@ -842,7 +840,7 @@ class WSwiss(LCDialog.LCDialog):
         self.grid_classification.refresh()
         self.grid_matches.refresh()
 
-    def terminar(self):
+    def finalize(self):
         self.terminated = True
         if self.timer:
             self.timer.stop()
@@ -1004,7 +1002,7 @@ class WSwiss(LCDialog.LCDialog):
                                 valor = self.swiss.score_win if side == "w" else self.swiss.score_lost
                             else:
                                 valor = self.swiss.score_lost if side == "w" else self.swiss.score_win
-                            cs = "%0.02f" % valor
+                            cs = f"{valor:0.02f}"
                             while cs.endswith("0"):
                                 cs = cs[:-1]
                             if cs.endswith("."):
@@ -1032,7 +1030,7 @@ class WSwiss(LCDialog.LCDialog):
             num_season = int(resp)
             self.swiss.set_current_season(num_season)
             self.result = REINIT
-            self.terminar()
+            self.finalize()
 
 
 def play_swiss(parent, swiss):

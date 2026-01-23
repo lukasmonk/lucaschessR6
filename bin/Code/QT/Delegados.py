@@ -13,7 +13,7 @@ dicPM = {}
 dicPZ = {}
 
 
-def genera_pm(piezas):
+def genera_pm(pieces):
     dicPM["R"] = Iconos.pmOpening()
     dicPM["M"] = Iconos.pmComentarioMas()
     dicPM["S"] = Iconos.pmOpeningComentario()
@@ -25,11 +25,11 @@ def genera_pm(piezas):
     dicPM["OV"] = Iconos.pmOpeningVariation()
     dicPM["VC"] = Iconos.pmVariationComment()
     dicPM["OVC"] = Iconos.pmOpeningVariationComment()
-    if piezas.is_only_board():
-        piezas = piezas.get_default()
+    if pieces.is_only_board():
+        pieces = pieces.get_default()
 
     for k in "KQRNBkqrnb":
-        dicPZ[k] = piezas.render(k)
+        dicPZ[k] = pieces.render(k)
 
 
 class ComboBox(QtWidgets.QItemDelegate):
@@ -126,7 +126,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
         self.is_white = is_white
         self.with_figurines = is_white is not None
 
-    def rehazPosicion(self):
+    def redo_position(self):
         position = self.bloquePieza.position
         self.setPos(position.x, position.y)
 
@@ -181,7 +181,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
         if li_nags:
             if post_pz is None:
                 post_pz = ""
-            post_pz += " " + " ".join(li_nags)
+            post_pz += f" {' '.join(li_nags)}"
 
         rect = option.rect
         w_total = rect.width()
@@ -193,7 +193,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
             painter.fillRect(rect, Code.dic_qcolors["PGN_SELBACKGROUND"])
             color = Code.dic_colors["PGN_SELFOREGROUND"]
         elif self.si_fondo:
-            fondo = index.model().getFondo(index)
+            fondo = index.model().get_background(index)
             if fondo:
                 painter.fillRect(rect, fondo)
 
@@ -221,9 +221,9 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
         document_pgn.setDefaultFont(option.font)
         if color:
             if is_color_origen:
-                pgn = '<font color="%s"><b>%s</b></font>' % (color, pgn)
+                pgn = f'<font color="{color}"><b>{pgn}</b></font>'
             else:
-                pgn = '<font color="%s">%s</font>' % (color, pgn)
+                pgn = f'<font color="{color}">{pgn}</font>'
         document_pgn.setHtml(pgn)
         w_pgn = document_pgn.idealWidth()
         h_pgn = document_pgn.size().height()
@@ -268,9 +268,9 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
             document_pgn = QtGui.QTextDocument()
             document_pgn.setDefaultFont(option.font)
             if color:
-                post_pz = '<font color="%s"><b>%s</b></font>' % (color, post_pz)
+                post_pz = f'<font color="{color}"><b>{post_pz}</b></font>'
             else:
-                post_pz = "<b>%s</b>" % post_pz
+                post_pz = f"<b>{post_pz}</b>"
             document_pgn.setHtml(post_pz)
             w_pgn = document_pgn.idealWidth()
             painter.save()
@@ -286,7 +286,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
             # font.setPointSize(new_size)
             document_analysis.setDefaultFont(font)
             if color:
-                txt_analysis = '<font color="%s">%s</font>' % (color, txt_analysis)
+                txt_analysis = f'<font color="{color}">{txt_analysis}</font>'
             document_analysis.setHtml(txt_analysis)
             w_analysis = document_analysis.idealWidth()
             painter.save()
@@ -300,15 +300,15 @@ class PmIconosBMT(QtWidgets.QStyledItemDelegate):
     Delegado para la muestra con html
     """
 
-    def __init__(self, parent=None, dicIconos=None, x=4):
+    def __init__(self, parent=None, dict_icons=None, x=4):
         QtWidgets.QStyledItemDelegate.__init__(self, parent)
 
         self.pos_x = x
 
-        if dicIconos:
-            self.dicIconos = dicIconos
+        if dict_icons:
+            self.dict_icons = dict_icons
         else:
-            self.dicIconos = {
+            self.dict_icons = {
                 "0": Iconos.pmPuntoBlanco(),
                 "1": Iconos.pmPuntoNegro(),
                 "2": Iconos.pmPuntoAmarillo(),
@@ -325,11 +325,11 @@ class PmIconosBMT(QtWidgets.QStyledItemDelegate):
         if "." in pos:
             pos = pos[: pos.index(".")]
 
-        if pos not in self.dicIconos:
+        if pos not in self.dict_icons:
             return
         painter.save()
         painter.translate(option.rect.x(), option.rect.y())
-        painter.drawPixmap(self.pos_x, 1, self.dicIconos[pos])
+        painter.drawPixmap(self.pos_x, 1, self.dict_icons[pos])
         painter.restore()
 
 
@@ -364,7 +364,7 @@ class PmIconosWeather(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
         QtWidgets.QStyledItemDelegate.__init__(self, parent)
 
-        self.dicIconos = {
+        self.dict_icons = {
             "0": Iconos.pmInvierno(),
             "1": Iconos.pmLluvia(),
             "2": Iconos.pmSolNubesLluvia(),
@@ -374,14 +374,14 @@ class PmIconosWeather(QtWidgets.QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         pos = str(index.model().data(index, QtCore.Qt.ItemDataRole.DisplayRole))
-        if pos not in self.dicIconos:
+        if pos not in self.dict_icons:
             if pos.isdigit():
                 pos = "4" if int(pos) > 4 else "0"
             else:
                 return
         painter.save()
         painter.translate(option.rect.x(), option.rect.y())
-        painter.drawPixmap(4, 4, self.dicIconos[pos])
+        painter.drawPixmap(4, 4, self.dict_icons[pos])
         painter.restore()
 
 
@@ -389,7 +389,7 @@ class PmIconosCheck(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
         QtWidgets.QStyledItemDelegate.__init__(self, parent)
 
-        self.dicIconos = {True: Iconos.pmChecked(), False: Iconos.pmUnchecked()}
+        self.dict_icons = {True: Iconos.pmChecked(), False: Iconos.pmUnchecked()}
 
     def paint(self, painter, option, index):
         value = index.model().data(index, QtCore.Qt.ItemDataRole.DisplayRole) is True
@@ -401,7 +401,7 @@ class PmIconosCheck(QtWidgets.QStyledItemDelegate):
         y = rect.y() + (height - 16) / 2
 
         painter.save()
-        painter.drawPixmap(x, y, self.dicIconos[value])
+        painter.drawPixmap(x, y, self.dict_icons[value])
         painter.restore()
 
     def createEditor(self, parent, option, index):
@@ -432,14 +432,14 @@ class MultiEditor(QtWidgets.QItemDelegate):
 
 
 class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
-    def __init__(self, with_figurines, siFondo=False, siLineas=True):
+    def __init__(self, with_figurines, siFondo=False, with_lines=True):
         self.with_figurines = with_figurines
         self.siAlineacion = False
-        self.siLineas = siLineas
+        self.with_lines = with_lines
         self.siFondo = siFondo
         QtWidgets.QStyledItemDelegate.__init__(self, None)
 
-    def rehazPosicion(self):
+    def redo_position(self):
         position = self.bloquePieza.position
         self.setPos(position.x, position.y)
 
@@ -495,7 +495,7 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
         if li_nags:
             if post_pz is None:
                 post_pz = ""
-            post_pz += " " + " ".join(li_nags)
+            post_pz += f" {' '.join(li_nags)}"
 
         rect = option.rect
         width = rect.width()
@@ -506,7 +506,7 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
             painter.fillRect(rect, Code.dic_qcolors["PGN_SELBACKGROUND"])
             color = Code.dic_colors["PGN_SELFOREGROUND"]
         elif self.siFondo:
-            fondo = index.model().getFondo(index)
+            fondo = index.model().get_background(index)
             if fondo:
                 painter.fillRect(rect, fondo)
 
@@ -523,9 +523,9 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
         document_pgn.setDefaultFont(option.font)
         if color:
             if is_color_origen:
-                pgn = '<font color="%s"><b>%s</b></font>' % (color, pgn)
+                pgn = f'<font color="{color}"><b>{pgn}</b></font>'
             else:
-                pgn = '<font color="%s">%s</font>' % (color, pgn)
+                pgn = f'<font color="{color}">{pgn}</font>'
         document_pgn.setHtml(pgn)
         w_pgn = document_pgn.idealWidth()
         h_pgn = document_pgn.size().height()
@@ -540,7 +540,7 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
 
         x = x0 + (width - ancho) / 2
         if self.siAlineacion:
-            alineacion = index.model().getAlineacion(index)
+            alineacion = index.model().get_alignment(index)
             if alineacion == "i":
                 x = x0 + 3
             elif alineacion == "d":
@@ -576,9 +576,9 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
             document_pgn = QtGui.QTextDocument()
             document_pgn.setDefaultFont(option.font)
             if color:
-                post_pz = '<font color="%s"><b>%s</b></font>' % (color, post_pz)
+                post_pz = f'<font color="{color}"><b>{post_pz}</b></font>'
             else:
-                post_pz = "<b>%s</b>" % post_pz
+                post_pz = f"<b>{post_pz}</b>"
             document_pgn.setHtml(post_pz)
             w_pgn = document_pgn.idealWidth()
             painter.save()
@@ -592,10 +592,7 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
             document_analysis = QtGui.QTextDocument()
             document_analysis.setDefaultFont(option.font)
             if color:
-                txt_analysis = '<font color="%s"><b>%s</b></font>' % (
-                    color,
-                    txt_analysis,
-                )
+                txt_analysis = f'<font color="{color}"><b>{txt_analysis}</b></font>'
             document_analysis.setHtml(txt_analysis)
             w_analysis = document_analysis.idealWidth()
             painter.save()
@@ -606,7 +603,7 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
         if agrisar:
             painter.setOpacity(1.0)
 
-        if self.siLineas:
+        if self.with_lines:
             if not is_white:
                 pen = QtGui.QPen()
                 pen.setWidth(1)
@@ -621,14 +618,14 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
 
 
 class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
-    def __init__(self, with_figurines, siFondo=False, siLineas=True):
+    def __init__(self, with_figurines, siFondo=False, with_lines=True):
         self.with_figurines = with_figurines
         self.siAlineacion = False
-        self.siLineas = siLineas
+        self.with_lines = with_lines
         self.siFondo = siFondo
         QtWidgets.QStyledItemDelegate.__init__(self, None)
 
-    def rehazPosicion(self):
+    def redo_position(self):
         position = self.bloquePieza.position
         self.setPos(position.x, position.y)
 
@@ -684,7 +681,7 @@ class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
         if li_nags:
             if post_pz is None:
                 post_pz = ""
-            post_pz += " " + " ".join(li_nags)
+            post_pz += f" {' '.join(li_nags)}"
 
         rect = option.rect
         width = rect.width()
@@ -695,7 +692,7 @@ class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
             painter.fillRect(rect, Code.dic_qcolors["PGN_SELBACKGROUND"])
             color = Code.dic_colors["PGN_SELFOREGROUND"]
         elif self.siFondo:
-            fondo = index.model().getFondo(index)
+            fondo = index.model().get_background(index)
             if fondo:
                 painter.fillRect(rect, fondo)
 
@@ -712,9 +709,9 @@ class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
         document_pgn.setDefaultFont(option.font)
         if color:
             if is_color_origen:
-                pgn = '<font color="%s"><b>%s</b></font>' % (color, pgn)
+                pgn = f'<font color="{color}"><b>{pgn}</b></font>'
             else:
-                pgn = '<font color="%s">%s</font>' % (color, pgn)
+                pgn = f'<font color="{color}">{pgn}</font>'
         document_pgn.setHtml(pgn)
         w_pgn = document_pgn.idealWidth()
         h_pgn = document_pgn.size().height()
@@ -732,7 +729,7 @@ class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
         else:
             x = x0 + 22
         if self.siAlineacion:
-            alineacion = index.model().getAlineacion(index)
+            alineacion = index.model().get_alignment(index)
             if alineacion == "i":
                 x = x0 + 3
             elif alineacion == "d":
@@ -768,9 +765,9 @@ class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
             document_pgn = QtGui.QTextDocument()
             document_pgn.setDefaultFont(option.font)
             if color:
-                post_pz = '<font color="%s"><b>%s</b></font>' % (color, post_pz)
+                post_pz = f'<font color="{color}"><b>{post_pz}</b></font>'
             else:
-                post_pz = "<b>%s</b>" % post_pz
+                post_pz = f"<b>{post_pz}</b>"
             document_pgn.setHtml(post_pz)
             w_pgn = document_pgn.idealWidth()
             painter.save()
@@ -784,10 +781,7 @@ class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
             document_analysis = QtGui.QTextDocument()
             document_analysis.setDefaultFont(option.font)
             if color:
-                txt_analysis = '<font color="%s"><small>%s</small></font>' % (
-                    color,
-                    txt_analysis,
-                )
+                txt_analysis = f'<font color="{color}"><small>{txt_analysis}</small></font>'
             document_analysis.setHtml(txt_analysis)
             w_analysis = document_analysis.idealWidth()
             painter.save()
@@ -798,7 +792,7 @@ class EtiquetaPOSN(QtWidgets.QStyledItemDelegate):
         if agrisar:
             painter.setOpacity(1.0)
 
-        if self.siLineas:
+        if self.with_lines:
             if not is_white:
                 pen = QtGui.QPen()
                 pen.setWidth(1)
@@ -848,7 +842,7 @@ class LinePGN(QtWidgets.QStyledItemDelegate):
         document_pgn = QtGui.QTextDocument()
         document_pgn.setDefaultFont(option.font)
         if color:
-            pgn = '<font color="%s">%s</font>' % (color, pgn)
+            pgn = f'<font color="{color}">{pgn}</font>'
         document_pgn.setHtml(pgn)
 
         x = rect.x()

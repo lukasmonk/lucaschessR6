@@ -29,7 +29,7 @@ class ManagerMenuVista(ManagerMenu.ManagerMenu):
         menu_vista.separador()
         menu_vista.opcion(
             "vista_rating",
-            _("Ratings") + " (NAGs)",
+            f"{_('Ratings')} (NAGs)",
             is_checked=self.configuration.x_show_rating,
         )
 

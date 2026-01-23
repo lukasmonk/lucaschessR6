@@ -38,6 +38,14 @@ class RowidReader(QThread):
         cursor = None
         try:
             conexion = sqlite3.connect(self.path_file)
+            conexion.execute("PRAGMA page_size = 4096")
+            conexion.execute("PRAGMA synchronous = NORMAL")
+            conexion.execute("PRAGMA journal_mode = WAL")
+            conexion.execute("PRAGMA cache_size = -16000")  # 16MB cache
+            conexion.execute("PRAGMA temp_store = MEMORY")  # Temporary storage in RAM (vital for ORDER BY)
+            conexion.execute("PRAGMA mmap_size = 268435456")  # 256MB Memory-mapped I/O
+            conexion.execute("PRAGMA read_uncommitted = ON")  # Allow reading without waiting for all locks
+
             sql = f'SELECT ROWID FROM "{self.tabla}"'
             if self.where:
                 sql += f" WHERE {self.where}"
@@ -67,6 +75,8 @@ class RowidReader(QThread):
 
         except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
             self.error_occurred.emit(str(e))
+        except Exception as e:
+            self.error_occurred.emit(f"Unexpected error: {str(e)}")
         finally:
             if cursor:
                 cursor.close()

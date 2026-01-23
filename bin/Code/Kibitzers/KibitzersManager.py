@@ -1,5 +1,5 @@
 import Code
-from Code import XRun
+from Code.Z import XRun
 from Code.Base.Constantes import (
     KIBRUN_CLOSE,
     KIBRUN_CONFIGURATION,
@@ -19,7 +19,7 @@ class Manager:
 
     def close(self):
         for ipc_kibitzer in self.li_activos:
-            ipc_kibitzer.terminar()
+            ipc_kibitzer.finalize()
 
     def edit(self):
         w = WindowKibitzers.WKibitzers(self.main_window, self)
@@ -63,10 +63,10 @@ class Orden:
         self.key = ""
         self.dv = {}
 
-    def ponVar(self, name, valor):
-        self.dv[name] = valor
+    # def ponVar(self, name, valor):
+    #     self.dv[name] = valor
 
-    def bloqueEnvio(self):
+    def block_sent(self):
         self.dv["__CLAVE__"] = self.key
         return self.dv
 
@@ -89,7 +89,7 @@ class IPCKibitzer:
         self.popen = XRun.run_lucas("-kibitzer", fdb)
 
     def escribe(self, orden):
-        self.ipc.push(orden.bloqueEnvio())
+        self.ipc.push(orden.block_sent())
 
     def working(self):
         if self.popen is None:
@@ -108,7 +108,7 @@ class IPCKibitzer:
         orden.key = KIBRUN_STOP
         self.escribe(orden)
 
-    def terminar(self):
+    def finalize(self):
         try:
             orden = Orden()
             orden.key = KIBRUN_CLOSE

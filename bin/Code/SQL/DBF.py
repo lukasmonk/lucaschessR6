@@ -76,7 +76,7 @@ class DBF:
         self.li_fields = [campo.strip() for campo in self.select.split(",")]
 
     def existe_column(self, column):
-        sql = "pragma table_info(%s)" % self.ctabla
+        sql = f"pragma table_info({self.ctabla})"
         cursor = self.conexion.execute(sql)
         lirows = cursor.fetchall()
         column = column.upper()
@@ -87,13 +87,13 @@ class DBF:
         return False
 
     def add_column_varchar(self, column: str):
-        sql = "ALTER TABLE %s ADD COLUMN %s VARCHAR;" % (self.ctabla, column)
+        sql = f"ALTER TABLE {self.ctabla} ADD COLUMN {column} VARCHAR;"
         self.conexion.execute(sql)
         self.conexion.commit()
         self.li_fields.append(column)
 
     def copy_column(self, column_ori, column_dest):
-        sql = "UPDATE %s SET %s = %s;" % (self.ctabla, column_dest, column_ori)
+        sql = f"UPDATE {self.ctabla} SET {column_dest} = {column_ori};"
         self.conexion.execute(sql)
         self.conexion.commit()
 
@@ -120,12 +120,12 @@ class DBF:
         self.recno = -1
         resto = ""
         if self.condicion:
-            resto += "WHERE %s" % self.condicion
+            resto += f"WHERE {self.condicion}"
         if self.orden:
             if resto:
                 resto += " "
-            resto += "ORDER BY %s" % self.orden
-        cSQL = "SELECT rowid FROM %s %s" % (self.ctabla, resto)
+            resto += f"ORDER BY {self.orden}"
+        cSQL = f"SELECT rowid FROM {self.ctabla} {resto}"
         self.cursor.execute(cSQL)
         self.liIDs = self.cursor.fetchall()
         return self.gotop()
@@ -137,12 +137,12 @@ class DBF:
         self.siBufferPendiente = True
         resto = ""
         if self.condicion:
-            resto += "WHERE %s" % self.condicion
+            resto += f"WHERE {self.condicion}"
         if self.orden:
             if resto:
                 resto += " "
-            resto += "ORDER BY %s" % self.orden
-        cSQL = "SELECT rowid FROM %s %s" % (self.ctabla, resto)
+            resto += f"ORDER BY {self.orden}"
+        cSQL = f"SELECT rowid FROM {self.ctabla} {resto}"
         self.cursorBuffer.execute(cSQL)
         self.liIDs = []
         while True:
@@ -165,12 +165,12 @@ class DBF:
         self.siBufferPendiente = True
         resto = ""
         if self.condicion:
-            resto += "WHERE %s" % self.condicion
+            resto += f"WHERE {self.condicion}"
         if self.orden:
             if resto:
                 resto += " "
-            resto += "ORDER BY %s" % self.orden
-        cSQL = "SELECT rowid FROM %s %s" % (self.ctabla, resto)
+            resto += f"ORDER BY {self.orden}"
+        cSQL = f"SELECT rowid FROM {self.ctabla} {resto}"
         self.cursorBuffer.execute(cSQL)
         self.liIDs = []
         xInicio = time.time()
@@ -296,7 +296,7 @@ class DBF:
         self.conexion.commit()
 
     def borrarConFiltro(self, filtro):
-        cSQL = "DELETE FROM %s WHERE %s" % (self.ctabla, filtro)
+        cSQL = f"DELETE FROM {self.ctabla} WHERE {filtro}"
         self.cursor.execute(cSQL)
         self.conexion.commit()
 
@@ -339,13 +339,13 @@ class DBF:
         liValues = []
         for campo in li_fields:
             if hasattr(regNuevo, campo):
-                campos += campo + ","
+                campos += f"{campo},"
                 values += "?,"
                 liValues.append(getattr(regNuevo, campo))
         campos = campos[:-1]
         values = values[:-1]
 
-        cSQL = "insert into %s(%s) values(%s)" % (self.ctabla, campos, values)
+        cSQL = f"insert into {self.ctabla}({campos}) values({values})"
         self.cursor.execute(cSQL, liValues)
 
         idNuevo = self.cursor.lastrowid
@@ -367,13 +367,13 @@ class DBF:
         liValues = []
         for campo in dir(regNuevo):
             if campo.isupper():
-                campos += campo + ","
+                campos += f"{campo},"
                 values += "?,"
                 liValues.append(getattr(regNuevo, campo))
         campos = campos[:-1]
         values = values[:-1]
 
-        cSQL = "insert into %s(%s) values(%s)" % (self.ctabla, campos, values)
+        cSQL = f"insert into {self.ctabla}({campos}) values({values})"
         self.cursor.execute(cSQL, liValues)
 
         idNuevo = self.cursor.lastrowid
@@ -398,13 +398,13 @@ class DBF:
         liValues = []
         for campo in dir(regNuevo):
             if campo.isupper():
-                campos += campo + ","
+                campos += f"{campo},"
                 values += "?,"
                 liValues.append(getattr(regNuevo, campo))
         campos = campos[:-1]
         values = values[:-1]
 
-        cSQL = "insert into %s(%s) values(%s)" % (self.ctabla, campos, values)
+        cSQL = f"insert into {self.ctabla}({campos}) values({values})"
         self.cursor.execute(cSQL, liValues)
 
         idNuevo = self.cursor.lastrowid
@@ -426,7 +426,7 @@ class DBF:
         li_fields = []
         for campo in dir(lista[0]):
             if campo.isupper():
-                campos += campo + ","
+                campos += f"{campo},"
                 values += "?,"
                 li_fields.append(campo)
         campos = campos[:-1]
@@ -434,7 +434,7 @@ class DBF:
 
         liError = []
 
-        cSQL = "insert into %s(%s) values(%s)" % (self.ctabla, campos, values)
+        cSQL = f"insert into {self.ctabla}({campos}) values({values})"
 
         for n, reg in enumerate(lista):
             liValues = []
@@ -456,13 +456,13 @@ class DBF:
         values = ""
         liValues = []
         for campo in dicNuevo:
-            campos += campo + ","
+            campos += f"{campo},"
             values += "?,"
             liValues.append(dicNuevo[campo])
         campos = campos[:-1]
         values = values[:-1]
 
-        cSQL = "insert into %s(%s) values(%s)" % (self.ctabla, campos, values)
+        cSQL = f"insert into {self.ctabla}({campos}) values({values})"
 
         self.cursor.execute(cSQL, liValues)
 
@@ -493,7 +493,7 @@ class DBF:
                 valorNue = getattr(regNuevo, campo)
                 valorAnt = getattr(self, campo)
                 if valorAnt != valorNue:
-                    campos += campo + "= ?,"
+                    campos += f"{campo}= ?,"
                     liValues.append(valorNue)
                     if campo in self.orden:
                         siReleer = True
@@ -535,7 +535,7 @@ class DBF:
         liValues = []
         for campo in dir(regNuevo):
             if campo.isupper():
-                campos += campo + "= ?,"
+                campos += f"{campo}= ?,"
                 liValues.append(getattr(regNuevo, campo))
 
         campos = campos[:-1]
@@ -582,12 +582,12 @@ class DBF:
         self.conexion.commit()
 
     def nuevaColumna(self, name, tipo):
-        cSQL = 'ALTER TABLE %s ADD COLUMN "%s" "%s"' % (self.ctabla, name, tipo)
+        cSQL = f'ALTER TABLE {self.ctabla} ADD COLUMN "{name}" "{tipo}"'
         self.cursor.execute(cSQL)
         self.conexion.commit()
 
     def maxCampo(self, campo):
-        cSQL = "SELECT Max(%s) FROM %s" % (campo, self.ctabla)
+        cSQL = f"SELECT Max({campo}) FROM {self.ctabla}"
         self.cursor.execute(cSQL)
         liData = self.cursor.fetchall()
         self.conexion.commit()
@@ -628,12 +628,12 @@ class DBFT(DBF):
         self.li_fields.extend([campo.strip() for campo in self.select.split(",")])
         resto = ""
         if self.condicion:
-            resto += "WHERE %s" % self.condicion
+            resto += f"WHERE {self.condicion}"
         if self.orden:
             if resto:
                 resto += " "
-            resto += "ORDER BY %s" % self.orden
-        cSQL = "SELECT ROWID,%s FROM %s %s" % (self.select, self.ctabla, resto)
+            resto += f"ORDER BY {self.orden}"
+        cSQL = f"SELECT ROWID,{self.select} FROM {self.ctabla} {resto}"
         self.cursor.execute(cSQL)
         self.liRows = self.cursor.fetchall()
         return self.gotop()

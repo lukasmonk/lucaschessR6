@@ -1,4 +1,4 @@
-from Code import Util
+from Code.Z import Util
 from Code.Odt import XML
 
 
@@ -6,8 +6,8 @@ class Settings(XML.XML):
     def __init__(self):
         XML.XML.__init__(self, "office:document-settings")
         self.add_param("xmlns:office", "urn:oasis:names:tc:opendocument:xmlns:office:1.0")
-        self.add_param("xmlns:ooo", "http://openoffice.org/2004/office")
-        self.add_param("xmlns:xlink", "http://www.w3.org/1999/xlink")
+        self.add_param("xmlns:ooo", "https://openoffice.org/2004/office")
+        self.add_param("xmlns:xlink", "https://www.w3.org/1999/xlink")
         self.add_param("xmlns:config", "urn:oasis:names:tc:opendocument:xmlns:config:1.0")
         self.add_param("office:version", "1.3")
         element1 = XML.Element("office:settings")

@@ -1,10 +1,9 @@
 import collections
 import copy
 import os
-import time
 import webbrowser
 from io import BytesIO
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Callable
 
 import FasterCode
 from PySide6 import QtCore, QtGui, QtWidgets
@@ -12,14 +11,9 @@ from PySide6.QtCore import Qt
 
 import Code
 import Code.Board.WBoardColors as WBoardColors
-from Code import Util, XRun
+from Code.Z import Util, XRun
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
-    BLACK,
-    BLINDFOLD_ALL,
-    BLINDFOLD_BLACK,
-    BLINDFOLD_CONFIG,
-    BLINDFOLD_WHITE,
     BLUNDER,
     GOOD_MOVE,
     INACCURACY,
@@ -29,7 +23,6 @@ from Code.Base.Constantes import (
     NO_RATING,
     TB_TAKEBACK,
     VERY_GOOD_MOVE,
-    WHITE,
     ZVALUE_PIECE,
 )
 from Code.Board import (
@@ -43,12 +36,11 @@ from Code.Board import (
     BoardTypes,
     LichessCommentParser,
 )
+from Code.Board.BoardSections import BoardVisualMenu, BoardEboardController, BoardBlindfold
 from Code.Databases import DBgames
 from Code.Director import TabVisual, WindowDirector
 from Code.Nags import Nags
 from Code.QT import (
-    Colocacion,
-    Controles,
     Delegados,
     Iconos,
     Piezas,
@@ -67,16 +59,98 @@ class RegKB:
         self.flags = flags
 
 
+class SaveVisualState:
+    with_menu_visual: bool
+    with_director: bool
+    show_graphic_icon: bool
+    dirvisual: Optional[WindowDirector.Director]
+    guion: Optional[TabVisual.Guion]
+    lastFenM2: str
+    nomdbVisual: str
+    dbVisual_show_always: bool
+
+
 class Board(QtWidgets.QGraphicsView):
     """
-    Clase principal para representar y gestionar el tablero de ajedrez gráfico.
-    Hereda de QGraphicsView y maneja la visualización de piezas, tablero, flechas,
-    y la interacción con el usuario (mouse, teclado).
+    Main class for representing and managing the graphical chessboard.
+    It inherits from QGraphicsView and handles the display of pieces, board, arrows,
+    and user interaction (mouse, keyboard).
     """
+
+    pieces_are_active: bool
+    li_pieces: list
+    can_be_rotated: bool
+    dic_movables: collections.OrderedDict
+    ancho: int
+    arrow_sc: Optional[BoardArrows.ArrowSC]
+    atajos_raton: Optional[Callable[[Any, Optional[str]], None]]
+    baseCasillasFSC: Optional[BoardElements.CajaSC]
+    baseCasillasSC: BoardElements.CajaSC | BoardElements.PixmapSC
+    cajonSC: BoardElements.CajaSC | BoardElements.PixmapSC
+    can_be_rotated: bool
+    colorBlancas: int
+    colorExterior: int
+    colorFondo: int
+    colorFrontera: int
+    colorNegras: int
+    colorTexto: int
+    config_board: Any
+    configuration: Any
+    current_graphlive: Any
+    dbVisual: Any
+    dicXML: dict[str, str]
+    dic_graphlive: dict[str, Any] | None
+    dic_movables: dict[Any, Any]
+    dirvisual: Any
+    escenea: QtWidgets.QGraphicsScene
+    extended_fondo: bool
+    fich_: str
+    guion: Any
+    init_white_bottom: bool
+    is_white_bottom: bool
+    lastFenM2: str | None
+    last_position: Any
+    liCoordenadasHorizontales: list[Any]
+    liCoordenadasVerticales: list[Any]
+    margin_center: int
+    mensajero: Any
+    minimum_size: int
+    nCoordenadas: int
+    pendingRelease: list[Any] | None
+    pieces: Any
+    pieces_are_active: bool
+    pressed_letter: Any
+    pressed_number: Any
+    png64Blancas: bytes
+    png64Fondo: bytes
+    png64Negras: bytes
+    rutaSVG: str
+    rutinaDropsPGN: Optional[Callable[[str], None]]
+    scriptSC_menu: Optional[BoardElements.PixmapSC]
+    show_graphic_icon: bool
+    side_indicator_sc: Optional[BoardElements.CirculoSC]
+    side_pieces_active: bool | None
+    tamFrontera: int
+    transBlancas: int
+    transNegras: int
+    transSideIndicator: int
+    width_square: int
+    with_director: bool
+    with_menu_visual: bool
+    reg_save_visual_state: SaveVisualState
+    indicadorSC_menu: Optional[BoardElements.PixmapSC]
+    width_piece: int
+    margin_pieces: int
+    png64Exterior: str
+    do_pressed_number: Optional[Callable]
+    do_pressed_letter: Optional[Callable]
+    puntos: int
+    li_arrows: list
+    id_last_movable: int
 
     def __init__(
         self,
-        parent: Optional[QtWidgets.QWidget],
+        parent,
         config_board: Any,
         with_menu_visual: bool = True,
         with_director: bool = True,
@@ -86,8 +160,8 @@ class Board(QtWidgets.QGraphicsView):
 
         self.setRenderHints(
             QtGui.QPainter.RenderHint.Antialiasing
-            | QtGui.QPainter.RenderHint.TextAntialiasing
-            | QtGui.QPainter.RenderHint.SmoothPixmapTransform
+            or QtGui.QPainter.RenderHint.TextAntialiasing
+            or QtGui.QPainter.RenderHint.SmoothPixmapTransform
         )
         self.setViewportUpdateMode(QtWidgets.QGraphicsView.ViewportUpdateMode.BoundingRectViewportUpdate)
         self.setCacheMode(QtWidgets.QGraphicsView.CacheModeFlag.CacheBackground)
@@ -103,6 +177,10 @@ class Board(QtWidgets.QGraphicsView):
 
         self.main_window = parent
         self.configuration = Code.configuration
+
+        self.visual_menu = BoardVisualMenu.BoardVisualMenu(self)
+        self.eboard = BoardEboardController.BoardEboardController(self)
+        self.blindfold_controller = BoardBlindfold.BoardBlindfold(self)
 
         self.variation_history = None
 
@@ -123,20 +201,18 @@ class Board(QtWidgets.QGraphicsView):
 
         self.config_board = config_board
 
-        self.blindfold = None
-
         self.siInicializado = False
 
         self.last_position: Optional[Position.Position] = None
 
         self.siF11 = False
 
-        self._dispatch_size = None  # configuration en vivo, dirige a la rutina de la main_window afectada
+        self.dispatch_size = None  # configuration en vivo, dirige a la rutina de la main_window afectada
 
         self.pendingRelease = None
 
         self.siPermitidoResizeExterno = True
-        self.mensajero = None
+        self.mensajero: Optional[Callable] = None
 
         self.si_borraMovibles = True
 
@@ -179,14 +255,13 @@ class Board(QtWidgets.QGraphicsView):
             if self.kb_buffer:
                 last = self.kb_buffer[-1]
                 key = last.key
-                flags = last.flags | QtCore.Qt.KeyboardModifier.AltModifier
+                flags = last.flags or QtCore.Qt.KeyboardModifier.AltModifier
             else:
                 return
 
-        if key in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete):
-            if self.allow_takeback():
-                self.main_window.manager.run_action(TB_TAKEBACK)
-                return
+        if key in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete) and self.allow_takeback():
+            self.main_window.manager.run_action(TB_TAKEBACK)
+            return
 
         is_alt = (flags & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0
         is_shift = (flags & QtCore.Qt.KeyboardModifier.ShiftModifier.value) > 0
@@ -209,15 +284,14 @@ class Board(QtWidgets.QGraphicsView):
                             QTUtils.set_clipboard(self.last_position.fen())
                         QTDialogs.fen_is_in_clipboard(self)
 
-            # ALT-B : Menu visual
             elif is_alt and key == Qt.Key.Key_B:
                 self.launch_visual_menu()
 
             elif is_alt and key == Qt.Key.Key_Y:
-                self.blindfoldChange()
+                self.blindfold_change()
 
             elif is_ctrl and key == Qt.Key.Key_Y:
-                self.blindfoldConfig()
+                self.blindfold_config()
 
             elif is_ctrl and (key in (Qt.Key.Key_Plus, Qt.Key.Key_Minus)):
                 ap = self.config_board.width_piece()
@@ -239,43 +313,35 @@ class Board(QtWidgets.QGraphicsView):
                         1.8,
                     )
 
-            # ALT-F -> Rota board
             elif is_alt and key == Qt.Key.Key_F:
                 self.try_to_rotate_the_board(None)
 
-            # ALT-I Save image to clipboard (CTRL->no border)
             elif key == Qt.Key.Key_I:
                 self.save_as_img(is_ctrl=is_ctrl, is_alt=is_alt)
                 QTMessages.temporary_message(self.main_window, _("Board image is in clipboard"), 1.2)
 
-            # ALT-J Save image to file (CTRL->no border)
             elif key == Qt.Key.Key_J:
-                path = SelectFiles.salvaFichero(
+                if path := SelectFiles.salvaFichero(
                     self,
                     _("File to save"),
                     self.configuration.save_folder(),
                     "png",
                     False,
-                )
-                if path:
+                ):
                     self.save_as_img(path, "png", is_ctrl=is_ctrl, is_alt=is_alt)
                     self.configuration.set_save_folder(os.path.dirname(path))
 
-            # ALT-K
             elif is_alt and key == Qt.Key.Key_K:
                 self.show_keys()
 
-            # ALT-L
             elif is_alt and key == Qt.Key.Key_L:
                 if self.last_position:
-                    webbrowser.open("https://lichess.org/analysis/standard/" + self.last_position.fen())
+                    webbrowser.open(f"https://lichess.org/analysis/standard/{self.last_position.fen()}")
 
-            # ALT-T
             elif is_alt and key == Qt.Key.Key_T:
                 if self.last_position:
-                    webbrowser.open("https://old.chesstempo.com/gamedb/fen/" + self.last_position.fen())
+                    webbrowser.open(f"https://old.chesstempo.com/gamedb/fen/{self.last_position.fen()}")
 
-            # ALT-X
             elif is_alt and key == Qt.Key.Key_X:
                 self.play_current_position()
 
@@ -287,12 +353,8 @@ class Board(QtWidgets.QGraphicsView):
                 # P -> show information
                 if key == Qt.Key.Key_P and hasattr(self.main_window.manager, "information_pgn"):
                     self.main_window.manager.information_pgn()
-                # ALT-N -> non distract mode
                 elif key == Qt.Key.Key_N and hasattr(self.main_window.manager, "non_distract_mode"):
                     self.main_window.manager.non_distract_mode()
-                # ALT-C -> show captures
-                elif key == Qt.Key.Key_C and hasattr(self.main_window.manager, "capturas"):
-                    self.main_window.manager.capturas()
                 else:
                     okseguir = True
         else:
@@ -349,8 +411,7 @@ class Board(QtWidgets.QGraphicsView):
 
     @staticmethod
     def xremove_item(item):
-        scene = item.scene()
-        if scene:
+        if scene := item.scene():
             scene.removeItem(item)
 
     def keyPressEvent(self, event):
@@ -362,23 +423,22 @@ class Board(QtWidgets.QGraphicsView):
                 return
             if (m & QtCore.Qt.KeyboardModifier.ControlModifier.value) > 0:
                 if k == Qt.Key.Key_F1:
-                    self.borraUltimoMovible()
+                    self.remove_last_movable()
                 elif k == Qt.Key.Key_F2:
-                    self.borraMovibles()
-            elif self.lanzaDirector():
+                    self.remove_movables()
+            elif self.launch_director():
                 self.dirvisual.keyPressEvent(event)
             return
 
         event.ignore()
 
-        if k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace) and len(self.dicMovibles) > 0:
+        if k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace) and len(self.dic_movables) > 0:
             if self.dirvisual:
                 self.dirvisual.keyPressEvent(event)
-            else:
-                if k == QtCore.Qt.Key.Key_Backspace:
-                    self.borraUltimoMovible()
-                elif k == QtCore.Qt.Key.Key_Delete:
-                    self.borraMovibles()
+            elif k == QtCore.Qt.Key.Key_Backspace:
+                self.remove_last_movable()
+            elif k == QtCore.Qt.Key.Key_Delete:
+                self.remove_movables()
             return
 
         self.exec_kb_buffer(k, m)
@@ -387,10 +447,9 @@ class Board(QtWidgets.QGraphicsView):
         self.with_menu_visual = si_activar
 
     def allowed_extern_resize(self, sino=None):
-        if sino is None:
-            return self.siPermitidoResizeExterno
-        else:
+        if sino is not None:
             self.siPermitidoResizeExterno = sino
+        return self.siPermitidoResizeExterno
 
     def maximize_size(self, activado_f11):
         self.siF11 = activado_f11
@@ -409,19 +468,19 @@ class Board(QtWidgets.QGraphicsView):
         self.set_width()
         if not is_white_bottom:
             self.try_to_rotate_the_board(None)
-        if self._dispatch_size:
-            self._dispatch_size()
+        if self.dispatch_size:
+            self.dispatch_size()
 
     def is_maximized(self):
         return self.config_board.width_piece() == 1000
 
-    def crea(self):
+    def draw_window(self):
         nom_pieces_ori = self.config_board.nomPiezas()
-        if self.blindfold:
-            self.piezas = Piezas.Blindfold(nom_pieces_ori, self.blindfold)
+        if self.blindfold_controller.blind_sides():
+            self.pieces = Piezas.Blindfold(nom_pieces_ori, self.blindfold_controller.blind_sides())
         else:
-            self.piezas = Code.all_pieces.selecciona(nom_pieces_ori)
-        self.anchoPieza = self.config_board.width_piece()
+            self.pieces = Code.all_pieces.selecciona(nom_pieces_ori)
+        self.width_piece = self.config_board.width_piece()
         self.margin_pieces = (
             Code.configuration.x_margin_pieces - 10
         )  # -10 a +10 como valor real, de 0 a 20 en configuración parámetros
@@ -455,7 +514,7 @@ class Board(QtWidgets.QGraphicsView):
         self.pieces_are_active = False  # Control adicional, para responder a eventos del raton
         self.side_pieces_active = None
 
-        self.can_be_rotated_the_board = True
+        self.can_be_rotated = True
 
         self.is_white_bottom = True
 
@@ -477,8 +536,7 @@ class Board(QtWidgets.QGraphicsView):
 
         tr = 1.0 * self.config_board.tamRecuadro() / 100.0
 
-        ap = int((1.0 * limit - 16.0 * self.margin_pieces) / (8.0 + tr * 92.0 / 80))
-        return ap
+        return int((1.0 * limit - 16.0 * self.margin_pieces) / (8.0 + tr * 92.0 / 80))
 
     def set_width(self):
         d_tam = {
@@ -494,7 +552,7 @@ class Board(QtWidgets.QGraphicsView):
         if ap == 1000:
             ap = self.calc_width_mx_piece()
         if ap in d_tam:
-            self.puntos, self.margenCentro = d_tam[ap]
+            self.puntos, self.margin_center = d_tam[ap]
         else:
             mx = INFINITE
             kt = 0
@@ -505,14 +563,14 @@ class Board(QtWidgets.QGraphicsView):
                     kt = k
             pt, mc = d_tam[kt]
             self.puntos = pt * ap // kt
-            self.margenCentro = mc * ap // kt
+            self.margin_center = mc * ap // kt
 
-        self.anchoPieza = ap
+        self.width_piece = ap
 
         self.width_square = ap + self.margin_pieces * 2
-        self.tamFrontera = self.margenCentro * 3.0 // 46.0
+        self.tamFrontera = int(self.margin_center * 3.0 // 46.0)
 
-        self.margenCentro = self.margenCentro * self.config_board.tamRecuadro() // 100
+        self.margin_center = self.margin_center * self.config_board.tamRecuadro() // 100
 
         fx = self.config_board.tamFrontera()
         self.tamFrontera = int(self.tamFrontera * fx // 100)
@@ -523,11 +581,11 @@ class Board(QtWidgets.QGraphicsView):
 
         self.puntos = self.puntos * self.config_board.tamLetra() * 12 // 1000
 
-        # Guardamos las piezas
+        # Guardamos las pieces
 
         if self.siInicializado:
             li_pz = []
-            for cpieza, pieza_sc, is_active in self.liPiezas:
+            for cpieza, pieza_sc, is_active in self.li_pieces:
                 if is_active:
                     physical_pos = pieza_sc.bloquePieza
                     f = physical_pos.row
@@ -538,11 +596,11 @@ class Board(QtWidgets.QGraphicsView):
             ap, apc = self.pieces_are_active, self.side_pieces_active
             si_flecha = self.arrow_sc is not None
 
-            self.rehaz()
+            self.redraw()
 
             if li_pz:
                 for cpieza, a1h8 in li_pz:
-                    self.creaPieza(cpieza, a1h8)
+                    self.create_piece(cpieza, a1h8)
             if ap:
                 self.activate_side(apc)
                 self.set_side_indicator(apc)
@@ -551,18 +609,18 @@ class Board(QtWidgets.QGraphicsView):
                 self.reset_arrow_sc()
 
         else:
-            self.rehaz()
+            self.redraw()
 
         self.siInicializado = True
         self.init_kb_buffer()
 
-    def rehaz(self):
+    def redraw(self):
         self.escena.clear()
-        self.liPiezas = []
-        self.liFlechas = []
+        self.li_pieces = []
+        self.li_arrows = []
         self.arrow_sc = None
-        self.dicMovibles = collections.OrderedDict()  # Flechas, Marcos, SVG
-        self.idUltimoMovibles = 0
+        self.dic_movables = collections.OrderedDict()  # Flechas, Marcos, SVG
+        self.id_last_movable = 0
         self.side_indicator_sc = None
 
         self.is_white_bottom = True
@@ -586,7 +644,7 @@ class Board(QtWidgets.QGraphicsView):
                 cajon = BoardTypes.Caja()
                 cajon.colorRelleno = self.colorExterior
         self.ancho = ancho = cajon.physical_pos.alto = cajon.physical_pos.ancho = (
-            self.width_square * 8 + self.margenCentro * 2 + self.tamFrontera * 2
+            self.width_square * 8 + self.margin_center * 2 + self.tamFrontera * 2
         )
         cajon.physical_pos.orden = 1
         cajon.tipo = 0
@@ -603,7 +661,7 @@ class Board(QtWidgets.QGraphicsView):
         else:
             base_casillas = BoardTypes.Caja()
             base_casillas.colorRelleno = self.colorFondo
-        base_casillas.physical_pos.x = base_casillas.physical_pos.y = self.margenCentro + self.tamFrontera / 2
+        base_casillas.physical_pos.x = base_casillas.physical_pos.y = self.margin_center + self.tamFrontera / 2
         base_casillas.physical_pos.alto = base_casillas.physical_pos.ancho = self.width_square * 8
         base_casillas.physical_pos.orden = 2
         base_casillas.tipo = 0
@@ -617,7 +675,7 @@ class Board(QtWidgets.QGraphicsView):
         # Frontera
         base_casillas_f = BoardTypes.Caja()
         base_casillas_f.grosor = self.tamFrontera
-        base_casillas_f.physical_pos.x = base_casillas_f.physical_pos.y = self.margenCentro
+        base_casillas_f.physical_pos.x = base_casillas_f.physical_pos.y = self.margin_center
         base_casillas_f.physical_pos.alto = base_casillas_f.physical_pos.ancho = (
             self.width_square * 8 + self.tamFrontera
         )
@@ -648,7 +706,7 @@ class Board(QtWidgets.QGraphicsView):
                 for y in range(8):
                     una = square.copia()
 
-                    k1 = k = self.margenCentro + self.tamFrontera // 2
+                    k1 = k = self.margin_center + self.tamFrontera // 2
                     if y % 2 == tipo:
                         k += self.width_square
                     una.physical_pos.x = k + z * 2 * self.width_square
@@ -669,7 +727,7 @@ class Board(QtWidgets.QGraphicsView):
         self.liCoordenadasHorizontales = []
 
         ancho_texto = self.puntos + 4
-        if self.margenCentro >= self.puntos or self.config_board.sepLetras() < 0:
+        if self.margin_center >= self.puntos or self.config_board.sepLetras() < 0:
             coord = BoardTypes.Texto()
             tipo_letra = self.config_board.font_type()
             peso = 75 if self.config_board.bold() else 50
@@ -683,15 +741,13 @@ class Board(QtWidgets.QGraphicsView):
             p_frontera = base_casillas_f.physical_pos
             gap_casilla = (self.width_square - ancho_texto) / 2
             sep = (
-                self.margenCentro * self.config_board.sepLetras() * 38 / 50000
+                self.margin_center * self.config_board.sepLetras() * 38 / 50000
             )  # ancho = 38 -> sep = 5 -> sepLetras = 100
 
             def norm(z):
                 if z < 0:
                     return 0
-                if z > (ancho - ancho_texto):
-                    return ancho - ancho_texto
-                return z
+                return ancho - ancho_texto if z > (ancho - ancho_texto) else z
 
             hx = norm(p_casillas.x + gap_casilla)
             hy_s = norm(p_frontera.y + p_frontera.alto + sep)
@@ -719,13 +775,13 @@ class Board(QtWidgets.QGraphicsView):
 
                     if li_co[0]:
                         hor.physical_pos.y = hy_s
-                        hor_sc = BoardElements.TextoSC(self.escena, hor, self.pulsadaLetra)
+                        hor_sc = BoardElements.TextoSC(self.escena, hor, self.pressed_letter)
                         self.liCoordenadasHorizontales.append(hor_sc)
 
                     if li_co[2]:
                         hor = hor.copia()
                         hor.physical_pos.y = hy_n
-                        hor_sc = BoardElements.TextoSC(self.escena, hor, self.pulsadaLetra)
+                        hor_sc = BoardElements.TextoSC(self.escena, hor, self.pressed_letter)
                         self.liCoordenadasHorizontales.append(hor_sc)
 
                     ver = coord.copia()
@@ -735,13 +791,13 @@ class Board(QtWidgets.QGraphicsView):
 
                     if li_co[1]:
                         ver.physical_pos.x = vx_o
-                        ver_sc = BoardElements.TextoSC(self.escena, ver, self.pulsadoNum)
+                        ver_sc = BoardElements.TextoSC(self.escena, ver, self.pressed_number)
                         self.liCoordenadasVerticales.append(ver_sc)
 
                     if li_co[3]:
                         ver = ver.copia()
                         ver.physical_pos.x = vx_e
-                        ver_sc = BoardElements.TextoSC(self.escena, ver, self.pulsadoNum)
+                        ver_sc = BoardElements.TextoSC(self.escena, ver, self.pressed_number)
                         self.liCoordenadasVerticales.append(ver_sc)
 
         # Indicador de color activo
@@ -809,7 +865,7 @@ class Board(QtWidgets.QGraphicsView):
                     self.escena,
                     script,
                     pixmap=Iconos.pmLampara(),
-                    rutina=self.lanzaGuionAuto,
+                    rutina=self.launch_guion_auto,
                 )
                 self.scriptSC_menu.hide()
                 self.scriptSC_menu.setOpacity(0.70)
@@ -818,9 +874,9 @@ class Board(QtWidgets.QGraphicsView):
 
         self.setSceneRect(0, 0, self.ancho, self.ancho)
 
-    def setAcceptDropPGNs(self, rutinaDropsPGN):
-        self.baseCasillasSC.setAcceptDrops(rutinaDropsPGN is not None)
-        self.rutinaDropsPGN = rutinaDropsPGN
+    def set_accept_drop_pgns(self, rutina_drops_pgn):
+        self.baseCasillasSC.setAcceptDrops(rutina_drops_pgn is not None)
+        self.rutinaDropsPGN = rutina_drops_pgn
 
     def dropEvent(self, event):
         if self.rutinaDropsPGN is not None:
@@ -858,10 +914,7 @@ class Board(QtWidgets.QGraphicsView):
                 return self.text
 
             def icon(self):
-                if len(self.key) == 1:
-                    return Iconos.Mover()
-                else:
-                    return None
+                return Iconos.Mover() if len(self.key) == 1 else None
 
             def run(self, exec_kb_buffer):
                 if len(self.key) == 1:
@@ -877,8 +930,8 @@ class Board(QtWidgets.QGraphicsView):
         li_regs = []
 
         def add_key(xkey, txt, is_alt=False, is_ctrl=False, is_shift=False):
-            reg = RegSK(xkey, txt, is_alt=is_alt, is_ctrl=is_ctrl, is_shift=is_shift)
-            li_regs.append(reg)
+            regkey = RegSK(xkey, txt, is_alt=is_alt, is_ctrl=is_ctrl, is_shift=is_shift)
+            li_regs.append(regkey)
 
         def alt(xkey, txt):
             add_key(xkey, txt, is_alt=True)
@@ -913,18 +966,18 @@ class Board(QtWidgets.QGraphicsView):
         close_group()
 
         alt("I", _("Copy board as image to clipboard"))
-        ctrl("I", _("Copy board as image to clipboard") + " (%s)" % _("without border"))
+        ctrl("I", f"{_('Copy board as image to clipboard')} ({_('without border')})")
         add_key(
             "I",
-            _("Copy board as image to clipboard") + " (%s)" % _("without coordinates"),
+            f"{_('Copy board as image to clipboard')} ({_('without coordinates')})",
             is_ctrl=True,
             is_alt=True,
         )
         alt("J", _("Copy board as image to a file"))
-        ctrl("J", _("Copy board as image to a file") + " (%s)" % _("without border"))
+        ctrl("J", f"{_('Copy board as image to a file')} ({_('without border')})")
         add_key(
             "J",
-            _("Copy board as image to a file") + " (%s)" % _("without coordinates"),
+            f"{_('Copy board as image to a file')} ({_('without coordinates')})",
             is_ctrl=True,
             is_alt=True,
         )
@@ -942,7 +995,7 @@ class Board(QtWidgets.QGraphicsView):
         if self.pieces_are_active:
             add_key(
                 "a1 ... h8",
-                _("To indicate origin and destination of a move") + "= a1 ... h8",
+                f"{_('To indicate origin and destination of a move')}= a1 ... h8",
             )
             close_group()
 
@@ -985,138 +1038,31 @@ class Board(QtWidgets.QGraphicsView):
         if reg:
             reg.run(self.exec_kb_buffer)
 
-    def launch_visual_menu(self):
-        if not self.with_menu_visual:
-            return
-
-        menu = QTDialogs.LCMenu(self)
-
-        menu.opcion("colors", _("Colors"), Iconos.Colores())
-        menu.separador()
-        menu.opcion("pieces", _("Pieces"), self.piezas.icono("K"))
-        menu.separador()
-        c = str(self.main_window)
-        ok = True
-        if "MainWindow" in c:
-            ok = not self.main_window.isMaximized()
-
-        if ok:
-            menu.opcion("size", _("Change board size"), Iconos.ResizeBoard())
-            menu.separador()
-
-        submenu = menu.submenu(_("By default"), Iconos.Defecto())
-        submenu.opcion("def_todo1", "1", Iconos.m1())
-        submenu.opcion("def_todo2", "2", Iconos.m2())
-        submenu.opcion("def_todo3", "3", Iconos.m3())
-
-        menu.separador()
-        if self.with_director:
-            menu.opcion("director", _("Director") + " [%s] " % _("F1-F10"), Iconos.Director())
-            menu.separador()
-
-        if self.can_be_rotated_the_board:
-            menu.opcion(
-                "girar",
-                _("Flip the board") + " [%s-F]" % _("ALT"),
-                Iconos.JS_Rotacion(),
-            )
-            menu.separador()
-
-        menu.opcion("keys", _("Active keys") + " [%s-K]" % _("ALT"), Iconos.Rename())
-        menu.separador()
-
-        resp = menu.lanza()
-        if resp is None:
-            return
-        elif resp == "colors":
-            menucol = QTDialogs.LCMenu(self)
-            menucol.opcion("edit", _("Edit"), Iconos.EditarColores())
-            menucol.separador()
-            li_temas = Util.restore_pickle(Code.configuration.paths.file_themes())
-            if li_temas:
-                WBoardColors.add_menu_themes(menucol, li_temas, "tt_")
-                menucol.separador()
-            for entry in Util.listdir(Code.path_resource("Themes")):
-                fich = entry.name
-                if fich.lower().endswith(".lktheme3"):
-                    self.fich_ = fich[:-9]
-                    name = self.fich_
-                    menucol.opcion("ot_" + fich, name, Iconos.Division())
-            resp = menucol.lanza()
-            if resp:
-                if resp == "edit":
-                    w = WBoardColors.WBoardColors(self)
-                    w.exec()
-                else:
-                    self.ponColores(li_temas, resp)
-
-        elif resp == "pieces":
-            menup = QTDialogs.LCMenu(self)
-            li = []
-            for x in Util.listdir(Code.path_resource("Pieces")):
-                try:
-                    if x.is_dir():
-                        ico = Code.all_pieces.icono("K", x.name)
-                        li.append((x.name, ico))
-                except:
-                    pass
-            li.sort(key=lambda rx: rx[0])
-            for x, ico in li:
-                menup.opcion(x, x, ico)
-            resp = menup.lanza()
-            if resp:
-                self.cambiaPiezas(resp)
-
-        elif resp == "size":
-            self.cambiaSize()
-
-        elif resp == "girar":
-            self.rotate_board()
-
-        elif resp == "director":
-            self.lanzaDirector()
-
-        elif resp == "keys":
-            self.show_keys()
-
-        elif resp.startswith("def_todo"):
-            self.configuration.change_theme_num(int(resp[-1]))
-            self.config_board = self.configuration.reset_conf_board(
-                self.config_board.id(), self.config_board.width_piece()
-            )
-            if self.config_board.is_base:
-                nom_pieces_ori = self.config_board.nomPiezas()
-                self.cambiaPiezas(nom_pieces_ori)
-            self.reset(self.config_board)
-            if hasattr(self.main_window.parent, "adjust_size"):
-                self.main_window.parent.adjust_size()
-
-    def lanzaDirector(self):
-        if self.with_director:
-            if self.dirvisual:
-                self.dirvisual.terminar()
-                self.dirvisual = None
-                return False
-            else:
-                self.dirvisual = WindowDirector.Director(self)
-                self.dirvisual.guion.play(editing=True)
-            return True
-        else:
+    def launch_director(self):
+        if not self.with_director:
             return False
+        if self.dirvisual:
+            self.dirvisual.finalize()
+            self.dirvisual = None
+            return False
+        else:
+            self.dirvisual = WindowDirector.Director(self)
+            self.dirvisual.guion.play(editing=True)
+        return True
 
     def close_visual_script(self):
         if self.guion is not None:
-            self.guion.cierraPizarra()
+            self.guion.close_pizarra()
             self.guion.cerrado = True
             self.guion = None
 
-    def lanzaGuionAuto(self):
+    def launch_guion_auto(self):
         if self.guion is not None:
-            self.guion.restoreBoard(siBorraMoviblesAhora=True)
+            self.guion.restore_board(remove_movables_now=True)
         else:
-            self.lanzaGuion()
+            self.launch_guion()
 
-    def lanzaGuion(self):
+    def launch_guion(self):
         if self.guion is not None:
             self.close_visual_script()
         else:
@@ -1124,19 +1070,14 @@ class Board(QtWidgets.QGraphicsView):
             self.guion.recupera()
             self.guion.play()
 
-    def cambiaSize(self):
-        imp = WTamBoard(self)
-        imp.colocate()
-        imp.exec()
-
-    def cambiaPiezas(self, cual):
-        self.config_board.cambiaPiezas(cual)
+    def change_the_pieces(self, cual):
+        self.config_board.change_the_pieces(cual)
         self.config_board.guardaEnDisco()
         ap, apc = self.pieces_are_active, self.side_pieces_active
         si_flecha = self.arrow_sc is not None
         atajos_raton = self.atajos_raton
 
-        self.crea()
+        self.draw_window()
         if ap:
             self.activate_side(apc)
             self.set_side_indicator(apc)
@@ -1151,17 +1092,17 @@ class Board(QtWidgets.QGraphicsView):
         if self.config_board.is_base:
             nom_pieces_ori = self.config_board.nomPiezas()
             Code.all_pieces.save_all_png(nom_pieces_ori, 30)
-            Delegados.genera_pm(self.piezas)
+            Delegados.genera_pm(self.pieces)
             self.main_window.pgn_refresh()
             if hasattr(self.main_window.manager, "put_view"):
                 self.main_window.manager.put_view()
 
-    def ponColores(self, li_temas, resp):
+    def set_colors(self, li_temas, resp):
         if resp.startswith("tt_"):
             tema = li_temas[int(resp[3:])]
 
         else:
-            fich = Code.path_resource("Themes/%s" % resp[3:])
+            fich = Code.path_resource(f"Themes/{resp[3:]}")
             tema = WBoardColors.elige_tema(self, fich)
 
         if tema:
@@ -1172,7 +1113,7 @@ class Board(QtWidgets.QGraphicsView):
             self.config_board.guardaEnDisco()
             pac = self.pieces_are_active
             pac_sie = self.side_pieces_active
-            self.crea()
+            self.draw_window()
             if pac and pac_sie is not None:
                 self.activate_side(pac_sie)
 
@@ -1183,7 +1124,7 @@ class Board(QtWidgets.QGraphicsView):
             del item
         pac = self.pieces_are_active
         pac_sie = self.side_pieces_active
-        self.crea()
+        self.draw_window()
         if pac and pac_sie is not None:
             self.activate_side(pac_sie)
 
@@ -1199,84 +1140,83 @@ class Board(QtWidgets.QGraphicsView):
             key += "SHIFT"
         return key
 
-    def mousePressGraphLive(self, event, a1h8):
+    def mouse_press_graph_live(self, event, a1h8):
         if not self.configuration.x_direct_graphics:
             return
         key = self.key_current_graphlive(event)
         key += "MR"
         if self.dic_graphlive is None:
-            self.dic_graphlive = self.readGraphLive()
+            self.dic_graphlive = self.read_graph_live()
         if key in self.dic_graphlive:
             elem = self.dic_graphlive.get(key)
             elem.a1h8 = a1h8 + a1h8
             if TabVisual.TP_FLECHA == elem.TP:
-                self.current_graphlive = self.creaFlecha(elem)
+                self.current_graphlive = self.create_arrow(elem)
                 self.current_graphlive.mouse_press_ext(event)
             elif TabVisual.TP_MARCO == elem.TP:
-                self.current_graphlive = self.creaMarco(elem)
+                self.current_graphlive = self.create_marco(elem)
                 self.current_graphlive.mouse_press_ext(event)
             elif TabVisual.TP_CIRCLE == elem.TP:
-                self.current_graphlive = self.creaCircle(elem)
+                self.current_graphlive = self.create_circle(elem)
                 self.current_graphlive.mouse_press_ext(event)
             elif TabVisual.TP_MARKER == elem.TP:
-                self.current_graphlive = self.creaMarker(elem)
+                self.current_graphlive = self.create_marker(elem)
                 self.current_graphlive.mouse_press_ext(event)
             elif TabVisual.TP_SVG == elem.TP:
-                self.current_graphlive = self.creaSVG(elem, False)
+                self.current_graphlive = self.create_svg(elem, False)
                 self.current_graphlive.mouse_press_ext(event)
 
             self.current_graphlive.TP = elem.TP
 
-    def mouseMoveGraphLive(self, event):
+    def mouse_move_graph_live(self, event):
         if not self.configuration.x_direct_graphics:
             return
         if self.current_graphlive.TP in (TabVisual.TP_FLECHA, TabVisual.TP_MARCO):
-            self.current_graphlive.mouseMoveExt(event)
+            self.current_graphlive.mouse_move_ext(event)
         self.current_graphlive.update()
 
-    def readGraphLive(self):
-        rel = {
-            0: "MR",
-            1: "ALTMR",
-            2: "SHIFTMR",
-            3: "CTRLMR",
-            4: "CTRLALTMR",
-            5: "CTRLSHIFTMR",
-            6: "MR1",
-            7: "ALTMR1",
-            8: "SHIFTMR1",
-        }
+    def read_graph_live(self):
         dic = {}
-        db = self.dbVisual
-        li = self.dbVisual.dbConfig["SELECTBANDA"]
+        li = self.dbVisual.db_config["SELECTBANDA"]
         if li:
+            rel = {
+                0: "MR",
+                1: "ALTMR",
+                2: "SHIFTMR",
+                3: "CTRLMR",
+                4: "CTRLALTMR",
+                5: "CTRLSHIFTMR",
+                6: "MR1",
+                7: "ALTMR1",
+                8: "SHIFTMR1",
+            }
+            db = self.dbVisual
             for xid, pos in li:
                 if xid.startswith("_F"):
-                    xdb = db.dbFlechas
+                    xdb = db.db_arrows
                     tp = TabVisual.TP_FLECHA
                     obj = BoardTypes.Flecha()
                 elif xid.startswith("_M"):
-                    xdb = db.dbMarcos
+                    xdb = db.db_marcos
                     tp = TabVisual.TP_MARCO
                     obj = BoardTypes.Marco()
                 elif xid.startswith("_D"):
-                    xdb = db.dbCircles
+                    xdb = db.db_circles
                     tp = TabVisual.TP_CIRCLE
                     obj = BoardTypes.Circle()
                 elif xid.startswith("_S"):
-                    xdb = db.dbSVGs
+                    xdb = db.db_svgs
                     tp = TabVisual.TP_SVG
                     obj = BoardTypes.SVG()
                 elif xid.startswith("_X"):
-                    xdb = db.dbMarkers
+                    xdb = db.db_markers
                     tp = TabVisual.TP_MARKER
                     obj = BoardTypes.Marker()
                 else:
                     continue
                 if pos in rel:
                     cnum_id = xid[3:]
-                    dic_current = xdb[cnum_id]
-                    if dic_current:
+                    if dic_current := xdb[cnum_id]:
                         obj.restore_dic(dic_current)
                     obj.TP = tp
                     obj.id = int(cnum_id) if cnum_id.isdigit() else cnum_id
@@ -1289,14 +1229,14 @@ class Board(QtWidgets.QGraphicsView):
             self.current_graphlive.hide()
             del self.current_graphlive
             self.current_graphlive = None
-            self.borraUltimoMovible()
+            self.remove_last_movable()
 
     def mouse_release_graph_live(self, event):
         if not self.configuration.x_direct_graphics:
             return
         h8 = self.event2a1h8(event)
         if h8 is not None:
-            a1 = self.current_graphlive.bloqueDatos.a1h8[:2]
+            a1 = self.current_graphlive.block_data.a1h8[:2]
             key = self.key_current_graphlive(event)
             if a1 == h8 and not key.startswith("CTRL"):
                 self.remove_current_graphlive()
@@ -1308,28 +1248,28 @@ class Board(QtWidgets.QGraphicsView):
                 elem.a1h8 = a1 + a1
                 tp = elem.TP
                 if tp == TabVisual.TP_SVG:
-                    self.current_graphlive = self.creaSVG(elem)
+                    self.current_graphlive = self.create_svg(elem)
                     self.current_graphlive.TP = tp
                 elif tp == TabVisual.TP_MARCO:
-                    self.current_graphlive = self.creaMarco(elem)
+                    self.current_graphlive = self.create_marco(elem)
                     self.current_graphlive.TP = tp
                 elif tp == TabVisual.TP_CIRCLE:
-                    self.current_graphlive = self.creaCircle(elem)
+                    self.current_graphlive = self.create_circle(elem)
                     self.current_graphlive.TP = tp
                 elif tp == TabVisual.TP_MARKER:
-                    self.current_graphlive = self.creaMarker(elem)
+                    self.current_graphlive = self.create_marker(elem)
                     self.current_graphlive.TP = tp
 
             else:
                 self.current_graphlive.set_a1h8(a1 + h8)
-            keys = list(self.dicMovibles.keys())
+            keys = list(self.dic_movables.keys())
             if len(keys) > 1:
                 last = len(keys) - 1
-                bd_last = self.current_graphlive.bloqueDatos
+                bd_last = self.current_graphlive.block_data
                 st = set()
-                for n, (pos, item) in enumerate(self.dicMovibles.items()):
+                for n, (pos, item) in enumerate(self.dic_movables.items()):
                     if n != last:
-                        bd = item.bloqueDatos
+                        bd = item.block_data
                         if (
                             hasattr(bd_last, "tpid")
                             and hasattr(bd, "tpid")
@@ -1339,24 +1279,25 @@ class Board(QtWidgets.QGraphicsView):
                             st.add(self.current_graphlive)
                             st.add(item)
                 for item in st:
-                    self.borraMovible(item)
+                    self.remove_movable(item)
 
             self.refresh()
         self.current_graphlive = None
 
     def mouseMoveEvent(self, event):
         if self.dirvisual and self.dirvisual.mouseMoveEvent(event):
-            return
+            return None
         pos = event.pos()
         x = pos.x()
         y = pos.y()
-        minimo = self.margenCentro
-        maximo = self.margenCentro + (self.width_square * 8)
+        minimo = self.margin_center
+        maximo = self.margin_center + (self.width_square * 8)
         si_dentro = (minimo < x < maximo) and (minimo < y < maximo)
         if si_dentro and self.current_graphlive:
-            return self.mouseMoveGraphLive(event)
+            return self.mouse_move_graph_live(event)
 
         QtWidgets.QGraphicsView.mouseMoveEvent(self, event)
+        return None
 
     def mouseReleaseEvent(self, event):
         if self.dirvisual and self.dirvisual.mouseReleaseEvent(event):
@@ -1376,11 +1317,11 @@ class Board(QtWidgets.QGraphicsView):
         pos = event.pos()
         x = pos.x()
         y = pos.y()
-        minimo = self.margenCentro
-        maximo = self.margenCentro + (self.width_square * 8)
+        minimo = self.margin_center
+        maximo = self.margin_center + (self.width_square * 8)
         if (minimo < x < maximo) and (minimo < y < maximo):
-            xc = 1 + int(float(x - self.margenCentro) / self.width_square)
-            yc = 1 + int(float(y - self.margenCentro) / self.width_square)
+            xc = 1 + int(float(x - self.margin_center) / self.width_square)
+            yc = 1 + int(float(y - self.margin_center) / self.width_square)
 
             if self.is_white_bottom:
                 yc = 9 - yc
@@ -1389,10 +1330,9 @@ class Board(QtWidgets.QGraphicsView):
 
             f = chr(48 + yc)
             c = chr(96 + xc)
-            a1h8 = c + f
+            return c + f
         else:
-            a1h8 = None
-        return a1h8
+            return None
 
     def mousePressEvent(self, event):
         if self.dirvisual:
@@ -1404,14 +1344,14 @@ class Board(QtWidgets.QGraphicsView):
         si_right = event.button() == QtCore.Qt.MouseButton.RightButton
         if si_right:
             if a1h8:
-                return self.mousePressGraphLive(event, a1h8)
-            else:
-                self.launch_visual_menu()
+                self.mouse_press_graph_live(event, a1h8)
                 return
+            self.launch_visual_menu()
+            return
 
         si_izq = event.button() == QtCore.Qt.MouseButton.LeftButton
         if si_izq and a1h8 is not None:
-            self.borraMovibles()
+            self.remove_movables()
 
             if self.active_premove:
                 self.main_window.manager.remove_premove()
@@ -1429,8 +1369,7 @@ class Board(QtWidgets.QGraphicsView):
 
         elif hasattr(self.main_window, "manager"):
             if hasattr(self.main_window.manager, "colect_candidates"):
-                li_c = self.main_window.manager.colect_candidates(a1h8)
-                if li_c:
+                if li_c := self.main_window.manager.colect_candidates(a1h8):
                     self.show_candidates(li_c)
 
         QtWidgets.QGraphicsView.mousePressEvent(self, event)
@@ -1440,10 +1379,7 @@ class Board(QtWidgets.QGraphicsView):
 
             def lee(fich):
                 with open(
-                    Code.path_resource("IntFiles/Svg", "%s.svg" % fich),
-                    "rt",
-                    encoding="utf-8",
-                    errors="ignore",
+                    Code.path_resource("IntFiles/Svg", f"{fich}.svg"), "rt", encoding="utf-8", errors="ignore"
                 ) as f:
                     resp = f.read()
                 return resp
@@ -1511,8 +1447,7 @@ class Board(QtWidgets.QGraphicsView):
         self.escena.update()
 
     def mouseDoubleClickEvent(self, event):
-        item = self.itemAt(event.pos())
-        if item:
+        if item := self.itemAt(event.pos()):
             if item == self.arrow_sc:
                 self.arrow_sc.hide()
 
@@ -1535,7 +1470,7 @@ class Board(QtWidgets.QGraphicsView):
 
     def set_dispatcher(self, mensajero, atajos_raton=None):
         if self.dirvisual:
-            self.dirvisual.cambiadoMensajero()
+            self.dirvisual.mensajero_changed()
         self.mensajero = mensajero
         if atajos_raton:
             self.atajos_raton = atajos_raton
@@ -1555,21 +1490,21 @@ class Board(QtWidgets.QGraphicsView):
 
     def dbvisual_contains(self, fenm2):
         try:
-            return fenm2 in self.dbVisual.dbFEN and len(self.dbVisual.dbFEN[fenm2]) > 0
+            return fenm2 in self.dbVisual.db_fen and len(self.dbVisual.db_fen[fenm2]) > 0
         except AttributeError:
             return False
 
     def dbvisual_list(self, fenm2):
-        return self.dbVisual.dbFEN[fenm2]
+        return self.dbVisual.db_fen[fenm2]
 
-    def dbVisual_save(self, fenm2, lista):
+    def dbvisual_save(self, fenm2, lista):
         if not lista:
-            del self.dbVisual.dbFEN[fenm2]
+            del self.dbVisual.db_fen[fenm2]
         else:
-            self.dbVisual.dbFEN[fenm2] = lista
+            self.dbVisual.db_fen[fenm2] = lista
 
-    def saveVisual(self):
-        alm = self.almSaveVisual = Util.Record()
+    def save_visual_state(self):
+        alm = self.reg_save_visual_state = SaveVisualState()
         alm.with_menu_visual = self.with_menu_visual
         alm.with_director = self.with_director
         alm.show_graphic_icon = self.show_graphic_icon
@@ -1579,8 +1514,8 @@ class Board(QtWidgets.QGraphicsView):
         alm.nomdbVisual = self.dbVisual.file
         alm.dbVisual_show_always = self.dbVisual.show_always()
 
-    def restoreVisual(self):
-        alm = self.almSaveVisual
+    def restore_visual_state(self):
+        alm = self.reg_save_visual_state
         self.with_menu_visual = alm.with_menu_visual
         self.with_director = alm.with_director
         self.show_graphic_icon = alm.show_graphic_icon
@@ -1604,59 +1539,51 @@ class Board(QtWidgets.QGraphicsView):
                     if self.show_graphic_icon:
                         self.scriptSC_menu.show()
                     if self.dbVisual.show_always():
-                        self.lanzaGuion()
+                        self.launch_guion()
                 elif self.show_graphic_icon:
                     self.scriptSC_menu.hide()
-
-    def eboard_arrow(self, a1, h8, prom):
-        if Code.eboard and Code.eboard.driver and self.allow_eboard:
-            position = self.last_position.copia()
-            position.play(a1, h8, prom)
-            Code.eboard.set_position(position)
-            time.sleep(2.0)
-            Code.eboard.set_position(self.last_position)
 
     def set_raw_last_position(self, position):
         if position != self.last_position:
             self.set_last_position(position)
 
-    def set_position(self, position, siBorraMoviblesAhora=True, variation_history=None):
+    def set_position(self, position, remove_movables_now=True, variation_history=None):
         self.active_premove = False
         if self.dirvisual:
-            self.dirvisual.cambiadaPosicionAntes()
+            self.dirvisual.changed_position_before()
         elif self.dbVisual.save_always():
-            self.dbVisual.saveMoviblesBoard(self)
+            self.dbVisual.save_movables_board(self)
 
-        if self.si_borraMovibles and siBorraMoviblesAhora:
-            self.borraMovibles()
+        if self.si_borraMovibles and remove_movables_now:
+            self.remove_movables()
 
         self.set_base_position(position, variation_history=variation_history)
 
         if self.dirvisual:
             if self.guion:
-                self.guion.cierraPizarra()
-            self.dirvisual.cambiadaPosicionDespues()
+                self.guion.close_pizarra()
+            self.dirvisual.changed_position_after()
 
         if variation_history:
             self.activate_side(position.is_white)
 
-    def removePieces(self):
-        for x in self.liPiezas:
+    def remove_pieces(self):
+        for x in self.li_pieces:
             if x[2]:
                 self.xremove_item(x[1])
-        self.liPiezas = []
+        self.li_pieces = []
 
     def set_base_position(self, position, variation_history=None):
         self.variation_history = variation_history
 
         self.pieces_are_active = False
-        self.removePieces()
+        self.remove_pieces()
 
         squares = position.squares
 
         for k in squares.keys():
             if squares[k]:
-                self.ponPieza(squares[k], k)
+                self.ensure_piece_at(squares[k], k)
 
         self.escena.update()
         if self.hard_focus:
@@ -1671,257 +1598,179 @@ class Board(QtWidgets.QGraphicsView):
         self.set_last_position(position)
         if self.variation_history:
             self.activate_side(position.is_white)
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents)
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
 
     def fila2punto(self, row):
         factor = (8 - row) if self.is_white_bottom else (row - 1)
-        # return factor * (self.anchoPieza + self.margin_pieces * 2) + self.margenCentro + self.tamFrontera
-        return factor * self.width_square + self.margenCentro + self.tamFrontera / 2 + self.margin_pieces
+        # return factor * (self.width_piece + self.margin_pieces * 2) + self.margin_center + self.tamFrontera
+        return factor * self.width_square + self.margin_center + self.tamFrontera / 2 + self.margin_pieces
 
     def columna2punto(self, column):
         factor = (column - 1) if self.is_white_bottom else (8 - column)
-        # return factor * (self.anchoPieza + self.margin_pieces * 2) + self.margenCentro + self.tamFrontera
-        return factor * self.width_square + self.margenCentro + self.tamFrontera / 2 + self.margin_pieces
+        # return factor * (self.width_piece + self.margin_pieces * 2) + self.margin_center + self.tamFrontera
+        return factor * self.width_square + self.margin_center + self.tamFrontera / 2 + self.margin_pieces
 
     def punto2fila(self, pos):
-        pos -= self.margenCentro + self.tamFrontera / 2 + self.margin_pieces
+        pos -= self.margin_center + self.tamFrontera / 2 + self.margin_pieces
         pos //= self.width_square
-        if self.is_white_bottom:
-            return int(8 - pos)
-        else:
-            return int(pos + 1)
+        return int(8 - pos) if self.is_white_bottom else int(pos + 1)
 
     def punto2columna(self, pos):
-        pos -= self.margenCentro + self.tamFrontera / 2 + self.margin_pieces
+        pos -= self.margin_center + self.tamFrontera / 2 + self.margin_pieces
         pos //= self.width_square
-        if self.is_white_bottom:
-            return int(pos + 1)
-        else:
-            return int(8 - pos)
+        return int(pos + 1) if self.is_white_bottom else int(8 - pos)
 
-    def colocaPieza(self, bloquePieza, posA1H8):
-        bloquePieza.row = int(posA1H8[1])
-        bloquePieza.column = ord(posA1H8[0]) - 96
-        self.recolocaPieza(bloquePieza)
+    def place_the_piece(self, bloque_pieza, pos_a1_h8):
+        bloque_pieza.row = int(pos_a1_h8[1])
+        bloque_pieza.column = ord(pos_a1_h8[0]) - 96
+        self.replace_the_piece(bloque_pieza)
 
-    def recolocaPieza(self, bloquePieza):
-        physical_pos = bloquePieza.physical_pos
-        physical_pos.x = self.columna2punto(bloquePieza.column)
-        physical_pos.y = self.fila2punto(bloquePieza.row)
+    def replace_the_piece(self, bloque_pieza):
+        physical_pos = bloque_pieza.physical_pos
+        physical_pos.x = self.columna2punto(bloque_pieza.column)
+        physical_pos.y = self.fila2punto(bloque_pieza.row)
 
-    def creaPieza(self, cpieza, posA1H8):
+    def create_piece(self, cpieza, pos_a1_h8):
         bloque_pieza = BoardTypes.Pieza()
         p = bloque_pieza.physical_pos
-        p.ancho = self.anchoPieza
-        p.alto = self.anchoPieza
+        p.ancho = self.width_piece
+        p.alto = self.width_piece
         p.orden = ZVALUE_PIECE
         bloque_pieza.pieza = cpieza
-        self.colocaPieza(bloque_pieza, posA1H8)
+        self.place_the_piece(bloque_pieza, pos_a1_h8)
         pieza_sc = BoardElements.PiezaSC(self.escena, bloque_pieza, self)
 
         # pieza_sc.setOpacity(self.opacity[0 if cpieza.isupper() else 1])
 
-        self.liPiezas.append([cpieza, pieza_sc, True])
+        self.li_pieces.append([cpieza, pieza_sc, True])
         return pieza_sc
 
-    def ponPieza(self, pieza, posA1H8):
-        for x in self.liPiezas:
-            if not x[2] and x[0] == pieza:
-                pieza_sc = x[1]
-                self.colocaPieza(pieza_sc.bloquePieza, posA1H8)
-                self.escena.addItem(pieza_sc)
-                pieza_sc.update()
+    def ensure_piece_at(self, piece, pos_a1_h8):
+        for x in self.li_pieces:
+            if not x[2] and x[0] == piece:
+                piece_sc = x[1]
+                self.place_the_piece(piece_sc.bloquePieza, pos_a1_h8)
+                self.escena.addItem(piece_sc)
+                piece_sc.update()
                 x[2] = True
-                return pieza_sc
+                return piece_sc
 
-        return self.creaPieza(pieza, posA1H8)
+        return self.create_piece(piece, pos_a1_h8)
 
-    def mostrarPiezas(self, siW, siB):
-        if siW and siB:
-            self.blindfold = None
-        elif siW and not siB:
-            self.blindfold = BLINDFOLD_BLACK
-        elif siB and not siW:
-            self.blindfold = BLINDFOLD_WHITE
-        else:
-            self.blindfold = BLINDFOLD_ALL
-        self.blindfoldReset()
-
-    def blindfoldChange(self):
-        self.blindfold = None if self.blindfold else BLINDFOLD_CONFIG
-        self.blindfoldReset()
-
-    def blindfoldReset(self):
-        ap, apc = self.pieces_are_active, self.side_pieces_active
-        siFlecha = self.arrow_sc is not None
-
-        is_white_bottom = self.is_white_bottom
-
-        atajos_raton = self.atajos_raton
-
-        self.crea()
-        if not is_white_bottom:
-            self.try_to_rotate_the_board(None)
-
-        if ap:
-            self.activate_side(apc)
-            self.set_side_indicator(apc)
-
-        if siFlecha:
-            self.reset_arrow_sc()
-
-        self.atajos_raton = atajos_raton
-        self.init_kb_buffer()
-
-    def blindfoldQuitar(self):
-        if self.blindfold:
-            self.blindfold = None
-            self.blindfoldReset()
-
-    def blindfoldConfig(self):
-        nom_pieces_ori = self.config_board.nomPiezas()
-        w = Piezas.WBlindfold(self, nom_pieces_ori)
-        if w.exec():
-            self.blindfold = BLINDFOLD_CONFIG
-            self.blindfoldReset()
-
-    def buscaPieza(self, pos_a1):
+    def get_num_piece_at(self, pos_a1):
         if pos_a1 is None or len(pos_a1) < 2:
             return -1
         row = int(pos_a1[1])
         column = ord(pos_a1[0]) - 96
-        for num, x in enumerate(self.liPiezas):
+        for num, x in enumerate(self.li_pieces):
             if x[2]:
                 pieza = x[1].bloquePieza
                 if pieza.row == row and pieza.column == column:
                     return num
         return -1
 
-    def damePiezaEn(self, posA1H8):
-        npieza = self.buscaPieza(posA1H8)
+    def get_piece_at(self, pos_a1):
+        npieza = self.get_num_piece_at(pos_a1)
         if npieza >= 0:
-            return self.liPiezas[npieza][1]
+            return self.li_pieces[npieza][1]
         return None
 
-    def dameNomPiezaEn(self, posA1H8):
-        npieza = self.buscaPieza(posA1H8)
-        if npieza >= 0:
-            return self.liPiezas[npieza][0]
-        return None
+    # def dameNomPiezaEn(self, pos_a1):
+    #     npieza = self.get_num_piece_at(pos_a1)
+    #     if npieza >= 0:
+    #         return self.li_pieces[npieza][0]
+    #     return None
 
-    def move_pieceTemporal(self, from_a1h8, to_a1h8):
-        npieza = self.buscaPieza(from_a1h8)
-        if npieza >= 0:
-            pieza_sc = self.liPiezas[npieza][1]
-            row = int(to_a1h8[1])
-            column = ord(to_a1h8[0]) - 96
-            x = self.columna2punto(column)
-            y = self.fila2punto(row)
-            pieza_sc.setPos(x, y)
+    # def move_pieceTemporal(self, from_a1h8, to_a1h8):
+    #     npieza = self.get_num_piece_at(from_a1h8)
+    #     if npieza >= 0:
+    #         pieza_sc = self.li_pieces[npieza][1]
+    #         row = int(to_a1h8[1])
+    #         column = ord(to_a1h8[0]) - 96
+    #         x = self.columna2punto(column)
+    #         y = self.fila2punto(row)
+    #         pieza_sc.setPos(x, y)
 
     def move_piece(self, from_a1h8, to_a1h8):
-        npieza = self.buscaPieza(from_a1h8)
+        npieza = self.get_num_piece_at(from_a1h8)
         if npieza >= 0:
             self.remove_piece(to_a1h8)
-            pieza_sc = self.liPiezas[npieza][1]
-            self.colocaPieza(pieza_sc.bloquePieza, to_a1h8)
-            pieza_sc.rehazPosicion()
+            pieza_sc = self.li_pieces[npieza][1]
+            self.place_the_piece(pieza_sc.bloquePieza, to_a1h8)
+            pieza_sc.redo_position()
             pieza_sc.update()
             self.escena.update()
 
-    # def move_piece_timed(self, from_a1h8, to_a1h8, seconds):
-    #     npieza = self.buscaPieza(from_a1h8)
-    #     if npieza >= 0:
-    #         def a1h8_xy(a1h8):
-    #             row = int(a1h8[1])
-    #             column = ord(a1h8[0]) - 96
-    #             x = self.columna2punto(column)
-    #             y = self.fila2punto(row)
-    #             return x, y
-    #
-    #         pieza_sc = self.liPiezas[npieza][1]
-    #         anim = QtCore.QPropertyAnimation(pieza_sc, b"geometry")
-    #         anim.setDuration(seconds*1000)
-    #         # anim.setStartValue(QtCore.QRect(150, 30, 100, 100))
-    #         r: QtCore.QRectF = QtCore.QRectF(pieza_sc.rect)
-    #         x, y = a1h8_xy(to_a1h8)
-    #         r.moveLeft(x)
-    #         r.moveBottom(y)
-    #
-    #         anim.setEndValue(r)
-    #         anim.start()
-
-    def set_piece_again(self, posA1H8):
-        npieza = self.buscaPieza(posA1H8)
+    def set_piece_again(self, pos_a1):
+        npieza = self.get_num_piece_at(pos_a1)
         if npieza >= 0:
-            pieza_sc = self.liPiezas[npieza][1]
-            pieza_sc.rehazPosicion()
+            pieza_sc = self.li_pieces[npieza][1]
+            pieza_sc.redo_position()
             pieza_sc.update()
             self.escena.update()
 
-    def remove_piece(self, posA1H8):
-        npieza = self.buscaPieza(posA1H8)
+    def remove_piece(self, pos_a1):
+        npieza = self.get_num_piece_at(pos_a1)
         if npieza >= 0:
-            pieza_sc = self.liPiezas[npieza][1]
+            pieza_sc = self.li_pieces[npieza][1]
             self.xremove_item(pieza_sc)
-            self.liPiezas[npieza][2] = False
+            self.li_pieces[npieza][2] = False
             self.escena.update()
 
-    def borraPiezaTipo(self, posA1H8, tipo):
-        row = int(posA1H8[1])
-        column = ord(posA1H8[0]) - 96
-        for num, x in enumerate(self.liPiezas):
-            if x[2]:
-                pieza = x[1].bloquePieza
-                if pieza.row == row and pieza.column == column and pieza.pieza == tipo:
-                    pieza_sc = self.liPiezas[num][1]
-                    self.xremove_item(pieza_sc)
-                    self.liPiezas[num][2] = False
-                    self.escena.update()
-                    return
+    # def borraPiezaTipo(self, pos_a1, tipo):
+    #     row = int(pos_a1[1])
+    #
+    #     column = ord(pos_a1[0]) - 96
+    #     for num, x in enumerate(self.li_pieces):
+    #         if x[2]:
+    #             pieza = x[1].bloquePieza
+    #             if pieza.row == row and pieza.column == column and pieza.pieza == tipo:
+    #                 pieza_sc = self.li_pieces[num][1]
+    #                 self.xremove_item(pieza_sc)
+    #                 self.li_pieces[num][2] = False
+    #                 self.escena.update()
+    #                 return
 
-    def change_piece(self, posA1H8, nueva):
-        self.remove_piece(posA1H8)
-        return self.creaPieza(nueva, posA1H8)
+    def change_piece(self, pos_a1, nueva):
+        self.remove_piece(pos_a1)
+        return self.create_piece(nueva, pos_a1)
 
     def activate_side(self, is_white):
         self.pieces_are_active = True
         self.side_pieces_active = is_white
-        for pieza, pieza_sc, is_active in self.liPiezas:
+        for pieza, pieza_sc, is_active in self.li_pieces:
             if is_active:
                 if is_white is None:
                     resp = True
                 else:
-                    if pieza.isupper():
-                        resp = is_white
-                    else:
-                        resp = not is_white
-                pieza_sc.activa(resp)
+                    resp = is_white if pieza.isupper() else not is_white
+                pieza_sc.activate(resp)
         self.init_kb_buffer()
 
-    def setDispatchMove(self, rutina):
-        for pieza, pieza_sc, is_active in self.liPiezas:
-            if is_active:
-                pieza_sc.setDispatchMove(rutina)
+    # def setDispatchMove(self, rutina):
+    #     for pieza, pieza_sc, is_active in self.li_pieces:
+    #         if is_active:
+    #             pieza_sc.setDispatchMove(rutina)
 
     def enable_all(self):
         self.pieces_are_active = True
-        for num, una in enumerate(self.liPiezas):
+        for una in self.li_pieces:
             pieza, pieza_sc, is_active = una
             if is_active:
-                pieza_sc.activa(True)
+                pieza_sc.activate(True)
         self.init_kb_buffer()
 
     def disable_all(self):
         self.pieces_are_active = False
         self.side_pieces_active = None
-        for num, una in enumerate(self.liPiezas):
+        for una in self.li_pieces:
             pieza, pieza_sc, is_active = una
             if is_active:
-                pieza_sc.activa(False)
+                pieza_sc.activate(False)
         self.init_kb_buffer()
 
-    def num2alg(self, row, column):
+    @staticmethod
+    def num2alg(row, column):
         return chr(96 + column) + str(row)
 
     def alg2num(self, a1):
@@ -1929,7 +1778,7 @@ class Board(QtWidgets.QGraphicsView):
         y = self.fila2punto(ord(a1[1]) - 48)
         return x, y
 
-    def try_to_move(self, pieza_sc, pos_cursor, eventButton):
+    def try_to_move(self, pieza_sc, pos_cursor):
         pieza = pieza_sc.bloquePieza
         from_sq = self.num2alg(pieza.row, pieza.column)
 
@@ -1963,7 +1812,7 @@ class Board(QtWidgets.QGraphicsView):
             # -CONTROL-
             self.init_kb_buffer()
 
-        pieza_sc.rehazPosicion()
+        pieza_sc.redo_position()
         pieza_sc.update()
         self.escena.update()
         QTUtils.refresh_gui()
@@ -1979,7 +1828,7 @@ class Board(QtWidgets.QGraphicsView):
 
     def piece_out_position(self, position):
         si_changed = False
-        for una in self.liPiezas:
+        for una in self.li_pieces:
             pieza, pieza_sc, is_active = una
             if position.is_white == pieza.isupper():
                 x = pieza_sc.x()
@@ -1997,7 +1846,7 @@ class Board(QtWidgets.QGraphicsView):
         return si_changed, None, None
 
     def set_side_indicator(self, is_white):
-        bd = self.side_indicator_sc.bloqueDatos
+        bd = self.side_indicator_sc.block_data
         if is_white:
             bd.colorRelleno = self.config_board.sideindicator_white()
             si_abajo = self.is_white_bottom
@@ -2009,7 +1858,7 @@ class Board(QtWidgets.QGraphicsView):
 
     def reset_arrow_sc(self):
         if self.arrow_sc:
-            a1h8 = self.arrow_sc.bloqueDatos.a1h8
+            a1h8 = self.arrow_sc.block_data.a1h8
             self.put_arrow_sc(a1h8[:2], a1h8[2:])
 
     def show_arrow_sc(self):
@@ -2019,7 +1868,7 @@ class Board(QtWidgets.QGraphicsView):
     def put_arrow_sc(self, from_a1h8, to_a1h8):
         a1h8 = from_a1h8 + to_a1h8
         if self.arrow_sc is None:
-            self.arrow_sc = self.creaFlechaSC(a1h8)
+            self.arrow_sc = self.create_arrow_sc(a1h8)
         self.arrow_sc.show()
         self.arrow_sc.set_a1h8(a1h8)
         self.arrow_sc.update()
@@ -2031,22 +1880,22 @@ class Board(QtWidgets.QGraphicsView):
             opacity = 0.4
         for from_sq, to_sq in li_arrows:
             if from_sq and to_sq:
-                self.creaFlechaMulti(from_sq + to_sq, False, destino=destino, opacity=opacity)
+                self.create_arrow_multi(from_sq + to_sq, False, destino=destino, opacity=opacity)
 
-    def pulsadaFlechaSC(self):
+    def pressed_arrow_sc(self):
         self.arrow_sc.hide()
 
-    def creaFlechaMulti(self, a1h8, siMain, destino="c", opacity=0.9):
-        bf = copy.deepcopy(self.config_board.fTransicion() if siMain else self.config_board.fAlternativa())
+    def create_arrow_multi(self, a1h8, is_main, destino="c", opacity=0.9):
+        bf = copy.deepcopy(self.config_board.fTransicion() if is_main else self.config_board.fAlternativa())
         bf.a1h8 = a1h8
         bf.destino = destino
         bf.opacity = opacity
 
-        arrow = self.creaFlecha(bf)
-        self.liFlechas.append(arrow)
+        arrow = self.create_arrow(bf)
+        self.li_arrows.append(arrow)
         arrow.show()
 
-    def creaFlechaSC(self, a1h8):
+    def create_arrow_sc(self, a1h8):
         bf = copy.deepcopy(self.config_board.fTransicion())
         bf.a1h8 = a1h8
         bf.width_square = self.width_square
@@ -2055,15 +1904,15 @@ class Board(QtWidgets.QGraphicsView):
         bf.tamFrontera = self.tamFrontera
 
         if self.configuration.x_movement_doublebox_board:
-            return BoardDoubleBoxes.DoubleBoxesSC(self.escena, bf, self.pulsadaFlechaSC)
+            return BoardDoubleBoxes.DoubleBoxesSC(self.escena, bf, self.pressed_arrow_sc)
         else:
-            return BoardArrows.FlechaSC(self.escena, bf, self.pulsadaFlechaSC)
+            return BoardArrows.ArrowSC(self.escena, bf, self.pressed_arrow_sc)
 
-    def creaFlechaTmp(self, from_a1h8, to_a1h8, siMain):
-        bf = copy.deepcopy(self.config_board.fTransicion() if siMain else self.config_board.fAlternativa())
+    def show_one_arrow_temp(self, from_a1h8, to_a1h8, is_main):
+        bf = copy.deepcopy(self.config_board.fTransicion() if is_main else self.config_board.fAlternativa())
         bf.a1h8 = from_a1h8 + to_a1h8
-        arrow = self.creaFlecha(bf)
-        self.liFlechas.append(arrow)
+        arrow = self.create_arrow(bf)
+        self.li_arrows.append(arrow)
         arrow.show()
 
     def crea_doubleboxes(self, from_a1h8, to_a1h8):
@@ -2075,18 +1924,18 @@ class Board(QtWidgets.QGraphicsView):
         bf.tamFrontera = self.tamFrontera
         double = BoardDoubleBoxes.DoubleBoxesSC(self.escena, bf, None)
         double.show()
-        self.registraMovible(double)
+        self.register_movable(double)
 
-    def creaFlechaPremove(self, xfrom, xto):
+    def show_arrow_premove(self, xfrom, xto):
         self.active_premove = True
         bf = copy.deepcopy(self.config_board.fActivo())
         bf.a1h8 = xfrom + xto
-        arrow = self.creaFlecha(bf)
-        self.liFlechas.append(arrow)
+        arrow = self.create_arrow(bf)
+        self.li_arrows.append(arrow)
         arrow.show()
         self.update()
 
-    def creaFlechaTutor(self, from_a1h8, to_a1h8, factor):
+    def show_arrow_tutor(self, from_a1h8, to_a1h8, factor):
         bf = copy.deepcopy(self.config_board.fTransicion())
         bf.a1h8 = from_a1h8 + to_a1h8
         bf.opacity = max(factor, 0.20)
@@ -2098,12 +1947,12 @@ class Board(QtWidgets.QGraphicsView):
         bf.forma = "1"
         bf.physical_pos.orden = ZVALUE_PIECE + 1
 
-        arrow = self.creaFlecha(bf)
-        self.liFlechas.append(arrow)
+        arrow = self.create_arrow(bf)
+        self.li_arrows.append(arrow)
         arrow.show()
 
-    def ponFlechasTmp(self, lista, ms=None):
-        self.ponFlechas(lista)
+    def show_arrows_temp(self, lista, ms=None):
+        self.show_arrows(lista)
 
         def quita_flechas_tmp():
             self.remove_arrows()
@@ -2114,11 +1963,11 @@ class Board(QtWidgets.QGraphicsView):
             ms = 2000 if len(lista) > 1 else 1400
         QtCore.QTimer.singleShot(ms, quita_flechas_tmp)
 
-    def ponFlechas(self, lista):
+    def show_arrows(self, lista):
         if self.arrow_sc:
             self.arrow_sc.hide()
-        for from_sq, to_sq, siMain in lista:
-            self.creaFlechaTmp(from_sq, to_sq, siMain)
+        for from_sq, to_sq, is_main in lista:
+            self.show_one_arrow_temp(from_sq, to_sq, is_main)
         QTUtils.refresh_gui()
 
     def show_arrow_mov(self, desde_a1h8, hasta_a1h8, modo, opacity=None):
@@ -2128,7 +1977,7 @@ class Board(QtWidgets.QGraphicsView):
         bf.redondeos = False
         bf.forma = "a"
 
-        si_pieza = self.buscaPieza(hasta_a1h8) > -1
+        si_pieza = self.get_num_piece_at(hasta_a1h8) > -1
         if modo == "m":  # movimientos
             bf.tipo = 2
             bf.grosor = 2
@@ -2171,10 +2020,6 @@ class Board(QtWidgets.QGraphicsView):
             bf.tipo = 1
             bf.destino = "c"
 
-        elif modo == "rt":
-            bf.grosor = 2
-            bf.destino = "c"
-
         elif modo == "ms":
             bf = self.config_board.fActivo().copia()
 
@@ -2186,9 +2031,9 @@ class Board(QtWidgets.QGraphicsView):
             bf.destino = "m"
             bf.physical_pos.orden = ZVALUE_PIECE + 1
 
-        if self.anchoPieza > 24:
-            bf.grosor = bf.grosor * 15 / 10
-            bf.altocabeza = bf.altocabeza * 15 / 10
+        if self.width_piece > 24:
+            bf.grosor = int(bf.grosor * 15 / 10)
+            bf.altocabeza = int(bf.altocabeza * 15 / 10)
 
         bf.a1h8 = desde_a1h8 + hasta_a1h8
         bf.width_square = self.width_square
@@ -2196,12 +2041,12 @@ class Board(QtWidgets.QGraphicsView):
         if opacity:
             bf.opacity = opacity
 
-        arrow = self.creaFlecha(bf)
-        self.liFlechas.append(arrow)
+        arrow = self.create_arrow(bf)
+        self.li_arrows.append(arrow)
         arrow.show()
 
     def remove_arrows(self):
-        for arrow in self.liFlechas:
+        for arrow in self.li_arrows:
             self.xremove_item(arrow)
             arrow.hide()
             del arrow
@@ -2216,17 +2061,17 @@ class Board(QtWidgets.QGraphicsView):
             self.analysis_bar.set_board_position()
 
         for ver in self.liCoordenadasVerticales:
-            ver.bloqueDatos.valor = str(9 - int(ver.bloqueDatos.valor))
+            ver.block_data.valor = str(9 - int(ver.block_data.valor))
             ver.update()
 
         for hor in self.liCoordenadasHorizontales:
-            hor.bloqueDatos.valor = chr(97 + 104 - ord(hor.bloqueDatos.valor))
+            hor.block_data.valor = chr(97 + 104 - ord(hor.block_data.valor))
             hor.update()
 
-        for pieza, pieza_sc, siVisible in self.liPiezas:
+        for pieza, pieza_sc, siVisible in self.li_pieces:
             if siVisible:
-                self.recolocaPieza(pieza_sc.bloquePieza)
-                pieza_sc.rehazPosicion()
+                self.replace_the_piece(pieza_sc.bloquePieza)
+                pieza_sc.redo_position()
                 pieza_sc.update()
 
         self.escena.update()
@@ -2237,7 +2082,7 @@ class Board(QtWidgets.QGraphicsView):
         for coord in self.liCoordenadasVerticales:
             coord.setVisible(ok)
 
-    def peonCoronando(self, is_white):
+    def pawn_promoting(self, is_white):
         if self.configuration.x_autopromotion_q:
             modifiers = QtWidgets.QApplication.keyboardModifiers()
             if modifiers != QtCore.Qt.KeyboardModifier.AltModifier:
@@ -2251,44 +2096,39 @@ class Board(QtWidgets.QGraphicsView):
         ):
             if not is_white:
                 pieza = pieza.lower()
-            menu.opcion(pieza, txt, self.piezas.icono(pieza))
+            menu.opcion(pieza, txt, self.pieces.icono(pieza))
 
         resp = menu.lanza()
-        if resp:
-            return resp
-        else:
-            return "q"
+        return resp or "q"
 
     def refresh(self):
         self.escena.update()
         QTUtils.refresh_gui()
 
-    def pulsadoNum(self, siIzq, siActivar, number):
-        if (
-            not siIzq
-        ):  # si es derecho lo dejamos para el menu visual, y el izquierdo solo muestra capturas, si se quieren ver movimientos, que active show candidates
+    def pressed_number(self, is_left, activate, number):
+        if not is_left:
+            # si es derecho lo dejamos para el menu visual, y el izquierdo solo muestra capturas,
+            # si se quieren ver movimientos, que active show candidates
             return
         if self.do_pressed_number:
-            self.do_pressed_number(siActivar, int(number))
+            self.do_pressed_number(activate, int(number))
 
-    def pulsadaLetra(self, siIzq, siActivar, letra):
-        if (
-            not siIzq
-        ):  # si es derecho lo dejamos para el menu visual, y el izquierdo solo muestra capturas, si se quieren ver movimientos, que active show candidates
+    def pressed_letter(self, is_left, activate, letter):
+        if not is_left:
+            # si es derecho lo dejamos para el menu visual, y el izquierdo solo muestra capturas,
+            # si se quieren ver movimientos, que active show candidates
             return
         if self.do_pressed_letter:
-            self.do_pressed_letter(siActivar, letra)
+            self.do_pressed_letter(activate, letter)
 
     def save_as_img(self, file=None, tipo=None, is_ctrl=False, is_alt=False):
         act_ind = act_scr = False
-        if self.indicadorSC_menu:
-            if self.indicadorSC_menu.isVisible():
-                act_ind = True
-                self.indicadorSC_menu.hide()
-        if self.show_graphic_icon and self.scriptSC_menu:
-            if self.scriptSC_menu.isVisible():
-                act_scr = True
-                self.scriptSC_menu.hide()
+        if self.indicadorSC_menu and self.indicadorSC_menu.isVisible():
+            act_ind = True
+            self.indicadorSC_menu.hide()
+        if self.show_graphic_icon and self.scriptSC_menu and self.scriptSC_menu.isVisible():
+            act_scr = True
+            self.scriptSC_menu.hide()
 
         if is_alt and not is_ctrl:
             pm = QtWidgets.QWidget.grab(self)
@@ -2303,10 +2143,10 @@ class Board(QtWidgets.QGraphicsView):
                 w -= self.tamFrontera * 2
                 h -= self.tamFrontera * 2
             elif is_alt and is_ctrl:
-                x += self.margenCentro + self.tamFrontera
-                y += self.margenCentro + self.tamFrontera
-                w -= self.margenCentro * 2 + self.tamFrontera * 2
-                h -= self.margenCentro * 2 + self.tamFrontera * 2
+                x += self.margin_center + self.tamFrontera
+                y += self.margin_center + self.tamFrontera
+                w -= self.margin_center * 2 + self.tamFrontera * 2
+                h -= self.margin_center * 2 + self.tamFrontera * 2
             r = QtCore.QRect(x, y, w, h)
             pm = QtWidgets.QWidget.grab(self, r)
         if file is None:
@@ -2320,11 +2160,11 @@ class Board(QtWidgets.QGraphicsView):
             self.scriptSC_menu.show()
 
     def thumbnail(self, ancho):
-        # escondemos piezas+flechas
-        for pieza, pieza_sc, si_visible in self.liPiezas:
+        # escondemos pieces+flechas
+        for pieza, pieza_sc, si_visible in self.li_pieces:
             if si_visible:
                 pieza_sc.hide()
-        for arrow in self.liFlechas:
+        for arrow in self.li_arrows:
             arrow.hide()
         if self.arrow_sc:
             self.arrow_sc.hide()
@@ -2337,18 +2177,18 @@ class Board(QtWidgets.QGraphicsView):
             QtCore.Qt.TransformationMode.SmoothTransformation,
         )
 
-        # mostramos piezas+flechas
-        for pieza, pieza_sc, si_visible in self.liPiezas:
+        # mostramos pieces+flechas
+        for pieza, pieza_sc, si_visible in self.li_pieces:
             if si_visible:
                 pieza_sc.show()
-        for arrow in self.liFlechas:
+        for arrow in self.li_arrows:
             arrow.show()
         if self.arrow_sc:
             self.arrow_sc.show()
 
         byte_array = QtCore.QByteArray()
         xbuffer = QtCore.QBuffer(byte_array)
-        xbuffer.open(QtCore.QIODevice.WriteOnly)
+        xbuffer.open(QtCore.QIODevice.OpenModeFlag.WriteOnly)
         thumb.save(xbuffer, "PNG")
 
         bytes_io = BytesIO(byte_array)
@@ -2381,27 +2221,25 @@ class Board(QtWidgets.QGraphicsView):
             dc = 9 - dc
             hc = 9 - hc
 
-        a1h8 = chr(dc + 96) + str(df) + chr(hc + 96) + str(hf)
+        return chr(dc + 96) + str(df) + chr(hc + 96) + str(hf)
 
-        return a1h8
-
-    def creaMarco(self, bloqueMarco):
-        bloque_marco_n = copy.deepcopy(bloqueMarco)
+    def create_marco(self, bloque_marco):
+        bloque_marco_n = copy.deepcopy(bloque_marco)
         bloque_marco_n.width_square = self.width_square
 
         return BoardBoxes.MarcoSC(self.escena, bloque_marco_n)
 
-    def creaCircle(self, bloque_circle):
+    def create_circle(self, bloque_circle):
         bloque_circle = copy.deepcopy(bloque_circle)
         bloque_circle.width_square = self.width_square
 
         return BoardCircles.CircleSC(self.escena, bloque_circle)
 
-    def creaSVG(self, bloqueSVG, siEditando=False):
-        bloque_svgn = copy.deepcopy(bloqueSVG)
+    def create_svg(self, bloque_svg, is_editing=False):
+        bloque_svgn = copy.deepcopy(bloque_svg)
         bloque_svgn.width_square = self.width_square
 
-        return BoardSVGs.SVGSC(self.escena, bloque_svgn, siEditando=siEditando)
+        return BoardSVGs.SVGSC(self.escena, bloque_svgn, is_editing=is_editing)
 
     def put_colorbox(self, a1h8, color):
         if color == NO_RATING:
@@ -2418,11 +2256,11 @@ class Board(QtWidgets.QGraphicsView):
         reg_svg = BoardTypes.SVG(dic=dic)
         reg_svg.a1h8 = a1h8 + a1h8
         reg_svg.siMovible = False
-        svg = self.creaSVG(reg_svg)
-        svg.bloqueDatos.psize = 110
-        self.registraMovible(svg)
+        svg = self.create_svg(reg_svg)
+        svg.block_data.psize = 110
+        self.register_movable(svg)
 
-    def put_rating(self, from_sq, to_sq, color, poscelda):
+    def put_rating(self, _from_sq, to_sq, color, poscelda):
         if color not in Code.dic_markers:
             dicm = {
                 GOOD_MOVE: "good_move",
@@ -2448,25 +2286,25 @@ class Board(QtWidgets.QGraphicsView):
         reg_svg.a1h8 = to_sq + to_sq
         reg_svg.siMovible = False
         reg_svg.poscelda = poscelda
-        marker = self.creaMarker(reg_svg)
-        self.registraMovible(marker)
+        marker = self.create_marker(reg_svg)
+        self.register_movable(marker)
         self.escena.update()
 
-    def creaMarker(self, bloqueMarker, siEditando=False):
-        bloque_marker_n = copy.deepcopy(bloqueMarker)
+    def create_marker(self, bloque_marker, is_editing=False):
+        bloque_marker_n = copy.deepcopy(bloque_marker)
         bloque_marker_n.width_square = self.width_square
 
-        return BoardMarkers.MarkerSC(self.escena, bloque_marker_n, siEditando=siEditando)
+        return BoardMarkers.MarkerSC(self.escena, bloque_marker_n, is_editing=is_editing)
 
-    def creaFlecha(self, bloque_flecha, rutina=None):
+    def create_arrow(self, bloque_flecha, rutina=None):
         bloque_flecha_n = copy.deepcopy(bloque_flecha)
         bloque_flecha_n.width_square = self.width_square
         bloque_flecha_n.tamFrontera = self.tamFrontera
 
-        return BoardArrows.FlechaSC(self.escena, bloque_flecha_n, rutina)
+        return BoardArrows.ArrowSC(self.escena, bloque_flecha_n, rutina)
 
-    def try_to_rotate_the_board(self, si_izquierdo):
-        if self.can_be_rotated_the_board:
+    def try_to_rotate_the_board(self, _is_left):
+        if self.can_be_rotated:
             self.rotate_board()
 
     def rotate_board(self):
@@ -2474,104 +2312,73 @@ class Board(QtWidgets.QGraphicsView):
         if self.arrow_sc:
             # self.put_arrow_sc( self.ultMovFlecha[0], self.ultMovFlecha[1])
             self.reset_arrow_sc()
-        bd = self.side_indicator_sc.bloqueDatos
+        bd = self.side_indicator_sc.block_data
         self.set_side_indicator(bd.colorRelleno == self.config_board.sideindicator_white())
-        for k, uno in self.dicMovibles.items():
+        for k, uno in self.dic_movables.items():
             uno.physical_pos2xy()
-        for arrow in self.liFlechas:
+        for arrow in self.li_arrows:
             arrow.physical_pos2xy()
         self.escena.update()
 
         if hasattr(self.main_window, "capturas"):
             self.main_window.capturas.ponLayout(self.is_white_bottom)
 
-    def registraMovible(self, bloqueSC):
-        self.idUltimoMovibles += 1
-        bloqueSC.idMovible = self.idUltimoMovibles
-        self.dicMovibles[self.idUltimoMovibles] = bloqueSC
+    def register_movable(self, bloque_sc):
+        self.id_last_movable += 1
+        bloque_sc.id_movable = self.id_last_movable
+        self.dic_movables[self.id_last_movable] = bloque_sc
 
-    def lista_movibles(self):
-        if self.dicMovibles:
-            li = []
-            for k, v in self.dicMovibles.items():
-                xobj = str(v)
-                if "Marco" in xobj:
-                    tp = TabVisual.TP_MARCO
-                elif "Flecha" in xobj:
-                    tp = TabVisual.TP_FLECHA
-                elif "SVG" in xobj:
-                    tp = TabVisual.TP_SVG
-                elif "Circle" in xobj:
-                    tp = TabVisual.TP_CIRCLE
-                else:
-                    continue
-                li.append((tp, v.bloqueDatos))
-
-            return li
-        else:
+    def list_movables(self):
+        if not self.dic_movables:
             return []
+        li = []
+        for k, v in self.dic_movables.items():
+            xobj = str(v)
+            if "Marco" in xobj:
+                tp = TabVisual.TP_MARCO
+            elif "Flecha" in xobj:
+                tp = TabVisual.TP_FLECHA
+            elif "SVG" in xobj:
+                tp = TabVisual.TP_SVG
+            elif "Circle" in xobj:
+                tp = TabVisual.TP_CIRCLE
+            else:
+                continue
+            li.append((tp, v.block_data))
 
-    # def exportaMovibles(self):
-    #     li = self.lista_movibles()
-    #     return Util.var2txt(li) if li else ""
-    #
-    # def importaMovibles(self, xData):
-    #     self.borraMovibles()
-    #     if xData:
-    #         liDatos = Util.txt2var(str(xData))
-    #         for tp, bloqueDatos in liDatos:
-    #             if tp == TabVisual.TP_MARCO:
-    #                 self.creaMarco(bloqueDatos)
-    #             elif tp == TabVisual.TP_CIRCLE:
-    #                 self.creaCircle(bloqueDatos)
-    #             elif tp == TabVisual.TP_FLECHA:
-    #                 self.creaFlecha(bloqueDatos)
-    #             elif tp == TabVisual.TP_SVG:
-    #                 self.creaSVG(bloqueDatos)
-    #             elif tp == TabVisual.TP_MARKER:
-    #                 self.creaMarker(bloqueDatos)
+        return li
 
-    def borraMovible(self, itemSC):
-        for k, uno in self.dicMovibles.items():
-            if uno == itemSC:
-                del self.dicMovibles[k]
+    def remove_movable(self, item_sc):
+        for k, uno in self.dic_movables.items():
+            if uno == item_sc:
+                del self.dic_movables[k]
                 self.xremove_item(uno)
                 return
 
-    def borraUltimoMovibleA1(self, a1):
-        for k, uno in reversed(self.dicMovibles.items()):
-            a1h8 = uno.bloqueDatos.a1h8
-            if a1h8.startswith(a1) or a1h8.endswith(a1):
-                self.borraMovible(uno)
-                break
+    def remove_last_movable(self):
+        if keys := list(self.dic_movables.keys()):
+            self.xremove_item(self.dic_movables[keys[-1]])
+            del self.dic_movables[keys[-1]]
 
-    def borraUltimoMovible(self):
-        keys = list(self.dicMovibles.keys())
-        if keys:
-            self.xremove_item(self.dicMovibles[keys[-1]])
-            del self.dicMovibles[keys[-1]]
-
-    def borraMovibles(self):
-        for k, uno in self.dicMovibles.items():
+    def remove_movables(self):
+        for k, uno in self.dic_movables.items():
             self.xremove_item(uno)
-        self.dicMovibles = collections.OrderedDict()
+        self.dic_movables = collections.OrderedDict()
         self.lastFenM2 = None
 
-    def bloqueaRotacion(self, si_bloquea):  # se usa en la presentacion para que no rote
-        self.can_be_rotated_the_board = not si_bloquea
+    def lock_rotation(self, si_bloquea):  # se usa en la presentacion para que no rote
+        self.can_be_rotated = not si_bloquea
 
     def set_dispatch_size(self, rutina_control):
-        self._dispatch_size = rutina_control
+        self.dispatch_size = rutina_control
 
     # def boundingRect(self):
     #     return QtCore.QRect(0, 0, self.ancho, self.ancho)
 
     def fen_active(self):
         li = []
-        for x in range(8):
-            li.append(["", "", "", "", "", "", "", ""])
-
-        for x in self.liPiezas:
+        li.extend(["", "", "", "", "", "", "", ""] for _ in range(8))
+        for x in self.li_pieces:
             if x[2]:
                 pieza_sc = x[1]
                 bp = pieza_sc.bloquePieza
@@ -2593,36 +2400,34 @@ class Board(QtWidgets.QGraphicsView):
                 uno += str(num)
             lineas.append(uno)
 
-        bd = self.side_indicator_sc.bloqueDatos
+        bd = self.side_indicator_sc.block_data
         is_white = bd.colorRelleno == self.config_board.sideindicator_white()
 
-        resto = "w" if is_white else "b"
-        resto += " KQkq - 0 1"
-
-        return "/".join(lineas) + " " + resto
+        resto = f"{'w' if is_white else 'b'} KQkq - 0 1"
+        return f"{'/'.join(lineas)} {resto}"
 
     def copia_posicion_de(self, otro_board):
-        for x in self.liPiezas:
+        for x in self.li_pieces:
             if x[2]:
                 self.xremove_item(x[1])
-        self.liPiezas = []
-        for cpieza, pieza_sc, is_active in otro_board.liPiezas:
+        self.li_pieces = []
+        for cpieza, pieza_sc, is_active in otro_board.li_pieces:
             if is_active:
                 physical_pos = pieza_sc.bloquePieza
                 f = physical_pos.row
                 c = physical_pos.column
                 pos_a1_h8 = chr(c + 96) + str(f)
-                self.creaPieza(cpieza, pos_a1_h8)
+                self.create_piece(cpieza, pos_a1_h8)
 
         if not otro_board.is_white_bottom:
             self.rotate_board()
 
         if otro_board.side_indicator_sc.isVisible():
-            bd_ot = otro_board.side_indicator_sc.bloqueDatos
+            bd_ot = otro_board.side_indicator_sc.block_data
             is_white = bd_ot.colorRelleno == otro_board.colorBlancas
             si_indicador_abajo = bd_ot.physical_pos.y == bd_ot.sur
 
-            bd = self.side_indicator_sc.bloqueDatos
+            bd = self.side_indicator_sc.block_data
             bd.physical_pos.y = bd.sur if si_indicador_abajo else bd.norte
             bd.colorRelleno = (
                 self.config_board.sideindicator_white() if is_white else self.config_board.sideindicator_black()
@@ -2630,16 +2435,16 @@ class Board(QtWidgets.QGraphicsView):
             self.side_indicator_sc.mostrar()
 
         if otro_board.arrow_sc and otro_board.arrow_sc.isVisible():
-            a1h8 = otro_board.arrow_sc.bloqueDatos.a1h8
+            a1h8 = otro_board.arrow_sc.block_data.a1h8
             desde_a1h8, hasta_a1h8 = a1h8[:2], a1h8[2:]
             self.put_arrow_sc(desde_a1h8, hasta_a1h8)
 
         self.escena.update()
         self.setFocus()
 
-    def terminar(self):
+    def finalize(self):
         if self.dirvisual:
-            self.dirvisual.terminar()
+            self.dirvisual.finalize()
 
     def allow_takeback(self):
         return (
@@ -2650,12 +2455,12 @@ class Board(QtWidgets.QGraphicsView):
 
     def set_tmp_position(self, position):
         self.pieces_are_active = False
-        self.removePieces()
+        self.remove_pieces()
 
         squares = position.squares
         for k in squares.keys():
             if squares[k]:
-                self.ponPieza(squares[k], k)
+                self.ensure_piece_at(squares[k], k)
 
         self.escena.update()
         if self.hard_focus:
@@ -2668,97 +2473,7 @@ class Board(QtWidgets.QGraphicsView):
             self.remove_arrows()
         self.init_kb_buffer()
         self.pieces_are_active = True
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents)
-
-    def try_eboard_takeback(self, side):
-        if not self.allow_eboard:
-            return 1
-        if Code.eboard.fen_eboard == self.last_position.fen():
-            return 0
-        if self.allow_takeback():
-            # game = self.main_window.manager.game
-
-            against_engine = self.main_window.manager.xrival is not None
-            if against_engine and hasattr(self.main_window.manager, "play_against_engine"):
-                against_engine = self.main_window.manager.play_against_engine
-
-            if against_engine:
-                allow_human_takeback = Code.eboard.allowHumanTB and self.last_position.is_white == side
-                # two_moves = len(game) >= 2
-            else:
-                allow_human_takeback = True
-                # two_moves = False
-
-            if allow_human_takeback:
-                Code.eboard.allowHumanTB = False
-                if self.main_window.manager.in_end_of_line():
-                    self.exec_kb_buffer(Qt.Key.Key_Backspace, 0)
-                else:
-                    self.main_window.key_pressed("T", QtCore.Qt.Key.Key_Left)
-                    # self.exec_kb_buffer(Qt.Key.Key_Left, 0)
-                return 1
-
-            # if two_moves:
-            #     m_1 = game.move(-1)
-            #     self.set_tmp_position(m_1.position_before)
-            #     m_2 = game.move(-2)
-            #     if self.arrow_sc:
-            #         self.arrow_sc.hide()
-            #     self.show_arrow_mov(m_2.to_sq, m_2.from_sq, "tb", opacity=0.50)
-
-            Code.eboard.allowHumanTB = True
-        return 0
-
-    def dispatch_eboard(self, quien, a1h8):
-        if self.mensajero and self.pieces_are_active and self.allow_eboard:
-
-            if quien == "whiteMove":
-                Code.eboard.allowHumanTB = False
-                if not self.side_pieces_active:
-                    return 0
-            elif quien == "blackMove":
-                Code.eboard.allowHumanTB = False
-                if self.side_pieces_active:
-                    return 0
-            elif quien == "scan":
-                QTUtils.set_clipboard(a1h8)
-                return 1
-
-            elif quien == "whiteTakeBack":
-                return self.try_eboard_takeback(WHITE)
-
-            elif quien == "blackTakeBack":
-                return self.try_eboard_takeback(BLACK)
-
-            elif quien == "stableBoard":
-                return 1
-
-            elif quien in ("stopSetupWTM", "stopSetupBTM"):
-                if hasattr(self.main_window, "manager") and hasattr(self.main_window.manager, "setup_board_live"):
-                    side = "w" if "W" in quien else "b"
-                    fen = f"{a1h8} {side} KQkq - 0 1"
-                    position = Position.Position()
-                    position.read_fen(fen)
-                    position.legal()
-                    self.main_window.manager.setup_board_live(side == "w", position)
-                return 1
-
-            else:
-                return 1
-
-            if self.mensajero(a1h8[:2], a1h8[2:4], a1h8[4:]):
-                return 1
-            return 0
-
-        return 1
-
-    def disable_eboard_here(self):
-        self.allow_eboard = False
-
-    def enable_eboard_here(self):
-        self.allow_eboard = True
-        if Code.eboard and Code.eboard.driver:
-            Code.eboard.set_position(self.last_position)
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ProcessEventsFlag.ExcludeUserInputEvents)
 
     def play_current_position(self):
         if hasattr(self.main_window, "manager") and hasattr(self.main_window.manager, "play_current_position"):
@@ -2791,7 +2506,7 @@ class Board(QtWidgets.QGraphicsView):
             elem.opacity = 0.8
             elem.tamFrontera = self.tamFrontera
 
-            self.registraMovible(self.creaCircle(elem))
+            self.register_movable(self.create_circle(elem))
 
         for arrow in arrows:
             elem = BoardTypes.Flecha()
@@ -2814,145 +2529,52 @@ class Board(QtWidgets.QGraphicsView):
             elem.ordenVista = 5
             elem.tamFrontera = self.tamFrontera
 
-            self.registraMovible(self.creaFlecha(elem))
+            self.register_movable(self.create_arrow(elem))
 
+    # -----------------------------------------------------------------------------------------------------  VISUALMENU
 
-class WTamBoard(QtWidgets.QDialog):
-    def __init__(self, board):
+    def launch_visual_menu(self):
+        return self.visual_menu.launch_visual_menu() if self.with_menu_visual else None
 
-        QtWidgets.QDialog.__init__(self, board.parent())
+    # -----------------------------------------------------------------------------------------------------------------
 
-        self.setWindowTitle(_("Change board size"))
-        self.setWindowIcon(Iconos.ResizeBoard())
-        self.setWindowFlags(
-            QtCore.Qt.WindowType.WindowCloseButtonHint
-            | QtCore.Qt.WindowType.Dialog
-            | QtCore.Qt.WindowType.WindowTitleHint
-        )
+    # -----------------------------------------------------------------------------------------------------      EBOARD
 
-        self._dispatch_size = board._dispatch_size
-        self.board = board
-        self.config_board = board.config_board
+    def try_eboard_takeback(self, side):
+        return self.eboard.try_eboard_takeback(side)
 
-        ap = self.config_board.width_piece()
+    def dispatch_eboard(self, quien, a1h8):
+        return self.eboard.dispatch_eboard(quien, a1h8)
 
-        self.antes = ap
+    def disable_eboard_here(self):
+        return self.eboard.disable_eboard_here()
 
-        li_tams = [
-            (_("Very large"), 80),
-            (_("Large"), 64),
-            (_("Medium"), 48),
-            (_("Medium-small"), 32),
-            (_("Small"), 24),
-            (_("Very small"), 16),
-            (_("Custom size"), 0),
-            (_("Initial size"), -1),
-            (_("By default"), -2),
-        ]
+    def enable_eboard_here(self):
+        return self.eboard.enable_eboard_here()
 
-        self.cb = Controles.CB(self, li_tams, self.width_for_cb(ap)).capture_changes(self.changed_width_cb)
+    def eboard_arrow(self, a1, h8, prom):
+        return self.eboard.eboard_arrow(a1, h8, prom)
 
-        minimo = self.board.minimum_size
-        maximo = board.calc_width_mx_piece() + 30
+    # -----------------------------------------------------------------------------------------------------------------
 
-        self.sb = Controles.SB(self, ap, minimo, maximo).capture_changes(self.cambiado_tam_sb)
+    # -----------------------------------------------------------------------------------------------------   BLINDFOLD
 
-        self.sl = Controles.SL(self, minimo, maximo, ap, self.cambiado_tam_sl, tick=0).set_width(180)
+    def show_pieces(self, is_white, is_black):
+        return self.blindfold_controller.show_pieces(is_white, is_black)
 
-        bt_aceptar = Controles.PB(self, "", rutina=self.aceptar, plano=False).ponIcono(Iconos.Aceptar())
+    def blindfold_change(self):
+        return self.blindfold_controller.blindfold_change()
 
-        layout = Colocacion.G()
-        layout.control(bt_aceptar, 0, 0).control(self.cb, 0, 1).control(self.sb, 0, 2)
-        layout.controlc(self.sl, 1, 0, 1, 3).margen(5)
-        self.setLayout(layout)
+    def blindfold_reset(self):
+        return self.blindfold_controller.blindfold_reset()
 
-        self.siOcupado = False
-        self.siCambio = False
-        self.board.allowed_extern_resize(False)
+    def blindfold_remove(self):
+        return self.blindfold_controller.blindfold_remove()
 
-    @staticmethod
-    def width_for_cb(ap):
-        return ap if ap in (80, 64, 48, 32, 24, 16) else 0
+    def blindfold_config(self):
+        return self.blindfold_controller.blindfold_config()
 
-    def colocate(self):
-        self.show()  # Necesario para que calcule bien el tama_o antes de colocar
-        pos = self.board.parent().mapToGlobal(self.board.pos())
+    def blindfold_something(self):
+        return self.blindfold_controller.blind_sides() is not None
 
-        y = pos.y() - self.frameGeometry().height()
-        if y < 0:
-            y = 0
-        pos.setY(y)
-        self.move(pos)
-
-    def aceptar(self):
-        self.close()
-
-    def change_width(self):
-        is_white_bottom = self.board.is_white_bottom
-        self.board.width_changed()
-        if not is_white_bottom:
-            self.board.try_to_rotate_the_board(None)
-
-    def dispatch(self):
-        t = self.board
-        if t._dispatch_size:
-            t._dispatch_size()
-        self.siCambio = True
-
-    def changed_width_cb(self):
-        if self.siOcupado:
-            return
-        self.siOcupado = True
-        ct = self.config_board
-        tam = self.cb.valor()
-
-        if tam == 0:
-            ct.width_piece(self.board.anchoPieza)
-        elif tam == -1:
-            tpz = self.antes
-            ct.width_piece(tpz)
-            self.cb.set_value(self.width_for_cb(tpz))
-            self.change_width()
-        elif tam == -2:
-            self.cb.set_value(self.width_for_cb(ct.ponDefAnchoPieza()))
-            self.change_width()
-        else:
-            ct.width_piece(tam)
-            self.change_width()
-
-        self.sb.set_value(self.board.anchoPieza)
-        self.sl.set_value(self.board.anchoPieza)
-        self.siOcupado = False
-        self.dispatch()
-
-    def cambiado_tam_sb(self):
-        if self.siOcupado:
-            return
-        self.siOcupado = True
-        tam = self.sb.valor()
-        self.config_board.width_piece(tam)
-        self.cb.set_value(self.width_for_cb(tam))
-        self.change_width()
-        self.sl.set_value(tam)
-        self.siOcupado = False
-        self.dispatch()
-
-    def cambiado_tam_sl(self):
-        if self.siOcupado:
-            return
-        self.siOcupado = True
-        tam = self.sl.valor()
-        self.config_board.width_piece(tam)
-        self.cb.set_value(self.width_for_cb(tam))
-        self.sb.set_value(tam)
-        self.change_width()
-        self.siOcupado = False
-        self.dispatch()
-
-    def closeEvent(self, event):
-        self.config_board.guardaEnDisco()
-        self.close()
-        if self.siCambio:
-            self.dispatch()
-        if self.config_board.is_base:
-            self.board.allowed_extern_resize(self.config_board.is_base)
+    # -----------------------------------------------------------------------------------------------------------------

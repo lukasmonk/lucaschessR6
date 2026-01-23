@@ -1,7 +1,7 @@
 import random
 
 import Code
-from Code import Adjournments, Util
+from Code.Z import Adjournments, Util
 from Code.Base import Move
 from Code.Base.Constantes import (
     BLACK,
@@ -159,7 +159,7 @@ class ManagerLeague(Manager.Manager):
         self.tc_rival.set_displayed(self.timed)
 
         if self.timed:
-            time_control = "%d" % int(self.max_seconds)
+            time_control = f"{int(self.max_seconds)}"
             if self.seconds_per_move:
                 time_control += "+%d" % self.seconds_per_move
             self.game.set_tag("TimeControl", time_control)
@@ -170,7 +170,7 @@ class ManagerLeague(Manager.Manager):
 
             if secs_extra:
                 self.game.set_tag(
-                    "TimeExtra" + ("White" if self.is_human_side_white else "Black"),
+                    f"TimeExtra{'White' if self.is_human_side_white else 'Black'}",
                     "%d" % secs_extra,
                 )
 
@@ -178,7 +178,7 @@ class ManagerLeague(Manager.Manager):
 
         self.main_window.active_game(True, self.timed)
 
-        self.set_dispatcher(self.player_has_moved)
+        self.set_dispatcher(self.player_has_moved_dispatcher)
         self.set_position(self.game.last_position)
         self.show_side_indicator(True)
         self.remove_hints(remove_back=True)
@@ -492,7 +492,7 @@ class ManagerLeague(Manager.Manager):
                 promotion,
             )
             if ok:
-                self.player_has_moved(from_sq, to_sq, promotion)
+                self.player_has_moved_dispatcher(from_sq, to_sq, promotion)
                 return
             self.premove = None
 
@@ -568,7 +568,7 @@ class ManagerLeague(Manager.Manager):
             move.set_time_ms(int(time_s * 1000))
             move.set_clock_ms(self.tc_rival.pending_time * 1000)
             self.add_move(move)
-            self.move_the_pieces(move.liMovs, True)
+            self.move_the_pieces(move.list_piece_moves, True)
             self.beep_extended(False)
             self.play_next_move()
             return True
@@ -582,7 +582,7 @@ class ManagerLeague(Manager.Manager):
             if from_sq == self.premove[0] and to_sq == self.premove[1]:
                 self.premove = None
                 return False
-        self.board.creaFlechaPremove(from_sq, to_sq)
+        self.board.show_arrow_premove(from_sq, to_sq)
         self.premove = from_sq, to_sq
 
         return True
@@ -592,7 +592,7 @@ class ManagerLeague(Manager.Manager):
             self.board.remove_arrows()
             self.premove = None
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         if self.rival_is_thinking:
             return self.check_premove(from_sq, to_sq)
         move = self.check_human_move(from_sq, to_sq, promotion, True)
@@ -604,7 +604,7 @@ class ManagerLeague(Manager.Manager):
         move.set_clock_ms(self.tc_player.pending_time * 1000)
 
         self.add_move(move)
-        self.move_the_pieces(move.liMovs, False)
+        self.move_the_pieces(move.list_piece_moves, False)
         self.beep_extended(True)
 
         self.play_next_move()
@@ -636,7 +636,7 @@ class ManagerLeague(Manager.Manager):
             self.muestra_resultado_delayed()
 
     def muestra_resultado_delayed(self):
-        mensaje, beep, player_win = self.game.label_resultado_player(self.is_human_side_white)
+        mensaje, beep, player_win = self.game.label_result_player(self.is_human_side_white)
 
         self.beep_result(beep)
         self.autosave()

@@ -119,7 +119,7 @@ class ForcingMoves:
                         self.add_threat(move)
                         if move in self.st_best_moves:
                             self.bm_is_threat = True
-                if infoMove._capture:
+                if infoMove.capture():
                     # pr int("Next move [%s] capture: %s" % (move, infoMove.move()))
                     if move in self.st_best_moves:
                         self.nextmove_captures += 1
@@ -155,9 +155,10 @@ class ForcingMoves:
         w = WForcingMoves.WForcingMoves(self)
         w.exec()
 
-    def cut_fen(self, fen):
+    @staticmethod
+    def cut_fen(fen):
         if " w " in fen:
-            new_str = fen.partition(' w ')[0] + " w - 0 1"
+            new_str = f"{fen.partition(' w ')[0]} w - 0 1"
         else:
-            new_str = fen.partition(' b ')[0] + " b - 0 1"
+            new_str = f"{fen.partition(' b ')[0]} b - 0 1"
         return new_str

@@ -1,5 +1,5 @@
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.CompetitionWithTutor import CompetitionWithTutor
 from Code.Memory import WindowMemoria
 from Code.QT import QTMessages
@@ -51,7 +51,7 @@ class Memoria:
         while True:
             cat = self.categorias.number(numcategoria)
             maxnivel = self.maxnivel(numcategoria)
-            nivel_mas1 = WindowMemoria.paramMemoria(self.procesador.main_window, cat.name(), maxnivel + 1)
+            nivel_mas1 = WindowMemoria.param_memory(self.procesador.main_window, cat.name(), maxnivel + 1)
             if nivel_mas1 is None:
                 break
             nivel = nivel_mas1 - 1
@@ -66,10 +66,10 @@ class Memoria:
 
     def launch_level(self, numcategoria, nivel):
 
-        piezas = nivel + 3
-        seconds = (6 - numcategoria) * piezas
+        pieces = nivel + 3
+        seconds = (6 - numcategoria) * pieces
 
-        li_fen = self.get_list_fens(piezas)
+        li_fen = self.get_list_fens(pieces)
         if not li_fen:
             return False
 

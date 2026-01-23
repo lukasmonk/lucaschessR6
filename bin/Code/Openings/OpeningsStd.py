@@ -3,7 +3,7 @@ import collections
 import FasterCode
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Position
 from Code.Translations import TrListas
 
@@ -34,7 +34,7 @@ class Opening:
         return p
 
     def __str__(self):
-        return self.name + " " + self.pgn
+        return f"{self.name} {self.pgn}"
 
 
 class ListaOpeningsStd:

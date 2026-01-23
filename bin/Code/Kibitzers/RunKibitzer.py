@@ -4,7 +4,7 @@ import time
 from PySide6 import QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     KIB_BEFORE_MOVE,
@@ -48,6 +48,11 @@ class Orden:
 
 
 class CPU:
+    num_kibitzer: int
+    key_video: str
+    dic_video: dict
+    tipo: str
+
     def __init__(self, fdb):
 
         self.ipc = UtilSQL.IPC(fdb, False)
@@ -96,7 +101,7 @@ class CPU:
 
     def reset_kibitzer(self):
         kibitzers = Kibitzers.Kibitzers()
-        self.kibitzer = kibitzers.kibitzer(self.numkibitzer)
+        self.kibitzer = kibitzers.kibitzer(self.num_kibitzer)
         prioridad = self.kibitzer.prioridad
 
         priorities = Priorities.priorities
@@ -121,8 +126,8 @@ class CPU:
             OpeningsStd.ap.reset()
 
             kibitzers = Kibitzers.Kibitzers()
-            self.numkibitzer = kibitzers.number(orden.dv["HUELLA"])
-            self.kibitzer = kibitzers.kibitzer(self.numkibitzer)
+            self.num_kibitzer = kibitzers.number(orden.dv["HUELLA"])
+            self.kibitzer = kibitzers.kibitzer(self.num_kibitzer)
             prioridad = self.kibitzer.prioridad
 
             priorities = Priorities.priorities
@@ -134,7 +139,7 @@ class CPU:
 
             self.titulo = self.kibitzer.name
 
-            self.key_video = "Kibitzers%s" % self.kibitzer.huella
+            self.key_video = f"Kibitzers{self.kibitzer.huella}"
             self.dic_video = self.configuration.restore_video(self.key_video)
 
             self.tipo = self.kibitzer.tipo

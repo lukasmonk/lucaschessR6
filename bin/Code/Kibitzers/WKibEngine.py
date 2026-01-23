@@ -3,7 +3,7 @@ from typing import Optional
 
 from PySide6 import QtCore
 
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import KIB_BEFORE_MOVE
 from Code.Engines import EngineRun
@@ -28,7 +28,7 @@ class WKibEngine(WKibCommon.WKibCommon):
         else:
             rotulo = _("Alternatives")
 
-        delegado = Delegados.EtiquetaPOS(True, siLineas=False, siFondo=True) if self.with_figurines else None
+        delegado = Delegados.EtiquetaPOS(True, with_lines=False, siFondo=True) if self.with_figurines else None
         delegado_pgn = Delegados.LinePGN() if self.with_figurines else None
 
         self.color_done = ScreenUtils.qt_color_rgb(231, 244, 254)
@@ -43,9 +43,9 @@ class WKibEngine(WKibCommon.WKibCommon):
         self.grid = Grid.Grid(
             self,
             o_columns,
-            dicVideo=self.dicVideo,
-            siSelecFilas=True,
-            altoFila=configuration.x_pgn_rowheight,
+            dic_video=self.dic_video,
+            complete_row_select=True,
+            heigh_row=configuration.x_pgn_rowheight,
         )
         f = Controles.FontType(puntos=configuration.x_pgn_fontpoints)
         self.grid.set_font(f)
@@ -53,7 +53,7 @@ class WKibEngine(WKibCommon.WKibCommon):
         self.lbDepth = Controles.LB(self)
 
         li_acciones = [
-            (_("Quit"), Iconos.Kibitzer_Close(), self.terminar),
+            (_("Quit"), Iconos.Kibitzer_Close(), self.finalize),
             (_("Continue"), Iconos.Kibitzer_Play(), self.play),
             (_("Pause"), Iconos.Kibitzer_Pause(), self.pause),
             (_("Original position"), Iconos.HomeBlack(), self.home),
@@ -67,12 +67,12 @@ class WKibEngine(WKibCommon.WKibCommon):
             (_("Show/hide board"), Iconos.Kibitzer_Board(), self.config_board),
             (_("Manual position"), Iconos.Kibitzer_Voyager(), self.set_position),
             (
-                "%s: %s" % (_("Enable"), _("window on top")),
+                f"{_('Enable')}: {_('window on top')}",
                 Iconos.Pin(),
                 self.window_top,
             ),
             (
-                "%s: %s" % (_("Disable"), _("window on top")),
+                f"{_('Disable')}: {_('window on top')}",
                 Iconos.Unpin(),
                 self.window_bottom,
             ),
@@ -95,7 +95,7 @@ class WKibEngine(WKibCommon.WKibCommon):
 
         if not self.show_board:
             self.board.hide()
-        self.restore_video(self.dicVideo)
+        self.restore_video(self.dic_video)
         self.set_flags()
 
         self.launch_engine()
@@ -110,7 +110,7 @@ class WKibEngine(WKibCommon.WKibCommon):
 
     def change_options(self):
         self.pause()
-        w = WindowKibitzers.WKibitzerLive(self, self.cpu.configuration, self.cpu.numkibitzer)
+        w = WindowKibitzers.WKibitzerLive(self, self.cpu.configuration, self.cpu.num_kibitzer)
         if w.exec():
             self.kibitzer = self.cpu.reset_kibitzer()
             self.engine_run.close()
@@ -122,12 +122,12 @@ class WKibEngine(WKibCommon.WKibCommon):
     def stop(self):
         self.engine_run.stop()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_moves)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         rm = self.li_moves[row]
-        key = o_column.key
+        key = obj_column.key
         if key == "EVALUATION":
             return rm.abbrev_text_base()
 
@@ -160,7 +160,7 @@ class WKibEngine(WKibCommon.WKibCommon):
                     return txt.lstrip("0123456789. ") if ".." in txt else txt
         return None
 
-    def grid_doble_click(self, grid, row, o_column):
+    def grid_doble_click(self, _grid, row, _obj_column):
         if 0 <= row < len(self.li_moves):
             rm = self.li_moves[row]
             self.game.read_pv(rm.movimiento())
@@ -174,12 +174,12 @@ class WKibEngine(WKibCommon.WKibCommon):
                 return True
         return False
 
-    def grid_color_fondo(self, grid, row, o_column):
+    def grid_color_fondo(self, _grid, row, _obj_column):
         if self.is_move_done(row):
             return self.color_done
         return None
 
-    def grid_bold(self, grid, row, o_column):
+    def grid_bold(self, _grid, row, _obj_column):
         return self.is_move_done(row)
 
     def check_input(self):
@@ -193,7 +193,7 @@ class WKibEngine(WKibCommon.WKibCommon):
         if self.valid_to_play() and not self.stopped:
             self.need_refresh_data = True
 
-    def bestmove_from_engine(self, bestmove):
+    def bestmove_from_engine(self, _bestmove):
         if not self.engine_run:
             return
         if self.valid_to_play() and not self.stopped:
@@ -252,7 +252,7 @@ class WKibEngine(WKibCommon.WKibCommon):
 
         exe = self.kibitzer.path_exe
         if not Util.exist_file(exe):
-            QTMessages.message_error(self, "%s:\n  %s" % (_("Engine not found"), exe))
+            QTMessages.message_error(self, f"{_('Engine not found')}:\n  {exe}")
             sys.exit()
 
         self.run_engine_params = EngineRun.RunEngineParams()
@@ -300,9 +300,9 @@ class WKibEngine(WKibCommon.WKibCommon):
             p = Game.Game(fen=fen)
             p.read_pv(rm.pv)
             jg0 = p.move(0)
-            jg0.set_comment(rm.abbrev_text_pdt() + " " + self.kibitzer.name)
+            jg0.set_comment(f"{rm.abbrev_text_pdt()} {self.kibitzer.name}")
             pgn = p.pgn_base_raw()
-            resp = '[FEN "%s"]\n\n%s' % (fen, pgn)
+            resp = f'[FEN "{fen}"]\n\n{pgn}'
             QTUtils.set_clipboard(resp)
             QTMessages.temporary_message(self, _("The line selected is saved to the clipboard"), 0.7)
 

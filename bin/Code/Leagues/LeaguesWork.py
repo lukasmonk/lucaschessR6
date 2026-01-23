@@ -39,7 +39,7 @@ class LeaguesWorkDB:
 
 class LeaguesWork:
     def __init__(self, league: Leagues.League):
-        self.path = league.path() + ".work"
+        self.path = f"{league.path()}.work"
         self.nom_league = league.name()
         self.league = league
         self.season = league.read_season()

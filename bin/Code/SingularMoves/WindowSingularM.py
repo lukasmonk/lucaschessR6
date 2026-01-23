@@ -5,7 +5,7 @@ from Code.SingularMoves import SingularMoves
 
 class WSingularM(LCDialog.LCDialog):
     def __init__(self, owner):
-        titulo = "%s: %s" % (_("Singular moves"), _("Calculate your strength"))
+        titulo = f"{_('Singular moves')}: {_('Calculate your strength')}"
         icono = Iconos.Strength()
         extparam = "singularmoves"
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
@@ -30,8 +30,8 @@ class WSingularM(LCDialog.LCDialog):
         o_columns.nueva("STRENGTH", _("Strength"), 80, align_center=True)
         o_columns.nueva("REPETITIONS", _("Repetitions"), 80, align_center=True)
         o_columns.nueva("BEST", _("Best repetition"), 120, align_center=True)
-        self.grid = grid = Grid.Grid(self, o_columns, siSelecFilas=True, siSeleccionMultiple=True)
-        grid.coloresAlternados()
+        self.grid = grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        grid.alternate_colors()
         self.register_grid(grid)
 
         ly = Colocacion.V().control(tb).control(grid).margen(3)
@@ -59,40 +59,35 @@ class WSingularM(LCDialog.LCDialog):
             self.accept()
 
     def borrar(self):
-        li = self.grid.recnosSeleccionados()
+        li = self.grid.list_selected_recnos()
         if li and QTMessages.pregunta(self, _("Are you sure?")):
             self.sm.borra_db(li)
             self.grid.refresh()
             self.grid.goto(li[0] if li[0] < self.sm.len_db() else 0, 0)
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return self.sm.len_db()
 
-    def grid_dato(self, grid, row, o_column):
-        col = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        col = obj_column.key
         if col == "N":
             return "%d" % (row + 1,)
         if col == "DATE":
             key = self.sm.db_keys[row]
-            return "%s-%s-%s %s:%s" % (
-                key[:4],
-                key[4:6],
-                key[6:8],
-                key[8:10],
-                key[10:12],
-            )
+            return f"{key[:4]}-{key[4:6]}-{key[6:8]} {key[8:10]}:{key[10:12]}"
         registro = self.sm.reg_db(row)
         if col == "STRENGTH":
-            return "%0.2f" % registro.get("STRENGTH", 0.0)
+            return f"{registro.get('STRENGTH', 0.0):0.2f}"
         if col == "BEST":
             rep = registro.get("REPETITIONS", [])
             if len(rep):
-                return "%0.2f" % registro.get("BEST", 0.0)
+                return f"{registro.get('BEST', 0.0):0.2f}"
             else:
                 return ""
         if col == "REPETITIONS":
             rep = registro.get("REPETITIONS", [])
             return len(rep) if len(rep) else ""
+        return None
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _column):
         self.repetir()

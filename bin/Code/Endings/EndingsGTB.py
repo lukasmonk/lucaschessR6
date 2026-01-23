@@ -17,6 +17,7 @@ class DBendings:
         self.current_listfen = []
         self.current_fen = None
         self.examples_auto = True  # Si tras cambiar de tipo se cargan ejemplos si no hay fens del tipo
+        self.current_order = ""
 
     def set_examples_auto(self, ok):
         self.examples_auto = ok
@@ -109,7 +110,7 @@ class DBendings:
             else:
                 label = _("Time")
 
-            mensaje += "%s: %.1f\n" % (label, ms / 1000)
+            mensaje += f"{label}: {ms / 1000:.1f}\n"
 
             moves_previo = dic_fen.get("MOVES")
             if (moves_previo is None) or (moves < moves_previo):
@@ -200,8 +201,8 @@ class DBendings:
         self.db_data.set_faster_mode()
         li_fields = ["TRIES", "TRIES_OK", "MOVES", "TIMEMS"]
 
-        def haz(key):
-            dic_data = self.db_data[key]
+        def haz(xkey):
+            dic_data = self.db_data[xkey]
             if dic_data is None:
                 return
             changed = False
@@ -211,7 +212,7 @@ class DBendings:
                         del dic_fenm2[field]
                         changed = True
             if changed:
-                self.db_data[key] = dic_data
+                self.db_data[xkey] = dic_data
 
         if only_current_key:
             haz(self.current_key)
@@ -222,14 +223,14 @@ class DBendings:
         self.db_data.set_normal_mode()
 
     def remove_positions(self, only_current_key):
-        def haz(key):
-            dic_data = self.db_data[key]
+        def haz(xkey):
+            dic_data = self.db_data[xkey]
             if dic_data is None:
                 return
             li_borrar = [fen_m2 for fen_m2, dic_fenm2 in dic_data.items() if dic_fenm2["ORIGIN"] == "manual"]
             for fen_m2 in li_borrar:
                 del dic_data[fen_m2]
-            self.db_data[key] = dic_data
+            self.db_data[xkey] = dic_data
 
         if only_current_key:
             haz(self.current_key)

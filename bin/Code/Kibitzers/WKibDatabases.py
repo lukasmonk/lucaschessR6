@@ -11,7 +11,8 @@ from Code.QT import Colocacion, Controles, Iconos, Piezas
 class InfoMoveReplace:
     board = None
 
-    def game_mode(self, x, y):
+    @staticmethod
+    def game_mode(_x, _y):
         return True
 
 
@@ -68,7 +69,7 @@ class WKibDatabases(WKibCommon.WKibCommon):
         )
 
         li_acciones = (
-            (_("Quit"), Iconos.Kibitzer_Close(), self.terminar),
+            (_("Quit"), Iconos.Kibitzer_Close(), self.finalize),
             (_("Continue"), Iconos.Kibitzer_Play(), self.play),
             (_("Pause"), Iconos.Kibitzer_Pause(), self.pause),
             (_("Original position"), Iconos.HomeBlack(), self.home),
@@ -76,12 +77,12 @@ class WKibDatabases(WKibCommon.WKibCommon):
             (_("Show/hide board"), Iconos.Kibitzer_Board(), self.config_board),
             (_("Configure the columns"), Iconos.EditColumns(), self.edit_columns),
             (
-                "%s: %s" % (_("Enable"), _("window on top")),
+                f"{_('Enable')}: {_('window on top')}",
                 Iconos.Pin(),
                 self.window_top,
             ),
             (
-                "%s: %s" % (_("Disable"), _("window on top")),
+                f"{_('Disable')}: {_('window on top')}",
                 Iconos.Unpin(),
                 self.window_bottom,
             ),
@@ -146,7 +147,7 @@ class WKibDatabases(WKibCommon.WKibCommon):
         self.siTop = False
         self.set_flags()
 
-    def terminar(self):
+    def finalize(self):
         self.finalizar()
         self.accept()
 
@@ -195,7 +196,7 @@ class WKibDatabases(WKibCommon.WKibCommon):
     def show_num_games(self):
         if not self.previous_stable:
             reccount, stable = self.db.reccount_stable()
-            message = _("Games") + f": {reccount}"
+            message = f"{_('Games')}: {reccount}"
             self.previous_stable = stable
             if stable:
                 li_moves = self.db.get_summary(self.pv, {}, False)
@@ -228,7 +229,7 @@ class WKibDatabases(WKibCommon.WKibCommon):
             self.analyzer_manager,
             is_competitive=False,
         )
-        manager = clon_procesador.manager = Procesador.ManagerGame.ManagerGame(clon_procesador)
+        manager = clon_procesador.manager = Code.Z.ManagerGame.ManagerGame(clon_procesador)
         manager.si_check_kibitzers = self.si_check_kibitzers
         manager.kibitzers_manager = self
         manager.main_window.base.analysis_bar.game = game
@@ -269,17 +270,19 @@ class WKibDatabases(WKibCommon.WKibCommon):
             self.wgames.changes = True
             self.wgames.edit_save(game.recno, game)
 
-    def some_working(self):
+    @staticmethod
+    def some_working():
         return False
 
-    def analyzer_clone(self, a, b, c):
+    def analyzer_clone(self, _a, _b, _c):
         return self.analyzer_manager
 
-    def rehazActual(self):
+    def redo_current(self):
         pass
 
     def put_game(self, a, b):
         pass
 
-    def si_check_kibitzers(self):
+    @staticmethod
+    def si_check_kibitzers():
         return False

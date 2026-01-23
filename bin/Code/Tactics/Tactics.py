@@ -1,6 +1,6 @@
 import random
 
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game, Position
 from Code.SQL import UtilSQL
 
@@ -202,7 +202,7 @@ class Tactic:
         self.tactics = tactics
         self.name = name
         self.tipo = tipo
-        self.path_db = Util.relative_path(folder_user, "%s%s.tdb" % (self.tactics.name, tipo))
+        self.path_db = Util.relative_path(folder_user, f"{self.tactics.name}{tipo}.tdb")
 
         # Default values ##########################################################################################
         # Max number of puzzles in each block
@@ -250,7 +250,7 @@ class Tactic:
         self.leeDatos()
 
     def title_extended(self):
-        return self.tactics.name + " " + self.title
+        return f"{self.tactics.name} {self.title}"
 
     def read_dic(self, dic):
         c = dic.get("PUZZLES")
@@ -656,10 +656,10 @@ class Tactic:
 
         fen = li[0]
         if fen.endswith(" 0"):
-            fen = fen[:-1] + "1"
+            fen = f"{fen[:-1]}1"
         label = li[1]
         solucion = li[2]
-        ok, game_obj = Game.pgn_game('[FEN "%s"]\n%s' % (fen, solucion))
+        ok, game_obj = Game.pgn_game(f'[FEN "{fen}"]\n{solucion}')
 
         game_base = None
         if len(li) > 3:
@@ -720,11 +720,11 @@ class Tactic:
             if self.w_reinforcement_working:
                 mens = _("End reinforcement")
                 color = "blue"
-                title = '<tr><td  align="center"><h4>%s</h4></td></tr>' % reinforcement_title
+                title = f'<tr><td  align="center"><h4>{reinforcement_title}</h4></td></tr>'
             else:
                 mens = _("GAME OVER")
                 color = "DarkMagenta"
-            str_final = "%s: <big>%s</big>" % (_("Next"), mens)
+            str_final = f"{_('Next')}: <big>{mens}</big>"
 
         else:
             str_final = "%s: %d" % (_("Next"), self.w_next_position + 1)
@@ -732,7 +732,7 @@ class Tactic:
 
             if self.reinforcement.is_activated():
                 if not self.w_reinforcement_working:
-                    str_final = "%s: %s" % (_("Next"), _("Reinforcement"))
+                    str_final = f"{_('Next')}: {_('Reinforcement')}"
                 else:
                     if reinforcement_title:
                         title = f'<tr><td  align="center"><h4>{reinforcement_title}</h4></td></tr>'

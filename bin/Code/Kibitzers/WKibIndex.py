@@ -45,9 +45,9 @@ class WKibIndex(QtWidgets.QDialog):
         self.setBackgroundRole(QtGui.QPalette.ColorRole.Light)
 
         Code.all_pieces = Piezas.AllPieces()
-        config_board = cpu.configuration.config_board("kib" + cpu.kibitzer.huella, 24)
+        config_board = cpu.configuration.config_board(f"kib{cpu.kibitzer.huella}", 24)
         self.board = Board.Board(self, config_board)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_dispatcher(self.mensajero)
 
         o_columns = Columnas.ListaColumnas()
@@ -57,10 +57,10 @@ class WKibIndex(QtWidgets.QDialog):
         self.grid = Grid.Grid(
             self,
             o_columns,
-            dicVideo=dic_video,
-            siSelecFilas=True,
-            siCabeceraVisible=True,
-            altoCabecera=4,
+            dic_video=dic_video,
+            complete_row_select=True,
+            header_visible=True,
+            header_heigh=4,
         )
         f = Controles.FontType(puntos=self.cpu.configuration.x_pgn_fontpoints)
         self.grid.set_font(f)
@@ -73,12 +73,12 @@ class WKibIndex(QtWidgets.QDialog):
             (_("Show/hide board"), Iconos.Kibitzer_Board(), self.config_board),
             (_("Manual position"), Iconos.Voyager(), self.set_position),
             (
-                "%s: %s" % (_("Enable"), _("window on top")),
+                f"{_('Enable')}: {_('window on top')}",
                 Iconos.Pin(),
                 self.window_top,
             ),
             (
-                "%s: %s" % (_("Disable"), _("window on top")),
+                f"{_('Disable')}: {_('window on top')}",
                 Iconos.Unpin(),
                 self.window_bottom,
             ),
@@ -144,7 +144,7 @@ class WKibIndex(QtWidgets.QDialog):
             tr(AnalysisIndexes.tp_exchangetendency(cp, mrm))
 
             tp = AnalysisIndexes.tp_positionalpressure(cp, mrm)
-            self.liData.append((tp[0], "%d" % int(tp[1]), ""))
+            self.liData.append((tp[0], f"{int(tp[1])}", ""))
 
             tr(AnalysisIndexes.tp_materialasymmetry(cp, mrm))
 
@@ -180,7 +180,7 @@ class WKibIndex(QtWidgets.QDialog):
         self.siTop = False
         self.set_flags()
 
-    def terminar(self):
+    def finalize(self):
         self.finalizar()
         self.accept()
 
@@ -200,11 +200,11 @@ class WKibIndex(QtWidgets.QDialog):
         self.siPlay = False
         self.engine_run.stop()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.liData)
 
-    def grid_dato(self, grid, row, o_column):
-        key = o_column.key
+    def grid_dato(self, _grid, row, obj_column):
+        key = obj_column.key
         titulo, valor, info = self.liData[row]
         if key == "titulo":
             return titulo
@@ -218,8 +218,8 @@ class WKibIndex(QtWidgets.QDialog):
         return None
 
     @staticmethod
-    def grid_bold(grid, row, o_column):
-        return o_column.key in ("Titulo",)
+    def grid_bold(_grid, _row, obj_column):
+        return obj_column.key in ("Titulo",)
 
     def changed_depth_from_engine(self):
         if not self.engine_run:
@@ -227,7 +227,7 @@ class WKibIndex(QtWidgets.QDialog):
         if self.siPlay:
             self.need_refresh_data = True
 
-    def bestmove_from_engine(self, bestmove):
+    def bestmove_from_engine(self, _bestmove):
         if not self.engine_run:
             return
         if self.siPlay:
@@ -273,7 +273,7 @@ class WKibIndex(QtWidgets.QDialog):
         menu.opcion("negras", _("Black"), ico(not self.is_white and self.is_black))
         menu.opcion(
             "blancasnegras",
-            "%s + %s" % (_("White"), _("Black")),
+            f"{_('White')} + {_('Black')}",
             ico(self.is_white and self.is_black),
         )
         resp = menu.lanza()

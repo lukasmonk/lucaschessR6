@@ -1,6 +1,6 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from Code import Util
+from Code.Z import Util
 from Code.Base.Constantes import BLACK, WHITE
 from Code.QT import Iconos
 

@@ -4,7 +4,7 @@ import sys
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code import XRun
+from Code.Z import XRun
 from Code.Base.Constantes import ExitProgram
 from Code.Config import Configuration, Usuarios
 from Code.MainWindow import InitApp
@@ -31,7 +31,7 @@ def select_language(owner, init):
     # symbol_ant = "⌛️"
     # menu.opcion(None, f"Select your language", Iconos.Aplicacion64())
     # menu.separador()
-    menu.opcion(lng_default, "By default: %s" % name_default, Iconos.AceptarPeque())
+    menu.opcion(lng_default, f"By default: {name_default}", Iconos.AceptarPeque())
     menu.separador()
 
     for k, name, porc, author, others in li:
@@ -64,9 +64,9 @@ def select_language(owner, init):
     Code.configuration.x_use_googletranslator = False
     if resp:
         lng, porc = resp
-    #     if lng != "en" and porc < 90:
-    #         if QTMessages.pregunta(owner, _("Do you want to use Google Translator (offline) to complete translations?")):
-    #             Code.configuration.x_use_googletranslator = True
+    # if lng != "en" and porc < 90:
+    #      if QTMessages.pregunta(owner, _("Do you want to use Google Translator (offline) to complete translations?")):
+    #          Code.configuration.x_use_googletranslator = True
     else:
         lng = lng_default
     configuration.set_translator(lng)
@@ -78,9 +78,6 @@ def select_language(owner, init):
 def run_gui(procesador):
     main_config = Configuration.Configuration("")
     main_config.lee()
-    if main_config.x_enable_highdpiscaling:
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling)
-        QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
 
     app = QtWidgets.QApplication([])
@@ -165,10 +162,10 @@ class WPassword(QtWidgets.QDialog):
         self.liUsuarios = li_usuarios
 
         li_options = [(usuario.name, nusuario) for nusuario, usuario in enumerate(li_usuarios)]
-        lb_u = Controles.LB(self, _("User") + ":").set_font(font)
+        lb_u = Controles.LB(self, f"{_('User')}:").set_font(font)
         self.cbU = Controles.CB(self, li_options, li_usuarios[0]).set_font(font)
 
-        lb_p = Controles.LB(self, _("Password") + ":").set_font(font)
+        lb_p = Controles.LB(self, f"{_('Password')}:").set_font(font)
         self.edP = Controles.ED(self).password().set_font(font)
 
         btaceptar = Controles.PB(self, _("Accept"), rutina=self.accept, plano=False).set_font(font)

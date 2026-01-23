@@ -10,6 +10,9 @@ from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTMessag
 
 
 class WRunCoordinatesBasic(LCDialog.LCDialog):
+    square_object: str
+    square_next: str
+
     def __init__(self, owner, db_coordinates, is_white, config):
 
         LCDialog.LCDialog.__init__(self, owner, _("Coordinates"), Iconos.Blocks(), "runcoordinatesbasic")
@@ -25,8 +28,8 @@ class WRunCoordinatesBasic(LCDialog.LCDialog):
         conf_board = self.configuration.config_board("RUNCOORDINATESBASIC", self.configuration.size_base())
 
         self.board = Board2.BoardEstaticoMensaje(self, conf_board, None, 0.6)
-        self.board.crea()
-        self.board.bloqueaRotacion(True)
+        self.board.draw_window()
+        self.board.lock_rotation(True)
         self.board.set_side_bottom(self.is_white)
         if config.with_pieces:
             self.cp_initial = Position.Position()
@@ -42,13 +45,13 @@ class WRunCoordinatesBasic(LCDialog.LCDialog):
         self.lb_score = Controles.LB(self).set_font(font)
 
         li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.terminar),
+            (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
             (_("Begin"), Iconos.Empezar(), self.begin),
             (_("Continue"), Iconos.Pelicula_Seguir(), self.seguir),
         )
         self.tb = QTDialogs.LCTB(self, li_acciones)
-        self.show_tb(self.terminar, self.begin)
+        self.show_tb(self.finalize, self.begin)
 
         ly_info = Colocacion.G()
         ly_info.controlc(lb_score_k, 0, 0).controlc(self.lb_score, 1, 0)
@@ -81,7 +84,7 @@ class WRunCoordinatesBasic(LCDialog.LCDialog):
         self.db_coordinates.save(self.coordinates)
         QTMessages.message(self, "%s\n\n%s: %d\n" % (_("Ended"), _("Result"), self.coordinates.score))
         self.board.pon_textos("", "", 1)
-        self.show_tb(self.terminar, self.seguir)
+        self.show_tb(self.finalize, self.seguir)
 
     def comprueba_time(self):
         if self.working:
@@ -97,7 +100,7 @@ class WRunCoordinatesBasic(LCDialog.LCDialog):
 
     def seguir(self):
         self.new_try()
-        self.show_tb(self.terminar)
+        self.show_tb(self.finalize)
         self.go_next()
 
     def go_next(self):
@@ -113,7 +116,7 @@ class WRunCoordinatesBasic(LCDialog.LCDialog):
                 self.lb_score.set_text("%d" % self.current_score)
                 self.go_next()
             else:
-                QTMessages.message_error(self, "%s: %s ≠ %s" % (_("Error"), celda, self.square_object))
+                QTMessages.message_error(self, f"{_('Error')}: {celda} ≠ {self.square_object}")
                 self.end_work()
 
     def closeEvent(self, event):
@@ -121,7 +124,7 @@ class WRunCoordinatesBasic(LCDialog.LCDialog):
         self.save_video()
         event.accept()
 
-    def terminar(self):
+    def finalize(self):
         self.working = False
         self.save_video()
         self.reject()

@@ -2,7 +2,7 @@ import sqlite3
 
 import FasterCode
 
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 
 pv_xpv = FasterCode.pv_xpv
@@ -21,14 +21,14 @@ class RecordSTAT:
         self.W = 0
         self.B = 0
         self.D = 0
-        self.O = 0
+        self.OTHER = 0
 
         self.cached = False
         self.move = None
         self.ROWID = None
 
     def total(self):
-        return self.W + self.B + self.D + self.O
+        return self.W + self.B + self.D + self.OTHER
 
 
 class TreeSTAT:
@@ -95,22 +95,22 @@ class TreeSTAT:
             rec.W = row[1]
             rec.B = row[2]
             rec.D = row[3]
-            rec.O = row[4]
+            rec.OTHER = row[4]
         return rec
 
     def write_rec(self, hkey, rec):
         if self.cache_active:
             if rec.total() > 10:
                 self.cache[hkey] = rec
-                return
+                return None
         rowid = rec.ROWID
         if rowid is None:
             sql = "INSERT INTO STATS( HASHKEY, W, B, D, O ) VALUES( ?, ?, ?, ?, ? )"
-            cursor = self._conexion.execute(sql, (hkey, rec.W, rec.B, rec.D, rec.O))
+            cursor = self._conexion.execute(sql, (hkey, rec.W, rec.B, rec.D, rec.OTHER))
             rowid = cursor.lastrowid
         else:
             sql = "UPDATE STATS SET W=?, B=?, D=?, O=? WHERE ROWID=?"
-            self._conexion.execute(sql, (rec.W, rec.B, rec.D, rec.O, rowid))
+            self._conexion.execute(sql, (rec.W, rec.B, rec.D, rec.OTHER, rowid))
         return rowid
 
     def commit(self):
@@ -125,7 +125,7 @@ class TreeSTAT:
         elif d:
             rec.D += d
         else:
-            rec.O += o
+            rec.OTHER += o
         return self.write_rec(hkey, rec)
 
     def append(self, pv, result, r=+1):
@@ -160,8 +160,8 @@ class TreeSTAT:
     def root(self):
         return self.read_rec(self.hinikey)
 
-    def rootGames(self):
-        return self.root().total()
+    # def rootGames(self):
+    #     return self.root().total()
 
     def children(self, pv_base, allmoves=True):
         make_pv(pv_base)
@@ -189,56 +189,59 @@ class TreeSTAT:
 
         lipvmove = []
         for rec in li_children:
-            win, draw, b, o = rec.W, rec.D, rec.B, rec.O
+            win, draw, b, o = rec.W, rec.D, rec.B, rec.OTHER
             t = rec.total()
 
-            dic = {}
             pvmove = rec.move
-            pv = pv_base + " " + pvmove
+            pv = f"{pv_base} {pvmove}"
             pv = pv.strip()
             lipvmove.append(pvmove)
-            dic["number"] = ""
-            dic["pvmove"] = pvmove
-            dic["pv"] = pv
-            dic["analysis"] = dic_analysis.get(pvmove, None)
-            dic["games"] = t
             tt += t
-            dic["white"] = win
-            dic["draw"] = draw
-            dic["black"] = b
-            dic["other"] = o
-            dic["pwhite"] = win * 100.0 / t if t else 0.0
-            dic["pdraw"] = draw * 100.0 / t if t else 0.0
-            dic["pblack"] = b * 100.0 / t if t else 0.0
-            dic["pother"] = o * 100.0 / t if t else 0.0
 
-            dic["rec"] = rec
+            dic = {
+                "number": "",
+                "pvmove": pvmove,
+                "pv": pv,
+                "analysis": dic_analysis.get(pvmove, None),
+                "games": t,
+                "white": win,
+                "draw": draw,
+                "black": b,
+                "other": o,
+                "pwhite": win * 100.0 / t if t else 0.0,
+                "pdraw": draw * 100.0 / t if t else 0.0,
+                "pblack": b * 100.0 / t if t else 0.0,
+                "pother": o * 100.0 / t if t else 0.0,
+                "rec": rec,
+            }
 
             li_moves.append(dic)
 
         if allmoves:
             for pvmove in dic_analysis:
                 if pvmove not in lipvmove:
-                    dic = {}
-                    pv = pv_base + " " + pvmove
+                    pv = f"{pv_base} {pvmove}"
                     pv = pv.strip()
-                    dic["pvmove"] = pvmove
-                    dic["pv"] = pv
-                    dic["analysis"] = dic_analysis[pvmove]
-                    dic["games"] = 0
-                    dic["white"] = 0
-                    dic["draw"] = 0
-                    dic["black"] = 0
-                    dic["other"] = 0
-                    dic["pwhite"] = 0.00
-                    dic["pdraw"] = 0.00
-                    dic["pblack"] = 0.00
-                    dic["pother"] = 0.00
-                    dic["rec"] = None
+
+                    dic = {
+                        "pvmove": pvmove,
+                        "pv": pv,
+                        "analysis": dic_analysis[pvmove],
+                        "games": 0,
+                        "white": 0,
+                        "draw": 0,
+                        "black": 0,
+                        "other": 0,
+                        "pwhite": 0.00,
+                        "pdraw": 0.00,
+                        "pblack": 0.00,
+                        "pother": 0.00,
+                        "rec": None,
+                    }
 
                     li_moves.append(dic)
 
-        li_moves = sorted(li_moves, key=lambda dic: -dic["games"])
+        li_moves = sorted(li_moves, key=lambda xdic: -xdic["games"])
 
         tg = win = draw = lost = 0
         for dic in li_moves:
@@ -273,7 +276,7 @@ class TreeSTAT:
                 p.read_pv(pv)
                 if p.num_moves():
                     move = p.last_jg()
-                    num_moves = move.numMove()
+                    num_moves = move.num_move()
                     pgn = move.pgn_figurines() if with_figurines else move.pgn_translated()
                     dic["move"] = pgn
                     dic["number"] = "%d." % num_moves
@@ -284,16 +287,17 @@ class TreeSTAT:
                     dic["move"] = pvmove
                 dic["game"] = p
 
-        dic = {}
-        dic["games"] = tg
-        dic["win"] = win
-        dic["draw"] = draw
-        dic["lost"] = lost
-        dic["pwin"] = win * 100.0 / tg if tg else 0.0
-        dic["pdraw"] = draw * 100.0 / tg if tg else 0.0
-        dic["plost"] = lost * 100.0 / tg if tg else 0.0
-        dic["pdrawwin"] = (win + draw) * 100.0 / tg if tg else 0.0
-        dic["pdrawlost"] = (lost + draw) * 100.0 / tg if tg else 0.0
+        dic = {
+            "games": tg,
+            "win": win,
+            "draw": draw,
+            "lost": lost,
+            "pwin": win * 100.0 / tg if tg else 0.0,
+            "pdraw": draw * 100.0 / tg if tg else 0.0,
+            "plost": lost * 100.0 / tg if tg else 0.0,
+            "pdrawwin": (win + draw) * 100.0 / tg if tg else 0.0,
+            "pdrawlost": (lost + draw) * 100.0 / tg if tg else 0.0,
+        }
         li_moves.append(dic)
 
         return li_moves

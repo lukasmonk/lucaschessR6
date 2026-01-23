@@ -3,7 +3,7 @@ import sys
 from PySide6 import QtWidgets
 
 import Code
-from Code import Util
+from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import BOOK_RANDOM_UNIFORM
 from Code.Config import Configuration
@@ -22,7 +22,7 @@ class TournamentWorker(RunWorker.RunWorker):
         self.name = self.tournament_work.run_name
         self.key_video = "TOURNAMENTPLAY"
         self.adjudicator_active = self.tournament_work.adjudicator_active()
-        self.adjudicator = self.tournament_work.adjudicator()
+        self.move_evaluator = self.tournament_work.move_evaluator()
         self.adjudicator_time = self.tournament_work.adjudicator_time()
         self.draw_range = self.tournament_work.run_drawRange
         self.draw_min_ply = self.tournament_work.run_drawMinPly

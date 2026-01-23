@@ -60,9 +60,10 @@ class WInfomove(QtWidgets.QWidget):
         config_board = configuration.config_board("INFOMOVE", 32)
         self.board = BoardKey(self, config_board)
         self.board.set_dispatch_size(self.cambiado_board)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_side_bottom(True)
-        self.board.disable_hard_focus()  # Para que los movimientos con el teclado from_sq grid wgames no cambien el foco
+        self.board.disable_hard_focus()  # Para que movimientos con el teclado from_sq grid wgames no cambien el foco
+
         self.cpActual = Position.Position()
         self.historia = None
         self.posHistoria = None
@@ -72,7 +73,9 @@ class WInfomove(QtWidgets.QWidget):
         lybt, bt = QTDialogs.ly_mini_buttons(self, "", siTiempo=True, siLibre=False, icon_size=24, siJugar=True)
 
         self.lbPGN = LBKey(self).relative_width(self.board.ancho).set_wrap()
-        self.lbPGN.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
+        self.lbPGN.setTextInteractionFlags(
+            Qt.TextInteractionFlag.LinksAccessibleByMouse | Qt.TextInteractionFlag.LinksAccessibleByKeyboard
+        )
         self.lbPGN.wowner = self
         self.lbPGN.set_font_type(puntos=configuration.x_pgn_fontpoints)
         Code.configuration.set_property(self.lbPGN, "pgn")
@@ -87,7 +90,7 @@ class WInfomove(QtWidgets.QWidget):
         scroll = QtWidgets.QScrollArea()
         scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidgetResizable(True)
-        scroll.setFrameStyle(QtWidgets.QFrame.NoFrame)
+        scroll.setFrameStyle(QtWidgets.QFrame.Shape.NoFrame)
         self.scroll = scroll
 
         ly = Colocacion.V().control(self.lbPGN).relleno(1).margen(0)
@@ -152,7 +155,7 @@ class WInfomove(QtWidgets.QWidget):
 
         p = self.game
 
-        movenum = p.primeraJugada()
+        movenum = p.first_num_move()
         li_pgn = []
         style_number = f'color:{Code.dic_colors["PGN_NUMBER"]}'
         style_select = f'color:{Code.dic_colors["PGN_SELECT"]};font-weight:bold;'
@@ -200,16 +203,16 @@ class WInfomove(QtWidgets.QWidget):
         if k in (Qt.Key.Key_Left, Qt.Key.Key_Up):
             self.move_back()
         elif k in (Qt.Key.Key_Right, Qt.Key.Key_Down):
-            self.MoverAdelante()
+            self.move_forward()
         elif k == Qt.Key.Key_Home:
-            self.MoverInicio()
+            self.move_to_beginning()
         elif k == Qt.Key.Key_End:
-            self.MoverFinal()
+            self.move_to_end()
         else:
             return False
         return True
 
-    def MoverInicio(self):
+    def move_to_beginning(self):
         self.pos_move = -1
         position = self.game.first_position
         self.board.set_position(position)
@@ -217,7 +220,7 @@ class WInfomove(QtWidgets.QWidget):
     def move_back(self):
         self.goto_move_num(self.pos_move - 1)
 
-    def MoverAdelante(self):
+    def move_forward(self):
         self.goto_move_num(self.pos_move + 1)
 
     def analizar_actual(self):
@@ -241,31 +244,31 @@ class WInfomove(QtWidgets.QWidget):
         self.lbPGN.set_text("")  # necesario para que desaparezca la selección
         self.goto_move_num(self.pos_move)
 
-    def MoverFinal(self):
+    def move_to_end(self):
         self.goto_move_num(99999)
 
-    def MoverJugar(self):
+    def move_play(self):
         self.board.play_current_position()
 
-    def MoverTiempo(self):
+    def move_timed(self):
         if self.clock_running:
             self.clock_running = False
         else:
             self.clock_running = True
-            self.MoverInicio()
+            self.move_to_beginning()
             self.run_clock()
 
-    def board_wheel_event(self, board, forward):
+    def board_wheel_event(self, _board, forward):
         forward = Code.configuration.wheel_board(not forward)
         if forward:
-            self.MoverAdelante()
+            self.move_forward()
         else:
             self.move_back()
 
     def pgn_wheel_event(self, forward):
         forward = Code.configuration.wheel_pgn(forward)
         if forward:
-            self.MoverAdelante()
+            self.move_forward()
         else:
             self.move_back()
 
@@ -274,9 +277,9 @@ class WInfomove(QtWidgets.QWidget):
         self.interval_replay = configuration.x_interval_replay
         self.beep_replay = configuration.x_beep_replay
         if self.clock_running:
-            self.MoverAdelante()
+            self.move_forward()
             if self.beep_replay:
-                Code.runSound.playBeep()
+                Code.runSound.play_beep()
             QtCore.QTimer.singleShot(self.interval_replay, self.run_clock)
 
     def stop_clock(self):

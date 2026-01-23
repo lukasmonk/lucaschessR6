@@ -30,12 +30,12 @@ class WPolyglot(LCDialog.LCDialog):
 
         conf_board = configuration.config_board("WPOLYGLOT", 48)
         self.board = Board.Board(self, conf_board)
-        self.board.crea()
+        self.board.draw_window()
         self.board.set_dispatcher(self.mensajero)
         self.with_figurines = configuration.x_pgn_withfigurines
 
         o_columnas = Columnas.ListaColumnas()
-        delegado = Delegados.EtiquetaPOS(True, siLineas=False) if self.configuration.x_pgn_withfigurines else None
+        delegado = Delegados.EtiquetaPOS(True, with_lines=False) if self.configuration.x_pgn_withfigurines else None
         o_columnas.nueva(
             "move",
             _("Move"),
@@ -74,10 +74,10 @@ class WPolyglot(LCDialog.LCDialog):
             edicion=Delegados.LineaTexto(is_integer=True),
         )
         self.grid_moves = Grid.Grid(self, o_columnas, is_editable=True)
-        self.grid_moves.setMinimumWidth(self.grid_moves.anchoColumnas() + 20)
+        self.grid_moves.setMinimumWidth(self.grid_moves.width_columns_displayables() + 20)
 
         self.tb = QTDialogs.LCTB(self)
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.terminar)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         self.tb.new(_("Takeback"), Iconos.Atras(), self.takeback)
         self.tb.new(_("Voyager"), Iconos.Voyager32(), self.voyager)
         self.tb.new(_("Import"), Iconos.Import8(), self.pol_import.importar)
@@ -126,7 +126,7 @@ class WPolyglot(LCDialog.LCDialog):
         self.grid_moves.refresh()
         self.grid_moves.gotop()
 
-    def grid_doble_click(self, grid, row, col):
+    def grid_doble_click(self, _grid, row, col):
         if col.key == "move":
             bin_move = self.li_moves[row]
             xfrom = bin_move.info_move.xfrom()
@@ -134,17 +134,17 @@ class WPolyglot(LCDialog.LCDialog):
             promotion = bin_move.info_move.promotion()
             self.mensajero(xfrom, xto, promotion)
 
-    def grid_cambiado_registro(self, grid, row, o_column):
+    def grid_cambiado_registro(self, _grid, row, _obj_column):
         if -1 < row < len(self.li_moves):
             bin_move = self.li_moves[row]
             self.board.put_arrow_sc(bin_move.info_move.xfrom(), bin_move.info_move.xto())
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_moves)
 
-    def grid_dato(self, grid, row, o_column):
+    def grid_dato(self, _grid, row, obj_column):
         move = self.li_moves[row]
-        key = o_column.key
+        key = obj_column.key
         if key == "move":
             san = move.info_move.san()
             if self.with_figurines:
@@ -153,7 +153,7 @@ class WPolyglot(LCDialog.LCDialog):
             else:
                 return san
         elif key == "%":
-            return "%.1f%%" % move.porc if move.porc > 0 else ""
+            return f"{move.porc:.1f}%" if move.porc > 0 else ""
         else:
             valor = move.get_field(key)
             return str(valor) if valor else ""
@@ -182,34 +182,35 @@ class WPolyglot(LCDialog.LCDialog):
                 binmove.porc = binmove.weight() * 100.0 / tt if tt else 0.0
             grid.refresh()
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
-        if k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
-            row, o_col = grid.current_position()
-            field = o_col.key
+    def grid_tecla_control(self, grid, k, _is_shift, _is_control, _is_alt):
+        if k not in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
+            return
+        row, o_col = grid.current_position()
+        field = o_col.key
 
-            binmove = self.li_moves[row]
+        binmove = self.li_moves[row]
 
-            if field in ("move", "%", "weight"):
-                binmove.set_field("weight", 0)
-                for xfield in ("score", "depth", "learn"):
-                    binmove.set_field(xfield, 0)
-            else:
-                binmove.set_field(field, 0)
+        if field in ("move", "%", "weight"):
+            binmove.set_field("weight", 0)
+            for xfield in ("score", "depth", "learn"):
+                binmove.set_field(xfield, 0)
+        else:
+            binmove.set_field(field, 0)
 
-            entry = binmove.get_entry()
-            if entry.key == 0:
-                entry.key = FasterCode.hash_polyglot8(self.position.fen())
-                entry.move = binmove.imove()
+        entry = binmove.get_entry()
+        if entry.key == 0:
+            entry.key = FasterCode.hash_polyglot8(self.position.fen())
+            entry.move = binmove.imove()
 
-            self.db_entries.save_entry(binmove.rowid, entry)
-            if entry.weight == 0:
-                binmove.rowid = entry.rowid = 0  # borrados
+        self.db_entries.save_entry(binmove.rowid, entry)
+        if entry.weight == 0:
+            binmove.rowid = entry.rowid = 0  # borrados
 
-                tt = sum(binmove.weight() for binmove in self.li_moves)
-                for binmove in self.li_moves:
-                    binmove.porc = binmove.weight() * 100.0 / tt if tt else 0.0
+            tt = sum(binmove.weight() for binmove in self.li_moves)
+            for binmove in self.li_moves:
+                binmove.porc = binmove.weight() * 100.0 / tt if tt else 0.0
 
-            grid.refresh()
+        grid.refresh()
 
     def mensajero(self, from_sq, to_sq, promocion=""):
         FasterCode.set_fen(self.position.fen())
@@ -218,7 +219,7 @@ class WPolyglot(LCDialog.LCDialog):
             self.position.read_fen(fen)
             self.set_position(self.position, True)
 
-    def terminar(self):
+    def finalize(self):
         self.finalizar()
         self.accept()
 

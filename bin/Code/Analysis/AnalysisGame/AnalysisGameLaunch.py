@@ -1,6 +1,6 @@
 from typing import Optional
 
-from Code import Util
+from Code.Z import Util
 from Code.Analysis import WindowAnalysisParam
 from Code.Analysis.AnalysisGame import AnalysisGame
 from Code.Databases import WDB_Utils
@@ -18,7 +18,7 @@ def analysis_game(manager):
 
     li_moves = []
     lni = Util.ListaNumerosImpresion(analysis_params.num_moves)
-    num_move = int(game.primeraJugada())
+    num_move = int(game.first_num_move())
     is_white = not game.starts_with_black
     for nRaw in range(game.num_moves()):
         must_save = lni.if_in_list(num_move)
@@ -58,14 +58,17 @@ def analysis_game(manager):
 
             if game.starts_with_black:
                 njg += 1
-            manager.main_window.pgnColocate(njg / 2, (njg + 1) % 2)
+            manager.main_window.place_on_pgn_table(njg / 2, (njg + 1) % 2)
             manager.board.put_arrow_sc(move.from_sq, move.to_sq)
             manager.put_view()
 
         if rm is not None:
             if ms is None:
                 ms = rm.time
-            message = f'{run_analysis_game.dispatch_bp_message}<br><small>{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}"'
+            message = (
+                f'{run_analysis_game.dispatch_bp_message}<br>'
+                f'<small>{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}"'
+            )
             manager_main_window_base.change_message(message)
 
         return not manager_main_window_base.is_canceled()
@@ -85,7 +88,7 @@ def analysis_game(manager):
         li_no_creados = []
 
         if analysis_params.tacticblunders:
-            if run_analysis_game.siTacticBlunders:
+            if run_analysis_game.si_tactic_blunders:
                 li_creados.append(analysis_params.tacticblunders)
             else:
                 li_no_creados.append(analysis_params.tacticblunders)
@@ -117,6 +120,5 @@ def analysis_game(manager):
 
     manager.goto_end()
 
-    if not_canceled:
-        if analysis_params.show_graphs:
-            manager.show_analysis()
+    if not_canceled and analysis_params.show_graphs:
+        manager.show_analysis()

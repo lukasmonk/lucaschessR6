@@ -28,7 +28,7 @@ class DBFcache:
         self.liIDs = []
 
     def mxreccount(self):
-        self.cursor.execute("SELECT COUNT(*) FROM %s" % self.ctabla)
+        self.cursor.execute(f"SELECT COUNT(*) FROM {self.ctabla}")
         liValores = self.cursor.fetchone()
         return liValores[0]
 
@@ -99,12 +99,12 @@ class DBFcache:
         self.siBufferPendiente = True
         resto = ""
         if self.condicion:
-            resto += "WHERE %s" % self.condicion
+            resto += f"WHERE {self.condicion}"
         if self.orden:
             if resto:
                 resto += " "
-            resto += "ORDER BY %s" % self.orden
-        cSQL = "SELECT rowid FROM %s %s" % (self.ctabla, resto)
+            resto += f"ORDER BY {self.orden}"
+        cSQL = f"SELECT rowid FROM {self.ctabla} {resto}"
         self.cursorBuffer.execute(cSQL)
         self.liIDs = []
         xInicio = time.time()
@@ -240,7 +240,7 @@ class DBFcache:
         self.resetCache()
 
     def borrarConFiltro(self, filtro):
-        cSQL = "DELETE FROM %s WHERE %s" % (self.ctabla, filtro)
+        cSQL = f"DELETE FROM {self.ctabla} WHERE {filtro}"
         self.cursor.execute(cSQL)
         self.conexion.commit()
         self.resetCache()
@@ -278,13 +278,13 @@ class DBFcache:
         liValues = []
         for campo in dir(regNuevo):
             if campo.isupper():
-                campos += campo + ","
+                campos += f"{campo},"
                 values += "?,"
                 liValues.append(getattr(regNuevo, campo))
         campos = campos[:-1]
         values = values[:-1]
 
-        cSQL = "insert into %s(%s) values(%s)" % (self.ctabla, campos, values)
+        cSQL = f"insert into {self.ctabla}({campos}) values({values})"
         self.cursor.execute(cSQL, liValues)
 
         idNuevo = self.cursor.lastrowid
@@ -319,7 +319,7 @@ class DBFcache:
         liValues = []
         for campo in dir(regNuevo):
             if campo.isupper():
-                campos += campo + "= ?,"
+                campos += f"{campo}= ?,"
                 liValues.append(getattr(regNuevo, campo))
 
         campos = campos[:-1]

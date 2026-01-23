@@ -46,7 +46,7 @@ class Skewer(CheckTheme.CheckTheme):
         if len(line_attacked_sq_pz) < 2:
             return False
 
-        # que no haya otras piezas en medio
+        # que no haya otras pieces en medio
         if line_attacked_sq_pz[0][0] != cr_response_from:
             return False
 
