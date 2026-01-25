@@ -190,7 +190,7 @@ class TrainMenuRun:
         WindowVisualiza.window_visualiza(self.procesador)
 
     def train_book(self):
-        self.train_book()
+        self.procesador.train_book()
 
     def train_book_ol(self):
         self.procesador.train_book_ol()

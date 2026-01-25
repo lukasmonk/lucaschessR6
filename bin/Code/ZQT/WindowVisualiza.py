@@ -49,17 +49,11 @@ class WControl(LCDialog.LCDialog):
         self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
 
         # Toolbar
-        li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.finalize),
-            None,
-            (_("Play"), Iconos.Empezar(), self.play),
-            None,
-            (_("New"), Iconos.Nuevo(), self.new),
-            None,
-            (_("Remove"), Iconos.Borrar(), self.remove),
-            None,
-        )
-        self.tb = QTDialogs.LCTB(self, li_acciones)
+        self.tb = QTDialogs.LCTB(self)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        self.tb.new(_("Play"), Iconos.Empezar(), self.play)
+        self.tb.new(_("New"), Iconos.Nuevo(), self.new)
+        self.tb.new(_("Remove"), Iconos.Borrar(), self.remove)
 
         # Colocamos
         ly = Colocacion.V().control(self.tb).control(self.ghistorico).margen(3)
@@ -83,10 +77,9 @@ class WControl(LCDialog.LCDialog):
         elif col == "ERRORS":
             v = f"{v}"
         elif col == "TIME":
+            v = int(v)
             if v > 60:
-                m = v / 60
-                s = v % 60
-                v = f"{m}'{s}\""
+                v = f"{v // 60}'{v % 60}\""
             else:
                 v = f'{v}"'
         elif col == "INTERVAL":

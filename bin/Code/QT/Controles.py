@@ -456,7 +456,7 @@ class LB(QtWidgets.QLabel):
         self.setStyleSheet(f"QWidget {{ color: {txt_color} }}")
         return self
 
-    def set_foreground_backgound(self, color, fondo):
+    def set_foreground_background(self, color, fondo):
         self.setStyleSheet(f"QWidget {{ color: {color}; background-color: {fondo}}}")
         return self
 

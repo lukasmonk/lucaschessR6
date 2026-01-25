@@ -47,7 +47,7 @@ class Information(QtWidgets.QWidget):
             Controles.LB(self, "")
             .set_font(font)
             .align_center()
-            .set_foreground_backgound("#eeeeee", "#474d59")
+            .set_foreground_background("#eeeeee", "#474d59")
             .set_wrap()
         )
         self.lb_opening.hide()
@@ -247,9 +247,9 @@ class Information(QtWidgets.QWidget):
             if opening:
                 self.lb_opening.set_text(opening)
                 if move.in_the_opening:
-                    self.lb_opening.set_foreground_backgound("#eeeeee", "#474d59")
+                    self.lb_opening.set_foreground_background("#eeeeee", "#474d59")
                 else:
-                    self.lb_opening.set_foreground_backgound("#ffffff", "#aaaaaa")
+                    self.lb_opening.set_foreground_background("#ffffff", "#aaaaaa")
                 self.lb_opening.show()
 
             if move.comment:
@@ -265,7 +265,7 @@ class Information(QtWidgets.QWidget):
 
                 if opening:
                     self.lb_opening.set_text(opening)
-                    self.lb_opening.set_foreground_backgound("#eeeeee", "#474d59")
+                    self.lb_opening.set_foreground_background("#eeeeee", "#474d59")
                     self.lb_opening.show()
 
     def keyPressEvent(self, event):

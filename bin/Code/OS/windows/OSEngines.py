@@ -31,7 +31,7 @@ def read_engines(folder_engines):
 
     # mas("alouette", "Roland Chastain", "0.1.7", "https://codeberg.org/rchastain/alouette", "alouette32.exe", 800)
 
-    # mas("acqua", "Giovanni Di Maria", "2.0", "http://www.elektrosoft.it/scacchi/acqua/acqua.asp", "acqua.exe", 844)
+    # mas("acqua", "Giovanni Di Maria", "2.0", "https://www.elektrosoft.it/scacchi/acqua/acqua.asp", "acqua.exe", 844)
     mas("foxcub", "Lucas Monge", "1.1", "", "FoxCub.exe", 1000)
     mas("fox", "Lucas Monge", "1.4", "", "Fox.exe", 1500)
 
@@ -39,7 +39,7 @@ def read_engines(folder_engines):
         "tarrasch",
         "Bill Forster",
         "ToyEngine Beta V0.906",
-        "http://www.triplehappy.com/",
+        "https://www.triplehappy.com/",
         "TarraschToyEngineV0.906.exe",
         1481,
         emulate_movetime=True,
@@ -49,12 +49,12 @@ def read_engines(folder_engines):
         "rocinante",
         "Antonio Torrecillas",
         "2.0",
-        "http://sites.google.com/site/barajandotrebejos/",
+        "https://sites.google.com/site/barajandotrebejos/",
         "Windows/Intel/rocinante-20-32-ja.exe",
         1800,
     )
 
-    mas("roce", "Roman Hartmann", "0.0390", "http://www.rocechess.ch/rocee.html", "roce39.exe", 1854)
+    mas("roce", "Roman Hartmann", "0.0390", "https://www.rocechess.ch/rocee.html", "roce39.exe", 1854)
 
     cm = mas(
         "cinnamon",
@@ -67,26 +67,26 @@ def read_engines(folder_engines):
     cm.set_uci_option("Hash", "32")
     cm.set_min_fixed_depth(2)
 
-    mas("bikjump", "Aart J.C. Bik", "2.01 (64-bit)", "http://www.aartbik.com/", "bikjump.exe", 2026)
+    mas("bikjump", "Aart J.C. Bik", "2.01 (64-bit)", "https://www.aartbik.com/", "bikjump.exe", 2026)
 
     cm = mas(
         "clarabit",
         "Salvador Pallares Bejarano",
         "1.00",
-        "http://sapabe.googlepages.com",
+        "https://sapabe.googlepages.com",
         "clarabit_100_x32_win.exe",
         2058,
         nodes_compatible=True,
     )
     cm.set_uci_option("OwnBook", "false")
 
-    mas("lime", "Richard Allbert", "v 66", "http://www.geocities.com/taciturn_lemon", "Lime_v66.exe", 2119)
+    mas("lime", "Richard Allbert", "v 66", "https://www.geocities.com/taciturn_lemon", "Lime_v66.exe", 2119)
 
     cm = mas(
         "chispa",
         "Federico Corigliano",
         "4.0.3",
-        "http://chispachess.blogspot.com/",
+        "https://chispachess.blogspot.com/",
         "chispa403-blend.exe",
         2227,
         nodes_compatible=True,
@@ -95,39 +95,39 @@ def read_engines(folder_engines):
 
     mas("ct800", "Rasmus Althoff", "1.46", "https://www.ct800.net/", "CT800_V1.46_x32.exe", 2600, nodes_compatible=True)
 
-    cm = mas("gaia", "Jean-Francois Romang, David Rabel", "3.5", "http://gaiachess.free.fr", "gaia32.exe", 2378)
+    cm = mas("gaia", "Jean-Francois Romang, David Rabel", "3.5", "https://gaiachess.free.fr", "gaia32.exe", 2378)
     cm.name = "Gaïa 3.5"
 
     mas(
         "simplex",
         "Antonio Torrecillas",
         "0.9.8",
-        "http://sites.google.com/site/barajandotrebejos/",
+        "https://sites.google.com/site/barajandotrebejos/",
         "Windows/simplex-098-32-ja.exe",
         2396,
     )
 
-    cm = mas("pawny", "Mincho Georgiev", "0.3.1", "http://pawny.netii.net/", "windows/pawny_0.3.1_x86.exe", 2484)
+    cm = mas("pawny", "Mincho Georgiev", "0.3.1", "https://pawny.netii.net/", "windows/pawny_0.3.1_x86.exe", 2484)
     cm.set_uci_option("OwnBook", "false")
 
-    mas("umko", "Borko Boskovic", "0.7", "http://umko.sourceforge.net/", "w32/umko_x32.exe", 2488)
+    mas("umko", "Borko Boskovic", "0.7", "https://umko.sourceforge.net/", "w32/umko_x32.exe", 2488)
 
     mas(
         "garbochess",
         "Gary Linscott",
         "2.20",
-        "http://forwardcoding.com/projects/chess/chess.html",
+        "https://forwardcoding.com/projects/chess/chess.html",
         "GarboChess2-32.exe",
         2526,
     )
 
-    mas("ufim", "Niyas Khasanov", "8.02", "http://wbec-ridderkerk.nl/html/details1/Ufim.html", "ufim802.exe", 2532)
+    mas("ufim", "Niyas Khasanov", "8.02", "https://wbec-ridderkerk.nl/html/details1/Ufim.html", "ufim802.exe", 2532)
 
     cm = mas(
         "alaric",
         "Peter Fendrich",
         "707",
-        "http://alaric.fendrich.se/index.html",
+        "https://alaric.fendrich.se/index.html",
         "alaric707.exe",
         2662,
         nodes_compatible=True,
@@ -140,7 +140,7 @@ def read_engines(folder_engines):
         "cyrano",
         "Harald Johnsen",
         "06B17",
-        "http://sites.estvideo.net/tipunch/cyrano/",
+        "https://sites.estvideo.net/tipunch/cyrano/",
         "cyrano.exe",
         2647,
         emulate_movetime=True,
@@ -166,28 +166,28 @@ def read_engines(folder_engines):
         "rhetoric",
         "Alberto Sanjuan",
         "1.4.3",
-        "http://www.chessrhetoric.com/",
+        "https://www.chessrhetoric.com/",
         "Rhetoric_x32.exe",
         2810,
         nodes_compatible=True,
     )
     cm.set_multipv(1, 4)
 
-    cm = mas("cheng", "Martin Sedlák", "4.40", "http://www.vlasak.biz/cheng", "cheng4.exe", 2750)
+    cm = mas("cheng", "Martin Sedlák", "4.40", "https://www.vlasak.biz/cheng", "cheng4.exe", 2750)
     cm.set_multipv(10, 256)
 
     cm = mas(
         "glaurung",
         "Tord RomsTad",
         "2.2 JA",
-        "http://www.glaurungchess.com/",
+        "https://www.glaurungchess.com/",
         "windows/glaurung-w32.exe",
         2765,
         nodes_compatible=True,
     )
     cm.set_multipv(10, 500)
 
-    cm = mas("fruit", "Fabien Letouzey", "2.3.1", "http://www.fruitchess.com/", "Fruit-2-3-1.exe", 2786)
+    cm = mas("fruit", "Fabien Letouzey", "2.3.1", "https://www.fruitchess.com/", "Fruit-2-3-1.exe", 2786)
     cm.set_multipv(10, 256)
 
     mas(
@@ -215,7 +215,7 @@ def read_engines(folder_engines):
         "rybka",
         "Vasik Rajlich",
         "2.3.2a 32-bit",
-        "http://rybkachess.com/",
+        "https://rybkachess.com/",
         "Rybka v2.3.2a.w32.exe",
         2936,
         nodes_compatible=True,
@@ -227,7 +227,7 @@ def read_engines(folder_engines):
         "critter",
         "Richard Vida",
         "1.6a 32bit",
-        "http://www.vlasak.biz/critter/",
+        "https://www.vlasak.biz/critter/",
         "Critter_1.6a_32bit.exe",
         3091,
         nodes_compatible=True,
@@ -254,7 +254,7 @@ def read_engines(folder_engines):
         "rodentii",
         "Pawel Koziol",
         "0.9.64",
-        "http://www.pkoziol.cal24.pl/rodent/rodent.htm",
+        "https://www.pkoziol.cal24.pl/rodent/rodent.htm",
         "RodentII_x32.exe",
         2912,
         nodes_compatible=True,
@@ -264,7 +264,7 @@ def read_engines(folder_engines):
         "amyan",
         "Antonio Dieguez R.",
         "1.62",
-        "http://www.pincha.cl/amyan/amyane.html",
+        "https://www.pincha.cl/amyan/amyane.html",
         "amyan.exe",
         2545,
         emulate_movetime=True,
@@ -287,7 +287,7 @@ def read_engines(folder_engines):
         "toga",
         "WHMoweryJr,Thomas Gaksch,Fabien Letouzey",
         "deepTogaNPS 1.9.6",
-        "http://www.computerchess.info/tdbb/phpBB3/viewtopic.php?f=9&t=357",
+        "https://www.computerchess.info/tdbb/phpBB3/viewtopic.php?f=9&t=357",
         "DeepToga1.9.6nps.exe",
         2843,
         emulate_movetime=True,
@@ -295,19 +295,19 @@ def read_engines(folder_engines):
     cm.set_multipv(10, 40)
     cm.name = "DeepToga1.9.6nps"
 
-    mas("greko98", "Vladimir Medvedev", "9.8", "http://sourceforge.net/projects/greko", "GreKo98a.exe", 2500)
+    mas("greko98", "Vladimir Medvedev", "9.8", "https://sourceforge.net/projects/greko", "GreKo98a.exe", 2500)
 
-    mas("greko", "Vladimir Medvedev", "12.9", "http://sourceforge.net/projects/greko", "GreKo.exe", 2508)
+    mas("greko", "Vladimir Medvedev", "12.9", "https://sourceforge.net/projects/greko", "GreKo.exe", 2508)
 
-    mas("delfi", "Fabio Cavicchio", "5.4", "http://www.msbsoftware.it/delfi/", "delfi.exe", 2686, emulate_movetime=True)
+    mas("delfi", "Fabio Cavicchio", "5.4", "https://www.msbsoftware.it/delfi/", "delfi.exe", 2686, emulate_movetime=True)
 
-    mas("monarch", "Steve Maughan", "1.7", "http://www.monarchchess.com/", "Monarch(v1.7).exe", 2100)
+    mas("monarch", "Steve Maughan", "1.7", "https://www.monarchchess.com/", "Monarch(v1.7).exe", 2100)
 
     mas(
         "andscacs",
         "Daniel José Queraltó",
         "0.9432n",
-        "http://www.amateurschach.de/main/_download.htm",
+        "https://www.amateurschach.de/main/_download.htm",
         "andscacs_32_no_popcnt.exe",
         3264,
         nodes_compatible=True,
@@ -317,7 +317,7 @@ def read_engines(folder_engines):
         "arminius",
         "Volker Annus",
         "2017-01-01",
-        "http://www.nnuss.de/Hermann/Arminius2017-01-01.zip",
+        "https://www.nnuss.de/Hermann/Arminius2017-01-01.zip",
         "Arminius2017-01-01-32Bit.exe",
         2662,
         emulate_movetime=True,
@@ -328,7 +328,7 @@ def read_engines(folder_engines):
         "wildcat",
         "Igor Korshunov",
         "8",
-        "http://www.igorkorshunov.narod.ru/WildCat",
+        "https://www.igorkorshunov.narod.ru/WildCat",
         "WildCat_8.exe",
         2627,
         emulate_movetime=True,
@@ -336,11 +336,11 @@ def read_engines(folder_engines):
 
     mas("demolito", "Lucas Braesch", "32bit", "https://github.com/lucasart/Demolito", "demolito_32bit_old.exe", 2627)
 
-    cm = mas("zappa", "Anthony Cozzie", "1.1", "http://www.acoz.net/zappa/", "zappa.exe", 2581, nodes_compatible=True)
+    cm = mas("zappa", "Anthony Cozzie", "1.1", "https://www.acoz.net/zappa/", "zappa.exe", 2581, nodes_compatible=True)
     cm.remove_log("zappa_log.txt")
 
     cm = mas(
-        "houdini", "Robert Houdart", "1.5a", "http://www.cruxis.com/chess/houdini.htm", "Houdini_15a_w32.exe", 3093
+        "houdini", "Robert Houdart", "1.5a", "https://www.cruxis.com/chess/houdini.htm", "Houdini_15a_w32.exe", 3093
     )
     cm.set_multipv(10, 16)
 
@@ -348,7 +348,7 @@ def read_engines(folder_engines):
         "hannibal",
         "Samuel N. Hamilton and Edsel G. Apostol",
         "1.4b",
-        "http://sites.google.com/site/edapostol/hannibal",
+        "https://sites.google.com/site/edapostol/hannibal",
         "Hannibal1.4bx32.exe",
         3000,
     )

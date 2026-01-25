@@ -895,9 +895,3 @@ def startfile(path: Union[str, Path]) -> bool:
 
 def clamp(n: Union[int, float], smallest: Union[int, float], largest: Union[int, float]) -> Union[int, float]:
     return max(smallest, min(n, largest))
-
-
-def list_depths_to_cb() -> List[Tuple[str, str]]:
-    return [(_("By default"), "PD"), (_("Maximum"), "MX")] + [
-        (str(x), str(x)) for x in list(range(1, 16)) + [20, 30, 40, 50, 75, 100, 150, 200]
-    ]

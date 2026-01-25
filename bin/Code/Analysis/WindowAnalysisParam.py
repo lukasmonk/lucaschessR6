@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from PySide6 import QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Analysis import WindowAnalysisConfig
 from Code.Base.Constantes import (
     ALL_VARIATIONS,
@@ -17,9 +16,11 @@ from Code.Base.Constantes import (
     MISTAKE_BLUNDER,
 )
 from Code.Books import Books
+from Code.Engines import Engines
 from Code.Engines import Priorities
 from Code.QT import FormLayout, Iconos, QTMessages, QTUtils
 from Code.Themes import AssignThemes
+from Code.Z import Util
 
 SEPARADOR = FormLayout.separador
 
@@ -233,7 +234,7 @@ def form_engine(analysis_params, all_engines):
 
     # MultiPV
     li_engine.append(SEPARADOR)
-    li = Util.list_depths_to_cb()
+    li = Engines.list_depths_to_cb()
     config = FormLayout.Combobox(_("Number of variations evaluated by the engine (MultiPV)"), li)
     li_engine.append((config, analysis_params.multiPV))
 
@@ -343,7 +344,7 @@ def analysis_parameters(parent, extended_mode, all_engines=False):
                     reg.cb_add_variations.setChecked(False)
         else:
             if hasattr(reg, "cb_variations") and (
-                reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True
+                    reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True
             ):
                 if reg.cb_variations_checked:
                     reg.cb_variations.setChecked(False)
@@ -468,9 +469,9 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
     li_gen.append(
         (
             (
-                '<div align="right">'
-                + _("Only the following players")
-                + f':<br>{_("(You can add multiple aliases separated by ; and wildcards with *)")}</div>'
+                    '<div align="right">'
+                    + _("Only the following players")
+                    + f':<br>{_("(You can add multiple aliases separated by ; and wildcards with *)")}</div>'
             ),
             cjug,
         )
@@ -557,7 +558,7 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
                     reg.cb_add_variations.setChecked(False)
         else:
             if hasattr(reg, "cb_variations") and (
-                reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True
+                    reg.cb_variations.isChecked() is True and reg.cb_add_variations.isChecked() is True
             ):
                 if reg.cb_variations_checked:
                     reg.cb_variations.setChecked(False)
@@ -661,13 +662,13 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
         save_dic_params(dic)
 
         if not (
-            analysis_params.tacticblunders
-            or analysis_params.pgnblunders
-            or analysis_params.bmtblunders
-            or analysis_params.fnsbrilliancies
-            or analysis_params.pgnbrilliancies
-            or analysis_params.bmtbrilliancies
-            or is_database
+                analysis_params.tacticblunders
+                or analysis_params.pgnblunders
+                or analysis_params.bmtblunders
+                or analysis_params.fnsbrilliancies
+                or analysis_params.pgnbrilliancies
+                or analysis_params.bmtbrilliancies
+                or is_database
         ):
             QTMessages.message_error(parent, _("No file was specified where to save results"))
             return None

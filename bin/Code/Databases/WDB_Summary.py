@@ -43,7 +43,7 @@ class WSummary(QtWidgets.QWidget):
             Controles.LB(self, "")
             .set_wrap()
             .align_center()
-            .set_foreground_backgound("white", "#4E5A65")
+            .set_foreground_background("white", "#4E5A65")
             .set_font_type(puntos=10 if with_moves else 16)
         )
         if not with_moves:

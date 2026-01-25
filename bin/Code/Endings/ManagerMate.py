@@ -2,7 +2,6 @@ import random
 import time
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
     ST_ENDGAME,
@@ -18,6 +17,7 @@ from Code.Base.Constantes import (
 from Code.ManagerBase import Manager
 from Code.QT import Iconos, QTDialogs, QTMessages
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class PositionMate:
@@ -346,6 +346,9 @@ class ControlMate:
 
         return li, all_done
 
+    def goto_row_iswhite(self, row, is_white):
+        pass
+
 
 class ManagerMate(Manager.Manager):
     lb_level = None
@@ -375,7 +378,7 @@ class ManagerMate(Manager.Manager):
         self.main_window.set_label1("<center><h1>%s</h1></center>" % _X(_("Mate in %1"), str(mate)))
         self.board.do_pressed_number = None
 
-        self.lb_level = self.main_window.base.lb_player_white.set_foreground_backgound(
+        self.lb_level = self.main_window.base.lb_player_white.set_foreground_background(
             Code.dic_colors["MANAGERMATE_FOREGROUND"],
             Code.dic_colors["MANAGERMATE_BACKGROUND"],
         )
@@ -386,7 +389,7 @@ class ManagerMate(Manager.Manager):
         rival.set_multipv(0, 0)
 
         li_depth = [0, 3, 5, 6, 7, 8, 10, 12]
-        self.manager_rival = self.procesador.create_manager_engine(rival, 0, li_depth[self.mate])
+        self.manager_rival = self.procesador.create_manager_engine(rival, 0, li_depth[self.mate], 0)
 
         self.remove_info()
 
@@ -426,7 +429,7 @@ class ManagerMate(Manager.Manager):
         return False
 
     def terminate_training(self):
-        self.lb_level.set_foreground_backgound("black", "white")
+        self.lb_level.set_foreground_background("black", "white")
         self.board.remove_arrows()
         self.main_window.columnas60(False)
         self.procesador.start()
@@ -464,8 +467,8 @@ class ManagerMate(Manager.Manager):
         resp = menu.lanza()
         if resp == "reset":
             if QTMessages.pregunta(
-                self.main_window,
-                f"{_('Recreate all levels and start over')}\n{_('Are you sure?')}",
+                    self.main_window,
+                    f"{_('Recreate all levels and start over')}\n{_('Are you sure?')}",
             ):
                 Util.remove_file(self.control_mate.file_path)
                 self.start(self.mate)
@@ -537,7 +540,7 @@ class ManagerMate(Manager.Manager):
 
         mate_buscar = self.mate - self.num_mov
         with QTMessages.one_moment_please(self.main_window):
-            li_rm = self.manager_analyzer.busca_mate(self.game, mate_buscar)
+            li_rm = self.manager_analyzer.seek_mate(self.game, mate_buscar)
         if li_rm:
             for rm in li_rm:
                 self.board.show_arrow_mov(rm.from_sq, rm.to_sq, "m")

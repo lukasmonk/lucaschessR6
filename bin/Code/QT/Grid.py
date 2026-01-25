@@ -372,7 +372,7 @@ class Grid(QtWidgets.QTableView):
     def set_tooltip_header(self, message):
         self.cabecera.set_tooltip(message)
 
-    def sekk_header(self, key):
+    def seek_header(self, key):
         return self.o_columns.locate_column(key)
 
     def selectAll(self):

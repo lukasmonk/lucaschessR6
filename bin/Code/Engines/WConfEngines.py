@@ -317,7 +317,7 @@ class WConfTutor(QtWidgets.QWidget):
         if self.is_changed:
             self.is_changed = False
             self.configuration.x_tutor_clave = self.engine.key
-            self.configuration.x_tutor_mstime = self.ed_time.text_to_float() * 1000
+            self.configuration.x_tutor_mstime = int(self.ed_time.text_to_float() * 1000)
             self.configuration.x_tutor_depth = self.ed_depth.text_to_integer()
             self.configuration.x_tutor_multipv = self.ed_multipv.text_to_integer()
             self.configuration.x_tutor_priority = self.cb_priority.valor()
@@ -437,7 +437,7 @@ class WConfAnalyzer(QtWidgets.QWidget):
             self.is_changed = False
 
             self.configuration.x_analyzer_clave = self.engine.key
-            self.configuration.x_analyzer_mstime = self.ed_time.text_to_float() * 1000
+            self.configuration.x_analyzer_mstime = int(self.ed_time.text_to_float() * 1000)
             self.configuration.x_analyzer_depth = self.ed_depth.text_to_integer()
             self.configuration.x_analyzer_multipv = self.ed_multipv.text_to_integer()
             self.configuration.x_analyzer_priority = self.cb_priority.valor()

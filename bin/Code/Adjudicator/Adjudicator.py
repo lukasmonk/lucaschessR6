@@ -3,11 +3,10 @@ from typing import Optional, Callable
 
 import Code
 from Code.Base import Game, Move, Position
-from Code.Engines import EngineManagerAnalysis, EngineResponse
+from Code.Engines import EngineManagerAnalysis, EngineResponse, Engines
 from Code.Openings import OpeningsStd
 from Code.QT import FormLayout, Iconos
 from Code.QT import QTMessages
-from Code.Z import Util
 
 
 class AdjudicatorState(Enum):
@@ -200,7 +199,7 @@ class Adjudicator:
         show_all = dic.get("SHOW_ALL", False)
 
         form = FormLayout.FormLayout(
-            self.wowner, f"{_('MoveEvatualor')} - {_('Options')}", Iconos.Engines(), with_default=True
+            self.wowner, f"{_('Adjudicator')} - {_('Options')}", Iconos.Engines(), with_default=True
         )
         form.separador()
         form.combobox(_("Engine"), Code.configuration.engines.list_name_alias_multipv10(), nom_engine)
@@ -213,7 +212,7 @@ class Adjudicator:
             init_value=seconds,
         )
         form.separador()
-        li = Util.list_depths_to_cb()
+        li = Engines.list_depths_to_cb()
         form.combobox(_("Number of variations evaluated by the engine (MultiPV)"), li, multipv)
         form.separador()
         form.checkbox(_("Show all evaluations"), show_all)

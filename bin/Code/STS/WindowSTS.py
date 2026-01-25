@@ -1,11 +1,11 @@
 import os
 import shutil
 import time
+from enum import Enum, auto
 
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Board import Board
 from Code.Engines import EngineManagerPlay, Engines, SelectEngines, WEngines
@@ -24,9 +24,20 @@ from Code.QT import (
     SelectFiles,
 )
 from Code.STS import STS
+from Code.Z import Util
+
+
+class RunState(Enum):
+    INIT = auto()
+    RUNNING = auto()
+    FINISHED = auto()
+    PAUSED = auto()
 
 
 class WRun(LCDialog.LCDialog):
+    elem: STS.Elem
+    nfen: int
+
     def __init__(self, w_parent, xsts, work, procesador, with_board):
         titulo = f"{xsts.name} - {work.ref} - {work.path_to_exe()}"
         icono = Iconos.STS()
@@ -49,14 +60,7 @@ class WRun(LCDialog.LCDialog):
         self.with_board = with_board
 
         # Toolbar
-        li_acciones = [
-            (_("Close"), Iconos.MainMenu(), self.cerrar),
-            None,
-            (_("Run"), Iconos.Run(), self.run),
-            (_("Pause"), Iconos.Pelicula_Pausa(), self.pause),
-            None,
-        ]
-        self.tb = tb = Controles.TBrutina(self, li_acciones, icon_size=24)
+        self.tb = QTDialogs.LCTB(self, icon_size=24)
 
         if with_board:
             # Board
@@ -90,7 +94,7 @@ class WRun(LCDialog.LCDialog):
         layout.control(self.grid)
         layout.margen(3)
 
-        ly = Colocacion.V().control(tb).otro(layout)
+        ly = Colocacion.V().control(self.tb).otro(layout)
 
         self.setLayout(ly)
 
@@ -98,11 +102,9 @@ class WRun(LCDialog.LCDialog):
 
         resp = self.sts.siguiente_posicion(self.work)
         if resp:
-            self.tb.set_action_visible(self.pause, False)
-            self.tb.set_action_visible(self.run, True)
+            self.set_toolbar(RunState.INIT)
         else:
-            self.tb.set_action_visible(self.pause, False)
-            self.tb.set_action_visible(self.run, False)
+            self.set_toolbar(RunState.FINISHED)
 
     def cerrar(self):
         self.sts.save()
@@ -114,17 +116,23 @@ class WRun(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.cerrar()
 
+    def set_toolbar(self, state: RunState):
+        self.tb.clear()
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.cerrar)
+        if state in (RunState.INIT, RunState.PAUSED):
+            self.tb.new(_("Run"), Iconos.Run(), self.run)
+        if state == RunState.RUNNING:
+            self.tb.new(_("Pause"), Iconos.Pelicula_Pausa(), self.pause)
+
     def run(self):
-        self.tb.set_action_visible(self.pause, True)
-        self.tb.set_action_visible(self.run, False)
+        self.set_toolbar(RunState.RUNNING)
         QTUtils.refresh_gui()
         self.playing = True
         while self.playing:
             self.siguiente()
 
     def pause(self):
-        self.tb.set_action_visible(self.pause, False)
-        self.tb.set_action_visible(self.run, True)
+        self.set_toolbar(RunState.PAUSED)
         QTUtils.refresh_gui()
         self.playing = False
         self.sts.save()
@@ -165,8 +173,7 @@ class WRun(LCDialog.LCDialog):
             self.sts.save()
             self.calc_max()
             self.grid.refresh()
-            self.tb.set_action_visible(self.pause, False)
-            self.tb.set_action_visible(self.run, False)
+            self.set_toolbar(RunState.FINISHED)
             self.playing = False
 
         QTUtils.refresh_gui()
@@ -177,16 +184,16 @@ class WRun(LCDialog.LCDialog):
                 self.board.show_one_arrow_temp(rm.from_sq, rm.to_sq, False)
         return self.playing
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.sts.groups)
 
-    def grid_bold(self, grid, row, obj_column):
+    def grid_bold(self, _grid, row, obj_column):
         column = obj_column.key
         if column.startswith("OTHER") or column == "WORK":
             return self.dworks[column].labels[row].is_max
         return False
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         column = obj_column.key
         group = self.sts.groups.group(row)
         if column == "GROUP":
@@ -241,7 +248,7 @@ class WRun(LCDialog.LCDialog):
 
 
 class WWork(QtWidgets.QDialog):
-    def __init__(self, w_parent, sts, work):
+    def __init__(self, w_parent, osts, work):
         super(WWork, self).__init__(w_parent)
 
         self.work = work
@@ -278,10 +285,10 @@ class WWork(QtWidgets.QDialog):
         self.sbNodes = Controles.ED(self).type_integer(work.nodes).relative_width(60)
 
         lb_sample = Controles.LB(self, f"{_('Sample')}: ")
-        self.sbIni = Controles.SB(self, work.ini + 1, 1, 100).capture_changes(self.changeSample)
+        self.sbIni = Controles.SB(self, work.ini + 1, 1, 100).capture_changes(self.change_sample)
         self.sbIni.isIni = True
         lb_guion = Controles.LB(self, _("to"))
-        self.sbEnd = Controles.SB(self, work.end + 1, 1, 100).capture_changes(self.changeSample)
+        self.sbEnd = Controles.SB(self, work.end + 1, 1, 100).capture_changes(self.change_sample)
         self.sbEnd.isIni = False
 
         # self.lbError = Controles.LB(self).set_font_type(peso=75).set_foreground("red")
@@ -305,24 +312,24 @@ class WWork(QtWidgets.QDialog):
         tab.new_tab(scroll_area, _("Engine options"))
 
         # Tab-Groups
-        bt_all = Controles.PB(self, _("All"), self.setAll, plano=False)
-        bt_none = Controles.PB(self, _("None"), self.setNone, plano=False)
+        bt_all = Controles.PB(self, _("All"), self.set_all, plano=False)
+        bt_none = Controles.PB(self, _("None"), self.set_none, plano=False)
         ly_an = Colocacion.H().control(bt_all).espacio(10).control(bt_none)
         self.liGroups = []
         ly = Colocacion.G()
         ly.empty_column(1, 10)
-        num = len(sts.groups)
+        num = len(osts.groups)
         mitad = num / 2 + num % 2
 
         for x in range(num):
-            group = sts.groups.group(x)
+            group = osts.groups.group(x)
             chb = Controles.CHB(self, _F(group.name), work.liGroupActive[x])
             self.liGroups.append(chb)
             col = 0 if x < mitad else 2
             fil = x % mitad
 
-            ly.control(chb, fil, col)
-        ly.otroc(ly_an, mitad, 0, num_columns=3)
+            ly.control(chb, int(fil), int(col))
+        ly.otroc(ly_an, int(mitad), 0, num_columns=3)
 
         w = QtWidgets.QWidget()
         w.setLayout(ly)
@@ -333,7 +340,7 @@ class WWork(QtWidgets.QDialog):
 
         self.edRef.setFocus()
 
-    def changeSample(self):
+    def change_sample(self):
         v_ini = self.sbIni.valor()
         v_end = self.sbEnd.valor()
         p = self.sender()
@@ -343,11 +350,11 @@ class WWork(QtWidgets.QDialog):
             else:
                 self.sbIni.set_value(v_end)
 
-    def setAll(self):
+    def set_all(self):
         for group in self.liGroups:
             group.set_value(True)
 
-    def setNone(self):
+    def set_none(self):
         for group in self.liGroups:
             group.set_value(False)
 
@@ -367,8 +374,8 @@ class WWork(QtWidgets.QDialog):
 
 
 class WUnSTS(LCDialog.LCDialog):
-    def __init__(self, w_parent, sts, procesador):
-        titulo = sts.name
+    def __init__(self, w_parent, osts, procesador):
+        titulo = osts.name
         icono = Iconos.STS()
         extparam = "unsts"
         LCDialog.LCDialog.__init__(self, w_parent, titulo, icono, extparam)
@@ -376,11 +383,11 @@ class WUnSTS(LCDialog.LCDialog):
         self.select_engines = None
 
         # Datos
-        self.sts = sts
+        self.sts = osts
         self.procesador = procesador
 
         # Toolbar
-        tb = Controles.TBrutina(self, icon_size=24)
+        self.toolbar = tb = QTDialogs.LCTB(self, icon_size=24)
         tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("Run"), Iconos.Run(), self.wk_run, sep=False)
         tb.new(f"+{_('Board')}", Iconos.Run2(), self.wk_run_with_board)
@@ -404,8 +411,8 @@ class WUnSTS(LCDialog.LCDialog):
         o_columns.nueva("RESULT", _("Result"), 150, align_center=True)
         o_columns.nueva("ELO", _("Elo"), 80, align_center=True)
         o_columns.nueva("WORKTIME", _("Work time"), 80, align_center=True)
-        for x in range(len(sts.groups)):
-            group = sts.groups.group(x)
+        for x in range(len(osts.groups)):
+            group = osts.groups.group(x)
             o_columns.nueva("T%d" % x, group.name, 140, align_center=True)
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
         self.register_grid(self.grid)
@@ -478,17 +485,21 @@ class WUnSTS(LCDialog.LCDialog):
         row = self.grid.recno()
         if row >= 0:
             work = self.sts.get_work(row)
+            self.toolbar.setDisabled(True)
             w = WRun(self, self.sts, work, self.procesador, False)
             w.exec()
+            self.toolbar.setEnabled(True)
 
     def wk_run_with_board(self):
         row = self.grid.recno()
         if row >= 0:
             work = self.sts.get_work(row)
+            self.toolbar.setDisabled(True)
             w = WRun(self, self.sts, work, self.procesador, True)
             w.exec()
+            self.toolbar.setEnabled(True)
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.wk_run()
 
     def wk_edit(self):
@@ -503,7 +514,7 @@ class WUnSTS(LCDialog.LCDialog):
         if work is None or not work:
             me = WEngines.select_engine(self)
             if not me:
-                return
+                return None
             work = self.sts.create_work(me)
         else:
             work.workTime = 0.0
@@ -554,10 +565,10 @@ class WUnSTS(LCDialog.LCDialog):
                 self.sts.save()
                 self.grid.refresh()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.sts.works)
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         work = self.sts.works.lista[row]
         column = obj_column.key
         if column == "POS":
@@ -585,9 +596,9 @@ class WUnSTS(LCDialog.LCDialog):
         test = int(column[1:])
         return self.sts.done_points(work, test)
 
-    def grid_doubleclick_header(self, grid, oCol):
-        if oCol.key != "POS":
-            self.sts.orden_works(oCol.key)
+    def grid_doubleclick_header(self, _grid, obj_column):
+        if obj_column.key != "POS":
+            self.sts.orden_works(obj_column.key)
             self.sts.save()
             self.grid.refresh()
             self.grid.gotop()
@@ -604,19 +615,10 @@ class WSTS(LCDialog.LCDialog):
         # Datos
         self.procesador = procesador
         self.carpetaSTS = Code.configuration.paths.folder_sts()
-        self.lista = self.leeSTS()
+        self.lista = self.read_sts()
 
-        tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
-        tb.new(_("Select"), Iconos.Seleccionar(), self.modificar)
-        tb.new(_("New"), Iconos.NuevoMas(), self.crear)
-        tb.new(_("Rename"), Iconos.Rename(), self.rename)
-        tb.new(_("Copy"), Iconos.Copiar(), self.copiar)
-        tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
-        tb.new(_("Config"), Iconos.Configurar(), self.configurar)
-        if len(self.lista) == 0:
-            for x in (self.modificar, self.borrar, self.copiar, self.rename):
-                tb.set_action_visible(x, False)
+        self.tb = QTDialogs.LCTB(self)
+        self.set_toolbar()
 
         # grid
         o_columns = Columnas.ListaColumnas()
@@ -633,14 +635,28 @@ class WSTS(LCDialog.LCDialog):
         )
 
         # Layout
-        layout = Colocacion.V().control(tb).control(self.grid).control(lb).margen(8)
+        layout = Colocacion.V().control(self.tb).control(self.grid).control(lb).margen(8)
         self.setLayout(layout)
 
         self.restore_video(with_tam=True, default_width=400, default_height=500)
 
         self.grid.gotop()
 
-    def leeSTS(self):
+    def set_toolbar(self):
+        tb = self.tb
+        tb.clear()
+        nlista = len(self.lista)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        if nlista > 0:
+            tb.new(_("Select"), Iconos.Seleccionar(), self.modificar)
+        tb.new(_("New"), Iconos.NuevoMas(), self.crear)
+        if nlista > 0:
+            tb.new(_("Rename"), Iconos.Rename(), self.rename)
+            tb.new(_("Copy"), Iconos.Copiar(), self.copiar)
+            tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
+        tb.new(_("Config"), Iconos.Configurar(), self.configurar)
+
+    def read_sts(self):
         li = []
         Util.create_folder(self.carpetaSTS)
         for entry in Util.listdir(self.carpetaSTS):
@@ -649,13 +665,13 @@ class WSTS(LCDialog.LCDialog):
                 st = entry.stat()
                 li.append((x, st.st_ctime, st.st_mtime))
 
-        li.sort(key=lambda x: x[2], reverse=True)  # por ultima modificacin y al reves
+        li.sort(key=lambda rx: rx[2], reverse=True)  # por ultima modificacin y al reves
         return li
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.lista)
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         column = obj_column.key
         name, fcreacion, fmanten = self.lista[row]
         if column == "NOMBRE":
@@ -669,46 +685,48 @@ class WSTS(LCDialog.LCDialog):
                 tm.tm_hour,
                 tm.tm_min,
             )
+        return None
 
     def finalize(self):
         self.save_video()
         self.accept()
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, _grid, _row, _obj_column):
         self.modificar()
 
     def modificar(self):
         n = self.grid.recno()
         if n >= 0:
             name = self.lista[n][0][:-4]
-            sts = STS.STS(name)
-            self.trabajar(sts)
+            osts = STS.STS(name)
+            self.trabajar(osts)
 
-    def nombreNum(self, num):
+    def nombre_num(self, num):
         return self.lista[num][0][:-4]
 
     def crear(self):
         name = self.edit_name("", True)
         if name:
-            sts = STS.STS(name)
-            sts.save()
+            osts = STS.STS(name)
+            osts.save()
             self.grid.refresh()
             self.reread()
-            self.trabajar(sts)
+            self.trabajar(osts)
 
     def reread(self):
-        self.lista = self.leeSTS()
+        self.lista = self.read_sts()
+        self.set_toolbar()
         self.grid.refresh()
 
     def rename(self):
         n = self.grid.recno()
         if n >= 0:
-            nombreOri = self.nombreNum(n)
-            nombreDest = self.edit_name(nombreOri)
-            if nombreDest:
-                pathOri = Util.opj(self.carpetaSTS, f"{nombreOri}.sts")
-                pathDest = Util.opj(self.carpetaSTS, f"{nombreDest}.sts")
-                shutil.move(pathOri, pathDest)
+            nombre_ori = self.nombre_num(n)
+            nombre_dest = self.edit_name(nombre_ori)
+            if nombre_dest:
+                path_ori = Util.opj(self.carpetaSTS, f"{nombre_ori}.sts")
+                path_dest = Util.opj(self.carpetaSTS, f"{nombre_dest}.sts")
+                shutil.move(path_ori, path_dest)
                 self.reread()
 
     def edit_name(self, previo, si_nuevo=False):
@@ -729,14 +747,14 @@ class WSTS(LCDialog.LCDialog):
             else:
                 return None
 
-    def trabajar(self, sts):
-        w = WUnSTS(self, sts, self.procesador)
+    def trabajar(self, osts):
+        w = WUnSTS(self, osts, self.procesador)
         w.exec()
 
     def borrar(self):
         n = self.grid.recno()
         if n >= 0:
-            name = self.nombreNum(n)
+            name = self.nombre_num(n)
             if QTMessages.pregunta(self, _X(_("Delete %1?"), name)):
                 path = Util.opj(self.carpetaSTS, f"{name}.sts")
                 os.remove(path)
@@ -745,14 +763,14 @@ class WSTS(LCDialog.LCDialog):
     def copiar(self):
         n = self.grid.recno()
         if n >= 0:
-            nombreBase = self.nombreNum(n)
-            name = self.edit_name(nombreBase, True)
+            nombre_base = self.nombre_num(n)
+            name = self.edit_name(nombre_base, True)
             if name:
-                sts = STS.STS(nombreBase)
-                sts.save_copy_new(name)
-                sts = STS.STS(name)
+                osts = STS.STS(nombre_base)
+                osts.save_copy_new(name)
+                osts = STS.STS(name)
                 self.reread()
-                self.trabajar(sts)
+                self.trabajar(osts)
 
     def configurar(self):
         menu = QTDialogs.LCMenu(self)

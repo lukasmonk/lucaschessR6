@@ -317,24 +317,24 @@ class ManagerGM(Manager.Manager):
         self.put_arrow_sc(user_move.from_sq, user_move.to_sq)
         self.board.disable_all()
 
-        if self.with_adjudicator:
-            position = self.game.last_position
-            li_moves = self.engine_gm.get_moves_txt(position, True)
-            if len(li_moves) > 1:
-                ok = False
-                for mv in li_moves:
-                    if mv[0] == from_sq and mv[1] == to_sq and mv[2] == promotion:
-                        ok = True
-                        from_sq_gm, to_sq_gm, promotion_gm = from_sq, to_sq, promotion
-                        break
-                if not ok:
-                    from_sq_gm, to_sq_gm, promotion_gm = WindowGM.select_move(self, li_moves, True)
-            else:
-                mv = li_moves[0]
-                from_sq_gm, to_sq_gm, promotion_gm = mv[0], mv[1], mv[2]
-            self.human_is_playing = True
-            self.gm_move = self.check_human_move(from_sq_gm, to_sq_gm, promotion_gm)
+        position = self.game.last_position
+        li_moves = self.engine_gm.get_moves_txt(position, True)
+        if len(li_moves) > 1:
+            ok = False
+            for mv in li_moves:
+                if mv[0] == from_sq and mv[1] == to_sq and mv[2] == promotion:
+                    ok = True
+                    from_sq_gm, to_sq_gm, promotion_gm = from_sq, to_sq, promotion
+                    break
+            if not ok:
+                from_sq_gm, to_sq_gm, promotion_gm = WindowGM.select_move(self, li_moves, True)
+        else:
+            mv = li_moves[0]
+            from_sq_gm, to_sq_gm, promotion_gm = mv[0], mv[1], mv[2]
+        self.human_is_playing = True
+        self.gm_move = self.check_human_move(from_sq_gm, to_sq_gm, promotion_gm)
 
+        if self.with_adjudicator:
             self.thinking(True)
             self.adjudicator.check_moves(self.gm_move, user_move)
 

@@ -3,7 +3,7 @@ import ssl
 import sys
 from typing import Optional
 
-from Code.Z import Util, Debug
+from Code.Z import Util
 
 Util.randomize()
 
@@ -101,9 +101,10 @@ def relative_root(path):
 
 
 BASE_VERSION = "C"
-VERSION = "R 6.0.0.3"
+VERSION = "R 6.0.0.4"
 
 if __debug__:
+    from Code.Z import Debug
 
     Debug.prln("Modo debug activado", color="green")
     if Debug.DEBUG_ENGINES:

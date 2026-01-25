@@ -72,7 +72,7 @@ class WForcingMoves(LCDialog.LCDialog):
 
         self.lb_result = Controles.LB(self).set_font_type(puntos=10, peso=500).fixed_height(32).set_wrap()
         self.lb_info = Controles.LB(self).set_font_type(puntos=14, peso=500)
-        self.lb_info.set_foreground_backgound("white", "#496075").align_center().set_wrap()
+        self.lb_info.set_foreground_background("white", "#496075").align_center().set_wrap()
 
         self.lb_info.setMinimumWidth(300)
 

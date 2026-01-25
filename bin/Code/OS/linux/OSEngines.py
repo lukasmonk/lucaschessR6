@@ -106,7 +106,7 @@ def read_engines(folder_engines):
         nodes_compatible=True,
     )
 
-    mas("andscacs", "Daniel José Queraltó", "0.95", "http://www.andscacs.com/", "Andscacs-0.95", 3240)
+    mas("andscacs", "Daniel José Queraltó", "0.95", "https://www.andscacs.com/", "Andscacs-0.95", 3240)
 
     mas("arasan", "Jon Dart", "22.2", "https://www.arasanchess.org/", "Arasan-22.2", 3259)
 
@@ -133,9 +133,9 @@ def read_engines(folder_engines):
 
     mas("ceechess", "Tom Reinitz", "1.3.2", "https://github.com/bctboi23/CeeChess", "CeeChess-1.3.2", 2268)
 
-    mas("cheng", "Martin Sedlák", "4.40", "http://www.vlasak.biz/cheng", "Cheng-4.40", 2750)
+    mas("cheng", "Martin Sedlák", "4.40", "https://www.vlasak.biz/cheng", "Cheng-4.40", 2750)
 
-    mas("cinnamon", "Giuseppe Cannella", "1.2b", "http://cinnamonchess.altervista.org/", "Cinnamon-1.2b", 1930)
+    mas("cinnamon", "Giuseppe Cannella", "1.2b", "https://cinnamonchess.altervista.org/", "Cinnamon-1.2b", 1930)
 
     mas("chessika", "Laurent Chea", "2.21", "https://gitlab.com/MrPingouin/chessika", "Chessika-2.21", 1441)
 
@@ -154,7 +154,7 @@ def read_engines(folder_engines):
         nodes_compatible=True,
     )
 
-    mas("critter", "Richard Vida", "1.6a", "http://www.vlasak.biz/critter", "Critter-1.6a", 3091)
+    mas("critter", "Richard Vida", "1.6a", "https://www.vlasak.biz/critter", "Critter-1.6a", 3091)
 
     mas("ct800", "Rasmus Althoff", "1.46", "https://www.ct800.net/", "CT800_V1.46", 2600, nodes_compatible=True)
 
@@ -213,7 +213,7 @@ def read_engines(folder_engines):
         2010,
     )
 
-    mas("fruit", "Fabien Letouzey", "2.1", "http://www.fruitchess.com/", "Fruit-2.1", 2784)
+    mas("fruit", "Fabien Letouzey", "2.1", "https://www.fruitchess.com/", "Fruit-2.1", 2784)
 
     cm = mas(
         "gambitfruit",
@@ -235,7 +235,7 @@ def read_engines(folder_engines):
         nodes_compatible=True,
     )
 
-    mas("glaurung", "Tord RomsTad", "2.2", "http://www.glaurungchess.com/", "Glaurung-2.2", 2765, nodes_compatible=True)
+    mas("glaurung", "Tord RomsTad", "2.2", "https://www.glaurungchess.com/", "Glaurung-2.2", 2765, nodes_compatible=True)
 
     cm = mas(
         "godel",
@@ -262,7 +262,7 @@ def read_engines(folder_engines):
         "greko",
         "Vladimir Medvedev",
         "2020.03",
-        "http://greko.su/index_en.html",
+        "https://greko.su/index_en.html",
         "GreKo-2020.03",
         2580,
         nodes_compatible=True,
@@ -272,7 +272,7 @@ def read_engines(folder_engines):
         "greko98",
         "Vladimir Medvedev",
         "9.8",
-        "http://sourceforge.net/projects/greko",
+        "https://sourceforge.net/projects/greko",
         "GreKo98a",
         2500,
         nodes_compatible=True,
@@ -294,7 +294,7 @@ def read_engines(folder_engines):
 
     mas("irina", "Lucas Monge", "0.20", "https://github.com/lukasmonk/irina", "irina", 1500)
 
-    mas("jabba", "Richard Allbert", "1.0", "http://jabbachess.blogspot.com/", "Jabba-1.0", 2078)
+    mas("jabba", "Richard Allbert", "1.0", "https://jabbachess.blogspot.com/", "Jabba-1.0", 2078)
 
     mas("k2", "Sergey Meus", "0.99", "https://github.com/serg-meus/k2", "K2-0.99", 2704, nodes_compatible=True)
 
@@ -336,11 +336,11 @@ def read_engines(folder_engines):
         1601,
     )
 
-    mas("octochess", "Tim Kosse", "r5190", "http://octochess.org/", "Octochess-r5190", 2771)  # New build
+    mas("octochess", "Tim Kosse", "r5190", "https://octochess.org/", "Octochess-r5190", 2771)  # New build
 
     mas("patricia", "Adam Kulju", "4 v2", "https://github.com/Adam-Kulju/Patricia", "patricia_4_v2", 3500)
 
-    mas("pawny", "Mincho Georgiev", "1.2", "http://pawny.netii.net/", "Pawny-1.2", 2550)
+    mas("pawny", "Mincho Georgiev", "1.2", "https://pawny.netii.net/", "Pawny-1.2", 2550)
 
     mas("pigeon", "Stuart Riffle", "1.5.1", "https://github.com/StuartRiffle/pigeon", "Pigeon-1.5.1", 1836)
 
@@ -360,7 +360,7 @@ def read_engines(folder_engines):
         "rocinante",
         "Antonio Torrecillas",
         "2.0",
-        "http://sites.google.com/site/barajandotrebejos/",
+        "https://sites.google.com/site/barajandotrebejos/",
         "Rocinante-2.0",
         1800,
     )
@@ -369,7 +369,7 @@ def read_engines(folder_engines):
         "rodentii",
         "Pawel Koziol",
         "0.9.64",
-        "http://www.pkoziol.cal24.pl/rodent/rodent.htm",
+        "https://www.pkoziol.cal24.pl/rodent/rodent.htm",
         "RodentII-0.9.64",
         2912,
         nodes_compatible=True,
@@ -388,12 +388,12 @@ def read_engines(folder_engines):
         "simplex",
         "Antonio Torrecillas",
         "0.98",
-        "http://sites.google.com/site/barajandotrebejos",
+        "https://sites.google.com/site/barajandotrebejos",
         "Simplex-0.9.8",
         2396,
     )
 
-    mas("sissa", "Christophe J. Mandin", "2.0", "http://devzero.fr/~mnc/SISSA/fr/index_fr.html", "Sissa-2.0", 1957)
+    mas("sissa", "Christophe J. Mandin", "2.0", "https://devzero.fr/~mnc/SISSA/fr/index_fr.html", "Sissa-2.0", 1957)
 
     mas("spacedog", "Eric Silverman", "0.97.7", "https://github.com/thorsilver/SpaceDog", "SpaceDog-0.97.7", 2231)
 
@@ -417,7 +417,7 @@ def read_engines(folder_engines):
         "toga",
         "WHMoweryJr,Thomas Gaksch,Fabien Letouzey",
         "deepTogaNPS 1.9.6",
-        "http://www.computerchess.info/tdbb/phpBB3/viewtopic.php?f=9&t=357",
+        "https://www.computerchess.info/tdbb/phpBB3/viewtopic.php?f=9&t=357",
         "DeepToga1.9.6nps",
         2843,
     )
@@ -444,7 +444,7 @@ def read_engines(folder_engines):
 
     mas("wyldchess", "Manik Charan", "1.51", "https://github.com/Mk-Chan/WyldChess", "WyldChess-1.51", 2682)
 
-    mas("zappa", "Anthony Cozzie", "1.1", "http://www.acoz.net/zappa/", "Zappa-1.1", 2614, nodes_compatible=True)
+    mas("zappa", "Anthony Cozzie", "1.1", "https://www.acoz.net/zappa/", "Zappa-1.1", 2614, nodes_compatible=True)
 
     mas("zurichess", "Alexandru Mosoi", "1.7.4", "https://bitbucket.org/zurichess/zurichess/", "Zurichess-1.7.4", 2830)
 

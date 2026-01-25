@@ -76,8 +76,8 @@ def letter_piece(piece):
 def dic_training():
     d = {
         "Checkmates by Eduardo Sadier": _("Checkmates by Eduardo Sadier"),
-        "%d positions of mate in two"
-        % Code.mate_en_dos: _("50000 positions of mate in two").replace("50000", "%d" % Code.mate_en_dos),
+        f"{Code.mate_en_dos} positions of mate in two":
+            _("50000 positions of mate in two").replace("50000", str(Code.mate_en_dos)),
         "Mate in one (derived from mate in two)": _("Mate in one (derived from mate in two)"),
         "Checkmates from FICS database": _("Checkmates from FICS database"),
         "Attacking the king in the castle M1": _("Attacking the king in the castle M1"),

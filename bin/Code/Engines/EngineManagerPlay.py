@@ -42,7 +42,6 @@ class PlayBook:
                 if len(game) > self.max_depth:
                     self.active = False
                     return None
-
             position = game.last_position
             fen = position.fen()
 
@@ -87,10 +86,12 @@ class EngineManagerPlay(EngineManager.EngineManager):
                 self.wicker_ctrl = None
 
         if self.playbook_active:
-            if fen is None:
-                position = game.last_position
-                fen = position.fen()
-            rm = self.playbook.check_move(fen=fen)
+            if game is not None:
+                rm = self.playbook.check_move(game=game)
+            elif fen is not None:
+                rm = self.playbook.check_move(fen=fen)
+            else:
+                rm = None
             if rm:
                 if dispacher:
                     dispacher(rm=rm)

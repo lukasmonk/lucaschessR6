@@ -19,7 +19,7 @@ from Code.Base.Constantes import (
 )
 from Code.Books import Books, Polyglot, WBooks
 from Code.Databases import DBgames
-from Code.Engines import EnginesBunch, Priorities
+from Code.Engines import EnginesBunch, Priorities, Engines
 from Code.Openings import (
     OpeningLines,
     OpeningsStd,
@@ -265,7 +265,7 @@ class WLines(LCDialog.LCDialog):
         )
         form.separador()
 
-        li = Util.list_depths_to_cb()
+        li = Engines.list_depths_to_cb()
         form.combobox(
             _("Number of variations evaluated by the engine (MultiPV)"),
             li,

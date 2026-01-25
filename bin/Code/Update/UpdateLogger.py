@@ -67,9 +67,8 @@ def setup_logger(log_dir: Optional[str] = None) -> logging.Logger:
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(detailed_formatter)
         logger.addHandler(file_handler)
-    except Exception as e:
-        # If file logging fails, continue without it
-        print(f"Warning: Could not setup file logging: {e}")
+    except Exception:
+        pass
 
     # Console handler
     console_handler = logging.StreamHandler()

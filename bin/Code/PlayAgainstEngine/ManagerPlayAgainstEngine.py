@@ -44,6 +44,7 @@ from Code.Base.Constantes import (
     TERMINATION_RESIGN,
     TERMINATION_WIN_ON_TIME,
     WHITE,
+    MULTIPV_MAXIMIZE
 )
 from Code.Books import Books, WBooks
 from Code.Engines import EngineManagerPlay, EngineResponse, Engines, SelectEngines
@@ -387,7 +388,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 self.limit_time_seconds = rival_time_ms / 1000
 
             if self.nAjustarFuerza != ADJUST_BETTER:
-                self.engine_rival.set_multipv_var("MX")
+                self.engine_rival.set_multipv_var(MULTIPV_MAXIMIZE)
             self.manager_rival = self.procesador.create_manager_engine(
                 self.engine_rival, rival_time_ms, rival_depth, self.nodes, self.nAjustarFuerza != ADJUST_BETTER
             )
