@@ -6,12 +6,14 @@ import time
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
+from Code.Base.Constantes import MULTIPV_MAXIMIZE
 from Code.Z import Util
 from Code.Analysis import Analysis
 from Code.Base import Game, Move, Position
 from Code.Board import Board2
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import Base, UtilSQL
+from Code.Engines import EngineManagerAnalysis
 
 
 def lee_1_linea_mfn(linea):
@@ -575,7 +577,9 @@ class WPotenciaBase(LCDialog.LCDialog):
 
 
 class WPotencia(LCDialog.LCDialog):
-    def __init__(self, owner, engine, seconds, min_min, min_max, linea=None, ref=None):
+    manager_analysis: EngineManagerAnalysis.EngineManagerAnalysis
+
+    def __init__(self, owner, name_engine, seconds, min_min, min_max, linea=None, ref=None):
 
         super(WPotencia, self).__init__(owner, _("Determine your calculating power"), Iconos.Potencia(), "potencia")
 
@@ -589,11 +593,10 @@ class WPotencia(LCDialog.LCDialog):
         self.procesador = owner.procesador
         self.configuration = Code.configuration
 
-        if engine.startswith("*"):
-            engine = engine[1:]
-        conf_motor = self.configuration.engines.search_tutor(engine)
-        self.manager_tutor = self.procesador.create_manager_engine(conf_motor, seconds * 1000, 0, 0)
-        self.manager_tutor.maximize_multipv()
+        if name_engine.startswith("*"):
+            name_engine = name_engine[1:]
+        engine = self.configuration.engines.search_tutor(name_engine)
+        self.manager_analysis = self.procesador.create_manager_analysis(engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE)
 
         # Board
         config_board = self.configuration.config_board("POTENCIA", 48)
@@ -783,8 +786,10 @@ class WPotencia(LCDialog.LCDialog):
                         wm.ponError(_("Invalid move"))
                         si_error = True
                         break
-                    move = Move.Move(None, cp, cp_nue, from_sq, to_sq, promotion)
-                    mrm, pos = self.manager_tutor.analysis_move(move, self.manager_tutor.mstime_engine)
+                    game = Game.Game(first_position=cp)
+                    move = Move.Move(game, cp, cp_nue, from_sq, to_sq, promotion)
+                    game.add_move(move)
+                    mrm, pos = self.manager_analysis.analyze_move(game, 0, None)
                     move.analysis = mrm, pos
 
                     self.li_analysis.append(move)
@@ -812,8 +817,8 @@ class WPotencia(LCDialog.LCDialog):
             self.historico.append(
                 Util.today(),
                 total_puntos,
-                self.manager_tutor.key,
-                int(self.manager_tutor.mstime_engine / 1000),
+                self.manager_analysis.engine.key,
+                int(self.manager_analysis.run_engine_params.fixed_ms / 1000),
                 self.min_min,
                 self.min_max,
                 self.linea,
@@ -872,7 +877,7 @@ class WPotencia(LCDialog.LCDialog):
         move = self.li_analysis[position]
         is_white = move.position_before.is_white
         Analysis.show_analysis(
-            self.manager_tutor,
+            self.manager_analysis,
             move,
             is_white,
             1,

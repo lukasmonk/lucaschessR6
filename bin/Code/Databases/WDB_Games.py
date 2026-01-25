@@ -1,6 +1,7 @@
 import csv
 import os
 import shutil
+import contextlib
 
 from PySide6 import QtCore, QtWidgets
 
@@ -1111,11 +1112,12 @@ class WGames(QtWidgets.QWidget):
         if new_is_internal and old_is_external:
             os.remove(self.db_games.link_file)
 
-        if not Util.same_path(path_old_data, path_new_data):
-            self.db_games.close()
-            shutil.move(path_old_data, path_new_data)
-            shutil.move(f"{path_old_data}.st1", f"{path_new_data}.st1")
-            self.configuration.set_last_database(dic_data["FILEPATH"])
+        if path_old_data != path_new_data:
+            with contextlib.suppress(FileNotFoundError, PermissionError, OSError):
+                self.db_games.close()
+                shutil.move(path_old_data, path_new_data)
+                shutil.move(f"{path_old_data}.st1", f"{path_new_data}.st1")
+                self.configuration.set_last_database(dic_data["FILEPATH"])
             reinit = True
             must_close = False
 

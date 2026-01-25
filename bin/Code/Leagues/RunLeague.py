@@ -27,7 +27,7 @@ class LeagueWorker(RunWorker.RunWorker):
         self.draw_min_ply = self.league.draw_min_ply
         self.resign = self.league.resign
         self.time_engine_engine = self.league.time_engine_engine
-        self.book_path = self.league.book
+        self.book_path = self.league.book.path
         self.book_depth = self.league.book_depth
         self.book_rr = self.league.book_rr
         self.slow_pieces = self.league.slow_pieces

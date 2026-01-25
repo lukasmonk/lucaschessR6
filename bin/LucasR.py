@@ -7,7 +7,6 @@
 # ==============================================================================
 import sys
 import warnings
-import Code
 
 warnings.simplefilter("ignore")
 
@@ -17,10 +16,7 @@ try:
 
     bin_dir = os.path.dirname(os.path.abspath(__file__))
     deleted = UpdateLockedFiles.cleanup_old_files(bin_dir, recursive=True)
-    if deleted:
-        print(f"Cleaned up {len(deleted)} old file(s) from previous update")
 except Exception:
-    # Don't fail startup if cleanup fails
     pass
 
 n_args = len(sys.argv)

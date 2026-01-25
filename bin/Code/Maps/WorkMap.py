@@ -956,7 +956,7 @@ class WorkMap:
                 lit = []
                 for n, xt in enumerate(prob7[elo]):
                     if xt:
-                        li.extend([n + 1] * xt)
+                        lit.extend([n + 1] * xt)
                 return random.choice(lit)
 
             for iso, alm in self.dic.items():

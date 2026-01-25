@@ -18,6 +18,7 @@ from Code.Translations import TrListas
 class TrainMenu(BaseMenu.RootMenu):
     name = "Train"
     submenu_training_positions: BaseMenu.SubMenu
+    dic_trainings: dict
 
     def add_options(self):
         self.basics()
@@ -155,6 +156,8 @@ class TrainMenu(BaseMenu.RootMenu):
         submenu_coordinates.new("coordinates_write", _("Visualise and write"), Iconos.CoordinatesWrite())
 
     def tactics(self):
+        self.dic_training = TrListas.dic_training()
+
         submenu_tactics = self.new_submenu(_("Tactics"), Iconos.Training_Tactics())
 
         self.training_positions(submenu_tactics)
@@ -211,6 +214,9 @@ class TrainMenu(BaseMenu.RootMenu):
 
         submenu_turn_on_the_ligths.new("tol_oneline", _("Turn on lights in one line"), Iconos.TOLline())
 
+    def tr_training(self, txt):
+        return self.dic_training.get(txt, _F(txt))
+
     def training_positions(self, submenu_tactics):
         icono_fns = Iconos.Kibitzer_Board()
         icono_base = Iconos.FolderGreen()
@@ -253,10 +259,10 @@ class TrainMenu(BaseMenu.RootMenu):
                 for clave, valor in xestructura_menu.items():
                     if isinstance(valor, dict):
                         # Si el valor es un diccionario, es una carpeta (submenú)
-                        rsubmenu = xsubmenu.new_submenu(clave, icono)
+                        rsubmenu = xsubmenu.new_submenu(_F(clave), icono)
                         crear_menu_recursivo(valor, rsubmenu)
                     else:
-                        xsubmenu.new(valor, _F(clave[:-4]), icono_fns)
+                        xsubmenu.new(valor, self.tr_training(clave[:-4]), icono_fns)
 
             crear_menu_recursivo(estructura_menu, submenu)
 
@@ -276,15 +282,10 @@ class TrainMenu(BaseMenu.RootMenu):
         for option in self.submenu_training_positions.li_options:
             option.add_to_menu(menu)
 
-    @staticmethod
-    def tactics_by_repetition(submenu_tactics):
+    def tactics_by_repetition(self, submenu_tactics):
         submenu_tactics_by_repetition = submenu_tactics.new_submenu(_("Learn tactics by repetition"), Iconos.Tacticas())
         nico_submenu = QTDialogs.rondo_colores(False)
         nico_opcion = QTDialogs.rondo_puntos(False)
-        dic_training = TrListas.dic_training()
-
-        def tr_training(txt):
-            return dic_training.get(txt, _F(txt))
 
         def menu_tacticas(submenu, tipo, carpeta_base, xlista):
             if os.path.isdir(carpeta_base):
@@ -303,11 +304,11 @@ class TrainMenu(BaseMenu.RootMenu):
                             if n_menus == 1:
                                 submenu.new(
                                     f"tactica|{tipo}|{xname}|{xcarpeta}|{ini}|{li_menus[0][0]}",
-                                    tr_training(xname),
+                                    self.tr_training(xname),
                                     nico_opcion.otro(),
                                 )
                             else:
-                                submenu_tactica = submenu.new_submenu(tr_training(xname), nico_submenu.otro())
+                                submenu_tactica = submenu.new_submenu(self.tr_training(xname), nico_submenu.otro())
 
                                 dmenu = {}
                                 for valor, tlista in li_menus:
@@ -317,10 +318,10 @@ class TrainMenu(BaseMenu.RootMenu):
                                         for x in range(len(tlista) - 1):
                                             t += f"|{tlista[x]}"
                                             if t not in dmenu:
-                                                v_trad = dic_training.get(tlista[x], _F(tlista[x]))
+                                                v_trad = self.tr_training(tlista[x])
                                                 dmenu[t] = actmenu.new_submenu(v_trad, nico_submenu.otro())
                                             actmenu = dmenu[t]
-                                    tname = _F(dic_training.get(tlista[-1], tlista[-1]))
+                                    tname = self.tr_training(tlista[-1])
                                     actmenu.new(
                                         f"tactica|{tipo}|{xname}|{xcarpeta}|{ini}|{valor}",
                                         tname,
@@ -345,7 +346,7 @@ class TrainMenu(BaseMenu.RootMenu):
                 ico = Iconos.Delete()
                 submenu_remove = submenu_tactics_by_repetition.new_submenu(_("Remove"), ico)
                 for carpeta, name in lista:
-                    submenu_remove.new(f"remtactica|{carpeta}|{name}", tr_training(name), ico)
+                    submenu_remove.new(f"remtactica|{carpeta}|{name}", self.tr_training(name), ico)
 
     def run_select(self, resp):
         tm = TrainMenuRun.TrainMenuRun(self)

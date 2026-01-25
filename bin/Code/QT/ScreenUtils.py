@@ -1,8 +1,8 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.QT import QTUtils
+from Code.Z import Util
 
 dAlineacion = {
     "i": QtCore.Qt.AlignmentFlag.AlignLeft,
@@ -188,17 +188,24 @@ class MaintainGeometry:
         self.window.setGeometry(self.geometry)
 
 
+# def shrink(widget: QtWidgets.QWidget):
+#     pos = widget.pos()
+#     r = widget.geometry()
+#     r.setWidth(0)
+#     r.setHeight(0)
+#     widget.setGeometry(r)
+#     widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
+#     widget.adjustSize()
+#     if widget.layout():
+#         widget.layout().activate()
+#     widget.move(pos)
+
+
 def shrink(widget: QtWidgets.QWidget):
-    pos = widget.pos()
-    r = widget.geometry()
-    r.setWidth(0)
-    r.setHeight(0)
-    widget.setGeometry(r)
-    widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Minimum)
-    widget.adjustSize()
     if widget.layout():
-        widget.layout().activate()
-    widget.move(pos)
+        widget.layout().invalidate()
+    widget.adjustSize()
+    widget.resize(widget.minimumSizeHint())
 
 
 class EstadoWindow:

@@ -27,7 +27,7 @@ class SwissWorker(RunWorker.RunWorker):
         self.draw_min_ply = self.swiss.draw_min_ply
         self.resign = self.swiss.resign
         self.time_engine_engine = self.swiss.time_engine_engine
-        self.book_path = self.swiss.book
+        self.book_path = self.swiss.book.path
         self.book_depth = self.swiss.book_depth
         self.book_rr = self.swiss.book_rr
         self.slow_pieces = self.swiss.slow_pieces

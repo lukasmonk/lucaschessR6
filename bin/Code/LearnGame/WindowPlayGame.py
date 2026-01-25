@@ -236,7 +236,7 @@ class WPlay1(LCDialog.LCDialog):
             self.lbRotulo = (
                 Controles.LB(self, self.db.label(recno))
                 .set_font_type(puntos=12)
-                .set_foreground_backgound("#076C9F", "#EFEFEF")
+                .set_foreground_background("#076C9F", "#EFEFEF")
             )
 
             self.liIntentos = self.registro.get("LIINTENTOS", [])

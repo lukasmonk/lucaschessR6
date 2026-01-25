@@ -248,7 +248,7 @@ class WLearn1(LCDialog.LCDialog):
             self.game.restore(self.registro["GAME"])
 
         self.lbRotulo = (
-            Controles.LB(self, self.label()).set_font_type(puntos=12).set_foreground_backgound("#076C9F", "#EFEFEF")
+            Controles.LB(self, self.label()).set_font_type(puntos=12).set_foreground_background("#076C9F", "#EFEFEF")
         )
 
         self.liIntentos = self.registro.get("LIINTENTOS", [])
@@ -466,7 +466,7 @@ class WLearnPuente(LCDialog.LCDialog):
         self.lbIni = (
             Controles.LB(self)
             .align_center()
-            .set_foreground_backgound("#076C9F", "#EFEFEF")
+            .set_foreground_background("#076C9F", "#EFEFEF")
             .minimum_width(self.boardIni.ancho)
         )
         ly_ini = Colocacion.V().control(self.boardIni).control(self.lbIni)
@@ -480,7 +480,7 @@ class WLearnPuente(LCDialog.LCDialog):
             self.lbFin = (
                 Controles.LB(self)
                 .align_center()
-                .set_foreground_backgound("#076C9F", "#EFEFEF")
+                .set_foreground_background("#076C9F", "#EFEFEF")
                 .minimum_width(self.boardFin.ancho)
             )
             self.boardFin.disable_eboard_here()
@@ -492,7 +492,7 @@ class WLearnPuente(LCDialog.LCDialog):
             Controles.LB(self, "00:00")
             .set_font(f)
             .align_center()
-            .set_foreground_backgound("#076C9F", "#EFEFEF")
+            .set_foreground_background("#076C9F", "#EFEFEF")
             .minimum_width(200)
         )
         self.lbReloj.setFrameStyle(QtWidgets.QFrame.Shape.Box or QtWidgets.QFrame.Shadow.Raised)

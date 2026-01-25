@@ -48,7 +48,7 @@ class WRunCounts(LCDialog.LCDialog):
         self.lb_info = (
             Controles.LB(self)
             .set_font_type(puntos=14, peso=500)
-            .set_foreground_backgound("white", "#496075")
+            .set_foreground_background("white", "#496075")
             .align_center()
         )
 

@@ -1,13 +1,14 @@
 import os
 import os.path
+from typing import List, Tuple
 
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util
-from Code.Base.Constantes import BOOK_BEST_MOVE, ENG_EXTERNAL
+from Code.Base.Constantes import BOOK_BEST_MOVE, ENG_EXTERNAL, MULTIPV_MAXIMIZE, MULTIPV_BYDEFAULT
 from Code.QT import QTDialogs
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class Engine:
@@ -181,9 +182,9 @@ class Engine:
         self.maxMultiPV = int(maximo) if maximo else 1
 
     def set_multipv_var(self, xmultipv: str | int):
-        if xmultipv == "MX":
+        if xmultipv == MULTIPV_MAXIMIZE:
             self.multiPV = self.maxMultiPV
-        elif xmultipv == "PD":
+        elif xmultipv == MULTIPV_BYDEFAULT:
             multi_pv = min(self.maxMultiPV, 10)
             multi_pv = next(
                 (int(valor) for comando, valor in self.liUCI if comando == "MultiPV"),
@@ -450,7 +451,7 @@ class OpcionUCI:
         try:
             idx_default = li.index("default")
             if idx_default < len(li) - 1:
-                self.default = " ".join(li[idx_default + 1 :])
+                self.default = " ".join(li[idx_default + 1:])
                 if self.default == "<empty>":
                     self.default = ""
             else:
@@ -585,3 +586,9 @@ def is_valid_engine(path_exe) -> bool:
 def get_uci_options(path_exe) -> list | None:
     buffer = _run_uci_command(path_exe)
     return buffer.splitlines() if buffer else None
+
+
+def list_depths_to_cb() -> List[Tuple[str, str]]:
+    return [(_("By default"), "PD"), (_("Maximum"), "MX")] + [
+        (str(x), str(x)) for x in list(range(1, 16)) + [20, 30, 40, 50, 75, 100, 150, 200]
+    ]

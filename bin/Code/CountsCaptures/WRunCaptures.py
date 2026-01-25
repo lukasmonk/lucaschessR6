@@ -68,7 +68,7 @@ class WRunCaptures(LCDialog.LCDialog):
         self.lb_info = (
             Controles.LB(self)
             .relative_width(254)
-            .set_foreground_backgound("white", "#496075")
+            .set_foreground_background("white", "#496075")
             .align_center()
             .set_font_type(puntos=self.configuration.x_font_points)
         )

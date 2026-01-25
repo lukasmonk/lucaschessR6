@@ -106,7 +106,7 @@ class BoardEstaticoMensajeK(Board2.BoardEstatico):
     @staticmethod
     def gen_svg(txt, fill, stroke):
         plant_svg = (
-            '<svg height="40" width="40" xmlns="http://www.w3.org/2000/svg">'
+            '<svg height="40" width="40" xmlns="https://www.w3.org/2000/svg">'
             '<path style="fill:FILL;fill-opacity:1;stroke:STROKE;'
             'stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;'
             'stroke-opacity:1;paint-order:stroke markers fill" d="M4.055 7.004h31.889v25.993H4.055z"/>'

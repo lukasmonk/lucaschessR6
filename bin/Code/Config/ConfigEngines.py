@@ -52,7 +52,7 @@ class ConfigEngines:
 
     def search(self, alias, defecto=None):
         if alias in self._dic_engines:
-            return self._dic_engines[alias]
+            return self._dic_engines[alias].clone()
         if defecto is None:
             defecto = self.configuration.x_rival_inicial
         return self.search(defecto)
@@ -61,7 +61,7 @@ class ConfigEngines:
         if key in self._dic_engines:
             eng = self._dic_engines[key]
             if eng.can_be_tutor_analyzer():
-                return eng
+                return eng.clone()
         return self.search_tutor(self.configuration.tutor_default)
 
     def list_alias_name_multipv(self):

@@ -69,7 +69,7 @@ class WTournament(LCDialog.LCDialog):
         # Tab-configuration --------------------------------------------------
         w = QtWidgets.QWidget()
 
-        # MoveEvatualor
+        # Adjudicator
         lb_resign = Controles.LB(
             self,
             "%s (%s): " % (_("Minimum centipawns to assign winner"), "0=%s" % _("Disable")),
@@ -98,7 +98,7 @@ class WTournament(LCDialog.LCDialog):
         layout = Colocacion.G()
         layout.controld(self.lbJmotor, 3, 0).control(self.cbJmotor, 3, 1)
         layout.controld(self.lbJtiempo, 4, 0).control(self.edJtiempo, 4, 1)
-        self.gbJ = Controles.GB(self, _("MoveEvatualor"), layout)
+        self.gbJ = Controles.GB(self, _("Adjudicator"), layout)
         self.gbJ.setCheckable(True)
         self.gbJ.setChecked(torneo.adjudicator_active())
 
@@ -135,7 +135,7 @@ class WTournament(LCDialog.LCDialog):
         # Norman Pollock
         lb_norman = Controles.LB(
             self,
-            '%s(<a href="http://www.nk-qy.info/40h/">?</a>): '
+            '%s(<a href="https://www.nk-qy.info/40h/">?</a>): '
             % _("Initial position from Norman Pollock openings database"),
         )
         self.chbNorman = Controles.CHB(self, " ", self.torneo.norman())

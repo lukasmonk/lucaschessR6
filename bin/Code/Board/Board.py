@@ -1573,6 +1573,16 @@ class Board(QtWidgets.QGraphicsView):
                 self.xremove_item(x[1])
         self.li_pieces = []
 
+    def move_piece_temp(self, from_a1h8, to_a1h8):
+        npieza = self.get_num_piece_at(from_a1h8)
+        if npieza >= 0:
+            pieza_sc = self.li_pieces[npieza][1]
+            row = int(to_a1h8[1])
+            column = ord(to_a1h8[0]) - 96
+            x = self.columna2punto(column)
+            y = self.fila2punto(row)
+            pieza_sc.setPos(x, y)
+
     def set_base_position(self, position, variation_history=None):
         self.variation_history = variation_history
 

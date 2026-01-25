@@ -87,11 +87,11 @@ class ManagerMateMap(Manager.Manager):
         QTUtils.refresh_gui()
 
         if self.manager_rival is None:
-            self.manager_rival = self.procesador.create_manager_engine(
-                self.configuration.engines.engine_tutor(),
-                self.configuration.x_tutor_mstime,
-                None,
-            )
+            engine = self.configuration.engines.engine_tutor()
+            mstime = int(self.configuration.x_tutor_mstime)
+            if mstime == 0:
+                mstime = 3000
+            self.manager_rival = self.procesador.create_manager_engine(engine, mstime, 0, 0)
 
         self.is_analyzed_by_tutor = False
 

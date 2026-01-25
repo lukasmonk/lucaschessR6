@@ -1,12 +1,16 @@
 import os.path
 import random
 import time
+from dataclasses import dataclass
+from typing import List
+
 
 import Code
-from Code.Z import Util
 from Code.Analysis import Analysis
 from Code.Base import Game, Move, Position
+from Code.Base.Constantes import MULTIPV_MAXIMIZE
 from Code.Board import Board
+from Code.Engines import EngineManagerAnalysis, EngineResponse
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -19,11 +23,17 @@ from Code.QT import (
     QTMessages,
     ScreenUtils,
 )
-from Code.ZQT import WindowPotencia
+from Code.QT import (
+    Delegados,
+)
 from Code.SQL import UtilSQL
+from Code.Z import Util
+from Code.ZQT import WindowPotencia
 
 
 class WDailyTestBase(LCDialog.LCDialog):
+    li_histo: list
+
     def __init__(self, procesador):
 
         LCDialog.LCDialog.__init__(
@@ -38,9 +48,9 @@ class WDailyTestBase(LCDialog.LCDialog):
         self.configuration = Code.configuration
 
         self.historico = UtilSQL.DictSQL(self.configuration.paths.file_daily_test())
-        self.calcListaHistorico()
+        self.calc_li_histo()
 
-        self.engine, self.seconds, self.pruebas, self.fns = self.leeParametros()
+        self.engine, self.seconds, self.pruebas, self.fns = self.read_parameters()
 
         # Historico
         o_columns = Columnas.ListaColumnas()
@@ -75,15 +85,15 @@ class WDailyTestBase(LCDialog.LCDialog):
         self.register_grid(self.ghistorico)
         self.restore_video()
 
-    def leeParametros(self):
+    def read_parameters(self):
         param = UtilSQL.DictSQL(self.configuration.paths.file_daily_test(), tabla="parametros")
-        engine = param.get("ENGINE", self.configuration.tutor_default)
+        name_engine = param.get("ENGINE", self.configuration.analyzer_default)
         seconds = param.get("SEGUNDOS", 7)
         pruebas = param.get("PRUEBAS", 5)
         fns = param.get("FNS", "")
         param.close()
 
-        return engine, seconds, pruebas, fns
+        return name_engine, seconds, pruebas, fns
 
     def grid_num_datos(self, grid):
         return len(self.li_histo)
@@ -115,8 +125,9 @@ class WDailyTestBase(LCDialog.LCDialog):
                 return os.path.basename(fns)
             else:
                 return _("By default")
+        return None
 
-    def calcListaHistorico(self):
+    def calc_li_histo(self):
         self.li_histo = self.historico.keys(si_ordenados=True, si_reverse=True)
 
     def closeEvent(self, event):  # Cierre con X
@@ -185,7 +196,7 @@ class WDailyTestBase(LCDialog.LCDialog):
                         key = self.li_histo[row]
                         del self.historico[key]
                     self.historico.pack()
-                    self.calcListaHistorico()
+                    self.calc_li_histo()
                 self.ghistorico.refresh()
 
     def empezar(self):
@@ -205,10 +216,10 @@ class WDailyTestBase(LCDialog.LCDialog):
                         if "|" in linea:
                             linea = linea.split("|")[0]
                         if (
-                            linea[0].isalnum()
-                            and linea[-1].isdigit()
-                            and ((" w " in linea) or (" b " in linea))
-                            and linea.count("/") == 7
+                                linea[0].isalnum()
+                                and linea[-1].isdigit()
+                                and ((" w " in linea) or (" b " in linea))
+                                and linea.count("/") == 7
                         ):
                             li.append(linea)
             if len(li) >= self.pruebas:
@@ -222,36 +233,50 @@ class WDailyTestBase(LCDialog.LCDialog):
         # liR = liFens
         w = WDailyTest(self, li_r, self.engine, self.seconds, self.fns)
         w.exec()
-        self.calcListaHistorico()
+        self.calc_li_histo()
         self.ghistorico.refresh()
 
 
+@dataclass()
+class DataMovement:
+    pos: int
+    pgn: str
+    result: str
+    loss: int
+    selected: bool
+
+
 class WDailyTest(LCDialog.LCDialog):
-    def __init__(self, owner, liFens, engine, seconds, fns):
+    manager_analysis: EngineManagerAnalysis.EngineManagerAnalysis
+    li_data: List[DataMovement]
+
+    def __init__(self, owner, li_fens, name_engine, seconds, fns):
 
         super(WDailyTest, self).__init__(owner, _("Your daily test"), Iconos.DailyTest(), "nivel")
 
         self.procesador = owner.procesador
         self.configuration = Code.configuration
 
-        if engine.startswith("*"):
-            engine = engine[1:]
-        conf_motor = self.configuration.engines.search_tutor(engine)
-        self.manager_tutor = self.procesador.create_manager_engine(conf_motor, seconds * 1000, 0, 0)
-        self.manager_tutor.maximize_multipv()
+        if name_engine.startswith("*"):
+            name_engine = name_engine[1:]
+        engine = self.configuration.engines.search_tutor(name_engine)
+        self.manager_analysis = self.procesador.create_manager_analysis(engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE)
 
         self.historico = owner.historico
+
+        self.with_figurines = self.configuration.x_pgn_withfigurines
 
         # Board
         config_board = self.configuration.config_board("LEVEL", 48)
 
-        self.liFens = liFens
+        self.liFens = li_fens
         self.nFens = len(self.liFens)
         self.juego = 0
         self.li_puntos = []
         self.li_pv = []
         self.li_tiempos = []
         self.fns = fns
+        self.li_data = []
 
         self.move_done = None
 
@@ -260,8 +285,19 @@ class WDailyTest(LCDialog.LCDialog):
         self.board.set_dispatcher(self.player_has_moved_dispatcher)
 
         # Rotulos informacion
-        self.lbColor = Controles.LB(self, "").set_wrap().minimum_width(200)
+        self.lbColor = Controles.LB(self, "")
         self.lbJuego = Controles.LB(self, "").align_center()
+        self.lbJuego.setStyleSheet("border: 2px solid lightgray; border-radius: 8px;")
+
+        with_col = (Code.configuration.x_pgn_width - 52 - 12) // 2
+        o_columns = Columnas.ListaColumnas()
+        self.delegado_pgn = Delegados.EtiquetaPGN(None, si_indicador_inicial=False)
+        o_columns.nueva("POS", _('N.'), 40, align_center=True)
+        o_columns.nueva("MOVEMENT", _('Movements'), with_col, align_center=True, edicion=self.delegado_pgn)
+        o_columns.nueva("LOSS", _('Loss'), 60, align_center=True)
+        self.wrm = Grid.Grid(self, o_columns, complete_row_select=True)
+        n_with = self.wrm.width_columns_displayables() + 20
+        self.wrm.setFixedWidth(n_with)
 
         # Tool bar
         li_acciones = (
@@ -273,20 +309,45 @@ class WDailyTest(LCDialog.LCDialog):
         )
         self.tb = Controles.TB(self, li_acciones)
 
-        lyT = Colocacion.V().control(self.board).relleno()
-        lyV = Colocacion.V().control(self.lbJuego).relleno().control(self.lbColor).relleno(2)
-        lyTV = Colocacion.H().otro(lyT).otro(lyV)
-        ly = Colocacion.V().control(self.tb).otro(lyTV)
+        ly_bm = Colocacion.H().control(self.board).control(self.wrm)
+        ly_dt = Colocacion.H().control(self.lbColor).control(self.lbJuego)
+        ly_tb = Colocacion.H().control(self.tb).otro(ly_dt)
+        ly = Colocacion.V().otro(ly_tb).otro(ly_bm)
 
         self.setLayout(ly)
 
         self.position = Position.Position()
         self.restore_video()
 
+        self.wrm.hide()
         self.play_next_move()
 
+    def grid_num_datos(self, grid):
+        return len(self.li_data)
+
+    def grid_dato(self, grid, row, obj_column):
+        data: DataMovement = self.li_data[row]
+        col = obj_column.key
+        if col == "MOVEMENT":
+            return data.pgn, self.is_white, data.result, None, None
+        elif col == "POS":
+            return str(data.pos)
+        elif col == "LOSS":
+            return str(data.loss)
+        return None
+
+    def grid_bold(self, _grid, row, obj_col):
+        data: DataMovement = self.li_data[row]
+        return data.selected
+
+    def grid_color_fondo(self, _grid, row, obj_col):
+        data: DataMovement = self.li_data[row]
+        if data.selected and obj_col.key == "POS":
+            return Code.dic_qcolors["PGN_SELBACKGROUND"]
+        return None
+
     def finalize(self):
-        self.manager_tutor.finalize()
+        self.manager_analysis.close()
         self.save_video()
         self.reject()
 
@@ -318,60 +379,61 @@ class WDailyTest(LCDialog.LCDialog):
         self.tb.update()
 
     def play_next_move(self):
+        self.wrm.hide()
         ScreenUtils.shrink(self)
         self.pon_toolbar(["abandonar"])
 
         if self.juego == self.nFens:
-            self.terminarTest()
+            self.finish_the_test()
             return
 
         fen = self.liFens[self.juego]
         self.juego += 1
 
-        self.lbJuego.set_text(f"<h2>{self.juego}/{self.nFens}<h2>")
-
         cp = self.position
 
         cp.read_fen(fen)
 
-        siW = cp.is_white
-        color, colorR = _("White"), _("Black")
-        cK, cQ, cKR, cQR = "K", "Q", "k", "q"
-        if not siW:
-            color, colorR = colorR, color
-            cK, cQ, cKR, cQR = cKR, cQR, cK, cQ
+        self.is_white = is_white = cp.is_white
+        color_player, color_rival = _("White"), _("Black")
+        k_player, q_player, k_rival, q_rival = "K", "Q", "k", "q"
+        if not is_white:
+            color_player, color_rival = color_rival, color_player
+            k_player, q_player, k_rival, q_rival = k_rival, q_rival, k_player, q_player
 
-        mens = f"<h1><center>{color}</center></h1><br>"
+        mens = f"<h2>{color_player}</h2>"
 
         if cp.castles:
 
-            def menr(ck, cq):
-                enr = ""
+            def get_castle(ck, cq):
+                castle = ""
                 if ck in cp.castles:
-                    enr += "O-O"
+                    castle += "O-O"
                 if cq in cp.castles:
-                    if enr:
-                        enr += ",  "
-                    enr += "O-O-O"
-                return enr
+                    if castle:
+                        castle += ",  "
+                    castle += "O-O-O"
+                return castle
 
-            enr = menr(cK, cQ)
+            enr = get_castle(k_player, q_player)
             if enr:
-                mens += f"<br>{color} : {enr}"
-            enr = menr(cKR, cQR)
+                mens += f"<br>{color_player} : {enr}"
+            enr = get_castle(k_rival, q_rival)
             if enr:
-                mens += f"<br>{colorR} : {enr}"
+                mens += f"<br>{color_rival} : {enr}"
         if cp.en_passant != "-":
-            mens += f"<br>     {_('En passant')} : {cp.en_passant}"
+            mens += f"<br>{_('En passant')} : {cp.en_passant}"
+
+        self.lbJuego.set_text(f"<h1>{self.juego}/{self.nFens}</h1>")
 
         self.lbColor.set_text(mens)
 
         self.continue_human()
         self.initial_time = time.time()
 
-    def terminarTest(self):
+    def finish_the_test(self):
         self.stop_human()
-        self.manager_tutor.finalize()
+        self.manager_analysis.close()
 
         t = 0
         for x in self.li_puntos:
@@ -387,8 +449,8 @@ class WDailyTest(LCDialog.LCDialog):
         fecha = f"{hoy.year}{hoy.month:02d}{hoy.day:02d}{hoy.hour:02d}{hoy.minute:02d}"
         datos = {
             "FECHA": hoy,
-            "ENGINE": self.manager_tutor.key,
-            "TIEMPOJUGADA": self.manager_tutor.mstime_engine,
+            "ENGINE": self.manager_analysis.engine.key,
+            "TIEMPOJUGADA": self.manager_analysis.run_engine_params.fixed_ms,
             "LIFENS": self.liFens,
             "LIPV": self.li_pv,
             "MPUNTOS": mpuntos,
@@ -400,6 +462,7 @@ class WDailyTest(LCDialog.LCDialog):
 
         self.lbColor.set_text("")
         self.lbJuego.set_text("")
+        self.wrm.hide()
 
         mens = f"<h3>{_('Average centipawns lost')} : {mpuntos:.2f}</h3><h3>{_('Average time (seconds)')} : {mtiempos:.2f}</h3>"
         QTMessages.message(self, mens, titulo=_("Result"))
@@ -430,66 +493,62 @@ class WDailyTest(LCDialog.LCDialog):
         game = Game.Game(first_position=self.position)
         ok, mens, self.move_done = Move.get_game_move(game, self.position, from_sq, to_sq, promotion)
         if ok:
+            game.add_move(self.move_done)
             self.board.set_position(self.move_done.position)
             self.board.put_arrow_sc(from_sq, to_sq)
-            self.calculaTiempoPuntos()
+            self.calc_time_score()
         else:
             self.continue_human()
 
-    def calculaTiempoPuntos(self):
+    def calc_time_score(self):
         vtime = time.time() - self.initial_time
 
         with QTMessages.analizando(self):
-            self.rmr, pos = self.manager_tutor.analysis_move(self.move_done, self.manager_tutor.mstime_engine)
-            self.move_done.analysis = self.rmr, pos
+            self.mrm, pos = self.manager_analysis.analyze_move(self.move_done.game, 0, None)
+            self.move_done.analysis = self.mrm, pos
 
         pv = self.move_done.movimiento()
         pv = pv.lower()
 
-        minimo = self.rmr.li_rm[0].centipawns_abs()
-        actual = None
-        mens = f"<h2>{self.juego}/{self.nFens}</h2><center><table>"
-        li = []
-        for rm in self.rmr.li_rm:
+        minimo = self.mrm.li_rm[0].centipawns_abs()
+        current_loss = 0
+        self.li_data = []
+        pos = 0
+        previo = None
+        current_pos = 0
+        rm: EngineResponse.EngineResponse
+        for rm in self.mrm.li_rm:
             pts = rm.centipawns_abs()
-            ptsc = minimo - pts
+            if pts != previo:
+                pos += 1
+                previo = pts
+            loss = minimo - pts
             mv = rm.movimiento().lower()
-            if mv == pv:
-                actual = ptsc
-            pgn = self.position.pgn_translated(mv[:2], mv[2:4], mv[4:])
-            li.append((mv == pv, pgn, pts, ptsc))
+            selected = mv == pv
+            if self.with_figurines:
+                pgn = self.position.pgn(rm.from_sq, rm.to_sq, rm.promotion)
+            else:
+                pgn = self.position.pgn_translated(rm.from_sq, rm.to_sq, rm.promotion)
+            if selected:
+                current_pos = len(self.li_data)
+                current_loss = loss
+            self.li_data.append(DataMovement(pos, pgn, rm.abbrev_text_base(), loss, selected))
 
-        if actual is None:
-            actual = ptsc
-
-        for siPV, pgn, pts, ptsc in li:
-            dosp = "&nbsp;:&nbsp;"
-            dosi = "&nbsp;=&nbsp;"
-            cpts = f"{pts}"
-            cptsc = f"{ptsc}"
-            if siPV:
-                ini = "<b>"
-                fin = "</b>"
-                pgn = ini + pgn + fin
-                dosp = ini + dosp + fin
-                dosi = ini + dosi + fin
-                cpts = ini + cpts + fin
-                cptsc = ini + cptsc + fin
-
-            mens += f'<tr><td>{pgn}</td><td>{dosp}</td><td align="right">{cpts}</td><td>{dosi}</td><td align="right">{cptsc}</td></tr>'
-        mens += "</table></center>"
-
+        if self.with_figurines:
+            self.delegado_pgn.setWhite(self.is_white)
+        self.wrm.show()
+        self.wrm.refresh()
+        self.wrm.goto(current_pos, 0)
         self.li_pv.append(pv)
-        self.li_puntos.append(actual)
+        self.li_puntos.append(current_loss)
         self.li_tiempos.append(vtime)
 
-        self.lbJuego.set_text(mens)
         self.lbColor.set_text("")
         self.pon_toolbar(["seguir", "cancelar", "analizar"])
 
     def analizar(self):
         Analysis.show_analysis(
-            self.manager_tutor,
+            self.manager_analysis,
             self.move_done,
             self.position.is_white,
             1,

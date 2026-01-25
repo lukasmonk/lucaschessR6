@@ -245,7 +245,7 @@ class WConfExternals(QtWidgets.QWidget):
             self.is_changed = False
             li = [eng.save() for eng in self.lista_motores]
             Util.save_pickle(Code.configuration.paths.file_external_engines(), li)
-            Code.configuration.relee_engines()
+            Code.configuration.engines.reset_external()
 
     def grid_cambiado_registro(self, grid, row, _obj_column):
         if grid == self.grid:

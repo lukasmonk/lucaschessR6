@@ -11,6 +11,7 @@ from Code.GM import GM
 from Code.Openings import WindowOpenings
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages, ScreenUtils
 from Code.SQL import UtilSQL
+from Code.Engines import Engines
 
 
 @dataclass
@@ -130,7 +131,7 @@ class WGM(LCDialog.LCDialog):
         ]
         self.cbJshow = Controles.CB(self, li_options, GM.ShowOption.WHEN_DIFFERENT.value)
         self.lbJmultiPV = Controles.LB2P(self, _("Number of variations evaluated by the engine (MultiPV)"))
-        li = Util.list_depths_to_cb()
+        li = Engines.list_depths_to_cb()
         self.cbJmultiPV = Controles.CB(self, li, "PD")
 
         self.li_adjudicator_controls = (
@@ -190,7 +191,7 @@ class WGM(LCDialog.LCDialog):
         ly2.control(self.lbJdepth).control(self.cbJdepth).relleno().control(self.chbEvals)
         ly3 = Colocacion.H().control(self.lbJmultiPV).control(self.cbJmultiPV).relleno()
         ly = Colocacion.V().otro(ly1).otro(ly2).otro(ly3)
-        self.gbJ = Controles.GB(self, _("MoveEvatualor"), ly).to_connect(self.change_adjudicator)
+        self.gbJ = Controles.GB(self, _("Adjudicator"), ly).to_connect(self.change_adjudicator)
         self.configuration.set_property(self.gbJ, "1")
 
         # Opciones
@@ -221,7 +222,7 @@ class WGM(LCDialog.LCDialog):
         o_columns.nueva("FECHA", _("Date"), 100, align_center=True)
         o_columns.nueva("PACIERTOS", _("Hints"), 90, align_center=True)
         o_columns.nueva("PUNTOS", _("Centipawns accumulated"), 140, align_center=True)
-        o_columns.nueva("ENGINE", _("MoveEvatualor"), 100, align_center=True)
+        o_columns.nueva("ENGINE", _("Adjudicator"), 100, align_center=True)
         o_columns.nueva("RESUMEN", _("Game played"), 280)
 
         self.grid = grid = Grid.Grid(self, o_columns, complete_row_select=True, background=None)

@@ -119,7 +119,7 @@ class WSwissConfig(LCDialog.LCDialog):
         ly = Colocacion.G()
         ly.controld(self.lb_jmotor, 3, 0).control(self.cb_jmotor, 3, 1)
         ly.controld(self.lb_jtiempo, 4, 0).control(self.ed_jtiempo, 4, 1)
-        self.gb_j = Controles.GB(self, _("MoveEvatualor"), ly)
+        self.gb_j = Controles.GB(self, _("Adjudicator"), ly)
 
         lb_slow = Controles.LB(self, f"{_('Slow down the movement of pieces')}: ")
         self.chb_slow = Controles.CHB(self, " ", swiss.slow_pieces)

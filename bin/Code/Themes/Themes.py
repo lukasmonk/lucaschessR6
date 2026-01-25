@@ -84,7 +84,7 @@ class Themes:
         self.build()
 
         self.svg_data = """
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="10">
+        <svg xmlns="https://www.w3.org/2000/svg" width="22" height="10">
           <text x="%d" y="9" font-family="Arial" font-size="9" fill="black">%s</text>
         </svg>
         """

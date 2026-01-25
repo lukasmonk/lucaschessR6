@@ -1,6 +1,6 @@
 import contextlib
 import time
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
 from PySide6 import QtCore
 
@@ -283,3 +283,18 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         if self.mrm:
             self.mrm.ordena()
         return self.mrm
+
+    def seek_mate(self, game: Game.Game, mate: int) -> List[EngineResponse.EngineResponse] | None:
+
+        def check_mate(rm: EngineResponse.EngineResponse, ms: float):
+            if 0 < rm.mate <= mate:
+                return False
+            return True
+
+        mrm: EngineResponse.MultiEngineResponse = self.analyze_last_position(game, check_mate)
+        mate = mrm.best_rm_ordered().mate
+
+        return [rm for rm in mrm.li_rm if rm.mate == mate]
+
+
+

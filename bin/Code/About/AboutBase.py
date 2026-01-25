@@ -151,7 +151,6 @@ class ThanksTo:
             'Rudolf Krämer',
             "Luis",
             "Stefan Akall",
-            "",
         ]
         li_resto = []
         txt += version("R", li_base, li_resto, False)

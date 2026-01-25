@@ -71,7 +71,7 @@ class WTrainBMT(LCDialog.LCDialog):
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
 
         # Juegan ---------------------------------------------------------------
-        self.lbJuegan = Controles.LB(self, "").set_foreground_backgound("white", "black").align_center()
+        self.lbJuegan = Controles.LB(self, "").set_foreground_background("white", "black").align_center()
 
         # Board ---------------------------------------------------------------
         config_board = self.configuration.config_board("BMT", 32)
@@ -194,7 +194,7 @@ class WTrainBMT(LCDialog.LCDialog):
 
         # Tool bar ---------------------------------------------------------------
         self.tb = QTDialogs.LCTB(self)
-        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.end_training)
         self.tb.new(_("Repeat"), Iconos.Pelicula_Repetir(), self.repetir)
         self.tb.new(_("Resign"), Iconos.Abandonar(), self.abandonar)
         self.tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
@@ -224,7 +224,7 @@ class WTrainBMT(LCDialog.LCDialog):
         if self.is_finished:
             self.empezar()
         else:
-            self.pon_toolbar(self.finalize, self.empezar)
+            self.pon_toolbar(self.end_training, self.empezar)
 
         self.show_controls(False)
 
@@ -280,7 +280,7 @@ class WTrainBMT(LCDialog.LCDialog):
             self.seguir()
 
     def closeEvent(self, event):
-        self.finalize(False)
+        self.finalize()
 
     def empezar(self):
         self.show_controls(True)
@@ -288,8 +288,12 @@ class WTrainBMT(LCDialog.LCDialog):
         self.set_score(0)
         self.set_time_seconds()
         self.set_clock()
+        
+    def end_training(self):
+        self.finalize()
+        self.accept()
 
-    def finalize(self, with_accept=True):
+    def finalize(self):
         self.end_time()
 
         if len(self.borrar_fen_lista) > 0:
@@ -329,8 +333,6 @@ class WTrainBMT(LCDialog.LCDialog):
             self.dbf.modificarReg(self.recnoActual, reg)
 
         self.save_video()
-        if with_accept:
-            self.accept()
 
     def repetir(self):
         self.show_controls(True)
@@ -403,10 +405,9 @@ class WTrainBMT(LCDialog.LCDialog):
         self.lbJuegan.set_text("")
         self.lbPrimera.set_text(self.texto_lbPrimera)
         self.lbPrimera.setVisible(False)
-        self.pon_toolbar(self.finalize, self.empezar)
+        self.pon_toolbar(self.end_training, self.empezar)
         # Ahora la ventana se queda vacia - por eso lo cierro
-        self.finalize()
-        self.accept()
+        self.end_training()
 
     def disable_all(self):  # compatibilidad ControlPGN
         return
@@ -550,7 +551,7 @@ class WTrainBMT(LCDialog.LCDialog):
 
     def pon_toolbar(self, *li):
         if not li:
-            li: list[Any] = [self.finalize]
+            li: list[Any] = [self.end_training]
 
             if not self.bmt_uno.finished:
                 li.append(self.abandonar)
