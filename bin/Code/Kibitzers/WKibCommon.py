@@ -14,6 +14,9 @@ class WKibCommon(QtWidgets.QDialog):
 
     def __init__(self, cpu, icon):
         QtWidgets.QDialog.__init__(self)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(cpu.titulo)
         self.setWindowIcon(icon)
 

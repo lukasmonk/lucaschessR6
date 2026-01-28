@@ -230,10 +230,10 @@ class TabTree(QtWidgets.QWidget):
             levelbase = len(dbop.basePV.split(" "))
 
             def haz(trdata, iparent, nivel):
-                if um.canceled():
+                if um.is_canceled():
                     return False
                 for xmove, xhijo in trdata.dicHijos.items():
-                    if um.canceled():
+                    if um.is_canceled():
                         return False
                     item = QtWidgets.QTreeWidgetItem(iparent)
                     txt = f"{xhijo.pgn}{' ' * (8 - len(xhijo.pgn))}{max(xhijo.elements, 1):2d}"
@@ -342,7 +342,7 @@ class TabTree(QtWidgets.QWidget):
         with QTMessages.one_moment_please(self.parent().parent().parent(), with_cancel=True) as um:
 
             def work(xdata):
-                if um.canceled():
+                if um.is_canceled():
                     return False
                 xitem = xdata.item
                 if xitem:

@@ -399,7 +399,7 @@ class WGenBooksTrainOL(LCDialog.LCDialog):
             def dispatch(xdepth, xlines):
                 if xlines:
                     um.label(f"{mens_work}<br>{mens_depth}: {xdepth:d}<br>{mens_lines}: {xlines:d}")
-                if um.canceled():
+                if um.is_canceled():
                     return False
                 return True
 
@@ -413,7 +413,7 @@ class WGenBooksTrainOL(LCDialog.LCDialog):
                 self.reg.start_fen,
                 dispatch,
             )
-            if um.canceled():
+            if um.is_canceled():
                 return False
 
         # Must be ended with the side move

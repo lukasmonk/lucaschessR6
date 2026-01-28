@@ -27,6 +27,8 @@ class WTVMarker(QtWidgets.QDialog):
 
         QtWidgets.QDialog.__init__(self, owner)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(_("Marker"))
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint

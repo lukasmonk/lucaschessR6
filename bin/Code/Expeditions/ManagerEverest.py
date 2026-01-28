@@ -1,6 +1,6 @@
 import time
 
-from Code.Adjudicator import Adjudicator
+from Code.Arbiter import Arbiter
 from Code.Base import Move, Game
 from Code.Base.Constantes import (
     GT_AGAINST_PGN,
@@ -11,8 +11,8 @@ from Code.Base.Constantes import (
     TB_CONFIG,
     TB_UTILITIES,
     TB_RESIGN,
-    TB_ADJUDICATOR_STOP,
-    TB_ADJUDICATOR,
+    TB_ARBITER_STOP,
+    TB_ARBITER,
     TB_TAKEBACK,
 )
 from Code.Expeditions import Everest
@@ -31,7 +31,7 @@ class ManagerEverest(Manager.Manager):
     analysis: tuple | None
     numJugadasObj: int
     pos_move_obj: int
-    adjudicator: Adjudicator.Adjudicator
+    arbiter: Arbiter.Arbiter
     initial_time: float
     puntos: int
     vtime: float
@@ -61,7 +61,7 @@ class ManagerEverest(Manager.Manager):
         self.pos_move_obj = 0
         self.name_obj = self.expedition.name
 
-        self.adjudicator = Adjudicator.Adjudicator(self, self.main_window, self.name_obj, self.player_has_moved)
+        self.arbiter = Arbiter.Arbiter(self, self.main_window, self.name_obj, self.player_has_moved)
 
         self.puntos = 0
         self.vtime = 0.0
@@ -88,24 +88,24 @@ class ManagerEverest(Manager.Manager):
     def configurar_local(self):
         li_extra_options = [
             (
-                "adjudicator_options",
-                f"{_('Adjudicator')} - {_('Options')}",
+                "arbiter_options",
+                f"{_('Arbiter')} - {_('Options')}",
                 Iconos.Engines(),
             ),
         ]
 
         if resp := Manager.Manager.configurar(self, li_extra_options):
-            if resp == "adjudicator_options":
-                self.adjudicator.change_adjudicator_options()
+            if resp == "arbiter_options":
+                self.arbiter.change_arbiter_options()
 
     def thinking(self, ok):
         super().thinking(ok)
         self.pon_toolbar(stop_analysis=ok)
 
     def pon_toolbar(self, stop_analysis=False):
-        li_tool = [TB_RESIGN, TB_CONFIG, TB_UTILITIES, TB_ADJUDICATOR]
+        li_tool = [TB_RESIGN, TB_CONFIG, TB_UTILITIES, TB_ARBITER]
         if stop_analysis:
-            li_tool.append(TB_ADJUDICATOR_STOP)
+            li_tool.append(TB_ARBITER_STOP)
         self.set_toolbar(li_tool)
         if stop_analysis:
             for tool in li_tool[:-1]:
@@ -130,11 +130,11 @@ class ManagerEverest(Manager.Manager):
         elif key == TB_UTILITIES:
             self.menu_utilities_elo()
 
-        elif key == TB_ADJUDICATOR:
-            self.adjudicator.change_adjudicator_options()
+        elif key == TB_ARBITER:
+            self.arbiter.change_arbiter_options()
 
-        elif key == TB_ADJUDICATOR_STOP:
-            self.adjudicator.analyze_end()
+        elif key == TB_ARBITER_STOP:
+            self.arbiter.analyze_end()
 
         elif key == TB_CLOSE:
             self.finalize()
@@ -222,7 +222,7 @@ class ManagerEverest(Manager.Manager):
             self.human_is_playing = True
             self.activate_side(is_white)
             self.initial_time = time.time()
-            self.adjudicator.analyze_begin(self.game)
+            self.arbiter.analyze_begin(self.game)
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         user_move = self.check_human_move(from_sq, to_sq, promotion)
@@ -239,7 +239,7 @@ class ManagerEverest(Manager.Manager):
 
         self.thinking(True)
 
-        self.adjudicator.check_moves(obj_move, user_move)
+        self.arbiter.check_moves(obj_move, user_move)
 
         return True
 
@@ -255,7 +255,7 @@ class ManagerEverest(Manager.Manager):
             comentario_usu = ""
             comentario_obj = ""
 
-            mrm = self.adjudicator.get_mrm()
+            mrm = self.arbiter.get_mrm()
             rm_obj, pos_obj = mrm.search_rm(obj_move.movimiento())
             rm_usu, pos_usu = mrm.search_rm(user_move.movimiento())
 
@@ -263,15 +263,15 @@ class ManagerEverest(Manager.Manager):
 
             w = WindowJuicio.WJuicio(
                 self,
-                self.adjudicator,
+                self.arbiter,
                 self.name_obj,
                 self.game.last_position,
                 mrm,
                 rm_obj,
                 rm_usu,
                 analysis,
-                is_competitive=not self.adjudicator.show_all,
-                continue_tt=self.adjudicator.is_analysing(),
+                is_competitive=not self.arbiter.show_all,
+                continue_tt=self.arbiter.is_analysing(),
             )
             w.exec()
             analysis = w.analysis
@@ -286,7 +286,7 @@ class ManagerEverest(Manager.Manager):
                 f"{-w.rm_obj.centipawns_abs():+d} = {self.puntos}"
             )
 
-        self.adjudicator.analyze_end()  # Por si acaso no lo está ya.
+        self.arbiter.analyze_end()  # Por si acaso no lo está ya.
 
         same_move = user_move.movimiento() == obj_move.movimiento()
         if not same_move:

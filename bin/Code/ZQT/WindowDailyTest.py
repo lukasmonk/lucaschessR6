@@ -294,7 +294,7 @@ class WDailyTest(LCDialog.LCDialog):
         self.delegado_pgn = Delegados.EtiquetaPGN(None, si_indicador_inicial=False)
         o_columns.nueva("POS", _('N.'), 40, align_center=True)
         o_columns.nueva("MOVEMENT", _('Movements'), with_col, align_center=True, edicion=self.delegado_pgn)
-        o_columns.nueva("LOSS", _('Loss'), 60, align_center=True)
+        o_columns.nueva("LOSS", "🔻", 60, align_center=True)
         self.wrm = Grid.Grid(self, o_columns, complete_row_select=True)
         n_with = self.wrm.width_columns_displayables() + 20
         self.wrm.setFixedWidth(n_with)
@@ -333,7 +333,7 @@ class WDailyTest(LCDialog.LCDialog):
         elif col == "POS":
             return str(data.pos)
         elif col == "LOSS":
-            return str(data.loss)
+            return str(-data.loss)
         return None
 
     def grid_bold(self, _grid, row, obj_col):

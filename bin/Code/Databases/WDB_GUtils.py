@@ -22,6 +22,8 @@ class WOptionsDatabase(QtWidgets.QDialog):
     def __init__(self, owner, configuration, dic_data, with_import_pgn=False, name=""):
         super(WOptionsDatabase, self).__init__(owner)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.new = len(dic_data) == 0
 
         self.dic_data = dic_data

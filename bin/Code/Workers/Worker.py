@@ -43,7 +43,7 @@ class Worker(QtWidgets.QWidget):
     seconds_per_move: int
     max_seconds: int
     xmatch = None
-    manager_adjudicator = None
+    manager_arbiter = None
     next_control: int
     dic_engine_managers: dict
 
@@ -171,7 +171,7 @@ class Worker(QtWidgets.QWidget):
 
         # Rotulos de informacion
         f = Controles.FontType(puntos=configuration.x_pgn_fontpoints)
-        self.lb_rotulo2 = Controles.LB(self)
+        self.lb_rotulo2 = Controles.LB(self).set_wrap()
         self.lb_rotulo2.setStyleSheet("border: 1px solid gray;")
         self.lb_rotulo3 = Controles.LB(self).set_wrap().set_fixed_lines(2).set_font(f).align(top=True)
         self.lb_rotulo2.set_text("")
@@ -218,11 +218,11 @@ class Worker(QtWidgets.QWidget):
     def grid_right_button(self, grid, row, col, modif):
         self.configurar()
 
-    def crea_adjudicator(self):
+    def crea_arbiter(self):
         engine = Code.configuration.engines.search(self.run_worker.move_evaluator)
 
         run_engine_params = EngineRun.RunEngineParams()
-        run_engine_params.update(engine, int(self.run_worker.adjudicator_time * 1000), 0, 0, 1)
+        run_engine_params.update(engine, int(self.run_worker.arbiter_time * 1000), 0, 0, 1)
 
         engine_manager = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
         return engine_manager
@@ -245,10 +245,10 @@ class Worker(QtWidgets.QWidget):
         # Cerramos los motores anteriores si los hay
         Code.list_engine_managers.close_all()
 
-        if self.run_worker.adjudicator_active:
-            self.manager_adjudicator = self.crea_adjudicator()
+        if self.run_worker.arbiter_active:
+            self.manager_arbiter = self.crea_arbiter()
         else:
-            self.manager_adjudicator = None
+            self.manager_arbiter = None
 
         if self.run_worker.draw_range == 0 and self.run_worker.resign == 0:
             self.next_control = INFINITE
@@ -652,8 +652,8 @@ class Worker(QtWidgets.QWidget):
         p_ult = rm_ult.centipawns_abs()
         p_ant = -rm_ant.centipawns_abs()
 
-        def adjudicator_score():
-            rm = self.manager_adjudicator.play_game(self.game)
+        def arbiter_score():
+            rm = self.manager_arbiter.play_game(self.game)
             self.next_control = 10
             return rm.centipawns_abs()
 
@@ -661,7 +661,7 @@ class Worker(QtWidgets.QWidget):
         dr = self.run_worker.draw_range
         dmp = self.run_worker.draw_min_ply
         if dmp and dr > 0 and num_moves >= dmp and (abs(p_ult) <= dr and abs(p_ant) <= dr):
-            p_tut = adjudicator_score() if self.manager_adjudicator else 0
+            p_tut = arbiter_score() if self.manager_arbiter else 0
             if abs(p_tut) <= dr:
                 self.game.set_termination(TERMINATION_ADJUDICATION, RESULT_DRAW)
                 return True
@@ -670,7 +670,7 @@ class Worker(QtWidgets.QWidget):
         # Resign
         rs = self.run_worker.resign
         if 0 < rs <= abs(p_ult) or 0 < rs <= abs(p_ant):
-            p_tut = adjudicator_score() if self.manager_adjudicator else rs  # si no hay manager que pase el control
+            p_tut = arbiter_score() if self.manager_arbiter else rs  # si no hay manager que pase el control
             if abs(p_tut) >= rs:
                 is_white = self.game.last_position.is_white
                 if p_tut > 0:

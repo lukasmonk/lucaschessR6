@@ -1634,7 +1634,7 @@ class Opening:
         game = Game.Game() if translated else None
 
         for xpv in self.li_xpv:
-            if um.canceled():
+            if um.is_canceled():
                 break
             lipv = FasterCode.xpv_pv(xpv).split(" ")
             if translated:

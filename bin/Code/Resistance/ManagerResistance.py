@@ -29,7 +29,7 @@ class ManagerResistance(Manager.Manager):
     lostmovepoints: int
     is_battle: bool
     movements_rival: int
-    manager_adjudicator: EngineManagerPlay.EngineManagerPlay
+    manager_arbiter: EngineManagerPlay.EngineManagerPlay
     
     def start(self, resistance, num_engine, str_side):
 
@@ -57,8 +57,8 @@ class ManagerResistance(Manager.Manager):
 
         # debe hacerse antes que rival
         self.procesador.close_engines()
-        engine_adjudicator = self.configuration.engines.engine_analyzer()
-        self.manager_adjudicator = self.procesador.create_manager_engine(engine_adjudicator, self.seconds * 1000, 0, 0)
+        engine_arbiter = self.configuration.engines.engine_analyzer()
+        self.manager_arbiter = self.procesador.create_manager_engine(engine_arbiter, self.seconds * 1000, 0, 0)
 
         engine = resistance.dameClaveEngine(num_engine)
         rival = self.configuration.engines.search(engine)
@@ -220,17 +220,17 @@ class ManagerResistance(Manager.Manager):
     def verify(self):
         if len(self.game) < (3 if self.is_engine_side_white else 4):
             return False
-        if self.manager_rival.engine.key != self.manager_adjudicator.engine.key:
+        if self.manager_rival.engine.key != self.manager_arbiter.engine.key:
 
             with QTMessages.WaitingMessage(self.main_window, _("Checking...")):
-                rm1 = self.manager_adjudicator.play(self.game)
+                rm1 = self.manager_arbiter.play(self.game)
                 self.rival_points = -rm1.centipawns_abs()   # el movimiento del rival está ya en game
                 self.put_current_label()
                 if self.maxerror:
                     game1 = self.game.copia()
                     game1.remove_only_last_movement()
                     game1.remove_only_last_movement()
-                    rm0 = self.manager_adjudicator.play(game1)
+                    rm0 = self.manager_arbiter.play(game1)
                     previo_rival = -rm0.centipawns_abs()
                     self.lostmovepoints = self.rival_points - previo_rival
                     if self.lostmovepoints > self.maxerror:

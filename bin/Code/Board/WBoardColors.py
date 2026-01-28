@@ -1353,6 +1353,8 @@ class WNameTheme(QtWidgets.QDialog):
     def __init__(self, owner, theme, your_themes):
         super(WNameTheme, self).__init__(owner)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.theme = theme
         li_sections = [theme["SECCION"] for theme in your_themes if "SECCION" in theme]
         self.li_sections = list(set(li_sections))

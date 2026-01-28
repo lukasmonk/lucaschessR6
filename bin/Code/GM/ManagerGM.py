@@ -4,7 +4,7 @@ from typing import Callable, Any
 
 import Code
 from Code.Z import Adjournments, Util
-from Code.Adjudicator import Adjudicator
+from Code.Arbiter import Arbiter
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_AGAINST_GM,
@@ -25,7 +25,7 @@ from Code.ZQT import WindowJuicio
 from Code.SQL import UtilSQL
 
 
-class AdjudicatorGM(Adjudicator.Adjudicator):
+class ArbiterGM(Arbiter.Arbiter):
     def __init__(self, owner, gm, rut_player_move: Callable, name_engine: str, ms_time: int, depth: int, multipv: int):
         self.name_engine = name_engine
         self.depth = depth
@@ -43,7 +43,7 @@ class ManagerGM(Manager.Manager):
     ini_time_s = 0.0
     puntos: int
     record: Util.Record
-    adjudicator: AdjudicatorGM
+    arbiter: ArbiterGM
     name_engine: str
     gm_move: Move.Move
     user_move: Move.Move
@@ -51,7 +51,7 @@ class ManagerGM(Manager.Manager):
     vtime: int
     is_white: bool
     modo: GM.GameMode
-    with_adjudicator: bool
+    with_arbiter: bool
     show_evals: bool
     mostrar: bool
     select_rival_move: bool
@@ -85,7 +85,7 @@ class ManagerGM(Manager.Manager):
         self.gm = record.gm
         self.is_white = record.is_white
         self.modo = record.modo
-        self.with_adjudicator = record.with_adjudicator
+        self.with_arbiter = record.with_arbiter
         self.show_evals = record.show_evals
         self.mostrar = record.mostrar
         self.select_rival_move = record.select_rival_move
@@ -100,12 +100,12 @@ class ManagerGM(Manager.Manager):
 
         self.is_analyzing = False
 
-        if self.with_adjudicator:
+        if self.with_arbiter:
             name_engine = record.engine
             ms_time = int(record.vtime * 100)
             depth = record.depth
             multipv = record.multiPV
-            self.adjudicator = AdjudicatorGM(self, self.gm, self.player_has_moved, name_engine, ms_time, depth, multipv)
+            self.arbiter = ArbiterGM(self, self.gm, self.player_has_moved, name_engine, ms_time, depth, multipv)
             self.puntos = 0
             self.analysis = None
 
@@ -176,8 +176,8 @@ class ManagerGM(Manager.Manager):
         return self.end_game()
 
     def end_game(self):
-        if self.with_adjudicator:
-            self.adjudicator.close()
+        if self.with_arbiter:
+            self.arbiter.close()
         if len(self.game) > 0 and self.state != ST_ENDGAME:
             self.game.set_unknown()
             self.set_end_game()
@@ -187,7 +187,7 @@ class ManagerGM(Manager.Manager):
 
     def reiniciar(self):
         if QTMessages.pregunta(self.main_window, _("Restart the game?")):
-            self.adjudicator.analyze_end()
+            self.arbiter.analyze_end()
             self.game.set_position()
             self.main_window.active_information_pgn(False)
             self.start(self.record)
@@ -303,8 +303,8 @@ class ManagerGM(Manager.Manager):
     def play_human(self, is_white):
         self.human_is_playing = True
         self.ini_time_s = time.time()
-        if self.with_adjudicator:
-            self.adjudicator.analyze_begin(self.game)
+        if self.with_arbiter:
+            self.arbiter.analyze_begin(self.game)
         self.activate_side(is_white)
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
@@ -319,7 +319,7 @@ class ManagerGM(Manager.Manager):
 
         position = self.game.last_position
         li_moves = self.engine_gm.get_moves_txt(position, True)
-        if len(li_moves) > 1:
+        if len(li_moves) >= 1:
             ok = False
             for mv in li_moves:
                 if mv[0] == from_sq and mv[1] == to_sq and mv[2] == promotion:
@@ -334,9 +334,9 @@ class ManagerGM(Manager.Manager):
         self.human_is_playing = True
         self.gm_move = self.check_human_move(from_sq_gm, to_sq_gm, promotion_gm)
 
-        if self.with_adjudicator:
+        if self.with_arbiter:
             self.thinking(True)
-            self.adjudicator.check_moves(self.gm_move, user_move)
+            self.arbiter.check_moves(self.gm_move, user_move)
 
         else:
             self.player_has_moved(user_move)
@@ -350,14 +350,14 @@ class ManagerGM(Manager.Manager):
         is_valid = self.engine_gm.is_valid_move(movimiento)
         same_move = user_move == gm_move
 
-        show_adjudicator = self.with_adjudicator and self.modo != GM.ShowOption.NEVER and not book_moves
-        if show_adjudicator and self.modo == GM.ShowOption.WHEN_DIFFERENT:
-            show_adjudicator = not same_move
+        show_arbiter = self.with_arbiter and self.modo != GM.ShowOption.NEVER and not book_moves
+        if show_arbiter and self.modo == GM.ShowOption.WHEN_DIFFERENT:
+            show_arbiter = not same_move
 
         position = self.game.last_position
 
-        if self.with_adjudicator and not book_moves:
-            mrm = self.adjudicator.get_mrm()
+        if self.with_arbiter and not book_moves:
+            mrm = self.arbiter.get_mrm()
             rm_gm, pos_gm = mrm.search_rm(gm_move.movimiento())
             rm_user, pos_user = mrm.search_rm(user_move.movimiento())
             analysis = mrm, pos_gm
@@ -366,10 +366,10 @@ class ManagerGM(Manager.Manager):
             pgn_gm = self.gm_move.pgn_translated()
             pgn_user = user_move.pgn_translated()
 
-            if show_adjudicator:
+            if show_arbiter:
                 w = WindowJuicio.WJuicio(
                     self,
-                    self.adjudicator,
+                    self.arbiter,
                     self.nombreGM,
                     position,
                     mrm,
@@ -377,7 +377,7 @@ class ManagerGM(Manager.Manager):
                     rm_user,
                     analysis,
                     is_competitive=self.show_evals != GM.ShowOption.WHEN_DIFFERENT,
-                    continue_tt=self.adjudicator.is_analysing(),
+                    continue_tt=self.arbiter.is_analysing(),
                 )
                 w.exec()
 
@@ -405,8 +405,8 @@ class ManagerGM(Manager.Manager):
                 )
             gm_move.analysis = analysis
 
-        if self.with_adjudicator:
-            self.adjudicator.analyze_end()
+        if self.with_arbiter:
+            self.arbiter.analyze_end()
 
         # self.move_the_pieces(gm_move.list_piece_moves)
 
@@ -459,7 +459,7 @@ class ManagerGM(Manager.Manager):
 
         txt, porc, txt_resumen = self.engine_gm.resultado(self.game)
         mensaje += f"<br><br>{txt}"
-        if self.with_adjudicator:
+        if self.with_arbiter:
             mensaje += f"<br><br><b>{_('Centipawns accumulated')}</b> = {self.puntos:+d}<br>"
 
         self.message_on_pgn(mensaje)

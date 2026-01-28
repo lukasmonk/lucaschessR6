@@ -368,7 +368,7 @@ class TallerSonido:
         self.playing()
 
     def playing(self):
-        if self.owner.is_canceled:
+        if self.owner.is_canceled():
             return
         t1 = time.time()
         hundreds_of_second = (t1 - self.ini_time) * 100 + self.cent_desde

@@ -1152,10 +1152,10 @@ class WLines(LCDialog.LCDialog):
 
                     def dispatch(rm, ms):
                         wmsg.label(f'{mens}<br><small>{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}')
-                        return not wmsg.canceled()
+                        return not wmsg.is_canceled()
 
                     mrm, pos = xanalyzer.analyze_move(game, len(game) - 1, dispatch)
-                    if wmsg.canceled():
+                    if wmsg.is_canceled():
                         return
             if pos < 0:
                 return
@@ -1869,7 +1869,7 @@ class WImportPolyglot(LCDialog.LCDialog):
             def dispatch(xdepth, xlines):
                 if xlines:
                     um.label(f"{mens_work}<br>{mens_depth}: {xdepth:d}<br>{mens_lines}: {xlines:d}")
-                if um.canceled():
+                if um.is_canceled():
                     return False
                 return True
 
@@ -1887,7 +1887,7 @@ class WImportPolyglot(LCDialog.LCDialog):
                 weight_min_white=weight_min_white,
                 weight_min_black=weight_min_black,
             )
-            if um.canceled():
+            if um.is_canceled():
                 return False
 
         if len(lines) == 0:

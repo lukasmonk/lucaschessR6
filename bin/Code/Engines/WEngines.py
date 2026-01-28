@@ -339,6 +339,7 @@ class WEngineExtend(QtWidgets.QDialog):
     def __init__(self, w_parent, list_engines, engine, is_tournament=False):
 
         super(WEngineExtend, self).__init__(w_parent)
+
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
         self.setWindowTitle(engine.name)

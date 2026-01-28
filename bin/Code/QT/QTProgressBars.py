@@ -9,6 +9,8 @@ class TwoProgressBars(QtWidgets.QDialog):
     def __init__(self, owner, titulo, formato1="%v/%m", formato2="%v/%m", with_pause=False):
         super().__init__(owner)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.owner = owner
         self.with_pause = with_pause
 
@@ -99,6 +101,8 @@ class TwoProgressBars(QtWidgets.QDialog):
 class ProgressBarWithTime(QtWidgets.QDialog):
     def __init__(self, owner, titulo, formato1="%v/%m", show_time=False):
         QtWidgets.QDialog.__init__(self, owner)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
         self.owner = owner
         self.show_time = show_time

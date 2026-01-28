@@ -194,12 +194,25 @@ class Tournament:
         self.db_games_queued = UtilSQL.ListObjSQL(self.file, GameTournament, tabla="games_queued")
         self.db_games_finished = UtilSQL.ListObjSQL(self.file, GameTournament, tabla="games_finished")
 
-    def check_databases(self):
+    def check_databases(self) -> bool:
+        ok = True
         engine: EngineTournament
         dic_engines = self.db_engines.as_dictionary()
         for huella, engine in dic_engines.items():
             if not engine.exists():
                 self.remove_engine(engine)
+                ok = False
+
+        return ok
+
+    def check_engines(self) -> bool:
+        ok = True
+        engine: EngineTournament
+        dic_engines = self.db_engines.as_dictionary()
+        for huella, engine in dic_engines.items():
+            if not engine.exists():
+                ok = False
+        return ok
 
     def name(self):
         return os.path.basename(self.file)[:-4]
@@ -257,14 +270,14 @@ class Tournament:
     def draw_range(self, valor=None):
         return self.config("drawrange", valor, 10)
 
-    def adjudicator_active(self, valor=None):
-        return self.config("adjudicator_active", valor, False)
+    def arbiter_active(self, valor=None):
+        return self.config("arbiter_active", valor, False)
 
     def move_evaluator(self, valor=None):
         return self.config("move_evaluator", valor, Code.configuration.tutor_default)
 
-    def adjudicator_time(self, valor=None):
-        return self.config("adjudicator_time", valor, 5.0)
+    def arbiter_time(self, valor=None):
+        return self.config("arbiter_time", valor, 5.0)
 
     def last_folder_engines(self, valor=None):
         return self.config("last_folder_engines", valor, None)

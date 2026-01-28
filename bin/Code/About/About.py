@@ -10,6 +10,8 @@ class WAbout(QtWidgets.QDialog):
         procesador = Code.procesador
         super(WAbout, self).__init__(procesador.main_window)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         # gen_web_bootstrap()
 
         self.setWindowTitle(_("About"))  # noqa: F821

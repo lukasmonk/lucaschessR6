@@ -200,7 +200,7 @@ class WEdicionSonido(LCDialog.LCDialog):
         self.mesa.set_hundreds_of_second(self.taller.hundreds_of_second)
 
         self.siGrabando = False
-        self.is_canceled = False
+        self._is_canceled = False
 
         self.max_time = max_time if max_time else 300.0  # seconds=5 minutos
 
@@ -220,7 +220,7 @@ class WEdicionSonido(LCDialog.LCDialog):
 
     def closeEvent(self, event):  # Cierre con X
         self.siGrabando = False
-        self.is_canceled = True
+        self._is_canceled = True
         self.save_video()
 
     def pon_base_tb(self):
@@ -278,7 +278,7 @@ class WEdicionSonido(LCDialog.LCDialog):
     def procesa_tb(self):
         accion = self.sender().key
         if accion == self.ks_aceptar:
-            self.is_canceled = True
+            self._is_canceled = True
             if self.mesa.si_hay_que_recortar():
                 from_sq, to_sq = self.mesa.limites()
                 self.taller.recorta(from_sq, to_sq)
@@ -298,7 +298,7 @@ class WEdicionSonido(LCDialog.LCDialog):
             self.microfono()
         elif accion == self.ks_cancelmic:
             self.siGrabando = False
-            self.is_canceled = True
+            self._is_canceled = True
             self.pon_base_tb()
 
         elif accion == self.ks_record:
@@ -314,13 +314,16 @@ class WEdicionSonido(LCDialog.LCDialog):
         elif accion == self.ks_stopplay:
             self.siPlay = False
 
+    def is_canceled(self):
+        return self._is_canceled
+
     def microfono(self):
         self.pon_toolbar((self.ks_cancelmic, None, self.ks_record))
 
     def mic_record(self):
         self.pon_toolbar((self.ks_cancelmic, None, self.ks_stopmic))
         self.siGrabando = True
-        self.is_canceled = False
+        self._is_canceled = False
 
         self.mesa.set_hundreds_of_second(0)
 
@@ -338,7 +341,7 @@ class WEdicionSonido(LCDialog.LCDialog):
 
         self.siGrabando = False
         self.taller.mic_end()
-        if self.is_canceled:
+        if self._is_canceled:
             self.taller.reset_to_0()
             self.mesa.set_hundreds_of_second(0)
         else:

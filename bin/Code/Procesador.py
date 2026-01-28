@@ -676,6 +676,10 @@ class Procesador:
         tmr = ToolsMenuRun.ToolsMenuRun(tm)
         tmr.pgn_read(pgn)
 
+    def strenght101(self):
+        tm = CompeteMenu.CompeteMenu(self)
+        tm.strenght101()
+
     @staticmethod
     def num_rows():
         return 0

@@ -19,6 +19,8 @@ class WTVArrow(QtWidgets.QDialog):
 
         QtWidgets.QDialog.__init__(self, owner)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(_("Arrow"))
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint

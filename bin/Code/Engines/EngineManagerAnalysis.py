@@ -19,7 +19,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         loop = QtCore.QEventLoop()
         timer = QtCore.QTimer(loop)
         timer.setInterval(self.ms_refresh)
-        self.is_canceled = False
+        self._is_canceled = False
 
         def check_state(bestmove):
             def close():
@@ -36,7 +36,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
             if dispacher and self.engine_run and self.engine_run.mrm:
                 if not dispacher(rm=self.engine_run.mrm.best_rm_ordered(), ms=self.elapsed_time.elapsed()):
-                    self.is_canceled = True
+                    self._is_canceled = True
                     self.engine_run.stop()
                     close()
                     return
@@ -105,7 +105,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             return None, -1
 
         self.mrm = self.engine_run.mrm
-        if self.is_canceled:
+        if self._is_canceled:
             return self.mrm, -1
 
         movimiento = move.movimiento()
@@ -119,7 +119,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             else:
                 tmp_play_params = self.run_engine_params
             rm = self.analyze_post_move(game, movement, tmp_play_params, dispacher)
-            if self.is_canceled or rm is None:
+            if self._is_canceled or rm is None:
                 return mrm, -1
             rm.change_side(mv_insert=movimiento)
             mrm.add_rm(rm)
@@ -218,7 +218,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
         self.enabled_emit_bestmove_found = emit_bestmove_found
         self.enabled_emit_depth_changed = emit_depth_changed
-        if self.is_disabled or self.is_canceled or mrm_new is None:
+        if self.is_disabled or self._is_canceled or mrm_new is None:
             return None
 
         rm = mrm_new.best_rm_ordered()

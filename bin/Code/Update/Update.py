@@ -95,10 +95,10 @@ def update_file(titulo: str, urlfichero: str, tam: int, sha256: Optional[str] = 
             progreso.cerrar()
             return False
 
-        is_canceled = progreso.is_canceled()
+        _is_canceled = progreso.is_canceled()
         progreso.cerrar()
 
-        if is_canceled:
+        if _is_canceled:
             logger.info("Update canceled by user")
             return False
 

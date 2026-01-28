@@ -384,7 +384,7 @@ class Swiss:
         self.draw_min_ply = 50
         self.draw_range = 10
         self.move_evaluator = Code.configuration.analyzer_default
-        self.adjudicator_time = 5.0
+        self.arbiter_time = 5.0
         self.time_engine_human = (15.0, 6)
         self.time_engine_engine = (3.0, 0)
         self.time_added_human = 0.0
@@ -417,9 +417,9 @@ class Swiss:
             "SLOW_PIECES": self.slow_pieces,
             "DRAW_MIN_PLY": self.draw_min_ply,
             "DRAW_RANGE": self.draw_range,
-            "ADJUDICATOR_ACTIVE": True,  # self.adjudicator_active,
-            "ADJUDICATOR": self.move_evaluator,
-            "ADJUDICATOR_TIME": self.adjudicator_time,
+            "ARBITER_ACTIVE": True,  # self.arbiter_active,
+            "arbiter": self.move_evaluator,
+            "ARBITER_TIME": self.arbiter_time,
             "TIME_ENGINE_HUMAN": self.time_engine_human,
             "TIME_ENGINE_ENGINE": self.time_engine_engine,
             "SAVED_OPPONENTS": [opponent.save() for opponent in self.li_opponents],
@@ -446,8 +446,8 @@ class Swiss:
         self.slow_pieces = dic_data.get("SLOW_PIECES", self.slow_pieces)
         self.draw_min_ply = dic_data.get("DRAW_MIN_PLY", self.draw_min_ply)
         self.draw_range = dic_data.get("DRAW_RANGE", self.draw_range)
-        self.move_evaluator = dic_data.get("ADJUDICATOR", self.move_evaluator)
-        self.adjudicator_time = dic_data.get("ADJUDICATOR_TIME", self.adjudicator_time)
+        self.move_evaluator = dic_data.get("arbiter", self.move_evaluator)
+        self.arbiter_time = dic_data.get("ARBITER_TIME", self.arbiter_time)
         self.time_engine_human = dic_data.get("TIME_ENGINE_HUMAN", self.time_engine_human)
         self.time_engine_engine = dic_data.get("TIME_ENGINE_ENGINE", self.time_engine_engine)
         self.current_num_season = dic_data.get("CURRENT_NUM_SEASON", self.current_num_season)
@@ -481,7 +481,7 @@ class Swiss:
                 li.append(s)
         return li
 
-    def adjudicator_active(self):
+    def arbiter_active(self):
         return self.resign > 0 or self.draw_range > 0
 
     def num_opponents(self):

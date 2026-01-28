@@ -21,9 +21,9 @@ class TournamentWorker(RunWorker.RunWorker):
         self.file_tournament_work = file_tournament_work
         self.name = self.tournament_work.run_name
         self.key_video = "TOURNAMENTPLAY"
-        self.adjudicator_active = self.tournament_work.adjudicator_active()
+        self.arbiter_active = self.tournament_work.arbiter_active()
         self.move_evaluator = self.tournament_work.move_evaluator()
-        self.adjudicator_time = self.tournament_work.adjudicator_time()
+        self.arbiter_time = self.tournament_work.arbiter_time()
         self.draw_range = self.tournament_work.run_drawRange
         self.draw_min_ply = self.tournament_work.run_drawMinPly
         self.resign = self.tournament_work.run_resign

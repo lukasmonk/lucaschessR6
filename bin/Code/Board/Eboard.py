@@ -1,4 +1,5 @@
 import ctypes
+
 import os
 import time
 
@@ -191,33 +192,33 @@ class Eboard:
                             pass
             else:
                 if self.name == "Certabo":
-                    path_dll = Util.opj(path_eboards, "CER_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-CER64.dll")
                 elif self.name == "Chessnut":
-                    path_dll = Util.opj(path_eboards, "NUT_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-NUT64.dll")
                 elif self.name == "DGT-gon":
-                    path_dll = Util.opj(path_eboards, "DGT_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-DGT64.dll")
                 elif self.name == "Pegasus":
-                    path_dll = Util.opj(path_eboards, "PEG_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-PEG64.dll")
                 elif self.name == "Millennium":
-                    path_dll = Util.opj(path_eboards, "MCL_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-MCL64.dll")
                 elif self.name == "Citrine":
-                    path_dll = Util.opj(path_eboards, "CIT_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-CIT64.dll")
                 elif self.name == "Saitek":
-                    path_dll = Util.opj(path_eboards, "OSA_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-OSA64.dll")
                 elif self.name == "Square Off":
-                    path_dll = Util.opj(path_eboards, "SOP_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-SOP64.dll")
                 elif self.name == "Tabutronic":
-                    path_dll = Util.opj(path_eboards, "TAB_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-TAB64.dll")
                 elif self.name == "iChessOne":
-                    path_dll = Util.opj(path_eboards, "ICO_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-ICO64.dll")
                 elif self.name == "Chessnut Evo":
-                    path_dll = Util.opj(path_eboards, "EVO_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-EVO64.dll")
                 elif self.name == "HOS Sensory":
-                    path_dll = Util.opj(path_eboards, "HOS_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-HOS64.dll")
                 elif self.name == "Chessnut Move":
-                    path_dll = Util.opj(path_eboards, "MOV_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-MOV64.dll")
                 else:
-                    path_dll = Util.opj(path_eboards, "UCB_DLL.dll")
+                    path_dll = Util.opj(path_eboards, "gon-UCB64.dll")
                 if os.path.isfile(path_dll):
                     try:
                         driver = ctypes.WinDLL(path_dll)
@@ -328,8 +329,11 @@ class Eboard:
             self.driver._DGTDLL_HideDialog(ctypes.c_int(1))
             self.setup = False
             if Util.is_windows():
-                handle = self.driver._handle
-                ctypes.windll.kernel32.FreeLibrary(handle)
+                from ctypes import wintypes
+                kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+                kernel32.FreeLibrary.argtypes = [wintypes.HMODULE]
+                kernel32.FreeLibrary.restype = wintypes.BOOL
+                kernel32.FreeLibrary(self.driver._handle)
 
             del self.driver
             self.driver = None

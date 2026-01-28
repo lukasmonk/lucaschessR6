@@ -959,6 +959,9 @@ class FormDialog(QtWidgets.QDialog):
             li_extra_options=None,
     ):
         super(FormDialog, self).__init__(parent, QtCore.Qt.WindowType.Dialog)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         flags = self.windowFlags()
         flags &= ~QtCore.Qt.WindowType.WindowContextHelpButtonHint
         self.setWindowFlags(flags)

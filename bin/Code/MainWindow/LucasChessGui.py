@@ -147,6 +147,9 @@ def run_gui(procesador):
 class WPassword(QtWidgets.QDialog):
     def __init__(self, li_usuarios):
         QtWidgets.QDialog.__init__(self, None)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
             | QtCore.Qt.WindowType.Dialog

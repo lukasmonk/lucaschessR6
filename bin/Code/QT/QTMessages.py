@@ -71,7 +71,7 @@ class WaitingMessage(QtWidgets.QWidget):
         self.owner = parent
 
         self.physical_pos = physical_pos
-        self.is_canceled = False
+        self._is_canceled = False
 
         if physical_pos == ON_TOOLBAR:
             fixed_size = parent.width()
@@ -131,12 +131,12 @@ QPushButton:pressed {
         self.is_closed = False
 
     def cancelar(self):
-        self.is_canceled = True
+        self._is_canceled = True
         self.final()
 
-    def canceled(self):
+    def is_canceled(self):
         QTUtils.refresh_gui()
-        return self.is_canceled
+        return self._is_canceled
 
     def activate_cancel(self, ok):
         self.btCancelar.setVisible(ok)
@@ -180,7 +180,7 @@ QPushButton:pressed {
             QTUtils.refresh_gui()
 
     def dispatcher_analysis(self, rm, ms):
-        if self.canceled():
+        if self.is_canceled():
             return False
         else:
             self.label(f'{self.mensaje}\n{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}')
@@ -191,7 +191,7 @@ QPushButton:pressed {
             if not self:
                 return
             self.ms -= 100
-            if self.canceled() or self.ms <= 0:
+            if self.is_canceled() or self.ms <= 0:
                 self.ms = 0
                 self.final()
                 return
@@ -259,6 +259,8 @@ def temporary_message(
 class TwoProgressBars(QtWidgets.QDialog):
     def __init__(self, owner, titulo, formato1="%v/%m", formato2="%v/%m", with_pause=False):
         QtWidgets.QDialog.__init__(self, owner)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
         self.owner = owner
         self.is_closed = False
@@ -365,6 +367,8 @@ class TwoProgressBars(QtWidgets.QDialog):
 class ProgressBarWithTime(QtWidgets.QDialog):
     def __init__(self, owner, titulo, formato1="%v/%m", show_time=False):
         QtWidgets.QDialog.__init__(self, owner)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
         self.owner = owner
         self.show_time = show_time
@@ -795,6 +799,9 @@ def message_menu(owner, main, the_message, delayed, zzpos=True, dont_show=False)
 class SimpleWindow(QtWidgets.QDialog):
     def __init__(self, owner, title, label, valor, mas_info, width, in_cursor, li_values):
         QtWidgets.QDialog.__init__(self, owner)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(title)
         self.resultado = None
         self.setWindowFlags(

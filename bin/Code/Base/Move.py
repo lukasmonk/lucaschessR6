@@ -223,11 +223,6 @@ class Move:
     def movimiento(self):
         return self.from_sq + self.to_sq + self.promotion.lower()
 
-    def pgn_translated(self):
-        d_conv = TrListas.dic_conv()
-        li = [d_conv.get(c, c) for c in self.base_pgn()]
-        return "".join(li)
-
     def pgn_figurines(self):
         return self.base_pgn()
 
@@ -288,7 +283,18 @@ class Move:
             resto = f" {resto}"
         return self.base_pgn() + resto
 
-    def resto(self, with_variations=True, with_nag_symbols=False):
+    def pgn_translated(self):
+        d_conv = TrListas.dic_conv()
+        li = [d_conv.get(c, c) for c in self.base_pgn()]
+        base = "".join(li)
+        resto = self.resto(translated=True)
+        if not resto:
+            return base
+        if resto[0] not in "?!":
+            resto = f" {resto}"
+        return base + resto
+
+    def resto(self, with_variations=True, with_nag_symbols=False, translated=False):
         resp = ""
         if self.li_nags:
             self.li_nags.sort()
@@ -322,7 +328,7 @@ class Move:
                 s -= m * 60
                 resp += "{[%%clk %02d:%02d:%02.2f]}" % (h, m, s)
         if with_variations and len(self.variations):
-            resp += f" {self.variations.get_pgn()}"
+            resp += f" {self.variations.get_pgn(translated)}"
 
         resp = resp.strip()
         return f" {resp}" if resp else ""
@@ -531,9 +537,9 @@ class Variations:
     def get(self, num_variation):
         return self.li_variations[num_variation] if len(self.li_variations) > num_variation else None
 
-    def get_pgn(self):
+    def get_pgn(self, translated=False):
         if self.li_variations:
-            return " ".join([f"({v.pgn_base_raw()})" for v in self.li_variations])
+            return " ".join([f"({v.pgn_base_raw(translated=translated)})" for v in self.li_variations])
         return ""
 
     def clear(self):

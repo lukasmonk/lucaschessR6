@@ -268,7 +268,7 @@ class TrainMenu(BaseMenu.RootMenu):
 
         gen_folder(Code.path_resource("Trainings"), self.submenu_training_positions, icono_base)
 
-        submenu_personal = self.submenu_training_positions.new_submenu(_("Personal training"), icono_personal)
+        submenu_personal = self.submenu_training_positions.new_submenu(_("Personal Training"), icono_personal)
         gen_folder(
             Code.configuration.paths.folder_personal_trainings(),
             submenu_personal,

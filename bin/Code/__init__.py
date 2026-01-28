@@ -101,7 +101,7 @@ def relative_root(path):
 
 
 BASE_VERSION = "C"
-VERSION = "R 6.0.0.4"
+VERSION = "R 6.0.0.5"
 
 if __debug__:
     from Code.Z import Debug

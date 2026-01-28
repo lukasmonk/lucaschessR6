@@ -492,7 +492,7 @@ class WBMT(LCDialog.LCDialog):
         tmp_bp = QTMessages.ProgressBarSimple(self.procesador.main_window, name, mensaje, tam_lista).mostrar()
 
         cp = Position.Position()
-        is_canceled = False
+        _is_canceled = False
 
         game = Game.Game()
 
@@ -505,7 +505,7 @@ class WBMT(LCDialog.LCDialog):
             tmp_bp.mensaje(mensaje + " %d/%d" % (pos, tam_lista))
             tmp_bp.pon(pos)
             if tmp_bp.is_canceled():
-                is_canceled = True
+                _is_canceled = True
                 break
 
             mrm = xmanager.analiza(fen)
@@ -518,7 +518,7 @@ class WBMT(LCDialog.LCDialog):
 
             for rm in mrm.li_rm:
                 if tmp_bp.is_canceled():
-                    is_canceled = True
+                    _is_canceled = True
                     break
                 pts = rm.centipawns_abs()
                 if pts != previa:
@@ -532,14 +532,14 @@ class WBMT(LCDialog.LCDialog):
                 game.read_pv(rm.pv)
                 rm.txtPartida = game.save()
 
-            if is_canceled:
+            if _is_canceled:
                 break
 
             uno.mrm = mrm  # lo cambiamos y ya esta
 
         xmanager.finalize()
 
-        if not is_canceled:
+        if not _is_canceled:
             bmt_lista.reiniciar()
 
             reg = self.dbf.baseRegistro()
