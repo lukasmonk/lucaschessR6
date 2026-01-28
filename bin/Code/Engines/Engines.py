@@ -96,8 +96,11 @@ class Engine:
         if is_extern:
             self.set_extern()
         if self.parent_external:
-            if conf_parent := Code.configuration.engines.dic_engines().get(self.parent_external):
-                self.path_exe = conf_parent.path_exe
+            try:
+                if conf_parent := Code.configuration.engines.dic_engines().get(self.parent_external):
+                    self.path_exe = conf_parent.path_exe
+            except AttributeError:
+                pass
         previous = os.path.abspath(os.curdir)
         try:
             self.read_uci_options()
@@ -235,7 +238,7 @@ class Engine:
 
     def remove_uci_options(self):
         if self.type == ENG_EXTERNAL:
-            path_uci_options = os.path.join(Code.configuration.paths.folder_config, self.uci_options_sqlite)
+            path_uci_options = os.path.join(Code.configuration.paths.folder_config(), self.uci_options_sqlite)
             with UtilSQL.DictTextSQL(path_uci_options) as dbuci:
                 del dbuci[self.key_engine()]
 

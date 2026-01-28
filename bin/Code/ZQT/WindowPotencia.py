@@ -6,14 +6,14 @@ import time
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Base.Constantes import MULTIPV_MAXIMIZE
-from Code.Z import Util
 from Code.Analysis import Analysis
 from Code.Base import Game, Move, Position
+from Code.Base.Constantes import MULTIPV_MAXIMIZE
 from Code.Board import Board2
+from Code.Engines import EngineManagerAnalysis
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import Base, UtilSQL
-from Code.Engines import EngineManagerAnalysis
+from Code.Z import Util
 
 
 def lee_1_linea_mfn(linea):
@@ -23,7 +23,7 @@ def lee_1_linea_mfn(linea):
     for x in cabs.split("|"):
         sp = x.index(" ")
         k = x[:sp]
-        v = x[sp + 1 :]
+        v = x[sp + 1:]
         dic[k] = v
         game.set_tag(k, v)
     game.read_pv(pv)
@@ -450,15 +450,16 @@ class WPotenciaBase(LCDialog.LCDialog):
             self.ghistorico.gotop()
             self.ghistorico.refresh()
 
-    def grid_doble_click(self, grid, fil, col):
-        self.repetir(fil)
+    def grid_doble_click(self, _grid, row, _obj_column):
+        if row >= 0:
+            self.repeat_row(row)
 
-    def repetir(self, fil=None):
-        if fil is None:
-            fil = self.ghistorico.recno()
-            if fil < 0:
-                return
-        reg = self.historico[fil]
+    def repetir(self):
+        if row := self.ghistorico.recno() >= 0:
+            self.repeat_row(row)
+
+    def repeat_row(self, row):
+        reg = self.historico[row]
         linea = reg.LINE
         if linea:
             w = WPotencia(

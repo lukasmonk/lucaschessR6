@@ -251,6 +251,8 @@ class WWork(QtWidgets.QDialog):
     def __init__(self, w_parent, osts, work):
         super(WWork, self).__init__(w_parent)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.work = work
 
         self.setWindowTitle(work.path_to_exe())

@@ -15,6 +15,8 @@ class WFiltrar(QtWidgets.QDialog):
     def __init__(self, w_parent, li_filter, db_save_nom=None):
         super(WFiltrar, self).__init__(w_parent)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         if db_save_nom is None:
             db_save_nom = Code.configuration.paths.file_filters_pgn()
 

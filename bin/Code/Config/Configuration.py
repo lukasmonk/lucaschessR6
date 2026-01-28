@@ -53,7 +53,7 @@ def toolbutton_int(qt_tbi):
 
 class BoxRooms:
     def __init__(self, configuration):
-        self.file = Util.opj(configuration.paths.folder_config, "boxrooms.pk")
+        self.file = Util.opj(configuration.paths.folder_config(), "boxrooms.pk")
         self._list = self.read()
 
     def read(self):
@@ -326,11 +326,6 @@ class Configuration:
 
     def boxrooms(self):
         return BoxRooms(self)
-
-    def folder_save_lcsb(self, nuevo=None):
-        if nuevo:
-            self.x_save_lcsb = nuevo
-        return self.x_save_lcsb or self.paths.folder_userdata()
 
     def nom_player(self):
         return self.x_player or _("Player")

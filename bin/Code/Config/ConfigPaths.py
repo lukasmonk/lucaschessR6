@@ -348,3 +348,11 @@ class ConfigPaths:
 
         if not Util.exist_file(self.file_sounds()):
             Util.file_copy(Code.path_resource("IntFiles", "sounds.pkd"), self.file_sounds())
+
+    # -----------------------------------------------------------------------------------
+
+    def folder_save_lcsb(self, nuevo=None):
+        if nuevo:
+            self.configuration.x_save_lcsb = nuevo
+            self.configuration.graba()
+        return self.configuration.x_save_lcsb or self.folder_userdata()

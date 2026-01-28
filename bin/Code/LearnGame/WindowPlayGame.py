@@ -3,7 +3,7 @@ from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import LI_BASIC_TAGS
 from Code.Databases import WindowDatabase
-from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages
+from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
 
@@ -93,18 +93,11 @@ class WPlayGameBase(LCDialog.LCDialog):
         self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
 
         # Tool bar
-        li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.finalize),
-            None,
-            (_("Play"), Iconos.Empezar(), self.play),
-            (_("New"), Iconos.Nuevo(), self.new),
-            None,
-            (_("Remove"), Iconos.Borrar(), self.remove),
-            None,
-            (_("Configuration"), Iconos.Configurar(), self.config),
-            None,
-        )
-        self.tb = QTDialogs.LCTB(self, li_acciones)
+        self.tb = QTDialogs.LCTB(self)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        self.tb.new(_("Play"), Iconos.Empezar(), self.play)
+        self.tb.new(_("New"), Iconos.Nuevo(), self.new)
+        self.tb.new(_("Remove"), Iconos.Borrar(), self.remove)
 
         # Colocamos
         ly_tb = Colocacion.H().control(self.tb).margen(0)
@@ -186,32 +179,6 @@ class WPlayGameBase(LCDialog.LCDialog):
                 self.is_white = w.is_white
                 self.is_black = w.is_black
                 self.accept()
-
-    def config(self):
-        var_config = "LEARN_GAME_PLAY_AGAINST"
-
-        dic = self.configuration.read_variables(var_config)
-
-        form = FormLayout.FormLayout(self, _("Configuration"), Iconos.Opciones(), minimum_width=440)
-
-        form.separador()
-
-        li_options = [
-            (_("Always"), None),
-            (_("When moves are different"), True),
-            (_("Never"), False),
-        ]
-        form.combobox(_("Show rating"), li_options, dic.get("SHOW_RATING", None))
-        form.separador()
-
-        form.checkbox(_("Show all evaluations"), dic.get("SHOW_ALL", False))
-
-        resultado = form.run()
-        if resultado:
-            accion, resp = resultado
-
-            dic["SHOW_RATING"], dic["SHOW_ALL"] = resp
-            self.configuration.write_variables(var_config, dic)
 
 
 class WPlay1(LCDialog.LCDialog):

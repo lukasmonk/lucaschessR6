@@ -16,6 +16,8 @@ class WDatos(QtWidgets.QDialog):
     def __init__(self, w_parent, txtcategoria, max_level):
         super(WDatos, self).__init__(w_parent)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(_("Check your memory on a chessboard"))
         self.setWindowIcon(Iconos.Memoria())
         self.setWindowFlags(

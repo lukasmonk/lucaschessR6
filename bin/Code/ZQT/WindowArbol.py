@@ -859,7 +859,7 @@ class WindowArbol(LCDialog.LCDialog):
         with QTMessages.analizando(self, True) as me:
 
             def test_me(rm):
-                if me.canceled():
+                if me.is_canceled():
                     xengine.stop()
                 return True
 
@@ -867,7 +867,7 @@ class WindowArbol(LCDialog.LCDialog):
 
             mrm = xengine.analiza(fen)
             xengine.finalize()
-            canceled = me.canceled()
+            canceled = me.is_canceled()
 
         if not canceled:
             mrm.vtime = alm.vtime / 1000.0

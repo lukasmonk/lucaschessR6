@@ -21,7 +21,7 @@ class EngineManager:
 
         self.run_engine_params = run_engine_params
 
-        self.is_canceled = False
+        self._is_canceled = False
         self.elapsed_time = QtCore.QElapsedTimer()
 
         self.fichero_log: Optional[str] = None

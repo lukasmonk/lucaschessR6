@@ -354,7 +354,7 @@ class WSave(LCDialog.LCDialog):
         self.em_body.set_text(body)
 
     def check_info_sp(self):
-        body_sp = self.check_info(self.game.pgn_translated())
+        body_sp = self.check_info(self.game.pgn_base(translated=True))
         self.em_body_sp.set_text(body_sp)
 
     def check_seventags(self):

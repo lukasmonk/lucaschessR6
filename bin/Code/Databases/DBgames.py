@@ -1043,7 +1043,7 @@ class DBgames:
                             self.db_stat.commit()
                         # Reiniciar transacción para el siguiente bloque
                         conexion.execute("BEGIN IMMEDIATE")
-            if dl_tmp.is_canceled:
+            if dl_tmp.is_canceled():
                 break
         dl_tmp.actualiza(erroneos + duplicados + importados, erroneos, duplicados, importados, 100.00)
         dl_tmp.ponSaving()

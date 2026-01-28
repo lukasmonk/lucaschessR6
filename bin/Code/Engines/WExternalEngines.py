@@ -362,7 +362,7 @@ class WConfExternals(QtWidgets.QWidget):
                     self.set_changed()
 
     def grid_doble_click(self, _grid, _row, _obj_column):
-        self.modificar()
+        QtCore.QTimer.singleShot(0, self.modificar)
 
     def arriba(self):
         row = self.grid.recno()
@@ -436,7 +436,9 @@ class WEngineFast(QtWidgets.QDialog):
 
         super(WEngineFast, self).__init__(w_parent)
 
-        self.setWindowTitle(engine.version)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
+        self.setWindowTitle(engine.key)
         self.setWindowIcon(Iconos.Engine())
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
@@ -456,6 +458,8 @@ class WEngineFast(QtWidgets.QDialog):
 
         lb_alias = Controles.LB2P(self, _("Alias"))
         self.edAlias = Controles.ED(self, engine.key).minimum_width(360)
+
+        lb_nombre = None
 
         if not self.imported:
             lb_nombre = Controles.LB2P(self, _("Name"))

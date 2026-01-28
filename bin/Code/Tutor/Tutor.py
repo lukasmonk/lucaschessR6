@@ -230,7 +230,7 @@ class Tutor:
         self.max_tutor = len(self.game_tutor)
         self.moving_tutor(True)
 
-    def mueve(self, quien, que):
+    def mueve1(self, quien, que):
         if quien not in ("user", "tutor", "opening", "rival"):
             return
 
@@ -250,6 +250,32 @@ class Tutor:
             tb = ast.literal_eval(f"self.w.tb{quien}")
             posMax = eval(f"self.max_{quien}")
             self.move_timed(funcion, tb, posMax)
+
+    def mueve(self, quien: str, que: str) -> None:
+        valid_quien = {"user", "tutor", "opening", "rival"}
+        if quien not in valid_quien:
+            return
+
+        mover = getattr(self, f"moving_{quien}", None)
+        if mover is None:
+            return
+
+        acciones = {
+            "Adelante": lambda: mover(n_saltar=1),
+            "Atras": lambda: mover(n_saltar=-1),
+            "Inicio": lambda: mover(is_base=True),
+            "Final": lambda: mover(is_end=True),
+            "Libre": lambda: self.analiza(quien),
+            "Tiempo": lambda: self.move_timed(
+                mover,
+                getattr(self.w, f"tb{quien}", None),
+                getattr(self, f"max_{quien}", None),
+            ),
+        }
+
+        accion = acciones.get(que)
+        if accion:
+            accion()
 
     def move_timed(self, funcion, tb, pos_max):
         if self.is_moving_time:

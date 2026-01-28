@@ -76,19 +76,19 @@ class SelectedGameThemeAnalyzer:
         self.li_games_missing_themes = []
         self.tag_count = 0
         self.themes = Code.get_themes()
-        self.is_canceled = False
+        self._is_canceled = False
 
         for n, recno in enumerate(li_sel):
-            if um.canceled():
-                self.is_canceled = True
+            if um.is_canceled():
+                self._is_canceled = True
                 return
 
             game_has_themes = False
             themes_in_game = []
             my_game: Game.Game = w_parent.db_games.read_game_recno(recno)
             for move_num, move in enumerate(my_game.li_moves):
-                if um.canceled():
-                    self.is_canceled = True
+                if um.is_canceled():
+                    self._is_canceled = True
                     return
                 lostp_abs = move.get_points_lost()
                 if lostp_abs is not None:
@@ -137,3 +137,6 @@ class SelectedGameThemeAnalyzer:
             self.tag_count,
             _("tags found"),
         )
+
+    def is_canceled(self):
+        return self._is_canceled

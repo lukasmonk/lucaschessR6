@@ -166,12 +166,15 @@ class GM:
                             promotion,
                             gmPartida.basic_label(is_gm),
                             move.pgn_translated(),
+                            1
                         ]
                     )
                 else:
                     d_repeticiones[move][1] += 1
                     pos = d_repeticiones[move][0]
                     li[pos][3] = _("%d games") % d_repeticiones[move][1]
+                    li[pos][5] = d_repeticiones[move][1]
+        li.sort(key=lambda x: -x[5])
         return li
 
     def label_game_if_unique(self, is_gm=True):

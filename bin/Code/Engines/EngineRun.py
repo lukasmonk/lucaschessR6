@@ -57,7 +57,7 @@ class RunEngineParams:
         if engine.min_fixed_depth > 0 and 0 < fixed_depth < engine.min_fixed_depth:
             fixed_depth = engine.min_fixed_depth
 
-        self.fixed_ms = fixed_ms
+        self.fixed_ms = int(fixed_ms)
         self.fixed_depth = fixed_depth
         self.fixed_nodes = fixed_nodes
         self.multipv = engine.multiPV
@@ -721,7 +721,9 @@ class EngineRun(QtCore.QObject):
         order = "startpos" if game.is_fen_initial() else f"fen {game.first_position.fen()}"
 
         if movement is None:
-            order += f" moves {game.pv()}"
+            pv = game.pv()
+            if pv:
+                order += f" moves {game.pv()}"
             self.is_white = game.is_white()
         else:
             move = game.move(movement)
@@ -764,7 +766,7 @@ class EngineRun(QtCore.QObject):
         self.mrm = EngineResponse.MultiEngineResponse(self.config.name, self.is_white)
 
         if run_engine_params.fixed_ms > 0:
-            self._timerstop_run(run_engine_params.fixed_ms + 100)
+            self._timerstop_run(int(run_engine_params.fixed_ms + 100))
 
         if run_engine_params.fixed_depth > 0:
             send_go(f"depth {run_engine_params.fixed_depth}")
@@ -778,7 +780,7 @@ class EngineRun(QtCore.QObject):
             if self.config.emulate_movetime:
                 send_go("infinite")
                 return
-            send_go(f"movetime {run_engine_params.fixed_ms}")
+            send_go(f"movetime {int(run_engine_params.fixed_ms)}")
             return
 
         if run_engine_params.timems_white > 0:

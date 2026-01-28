@@ -14,6 +14,8 @@ class WTVCircle(QtWidgets.QDialog):
 
         QtWidgets.QDialog.__init__(self, owner)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(_("Circle"))
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint

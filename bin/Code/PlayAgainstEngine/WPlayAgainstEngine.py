@@ -1395,6 +1395,8 @@ class WCambioRival(QtWidgets.QDialog):
     def __init__(self, w_parent, configuration, dic, si_manager_solo):
         super(WCambioRival, self).__init__(w_parent)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         if not dic:
             dic = {}
 

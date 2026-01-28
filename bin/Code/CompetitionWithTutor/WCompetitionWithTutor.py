@@ -138,6 +138,8 @@ class WDatos(QtWidgets.QDialog):
     def __init__(self, w_parent, rival, categorias, categoria):
         super(WDatos, self).__init__(w_parent)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(_("New game"))
         self.setWindowIcon(Iconos.Datos())
         self.setWindowFlags(QtCore.Qt.WindowType.Dialog | QtCore.Qt.WindowType.WindowTitleHint)
@@ -258,6 +260,8 @@ class WNumEntrenamiento(QtWidgets.QDialog):
 
     def __init__(self, w_parent, titulo, to_sq, etiqueta=None, pos=None, additional_message=None):
         super(WNumEntrenamiento, self).__init__(w_parent)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
         self.setFont(Controles.FontType(puntos=Code.configuration.x_sizefont_infolabels))
 

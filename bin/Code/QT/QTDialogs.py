@@ -644,7 +644,7 @@ class LCMenuPiezas(Controles.Menu):
 
 
 class ImportarFichero(QtWidgets.QDialog):
-    def __init__(self, parent, titulo, siErroneos, siWorkDone, icono):
+    def __init__(self, parent, titulo, si_erroneous, si_work_done, icono):
         QtWidgets.QDialog.__init__(self, parent)
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
@@ -656,15 +656,15 @@ class ImportarFichero(QtWidgets.QDialog):
         self.setWindowIcon(icono)
         self.fontB = f = Controles.FontType(puntos=10, peso=75)
 
-        self.siErroneos = siErroneos
-        self.siWorkDone = siWorkDone
+        self.siErroneos = si_erroneous
+        self.siWorkDone = si_work_done
 
-        self.is_canceled = False
+        self._is_canceled = False
 
         lbRotLeidos = Controles.LB(self, f"{_('Games read')}:").set_font(f)
         self.lbLeidos = Controles.LB(self, "0").set_font(f)
 
-        if siErroneos:
+        if si_erroneous:
             lbRotErroneos = Controles.LB(self, f"{_('Erroneous')}:").set_font(f)
             self.lbErroneos = Controles.LB(self, "0").set_font(f)
         else:
@@ -686,7 +686,7 @@ class ImportarFichero(QtWidgets.QDialog):
 
         ly = Colocacion.G().margen(20)
         ly.controld(lbRotLeidos, 0, 0).controld(self.lbLeidos, 0, 1)
-        if siErroneos:
+        if si_erroneous:
             ly.controld(lbRotErroneos, 1, 0).controld(self.lbErroneos, 1, 1)
         ly.controld(lbRotDuplicados, 2, 0).controld(self.lbDuplicados, 2, 1)
         ly.controld(lbRotImportados, 3, 0).controld(self.lbImportados, 3, 1)
@@ -716,8 +716,11 @@ class ImportarFichero(QtWidgets.QDialog):
         self.refresh_gui()
 
     def cancelar(self):
-        self.is_canceled = True
+        self._is_canceled = True
         self.ponContinuar()
+
+    def is_canceled(self):
+        return self._is_canceled
 
     def ponExportados(self):
         self.lbRotImportados.set_text(f"{_('Exported')}:")
@@ -752,7 +755,7 @@ class ImportarFichero(QtWidgets.QDialog):
         if self.siWorkDone:
             self.lbWorkDone.set_text(f"{int(workdone)}%")
         self.refresh_gui()
-        return not self.is_canceled
+        return not self._is_canceled
 
 
 class ImportarFicheroPGN(ImportarFichero):

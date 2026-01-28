@@ -1371,10 +1371,10 @@ class WGames(QtWidgets.QWidget):
                 if game.is_fen_initial():
                     fgm.other_game(game)
 
-            is_canceled = tmp_bp.is_canceled()
+            _is_canceled = tmp_bp.is_canceled()
             tmp_bp.cerrar()
 
-            if not is_canceled:
+            if not _is_canceled:
                 is_created = fgm.xprocesa()
 
                 if is_created:
@@ -1577,7 +1577,7 @@ class WGames(QtWidgets.QWidget):
     def tw_themes(self):
         with QTMessages.one_moment_please(self.wb_database, _("Analyzing tactical themes"), with_cancel=True) as um:
             a = WDB_Theme_Analysis.SelectedGameThemeAnalyzer(self, um)
-            if a.is_canceled:
+            if a.is_canceled():
                 return
 
         if len(a.dic_themes) == 0:

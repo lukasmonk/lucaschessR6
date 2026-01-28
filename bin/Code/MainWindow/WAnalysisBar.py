@@ -164,6 +164,7 @@ class AnalysisBar(QtWidgets.QWidget):
                     self.engine_manager.stop()
 
     def configure(self):
+        self.end_think()
         configuration = Code.configuration
         form = FormLayout.FormLayout(self, _("Configuration"), Iconos.Configurar())
         form.separador()

@@ -24,6 +24,9 @@ from Code.SQL import UtilSQL
 class WExportarPGN(QtWidgets.QDialog):
     def __init__(self, parent, path_white, path_black):
         QtWidgets.QDialog.__init__(self, parent)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
             | QtCore.Qt.WindowType.Dialog
@@ -34,7 +37,7 @@ class WExportarPGN(QtWidgets.QDialog):
         self.setWindowIcon(Iconos.Board())
         self.fontB = f = Controles.FontType(puntos=14)
 
-        self.is_canceled = False
+        self._is_canceled = False
 
         lb_file = Controles.LB(self, f"{_('File')}: {os.path.basename(path_white)}").set_font(f)
         lb_positions = Controles.LB(self, f"{_('Positions')}:").set_font(f)
@@ -83,8 +86,11 @@ class WExportarPGN(QtWidgets.QDialog):
         QTUtils.refresh_gui()
 
     def cancelar(self):
-        self.is_canceled = True
+        self._is_canceled = True
         self.pon_continue()
+
+    def is_canceled(self):
+        return self._is_canceled
 
     def pon_saving(self):
         self.bt_cancel_continue.setEnabled(True)
@@ -219,7 +225,7 @@ class PolyglotExport:
             control[1] = 0
             wexport.set_side(side)
             wexport.pon_cancel()
-            if wexport.is_canceled:
+            if wexport.is_canceled():
                 break
             with UtilSQL.ListSQLBig(Code.configuration.temporary_file("sqlite")) as dblist:
                 current_path = path_white if side == WHITE else path_black
@@ -246,7 +252,7 @@ class PolyglotExport:
                     if fenm2 in st_fenm2:
                         return True
                     st_fenm2.add(fenm2)
-                    return wexport.is_canceled
+                    return wexport.is_canceled()
 
                 def add_entries(fen, li_pv):
                     if is_already_fen(fen):
@@ -286,7 +292,7 @@ class PolyglotExport:
                 else:
                     add_moves(FEN_INITIAL, [])
 
-                if not wexport.is_canceled:
+                if not wexport.is_canceled():
                     wexport.set_positions(control[1])
                     previo = ""
                     with open(current_path, "at", encoding="utf-8") as q:
@@ -306,7 +312,7 @@ class PolyglotExport:
                                 if time.time() - control[0] > 1.0:
                                     control[0] = time.time()
                                     wexport.set_games(num_games)
-                                if wexport.is_canceled:
+                                if wexport.is_canceled():
                                     break
                         wexport.set_games(num_games)
 
@@ -593,13 +599,16 @@ class PolyglotImport:
 class ImportarPGNDB(QtWidgets.QDialog):
     def __init__(self, parent, titulo):
         QtWidgets.QDialog.__init__(self, parent)
+
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
             | QtCore.Qt.WindowType.Dialog
             | QtCore.Qt.WindowType.WindowTitleHint
         )
 
-        self.is_canceled = False
+        self._is_canceled = False
 
         self.setWindowTitle(titulo)
         self.setWindowIcon(Iconos.Import8())
@@ -648,7 +657,10 @@ class ImportarPGNDB(QtWidgets.QDialog):
             self.invalid_prevision = False
 
     def cancelar(self):
-        self.is_canceled = True
+        self._is_canceled = True
+
+    def is_canceled(self):
+        return self._is_canceled
 
     def dispatch(self, is_total, valor, num_games):
         if is_total:
@@ -671,7 +683,7 @@ class ImportarPGNDB(QtWidgets.QDialog):
                 self.lb_previsto.set_text(f'{_("Pending time")}: {time_message}')
 
         QTUtils.refresh_gui()
-        return not self.is_canceled
+        return not self._is_canceled
 
 
 def fuente_dbbig(db, min_games, min_score, calc_weight, save_score):

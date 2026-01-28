@@ -202,7 +202,7 @@ def list_vars_values(obj: Any, li_exclude: Optional[List[str]] = None) -> List[T
         # 3. VERIFICAR si el valor de la variable es pickleable
         try:
             # Intenta serializar el valor. Si falla, lanza PicklingError (o a veces TypeError)
-            pickle.dumps(value)
+            pickle.dumps(value, protocol=4)
             # Si tiene éxito, es una variable pura y pickleable
             li_vars.append((name, value))
         except (pickle.PicklingError, TypeError):

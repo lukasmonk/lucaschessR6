@@ -10,6 +10,10 @@ def run_lucas(*args):
         li.append(sys.executable)
         li.append("LucasR.py")
     else:
-        li.append("LucasR.exe" if Util.is_windows() else "./LucasR")
+        if Util.is_windows():
+            li.append("python.exe")
+            li.append("LucasR.pyc")
+        else:
+            li.append("./LucasR")
     li.extend(args)
     return subprocess.Popen(li)

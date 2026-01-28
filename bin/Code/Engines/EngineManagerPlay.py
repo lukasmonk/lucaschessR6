@@ -131,7 +131,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
         )
 
         self.seconds_humanize = 0  # must be restarted each time
-        self.is_canceled = False
+        self._is_canceled = False
 
         def check_state(bestmove):
             def close():
@@ -145,13 +145,13 @@ class EngineManagerPlay(EngineManager.EngineManager):
                 loop.quit()
 
             if self.engine_run is None:
-                self.is_canceled = True
+                self._is_canceled = True
                 close()
                 return
 
             if dispacher and self.engine_run.mrm:
                 if not dispacher(rm=self.engine_run.mrm.best_rm_ordered()):
-                    self.is_canceled = True
+                    self._is_canceled = True
                     close()
 
             if bestmove is not None:
@@ -197,7 +197,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
         if self.engine_run is None:
             return None
 
-        if self.is_canceled:
+        if self._is_canceled:
             return None
 
         if self.engine_run.mrm is None:

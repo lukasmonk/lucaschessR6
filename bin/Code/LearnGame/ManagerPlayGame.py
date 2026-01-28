@@ -16,13 +16,14 @@ from Code.Base.Constantes import (
     TB_QUIT,
     TB_REINIT,
     TB_UTILITIES,
+    TB_ARBITER
 )
 from Code.LearnGame import WindowPlayGame
 from Code.ManagerBase import Manager
 from Code.Openings import Opening, OpeningsStd
 from Code.QT import QTMessages
 from Code.ZQT import WindowJuicio
-from Code.Adjudicator import Adjudicator
+from Code.Arbiter import Arbiter
 
 
 class ManagerPlayGame(Manager.Manager):
@@ -43,16 +44,11 @@ class ManagerPlayGame(Manager.Manager):
     min_mstime: int
     puntos: int
     vtime: float
-    show_all: bool
     book = None
-    show_rating_always = None
-    show_rating_different = None
-    show_rating_never = None
-    show_rating = None
     mrm = None
     mrm_tutor = None
     initial_time = None
-    adjudicator: Adjudicator.Adjudicator
+    arbiter: Arbiter.Arbiter
 
     def start(self, recno, is_white, is_black, close_on_exit=False):
         self.game_type = GT_LEARN_PLAY
@@ -88,7 +84,7 @@ class ManagerPlayGame(Manager.Manager):
         self.is_save = False
         self.min_mstime = 5000
 
-        self.adjudicator = Adjudicator.Adjudicator(self, self.main_window, self.name_obj_common(), self.player_has_moved)
+        self.arbiter = Arbiter.Arbiter(self, self.main_window, self.name_obj_common(), self.player_has_moved)
 
         self.puntosMax = 0
         self.puntos = 0
@@ -96,7 +92,7 @@ class ManagerPlayGame(Manager.Manager):
 
         self.book = Opening.OpeningPol(999)
 
-        self.set_toolbar((TB_CANCEL, TB_REINIT, TB_CONFIG, TB_UTILITIES))
+        self.set_toolbar((TB_CANCEL, TB_REINIT, TB_CONFIG, TB_UTILITIES, TB_ARBITER))
 
         self.main_window.active_game(True, False)
         self.remove_hints(True, True)
@@ -113,18 +109,6 @@ class ManagerPlayGame(Manager.Manager):
         self.check_boards_setposition()
 
         self.state = ST_PLAYING
-
-        var_config = "LEARN_GAME_PLAY_AGAINST"
-
-        dic = self.configuration.read_variables(var_config)
-
-        self.show_all = dic.get("SHOW_ALL", False)
-        self.show_rating_always, self.show_rating_different, self.show_rating_never = (
-            None,
-            True,
-            False,
-        )
-        self.show_rating = dic.get("SHOW_RATING", self.show_rating_always)
 
         self.play_next_move()
 
@@ -173,6 +157,9 @@ class ManagerPlayGame(Manager.Manager):
         elif key == TB_UTILITIES:
             self.menu_utilities_elo()
 
+        elif key == TB_ARBITER:
+            self.arbiter.change_arbiter_options()
+
         elif key in self.procesador.li_opciones_inicio:
             self.procesador.run_action(key)
 
@@ -184,7 +171,7 @@ class ManagerPlayGame(Manager.Manager):
 
     def cancelar(self):
         self.puntos = -999
-        self.adjudicator.close()
+        self.arbiter.close()
         self.procesador.start()
         return False
 
@@ -204,7 +191,7 @@ class ManagerPlayGame(Manager.Manager):
         self.board.set_position(self.game.first_position)
         self.pgn_refresh(True)
         self.check_boards_setposition()
-        self.analyze_end()
+        self.arbiter.analyze_end()
 
         self.play_next_move()
 
@@ -253,7 +240,7 @@ class ManagerPlayGame(Manager.Manager):
             self.human_is_playing = True
             self.activate_side(is_white)
             self.initial_time = time.time()
-            self.adjudicator.analyze_begin(self.game)
+            self.arbiter.analyze_begin(self.game)
         else:
             self.add_move(False)
             self.play_next_move()
@@ -282,7 +269,7 @@ class ManagerPlayGame(Manager.Manager):
 
         self.thinking(True)
 
-        self.adjudicator.check_moves(obj_move, user_move)
+        self.arbiter.check_moves(obj_move, user_move)
 
         return True
 
@@ -298,7 +285,7 @@ class ManagerPlayGame(Manager.Manager):
             comentario_usu = ""
             comentario_obj = ""
 
-            mrm = self.adjudicator.get_mrm()
+            mrm = self.arbiter.get_mrm()
             rm_obj, pos_obj = mrm.search_rm(obj_move.movimiento())
             rm_usu, pos_usu = mrm.search_rm(user_move.movimiento())
 
@@ -306,15 +293,15 @@ class ManagerPlayGame(Manager.Manager):
 
             w = WindowJuicio.WJuicio(
                 self,
-                self.adjudicator,
+                self.arbiter,
                 self.name_obj_common(),
                 self.game.last_position,
                 mrm,
                 rm_obj,
                 rm_usu,
                 analysis,
-                is_competitive=not self.adjudicator.show_all,
-                continue_tt=self.adjudicator.is_analysing(),
+                is_competitive=not self.arbiter.show_all,
+                continue_tt=self.arbiter.is_analysing(),
             )
             w.exec()
             analysis = w.analysis
@@ -330,7 +317,7 @@ class ManagerPlayGame(Manager.Manager):
                 f"{-w.rm_obj.centipawns_abs():+d} = {self.puntos}"
             )
 
-        self.adjudicator.analyze_end()  # Por si acaso no lo está ya.
+        self.arbiter.analyze_end()  # Por si acaso no lo está ya.
 
         same_move = user_move.movimiento() == obj_move.movimiento()
         if not same_move:

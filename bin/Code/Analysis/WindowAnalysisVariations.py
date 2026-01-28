@@ -9,6 +9,8 @@ class WAnalisisVariations(QtWidgets.QDialog):
     def __init__(self, o_base, ventana, segundos_pensando, is_white, c_puntos):
         super(WAnalisisVariations, self).__init__(ventana)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.oBase = o_base
 
         self.timer = None

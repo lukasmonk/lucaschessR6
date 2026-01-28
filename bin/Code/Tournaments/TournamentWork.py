@@ -46,17 +46,17 @@ class TournamentWork:
         with self.tournament() as torneo:
             return torneo.slow_pieces()
 
-    def adjudicator_active(self):
+    def arbiter_active(self):
         with self.tournament() as torneo:
-            return torneo.adjudicator_active()
+            return torneo.arbiter_active()
 
     def move_evaluator(self):
         with self.tournament() as torneo:
             return torneo.move_evaluator()
 
-    def adjudicator_time(self):
+    def arbiter_time(self):
         with self.tournament() as torneo:
-            return torneo.adjudicator_time()
+            return torneo.arbiter_time()
 
     def search_hengine(self, h):
         with self.tournament() as torneo:

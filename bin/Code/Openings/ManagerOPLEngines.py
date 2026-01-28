@@ -51,11 +51,11 @@ class ManagerOpeningEngines(Manager.Manager):
     is_human_side_white: bool
     book: Books.Book | None
     keybook_engine: str
-    manager_adjudicator: EngineManagerAnalysis.EngineManagerAnalysis
+    manager_arbiter: EngineManagerAnalysis.EngineManagerAnalysis
     manager_rival: Optional[EngineManagerPlay.EngineManagerPlay] = None
     um: Optional[QTMessages.WaitingMessage] = None
-    mstime_adjudicator: int
-    key_adjudicator_cache: str
+    mstime_arbiter: int
+    key_arbiter_cache: str
     training_engines: dict
     dbop: OpeningLines.Opening
     mstime_rival: int
@@ -144,12 +144,12 @@ class ManagerOpeningEngines(Manager.Manager):
         self.manager_rival = self.procesador.create_manager_engine(rival, self.mstime_rival, 0, 0)
         self.manager_rival.is_white = self.is_engine_side_white
 
-        engine_adjudicator = self.configuration.engines.search(self.training_engines["ENGINE_CONTROL"])
-        self.mstime_adjudicator = int(self.training_engines["ENGINE_TIME"] * 1000)
+        engine_arbiter = self.configuration.engines.search(self.training_engines["ENGINE_CONTROL"])
+        self.mstime_arbiter = int(self.training_engines["ENGINE_TIME"] * 1000)
         run_engine_params = EngineRun.RunEngineParams()
-        run_engine_params.update(engine_adjudicator, self.mstime_adjudicator, 0, 0, 10)
-        self.manager_adjudicator = EngineManagerAnalysis.EngineManagerAnalysis(engine_adjudicator, run_engine_params)
-        self.key_adjudicator_cache = f"ADJUDICATOR{engine_adjudicator.name}"
+        run_engine_params.update(engine_arbiter, self.mstime_arbiter, 0, 0, 10)
+        self.manager_arbiter = EngineManagerAnalysis.EngineManagerAnalysis(engine_arbiter, run_engine_params)
+        self.key_arbiter_cache = f"arbiter{engine_arbiter.name}"
 
         self.li_info = [
             f"<b>{_('Engine')}</b>: {self.numengine + 1}/{num_engines} - {self.manager_rival.engine.name}",
@@ -377,7 +377,7 @@ class ManagerOpeningEngines(Manager.Manager):
                 self.um.label(f"{_('Analyzing')} {add_to_title}")
 
     def is_canceled(self):
-        si = self.um.canceled()
+        si = self.um.is_canceled()
         if si:
             self.um.final()
         return si
@@ -385,9 +385,9 @@ class ManagerOpeningEngines(Manager.Manager):
     def analyze_move(self, num_move):
         move: Move.Move = self.game.move(num_move)
         fen: str = move.position_before.fen()
-        vtime: float = self.mstime_adjudicator
+        vtime: float = self.mstime_arbiter
         mrm: Optional[EngineResponse.MultiEngineResponse] = self.dbop.get_cache_engines(
-            self.key_adjudicator_cache, vtime, fen
+            self.key_arbiter_cache, vtime, fen
         )
         if mrm is not None:
             rm, pos = mrm.search_rm(move.movimiento())
@@ -396,11 +396,11 @@ class ManagerOpeningEngines(Manager.Manager):
 
         if mrm is None:
             self.waiting_message()
-            mrm, pos = self.manager_adjudicator.analyze_move(self.game, num_move, None)
+            mrm, pos = self.manager_arbiter.analyze_move(self.game, num_move, None)
 
         rm, pos = mrm.search_rm(move.movimiento())
         move.analysis = mrm, pos
-        self.dbop.set_cache_engines(self.key_adjudicator_cache, vtime, fen, mrm)
+        self.dbop.set_cache_engines(self.key_arbiter_cache, vtime, fen, mrm)
         return mrm, rm, pos
 
     def run_control(self):

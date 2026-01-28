@@ -161,6 +161,8 @@ class WTamBoard(QtWidgets.QDialog):
 
         QtWidgets.QDialog.__init__(self, board.parent())
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.setWindowTitle(_("Change board size"))
         self.setWindowIcon(Iconos.ResizeBoard())
         self.setWindowFlags(

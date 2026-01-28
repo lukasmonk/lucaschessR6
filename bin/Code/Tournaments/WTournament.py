@@ -69,7 +69,7 @@ class WTournament(LCDialog.LCDialog):
         # Tab-configuration --------------------------------------------------
         w = QtWidgets.QWidget()
 
-        # Adjudicator
+        # Arbiter
         lb_resign = Controles.LB(
             self,
             "%s (%s): " % (_("Minimum centipawns to assign winner"), "0=%s" % _("Disable")),
@@ -93,14 +93,14 @@ class WTournament(LCDialog.LCDialog):
         self.cbJmotor, self.lbJmotor = QTMessages.combobox_lb(
             self, self.list_engines, torneo.move_evaluator(), _("Engine")
         )
-        self.edJtiempo = Controles.ED(self).type_float(torneo.adjudicator_time()).relative_width(50)
+        self.edJtiempo = Controles.ED(self).type_float(torneo.arbiter_time()).relative_width(50)
         self.lbJtiempo = Controles.LB2P(self, _("Time in seconds"))
         layout = Colocacion.G()
         layout.controld(self.lbJmotor, 3, 0).control(self.cbJmotor, 3, 1)
         layout.controld(self.lbJtiempo, 4, 0).control(self.edJtiempo, 4, 1)
-        self.gbJ = Controles.GB(self, _("Adjudicator"), layout)
+        self.gbJ = Controles.GB(self, _("Arbiter"), layout)
         self.gbJ.setCheckable(True)
-        self.gbJ.setChecked(torneo.adjudicator_active())
+        self.gbJ.setChecked(torneo.arbiter_active())
 
         lb_book = Controles.LB(self, f"{_('Opening book')}: ")
         self.list_books = Books.ListBooks()
@@ -579,6 +579,8 @@ class WTournament(LCDialog.LCDialog):
             self.li_data_current_engine.append((opcion.name, str(opcion.valor)))
 
     def gm_launch(self):
+        self.torneo.check_databases()
+
         if self.torneo.num_games_queued() == 0:
             QTMessages.message(self, _("You must create some games (Queued Games tab/ New)"))
             return
@@ -615,9 +617,9 @@ class WTournament(LCDialog.LCDialog):
                 or self.torneo.slow_pieces() != self.chb_slow.valor()
                 or self.torneo.book() != self.cbBooks.valor()
                 or self.torneo.book_depth() != self.sbBookDepth.valor()
-                or self.torneo.adjudicator_active() != self.gbJ.isChecked()
+                or self.torneo.arbiter_active() != self.gbJ.isChecked()
                 or self.torneo.move_evaluator() != self.cbJmotor.valor()
-                or self.torneo.adjudicator_time() != self.edJtiempo.text_to_float()
+                or self.torneo.arbiter_time() != self.edJtiempo.text_to_float()
             )
             if changed:
                 self.grabar()
@@ -643,9 +645,9 @@ class WTournament(LCDialog.LCDialog):
             self.torneo.slow_pieces(self.chb_slow.valor())
             self.torneo.book(self.cbBooks.valor())
             self.torneo.book_depth(self.sbBookDepth.valor())
-            self.torneo.adjudicator_active(self.gbJ.isChecked())
+            self.torneo.arbiter_active(self.gbJ.isChecked())
             self.torneo.move_evaluator(self.cbJmotor.valor())
-            self.torneo.adjudicator_time(self.edJtiempo.text_to_float())
+            self.torneo.arbiter_time(self.edJtiempo.text_to_float())
 
     def eng_new(self):
         # Pedimos el ejecutable

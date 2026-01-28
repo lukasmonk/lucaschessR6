@@ -46,6 +46,8 @@ class Scanner(QtWidgets.QDialog):
     def __init__(self, owner, folder_scanners, desktop, geometry):
         QtWidgets.QDialog.__init__(self)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.vars = ScannerVars(folder_scanners)
         self.desktop = desktop
         self.selected_pixmap = None

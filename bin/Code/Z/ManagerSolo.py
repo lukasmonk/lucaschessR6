@@ -294,18 +294,18 @@ class ManagerSolo(Manager.Manager):
 
     def save_as(self):
         extension = "lcsb"
-        siConfirmar = True
+        si_confirmar = True
         if self.last_file:
             file = self.last_file
         else:
             file = self.configuration.paths.folder_save_lcsb()
         while True:
-            resp = SelectFiles.salvaFichero(self.main_window, _("File to save"), file, extension, siConfirmar)
+            resp = SelectFiles.salvaFichero(self.main_window, _("File to save"), file, extension, si_confirmar)
             if resp:
                 resp = str(resp)
                 if not resp.lower().endswith(f".{extension}"):
                     resp += f".{extension}"
-                if not siConfirmar:
+                if not si_confirmar:
                     if os.path.abspath(resp) != os.path.abspath(self.last_file) and os.path.isfile(resp):
                         yn = QTMessages.question_withcancel(
                             self.main_window,

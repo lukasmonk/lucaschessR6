@@ -18,6 +18,8 @@ class WKibIndex(QtWidgets.QDialog):
     def __init__(self, cpu):
         QtWidgets.QDialog.__init__(self)
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+
         self.cpu = cpu
         self.kibitzer = cpu.kibitzer
 

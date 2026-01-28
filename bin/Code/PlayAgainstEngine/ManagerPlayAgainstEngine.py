@@ -8,7 +8,6 @@ import FasterCode
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Adjournments, Util
 from Code.Analysis import Analysis
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
@@ -55,6 +54,7 @@ from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils
 from Code.Translations import TrListas
 from Code.Tutor import Tutor
 from Code.Voyager import Voyager
+from Code.Z import Adjournments, Util
 
 
 class ToolbarState(Enum):
@@ -144,6 +144,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
     tb_huella: str
 
+    dic_times_prev_move: dict
+
     def start(self, dic_var: Dict[str, Any]):
         self.base_inicio(dic_var)
         if self.timed:
@@ -186,6 +188,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.play_while_win = dic_var.get("WITH_LIMIT_PWW", False)
         self.limit_pww = dic_var.get("LIMIT_PWW", 90)
+
+        self.dic_times_prev_move = {}
 
     def _init_show(self, dic_var: Dict[str, Any]):
         n_box_height = dic_var.get("BOXHEIGHT", 24)
@@ -494,8 +498,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if tc.time_is_consumed():
                 t = time.time()
                 if is_player and QTMessages.pregunta(
-                    self.main_window,
-                    f"{_X(_('%1 has won on time.'), self.rival_name)}\n\n{_('Add time and keep playing?')}",
+                        self.main_window,
+                        f"{_X(_('%1 has won on time.'), self.rival_name)}\n\n{_('Add time and keep playing?')}",
                 ):
                     min_x = WPlayAgainstEngine.get_extra_minutes(self.main_window)
                     if min_x:
@@ -679,7 +683,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             return
 
         self.game.reset()
-        self.main_window.activaInformacionPGN(False)
+        self.main_window.active_information_pgn(False)
 
         reinicio = self.reinicio.get("REINIT", 0) + 1
         self.game.set_tag("Reinit", str(reinicio))
@@ -869,6 +873,14 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if self.state == ST_ENDGAME:
                 self.state = ST_PLAYING
                 self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
+
+            if self.timed:
+                w_save, b_save = self.dic_times_prev_move[len(self.game)]
+                self.tc_white.restore(w_save)
+                self.tc_black.restore(b_save)
+                self.tc_white.set_labels()
+                self.tc_black.set_labels()
+
             self.play_next_move()
 
     def reopen_book(self):
@@ -904,6 +916,9 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         if len(self.game) > 1:
             self.crash_adjourn()
+
+        if self.timed:
+            self.dic_times_prev_move[len(self.game)] = (self.tc_white.save(), self.tc_black.save())
 
         if si_rival:
             self.play_rival()
@@ -1137,7 +1152,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 return resp
 
     def select_book_move_base(
-        self, book: Books.Book, book_select: int
+            self, book: Books.Book, book_select: int
     ) -> Tuple[bool, Optional[int], Optional[int], Optional[str]]:
         fen = self.last_fen()
 
@@ -1614,7 +1629,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.premove = None
 
     def pww_centipawns_lost(
-        self, mrm: EngineResponse.MultiEngineResponse, rm_user: EngineResponse.EngineResponse
+            self, mrm: EngineResponse.MultiEngineResponse, rm_user: EngineResponse.EngineResponse
     ) -> int:
         if len(self.game.li_moves) == 0:
             best = mrm.best_rm_ordered()
