@@ -18,10 +18,22 @@ from Code.CompetitionWithTutor import WCompetitionWithTutor
 from Code.ManagerBase import Manager
 from Code.QT import Iconos, QTMessages, QTUtils
 from Code.Tactics import Tactics, WindowTactics
+from Code.Base import Game
+from Code.MainWindow import WindowSolve
 
 
 class ManagerTactics(Manager.Manager):
     requested_help: bool
+    reiniciando: bool
+    tactic: Tactics.Tactic
+    game_obj: Game.Game
+    game_base: Game.Game
+    point_view: int
+    with_automatic_jump: bool
+    pos_obj: int
+    num_bad_tries: int
+    ini_clock: float
+    wsolve: WindowSolve.WSolve
 
     def start(self, tactic: Tactics.Tactic):
         self.reiniciando = False
@@ -32,17 +44,16 @@ class ManagerTactics(Manager.Manager):
         self.ayudas_iniciales = 0
         self.requested_help = False
         self.is_competitive = False
-        self.game_obj, self.game_base = self.tactic.work_read_position()
         self.reiniciar()
 
     def reiniciar(self):
         if self.reiniciando:
             return
         self.reiniciando = True
-
+        self.game_obj, self.game_base = self.tactic.work_read_position()
         self.main_window.active_information_pgn(True)
 
-        self.pointView = self.tactic.pointView()
+        self.point_view = self.tactic.point_view()
 
         self.with_automatic_jump = self.tactic.with_automatic_jump()
 
@@ -50,8 +61,8 @@ class ManagerTactics(Manager.Manager):
 
         cp = self.game_obj.first_position
         is_white = cp.is_white
-        if self.pointView:
-            is_white = self.pointView == 1
+        if self.point_view:
+            is_white = self.point_view == 1
         self.is_human_side_white = is_white
         self.is_engine_side_white = not is_white
 
@@ -269,7 +280,7 @@ class ManagerTactics(Manager.Manager):
         si_rival = is_white == self.is_engine_side_white
 
         if si_rival:
-            move = self.game_obj.move(self.pos_obj)
+            move = self.game_obj.move(self.pos_obj).clone(self.game)
             self.move_the_pieces(move.list_piece_moves, True)
             self.add_move(move, False)
             self.play_next_move()

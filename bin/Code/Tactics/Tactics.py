@@ -563,7 +563,7 @@ class Tactic:
         else:
             return 0
 
-    def pointView(self):
+    def point_view(self):
         with self.dbdatos() as db:
             n = db["POINTVIEW"]
             if n is None:

@@ -158,7 +158,7 @@ class GameTournament(object):
         if self.minutos:
 
             def wdec(x):
-                return (f"{x:f}").rstrip("0").rstrip(".")
+                return f"{x:f}".rstrip("0").rstrip(".")
 
             if self.seconds_per_move:
                 return f"{wdec(self.minutos * 60)}+{wdec(self.seconds_per_move)}"
@@ -172,6 +172,7 @@ class GameTournament(object):
             game = Game.Game()
             game.restore(self.game_save)
             return game
+        return None
 
     def save_game(self, game):
         self.game_save = game.save(True)
@@ -342,7 +343,7 @@ class Tournament:
 
         if li_rem_gm:
             self.remove_games_queued(li_rem_gm)
-            # self.remove_games_finished(li_rem_gm)
+            self.remove_games_finished(li_rem_gm)
 
         for pos in lista:
             en = self.engine(pos)
@@ -432,10 +433,12 @@ class Tournament:
             if game is not None:
                 eng_white = self.db_engines.get(game.hwhite)
                 eng_black = self.db_engines.get(game.hblack)
-                eng_white.remove_result(game)
-                eng_black.remove_result(game)
-                self.save_engine(eng_white)  # reemplaza
-                self.save_engine(eng_black)  # reemplaza
+                if eng_white:
+                    eng_white.remove_result(game)
+                    self.save_engine(eng_white)  # reemplaza
+                if eng_black:
+                    eng_black.remove_result(game)
+                    self.save_engine(eng_black)  # reemplaza
 
             del self.db_games_finished[pos]
 

@@ -183,17 +183,15 @@ class AnalysisBar(QtWidgets.QWidget):
         form.separador()
 
         resultado = form.run()
-        if resultado is None:
-            return
-
-        self.config_play = None
-        (
-            configuration.x_analyzer_autorotate_ab,
-            configuration.x_analyzer_depth_ab,
-            configuration.x_analyzer_mstime_ab,
-        ) = resultado[1]
-        configuration.x_analyzer_mstime_ab *= 1000
-        configuration.graba()
+        if resultado is not None:
+            self.config_play = None
+            (
+                configuration.x_analyzer_autorotate_ab,
+                configuration.x_analyzer_depth_ab,
+                configuration.x_analyzer_mstime_ab,
+            ) = resultado[1]
+            configuration.x_analyzer_mstime_ab *= 1000
+            configuration.graba()
 
         self.set_game(self.game)
         self.set_board_position()

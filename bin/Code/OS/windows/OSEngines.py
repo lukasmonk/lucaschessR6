@@ -263,7 +263,7 @@ def read_engines(folder_engines):
     mas(
         "amyan",
         "Antonio Dieguez R.",
-        "1.62",
+        "1.72",
         "https://www.pincha.cl/amyan/amyane.html",
         "amyan.exe",
         2545,
@@ -435,10 +435,10 @@ def read_engines(folder_engines):
     cm = mas(
         "stockfish",
         " T. Romstad, M. Costalba, J. Kiiski, G. Linscott",
-        "17.1 64",
+        "18 64",
         "https://stockfishchess.org/",
-        "Stockfish-17.1-64.exe",
-        3611,
+        "Stockfish-18-64.exe",
+        3700,
         nodes_compatible=True,
     )
     cm.set_uci_option("Ponder", "false")

@@ -1,12 +1,11 @@
+import contextlib
 import csv
 import os
 import shutil
-import contextlib
 
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util, XRun
 from Code.Analysis import RunAnalysisControl, WindowAnalysisParam
 from Code.Analysis.AnalysisGame import AnalysisGame
 from Code.Base import Game, Position
@@ -46,11 +45,12 @@ from Code.QT import (
     SelectFiles,
     QTProgressBars,
 )
-from Code.ZQT import WindowSavePGN
 from Code.SQL import UtilSQL
 from Code.Themes import WDB_Theme_Analysis
 from Code.Translations import TrListas
 from Code.Voyager import Voyager
+from Code.Z import Util, XRun
+from Code.ZQT import WindowSavePGN
 
 
 class WGames(QtWidgets.QWidget):
@@ -286,13 +286,13 @@ class WGames(QtWidgets.QWidget):
                 wxpv = 'XPV LIKE "'
                 while wxpv in where:
                     pos = where.index(wxpv)
-                    otro = where[pos + len(wxpv) :]
+                    otro = where[pos + len(wxpv):]
                     pos_apos = otro.index('"')
                     xpv = otro[: pos_apos - 1]
                     g = Game.Game()
                     g.read_xpv(xpv)
                     pgn = g.pgn_base_raw(translated=True)
-                    where = where[:pos] + pgn + where[pos + len(wxpv) + pos_apos + 1 :]
+                    where = where[:pos] + pgn + where[pos + len(wxpv) + pos_apos + 1:]
                 txt += f" | {_('Filter')}: {where}"
         else:
             si_pte = self.db_games.if_there_are_records_to_read()
@@ -426,8 +426,8 @@ class WGames(QtWidgets.QWidget):
     def tw_terminar(self):
         if self.is_temporary and self.changes:
             if QTMessages.pregunta(
-                self,
-                _("Changes have been made, do you want to export them to a PGN file?"),
+                    self,
+                    _("Changes have been made, do you want to export them to a PGN file?"),
             ):
                 self.tw_exportar_pgn(False)
         self.terminado = True
@@ -711,8 +711,8 @@ class WGames(QtWidgets.QWidget):
         fp = DBgamesMov.DBgamesMov(self.db_games)
         if fp.need_generate():
             if not QTMessages.pregunta(
-                self,
-                _("A position index file needs to be created, which can be a lengthy process, shall we continue?"),
+                    self,
+                    _("A position index file needs to be created, which can be a lengthy process, shall we continue?"),
             ):
                 return
             if not self.generate_positions_file():

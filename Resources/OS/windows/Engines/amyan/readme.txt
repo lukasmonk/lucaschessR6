@@ -14,8 +14,8 @@
        *                                                                             *
        *******************************************************************************
 
-Version : 1.62
-Web     : http://www.geocities.com/zodiamoon/amyan
+Version : 1.72
+Web     : http://www.pincha.cl/amyan
 
 
 My chess program Amyan! ( compatible with Winboard and UCI protocols. )
@@ -24,10 +24,10 @@ My chess program Amyan! ( compatible with Winboard and UCI protocols. )
 Hi! this is a chess engine (no interface included), compatible with WINBOARD and UCI protocols, 
 so you need a Winboard or Uci compatible chess interface.
 
-Strength?? above 2350 elo in a Celeron 1.3 Ghz, but this is very relative.
+Strength?? pretty strong, altough not as strong as the top chess programs.
 
 Some of the strongest free chess engines are:
-Ruffian, Yace, Crafty, Aristarch, Smarthink, etc.
+Rybka 2.2, StockFish, Bright, etc. just take a look at the various rating lists available.
 
 
 The files style.ini and ics.ini only are read when running as a Winboard engine.
@@ -46,8 +46,8 @@ It always claims draw by repetition and almost always the fifty move rule(infini
 
 It doesn't ponder yet...
 
-Amyan has a default hash table of small size, you better change that setting in the style.ini 
-file for optimal perfomance.
+Amyan has a default hash table of 32 MB of size, you better change that setting in the style.ini 
+file for optimal perfomance in case you have enough RAM or will play long games.
 
 
 Respect to UCI
@@ -56,7 +56,8 @@ Respect to UCI
 Amyan supports part of UCI protocol.
 Amyan does ponder under UCI.
 It does support assign an ELO level (if the GUI supports it as well)
-It doesn't support multipv yet.
+It does support multipv, and the show refutations option.
+It has a very small default hash size, you better change that setting in its configuration for optimal performance.
 
 **************************
 
@@ -66,7 +67,7 @@ Openning book:
 
 Amyan comes with a small opening book with some hundreds of moves written by me, and some 
 others taken from amyan's own games.
-If you run Amyan in a commercial interface, it may be possible to use another book, surely 
+If you run Amyan in some interfaces, like Arena, it may be possible to use another book, surely 
 bigger, and more importantly, with more opennings.
 
 
@@ -75,16 +76,16 @@ Search :
 
 Basically,
 
--6 killers are used per ply, two of them are of a different ply.
--the move ordering is not much position dependant (except captures obviously.)
--few extensions (only up to 1 per line except check escape.)
+-Several killers are used.
+-My move ordering is mainly killer based. Static tables only get me a 5% speedup or so.
+-few extensions (only up to 1 per line currently except check escape.)
 -some futility prunning.
--null-move usage (with r=2.)
--a bit more prunning, which doesn't make much difference.
+-null-move usage (with r=2 only.)
+-reductions usage.
 -qsearch with only some captures and check escapes, only sometimes more in a few
 threats (but as that's is considered an extension=>only 1 per line)
 -for ordering captures, mainly, it uses mvv/lva, and prunes a bit.
--nothing of things like etc and iid, because I didn't managed to make a difference with them and moved to other stuff.
+-nothing of things like etc and iid, because I didn't managed to make a difference with them.
 
 
 Evaluation :
@@ -105,26 +106,30 @@ on rank(if connected, obstructed, attacked or supported by rook etc.)
 
 All the values are tunned by hand and trying to do correct stuff and make amyan play fun at the same time.
 Almost all the values that must depend of the material on the board, do, at least in a poor way.
-Anyway, amyan is a slow searcher (slower in NPS than most other programs) so if it does good enough it's because 
-even with the evaluation being simple, it works good enough.
-
+I think Amyan's eval is good enough. It can detect most strong King attacks.
+Pawns storms is characteristic of its playing style, I like that very much.
+If you think amyan's eval is very bad for a particular position send me an email.
 
 Others :
 --------
 
 For board representation, basically an array for the board and arrays for each piece type 
-are used. No special tricks.
-Minimum usage of bitboards for pawns, winning a very little bit of speed.
-Naturally there are a "normal" hash table, an eval hash and a pawn hash.
-Amyan uses only almost 14.000 lines of code.
-It doesn't uses endgames tables yet but may be in the future...
+are used. No special tricks. In the board array, index 11 is A1 and 88 is H8, isn't it intuitive enough?
+Usage of bitboards mainly for pawns.
+
+There are a "normal" hash table(including qsearch), an eval hash and a pawn hash. History heuristic is not active yet. Anyway killers and history prunning concepts can converge.
+It doesn't uses endgames tables yet but I will implement them soon.
+
+We could say Amyan is a slow searcher, this is not only because it may have a slow eval, actually the whole program is relatively inefficient.
+
+BTW I don't study other people source codes. For the sake of curiosity I still take a look mainly to some other program's eval tough..
 
 
 Thanks to :
 -----------
 
 *Arturo Ochoa.
-(because the pretty logo)
+(because the pretty logo, it's PERFECT)
 *Telmo Escobar.
 (because helping me with some moves for the little book and make good comment about amyan)
 *Dann Corbit.
@@ -137,7 +142,7 @@ Thanks to :
 (TSCP helped me to get my thing runing with Winboard more quickly)
 *Thomas Mayer.(->Dan Homman->Robert Hyatt->Tim Mann)
 (because sending me a piece of code to read input without wait)
-*Lars Hollerstorm, Leo Dijkman, Alex Schmidt, Patrick Buckman, George Lyapko, Steffen Basting, 
+*Lars Hollerstorm, Leo Dijkman, Alex Schmidt, Patrick Buchmann, George Lyapko, Steffen Basting, 
 Roger Brown, Andy, Tony, etc.
 (for testing chess engines, including mine.)
 *many more
@@ -147,10 +152,8 @@ and to the CCC, and to all the winboard and chess programming community.
 
 
 --------------------------------------------------------------------------
-Amyan plays at FICS (www.freechess.org), using an Intel Celeron 1.3 Ghz it has 
-a rating of a little more than 2300 at blitz and standard, at the time of this writing.
-The poor chess player who is writing now usually has a bit less than 1500 at blitz...,
-and at standard I don't play much.
+Amyan account at FICS (www.freechess.org), is with nick: Amyan.
+Myself am a very weak player.
 
 Please excuse my english.
 
@@ -168,6 +171,7 @@ Some of the anime series I like: yea I do really watch this!
 Angelic Layer
 Avenger
 Card Captor Sakura
+Claymore
 Gantz
 .Hack//SIGN
 Hikaru No Go

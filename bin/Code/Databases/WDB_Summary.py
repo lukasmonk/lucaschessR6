@@ -584,6 +584,7 @@ class WSummaryBase(QtWidgets.QWidget):
     def grid_tecla_control(self, _grid, k, _is_shift, _is_control, _is_alt):
         if k in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
             self.siguiente()
+        return True
 
     def grid_doble_click(self, _grid, _fil, _col):
         self.siguiente()

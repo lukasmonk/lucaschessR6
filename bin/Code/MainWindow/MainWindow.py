@@ -110,6 +110,7 @@ class MainWindow(LCDialog.LCDialog):
                 if elem_tb in li_acciones and self.is_enabled_option_toolbar(elem_tb):
                     self.manager.run_action(elem_tb)
                     return
+        self.accept()
 
     def on_top_window(self):
         self.onTop = not self.onTop

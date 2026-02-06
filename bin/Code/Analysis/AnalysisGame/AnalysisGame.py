@@ -251,8 +251,8 @@ class AnalysisGame(QtCore.QObject):
             wprogressbar.set_total(2, len(li_moves_to_analyze))
 
         training_state = AnalysisState(
-            si_blunders=ap.pgnblunders or ap.oriblunders or ap.bmtblunders or self.tacticblunders,
-            si_brilliancies=ap.fnsbrilliancies or ap.pgnbrilliancies or ap.bmtbrilliancies,
+            si_blunders=bool(ap.pgnblunders or ap.oriblunders or ap.bmtblunders or self.tacticblunders),
+            si_brilliancies=bool(ap.fnsbrilliancies or ap.pgnbrilliancies or ap.bmtbrilliancies),
             si_bp2=si_bp2,
             total_moves=len(li_moves_to_analyze),
             cl_game=Util.huella(),
@@ -434,8 +434,8 @@ class AnalysisGame(QtCore.QObject):
                 )
                 self.si_bmt_brilliancies = True
 
-    @staticmethod
-    def _finalize_outputs(analysis_params, game, training_state):
+    # @staticmethod
+    def _finalize_outputs(self, analysis_params, game, training_state):
         if training_state.pgn_original_blunders and analysis_params.oriblunders:
             with open(analysis_params.pgnblunders, "at", encoding="utf-8", errors="ignore") as q:
                 q.write(f"\n{game.pgn()}\n\n")
@@ -443,3 +443,40 @@ class AnalysisGame(QtCore.QObject):
         if training_state.pgn_original_brilliancies and analysis_params.oribrilliancies:
             with open(analysis_params.pgnbrilliancies, "at", encoding="utf-8", errors="ignore") as q:
                 q.write(f"\n{game.pgn()}\n\n")
+
+        if self.bmt_listaBlunders:
+            self.terminar_bmt(self.bmt_listaBlunders, analysis_params.bmtblunders)
+
+        if self.bmt_listaBrilliancies:
+            self.terminar_bmt(self.bmt_listaBrilliancies, analysis_params.bmtbrilliancies)
+
+    @staticmethod
+    def terminar_bmt(bmt_lista, name):
+        """
+        Si se estan creando registros para el entrenamiento BMT (Best move Training), al final hay que grabarlos
+        @param bmt_lista: lista a grabar
+        @param name: name del entrenamiento
+        """
+        if bmt_lista and len(bmt_lista) > 0:
+            bmt = BMT.BMT(Code.configuration.paths.file_bmt())
+            dbf = bmt.read_dbf(False)
+
+            reg = dbf.baseRegistro()
+            reg.ESTADO = "0"
+            reg.NOMBRE = name
+            reg.EXTRA = ""
+            reg.TOTAL = len(bmt_lista)
+            reg.HECHOS = 0
+            reg.PUNTOS = 0
+            reg.MAXPUNTOS = bmt_lista.max_puntos()
+            reg.FINICIAL = Util.dtos(Util.today())
+            reg.FFINAL = ""
+            reg.SEGUNDOS = 0
+            reg.BMT_LISTA = Util.var2zip(bmt_lista)
+            reg.HISTORIAL = Util.var2zip([])
+            reg.REPE = 0
+            reg.ORDEN = 0
+
+            dbf.insertarReg(reg, siReleer=False)
+
+            bmt.cerrar()

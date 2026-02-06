@@ -19,6 +19,7 @@ class TournamentWorker(RunWorker.RunWorker):
         super().__init__()
         self.tournament_work = TournamentWork.TournamentWork(file_tournament)
         self.file_tournament_work = file_tournament_work
+        self.num_worker = int(file_tournament_work[file_tournament_work.rindex(".")+1:])
         self.name = self.tournament_work.run_name
         self.key_video = "TOURNAMENTPLAY"
         self.arbiter_active = self.tournament_work.arbiter_active()

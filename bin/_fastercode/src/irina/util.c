@@ -5,25 +5,39 @@
 #include "defs.h"
 #include "protos.h"
 #include "globals.h"
+#include <time.h>
 
 
 #ifdef WIN32
-void cpuidex(int info[4], int function_id, int subfunction_id) {
-    __asm__ __volatile__ (
-        "cpuid"
-        : "=a"(info[0]), "=b"(info[1]), "=c"(info[2]), "=d"(info[3])
-        : "a"(function_id), "c"(subfunction_id)
-    );
+
+Bitmap get_ms() {
+    struct timeb buffer;
+
+    ftime(&buffer);
+    return (buffer.time * 1000) +buffer.millitm;
 }
 
-// Verifica soporte para BMI2 (bit 8 de EBX en CPUID.07H:EBX)
-int is_bmi2() {
-    int info[4];
-    cpuidex(info, 7, 0);
-    return (info[1] & (1 << 8)) != 0;
-}
-#else
 #include <stdint.h>
+#include <intrin.h>
+
+int is_bmi2(void)
+{
+    int info[4];
+
+    __cpuidex(info, 7, 0);
+    return (info[1] & (1 << 8)) != 0;   // EBX bit 8 = BMI2
+}
+
+#else
+
+#include <stdint.h>
+
+Bitmap get_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return (Bitmap)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
 int is_bmi2()
 {
     // change by: https://github.com/jlrdh
@@ -77,12 +91,6 @@ unsigned int first_one(Bitmap bb) {
     return index64[((bb ^ (bb - 1)) * debruijn64) >> 58];
 }
 
-Bitmap get_ms() {
-    struct timeb buffer;
-
-    ftime(&buffer);
-    return (buffer.time * 1000) +buffer.millitm;
-}
 
 int ah_pos(char *ah) {
     if ((ah[0] < 'a') || (ah[0] > 'h') || (ah[1] < '0') || (ah[1] > '9')) {

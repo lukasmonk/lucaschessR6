@@ -455,7 +455,8 @@ class WPotenciaBase(LCDialog.LCDialog):
             self.repeat_row(row)
 
     def repetir(self):
-        if row := self.ghistorico.recno() >= 0:
+        row = self.ghistorico.recno()
+        if row >= 0:
             self.repeat_row(row)
 
     def repeat_row(self, row):
