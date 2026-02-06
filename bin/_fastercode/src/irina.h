@@ -13,14 +13,14 @@ typedef struct
    unsigned is_castle : 2;
 } MoveBin;
 
-int is_bmi2();
-void init_board();
+int is_bmi2(void);
+void init_board(void);
 void fen_board(char *fen);
 int movegen(void);
 int pgn2pv(char *pgn, char * pv);
 int make_nummove(int resp);
 char * play_fen(char * fen, int depth, int time);
-int num_moves( );
+int num_moves( void );
 void get_move( int num, char * pv );
 
 char *board_fen(char *fen);
@@ -51,7 +51,7 @@ unsigned int move_from_string(char move_s[6]);
 int move_to_string(char move_s[6], unsigned int move);
 
 void open_poly_w(char * name);
-void close_poly();
+void close_poly(void);
 
 void set_ext_fen_body(char * ext_fen, char * ext_body, char * ext_pv );
 

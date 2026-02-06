@@ -1,10 +1,11 @@
 import os
 import stat
+
 import FasterCode
 
-from Code.Z import Util
 from Code.Base.Constantes import ENG_INTERNAL
 from Code.Engines import Engines
+from Code.Z import Util
 
 
 def read_engines(folder_engines):
@@ -70,10 +71,10 @@ def read_engines(folder_engines):
     cm = mas(
         "stockfish",
         "Tord Romstad, Marco Costalba, Joona Kiiski",
-        "17.1",
+        "18",
         "https://stockfishchess.org/",
-        "stockfish-17.1-64",
-        3611,
+        "stockfish-18-64",
+        3700,
     )
     cm.set_uci_option("Hash", "64")
     cm.set_uci_option("Threads", "2")
@@ -235,7 +236,8 @@ def read_engines(folder_engines):
         nodes_compatible=True,
     )
 
-    mas("glaurung", "Tord RomsTad", "2.2", "https://www.glaurungchess.com/", "Glaurung-2.2", 2765, nodes_compatible=True)
+    mas("glaurung", "Tord RomsTad", "2.2", "https://www.glaurungchess.com/", "Glaurung-2.2", 2765,
+        nodes_compatible=True)
 
     cm = mas(
         "godel",
@@ -455,12 +457,12 @@ def dic_engines_fixed_elo(folder_engines):
     d = read_engines(folder_engines)
     dic = {}
     for nm, xfrom, xto in (
-        ("stockfish", 1400, 3000),
-        ("arasan", 1000, 2600),
-        ("cheng", 800, 2500),
-        ("greko", 1600, 2400),
-        ("texel", 700, 2500),
-        ("fox", 1000, 2700),
+            ("stockfish", 1400, 3000),
+            ("arasan", 1000, 2600),
+            ("cheng", 800, 2500),
+            ("greko", 1600, 2400),
+            ("texel", 700, 2500),
+            ("fox", 1000, 2700),
     ):
         for elo in range(xfrom, xto + 100, 100):
             cm = d[nm].clone()

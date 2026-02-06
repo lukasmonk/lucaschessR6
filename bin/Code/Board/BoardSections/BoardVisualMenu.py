@@ -115,7 +115,7 @@ class BoardVisualMenu:
             board.launch_director()
 
         elif resp == "keys":
-            board.keyboard.show_keys()
+            board.show_keys()
 
         elif resp.startswith("def_todo"):
             board.configuration.change_theme_num(int(resp[-1]))

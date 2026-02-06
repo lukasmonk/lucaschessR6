@@ -380,9 +380,9 @@ class Move:
     def distancia(self):
         return Position.distancia(self.from_sq, self.to_sq)
 
-    def save(self):
+    def save(self, with_variations: bool = True):
         dic = {"move": self.movimiento(), "in_the_opening": self.in_the_opening}
-        if len(self.variations):
+        if len(self.variations) and with_variations:
             dic["variations"] = self.variations.save()
         if self.comment:
             dic["comment"] = self.comment
@@ -432,11 +432,11 @@ class Move:
         else:
             self.analysis = None
 
-    def clone(self, other_game):
+    def clone(self, other_game, with_variations: bool = True):
         m = Move(other_game)
         m.position_before = self.position_before.copia()
         m.position = self.position.copia()
-        m.restore(self.save())
+        m.restore(self.save(with_variations=with_variations))
         return m
 
     def add_variation(self, game):

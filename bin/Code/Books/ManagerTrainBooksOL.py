@@ -215,7 +215,7 @@ class ManagerTrainBooksOL(Manager.Manager):
             self.disable_all()
 
             self.rm_rival = EngineResponse.EngineResponse("Opening", self.is_engine_side_white)
-            move: Move.Move = self.game_obj.move(num_moves)
+            move: Move.Move = self.game_obj.move(num_moves).clone(self.game)
             self.rival_has_moved(move)
             self.play_next_move()
 

@@ -187,7 +187,8 @@ class ManagerGM(Manager.Manager):
 
     def reiniciar(self):
         if QTMessages.pregunta(self.main_window, _("Restart the game?")):
-            self.arbiter.analyze_end()
+            if self.with_arbiter:
+                self.arbiter.analyze_end()
             self.game.set_position()
             self.main_window.active_information_pgn(False)
             self.start(self.record)

@@ -20,6 +20,7 @@ class RunWorker:
     book_rr: str | None
     book_depth: int | None
     initial_fen: str | None
+    num_worker: int|None = None
 
     def __init__(self):
         Code.procesador = ProcesadorBar()  # necesario para la barra de analisis

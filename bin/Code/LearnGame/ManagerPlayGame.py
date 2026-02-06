@@ -325,7 +325,7 @@ class ManagerPlayGame(Manager.Manager):
             self.board.set_position(user_move.position_before)
 
         comment = (
-            f"{self.name_obj}: {obj_move.pgn_translated()} {comentario_obj}\n"
+            f"{self.name_obj()}: {obj_move.pgn_translated()} {comentario_obj}\n"
             f"{self.configuration.x_player}: {user_move.pgn_translated()} {comentario_usu}\n"
             f"{comentario_puntos}"
         )
@@ -335,7 +335,7 @@ class ManagerPlayGame(Manager.Manager):
         return True
 
     def add_move(self, is_player_move, comment=None, analysis=None, same_move=False):
-        move = self.game_obj.move(self.pos_move_obj)
+        move = self.game_obj.move(self.pos_move_obj).clone(self.game)
         self.pos_move_obj += 1
         if analysis is not None:
             move.analysis = analysis

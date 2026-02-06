@@ -372,10 +372,6 @@ class Manager:
             if li_destinos:
                 self.atajosRatonOrigen = a1h8
                 self.atajosRatonDestino = None
-                # if self.atajosRatonDestino and self.atajosRatonDestino in li_destinos:
-                #     mueve()
-                # else:
-                #     self.atajosRatonDestino = None
                 show_candidates()
                 return
             elif li_origenes:

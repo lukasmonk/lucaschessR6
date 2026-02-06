@@ -2,7 +2,6 @@ from typing import Any, Dict, Optional, Union, List
 
 import FasterCode
 
-from Code.Z import Util
 from Code.Base import Move, Position
 from Code.Base.Constantes import (
     ALL,
@@ -47,6 +46,7 @@ from Code.Base.Constantes import (
 )
 from Code.Nags.Nags import NAG_1, NAG_2, NAG_3, NAG_4, NAG_5, NAG_6
 from Code.Openings import Opening, OpeningsStd
+from Code.Z import Util
 
 
 class Game:
@@ -196,10 +196,10 @@ class Game:
         for pos, (tag, value) in enumerate(self.li_tags):
             if tag.upper() == "RESULT":
                 if value.strip() not in (
-                    RESULT_UNKNOWN,
-                    RESULT_WIN_BLACK,
-                    RESULT_WIN_WHITE,
-                    RESULT_DRAW,
+                        RESULT_UNKNOWN,
+                        RESULT_WIN_BLACK,
+                        RESULT_WIN_WHITE,
+                        RESULT_DRAW,
                 ):
                     value = RESULT_UNKNOWN
                 self.li_tags[pos] = ["Result", value]
@@ -547,6 +547,21 @@ class Game:
         txt = other.save()
         self.restore(txt)
 
+    def clone(self, with_variations: bool = True):
+        gclone = Game(self.first_position.copia())
+        gclone.first_comment = self.first_comment
+        gclone.result = self.result
+        gclone.termination = self.termination
+        gclone.li_tags = [(k, v) for k, v in self.li_tags]
+        gclone.li_moves = []
+        for move in self.li_moves:
+            mclone = move.clone(gclone, with_variations=with_variations)
+            gclone.li_moves.append(mclone)
+        gclone.assign_opening()
+        gclone.si3repetidas()
+        gclone.set_result()
+        return gclone
+
     def si3repetidas(self):
         n_jug = len(self.li_moves)
         if n_jug > 3:
@@ -575,11 +590,11 @@ class Game:
         pv = []
         for mov in lipv:
             if (
-                len(mov) >= 4
-                and mov[0] in "abcdefgh"
-                and mov[1] in "12345678"
-                and mov[2] in "abcdefgh"
-                and mov[3] in "12345678"
+                    len(mov) >= 4
+                    and mov[0] in "abcdefgh"
+                    and mov[1] in "12345678"
+                    and mov[2] in "abcdefgh"
+                    and mov[3] in "12345678"
             ):
                 pv.append(mov)
             else:
@@ -682,9 +697,9 @@ class Game:
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                    (with_variations == ALL)
-                    or (is_w and with_variations == ONLY_WHITE)
-                    or (not is_w and with_variations == ONLY_BLACK)
+                        (with_variations == ALL)
+                        or (is_w and with_variations == ONLY_WHITE)
+                        or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
                         li_pvc.extend(variation.all_pv(pv_previo.strip(), with_variations))
@@ -698,9 +713,9 @@ class Game:
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                    (with_variations == ALL)
-                    or (is_w and with_variations == ONLY_WHITE)
-                    or (not is_w and with_variations == ONLY_BLACK)
+                        (with_variations == ALL)
+                        or (is_w and with_variations == ONLY_WHITE)
+                        or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
                         if dicv := variation.all_comments(with_variations):
@@ -853,12 +868,12 @@ class Game:
         beep = None
         player_lost = False
         if (self.result == RESULT_WIN_WHITE and player_side == WHITE) or (
-            self.result == RESULT_WIN_BLACK and player_side == BLACK
+                self.result == RESULT_WIN_BLACK and player_side == BLACK
         ):
             mensaje, beep = self._label_won(nom_other)
 
         elif (self.result == RESULT_WIN_WHITE and player_side == BLACK) or (
-            self.result == RESULT_WIN_BLACK and player_side == WHITE
+                self.result == RESULT_WIN_BLACK and player_side == WHITE
         ):
             player_lost = True
             mensaje, beep = self._label_lost(nom_other)
@@ -920,7 +935,8 @@ class Game:
     def average_mstime_user(self, num):
         # solo se pregunta cuando le toca jugar al usuario
         is_white = self.last_position.is_white
-        if li := [move.time_ms for move in self.li_moves if move.is_white() == is_white and move.time_ms > 0]:
+        li = [move.time_ms for move in self.li_moves if move.is_white() == is_white and move.time_ms > 0]
+        if len(li) > 0:
             li = li[-num:]
             return sum(li) / len(li)
         else:
@@ -945,14 +961,14 @@ class Game:
                 move0.add_variation(variation)
 
     def remove_info_moves(
-        self,
-        variations=True,
-        ratings=True,
-        comments=True,
-        analysis=True,
-        themes=True,
-        time_ms=True,
-        clock_ms=True,
+            self,
+            variations=True,
+            ratings=True,
+            comments=True,
+            analysis=True,
+            themes=True,
+            time_ms=True,
+            clock_ms=True,
     ):
         if comments:
             self.first_comment = ""
@@ -977,7 +993,7 @@ class Game:
             self.li_moves = self.li_moves[:num_move]
             self.set_unknown()
         else:
-            self.li_moves = self.li_moves[num_move + 1 :]
+            self.li_moves = self.li_moves[num_move + 1:]
             if self.li_moves:
                 move: Move.Move = self.li_moves[0]
                 self.first_position = move.position_before.copia()
@@ -1288,7 +1304,7 @@ class PGNtoGame:
             return
 
         label: str = kv[:pos]
-        value: str = kv[pos + 1 :].strip()
+        value: str = kv[pos + 1:].strip()
         label_upper: str = label.upper()
 
         if label_upper == "FEN":
@@ -1450,8 +1466,4 @@ def read_games(pgnfile):
 
 
 def game_without_variations(game: Game):
-    game_new = Game()
-    game_new.assign_other_game(game)
-    for move in game_new.li_moves:
-        move.variations.clear()
-    return game_new
+    return game.clone(with_variations=False)

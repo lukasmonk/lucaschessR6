@@ -1,5 +1,4 @@
 import os
-import time
 
 from PySide6 import QtCore, QtWidgets
 
@@ -175,7 +174,8 @@ class WTournament(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NUM", _("N."), 50, align_center=True)
         o_columns.nueva("ALIAS", _("Alias"), 209)
-        self.gridEnginesAlias = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True, xid=GRID_ALIAS)
+        self.gridEnginesAlias = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True,
+                                          xid=GRID_ALIAS)
         self.register_grid(self.gridEnginesAlias)
 
         w = QtWidgets.QWidget()
@@ -437,6 +437,7 @@ class WTournament(LCDialog.LCDialog):
             return self.torneo.num_games_finished()
         elif gid == GRID_RESULTS:
             return self.torneo.num_engines()
+        return None
 
     def grid_dato(self, grid, row, obj_column):
         column = obj_column.key
@@ -460,6 +461,7 @@ class WTournament(LCDialog.LCDialog):
             return me.key
         elif column == "NUM":
             return str(row + 1)
+        return None
 
     def grid_dato_engines_values(self, row, column):
         li = self.li_data_current_engine[row]
@@ -496,6 +498,7 @@ class WTournament(LCDialog.LCDialog):
             return "%d" % db
         elif column == "GAMES":
             return f"{ww + wb + lw + lb + dw + db}"
+        return None
 
     def grid_dato_games_queued(self, row, column):
         gm = self.torneo.game_queued(row)
@@ -507,10 +510,9 @@ class WTournament(LCDialog.LCDialog):
         elif column == "BLACK":
             en = self.torneo.search_hengine(gm.hblack)
             return en.key if en else "???"
-        # elif column == "STATE":
-        #     return _("Working...") if gm.worker else ""
         elif column == "TIME":
             return gm.label_time()
+        return None
 
     def grid_dato_games_finished(self, row, column):
         gm: Tournament.GameTournament = self.torneo.game_finished(row)
@@ -532,8 +534,9 @@ class WTournament(LCDialog.LCDialog):
             return gm.label_time()
         elif column == "PLYCOUNT":
             return str(len(game))
+        return None
 
-    def grid_cambiado_registro(self, grid, row, column):
+    def grid_cambiado_registro(self, grid, row, _obj_column):
         if grid.id == GRID_ALIAS:
             me = self.torneo.engine(row)
             self.act_engine(me)
@@ -604,7 +607,6 @@ class WTournament(LCDialog.LCDialog):
                         last = pos
                         break
                     XRun.run_lucas("-tournament", self.torneo.file, wfile)
-                    time.sleep(1.0)
 
     def comprueba_cambios(self):
         if self.torneo:
@@ -678,22 +680,6 @@ class WTournament(LCDialog.LCDialog):
 
         self.rotulos_tabs()
 
-    # def enImportarTodos(self):
-    #     lista = self.configuration.engines.list_name_alias()
-    #     for name, key in lista:
-    #         for depth in range(1, 5):
-    #             me = Tournament.EngineTournament()
-    #             me.pon_huella(self.torneo)
-    #             me.read_exist_engine(key)
-    #             me.key = key + " - depth %d" % depth
-    #             me.depth = depth
-    #             me.elo = 1500
-    #             self.torneo.save_engine(me)
-    #     self.gridEnginesAlias.refresh()
-    #     self.gridEnginesAlias.gobottom(0)
-    #     self.gridResults.refresh()
-    #     self.rotulos_tabs()
-
     def eng_import(self):
         if self.internal_engines is None:
             self.internal_engines = SelectEngines.SelectEngines(self)
@@ -721,30 +707,35 @@ class WTournament(LCDialog.LCDialog):
 
         self.rotulos_tabs()
 
-    def grid_tecla_control(self, grid, k, is_shift, is_control, is_alt):
+    def grid_tecla_control(self, grid, k, _is_shift, _is_control, _is_alt):
         if k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             if grid == self.gridGamesQueued:
                 self.gm_borrar_queued()
+                return False
             elif grid == self.gridEnginesAlias:
                 self.eng_remove()
+                return False
             elif grid == self.gridGamesFinished:
                 self.gm_borrar_finished()
+                return False
+        return True
 
-    def grid_doble_click(self, grid, row, column):
+    def grid_doble_click(self, grid, _row, _obj_column):
         if grid in [self.gridEnginesAlias, self.gridEnginesValores]:
             self.eng_modify()
         elif grid == self.gridGamesFinished:
             self.gm_show_finished()
 
-    def grid_color_fondo(self, grid, nfila, ocol):
+    def grid_color_fondo(self, grid, _row, obj_column):
         if grid == self.gridResults:
-            key = ocol.key
+            key = obj_column.key
             if "WHITE" in key:
                 return self.qt_color["WHITE"]
             elif "BLACK" in key:
                 return self.qt_color["BLACK"]
             elif "SCORE" in key:
                 return self.qt_color["SCORE"]
+        return None
 
     def eng_modify(self):
         row = self.gridEnginesAlias.recno()

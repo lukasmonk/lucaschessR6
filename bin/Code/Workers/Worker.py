@@ -54,8 +54,10 @@ class Worker(QtWidgets.QWidget):
         Code.list_engine_managers.check_active_logs()
 
         self.run_worker = run_worker
-
-        self.setWindowTitle(f'{run_worker.name} - {_("Worker")}')
+        worker = _("Worker")
+        if self.run_worker.num_worker:
+            worker = f'{worker} {run_worker.num_worker}'
+        self.setWindowTitle(f'{run_worker.name} - {worker} ')
         self.setWindowIcon(Iconos.League())
 
         self.tb = QTDialogs.LCTB(self, icon_size=24)

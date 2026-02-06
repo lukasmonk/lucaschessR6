@@ -13,12 +13,12 @@ class StockfishManager:
     Manage Stockfish engine selection based on CPU capabilities.
     """
 
-    STOCKFISH_KEY = "STOCKFISH17.1"
+    STOCKFISH_KEY = "STOCKFISH18"
 
     REQUIREMENTS = [
         ("vnni512", {"avx512f", "avx512vl", "avx512vnni", "avx512dq", "avx512bw"}),
         ("avx512", {"avx512f", "avx512bw", "avx512dq"}),
-        ("vnni256", {"avx2", "avxvnni"}),
+        # ("vnni256", {"avx2", "avxvnni"}),
         ("avxvnni", {"avx2", "avxvnni"}),
         ("bmi2", {"bmi2"}),
         ("avx2", {"avx2"}),

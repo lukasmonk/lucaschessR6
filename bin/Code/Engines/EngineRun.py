@@ -114,6 +114,8 @@ class EngineRun(QtCore.QObject):
     last_time_depth_emit: int = 0
     time_interval_depth_emit: int = 500
 
+    timerstop: Optional[QtCore.QTimer] = None
+
     def __init__(self, config: StartEngineParams):
         super().__init__()
 

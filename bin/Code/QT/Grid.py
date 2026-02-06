@@ -141,12 +141,12 @@ class ControlGrid(QtCore.QAbstractTableModel):
         flag |= QtCore.Qt.ItemFlag.ItemIsSelectable
 
         column = self.columns_displayables.column(index.column())
+        if column:
+            if column.is_editable:
+                flag |= QtCore.Qt.ItemFlag.ItemIsEditable
 
-        if column.is_editable:
-            flag |= QtCore.Qt.ItemFlag.ItemIsEditable
-
-        if column.is_checked:
-            flag |= QtCore.Qt.ItemFlag.ItemIsUserCheckable
+            if column.is_checked:
+                flag |= QtCore.Qt.ItemFlag.ItemIsUserCheckable
 
         return flag
 
@@ -231,11 +231,7 @@ class HeaderFontVertical(Header):
         data = self._get_data(index)
         painter.rotate(-90)
         painter.setFont(self._font)
-        painter.drawText(
-            -rect.height() + self._margin,
-            rect.left() + (rect.width() + self._descent) / 2,
-            data,
-        )
+        painter.drawText(-rect.height() + self._margin, rect.left() + (rect.width() + self._descent) / 2, data)
 
     def sizeHint(self):
         if self._height:
@@ -280,23 +276,23 @@ class Grid(QtWidgets.QTableView):
     """
 
     def __init__(
-        self,
-        w_parent,
-        o_columns,
-        dic_video=None,
-        heigh_row=None,
-        complete_row_select=False,
-        select_multiple=False,
-        with_lines=True,
-        is_editable=False,
-        is_column_header_movable=True,
-        xid=None,
-        background="",
-        header_visible=True,
-        header_heigh=None,
-        alternate=True,
-        cab_vertical_font=None,
-        with_header_vertical=False,
+            self,
+            w_parent,
+            o_columns,
+            dic_video=None,
+            heigh_row=None,
+            complete_row_select=False,
+            select_multiple=False,
+            with_lines=True,
+            is_editable=False,
+            is_column_header_movable=True,
+            xid=None,
+            background="",
+            header_visible=True,
+            header_heigh=None,
+            alternate=True,
+            cab_vertical_font=None,
+            with_header_vertical=False,
     ):
         """
         @param w_parent: ventana propietaria
@@ -378,10 +374,10 @@ class Grid(QtWidgets.QTableView):
     def selectAll(self):
         if self.w_parent.grid_num_datos(self) > 20000:
             if not QTMessages.pregunta(
-                self,
-                f'{_("This process takes a very long time")}.<br><br>{_("What do you want to do?")}',
-                label_yes=_("Continue"),
-                label_no=_("Cancel"),
+                    self,
+                    f'{_("This process takes a very long time")}.<br><br>{_("What do you want to do?")}',
+                    label_yes=_("Continue"),
+                    label_no=_("Cancel"),
             ):
                 return
         QtWidgets.QTableView.selectAll(self)
@@ -395,7 +391,7 @@ class Grid(QtWidgets.QTableView):
         else:
             sel = QtWidgets.QAbstractItemView.SelectionBehavior.SelectItems
         self.setSelectionBehavior(sel)
-        
+
         if select_multiple:
             sel_mode = QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection
         else:
@@ -433,7 +429,8 @@ class Grid(QtWidgets.QTableView):
                 if self.w_parent.grid_tecla_pulsada(self, event.text()) is None:
                     return
         if hasattr(self.w_parent, "grid_tecla_control"):
-            if self.w_parent.grid_tecla_control(self, k, is_shift, is_control, is_alt) is None:
+            # Si devuelve None o False, significa que hay que terminar el evento
+            if not self.w_parent.grid_tecla_control(self, k, is_shift, is_control, is_alt):
                 return
         if k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace) and hasattr(self.w_parent, "grid_remove"):
             if self.w_parent.grid_remove() is None:
@@ -659,14 +656,14 @@ class Grid(QtWidgets.QTableView):
         return self.recno(), self.currentIndex().column()
 
     def font_type(
-        self,
-        name="",
-        puntos=8,
-        peso=50,
-        is_italic=False,
-        is_underlined=False,
-        is_striked=False,
-        txt=None,
+            self,
+            name="",
+            puntos=8,
+            peso=50,
+            is_italic=False,
+            is_underlined=False,
+            is_striked=False,
+            txt=None,
     ):
         font = QtGui.QFont()
         if txt is None:

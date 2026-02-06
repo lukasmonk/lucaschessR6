@@ -389,7 +389,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         return True
 
     def add_move(self, si_nuestra, comment=None, analysis=None, same_move=False):
-        move = self.game_obj.move(self.pos_move_obj)
+        move = self.game_obj.move(self.pos_move_obj).clone(self.game)
         self.pos_move_obj += 1
         if analysis:
             move.analysis = analysis

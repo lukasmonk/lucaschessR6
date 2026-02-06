@@ -203,7 +203,7 @@ class PGNreader:
 
         self.li_btexto = []
         def add_label(ln):
-            ln = ln[1:-1].strip()
+            ln = ln[1:len(ln)-1].strip()
             si_barra = b'\\"' in ln
             if si_barra:
                 ln = ln.replace(b'\\"', b'|&|')
@@ -217,7 +217,7 @@ class PGNreader:
                     ln = ln.replace(b'""', b'"')
                     if ln.count(b'"') != 2:
                         return False
-            if ln[-1:] != b'"':
+            if ln[len(ln)-1:] != b'"':
                 return False
             key, value, nada = ln.split(b'"')
             key = key.strip()
@@ -233,14 +233,14 @@ class PGNreader:
                 raise StopIteration
             linea = linea.strip()
             self.li_btexto.append(linea)
-            if linea[:1] == b"[" and linea[-1:] == b"]":
+            if linea.startswith(b"[") and linea.endswith(b"]"):
                 add_label(linea)
                 while True:
                     linea = readline()
                     if not linea:
                         raise StopIteration
                     linea1 = linea.strip()
-                    if linea1[:1] == b"[" and linea1[-1:] == b"]":
+                    if linea1.startswith(b"[") and linea1.endswith(b"]"):
                         add_label(linea1)
                     elif len(linea1) > 0:
                         body = linea
@@ -255,7 +255,7 @@ class PGNreader:
             ln = linea.strip()
             #if not ln:
             #    break
-            if ln[:1] == b"[" and ln[-1:] == b"]" and ln.count(b'"') >= 2 and ln.count(b"[") == 1 and ln.count(b"]") == 1:
+            if ln.startswith(b"[") and ln.endswith(b"]") and ln.count(b'"') >= 2 and ln.count(b"[") == 1 and ln.count(b"]") == 1:
                 self.f.seek(self.f.tell() - len(linea))
                 break
             body += linea
@@ -530,7 +530,7 @@ def xpv_lipv(xpv: str):
             is_white = not is_white
         else:
             c = {50: "q", 51: "r", 52: "b", 53: "n"}.get(x, "")
-            li[-1] += c
+            li[len(li) - 1] += c
     return li
 
 
@@ -650,7 +650,8 @@ def lipv_pgn(fen, lipv):
     cdef char san[10]
     set_fen(fen)
     is_white = " w " in fen
-    num = int(fen.split(" ")[-1])
+    li_pv = fen.split(" ")
+    num = int(li_pv[len(li_pv) - 1])
     li = []
     tam = 0
     for pv in lipv:
