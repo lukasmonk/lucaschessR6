@@ -140,7 +140,6 @@ bool bioskey() {
 
 #else
 /* Windows */
-#include <windows.h>
 #include <conio.h>
 
 bool bioskey() {
