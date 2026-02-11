@@ -59,6 +59,7 @@ class WKibLine(QtWidgets.QMainWindow):
         super().__init__()
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
 
         wrapper = QtWidgets.QWidget()
         wrapper.setObjectName("wrapper")
