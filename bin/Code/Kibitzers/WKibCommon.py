@@ -163,6 +163,8 @@ class WKibCommon(QtWidgets.QDialog):
         self.siPlay = False
         self.tb.set_pos_visible(1, True)
         self.tb.set_pos_visible(2, False)
+        if hasattr(self, 'engine_run') and self.engine_run:
+            self.engine_run.stop()
 
     def orden_game(self, game):
         pass
