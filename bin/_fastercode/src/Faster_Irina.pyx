@@ -246,6 +246,9 @@ class PGNreader:
                         body = linea
                         break
                 break
+            elif linea:
+                body = linea + b"\n"
+                break
 
         while True:
             linea = readline()
