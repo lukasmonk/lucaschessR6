@@ -1460,7 +1460,8 @@ class Manager:
 
     def player_has_moved_base(self, from_sq, to_sq, promotion=""):
         if self.board.variation_history is not None:
-            if not (self.in_end_of_line() and self.board.variation_history.count("|") == 0):
+            vh = self.board.variation_history
+            if vh.count("|") > 0 or int(vh) < len(self.game) - 1:
                 return self.mueve_variation(from_sq, to_sq, promotion="")
         return self.messenger(from_sq, to_sq, promotion)
 
