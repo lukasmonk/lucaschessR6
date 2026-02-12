@@ -1,2 +1,18 @@
 UserData/
 
+# Python
+__pycache__/
+
+# Build artifacts
+*.pyd
+*.lib
+*.obj
+bin/_fastercode/src/build/
+bin/_fastercode/src/FasterCode.c
+bin/_fastercode/src/irina/err.txt
+bin/_fastercode/src/irina/util.i
+bin/_fastercode/util.i
+
+# Runtime-generated engine (copied from best CPU-specific variant at startup)
+Resources/OS/windows/Engines/stockfish/Stockfish-18-64.exe
+
