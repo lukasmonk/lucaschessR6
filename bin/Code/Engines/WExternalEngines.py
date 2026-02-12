@@ -17,6 +17,7 @@ from Code.QT import (
     LCDialog,
     QTDialogs,
     QTMessages,
+    SelectFiles,
 )
 
 
@@ -137,6 +138,39 @@ class WExternalEngines(LCDialog.LCDialog):
         opcion = self.li_uci_options[nfila]
         self.engine.set_uci_option(opcion.name, valor)
         self.wexternals.set_changed()
+
+    def grid_doble_click(self, grid, row, obj_column):
+        if grid != self.grid_conf or row < 0 or obj_column is None or obj_column.key != "VALUE":
+            return
+
+        opcion = self.li_uci_options[row]
+        if opcion.name != "SyzygyPath":
+            return
+
+        current_value = str(opcion.valor or "")
+        for xname, xvalue in self.engine.liUCI:
+            if xname == opcion.name:
+                current_value = str(xvalue or "")
+                break
+
+        current_folder = ""
+        if current_value:
+            for part in current_value.split(os.pathsep):
+                part = part.strip()
+                if part and os.path.isdir(part):
+                    current_folder = part
+                    break
+
+        if not current_folder:
+            current_folder = os.getcwd()
+
+        selected = SelectFiles.get_existing_directory(self, current_folder, _("Select Syzygy folder"))
+        if not selected:
+            return
+
+        self.engine.set_uci_option(opcion.name, selected)
+        self.wexternals.set_changed()
+        self.grid_conf.refresh()
 
     def save(self):
         self.wexternals.save()
