@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 REM -------------------------------------------------------
-REM CONFIGURACIÓN
+REM CONFIGURACIÃ“N
 REM -------------------------------------------------------
 
 set PYTHON_EXE=H:\lucaschessR6\.venv\Scripts\python.exe
@@ -128,7 +128,13 @@ echo.
 :env_ready
 
 REM -------------------------------------------------------
-REM Compilar librería C: irina.lib
+REM Change to script directory (so relative paths work)
+REM -------------------------------------------------------
+
+cd /d "%~dp0"
+
+REM -------------------------------------------------------
+REM Compilar librerÃ­a C: irina.lib
 REM -------------------------------------------------------
 
 echo.
@@ -174,7 +180,7 @@ echo.
 copy /B Faster_Irina.pyx+Faster_Polyglot.pyx FasterCode.pyx > nul
 
 REM -------------------------------------------------------
-REM Compilar extensión Python con setup.py
+REM Compilar extensiÃ³n Python con setup.py
 REM -------------------------------------------------------
 
 echo.
