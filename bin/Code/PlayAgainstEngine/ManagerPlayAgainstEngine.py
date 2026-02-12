@@ -1492,6 +1492,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         fen_ultimo = self.last_fen()
         if fen_ultimo in self.cache:
             move = self.cache[fen_ultimo]
+            if self.board.last_position != move.position_before:
+                self.set_position(move.position_before)
             self.move_the_pieces(move.list_piece_moves, True)
             self.add_move(move)
             if self.timed:
@@ -1602,6 +1604,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             fen_ultimo = self.last_fen()
             move.set_time_ms(int(time_s * 1000))
             move.set_clock_ms(int(self.tc_rival.pending_time * 1000))
+            if self.board.last_position != move.position_before:
+                self.set_position(move.position_before)
             self.add_move(move)
             self.move_the_pieces(move.list_piece_moves, True)
             self.beep_extended(False)
