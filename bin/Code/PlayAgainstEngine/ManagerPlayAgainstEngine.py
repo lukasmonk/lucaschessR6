@@ -149,7 +149,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
     def start(self, dic_var: Dict[str, Any]):
         self.base_inicio(dic_var)
         if self.timed:
-            if self.hints:
+            if self.hints and self.manager_tutor:
                 self.manager_tutor.check_engine()
             self.manager_rival.check_engine()
             self.start_pending_continue = True
@@ -750,7 +750,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if self.timed:
             self.show_clocks()
         if self.timed:
-            if self.hints:
+            if self.hints and self.manager_tutor:
                 self.manager_tutor.check_engine()
             self.manager_rival.check_engine()
             self.start_message()
@@ -803,7 +803,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.crash_adjourn_end()
             self.analyze_terminate()
             self.state = ST_ENDGAME
-            self.manager_tutor.close()
+            if self.manager_tutor:
+                self.manager_tutor.close()
 
         if len(self.game) > 0:
 
@@ -859,7 +860,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if len(self.game) and self.in_end_of_line():
             if self.is_tutor_analysing:
                 self.is_tutor_analysing = False
-                self.manager_tutor.stop()
+                if self.manager_tutor:
+                    self.manager_tutor.stop()
             if self.hints:
                 self.hints -= 1
                 self.tutor_con_flechas = self.nArrowsTt > 0 and self.hints > 0
@@ -975,7 +977,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if self.opening_mandatory or self.ayudas_iniciales <= 0:
                 return
 
-        if not self.is_finished():
+        if not self.is_finished() and self.manager_tutor:
             self.is_tutor_analysing = True
             self.manager_tutor.analyze_tutor(self.game, self.analyze_bestmove_found, self.analyze_changedepth)
 
@@ -995,14 +997,15 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.mrm_tutor = mrm
 
     def analyze_end(self):
-        if self.is_tutor_analysing:
+        if self.is_tutor_analysing and self.manager_tutor:
             self.manager_tutor.stop()
 
     def analyze_terminate(self):
         self.player_has_moved_a1h8 = None
         if self.is_tutor_analysing:
             self.is_tutor_analysing = False
-            self.manager_tutor.stop()
+            if self.manager_tutor:
+                self.manager_tutor.stop()
 
     def current_bestmove(self) -> Tuple[Optional[int], Optional[int], Optional[str]]:
         if not self.is_in_last_move():
@@ -1238,7 +1241,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 self.main_window.pensando_tutor(True)
 
                 self.player_has_moved_a1h8 = move
-                if not self.manager_tutor.is_run_fixed():
+                if not self.manager_tutor or not self.manager_tutor.is_run_fixed():
                     self.analyze_end()
             return None
 
@@ -1348,7 +1351,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                     self.is_tutor_analysing = True
                     self.is_analyzing = True
                     self.pon_toolbar(ToolbarState.TUTOR_THINKING)
-                    self.mrm_tutor = self.manager_tutor.analyze_tutor_move(self.game, a1h8)
+                    self.mrm_tutor = self.manager_tutor.analyze_tutor_move(self.game, a1h8) if self.manager_tutor else None
                     self.state = ST_PLAYING
                     self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
                     self.main_window.pensando_tutor(False)
@@ -1489,6 +1492,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         fen_ultimo = self.last_fen()
         if fen_ultimo in self.cache:
             move = self.cache[fen_ultimo]
+            if self.board.last_position != move.position_before:
+                self.set_position(move.position_before)
             self.move_the_pieces(move.list_piece_moves, True)
             self.add_move(move)
             if self.timed:
@@ -1599,6 +1604,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             fen_ultimo = self.last_fen()
             move.set_time_ms(int(time_s * 1000))
             move.set_clock_ms(int(self.tc_rival.pending_time * 1000))
+            if self.board.last_position != move.position_before:
+                self.set_position(move.position_before)
             self.add_move(move)
             self.move_the_pieces(move.list_piece_moves, True)
             self.beep_extended(False)
@@ -1707,7 +1714,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             comment += "\n"
 
         if j_num:
-            comment += f"{_('Tutor')}: {self.manager_tutor.name}\n"
+            comment += f"{_('Tutor')}: {self.manager_tutor.name if self.manager_tutor else '?'}\n"
             comment += f"{_('Number of moves')}:{j_num}\n"
             comment += f"{_('Same move')}:{j_same} ({j_same * 1.0 / j_num:0.2f}%)\n"
             comment += (
@@ -1785,9 +1792,9 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             r_p = dr["ENGINE_DEPTH"]
             r_n = dr["ENGINE_NODES"]
             if r_t <= 0:
-                r_t = None
+                r_t = 0
             if r_p <= 0:
-                r_p = None
+                r_p = 0
 
             dr["RESIGN"] = self.resign_limit
             self.manager_rival.close()

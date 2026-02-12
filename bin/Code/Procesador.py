@@ -289,6 +289,12 @@ class Procesador:
 
     def create_manager_tutor(self):
         engine = self.configuration.engines.engine_tutor()
+        if engine is None:
+            from Code.Engines import CheckEngines
+            CheckEngines.check_engines(self.main_window)
+            engine = self.configuration.engines.engine_tutor()
+        if engine is None:
+            return None
         engine.set_multipv_var(self.configuration.x_tutor_multipv)
         run_engine_params = EngineRun.RunEngineParams()
         run_engine_params.update(
@@ -311,6 +317,12 @@ class Procesador:
 
     def create_manager_analyzer(self, mstime, depth, nodes, multipv):
         engine = self.configuration.engines.engine_analyzer()
+        if engine is None:
+            from Code.Engines import CheckEngines
+            CheckEngines.check_engines(self.main_window)
+            engine = self.configuration.engines.engine_analyzer()
+        if engine is None:
+            return None
         engine.set_multipv_var(self.configuration.x_analyzer_multipv if multipv is None else multipv)
         run_engine_params = EngineRun.RunEngineParams()
         run_engine_params.update(engine, mstime, depth, nodes, engine.multiPV)
