@@ -953,6 +953,7 @@ class Voyager(LCDialog.LCDialog):
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint | QtCore.Qt.Window | QtCore.Qt.WindowType.WindowStaysOnTopHint
         )
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips)
 
         self.is_game = is_game
         self.game = game.copia()

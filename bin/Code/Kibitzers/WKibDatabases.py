@@ -135,6 +135,7 @@ class WKibDatabases(WKibCommon.WKibCommon):
             flags &= ~QtCore.Qt.WindowType.WindowStaysOnTopHint
         flags |= QtCore.Qt.WindowType.WindowCloseButtonHint
         self.setWindowFlags(flags)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips, self.siTop)
         self.tb.set_action_visible(self.window_top, not self.siTop)
         self.tb.set_action_visible(self.window_bottom, self.siTop)
         self.show()

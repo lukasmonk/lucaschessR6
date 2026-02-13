@@ -195,6 +195,7 @@ class MainWindow(LCDialog.LCDialog):
         # flags &= ~QtCore.Qt.WindowType.WindowCloseButtonHint
         self.setWindowFlags(flags)
         self.setWindowFlags(QtCore.Qt.WindowType.WindowCloseButtonHint | flags)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips, self.onTop)
         if self.board.is_maximized():
             self.showMaximized()
         else:
