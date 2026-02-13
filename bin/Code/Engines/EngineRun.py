@@ -125,6 +125,7 @@ class EngineRun(QtCore.QObject):
 
         self.config = config
         self._wait_loop: Optional[QtCore.QEventLoop] = None
+        self._bestmoves_to_skip: int = 0
         self.stream_line_processor = StreamLineProcessor()
 
         self.mode_timer_poll = Code.configuration.x_msrefresh_poll_engines > 0
@@ -391,6 +392,14 @@ class EngineRun(QtCore.QObject):
                             pass
 
                     st = self.state
+
+                    # --- Skip stale output from previously stopped searches ---
+                    if line.startswith("bestmove") and self._bestmoves_to_skip > 0:
+                        self._bestmoves_to_skip -= 1
+                        continue
+                    if st == EngineState.THINKING and self._bestmoves_to_skip > 0:
+                        # Info lines from a stopped search that precede the stale bestmove
+                        continue
 
                     if st == EngineState.READING_UCI:
                         if line == "uciok":
@@ -718,6 +727,8 @@ class EngineRun(QtCore.QObject):
 
     # --- positions / play ---
     def set_game_position(self, game: Game.Game, movement: Optional[int], pre_move: bool):
+        if self.state == EngineState.THINKING:
+            self._bestmoves_to_skip += 1
         self.stop()
         self.isready()
         order = "startpos" if game.is_fen_initial() else f"fen {game.first_position.fen()}"
@@ -740,6 +751,8 @@ class EngineRun(QtCore.QObject):
         self._send_command(f"position {order}")
 
     def set_fen_position(self, fen: str):
+        if self.state == EngineState.THINKING:
+            self._bestmoves_to_skip += 1
         self.stop()
         self.isready()
         self._send_command(f"position fen {fen}")
