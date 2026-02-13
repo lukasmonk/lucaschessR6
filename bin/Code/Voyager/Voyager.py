@@ -463,7 +463,7 @@ class WPosicion(QtWidgets.QWidget):
                     self.scanner_init()
                     self.is_scan_init = True
                 img: QtGui.QImage = data
-                path_png = Code.configuration.temporary_file("png")
+                path_png = str(Code.configuration.temporary_file("png"))
                 img.save(path_png)
                 self.im_scanner = Image.open(path_png)
                 self.scanner_process()
