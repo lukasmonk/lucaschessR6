@@ -125,6 +125,7 @@ class EngineRun(QtCore.QObject):
 
         self.config = config
         self._wait_loop: Optional[QtCore.QEventLoop] = None
+        self._drain_loop: Optional[QtCore.QEventLoop] = None
         self.stream_line_processor = StreamLineProcessor()
 
         self.mode_timer_poll = Code.configuration.x_msrefresh_poll_engines > 0
@@ -457,6 +458,11 @@ class EngineRun(QtCore.QObject):
 
                             li = line.split(" ")
                             self.bestmove = li[1] if len(li) > 1 else ""
+                            if self._drain_loop is not None:
+                                try:
+                                    self._drain_loop.quit()
+                                except:
+                                    pass
                             if self.emit:
                                 try:
                                     self.bestmove_found.emit(self.bestmove)
@@ -482,6 +488,11 @@ class EngineRun(QtCore.QObject):
             if self._wait_loop:
                 try:
                     self._wait_loop.quit()
+                except:
+                    pass
+            if self._drain_loop:
+                try:
+                    self._drain_loop.quit()
                 except:
                     pass
             if __debug__:
@@ -551,6 +562,33 @@ class EngineRun(QtCore.QObject):
         except:
             if __debug__:
                 Debug.prln(f"Error in stop():\n{traceback.format_exc()}", color="red")
+
+    def _drain_stopped_search(self):
+        """After stop(), wait for the engine to send bestmove so all stale output
+        is consumed before isready(). This prevents old search data from leaking
+        into the next search's mrm when the engine sends readyok before bestmove."""
+        if self.state not in (EngineState.THINKING, EngineState.PONDERING):
+            return
+        drain_loop = QtCore.QEventLoop()
+        self._drain_loop = drain_loop
+
+        if self.mode_timer_poll:
+            self._start_polling()
+
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(drain_loop.quit)
+        timer.start(2000)
+
+        QtCore.QCoreApplication.processEvents()
+        if self.state in (EngineState.THINKING, EngineState.PONDERING):
+            drain_loop.exec()
+        timer.stop()
+
+        if self.mode_timer_poll:
+            self._stop_polling()
+
+        self._drain_loop = None
 
     def time_played(self):
         return (time.time() - self.play_time_begin) if self.play_time_begin else 0.0
@@ -640,6 +678,11 @@ class EngineRun(QtCore.QObject):
                 self._wait_loop.quit()
             except:
                 pass
+        if self._drain_loop:
+            try:
+                self._drain_loop.quit()
+            except:
+                pass
 
         # Bloquear señales para evitar eventos durante el cierre
         with contextlib.suppress(RuntimeError, AttributeError):
@@ -719,6 +762,7 @@ class EngineRun(QtCore.QObject):
     # --- positions / play ---
     def set_game_position(self, game: Game.Game, movement: Optional[int], pre_move: bool):
         self.stop()
+        self._drain_stopped_search()
         self.isready()
         order = "startpos" if game.is_fen_initial() else f"fen {game.first_position.fen()}"
 
@@ -741,6 +785,7 @@ class EngineRun(QtCore.QObject):
 
     def set_fen_position(self, fen: str):
         self.stop()
+        self._drain_stopped_search()
         self.isready()
         self._send_command(f"position fen {fen}")
         self.is_white = " w" in fen
