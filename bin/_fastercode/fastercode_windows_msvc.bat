@@ -2,25 +2,62 @@
 setlocal enabledelayedexpansion
 
 REM -------------------------------------------------------
-REM CONFIGURACIÓN
+REM CONFIGURATION
 REM -------------------------------------------------------
 
-set PYTHON_EXE=H:\lucaschessR6\.venv\Scripts\python.exe
-set VS_PATH=C:\Program Files\Microsoft Visual Studio\2022\Community
-set VCVARS=%VS_PATH%\VC\Auxiliary\Build\vcvars64.bat
+:: Change these paths to match your local environment
+set "PYTHON_EXE=H:\lucaschessR6\.venv\Scripts\python.exe"
+set "VS_PATH=C:\Program Files\Microsoft Visual Studio\2022\Community"
 
 REM -------------------------------------------------------
-REM Inicializar entorno MSVC
+REM VALIDATION
 REM -------------------------------------------------------
+
+:: Check if Python exists at the specified path
+if not exist "%PYTHON_EXE%" (
+    echo.
+    echo [ERROR] Python executable not found at: "%PYTHON_EXE%"
+    echo.
+    echo Help: Please edit this .bat file and update the 'set PYTHON_EXE=...'
+    echo       line with the correct path to your python.exe.
+    echo.
+    pause
+    exit /b 1
+)
+
+:: Check if Visual Studio path exists
+if not exist "%VS_PATH%" (
+    echo.
+    echo [ERROR] Visual Studio path not found at: "%VS_PATH%"
+    echo.
+    echo Help: Please edit this .bat file and update the 'set VS_PATH=...'
+    echo       line to point to your MSVC installation folder.
+    echo.
+    pause
+    exit /b 1
+)
+
+set "VCVARS=%VS_PATH%\VC\Auxiliary\Build\vcvars64.bat"
+
+REM -------------------------------------------------------
+REM INITIALIZE MSVC ENVIRONMENT
+REM -------------------------------------------------------
+
+if not exist "%VCVARS%" (
+    echo [ERROR] MSVC initialization script not found at: %VCVARS%
+    pause
+    exit /b 1
+)
 
 call "%VCVARS%"
 if errorlevel 1 (
-    echo ERROR: MSVC environment not initialized
+    echo [ERROR] Failed to initialize MSVC environment.
+    pause
     exit /b 1
 )
 
 REM -------------------------------------------------------
-REM Compilar librería C: libirina.lib
+REM Compile C library: libirina.lib
 REM -------------------------------------------------------
 
 echo.
@@ -43,7 +80,7 @@ del *.obj
 cd ..
 
 REM -------------------------------------------------------
-REM Generar FasterCode.pyx (si procede)
+REM Generate FasterCode.pyx
 REM -------------------------------------------------------
 
 echo.
@@ -53,7 +90,7 @@ echo.
 copy /B Faster_Irina.pyx+Faster_Polyglot.pyx FasterCode.pyx > nul
 
 REM -------------------------------------------------------
-REM Compilar extensión Python con setup.py
+REM Compiling Python extension with setup.py
 REM -------------------------------------------------------
 
 echo.

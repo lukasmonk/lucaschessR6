@@ -20,7 +20,7 @@ class GMConfiguration:
     modo: GM.GameMode = GM.GameMode.STANDARD
     gameElegida: Optional[int] = None
     is_white: bool = True
-    with_arbiter: bool = True
+    with_adjudicator: bool = True
     show_evals: bool = False
     engine: Optional[str] = None
     vtime: int = 10
@@ -134,7 +134,7 @@ class WGM(LCDialog.LCDialog):
         li = Engines.list_depths_to_cb()
         self.cbJmultiPV = Controles.CB(self, li, "PD")
 
-        self.li_arbiter_controls = (
+        self.li_adjudicator_controls = (
             self.cbJmotor,
             self.lbJmotor,
             self.edJtiempo,
@@ -148,7 +148,7 @@ class WGM(LCDialog.LCDialog):
             self.chbEvals,
         )
 
-        for control in self.li_arbiter_controls:
+        for control in self.li_adjudicator_controls:
             control.setFont(flb)
         self.cb_gm.setFont(flb)
 
@@ -191,7 +191,7 @@ class WGM(LCDialog.LCDialog):
         ly2.control(self.lbJdepth).control(self.cbJdepth).relleno().control(self.chbEvals)
         ly3 = Colocacion.H().control(self.lbJmultiPV).control(self.cbJmultiPV).relleno()
         ly = Colocacion.V().otro(ly1).otro(ly2).otro(ly3)
-        self.gbJ = Controles.GB(self, _("Arbiter"), ly).to_connect(self.change_arbiter)
+        self.gbJ = Controles.GB(self, _("Adjudicator"), ly).to_connect(self.change_adjudicator)
         self.configuration.set_property(self.gbJ, "1")
 
         # Opciones
@@ -222,7 +222,7 @@ class WGM(LCDialog.LCDialog):
         o_columns.nueva("FECHA", _("Date"), 100, align_center=True)
         o_columns.nueva("PACIERTOS", _("Hints"), 90, align_center=True)
         o_columns.nueva("PUNTOS", _("Centipawns accumulated"), 140, align_center=True)
-        o_columns.nueva("ENGINE", _("Arbiter"), 100, align_center=True)
+        o_columns.nueva("ENGINE", _("Adjudicator"), 100, align_center=True)
         o_columns.nueva("RESUMEN", _("Game played"), 280)
 
         self.grid = grid = Grid.Grid(self, o_columns, complete_row_select=True, background=None)
@@ -230,7 +230,7 @@ class WGM(LCDialog.LCDialog):
         self.register_grid(grid)
 
         # Tabs
-        self.tab = Controles.Tab().set_position("S")
+        self.tab = Controles.Tab().set_position_south()
         self.tab.new_tab(gb_basic, _("Basic"))
         self.tab.new_tab(gb_advanced, _("Advanced"))
         self.tab.new_tab(self.grid, _("History"))
@@ -246,7 +246,7 @@ class WGM(LCDialog.LCDialog):
         self.setLayout(layout)
 
         self.restore_dic()
-        self.change_arbiter()
+        self.change_adjudicator()
         self.check_gm()
         self.check_personal()
         self.check_histo()
@@ -409,10 +409,10 @@ class WGM(LCDialog.LCDialog):
                 self.cb_gm.addItem(tp[0], tp[1])
             self.cb_gm.setCurrentIndex(0)
 
-    def change_arbiter(self):
+    def change_adjudicator(self):
         if self.li_personal:
             si = self.gbJ.isChecked()
-            for control in self.li_arbiter_controls:
+            for control in self.li_adjudicator_controls:
                 control.setVisible(si)
 
     def save_dict(self) -> bool:
@@ -428,7 +428,7 @@ class WGM(LCDialog.LCDialog):
 
         config.gameElegida = None
         config.is_white = self.rb_white.isChecked()
-        config.with_arbiter = self.gbJ.isChecked()
+        config.with_adjudicator = self.gbJ.isChecked()
         config.show_evals = self.chbEvals.valor()
         config.engine = self.cbJmotor.valor()
         config.vtime = int(self.edJtiempo.text_to_float() * 10)
@@ -441,8 +441,8 @@ class WGM(LCDialog.LCDialog):
         config.opening = self.opening_block
         config.li_preferred_openings = self.li_preferred_openings
 
-        if config.with_arbiter and config.vtime <= 0 and config.depth == 0:
-            config.with_arbiter = False
+        if config.with_adjudicator and config.vtime <= 0 and config.depth == 0:
+            config.with_adjudicator = False
 
         default = GM.get_folder_gm()
         carpeta = (
@@ -463,7 +463,7 @@ class WGM(LCDialog.LCDialog):
             "GM": config.gm,
             "MODO": config.modo.value,
             "IS_WHITE": config.is_white,
-            "WITH_ARBITER": config.with_arbiter,
+            "WITH_ADJUDICATOR": config.with_adjudicator,
             "SHOW_EVALS": config.show_evals,
             "ENGINE": config.engine,
             "VTIME": config.vtime,
@@ -489,7 +489,7 @@ class WGM(LCDialog.LCDialog):
         config.gm = dic["GM"]
         config.modo = GM.GameMode(dic.get("MODO", GM.GameMode.STANDARD.value))
         config.is_white = dic.get("IS_WHITE", True)
-        config.with_arbiter = dic.get("WITH_ARBITER", True)
+        config.with_adjudicator = dic.get("WITH_ADJUDICATOR", True)
         config.show_evals = dic.get("SHOW_EVALS", False)
         config.engine = dic["ENGINE"]
         config.vtime = dic["VTIME"]
@@ -524,7 +524,7 @@ class WGM(LCDialog.LCDialog):
         self.rb_white.setChecked(config.is_white)
         self.rb_black.setChecked(not config.is_white)
 
-        self.gbJ.setChecked(config.with_arbiter)
+        self.gbJ.setChecked(config.with_adjudicator)
         self.cbJmotor.set_value(config.engine)
         self.edJtiempo.set_float(float(config.vtime / 10.0))
         self.cbJshow.set_value(config.mostrar.value)

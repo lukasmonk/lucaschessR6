@@ -226,8 +226,8 @@ class ManagerTrainPositions(Manager.Manager):
             engine = self.configuration.engines.search(self.configuration.x_tutor_clave)
             self.manager_rival = self.procesador.create_manager_engine(
                 engine,
-                self.configuration.x_tutor_mstime,
-                self.configuration.x_tutor_depth,
+                int(self.configuration.x_tutor_mstime),
+                int(self.configuration.x_tutor_depth),
                 0,
             )
         player = self.configuration.nom_player()
@@ -408,7 +408,6 @@ class ManagerTrainPositions(Manager.Manager):
             self.manager_rival.stop()
         if self.is_analyzing:
             self.manager_tutor.stop()
-        self.main_window.active_information_pgn(False)
         self.the_next(
             self.pos_training,
             self.num_trainings,

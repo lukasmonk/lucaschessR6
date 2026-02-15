@@ -8,8 +8,8 @@ class RunWorker:
     name: str
     key_video: str
     move_evaluator: str
-    arbiter_time: float
-    arbiter_active: bool
+    adjudicator_time: float
+    adjudicator_active: bool
     draw_range: int
     draw_min_ply: int
     resign: int
@@ -21,6 +21,7 @@ class RunWorker:
     book_depth: int | None
     initial_fen: str | None
     num_worker: int|None = None
+    icon: object
 
     def __init__(self):
         Code.procesador = ProcesadorBar()  # necesario para la barra de analisis

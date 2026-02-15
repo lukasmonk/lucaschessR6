@@ -4,7 +4,6 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import ControlPGN, CPU, TimeControl, Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     BLACK,
@@ -30,6 +29,7 @@ from Code.Engines import (
 from Code.MainWindow import WAnalysisBar
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, QTDialogs, QTUtils, ScreenUtils
 from Code.Sound import Sound
+from Code.Z import ControlPGN, CPU, TimeControl, Util
 
 
 class Worker(QtWidgets.QWidget):
@@ -43,9 +43,10 @@ class Worker(QtWidgets.QWidget):
     seconds_per_move: int
     max_seconds: int
     xmatch = None
-    manager_arbiter = None
+    manager_adjudicator = None
     next_control: int
     dic_engine_managers: dict
+    rejections_adjudicator: int
 
     def __init__(self, run_worker):
         QtWidgets.QWidget.__init__(self)
@@ -56,9 +57,9 @@ class Worker(QtWidgets.QWidget):
         self.run_worker = run_worker
         worker = _("Worker")
         if self.run_worker.num_worker:
-            worker = f'{worker} {run_worker.num_worker}'
+            worker = f'{worker} [#{run_worker.num_worker}]'
         self.setWindowTitle(f'{run_worker.name} - {worker} ')
-        self.setWindowIcon(Iconos.League())
+        self.setWindowIcon(run_worker.icon)
 
         self.tb = QTDialogs.LCTB(self, icon_size=24)
 
@@ -220,11 +221,11 @@ class Worker(QtWidgets.QWidget):
     def grid_right_button(self, grid, row, col, modif):
         self.configurar()
 
-    def crea_arbiter(self):
+    def crea_adjudicator(self):
         engine = Code.configuration.engines.search(self.run_worker.move_evaluator)
 
         run_engine_params = EngineRun.RunEngineParams()
-        run_engine_params.update(engine, int(self.run_worker.arbiter_time * 1000), 0, 0, 1)
+        run_engine_params.update(engine, int(self.run_worker.adjudicator_time * 1000), 0, 0, 1)
 
         engine_manager = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
         return engine_manager
@@ -247,10 +248,11 @@ class Worker(QtWidgets.QWidget):
         # Cerramos los motores anteriores si los hay
         Code.list_engine_managers.close_all()
 
-        if self.run_worker.arbiter_active:
-            self.manager_arbiter = self.crea_arbiter()
+        if self.run_worker.adjudicator_active:
+            self.manager_adjudicator = self.crea_adjudicator()
+            self.rejections_adjudicator = 0
         else:
-            self.manager_arbiter = None
+            self.manager_adjudicator = None
 
         if self.run_worker.draw_range == 0 and self.run_worker.resign == 0:
             self.next_control = INFINITE
@@ -361,6 +363,7 @@ class Worker(QtWidgets.QWidget):
         Code.list_engine_managers.close_all()
         self.close()
         QtWidgets.QApplication.quit()
+        Util.close_app()
 
     def cancel_match(self):
         self.is_closed = True
@@ -636,11 +639,11 @@ class Worker(QtWidgets.QWidget):
         if self.next_control > 0:
             return False
 
-        self.next_control = 1
+        self.next_control = 1  # que siga mirando jugada a jugada
 
         num_moves = len(self.game)
 
-        last_move = self.game.last_jg()
+        last_move: Move.Move = self.game.last_jg()
         if not last_move.analysis:
             return False
         mrm, pos = last_move.analysis
@@ -654,16 +657,22 @@ class Worker(QtWidgets.QWidget):
         p_ult = rm_ult.centipawns_abs()
         p_ant = -rm_ant.centipawns_abs()
 
-        def arbiter_score():
-            rm = self.manager_arbiter.play_game(self.game)
-            self.next_control = 10
-            return rm.centipawns_abs()
+        def adjudicator_score():
+            rm = self.manager_adjudicator.play_game(self.game)
+            self.rejections_adjudicator += 1
+            self.next_control = 9 + self.rejections_adjudicator * 2
+            # Tras hacer un control de calidad si falla mirar dentro de 9 movimientos + rechazos
+            # el problema tipico es cuando los motores siempre envian score = 0
+            # next_control es impar para que la próxima vez pregunte al contrario
+            # el análisis es desde el punto de vista del rival, que es el que le toca mover
+            # como el escore se calcula en base al motor que acaba de mover, la evaluación es la contraria
+            return -rm.centipawns_abs()
 
         # Draw
         dr = self.run_worker.draw_range
         dmp = self.run_worker.draw_min_ply
-        if dmp and dr > 0 and num_moves >= dmp and (abs(p_ult) <= dr and abs(p_ant) <= dr):
-            p_tut = arbiter_score() if self.manager_arbiter else 0
+        if dmp and dr > 0 and num_moves >= dmp and abs(p_ult) <= dr and abs(p_ant) <= dr:
+            p_tut = adjudicator_score() if self.manager_adjudicator else 0
             if abs(p_tut) <= dr:
                 self.game.set_termination(TERMINATION_ADJUDICATION, RESULT_DRAW)
                 return True
@@ -671,18 +680,26 @@ class Worker(QtWidgets.QWidget):
 
         # Resign
         rs = self.run_worker.resign
-        if 0 < rs <= abs(p_ult) or 0 < rs <= abs(p_ant):
-            p_tut = arbiter_score() if self.manager_arbiter else rs  # si no hay manager que pase el control
-            if abs(p_tut) >= rs:
-                is_white = self.game.last_position.is_white
-                if p_tut > 0:
-                    result = RESULT_WIN_WHITE if is_white else RESULT_WIN_BLACK
-                else:
-                    result = RESULT_WIN_BLACK if is_white else RESULT_WIN_WHITE
+        if rs > p_ult:
+            # si el motor piensa que no hemos llegado al límite nos vamos
+            return False
+        if rs > p_ant and not self.manager_adjudicator:
+            # si el motor rival piensa que no se ha llegado al límite y no hay arbitro nos vamos
+            return False
+
+        result = RESULT_WIN_WHITE if last_move.is_white() else RESULT_WIN_BLACK
+
+        if self.manager_adjudicator:
+            # si hay arbitro el árbitro decide
+            p_tut = adjudicator_score()
+            if p_tut >= rs:
                 self.game.set_termination(TERMINATION_ADJUDICATION, result)
                 return True
+            return False
 
-        return False
+        # si no hay arbitro y los dos piensan que el escore es superior al rs se adjudica
+        self.game.set_termination(TERMINATION_ADJUDICATION, result)
+        return True
 
     def move_the_pieces(self, li_movs):
         if self.run_worker.slow_pieces:
@@ -700,7 +717,7 @@ class Worker(QtWidgets.QWidget):
                         dc = ord(from_sq[0]) - ord(to_sq[0])
                         df = int(from_sq[1]) - int(to_sq[1])
                         # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
-                        dist = (dc**2 + df**2) ** 0.5
+                        dist = (dc ** 2 + df ** 2) ** 0.5
                         seconds = 4.0 * dist / (9.9 * rapidez)
                     cpu.move_piece(movim[1], movim[2], is_exclusive=False, seconds=seconds)
 

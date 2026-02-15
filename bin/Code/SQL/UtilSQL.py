@@ -1,6 +1,9 @@
+import os
 import pickle
+import random
 import sqlite3
-from typing import Any, Dict, List, Optional, Tuple, Iterator, Type
+import time
+from typing import Any, Dict, List, Optional, Tuple, Iterator, Type, Callable
 
 import psutil
 import sortedcontainers
@@ -176,121 +179,6 @@ class DictSQL(object):
         self.conexion.commit()
         self.pending_commit = False
         self.normal_save_mode = mode
-
-
-class DictSQLRawExclusive(object):
-    GET_ALL = 1
-    GET_ONE = 2
-    GET_NONE = 0
-
-    def __init__(self, path_db: str, tabla: str = "Data"):
-        self.tabla = tabla
-        self.conexion = sqlite3.connect(path_db, isolation_level="EXCLUSIVE")
-        self.conexion.execute("PRAGMA page_size = 4096")
-        self.conexion.execute("PRAGMA synchronous = NORMAL")
-
-        self.conexion.execute(f"CREATE TABLE IF NOT EXISTS {tabla}( KEY TEXT PRIMARY KEY, VALUE BLOB );")
-
-        cursor = self.conexion.execute(f"SELECT KEY FROM {self.tabla}")
-        self.li_keys: List[str] = [reg[0] for reg in cursor.fetchall()]
-        cursor.close()
-
-    def execute(
-        self, sql: str, args: Optional[Tuple] = None, is_all: Optional[int] = None, commit: bool = False
-    ) -> Any:
-        tries = 10
-        while tries:
-            try:
-                if args:
-                    cursor = self.conexion.execute(sql, args)
-                else:
-                    cursor = self.conexion.execute(sql)
-                if is_all == self.GET_ALL:
-                    return cursor.fetchall()
-                elif is_all == self.GET_ONE:
-                    return cursor.fetchone()
-                if commit:
-                    self.conexion.commit()
-                return None
-
-            except sqlite3.OperationalError:
-                tries -= 1
-        return None
-
-    def exist(self, key: str) -> bool:
-        sql = f"SELECT VALUE FROM {self.tabla} WHERE KEY= ?"
-        row = self.execute(sql, (key,), self.GET_ONE)
-        return row is not None
-
-    def __contains__(self, key: str) -> bool:
-        return self.exist(key)
-
-    def __setitem__(self, key: str, obj: Any) -> None:
-        if not self.conexion:
-            return
-        if self.exist(key):
-            sql = f"UPDATE {self.tabla} SET VALUE=? WHERE KEY = ?"
-        else:
-            sql = f"INSERT INTO {self.tabla} (VALUE,KEY) values(?,?)"
-        dato = pickle.dumps(obj, protocol=4)
-        self.execute(sql, (memoryview(dato), key), commit=True)
-
-    def __getitem__(self, key: str) -> Any:
-        if self.exist(key):
-            sql = f"SELECT VALUE FROM {self.tabla} WHERE KEY= ?"
-
-            row = self.execute(sql, (key,), self.GET_ONE)
-            if row[0] is not None:
-                return pickle.loads(row[0])
-        return None
-
-    def __delitem__(self, key: str) -> None:
-        sql = f"DELETE FROM {self.tabla} WHERE KEY= ?"
-        self.execute(sql, (key,), commit=True)
-
-    def __len__(self) -> int:
-        sql = f"SELECT COUNT(*) FROM {self.tabla}"
-        row = self.execute(sql, is_all=self.GET_ONE)
-        return row[0]
-
-    def close(self) -> None:
-        try:
-            if self.conexion:
-                self.conexion.close()
-        except:
-            pass
-        self.conexion = None
-
-    def get(self, key: Any, default: Any = None) -> Any:
-        key = str(key)
-        value = self.__getitem__(key)
-        if value is None:
-            value = default
-        return value
-
-    def as_dictionary(self) -> Dict[str, Any]:
-        sql = f"SELECT KEY,VALUE FROM {self.tabla}"
-        li_all = self.execute(sql, is_all=self.GET_ALL)
-        dic = {}
-        if li_all:
-            for key, dato in li_all:
-                dic[key] = pickle.loads(dato)
-        return dic
-
-    def keys(self) -> List[str]:
-        sql = f"SELECT KEY FROM {self.tabla}"
-        li_all = self.execute(sql, is_all=self.GET_ALL)
-        return [row[0] for row in li_all]
-
-    def zap(self) -> None:
-        self.execute(f"DELETE FROM {self.tabla}", commit=True)
-        self.execute("VACUUM", commit=True)
-
-    def __enter__(self) -> "DictSQLRawExclusive":
-        return self
-
-    def __exit__(self, xtype: Any, value: Any, traceback: Any) -> None:
-        self.close()
 
 
 class DictObjSQL(DictSQL):
@@ -510,12 +398,12 @@ class ListSQLBig(object):
 
 class ListObjSQL(ListSQL):
     def __init__(
-        self,
-        path_file: str,
-        class_storage: Type,
-        tabla: str = "datos",
-        max_cache: int = 2048,
-        is_reversed: bool = False,
+            self,
+            path_file: str,
+            class_storage: Type,
+            tabla: str = "datos",
+            max_cache: int = 2048,
+            is_reversed: bool = False,
     ):
         self.class_storage = class_storage
         ListSQL.__init__(self, path_file, tabla, max_cache, is_reversed)
@@ -962,3 +850,263 @@ class DictTextSQL(object):
         self.conexion.commit()
         self.pending_commit = False
         self.normal_save_mode = mode
+
+
+class DictSQLMultiProcess(object):
+    def __init__(self, path_db: str, tabla: str = "Data"):
+        self.path_db = path_db
+        self.tabla = tabla
+        self._local_conn = None  # Conexión persistente durante el bloque 'with'
+
+        # Inicialización base
+        with self._get_connection() as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA auto_vacuum = INCREMENTAL")
+            conn.execute("PRAGMA cache_size = -2000")  # 2MB cache negative = KB
+            conn.execute("PRAGMA temp_store = MEMORY")
+            conn.execute("PRAGMA mmap_size = 268435456")  # 256MB mmap
+            conn.execute(f"CREATE TABLE IF NOT EXISTS {self.tabla} (KEY TEXT PRIMARY KEY, VALUE BLOB);")
+
+    def _get_connection(self):
+        """Crea una conexión con timeout para esperar a otros procesos."""
+        conn = sqlite3.connect(self.path_db, timeout=3.0)
+        conn.isolation_level = None
+        return conn
+
+    def __enter__(self) -> "DictSQLMultiProcess":
+        """Inicia una transacción exclusiva para el proceso actual."""
+        self._local_conn = self._get_connection()
+        try:
+            # Bloqueamos la escritura para otros procesos desde el inicio
+            self._begin_immediate(self._local_conn)
+        except sqlite3.OperationalError:
+            if self._local_conn:
+                self._local_conn.close()
+            self._local_conn = None
+            raise
+        return self
+
+    def _begin_immediate(self, conn: sqlite3.Connection):
+        """Intenta iniciar una transacción inmediata con reintentos."""
+        import time
+        import random
+
+        retries = 5
+        for i in range(retries):
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                return
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e).lower() and i < retries - 1:
+                    time.sleep(0.05 + random.random() * 0.1)  # 50-150ms delay
+                    continue
+                raise
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Finaliza la transacción: COMMIT si todo fue bien, ROLLBACK si hubo error."""
+        if self._local_conn:
+            try:
+                if exc_type is None:
+                    self._local_conn.execute("COMMIT")
+                else:
+                    self._local_conn.execute("ROLLBACK")
+            finally:
+                self._local_conn.close()
+                self._local_conn = None
+
+    def _execute(self, sql: str, args: Tuple = (), fetch: str = None, is_write: bool = False):
+        """Maneja la ejecución detectando si estamos dentro de un 'with' o no."""
+        # Si estamos dentro de un bloque 'with', usamos la conexión activa
+        if self._local_conn:
+            cursor = self._local_conn.execute(sql, args)
+            if fetch == "all":
+                return cursor.fetchall()
+            if fetch == "one":
+                return cursor.fetchone()
+            return None
+
+        # Si NO estamos en un 'with', abrimos/cerramos una conexión rápida (One-shot)
+        conn = self._get_connection()
+        try:
+            if is_write:
+                self._begin_immediate(conn)
+            cursor = conn.execute(sql, args)
+            res = None
+            if fetch == "all":
+                res = cursor.fetchall()
+            elif fetch == "one":
+                res = cursor.fetchone()
+            if is_write:
+                conn.execute("COMMIT")
+            return res
+        except Exception as e:
+            if is_write:
+                conn.execute("ROLLBACK")
+            raise e
+        finally:
+            conn.close()
+
+    # --- Métodos de Diccionario ---
+
+    def __setitem__(self, key: str, obj: Any) -> None:
+        dato = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
+        sql = f"INSERT OR REPLACE INTO {self.tabla} (KEY, VALUE) VALUES (?, ?)"
+        self._execute(sql, (str(key), memoryview(dato)), is_write=True)
+
+    def __getitem__(self, key: str) -> Any:
+        sql = f"SELECT VALUE FROM {self.tabla} WHERE KEY = ?"
+        row = self._execute(sql, (str(key),), fetch="one")
+        if row:
+            return pickle.loads(row[0])
+        return None
+
+    def __delitem__(self, key: str) -> None:
+        sql = f"DELETE FROM {self.tabla} WHERE KEY = ?"
+        self._execute(sql, (str(key),), is_write=True)
+
+    def __contains__(self, key: str) -> bool:
+        sql = f"SELECT 1 FROM {self.tabla} WHERE KEY = ? LIMIT 1"
+        return self._execute(sql, (str(key),), fetch="one") is not None
+
+    def __len__(self) -> int:
+        sql = f"SELECT COUNT(*) FROM {self.tabla}"
+        row = self._execute(sql, fetch="one")
+        return row[0] if row else 0
+
+    def keys(self) -> List[str]:
+        sql = f"SELECT KEY FROM {self.tabla}"
+        rows = self._execute(sql, fetch="all")
+        return [row[0] for row in rows] if rows else []
+
+    def as_dictionary(self) -> Dict[str, Any]:
+        sql = f"SELECT KEY,VALUE FROM {self.tabla}"
+        rows = self._execute(sql, fetch="all")
+        dic = {}
+        if rows:
+            for key, dato in rows:
+                dic[key] = pickle.loads(dato)
+        return dic
+
+    def pack(self) -> None:
+        """Compacta la base de datos."""
+        # Note: VACUUM cannot be run inside a transaction
+        if self._local_conn:
+            # If we are in a transaction we can't vacuum.
+            # We skip it or we could close/reopen, but that's complex for this context.
+            return
+        conn = self._get_connection()
+        try:
+            conn.execute("VACUUM")
+        finally:
+            conn.close()
+
+    def zap(self) -> None:
+        self._execute(f"DELETE FROM {self.tabla}", is_write=True)
+
+
+class Tickets:
+    """
+    Tickets para trabajar con varios procesos a la vez. Usado en los torneos/Ligas/Suizos
+    """
+
+    def __init__(self, path: str, get_dic_data: Callable):
+        self.path = path
+        self.get_dic_data = get_dic_data
+        self._init_db()
+
+    def _init_db(self) -> None:
+        with sqlite3.connect(self.path, timeout=10.0) as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS TICKETS (REF TEXT PRIMARY KEY, PID INTEGER, START_TIME REAL)
+                """
+            )
+
+    def _get_connection(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self.path, timeout=10.0)
+        conn.isolation_level = None
+        return conn
+
+    def get_ticket(self) -> Optional[str]:
+        retries = 10
+        base_delay = 0.05
+
+        for attempt in range(retries):
+            conn = self._get_connection()  # Obtenemos conexión manual
+            try:
+                conn.execute("BEGIN IMMEDIATE")
+                ticket = self._assign_ticket(conn)
+
+                if ticket:
+                    conn.commit()
+                else:
+                    conn.rollback()
+
+                return ticket
+
+            except sqlite3.OperationalError as exc:
+                if "locked" in str(exc).lower() and attempt < retries - 1:
+                    delay = base_delay * (2 ** attempt) + random.random() * 0.1
+                    time.sleep(delay)
+                    continue
+                raise
+            finally:
+                conn.close()
+        return None
+
+    def _assign_ticket(self, conn: sqlite3.Connection) -> Optional[str]:
+        dic_data = self.get_dic_data()
+        if not dic_data:
+            return None
+
+        current_pid = os.getpid()
+        current_start_time = psutil.Process(current_pid).create_time()
+
+        # 1. Crear una tabla temporal para nuestras referencias actuales
+        conn.execute("CREATE TEMPORARY TABLE IF NOT EXISTS current_refs (ref TEXT)")
+        conn.execute("DELETE FROM current_refs")  # Limpiar por si acaso
+        conn.executemany("INSERT INTO current_refs (ref) VALUES (?)", [(r,) for r in dic_data])
+
+        # 2. Buscar referencias que NO están en la tabla TICKETS (usando un EXCEPT o LEFT JOIN)
+        # Esta query devuelve las refs que están en nuestra lista pero no en la DB
+        row = conn.execute("""
+            SELECT ref FROM current_refs 
+            WHERE ref NOT IN (SELECT REF FROM TICKETS) 
+            LIMIT 1
+        """).fetchone()
+
+        if row:
+            ref = row[0]
+            conn.execute(
+                "INSERT INTO TICKETS (REF, PID, START_TIME) VALUES (?, ?, ?)",
+                (ref, current_pid, current_start_time)
+            )
+            return dic_data[ref]
+
+        # 3. Si no hay nuevas, intentar reclamar una de un PID dead
+        cursor = conn.execute("""
+            SELECT t.REF, t.PID, t.START_TIME 
+            FROM TICKETS t
+            JOIN current_refs c ON t.REF = c.ref
+        """)
+        for ref, pid, p_start_time in cursor:
+            if not self._is_alive(pid, p_start_time):
+                conn.execute(
+                    "UPDATE TICKETS SET PID = ?, START_TIME = ? WHERE REF = ?",
+                    (current_pid, current_start_time, ref)
+                )
+                return dic_data[ref]
+
+        return None
+
+    @staticmethod
+    def _is_alive(pid: int, start_time: float) -> bool:
+        try:
+            p = psutil.Process(pid)
+            # Verificamos existencia y que no sea un PID reciclado
+            return p.is_running() and abs(p.create_time() - start_time) < 1.0
+        except (psutil.NoSuchProcess, psutil.AccessDenied, ProcessLookupError):
+            return False

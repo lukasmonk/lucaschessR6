@@ -488,7 +488,7 @@ class Game:
             return self.li_moves[num] if 0 <= num < total_moves else self.li_moves[-1]
         return None
 
-    def move_pos(self, move: Move.Move) -> int:
+    def move_pos(self, move: "Move.Move") -> int:
         """Devuelve la posición del movimiento en la lista, o -1 si no se encuentra."""
         try:
             return self.li_moves.index(move)

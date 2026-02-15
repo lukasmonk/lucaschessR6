@@ -97,9 +97,8 @@ class WTrainBMT(LCDialog.LCDialog):
         self.ptsMejor = 0
         self.ptsPrimero = 0
         self.lbPrimera = Controles.LB(self, self.texto_lbPrimera)
-        f = Controles.FontType(puntos=8)
-        self.lb_conditions = Controles.LB(self, "").set_font(f)
-        self.lb_game = Controles.LB(self, "").set_font(f)
+        self.lb_conditions = Controles.LB(self, "")
+        self.lb_game = Controles.LB(self, "")
 
         # Grid-PGN ---------------------------------------------------------------
         o_columns = Columnas.ListaColumnas()

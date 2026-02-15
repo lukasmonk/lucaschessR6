@@ -32,13 +32,13 @@ class Log:
 
     def write(self, buf: str) -> None:
         if buf.startswith("Traceback"):
-            buf = f"{today()}\n{buf}"
+            import Code
+            buf = f"{Code.VERSION}-{today()}\n{buf}"
         with self.logname.open("at", encoding="utf-8") as ferr:
             ferr.write(buf)
 
     def writeln(self, buf: str) -> None:
-        with self.logname.open("at", encoding="utf-8") as ferr:
-            ferr.write(f"{buf}\n")
+        self.write(f"{buf}\n")
 
     def flush(self) -> None:
         pass  # To remove error 120 at exit
@@ -895,3 +895,7 @@ def startfile(path: Union[str, Path]) -> bool:
 
 def clamp(n: Union[int, float], smallest: Union[int, float], largest: Union[int, float]) -> Union[int, float]:
     return max(smallest, min(n, largest))
+
+
+def close_app():
+    os._exit(0)

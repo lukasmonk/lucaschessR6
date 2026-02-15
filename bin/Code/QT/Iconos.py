@@ -3348,8 +3348,8 @@ def pmProgreso():
 def Progreso():
     return iget("Progreso")
 
-def pmArbiter():
-    return iget("pmArbiter")
+def pmAdjudicator():
+    return iget("pmAdjudicator")
 
-def Arbiter():
-    return iget("Arbiter")
+def Adjudicator():
+    return iget("Adjudicator")

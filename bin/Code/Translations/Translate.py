@@ -5,6 +5,7 @@ import os
 import polib
 
 import Code
+from Code.Z import Util
 
 
 class Translations:
@@ -33,25 +34,55 @@ class Translations:
         pon("X-ray attack", "X-Ray attack")
         pon("Attacking Defender", "Attacking defender")
 
+    @staticmethod
+    def update_dic(dic: dict, path: str, is_mo: bool):
+        if Util.exist_file(path):
+            try:
+                if is_mo:
+                    pomofile = polib.mofile(path)
+                else:
+                    pomofile = polib.pofile(path)
+
+                def lmp(msg):
+                    if "||" in msg:
+                        msg = msg[msg.index("||"):].strip()
+                    return msg
+
+                dicn = {entry.msgid: lmp(entry.msgstr) for entry in pomofile}
+                dic.update(dicn)
+            except:
+                return
+
     def read_mo(self):
         path_mo = self.get_path(self.lang)
-        mofile = polib.mofile(path_mo)
-        dic = {entry.msgid: entry.msgstr for entry in mofile}
-        if Code.configuration.x_use_googletranslator and not Code.configuration.x_translation_mode:
-            path_mo = self.get_path_google_translate(self.lang)
-            try:
-                mofile = polib.mofile(path_mo)
-                dicg = {entry.msgid: entry.msgstr for entry in mofile}
-                dic.update(dicg)
-            except:
-                pass
+        dic = {}
+        self.update_dic(dic, path_mo, is_mo=True)
+        if not Code.configuration.x_translation_mode:
+            if Code.configuration.x_translator_google:
+                path_mo = self.get_path_google_translate(self.lang)
+                self.update_dic(dic, path_mo, is_mo=True)
+            if Code.configuration.x_translation_local:
+                path_po = Util.opj(Code.configuration.paths.folder_userdata(),
+                                   "Translations", f"{self.lang}.po")
+                self.update_dic(dic, path_po, is_mo=False)
+
         self.sinonimos(dic)
         return dic
 
     def read_mo_openings(self):
         path_mo = self.get_path_openings(self.lang)
-        mofile = polib.mofile(path_mo)
-        return {entry.msgid: entry.msgstr for entry in mofile}
+        dic = {}
+        self.update_dic(dic, path_mo, is_mo=True)
+        if not Code.configuration.x_translation_mode:
+            if Code.configuration.x_translator_google_openings:
+                path_mo = self.get_path_google_translate_openings(self.lang)
+                self.update_dic(dic, path_mo, is_mo=True)
+            if Code.configuration.x_translation_local:
+                path_po = Util.opj(Code.configuration.paths.folder_userdata(),
+                                   "Translations", f"openings_{self.lang}.po")
+                self.update_dic(dic, path_po, is_mo=False)
+
+        return dic
 
     def translate(self, txt):
         trans = self.dic_translate.get(txt)
@@ -78,7 +109,12 @@ class Translations:
     @staticmethod
     def get_path_google_translate(lang):
         path_locale = Code.path_resource("Locale")
-        return f"{path_locale}/{lang}/LC_MESSAGES/google_translate.mo"
+        return f"{path_locale}/{lang}/LC_MESSAGES/g_lucaschess.mo"
+
+    @staticmethod
+    def get_path_google_translate_openings(lang):
+        path_locale = Code.path_resource("Locale")
+        return f"{path_locale}/{lang}/LC_MESSAGES/g_lcopenings.mo"
 
     @staticmethod
     def get_path_openings(lang):

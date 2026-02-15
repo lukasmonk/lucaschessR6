@@ -49,6 +49,7 @@ from Code.Engines import (
     CheckEngines,
     EngineManagerAnalysis,
     EngineManagerPlay,
+    EngineManagerRefresh,
     EngineRun,
     Engines,
     ListEngineManagers,
@@ -325,6 +326,15 @@ class Procesador:
 
     def analyzer_clone(self, mstime, depth, nodes, multipv):
         return self.create_manager_analyzer(mstime, depth, nodes, multipv)
+
+    def analyzer_refresh_clone(self, mstime, depth, nodes, multipv):
+        engine = self.configuration.engines.engine_analyzer()
+        engine.set_multipv_var(self.configuration.x_analyzer_multipv if multipv is None else multipv)
+        run_engine_params = EngineRun.RunEngineParams()
+        run_engine_params.update(engine, mstime, depth, nodes, engine.multiPV)
+        xanalyzer = EngineManagerRefresh.EngineManagerRefresh(engine, run_engine_params)
+        xanalyzer.set_priority(self.configuration.x_analyzer_priority)
+        return xanalyzer
 
     def change_manager_analyzer(self):
         if self.manager_analyzer is not None:

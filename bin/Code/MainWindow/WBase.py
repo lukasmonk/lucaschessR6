@@ -54,10 +54,10 @@ from Code.Base.Constantes import (  # TB_BOXROOMS_PGN,
     TB_TOOLS,
     TB_TRAIN,
     TB_TUTOR_STOP,
-    TB_ARBITER_STOP,
+    TB_ADJUDICATOR_STOP,
     TB_UTILITIES,
     TB_VARIATIONS,
-    TB_ARBITER,
+    TB_ADJUDICATOR,
 )
 from Code.Board import Board
 from Code.MainWindow import WAnalysisBar, WindowSolve
@@ -246,8 +246,8 @@ class WBase(QtWidgets.QWidget):
             TB_REPLAY: (_("Replay"), Iconos.Pelicula()),
             TB_SETTINGS: (_("Options"), Iconos.Preferencias()),
             TB_TUTOR_STOP: (_("Stop"), Iconos.StopTraining()),
-            TB_ARBITER_STOP: (_("Stop"), Iconos.StopTraining()),
-            TB_ARBITER: (_("Arbiter"), Iconos.Arbiter()),
+            TB_ADJUDICATOR_STOP: (_("Stop"), Iconos.StopTraining()),
+            TB_ADJUDICATOR: (_("Adjudicator"), Iconos.Adjudicator()),
         }
 
     def launch_shortcuts(self):
