@@ -114,12 +114,12 @@ class WSwissConfig(LCDialog.LCDialog):
         self.cb_jmotor, self.lb_jmotor = QTMessages.combobox_lb(
             self, self.list_engines, swiss.move_evaluator, _("Engine")
         )
-        self.ed_jtiempo = Controles.ED(self).type_float(swiss.arbiter_time).relative_width(50)
+        self.ed_jtiempo = Controles.ED(self).type_float(swiss.adjudicator_time).relative_width(50)
         self.lb_jtiempo = Controles.LB2P(self, _("Time in seconds"))
         ly = Colocacion.G()
         ly.controld(self.lb_jmotor, 3, 0).control(self.cb_jmotor, 3, 1)
         ly.controld(self.lb_jtiempo, 4, 0).control(self.ed_jtiempo, 4, 1)
-        self.gb_j = Controles.GB(self, _("Arbiter"), ly)
+        self.gb_j = Controles.GB(self, _("Adjudicator"), ly)
 
         lb_slow = Controles.LB(self, f"{_('Slow down the movement of pieces')}: ")
         self.chb_slow = Controles.CHB(self, " ", swiss.slow_pieces)
@@ -323,8 +323,8 @@ class WSwissConfig(LCDialog.LCDialog):
         self.swiss.draw_min_ply = self.ed_draw_min_ply.text_to_integer()
         self.swiss.draw_range = self.ed_draw_range.text_to_integer()
         self.swiss.move_evaluator = self.cb_jmotor.valor()
-        self.swiss.arbiter_time = self.ed_jtiempo.text_to_float()
-        self.swiss.arbiter_active = True
+        self.swiss.adjudicator_time = self.ed_jtiempo.text_to_float()
+        self.swiss.adjudicator_active = True
         self.swiss.slow_pieces = self.chb_slow.valor()
         mnt = self.ed_minutes_eng_eng.text_to_float()
         if mnt <= 0:

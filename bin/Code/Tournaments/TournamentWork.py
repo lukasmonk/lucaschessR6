@@ -29,15 +29,6 @@ class TournamentWork:
     def tournament(self):
         return Tournament.Tournament(self.file_tournament)
 
-    def get_tgame_queued(self, file_work):
-        with self.tournament() as torneo:
-            self.run_name = torneo.name()
-            self.run_drawRange = torneo.draw_range()
-            self.run_drawMinPly = torneo.draw_min_ply()
-            self.run_resign = torneo.resign()
-            self.run_bookDepth = torneo.book_depth()
-            return torneo.get_tgame_queued(file_work)
-
     def fen_norman(self):
         with self.tournament() as torneo:
             return torneo.fen_norman()
@@ -46,17 +37,17 @@ class TournamentWork:
         with self.tournament() as torneo:
             return torneo.slow_pieces()
 
-    def arbiter_active(self):
+    def adjudicator_active(self):
         with self.tournament() as torneo:
-            return torneo.arbiter_active()
+            return torneo.adjudicator_active()
 
     def move_evaluator(self):
         with self.tournament() as torneo:
             return torneo.move_evaluator()
 
-    def arbiter_time(self):
+    def adjudicator_time(self):
         with self.tournament() as torneo:
-            return torneo.arbiter_time()
+            return torneo.adjudicator_time()
 
     def search_hengine(self, h):
         with self.tournament() as torneo:
@@ -78,3 +69,7 @@ class TournamentWork:
             engine_white = torneo.search_hengine(tgame.hwhite)
             engine_black = torneo.search_hengine(tgame.hblack)
             return engine_white, engine_black
+
+    def get_dic_queues(self):
+        with self.tournament() as torneo:
+            return torneo.get_dic_games_queued()

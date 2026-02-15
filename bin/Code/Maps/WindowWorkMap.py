@@ -101,7 +101,7 @@ class WMap(LCDialog.LCDialog):
         w.setLayout(ly)
 
         self.tab = Controles.Tab()
-        self.tab.set_position("W")
+        self.tab.set_position_west()
         self.tab.new_tab(splitter, _("Map"))
         self.tab.new_tab(w, _("Data"))
 

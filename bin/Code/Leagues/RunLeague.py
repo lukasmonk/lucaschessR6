@@ -9,7 +9,7 @@ from Code.Config import Configuration
 from Code.Leagues import Leagues, LeaguesWork
 from Code.MainWindow import InitApp
 from Code.Openings import OpeningsStd
-from Code.QT import Piezas
+from Code.QT import Piezas, Iconos
 from Code.Workers import RunWorker, Worker
 
 
@@ -20,9 +20,9 @@ class LeagueWorker(RunWorker.RunWorker):
         self.league_work = LeaguesWork.LeaguesWork(self.league)
         self.name = self.league.name()
         self.key_video = "LEAGUEYPLAY"
-        self.arbiter_active = self.league.arbiter_active()
+        self.adjudicator_active = self.league.adjudicator_active()
         self.move_evaluator = self.league.move_evaluator
-        self.arbiter_time = self.league.arbiter_time
+        self.adjudicator_time = self.league.adjudicator_time
         self.draw_range = self.league.draw_range
         self.draw_min_ply = self.league.draw_min_ply
         self.resign = self.league.resign
@@ -31,8 +31,10 @@ class LeagueWorker(RunWorker.RunWorker):
         self.book_depth = self.league.book_depth
         self.book_rr = self.league.book_rr
         self.slow_pieces = self.league.slow_pieces
+        self.icon = Iconos.League()
 
-        self.match: Leagues.Match | None = None
+        self.match: Leagues.Match | None = self._get_match()
+        self.first_request = True
 
     def start(self):
         w = Worker.Worker(self)
@@ -40,6 +42,12 @@ class LeagueWorker(RunWorker.RunWorker):
         w.looking_for_work()
 
     def get_other_match(self):
+        if self.first_request:
+            self.first_request = False
+            return self.match
+        return self._get_match()
+
+    def _get_match(self):
         self.match = self.league_work.get_other_match()
         if self.match:
             self.engine_white = self.league.opponent_by_xid(self.match.xid_white).thinker

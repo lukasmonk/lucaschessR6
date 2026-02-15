@@ -37,6 +37,8 @@ class WTranslate(LCDialog.LCDialog):
     MAIN_REFERENCE = "MAIN_REFERENCE"
     SECONDARY_REFERENCES = "SECONDARY_REFERENCES"
 
+    dic_google: dict | None
+
     def __init__(self, path_db):
         icono = Iconos.WorldMap()
         titulo = "Translation"
@@ -59,6 +61,8 @@ class WTranslate(LCDialog.LCDialog):
 
         self.dic_languages = {}
         self.read_languages()
+
+        self.dic_google = None
 
         self.work_translate = WorkTranslate.WorkTranslate(path_db, False, self.tr_actual)
 
@@ -188,10 +192,10 @@ class WTranslate(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.save()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_labels)
 
-    def grid_dato(self, grid, fila, o_col):
+    def grid_dato(self, _grid, fila, o_col):
         clave = o_col.key
         key = self.li_labels[fila]
         dic = self.dic_translate[key]
@@ -201,8 +205,9 @@ class WTranslate(LCDialog.LCDialog):
             return key
         elif clave == "CURRENT":
             return dic["NEW"] if dic["NEW"] else dic["TRANS"]
+        return None
 
-    def grid_setvalue(self, grid, fila, o_col, value):
+    def grid_setvalue(self, _grid, fila, _obj_column, value):
         auto_reorder = self.automatic_reorder
         self.automatic_reorder = False
 
@@ -247,14 +252,15 @@ class WTranslate(LCDialog.LCDialog):
 
         self.automatic_reorder = auto_reorder
 
-    def grid_color_texto(self, grid, row, obj_column):
+    def grid_color_texto(self, _grid, row, obj_column):
         if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             if dic["NEW"]:
                 return self.color_new
+        return None
 
-    def grid_color_fondo(self, grid, row, obj_column):
+    def grid_color_fondo(self, _grid, row, obj_column):
         if obj_column.key == "BASE":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
@@ -264,12 +270,14 @@ class WTranslate(LCDialog.LCDialog):
                 or self.ult_where[2] in dic["WHERE"]
             ):
                 return self.color_ult
+        return None
 
-    def grid_bold(self, grid, row, obj_column):
+    def grid_bold(self, _grid, row, obj_column):
         if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             return dic["NEW"]
+        return None
 
     def menu_occurrences(self, row):
         key = self.li_labels[row]
@@ -373,7 +381,7 @@ class WTranslate(LCDialog.LCDialog):
 
         self.automatic_reorder = auto
 
-    def grid_right_button(self, grid, row, obj_column, modificadores):
+    def grid_right_button(self, _grid, row, obj_column, _modificadores):
         if row < 0:
             return
         if obj_column.key == "CURRENT":
@@ -432,7 +440,7 @@ class WTranslate(LCDialog.LCDialog):
         self.grid.refresh()
         self.grid.gotop()
 
-    def grid_doubleclick_header(self, grid, o_col):
+    def grid_doubleclick_header(self, _grid, o_col):
         key_col = o_col.key
         self.order_by_type(key_col)
 
@@ -520,7 +528,6 @@ class WTranslate(LCDialog.LCDialog):
 
         for row in mirar:
             key = self.li_labels[row]
-            ok = False
             if txt in key.upper():
                 ok = True
             else:
@@ -576,7 +583,7 @@ class WTranslate(LCDialog.LCDialog):
         form.apart_simple_np("Remember that you can edit directly in the table by double-clicking on it")
         resultado = form.run()
         if resultado is None:
-            return None
+            return
         accion, li_resp = resultado
         row = self.li_labels.index(label)  # necesario ya que puede cambiar
         self.grid_setvalue(None, row, None, li_resp[0])
@@ -675,6 +682,14 @@ class WTranslate(LCDialog.LCDialog):
         mofile = polib.mofile(path_mo)
         self.dic_languages[lng] = {entry.msgid: entry.msgstr for entry in mofile}
 
+    def read_google(self):
+        path_mo = Code.path_resource("Locale", self.tr_actual, "LC_MESSAGES", "g_lucaschess.mo")
+        if Util.exist_file(path_mo):
+            mofile = polib.mofile(path_mo)
+            self.dic_google = {entry.msgid: entry.msgstr for entry in mofile}
+        else:
+            self.dic_google = {}
+
     def read_languages(self):
         if self.main_reference:
             self.read_language(self.main_reference)
@@ -714,15 +729,18 @@ class WTranslate(LCDialog.LCDialog):
 
         QtCore.QTimer.singleShot(500 if li_received else 1000, self.check_sended_from_lucas)
 
-    def help(self):
+    @staticmethod
+    def help():
         path_pdf = Code.path_resource("IntFiles", "translation.pdf")
         Util.startfile(path_pdf)
 
     def google_translate(self):
+        if self.dic_google is None:
+            self.read_google()
         row = self.grid.recno()
         label = self.li_labels[row]
         current = self.dic_translate[label]
-        if not (current["TRANS"] or current["NEW"]):
+        if not (current["TRANS"].strip() or current["NEW"].strip()):
             target = Code.configuration.x_translator
             if target == "zh":
                 target = "zh-CN"
@@ -732,7 +750,10 @@ class WTranslate(LCDialog.LCDialog):
                 target = "pt"
             elif target == "si":
                 target = "sl"
-            google = GoogleTranslator(source='en', target=target).translate(label)
+            if label in self.dic_google:
+                google = self.dic_google[label]
+            else:
+                google = GoogleTranslator(source='en', target=target).translate(label)
             if google:
                 self.grid_setvalue(None, row, None, google)
                 self.grid.refresh()
@@ -756,4 +777,5 @@ def run_wtranslation(path_db):
         app.setStyleSheet(f.read())
 
     wtranslate = WTranslate(path_db)
+
     wtranslate.exec()

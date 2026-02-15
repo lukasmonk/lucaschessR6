@@ -8,6 +8,29 @@ set PYTHON_PATH=C:\Users\lucas\AppData\Roaming\uv\python\cpython-3.12.12-windows
 set MINGW64_PATH=h:\mingw64\bin
 REM ---------------------------------------------------------------------------------------------------------
 
+:: Check if Python exists at the specified path
+if not exist "%PYTHON_PATH%\python.exe" (
+    echo.
+    echo [ERROR] Python executable not found at: "%PYTHON_EXE%"
+    echo.
+    echo Help: Please edit this .bat file and update the 'set PYTHON_PATH=...'
+    echo       line with the correct path to your python.exe.
+    echo.
+    pause
+    exit /b 1
+)
+
+:: Check if gcc exists at the specified path
+if not exist "%MINGW64_PATH%\gcc.exe" (
+    echo.
+    echo [ERROR] mingw not found at: "%MINGW64_PATH%"
+    echo.
+    echo Help: Please edit this .bat file and update the 'set MINGW64_PATH=...'
+    echo       line with the correct path to your python.exe.
+    echo.
+    pause
+    exit /b 1
+)
 
 set PATH=%MINGW64_PATH%;%PYTHON_PATH%;%PYTHON_PATH%\DLLs;%PYTHON_PATH%\Scripts;%PYTHON_PATH%\lib;%PATH%
 

@@ -39,8 +39,8 @@ class AnalysisBar(QtWidgets.QWidget):
             Code.dic_colors["BLACK_ANALYSIS_BAR"],
             Code.dic_colors["WHITE_ANALYSIS_BAR"],
         )
-        style = f"""QProgressBar{{background-color :{b};border : 1px solid {b};margin-left:4px;}}  
-                   QProgressBar::chunk {{background-color: {w};}}"""
+        style = f"""QProgressBar{{background-color :{b};border : 1px solid {b};margin-left:4px;border-radius:0px;}}  
+                   QProgressBar::chunk {{background-color: {w};border-radius:0px;}}"""
         self.setStyleSheet(style)
 
         self.xpv = None
@@ -75,7 +75,7 @@ class AnalysisBar(QtWidgets.QWidget):
         self.setVisible(ok)
         if ok:
             if self.engine_manager is None:
-                self.engine_manager = Code.procesador.analyzer_clone(0, 0, 0, 1)
+                self.engine_manager = Code.procesador.analyzer_refresh_clone(0, 0, 0, 1)
                 self.engine_manager.set_priority_very_low()
                 self.engine_manager.connect_depthchanged(self.control_state)
         else:
@@ -106,9 +106,8 @@ class AnalysisBar(QtWidgets.QWidget):
         if self.engine_manager:
             self.game = game
             self.xpv = game.xpv()
-            self.engine_manager.stop()
             self.engine_manager.run_engine_params = self.get_config_play()
-            self.engine_manager.analyze_nomodal(game)
+            self.engine_manager.refresh(game)
 
     def show_score(self, txt):
         if self.isVisible():

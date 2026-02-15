@@ -117,9 +117,9 @@ class TrainMenu(BaseMenu.RootMenu):
     def horses_ico():
         return {
             1: ("N", "Alpha", _("By default")),
-            2: ("p", "Fantasy", _("Four pawns test")),
+            2: ("P", "Fantasy", _("Four pawns test")),
             3: ("Q", "Pirat", _("Jonathan Levitt test")),
-            4: ("n", "Spatial", "a1"),
+            4: ("N", "Spatial", "a1"),
             5: ("N", "Cburnett", "e4"),
         }
 

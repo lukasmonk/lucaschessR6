@@ -1,5 +1,3 @@
-import ast
-
 import FasterCode
 
 import Code
@@ -8,6 +6,7 @@ from Code.Base import Game
 from Code.Base.Constantes import BLUNDER, INACCURACY, MISTAKE, TOP_RIGHT
 from Code.QT import QTMessages
 from Code.Tutor import WindowTutor
+from Code.Z import Util
 
 
 class Tutor:
@@ -116,11 +115,11 @@ class Tutor:
         self.board_user.set_position(self.move.position)
 
         message = (
-            _("Your move")
-            + "<br><br>"
-            + self.game_user.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
-            + " "
-            + self.rm_user.texto()
+                _("Your move")
+                + "<br><br>"
+                + self.game_user.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
+                + " "
+                + self.rm_user.texto()
         )
 
         self.w.set_score_user(message)
@@ -130,7 +129,7 @@ class Tutor:
             pv_bloque = self.rm_rival.get_pv()
             n = pv_bloque.find(" ")
             if n > 0:
-                pv_bloque = pv_bloque[n + 1 :].strip()
+                pv_bloque = pv_bloque[n + 1:].strip()
             else:
                 pv_bloque = ""
 
@@ -145,11 +144,11 @@ class Tutor:
                     self.board_rival.set_position(self.game_rival.li_moves[0].position)
                     self.rival_has_moved(True)
                     message = (
-                        _("Opponent's prediction")
-                        + "<br><br>"
-                        + self.game_rival.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
-                        + " "
-                        + self.rm_rival.texto_rival()
+                            _("Opponent's prediction")
+                            + "<br><br>"
+                            + self.game_rival.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
+                            + " "
+                            + self.rm_rival.texto_rival()
                     )
                     self.w.set_score_rival(message)
 
@@ -217,11 +216,11 @@ class Tutor:
         self.game_tutor.read_pv(rm.get_pv())
 
         message = (
-            _("Tutor's suggestion")
-            + "<br><br>"
-            + self.game_tutor.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
-            + " "
-            + rm.texto()
+                _("Tutor's suggestion")
+                + "<br><br>"
+                + self.game_tutor.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
+                + " "
+                + rm.texto()
         )
 
         self.w.set_score_tutor(message)
@@ -234,7 +233,7 @@ class Tutor:
         if quien not in ("user", "tutor", "opening", "rival"):
             return
 
-        funcion = ast.literal_eval(f"self.moving_{quien}")
+        funcion = getattr(self, f"moving_{quien}")
 
         if que == "Adelante":
             funcion(n_saltar=1)
@@ -247,9 +246,14 @@ class Tutor:
         elif que == "Libre":
             self.analiza(quien)
         elif que == "Tiempo":
-            tb = ast.literal_eval(f"self.w.tb{quien}")
-            posMax = eval(f"self.max_{quien}")
-            self.move_timed(funcion, tb, posMax)
+            try:
+                tb = getattr(self.w, f"tb{quien}")
+                pos_max = getattr(self, f"max_{quien}")
+
+                self.move_timed(funcion, tb, pos_max)
+
+            except AttributeError:
+                pass
 
     def mueve(self, quien: str, que: str) -> None:
         valid_quien = {"user", "tutor", "opening", "rival"}
@@ -261,12 +265,12 @@ class Tutor:
             return
 
         acciones = {
-            "Adelante": lambda: mover(n_saltar=1),
-            "Atras": lambda: mover(n_saltar=-1),
-            "Inicio": lambda: mover(is_base=True),
-            "Final": lambda: mover(is_end=True),
+            "forward": lambda: mover(n_saltar=1),
+            "back": lambda: mover(n_saltar=-1),
+            "to_beginning": lambda: mover(is_base=True),
+            "to_end": lambda: mover(is_end=True),
             "Libre": lambda: self.analiza(quien),
-            "Tiempo": lambda: self.move_timed(
+            "timed": lambda: self.move_timed(
                 mover,
                 getattr(self.w, f"tb{quien}", None),
                 getattr(self, f"max_{quien}", None),
@@ -312,11 +316,9 @@ class Tutor:
 
     def moving_user(self, si_inicio=False, n_saltar=0, is_end=False, is_base=False):
         if n_saltar:
-            pos = self.pos_user + n_saltar
-            if 0 <= pos < self.max_user:
-                self.pos_user = pos
-            else:
-                return
+            self.pos_user += n_saltar
+            if self.pos_user == -1:
+                is_base = True
         elif si_inicio:
             self.pos_user = 0
         elif is_base:
@@ -326,7 +328,8 @@ class Tutor:
         else:
             return
 
-        move = self.game_user.move(self.pos_user if self.pos_user > -1 else 0)
+        self.pos_user = Util.clamp(self.pos_user, 0, self.max_user - 1)
+        move = self.game_user.move(self.pos_user)
         if is_base:
             self.board_user.set_position(move.position_before)
         else:
@@ -335,11 +338,9 @@ class Tutor:
 
     def moving_tutor(self, si_inicio=False, n_saltar=0, is_end=False, is_base=False):
         if n_saltar:
-            pos = self.pos_tutor + n_saltar
-            if 0 <= pos < self.max_tutor:
-                self.pos_tutor = pos
-            else:
-                return
+            self.pos_tutor += n_saltar
+            if self.pos_tutor == -1:
+                is_base = True
         elif si_inicio:
             self.pos_tutor = 0
         elif is_base:
@@ -348,8 +349,8 @@ class Tutor:
             self.pos_tutor = self.max_tutor - 1
         else:
             return
-
-        move = self.game_tutor.move(self.pos_tutor if self.pos_tutor > -1 else 0)
+        self.pos_tutor = Util.clamp(self.pos_tutor, 0, self.max_tutor - 1)
+        move = self.game_tutor.move(self.pos_tutor)
         if move:
             if is_base:
                 self.board_tutor.set_position(move.position_before)
@@ -359,11 +360,9 @@ class Tutor:
 
     def moving_opening(self, si_inicio=False, n_saltar=0, is_end=False, is_base=False):
         if n_saltar:
-            pos = self.pos_opening + n_saltar
-            if 0 <= pos < self.max_opening:
-                self.pos_opening = pos
-            else:
-                return
+            self.pos_opening += n_saltar
+            if self.pos_opening == -1:
+                is_base = True
         elif si_inicio:
             self.pos_opening = 0
         elif is_base:
@@ -373,7 +372,8 @@ class Tutor:
         else:
             return
 
-        move = self.game_opening.move(self.pos_opening if self.pos_opening > -1 else 0)
+        self.pos_opening = Util.clamp(self.pos_opening, 0, self.max_opening - 1)
+        move = self.game_opening.move(self.pos_opening)
         if is_base:
             self.board_openings.set_position(move.position_before)
         else:
@@ -382,19 +382,20 @@ class Tutor:
 
     def moving_rival(self, si_inicio=False, n_saltar=0, is_end=False, is_base=False):
         if n_saltar:
-            pos = self.pos_rival + n_saltar
-            if 0 <= pos < self.max_rival:
-                self.pos_rival = pos
-            else:
-                return
+            self.pos_rival += n_saltar
+            if self.pos_rival == -1:
+                is_base = True
         elif si_inicio:
             self.pos_rival = 0
         elif is_base:
             self.pos_rival = -1
-        else:
+        elif is_end:
             self.pos_rival = self.max_rival - 1
+        else:
+            return
 
-        move = self.game_rival.move(self.pos_rival if self.pos_rival > -1 else 0)
+        self.pos_rival = Util.clamp(self.pos_rival, 0, self.max_rival - 1)
+        move = self.game_rival.move(self.pos_rival)
         if is_base:
             self.board_rival.set_position(move.position_before)
         else:
@@ -520,7 +521,7 @@ def launch_tutor(mrm_tutor, rm_usuario, tp=None):
     rm_tutor = mrm_tutor.best_rm_ordered()
     if tp == 0:  # ALWAYS
         return (rm_tutor.movimiento() != rm_usuario.movimiento()) and (
-            rm_tutor.centipawns_abs() > rm_usuario.centipawns_abs()
+                rm_tutor.centipawns_abs() > rm_usuario.centipawns_abs()
         )
     else:
         ev = Code.analysis_eval.evaluate(rm_tutor, rm_usuario)

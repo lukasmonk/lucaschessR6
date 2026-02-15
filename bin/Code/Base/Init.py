@@ -1,4 +1,3 @@
-import os
 import sys
 
 import Code
@@ -25,4 +24,4 @@ def init():
     if resp == ExitProgram.REINIT.value:
         XRun.run_lucas()
 
-    os._exit(0)
+    Util.close_app()

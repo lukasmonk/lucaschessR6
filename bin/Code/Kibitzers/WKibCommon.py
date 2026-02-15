@@ -7,6 +7,7 @@ from Code.Board import Board
 from Code.Kibitzers import Kibitzers
 from Code.QT import Controles, Delegados, Iconos, Piezas, QTDialogs, ScreenUtils
 from Code.Voyager import Voyager
+from Code.Z import Util
 
 
 class WKibCommon(QtWidgets.QDialog):
@@ -157,6 +158,7 @@ class WKibCommon(QtWidgets.QDialog):
     def finalize(self):
         self.finalizar()
         self.accept()
+        Util.close_app()
 
     def pause(self):
         self.siPlay = False

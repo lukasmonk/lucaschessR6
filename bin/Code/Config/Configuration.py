@@ -1,4 +1,5 @@
 import os.path
+from datetime import date
 import pickle
 
 from PySide6 import QtWidgets
@@ -93,7 +94,12 @@ class Configuration:
         self.x_save_folder = "UserData"
         self.x_save_pgn_folder = ""
         self.x_save_lcsb = ""
+
         self.x_translator = ""
+        self.x_translator_google = False
+        self.x_translator_google_openings = False
+        self.x_translation_mode = False
+        self.x_translation_local = True
 
         self.x_show_effects = False
         self.x_pieces_speed = 100
@@ -169,7 +175,7 @@ class Configuration:
         self.x_tutor_clave = self.tutor_default
         self.x_tutor_multipv = 10  # 0: maximo
         self.x_tutor_diftype = INACCURACY
-        self.x_tutor_mstime = 3000
+        self.x_tutor_mstime = int(3000)
         self.x_tutor_depth = 0
         self.x_tutor_priority = Priorities.priorities.low
         self.x_tutor_view = POS_TUTOR_HORIZONTAL
@@ -241,9 +247,6 @@ class Configuration:
         self.li_personalities = []
 
         self.rival = None
-
-        self.x_translation_mode = False
-        self.x_use_googletranslator = False
 
         self.x_style = "Fusion"
         self.x_style_mode = "By default"
@@ -365,6 +368,13 @@ class Configuration:
     def set_translator(self, xtranslator):
         self.x_translator = xtranslator
 
+    def set_translation_values(self, lng, help_mode, use_local, google_labels, google_openings):
+        self.x_translator = lng
+        self.x_translator_google = google_labels
+        self.x_translator_google_openings = google_openings
+        self.x_translation_mode = help_mode
+        self.x_translation_local = use_local
+
     def type_icons(self):
         return int_toolbutton(self.x_tb_icons)
 
@@ -469,6 +479,16 @@ class Configuration:
                     li.append((uno.name, dic["NAME"], int(dic["%"]), dic.get("AUTHOR", "")))
         return sorted(li, key=lambda lng: f"AAA{lng[0]}" if lng[1] > "Z" else lng[1])
 
+    @staticmethod
+    def dic_translations():
+        dic = {}
+        dlang = Code.path_resource("Locale")
+        for uno in Util.listdir(dlang):
+            fini = Util.opj(dlang, uno.name, "lang.ini")
+            if os.path.isfile(fini):
+                dic[uno.name] = Util.ini_dic(fini)
+        return dic
+
     def elo_current(self):
         return self.x_elo
 
@@ -519,20 +539,31 @@ class Configuration:
 
     def clean_tmp_folder(self):
         try:
+            # Obtenemos la fecha de hoy para comparar
+            today = date.today()
 
-            def remove_folder(folder, root):
+            def remove_folder(folder, is_root):
                 if "UserData" in folder and "tmp" in folder:
-                    entry: os.DirEntry
                     for entry in Util.listdir(folder):
                         if entry.is_dir():
                             remove_folder(entry.path, False)
+                            try:
+                                if not is_root and not os.listdir(entry.path):
+                                    os.rmdir(entry.path)
+                            except:
+                                pass
+
                         elif entry.is_file():
-                            Util.remove_file(entry.path)
-                    if not root:
-                        os.rmdir(folder)
+                            # Obtenemos la fecha de última modificación del fichero
+                            mtime = date.fromtimestamp(entry.stat().st_mtime)
+
+                            # Si la fecha de modificación es anterior a hoy, se borra
+                            if mtime < today:
+                                Util.remove_file(entry.path)
 
             remove_folder(self.temporary_folder(), True)
-        except:
+
+        except Exception:
             pass
 
     def read_variables(self, key_var):

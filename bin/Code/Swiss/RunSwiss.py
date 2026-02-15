@@ -8,7 +8,7 @@ from Code.Base import Game
 from Code.Config import Configuration
 from Code.MainWindow import InitApp
 from Code.Openings import OpeningsStd
-from Code.QT import Piezas
+from Code.QT import Piezas, Iconos
 from Code.Swiss import Swiss, SwissWork
 from Code.Workers import RunWorker, Worker
 
@@ -20,9 +20,9 @@ class SwissWorker(RunWorker.RunWorker):
         self.swiss_work = SwissWork.SwissWork(self.swiss)
         self.name = self.swiss.name()
         self.key_video = "SWISSPLAY"
-        self.arbiter_active = self.swiss.arbiter_active()
+        self.adjudicator_active = self.swiss.adjudicator_active()
         self.move_evaluator = self.swiss.move_evaluator
-        self.arbiter_time = self.swiss.arbiter_time
+        self.adjudicator_time = self.swiss.adjudicator_time
         self.draw_range = self.swiss.draw_range
         self.draw_min_ply = self.swiss.draw_min_ply
         self.resign = self.swiss.resign
@@ -31,8 +31,10 @@ class SwissWorker(RunWorker.RunWorker):
         self.book_depth = self.swiss.book_depth
         self.book_rr = self.swiss.book_rr
         self.slow_pieces = self.swiss.slow_pieces
+        self.icon = Iconos.Swiss()
 
-        self.match: Swiss.Match | None = None
+        self.match: Swiss.Match | None = self._get_match()
+        self.first_request = True
 
     def start(self):
         w = Worker.Worker(self)
@@ -40,6 +42,12 @@ class SwissWorker(RunWorker.RunWorker):
         w.looking_for_work()
 
     def get_other_match(self):
+        if self.first_request:
+            self.first_request = False
+            return self.match
+        return self._get_match()
+
+    def _get_match(self):
         self.match = self.swiss_work.get_other_match()
         if self.match:
             self.engine_white = self.swiss.opponent_by_xid(self.match.xid_white).thinker

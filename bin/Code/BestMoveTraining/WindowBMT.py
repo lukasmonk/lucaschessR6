@@ -787,23 +787,23 @@ class WBMT(LCDialog.LCDialog):
             self.releer()
 
     def cambiar(self):
-        if fbmt := SelectFiles.salvaFichero(
+        if bmtt := SelectFiles.salvaFichero(
             self,
             _("Select/create another file of training"),
             self.configuration.paths.file_bmt(),
             "bmt",
             False,
         ):
-            fbmt = Util.relative_path(fbmt)
+            bmtt = Util.relative_path(bmtt)
             abmt = self.bmt
             try:
-                self.bmt = BMT.BMT(fbmt)
+                self.bmt = BMT.BMT(bmtt)
             except:
-                QTMessages.message_error(self, _X(_("Unable to read file %1"), fbmt))
+                QTMessages.message_error(self, _X(_("Unable to read file %1"), bmtt))
                 return
             abmt.cerrar()
             self.read_dbf()
-            self.configuration.paths.set_file_bmt(fbmt)
+            self.configuration.paths.set_file_bmt(bmtt)
             self.configuration.graba()
             self.setWindowTitle(self.titulo())
             self.grid.refresh()
@@ -815,7 +815,7 @@ class WBMT(LCDialog.LCDialog):
         if recno >= 0:
             reg_actual = dbf.registroActual()
             carpeta = f"{os.path.dirname(self.configuration.paths.file_bmt())}/{dbf.NOMBRE}.bm1"
-            if fbm1 := SelectFiles.salvaFichero(self, _("Export the current training"), carpeta, "bm1", True):
+            if bmt1 := SelectFiles.salvaFichero(self, _("Export the current training"), carpeta, "bm1", True):
                 bmt_lista = self.zip2var_bmt_lista(dbf, recno)
                 if bmt_lista is not None:
                     if si_limpiar:
@@ -832,7 +832,7 @@ class WBMT(LCDialog.LCDialog):
                         reg_actual.BMT_LISTA = bmt_lista
                         reg_actual.HISTORIAL = Util.zip2var(dbf.leeOtroCampo(recno, "HISTORIAL"))
 
-                    Util.save_pickle(fbm1, reg_actual)
+                    Util.save_pickle(bmt1, reg_actual)
 
     def modificar(self):
         grid, dbf, recno = self.actual()
@@ -875,15 +875,15 @@ class WBMT(LCDialog.LCDialog):
 
     def importar(self):
         carpeta = os.path.dirname(self.configuration.paths.file_bmt())
-        if fbm1 := SelectFiles.leeFichero(self, carpeta, "bm1", titulo=_("Import a training")):
-            reg = Util.restore_pickle(fbm1)
+        if bmt1 := SelectFiles.leeFichero(self, carpeta, "bm1", titulo=_("Import a training")):
+            reg = Util.restore_pickle(bmt1)
             if hasattr(reg, "BMT_LISTA"):
                 reg.BMT_LISTA = Util.var2zip(reg.BMT_LISTA)
                 reg.HISTORIAL = Util.var2zip(reg.HISTORIAL)
                 self.dbf.insertarReg(reg, siReleer=False)
                 self.releer()
             else:
-                QTMessages.message_error(self, _X(_("Unable to read file %1"), fbm1))
+                QTMessages.message_error(self, _X(_("Unable to read file %1"), bmt1))
 
     def entrenar(self):
         grid, dbf, recno = self.actual()

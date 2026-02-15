@@ -84,6 +84,8 @@ class WorkTranslate(object):
         return True
 
     def read_from_lucas(self):
+        if not self.conexion:
+            return None
         sql = "SELECT ROWID, KEY, VALUE FROM LC_TR WHERE ROWID >= %d" % self.last_rowid
         cursor = self.conexion.execute(sql)
         li_all = cursor.fetchall()

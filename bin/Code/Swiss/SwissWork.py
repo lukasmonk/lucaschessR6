@@ -1,40 +1,10 @@
 import os.path
 import random
-import time
 
 import psutil
 
 from Code.SQL import UtilSQL
 from Code.Swiss import Swiss
-
-
-class SwissesWorkDB:
-    def __init__(self, path: str, table: str):
-        self.path = path
-        self.table = table
-        self.db = None
-
-    def __enter__(self):
-        tries = 5
-        while tries:
-            tries -= 1
-            try:
-                self.db = UtilSQL.DictSQLRawExclusive(self.path, tabla=self.table)
-                break
-            except:
-                time.sleep(random.randint(30, 100) / 100)
-        return self.db
-
-    def __exit__(self, xtype, value, traceback):
-        tries = 3
-        while tries:
-            tries -= 1
-            try:
-                self.db.close()
-                break
-            except:
-                time.sleep(random.randint(30, 100) / 100)
-        self.db = None
 
 
 class SwissWork:
@@ -49,10 +19,10 @@ class SwissWork:
             return dbc["JOURNEY"], dbc["NUM_SEASON"]
 
     def db_work(self, table):
-        return SwissesWorkDB(self.path, table)
+        return UtilSQL.DictSQLMultiProcess(self.path, table)
 
     def put_swiss(
-        self,
+            self,
     ):
         season = self.swiss.read_season()
 
@@ -71,7 +41,8 @@ class SwissWork:
 
     def num_pending_matches(self):
         with self.db_work("MATCHS") as db:
-            return len(db) + self.num_working_matches()
+            num = len(db)
+        return num + self.num_working_matches()
 
     def num_working_matches(self):
         with self.db_work("MATCHS_WORKING") as dbw:
@@ -113,10 +84,10 @@ class SwissWork:
             if not ok:
                 return None
 
-            with self.db_work("MATCHS_WORKING") as dbw:
-                xmatch.pid_tmp = os.getpid()
-                dbw[xmatch.xid] = xmatch
-            return xmatch
+        with self.db_work("MATCHS_WORKING") as dbw:
+            xmatch.pid_tmp = os.getpid()
+            dbw[xmatch.xid] = xmatch
+        return xmatch
 
     def put_match_done(self, xmatch, game):
         with self.db_work("MATCHS_WORKING") as dbw:

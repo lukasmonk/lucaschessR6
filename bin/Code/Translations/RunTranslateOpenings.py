@@ -22,6 +22,8 @@ from Code.QT import (
 
 
 class WTranslateOpenings(LCDialog.LCDialog):
+    dic_google: dict | None
+
     def __init__(self, owner):
         icono = Iconos.Book()
         titulo = "Openings translation"
@@ -34,6 +36,8 @@ class WTranslateOpenings(LCDialog.LCDialog):
         self.dic_translate = self.read_openings_std()
         self.read_po_openings()
         self.li_labels = list(self.dic_translate.keys())
+
+        self.dic_google = None
 
         self.color_new = ScreenUtils.qt_color("#840C24")
 
@@ -92,11 +96,21 @@ class WTranslateOpenings(LCDialog.LCDialog):
         self.orders = {"BASE": 0, "CURRENT": 0}
         self.order_by_type("BASE")
 
+    def read_google(self):
+        path_mo = Code.path_resource("Locale", self.tr_actual, "LC_MESSAGES", "g_lcopenings.mo")
+        if Util.exist_file(path_mo):
+            mofile = polib.mofile(path_mo)
+            self.dic_google = {entry.msgid: entry.msgstr for entry in mofile}
+        else:
+            self.dic_google = {}
+
     def google_translate(self):
+        if self.dic_google is None:
+            self.read_google()
         row = self.grid.recno()
         label = self.li_labels[row]
         current = self.dic_translate[label]
-        if not (current["TRANS"] or current["NEW"]):
+        if not (current["TRANS"].strip() or current["NEW"].strip()):
             target = Code.configuration.x_translator
             if target == "zh":
                 target = "zh-CN"
@@ -106,7 +120,10 @@ class WTranslateOpenings(LCDialog.LCDialog):
                 target = "pt"
             elif target == "si":
                 target = "sl"
-            google = GoogleTranslator(source='en', target=target).translate(label)
+            if label in self.dic_google:
+                google = self.dic_google[label]
+            else:
+                google = GoogleTranslator(source='en', target=target).translate(label)
             if google:
                 self.grid_setvalue(None, row, None, google)
                 self.grid.refresh()
@@ -200,8 +217,8 @@ class WTranslateOpenings(LCDialog.LCDialog):
             "Content-Transfer-Encoding": "8bit",
         }
         for key, dic in self.dic_translate.items():
-            if dic["NEW"] or dic["TRANS"]:
-                entry = polib.POEntry(msgid=key, msgstr=dic["NEW"] or dic["TRANS"])
+            if dic["NEW"]:
+                entry = polib.POEntry(msgid=key, msgstr=dic["NEW"])
                 po.append(entry)
         po.save(path_po)
 
@@ -212,10 +229,10 @@ class WTranslateOpenings(LCDialog.LCDialog):
     def closeEvent(self, event):
         self.save()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_labels)
 
-    def grid_dato(self, grid, fila, o_col):
+    def grid_dato(self, _grid, fila, o_col):
         clave = o_col.key
         key = self.li_labels[fila]
         dic = self.dic_translate[key]
@@ -223,26 +240,29 @@ class WTranslateOpenings(LCDialog.LCDialog):
             return f"{key}\n{dic['ECO']}: {dic['PGN']}"
         elif clave == "CURRENT":
             return dic["NEW"] if dic["NEW"] else dic["TRANS"]
+        return None
 
-    def grid_setvalue(self, grid, fila, o_col, value):
+    def grid_setvalue(self, _grid, fila, _obj_column, value):
         key = self.li_labels[fila]
         value = value.strip()
         dic = self.dic_translate[key]
         dic["NEW"] = "" if value == dic["TRANS"] else value
         self.set_porcentage()
 
-    def grid_color_texto(self, grid, row, obj_column):
+    def grid_color_texto(self, _grid, row, obj_column):
         if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             if dic["NEW"]:
                 return self.color_new
+        return None
 
-    def grid_bold(self, grid, row, obj_column):
+    def grid_bold(self, _grid, row, obj_column):
         if obj_column.key == "CURRENT":
             key = self.li_labels[row]
             dic = self.dic_translate[key]
             return dic["NEW"]
+        return None
 
     def order_by_type(self, key_col):
         order = self.orders[key_col]
@@ -303,7 +323,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         self.grid.refresh()
         self.grid.gotop()
 
-    def grid_doubleclick_header(self, grid, o_col):
+    def grid_doubleclick_header(self, _grid, o_col):
         key_col = o_col.key
         self.order_by_type(key_col)
 
@@ -348,7 +368,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         elif k == QtCore.Qt.Key.Key_Delete:
             row = self.grid.recno()
             if row >= 0:
-                key = self.li_labels[row]
+                # key = self.li_labels[row]
                 self.grid_setvalue(None, row, None, "")
                 self.grid.refresh()
         elif k == QtCore.Qt.Key.Key_F5:
@@ -359,23 +379,15 @@ class WTranslateOpenings(LCDialog.LCDialog):
                 if not valor:
                     self.grid_setvalue(None, row, None, key)
                     self.grid.refresh()
-                    # valor = key
-                # if "King" in valor:
-                #     valor = valor.replace("King ", "King's ")
-                # if "Queen" in valor:
-                #     valor = valor.replace("Queen ", "Queen's ")
-                # self.grid_setvalue(None, row, None, valor)
-                # self.grid.refresh()
-                # self.siguiente()
 
-    def change_new(self, key, new_value):
-        trans = self.dic_translate[key]["TRANS"]
-        self.dic_translate[key]["NEW"] = new_value
-        self.create_po(self.configuration.po_saved())
-        if trans == new_value:
-            return
-        send = new_value  # if new_value else trans
-        self.work_translate.send_to_lucas(key, send)
+    # def change_new(self, key, new_value):
+    #     trans = self.dic_translate[key]["TRANS"]
+    #     self.dic_translate[key]["NEW"] = new_value
+    #     self.create_po(Code.configuration.po_saved())
+    #     if trans == new_value:
+    #         return
+    #     send = new_value  # if new_value else trans
+    #     self.work_translate.send_to_lucas(key, send)
 
     def utilities(self):
         menu = QTDialogs.LCMenu(self)

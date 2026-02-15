@@ -167,9 +167,14 @@ class CPU:
             self.ipc.close()
             self.ventana.finalizar()
             self.ventana.reject()
+            self.close_app()
 
     def save_video(self, dic):
         self.configuration.save_video(self.key_video, dic)
+
+    @staticmethod
+    def close_app():
+        Util.close_app()
 
     def show_window(self):
         app = QtWidgets.QApplication([])

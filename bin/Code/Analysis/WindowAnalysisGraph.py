@@ -129,7 +129,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
         ly_left = Colocacion.V().control(tab_grid).otro(ly_rb).margen(0)
         ly_up = Colocacion.H().otro(ly_left).control(self.board)
 
-        Controles.Tab().set_position("W")
+        Controles.Tab().set_position_west()
         ancho = self.board.width() + ancho_grid
         self.htotal = [
             Histogram.Histogram(self, alm.hgame, grid_all, ancho, True),

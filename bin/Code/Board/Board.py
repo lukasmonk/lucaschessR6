@@ -255,7 +255,7 @@ class Board(QtWidgets.QGraphicsView):
             if self.kb_buffer:
                 last = self.kb_buffer[-1]
                 key = last.key
-                flags = last.flags or QtCore.Qt.KeyboardModifier.AltModifier
+                flags = last.flags or QtCore.Qt.KeyboardModifier.AltModifier.value
             else:
                 return
 
@@ -918,14 +918,14 @@ class Board(QtWidgets.QGraphicsView):
 
             def run(self, exec_kb_buffer):
                 if len(self.key) == 1:
-                    flags = 0
+                    flags = QtCore.Qt.KeyboardModifiers()
                     if self.is_ctrl:
-                        flags |= QtCore.Qt.KeyboardModifier.ControlModifier
+                        flags |= QtCore.Qt.ControlModifier
                     if self.is_alt:
-                        flags |= QtCore.Qt.KeyboardModifier.AltModifier
+                        flags |= QtCore.Qt.AltModifier
                     if self.is_shift:
-                        flags |= QtCore.Qt.KeyboardModifier.ShiftModifier
-                    exec_kb_buffer(ord(self.key), flags)
+                        flags |= QtCore.Qt.ShiftModifier
+                    exec_kb_buffer(ord(self.key), flags.value)
 
         li_regs = []
 

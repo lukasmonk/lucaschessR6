@@ -1,4 +1,5 @@
 import os
+import time
 
 from PySide6 import QtCore, QtWidgets
 
@@ -68,7 +69,7 @@ class WTournament(LCDialog.LCDialog):
         # Tab-configuration --------------------------------------------------
         w = QtWidgets.QWidget()
 
-        # Arbiter
+        # Adjudicator
         lb_resign = Controles.LB(
             self,
             "%s (%s): " % (_("Minimum centipawns to assign winner"), "0=%s" % _("Disable")),
@@ -92,14 +93,14 @@ class WTournament(LCDialog.LCDialog):
         self.cbJmotor, self.lbJmotor = QTMessages.combobox_lb(
             self, self.list_engines, torneo.move_evaluator(), _("Engine")
         )
-        self.edJtiempo = Controles.ED(self).type_float(torneo.arbiter_time()).relative_width(50)
+        self.edJtiempo = Controles.ED(self).type_float(torneo.adjudicator_time()).relative_width(50)
         self.lbJtiempo = Controles.LB2P(self, _("Time in seconds"))
         layout = Colocacion.G()
         layout.controld(self.lbJmotor, 3, 0).control(self.cbJmotor, 3, 1)
         layout.controld(self.lbJtiempo, 4, 0).control(self.edJtiempo, 4, 1)
-        self.gbJ = Controles.GB(self, _("Arbiter"), layout)
+        self.gbJ = Controles.GB(self, _("Adjudicator"), layout)
         self.gbJ.setCheckable(True)
-        self.gbJ.setChecked(torneo.arbiter_active())
+        self.gbJ.setChecked(torneo.adjudicator_active())
 
         lb_book = Controles.LB(self, f"{_('Opening book')}: ")
         self.list_books = Books.ListBooks()
@@ -374,7 +375,7 @@ class WTournament(LCDialog.LCDialog):
     def borra_draw_range(self):
         previo = self.ed_draw_range.text_to_integer()
         self.ed_draw_range.type_integer(0 if previo else 10)
-        self.ed_draw_min_ply.type_integer(0 if previo else 50)
+        self.ed_draw_min_ply.type_integer(0 if previo else 80)
 
     def show_position(self):
         if self.fen:
@@ -594,19 +595,9 @@ class WTournament(LCDialog.LCDialog):
         if resp:
             Code.list_engine_managers.set_active_logs()
             with QTMessages.one_moment_please(self):
-                last = 0
                 for num in range(resp):
-                    worker_plant = Util.opj(self.configuration.paths.folder_tournaments_workers(), "worker.%05d")
-                    pos = last + 1
-                    while True:
-                        wfile = worker_plant % pos
-                        if Util.exist_file(wfile):
-                            if not Util.remove_file(wfile):
-                                pos += 1
-                                continue
-                        last = pos
-                        break
-                    XRun.run_lucas("-tournament", self.torneo.file, wfile)
+                    XRun.run_lucas("-tournament", self.torneo.file)
+                    time.sleep(0.1)
 
     def comprueba_cambios(self):
         if self.torneo:
@@ -619,9 +610,9 @@ class WTournament(LCDialog.LCDialog):
                 or self.torneo.slow_pieces() != self.chb_slow.valor()
                 or self.torneo.book() != self.cbBooks.valor()
                 or self.torneo.book_depth() != self.sbBookDepth.valor()
-                or self.torneo.arbiter_active() != self.gbJ.isChecked()
+                or self.torneo.adjudicator_active() != self.gbJ.isChecked()
                 or self.torneo.move_evaluator() != self.cbJmotor.valor()
-                or self.torneo.arbiter_time() != self.edJtiempo.text_to_float()
+                or self.torneo.adjudicator_time() != self.edJtiempo.text_to_float()
             )
             if changed:
                 self.grabar()
@@ -647,9 +638,9 @@ class WTournament(LCDialog.LCDialog):
             self.torneo.slow_pieces(self.chb_slow.valor())
             self.torneo.book(self.cbBooks.valor())
             self.torneo.book_depth(self.sbBookDepth.valor())
-            self.torneo.arbiter_active(self.gbJ.isChecked())
+            self.torneo.adjudicator_active(self.gbJ.isChecked())
             self.torneo.move_evaluator(self.cbJmotor.valor())
-            self.torneo.arbiter_time(self.edJtiempo.text_to_float())
+            self.torneo.adjudicator_time(self.edJtiempo.text_to_float())
 
     def eng_new(self):
         # Pedimos el ejecutable

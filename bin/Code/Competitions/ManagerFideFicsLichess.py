@@ -5,7 +5,7 @@ import FasterCode
 
 import Code
 from Code.Z import Adjournments, Util
-from Code.Arbiter import Arbiter
+from Code.Adjudicator import Adjudicator
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GO_END,
@@ -23,8 +23,8 @@ from Code.Base.Constantes import (
     TB_RESIGN,
     TB_TAKEBACK,
     TB_UTILITIES,
-    TB_ARBITER_STOP,
-    TB_ARBITER,
+    TB_ADJUDICATOR_STOP,
+    TB_ADJUDICATOR,
 )
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages, QTUtils
@@ -57,7 +57,7 @@ class ManagerFideFicsLichess(Manager.Manager):
     numJugadasObj = 0
     tag_result = None
     id_game = 0
-    arbiter: Arbiter.Arbiter
+    adjudicator: Adjudicator.Adjudicator
 
     def selecciona(self, type_play):
         self.game_type = type_play
@@ -174,7 +174,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         self.hints = 0
         self.ayudas_iniciales = 0
 
-        self.arbiter = Arbiter.Arbiter(self, self.main_window, self.name_obj, self.player_has_moved)
+        self.adjudicator = Adjudicator.Adjudicator(self, self.main_window, self.name_obj, self.player_has_moved)
 
         self.pon_toolbar()
 
@@ -198,9 +198,9 @@ class ManagerFideFicsLichess(Manager.Manager):
         self.set_label2(f"{_("Score")}: <b>{self.puntos:+d}</b>")
 
     def pon_toolbar(self, stop_analysis=False):
-        li_tool = [TB_RESIGN, TB_ADJOURN, TB_CONFIG, TB_UTILITIES, TB_ARBITER]
+        li_tool = [TB_RESIGN, TB_ADJOURN, TB_CONFIG, TB_UTILITIES, TB_ADJUDICATOR]
         if stop_analysis:
-            li_tool.append(TB_ARBITER_STOP)
+            li_tool.append(TB_ADJUDICATOR_STOP)
         self.set_toolbar(li_tool)
         if stop_analysis:
             for tool in li_tool[:-1]:
@@ -222,11 +222,11 @@ class ManagerFideFicsLichess(Manager.Manager):
         elif key == TB_ADJOURN:
             self.adjourn()
 
-        elif key == TB_ARBITER:
-            self.arbiter.change_arbiter_options()
+        elif key == TB_ADJUDICATOR:
+            self.adjudicator.change_adjudicator_options()
 
-        elif key == TB_ARBITER_STOP:
-            self.arbiter.analyze_end()
+        elif key == TB_ADJUDICATOR_STOP:
+            self.adjudicator.analyze_end()
 
         elif key in self.procesador.li_opciones_inicio:
             self.procesador.run_action(key)
@@ -245,7 +245,7 @@ class ManagerFideFicsLichess(Manager.Manager):
 
             with Adjournments.Adjournments() as adj:
                 adj.add(self.game_type, dic, self._titulo)
-                self.arbiter.close()
+                self.adjudicator.close()
                 adj.si_seguimos(self)
 
     def run_adjourn(self, dic):
@@ -264,16 +264,16 @@ class ManagerFideFicsLichess(Manager.Manager):
 
     def rendirse(self):
         if self.state == ST_ENDGAME:
-            self.arbiter.close()
+            self.adjudicator.close()
             return True
         if len(self.game) > 0:
             if not QTMessages.pregunta(self.main_window, f"{_('Do you want to resign?')} ({self.plost})"):
                 return False  # no abandona
             self.puntos = -999
-            self.arbiter.close()
+            self.adjudicator.close()
             self.show_result()
         else:
-            self.arbiter.close()
+            self.adjudicator.close()
             self.procesador.start()
         return False
 
@@ -303,7 +303,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         else:
             self.human_is_playing = True
             self.activate_side(is_white)
-            self.arbiter.analyze_begin(self.game)
+            self.adjudicator.analyze_begin(self.game)
 
     def thinking(self, ok):
         super().thinking(ok)
@@ -322,8 +322,8 @@ class ManagerFideFicsLichess(Manager.Manager):
 
         self.thinking(True)
 
-        # QTUtils.deferred_call(1, lambda: self.arbiter.check_moves(obj_move, user_move))
-        self.arbiter.check_moves(obj_move, user_move)
+        # QTUtils.deferred_call(1, lambda: self.adjudicator.check_moves(obj_move, user_move))
+        self.adjudicator.check_moves(obj_move, user_move)
 
         return True
 
@@ -340,7 +340,7 @@ class ManagerFideFicsLichess(Manager.Manager):
             comentario_usu = ""
             comentario_obj = ""
 
-            mrm = self.arbiter.get_mrm()
+            mrm = self.adjudicator.get_mrm()
             rm_obj, pos_obj = mrm.search_rm(obj_move.movimiento())
             rm_usu, pos_usu = mrm.search_rm(user_move.movimiento())
 
@@ -348,15 +348,15 @@ class ManagerFideFicsLichess(Manager.Manager):
 
             w = WindowJuicio.WJuicio(
                 self,
-                self.arbiter,
+                self.adjudicator,
                 self.name_obj,
                 self.game.last_position,
                 mrm,
                 rm_obj,
                 rm_usu,
                 analysis,
-                is_competitive=not self.arbiter.show_all,
-                continue_tt=self.arbiter.is_analysing(),
+                is_competitive=not self.adjudicator.show_all,
+                continue_tt=self.adjudicator.is_analysing(),
             )
             w.exec()
             analysis = w.analysis
@@ -371,7 +371,7 @@ class ManagerFideFicsLichess(Manager.Manager):
                 f"{-w.rm_obj.centipawns_abs():+d} = {self.puntos}"
             )
 
-        self.arbiter.analyze_end()  # Por si acaso no lo está ya.
+        self.adjudicator.analyze_end()  # Por si acaso no lo está ya.
 
         same_move = user_move.movimiento() == obj_move.movimiento()
         if not same_move:
@@ -416,7 +416,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         self.refresh()
 
     def show_result(self):
-        self.arbiter.analyze_end()
+        self.adjudicator.analyze_end()
         self.disable_all()
         self.human_is_playing = False
 

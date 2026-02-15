@@ -375,7 +375,7 @@ class LB(QtWidgets.QLabel):
     def set_font_type(
             self,
             name="",
-            puntos=8,
+            puntos=None,
             peso=50,
             is_italic=False,
             is_underlined=False,
@@ -1164,6 +1164,18 @@ class Tab(QtWidgets.QTabWidget):
         elif pos == "W":
             rpos = self.TabPosition.West
         self.setTabPosition(rpos)
+        return self
+
+    def set_position_south(self):
+        self.setTabPosition(self.TabPosition.South)
+        return self
+
+    def set_position_east(self):
+        self.setTabPosition(self.TabPosition.East)
+        return self
+
+    def set_position_west(self):
+        self.setTabPosition(self.TabPosition.West)
         return self
 
     def set_icono(self, pos, icono):

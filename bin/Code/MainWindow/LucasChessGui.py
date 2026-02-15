@@ -1,4 +1,3 @@
-import locale
 import sys
 
 from PySide6 import QtCore, QtWidgets
@@ -8,71 +7,8 @@ from Code.Z import XRun
 from Code.Base.Constantes import ExitProgram
 from Code.Config import Configuration, Usuarios
 from Code.MainWindow import InitApp
-from Code.QT import Colocacion, Controles, GarbageCollector, Iconos, QTDialogs
-
-
-def select_language(owner, init):
-    configuration = Code.configuration
-    li = configuration.list_translations(True)
-
-    lng_default = Code.configuration.translator()
-    name_default = Code.configuration.language()
-    if init:
-        li_info = locale.getdefaultlocale()
-        if len(li_info) == 2:
-            lng = li_info[0][:2]
-            for k, name, porc, author, others in li:
-                if k == lng:
-                    name_default = name
-                    lng_default = lng
-
-    menu = QTDialogs.LCMenuRondo(owner)
-    menu.set_font_type(Code.font_mono, puntos=10, peso=700)
-    # symbol_ant = "⌛️"
-    # menu.opcion(None, f"Select your language", Iconos.Aplicacion64())
-    # menu.separador()
-    menu.opcion(lng_default, f"By default: {name_default}", Iconos.AceptarPeque())
-    menu.separador()
-
-    for k, name, porc, author, others in li:
-        option = name
-        tam = len(name)
-        if k == "zh":  # chinese ocupa el doble
-            tam = tam * 2 - 1
-        if porc == 100:
-            tam += 1
-        spaces = " " * (15 - tam)
-        if k == "ar":
-            option = chr(0x202D) + option
-            spaces += " "
-
-        if k != "en":
-            if not author:
-                author = "      "
-            option = f"{option}{spaces}({porc}%) {author}"
-            # if others:
-            #     others = others.strip()
-            #     option = f"{option}  {symbol_ant}{others}"
-
-        if k == lng_default:
-            menu.opcion((k, porc), option, Iconos.AceptarPeque())
-        else:
-            menu.opcion((k, porc), option)
-
-    menu.separador()
-    resp = menu.lanza()
-    Code.configuration.x_use_googletranslator = False
-    if resp:
-        lng, porc = resp
-    # if lng != "en" and porc < 90:
-    #      if QTMessages.pregunta(owner, _("Do you want to use Google Translator (offline) to complete translations?")):
-    #          Code.configuration.x_use_googletranslator = True
-    else:
-        lng = lng_default
-    configuration.set_translator(lng)
-    configuration.graba()
-    configuration.load_translation()
-    return resp
+from Code.QT import Colocacion, Controles, GarbageCollector, Iconos
+from Code.Translations import SelectLanguage
 
 
 def run_gui(procesador):
@@ -120,7 +56,7 @@ def run_gui(procesador):
             configuration.graba()
 
         else:
-            select_language(None, True)
+            SelectLanguage.menu_select_language(None)
 
     translator = QtCore.QTranslator()
     translations_path = QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.LibraryPath.TranslationsPath)

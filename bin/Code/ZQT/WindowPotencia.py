@@ -27,14 +27,14 @@ def lee_1_linea_mfn(linea):
         dic[k] = v
         game.set_tag(k, v)
     game.read_pv(pv)
-    event = dic["Event"]
-    site = dic["Site"]
+    event = dic.get("Event", "")
+    site = dic.get("Site", "")
     if site and site != event:
         event += f"-{site}"
-    date = dic["Date"].replace(".?", "").replace("?", "")
-    white = dic["White"]
-    black = dic["Black"]
-    result = dic["Result"]
+    date = dic.get("Date", "").replace(".?", "").replace("?", "")
+    white = dic.get("White", "")
+    black = dic.get("Black", "")
+    result = dic.get("Result", "")
     info = f"<b>{white} - {black} ({result})</b>    {event} ({date}) "
     return game, dic, info, int(move), linea
 
@@ -522,7 +522,7 @@ class WPotenciaBase(LCDialog.LCDialog):
 
     def configurar(self):
         # Datos
-        li_gen = [(None, None)]
+        li_gen: list = [(None, None)]
 
         # # Motor
         mt = self.configuration.tutor_default if self.engine is None else self.engine

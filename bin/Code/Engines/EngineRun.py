@@ -459,6 +459,7 @@ class EngineRun(QtCore.QObject):
                             self.bestmove = li[1] if len(li) > 1 else ""
                             if self.emit:
                                 try:
+                                    self.depth_changed.emit()  # sino no se ve la ultima depth
                                     self.bestmove_found.emit(self.bestmove)
                                 except:
                                     pass

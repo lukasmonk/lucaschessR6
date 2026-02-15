@@ -266,7 +266,7 @@ def read_engines(folder_engines):
         "1.72",
         "https://www.pincha.cl/amyan/amyane.html",
         "amyan.exe",
-        2545,
+        2575,
         emulate_movetime=True,
         nodes_compatible=True,
     )
