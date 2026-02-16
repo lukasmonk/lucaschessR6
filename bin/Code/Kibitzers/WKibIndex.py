@@ -19,6 +19,7 @@ class WKibIndex(QtWidgets.QDialog):
         QtWidgets.QDialog.__init__(self)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
 
         self.cpu = cpu
         self.kibitzer = cpu.kibitzer

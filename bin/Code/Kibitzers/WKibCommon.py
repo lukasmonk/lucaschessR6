@@ -17,6 +17,7 @@ class WKibCommon(QtWidgets.QDialog):
         QtWidgets.QDialog.__init__(self)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips, True)
 
         self.setWindowTitle(cpu.titulo)
         self.setWindowIcon(icon)
@@ -164,6 +165,8 @@ class WKibCommon(QtWidgets.QDialog):
         self.siPlay = False
         self.tb.set_pos_visible(1, True)
         self.tb.set_pos_visible(2, False)
+        if hasattr(self, 'engine_run') and self.engine_run:
+            self.engine_run.stop()
 
     def orden_game(self, game):
         pass

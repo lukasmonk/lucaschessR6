@@ -228,6 +228,7 @@ class WAnalysis(LCDialog.LCDialog):
         flags = self.windowFlags()
         flags |= QtCore.Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(flags)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips)
 
         # UI Elements
         self.lb_game = Controles.LB(self)
