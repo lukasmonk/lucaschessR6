@@ -23,7 +23,7 @@ class WAbout(QtWidgets.QDialog):
             | QtCore.Qt.WindowType.WindowMaximizeButtonHint
         )
 
-        f = Controles.FontType(puntos=10)  # 0, peso=75 )
+        f = Controles.FontTypeNew(point_size=10)
 
         head = f'<span style="font-size:30pt; font-weight="700"; font-family:arial; >{Code.lucas_chess}</span><br>'
         head += f'<span style="font-size:15pt;">{_X(_("version %1"), Code.VERSION)}</span><br>'

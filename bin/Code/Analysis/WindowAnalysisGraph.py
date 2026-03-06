@@ -313,7 +313,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
     def _grid_dato_moves_best(self, obj_column, column, move):
         if self.with_figurines:
             delegado = obj_column.edicion
-            delegado.setWhite(move.is_white())
+            delegado.set_side_of_figurines(move.is_white())
         mrm, pos = move.analysis
         rm0 = mrm.li_rm[pos if column == "MOVE" else 0]
         pv1 = rm0.pv.split(" ")[0]

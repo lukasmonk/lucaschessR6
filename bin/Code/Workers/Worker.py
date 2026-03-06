@@ -200,7 +200,7 @@ class Worker(QtWidgets.QWidget):
 
         return ly_v
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return self.pgn.num_rows()
 
     def configurar(self):
@@ -218,7 +218,7 @@ class Worker(QtWidgets.QWidget):
             dic["ANALYSIS_BAR"] = activated
             Code.configuration.write_variables(self.key_vars, dic)
 
-    def grid_right_button(self, grid, row, col, modif):
+    def grid_right_button(self, _grid, _row, _obj_column, _modif):
         self.configurar()
 
     def crea_adjudicator(self):
@@ -358,10 +358,8 @@ class Worker(QtWidgets.QWidget):
 
     def finalize(self):
         self.is_closed = True
-
         self.analysis_bar.activate(False)
         Code.list_engine_managers.close_all()
-        self.close()
         QtWidgets.QApplication.quit()
         Util.close_app()
 
@@ -561,7 +559,7 @@ class Worker(QtWidgets.QWidget):
         result = RESULT_WIN_BLACK if is_white else RESULT_WIN_WHITE
         self.game.set_termination(TERMINATION_ENGINE_MALFUNCTION, result)
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         control_pgn = self.pgn
 
         col = obj_column.key
@@ -727,8 +725,8 @@ class Worker(QtWidgets.QWidget):
             # segundo los borrados
             for movim in li_movs:
                 if movim[0] == "b":
-                    n = cpu.wait(seconds * 0.80 / rapidez)
-                    cpu.remove_piece(movim[1], father=n)
+                    cpu.wait(seconds * 0.80 / rapidez)
+                    cpu.remove_piece(movim[1])
 
             # tercero los cambios
             for movim in li_movs:

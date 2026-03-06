@@ -79,5 +79,16 @@ if exist "FasterCode.cp%PYTHON_VERSION%-win_amd64.pyd" (
 ) else (
     echo Error,
 )
+
+echo.
+echo === Copying FasterCode to its destination folder ===
+echo.
+copy /Y *.pyd ..\..\OS\windows
+
+echo.
+echo ============================================
+echo Build completed successfully
+echo ============================================
+
 pause
 REM ---------------------------------------------------------------------------------------------------------

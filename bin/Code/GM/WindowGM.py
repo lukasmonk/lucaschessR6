@@ -58,7 +58,7 @@ class WGM(LCDialog.LCDialog):
         extparam = "gm"
         LCDialog.LCDialog.__init__(self, w_parent, titulo, icono, extparam)
 
-        flb = Controles.FontType(puntos=Code.configuration.x_font_points)
+        flb = Controles.FontTypeNew(point_size=Code.configuration.x_font_points)
 
         # Toolbar
         li_acciones = [

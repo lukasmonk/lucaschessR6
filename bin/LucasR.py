@@ -12,15 +12,6 @@ import Code
 
 warnings.simplefilter("ignore")
 
-try:
-    from Code.Update import UpdateLockedFiles
-    import os
-
-    bin_dir = os.path.dirname(os.path.abspath(__file__))
-    deleted = UpdateLockedFiles.cleanup_old_files(bin_dir, recursive=True)
-except Exception:
-    pass
-
 n_args = len(sys.argv)
 if n_args == 1:
     import Code.Base.Init

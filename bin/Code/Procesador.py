@@ -43,7 +43,7 @@ from Code.Books import (
 )
 from Code.CompetitionWithTutor import ManagerCompeticion
 from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
-from Code.Config import Configuration, WindowConfig
+from Code.Config import Configuration, WindowConfig, WindowUsuarios
 from Code.Databases import DBgames
 from Code.Engines import (
     CheckEngines,
@@ -60,6 +60,7 @@ from Code.GM import ManagerGM
 from Code.Kibitzers import KibitzersManager
 from Code.Leagues import ManagerLeague
 from Code.LearnGame import ManagerPlayGame, WindowLearnGame, WindowPlayGame
+from Code.Leitner import Leitner, ManagerLeitner
 from Code.MainWindow import MainWindow, Presentacion
 from Code.Maps import ManagerMateMap, WindowWorkMap
 from Code.Menus import (
@@ -94,13 +95,14 @@ class Procesador:
     is_first_time = None
     manager_tutor: EngineManagerAnalysis.EngineManagerAnalysis | None
     manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None
+    if_presentation: bool
+    initial_position: Position.Position
 
     def __init__(self):
         if Code.list_engine_managers is None:
             Code.list_engine_managers = ListEngineManagers.ListEngineManagers()
 
         self.main_window = None
-        # self.kibitzers_manager = KibitzersManager(self)
 
     def start_with_user(self, user):
         self.user = user
@@ -118,6 +120,9 @@ class Procesador:
 
         self.configuration = Configuration.Configuration(user)
         self.configuration.start()
+
+        CheckEngines.check_engines()
+
         Code.procesador = self
         Code.runSound.read_sounds()
         OpeningsStd.ap.reset()
@@ -136,10 +141,10 @@ class Procesador:
         self.manager = None
 
         self.is_first_time = True
-        self.siPresentacion = False  # si esta funcionando la presentacion
+        self.if_presentation = False  # si esta funcionando la presentacion
 
-        self.posicionInicial = Position.Position()
-        self.posicionInicial.set_pos_initial()
+        self.initial_position = Position.Position()
+        self.initial_position.set_pos_initial()
 
         self.manager_rival = None
         self.manager_tutor = None  # creaTutor lo usa asi que hay que definirlo antes
@@ -200,7 +205,7 @@ class Procesador:
                 return
             elif comando == "-play":
                 fich_tmp = sys.argv[2]
-                self.juegaExterno(fich_tmp)
+                self.play_in_external_mode(fich_tmp)
                 return
 
             elif comando == "-playagainst":
@@ -241,7 +246,7 @@ class Procesador:
         self.main_window.active_game(False, False)
         self.main_window.thinking(False)
         self.board.do_pressed_number = None
-        self.board.set_position(self.posicionInicial)
+        self.board.set_position(self.initial_position)
         self.board.remove_movables()
         self.board.remove_arrows()
         self.main_window.adjust_size()
@@ -267,13 +272,13 @@ class Procesador:
                 self.presentacion()
         self.kibitzers_manager.stop()
 
-    def presentacion(self, siEmpezar=True):
-        self.siPresentacion = siEmpezar
-        if not siEmpezar:
+    def presentacion(self, if_start=True):
+        self.if_presentation = if_start
+        if not if_start:
             self.cpu.stop()
             self.board.set_side_bottom(True)
             self.board.activa_menu_visual(True)
-            self.board.set_position(self.posicionInicial)
+            self.board.set_position(self.initial_position)
             self.board.setToolTip("")
             self.board.lock_rotation(False)
 
@@ -418,7 +423,7 @@ class Procesador:
     def run_action(self, key):
         self.main_window.deactivate_eboard(0)
 
-        if self.siPresentacion:
+        if self.if_presentation:
             self.presentacion(False)
 
         if key == TB_QUIT:
@@ -429,31 +434,24 @@ class Procesador:
             self.main_window.accept()
 
         elif key == TB_PLAY:
-            self.check_engines()
             self.menu_play()
 
         elif key == TB_COMPETE:
-            self.check_engines()
             self.menu_compete()
 
         elif key == TB_TRAIN:
-            self.check_engines()
             self.menu_train()
 
         elif key == TB_ENGINES:
-            self.check_engines()
             self.menu_engines()
 
         elif key == TB_OPTIONS:
-            self.check_engines()
             self.menu_options()
 
         elif key == TB_TOOLS:
-            self.check_engines()
             self.menu_tools()
 
         elif key == TB_INFORMATION:
-            self.check_engines()
             self.menu_information()
 
         elif key == TB_ADJOURNMENTS:
@@ -582,7 +580,7 @@ class Procesador:
         else:
             dbli_books_train.close()
 
-    def juegaExterno(self, fich_tmp):
+    def play_in_external_mode(self, fich_tmp):
         dic_sended = Util.restore_pickle(fich_tmp)
         dic = WPlayAgainstEngine.play_position(self, _("Play a position"), dic_sended["ISWHITE"])
         if dic is None:
@@ -766,8 +764,13 @@ class Procesador:
         else:
             self.manager.start(swiss, xmatch)
 
-    def check_engines(self):
-        return CheckEngines.check_engines(self.main_window)
+    def play_leitner(self, pos: int):
+        db_leitner = Leitner.LeitnerDB()
+        self.manager = ManagerLeitner.ManagerLeitner(self)
+        self.manager.start(db_leitner, pos)
+
+    def users(self):
+        WindowUsuarios.edit_users(self)
 
 
 class ProcesadorVariations(Procesador):
@@ -788,7 +791,7 @@ class ProcesadorVariations(Procesador):
             TB_INFORMATION,
         ]  # Lo incluimos aqui porque sino no lo lee, en caso de aplazada
 
-        self.siPresentacion = False
+        self.if_presentation = False
 
         self.main_window = MainWindow.MainWindow(self, window, extparam="mainv")
         self.main_window.set_manager_active(self)
@@ -802,6 +805,6 @@ class ProcesadorVariations(Procesador):
 
         self.replayBeep = None
 
-        self.posicionInicial = None
+        self.initial_position = None
 
         self.cpu = CPU.CPU(self.main_window)

@@ -1,12 +1,11 @@
 import os.path
-from datetime import date
 import pickle
+from datetime import date
 
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 
 import Code
-from Code.Z import Util
 from Code.Analysis import AnalysisEval
 from Code.Base.Constantes import (
     DBSHOW_INITIAL_POSITION,
@@ -16,6 +15,7 @@ from Code.Base.Constantes import (
     INACCURACY,
     MENU_PLAY_BOTH,
     POS_TUTOR_HORIZONTAL,
+    NOTATION_ALGEBRAIC
 )
 from Code.Board import ConfBoards
 from Code.Config import ConfigEngines, ConfigPaths
@@ -23,6 +23,7 @@ from Code.Engines import Priorities
 from Code.QT import IconosBase, ScreenUtils
 from Code.SQL import UtilSQL
 from Code.Translations import Translate, TrListas
+from Code.Z import Util
 
 
 def int_toolbutton(xint):
@@ -30,11 +31,11 @@ def int_toolbutton(xint):
         (
             tbi
             for tbi in (
-                Qt.ToolButtonStyle.ToolButtonIconOnly,
-                Qt.ToolButtonStyle.ToolButtonTextOnly,
-                Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-                Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
-            )
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+        )
             if xint == tbi.value
         ),
         Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
@@ -43,10 +44,10 @@ def int_toolbutton(xint):
 
 def toolbutton_int(qt_tbi):
     if qt_tbi in (
-        Qt.ToolButtonStyle.ToolButtonIconOnly,
-        Qt.ToolButtonStyle.ToolButtonTextOnly,
-        Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-        Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
     ):
         return qt_tbi.value
     return Qt.ToolButtonStyle.ToolButtonTextUnderIcon.value
@@ -135,6 +136,8 @@ class Configuration:
 
         self.x_movement_doublebox_board = False
 
+        self.x_shadows_board = True
+
         self.x_director_icon = False
         self.x_direct_graphics = False
 
@@ -151,6 +154,8 @@ class Configuration:
         self.x_databases_rowheight = 24
 
         self.x_pgn_english = False
+
+        self.x_notation_style = NOTATION_ALGEBRAIC
 
         self.x_autopromotion_q = False
 
@@ -169,7 +174,7 @@ class Configuration:
 
         self.x_cursor_thinking = True
 
-        self.x_rival_inicial = "rocinante" if Util.is_linux() else "irina"
+        self.x_rival_inicial = "irina"
 
         self.tutor_default = "stockfish"
         self.x_tutor_clave = self.tutor_default
@@ -535,7 +540,7 @@ class Configuration:
 
     def temporary_file(self, extension):
         dir_tmp = Util.opj(self.paths.folder_userdata(), "tmp")
-        return Util.temporary_file(dir_tmp, extension)
+        return str(Util.temporary_file(dir_tmp, extension))
 
     def clean_tmp_folder(self):
         try:
@@ -588,8 +593,8 @@ class Configuration:
             self.dic_conf_boards_pk = db.as_dictionary()
             if "BASE" not in self.dic_conf_boards_pk:
                 with open(
-                    Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
-                    "rb",
+                        Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
+                        "rb",
                 ) as f:
                     var = pickle.loads(f.read())
                     alto = ScreenUtils.desktop_height()

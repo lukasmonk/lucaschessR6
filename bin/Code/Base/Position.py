@@ -19,6 +19,7 @@ from Code.Base.Constantes import (
     PHASE_BISHOP,
     PHASE_ROOK,
     PHASE_QUEEN,
+    NOTATION_LONGALGEBRAIC, NOTATION_ALGEBRAIC
 )
 from Code.Translations import TrListas
 
@@ -328,7 +329,16 @@ class Position:
 
     def pgn(self, from_sq, to_sq, promotion=""):
         self.set_lce()
-        return FasterCode.get_pgn(from_sq, to_sq, '' if promotion is None else promotion)
+        promotion = promotion or ""
+        if Code.configuration.x_notation_style == NOTATION_ALGEBRAIC:
+            return FasterCode.get_pgn(from_sq, to_sq, promotion)
+
+        if Code.configuration.x_notation_style == NOTATION_LONGALGEBRAIC:
+            return FasterCode.get_pgn_longalgebraic(from_sq, to_sq, promotion)
+
+        # (f'assert check("{self.fen()}", "{from_sq}", "{to_sq}", "{promotion or ""}") == "{resp}"')
+        # return resp
+        return FasterCode.get_pgn_descriptive(self.is_white, from_sq, to_sq, promotion)
 
     def get_fenm2(self):
         self.set_lce()

@@ -131,7 +131,7 @@ class WBMT(LCDialog.LCDialog):
         li_acciones = [
             (_("Close"), Iconos.MainMenu(), self.finalize),
             None,
-            (_("Play"), Iconos.Empezar(), self.entrenar),
+            (_("Play"), Iconos.Empezar(), self.do_training),
             None,
             (_("New"), Iconos.Nuevo(), self.nuevo),
             None,
@@ -885,7 +885,7 @@ class WBMT(LCDialog.LCDialog):
             else:
                 QTMessages.message_error(self, _X(_("Unable to read file %1"), bmt1))
 
-    def entrenar(self):
+    def do_training(self):
         grid, dbf, recno = self.actual()
         if recno >= 0:
             dbf.goto(recno)
@@ -929,7 +929,7 @@ class WBMT(LCDialog.LCDialog):
         return dbf.reccount()
 
     def grid_doble_click(self, _grid, _row, _column):
-        self.entrenar()
+        self.do_training()
 
     def grid_dato(self, grid, row, obj_column):
         dbf = self.dbfT if grid.id == "T" else self.dbf

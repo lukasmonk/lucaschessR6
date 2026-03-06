@@ -11,6 +11,7 @@ class LCDialog(QtWidgets.QDialog):
         super().__init__(main_window)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_AlwaysShowToolTips)
 
         self.key_video = extparam
         self.liGrids = []

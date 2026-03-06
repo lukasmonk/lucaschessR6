@@ -295,6 +295,14 @@ class WBase(QtWidgets.QWidget):
         o_columns.li_columns[1].head = white if white else _("White")
         o_columns.li_columns[2].head = black if black else _("Black")
 
+    def update_figurines(self):
+        with_figurines = Code.configuration.x_pgn_withfigurines
+        o_columns = self.pgn.o_columns
+        col_white = o_columns.locate_column("WHITE")
+        col_white.edicion.set_side_of_figurines(True if with_figurines else None)
+        col_black = o_columns.locate_column("BLACK")
+        col_black.edicion.set_side_of_figurines(False if with_figurines else None)
+
     def create_information_block(self):
         configuration = self.manager.configuration
         width_pgn = configuration.x_pgn_width
@@ -630,7 +638,7 @@ class WBase(QtWidgets.QWidget):
             if color_nag == NAG_0:  # Son prioritarios los nags manuales
                 nothing, color_nag = mrm.set_nag_color(rm)
 
-        is_opening = move.is_book_move()
+        is_opening = move.in_the_opening
 
         if is_opening or move.comment or move.variations:
             image_initial = "O" if is_opening else ""
@@ -639,7 +647,7 @@ class WBase(QtWidgets.QWidget):
             if move.comment:
                 image_initial += "C"
 
-        pgn = move.pgn_figurines() if Code.configuration.x_pgn_withfigurines else move.pgn_translated()
+        pgn = move.pgn_figurines() if Code.configuration.x_pgn_withfigurines else move.pgn_base_translated()
         if color_nag:
             color = Nags.nag_color(color_nag)
 

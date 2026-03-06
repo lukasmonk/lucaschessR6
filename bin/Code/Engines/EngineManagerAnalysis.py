@@ -95,7 +95,6 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
                     return mrm, pos
 
         self.engine_run.set_game_position(game, movement if len(game) > 0 else None, True)
-        self.engine_run.play(self.run_engine_params)
 
         self.elapsed_time.start()
 
@@ -270,7 +269,6 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             return None
 
         self.engine_run.set_fen_position(fen)
-        self.engine_run.play(self.run_engine_params)
 
         self.elapsed_time.start()
 

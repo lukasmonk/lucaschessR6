@@ -7,12 +7,12 @@ import FasterCode
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import FEN_INITIAL, STANDARD_TAGS, TACTICTHEMES
 from Code.Databases import DBgamesST
 from Code.Openings import OpeningsStd
 from Code.SQL import UtilSQL, RowidReader
+from Code.Z import Util
 
 pos_a1 = FasterCode.pos_a1
 a1_pos = FasterCode.a1_pos
@@ -30,6 +30,7 @@ fen_fenm2 = FasterCode.fen_fenm2
 make_pv = FasterCode.make_pv
 num_move = FasterCode.num_move
 move_num = FasterCode.move_num
+
 
 drots = {x.upper(): x for x in STANDARD_TAGS}
 
@@ -140,13 +141,13 @@ class DBgames:
         sql_select = ",".join(['Games_old."%s"' % f.replace('"', '') for f in lifields])
 
         for sql in (
-            "PRAGMA foreign_keys=off;",
-            "BEGIN TRANSACTION;",
-            "ALTER TABLE Games RENAME TO Games_old;",
-            f"CREATE TABLE Games ({sql_create});",
-            f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
-            "DROP TABLE Games_old;",
-            "CREATE INDEX XPV_INDEX ON Games (XPV);",
+                "PRAGMA foreign_keys=off;",
+                "BEGIN TRANSACTION;",
+                "ALTER TABLE Games RENAME TO Games_old;",
+                f"CREATE TABLE Games ({sql_create});",
+                f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
+                "DROP TABLE Games_old;",
+                "CREATE INDEX XPV_INDEX ON Games (XPV);",
         ):
             try:
                 self.conexion.execute(sql)
@@ -170,13 +171,13 @@ class DBgames:
             cursor = self.conexion.execute("pragma table_info(Games)")
             if not cursor.fetchall():
                 for sql in (
-                    "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
-                    "CREATE INDEX XPV_INDEX ON Games (XPV);",
-                    "PRAGMA journal_mode = WAL;",
-                    "PRAGMA synchronous = NORMAL;",
-                    "PRAGMA temp_store = MEMORY;",
-                    "PRAGMA cache_size = 10000;",
-                    "PRAGMA mmap_size = 268435456;",
+                        "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
+                        "CREATE INDEX XPV_INDEX ON Games (XPV);",
+                        "PRAGMA journal_mode = WAL;",
+                        "PRAGMA synchronous = NORMAL;",
+                        "PRAGMA temp_store = MEMORY;",
+                        "PRAGMA cache_size = -32000;",
+                        "PRAGMA mmap_size = 268435456;",
                 ):
                     self.conexion.execute(sql)
                 self.conexion.commit()
@@ -718,7 +719,7 @@ class DBgames:
         fen, pv = self.read_xpv(raw["XPV"])
         if xpgn:
             if xpgn.startswith(BODY_SAVE):
-                pgn_read = xpgn[len(BODY_SAVE) :].strip()
+                pgn_read = xpgn[len(BODY_SAVE):].strip()
                 if fen:
                     pgn_read = b'[FEN "%s"]\n' % fen.encode() + pgn_read
                 ok, game = Game.pgn_game(pgn_read)
@@ -862,46 +863,29 @@ class DBgames:
                 ferr.write(b"\n")
 
         si_cols_cambiados = False
-        quoted_fields = ",".join([f'"{campo}"' for campo in self.li_fields])
+        quoted_fields = ",".join(['"%s"' % campo for campo in self.li_fields])
         select_values = ("?," * len(self.li_fields))[:-1]
         sql = f"INSERT INTO Games ({quoted_fields}) VALUES ({select_values});"
-
-        st_xpv_bloque = set()
 
         li_regs = []
         n_regs = 0
 
         conexion = self.conexion
 
-        # Crear tabla temporal para verificación eficiente de duplicados
-        # Para bases de datos grandes (millones de registros), esto es mucho más rápido
-        # que hacer queries individuales a la tabla Games
-        if duplicate_check:
-            try:
-                conexion.execute("DROP TABLE IF EXISTS temp_import_xpv")
-                conexion.execute("CREATE TEMP TABLE temp_import_xpv (xpv TEXT PRIMARY KEY)")
-                # Copiar todos los XPVs existentes (una sola query)
-                conexion.execute("INSERT INTO temp_import_xpv SELECT XPV FROM Games")
-                conexion.commit()
-            except sqlite3.Error:
-                # Si falla la creación de la tabla temporal, continuar sin ella
-                # (fallback al método antiguo)
-                duplicate_check = False
-
-        # Iniciar transacción para mejor rendimiento
-        conexion.execute("BEGIN IMMEDIATE")
+        st_xpv_bloque = set()  # control de duplicados
 
         dcabs = self.read_config("dcabs", drots.copy())
 
         obj_decode = Util.Decode()
         decode = obj_decode.decode
 
+        conexion.execute("BEGIN IMMEDIATE")
         for file in ficheros:
             nomfichero = os.path.basename(file)
-            fich_erroneos = Util.opj(Code.configuration.temporary_folder(), f"{nomfichero[:-3]}errors.pgn")
+            fich_erroneos = Util.opj(Code.configuration.temporary_folder(), nomfichero[:-3] + "errors.pgn")
             fich_duplicados = Util.opj(
                 Code.configuration.temporary_folder(),
-                f"{nomfichero[:-3]}duplicates.pgn",
+                nomfichero[:-3] + "duplicates.pgn",
             )
             dl_tmp.pon_titulo(nomfichero)
             next_n = random.randint(800, 1500)
@@ -927,6 +911,7 @@ class DBgames:
                     # Sin movimientos
                     if not pv and not allows_cero_moves:
                         erroneos += 1
+                        dl_tmp.refresh_gui()
                         write_logs(fich_erroneos, fpgn.bpgn())
                         dl_tmp.refresh_gui()
                         continue
@@ -948,7 +933,7 @@ class DBgames:
                                 erroneos += 1
                                 write_logs(fich_erroneos, fpgn.bpgn())
                                 continue
-                            xpv = f"|{fen}|{xpv}"
+                            xpv = "|%s|%s" % (fen, xpv)
 
                     if not fen:
                         if not allows_complete_games:
@@ -961,9 +946,10 @@ class DBgames:
                         # Duplicados en el bloque actual
                         if xpv in st_xpv_bloque:
                             ok = False
+
+                        # Duplicados respecto a las grabadas ya
                         else:
-                            # Verificar contra tabla temporal (mucho más rápido con índice)
-                            cursor = conexion.execute("SELECT 1 FROM temp_import_xpv WHERE xpv = ? LIMIT 1", (xpv,))
+                            cursor = conexion.execute("SELECT 1 FROM Games WHERE XPV = ? LIMIT 1", (xpv,))
                             ok = cursor.fetchone() is None
 
                         if not ok:
@@ -971,16 +957,7 @@ class DBgames:
                             write_logs(fich_duplicados, fpgn.bpgn())
                             continue
 
-                        # Agregar a tabla temporal para futuras verificaciones
-                        try:
-                            conexion.execute("INSERT INTO temp_import_xpv (xpv) VALUES (?)", (xpv,))
-                        except sqlite3.IntegrityError:
-                            # Ya existe (race condition poco probable)
-                            duplicados += 1
-                            write_logs(fich_duplicados, fpgn.bpgn())
-                            continue
-
-                    st_xpv_bloque.add(xpv)
+                        st_xpv_bloque.add(xpv)
 
                     for k in d_cab:
                         if k.upper() not in self.st_fields:
@@ -1001,7 +978,7 @@ class DBgames:
 
                             self.add_column(k)
                             si_cols_cambiados = True
-                            quoted_fields = ",".join([f'"{f}"' for f in self.li_fields])
+                            quoted_fields = ",".join(['"%s"' % f for f in self.li_fields])
                             select_values = ("?," * len(self.li_fields))[:-1]
                             sql = f"INSERT INTO Games ({quoted_fields}) VALUES ({select_values});"
 
@@ -1033,17 +1010,12 @@ class DBgames:
                     li_regs.append(reg)
                     n_regs += 1
                     importados += 1
-                    if n_regs == 20000:
+                    if n_regs == 50000:
                         n_regs = 0
                         conexion.executemany(sql, li_regs)
                         li_regs = []
                         st_xpv_bloque = set()
-                        conexion.commit()
-                        if self.with_db_stat:
-                            self.db_stat.commit()
-                        # Reiniciar transacción para el siguiente bloque
-                        conexion.execute("BEGIN IMMEDIATE")
-            if dl_tmp.is_canceled():
+            if dl_tmp.is_canceled:
                 break
         dl_tmp.actualiza(erroneos + duplicados + importados, erroneos, duplicados, importados, 100.00)
         dl_tmp.ponSaving()
@@ -1059,13 +1031,6 @@ class DBgames:
         dl_tmp.ponContinuar()
 
         self.save_config("dcabs", dcabs)
-
-        # Limpiar tabla temporal
-        if duplicate_check:
-            try:
-                conexion.execute("DROP TABLE IF EXISTS temp_import_xpv")
-            except sqlite3.Error:
-                pass
 
         return si_cols_cambiados
 
@@ -1111,11 +1076,11 @@ class DBgames:
             if btell == next_n:
                 if time.time() - t1 > 0.9:
                     if not dl_tmp.actualiza(
-                        erroneos + duplicados + importados,
-                        erroneos,
-                        duplicados,
-                        importados,
-                        btell * 100.0 / bsize,
+                            erroneos + duplicados + importados,
+                            erroneos,
+                            duplicados,
+                            importados,
+                            btell * 100.0 / bsize,
                     ):
                         break
                     t1 = time.time()

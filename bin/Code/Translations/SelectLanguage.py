@@ -124,7 +124,7 @@ QGroupBox::title {
         layout.setSpacing(10)
         layout.setContentsMargins(15, 15, 15, 15)
 
-        font_avisos = Controles.FontType(more_puntos=-1)
+        font_avisos = Controles.FontType(point_size_delta=-1)
 
         # Standard Labels Group
         self.labels_group = QtWidgets.QGroupBox(_("Standard Labels"))

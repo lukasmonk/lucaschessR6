@@ -104,23 +104,3 @@ class GetGameQueuedTournament:
 
     def get_game(self):
         return self.tickets.get_ticket()
-        # with UtilSQL.ListObjSQL(self.path_tournament, Tournament.GameTournament, tabla="games_queued") as dbqueued, \
-        #         UtilSQL.DictSQLMultiProcess(self.path_work) as dbwork:
-        #     if len(dbqueued) == 0:
-        #         return None
-        #
-        #     game_tournament: Tournament.GameTournament
-        #     dic_games = {}
-        #     for game_tournament in dbqueued:
-        #         if game_tournament.id_game in dbwork:
-        #             dic_games[game_tournament.id_game] = game_tournament
-        #             continue
-        #         dbwork[game_tournament.id_game] = os.getpid()
-        #         return game_tournament
-        #
-        #     for id_game in dic_games:
-        #         pid = dbwork[id_game]
-        #         if not psutil.pid_exists(pid):
-        #             dbwork[id_game] = os.getpid()
-        #             return dic_games[id_game]
-        #     return None

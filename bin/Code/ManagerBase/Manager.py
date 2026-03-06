@@ -365,10 +365,11 @@ class Manager:
                     self.other_candidates(li_moves, position, li_c)
                 self.board.show_candidates(li_c)
 
-        if self.configuration.x_mouse_shortcuts is None:
-            return
+        # Si hay una pieza en a1h8, que muestre candidatos
+        if position.get_pz(a1h8):
+            show_candidates()
 
-        if self.configuration.x_mouse_shortcuts is not None:
+        if not self.configuration.x_mouse_shortcuts:
             if li_destinos:
                 self.atajosRatonOrigen = a1h8
                 self.atajosRatonDestino = None
@@ -477,6 +478,7 @@ class Manager:
                     self.board.change_piece(movim[1], movim[2])
         # Aprovechamos que esta operacion se hace en cada move
         self.reset_shortcuts_mouse()
+        self.board.variation_history = None
 
     def num_rows(self):
         return self.pgn.num_rows()
@@ -1458,10 +1460,55 @@ class Manager:
         mensaje = _("Press the continue button to start.")
         self.mensaje(mensaje, delayed=nomodal)
 
+    # def player_has_moved_base(self, from_sq, to_sq, promotion=""):
+    #     if self.board.variation_history is not None:
+    #         vh = self.board.variation_history
+    #         ok_variation = vh.count("|") > 0
+    #         if not ok_variation:
+    #             if int(vh) < len(self.game) - 1:
+    #                 ok_variation = int(vh) < len(self.game) - 2
+    #                 if not ok_variation and int(vh) < len(self.game) - 1:
+    #                     row, column = self.main_window.pgn_pos_actual()
+    #                     ok_variation = column.key == "NUMBER"
+    #         if ok_variation:
+    #             return self.mueve_variation(from_sq, to_sq, promotion="")
+    #     return self.messenger(from_sq, to_sq, promotion)
+
     def player_has_moved_base(self, from_sq, to_sq, promotion=""):
-        if self.board.variation_history is not None:
-            if not (self.in_end_of_line() and self.board.variation_history.count("|") == 0):
-                return self.mueve_variation(from_sq, to_sq, promotion="")
+        vh = self.board.variation_history
+
+        # 1. Si no hay historial de variaciones, vamos directo al messenger
+        if vh is None:
+            return self.messenger(from_sq, to_sq, promotion)
+
+        # 2. Determinamos si es una variación
+        # Caso A: Contiene el separador de profundidad "|"
+        is_variation = "|" in vh
+
+        # Caso B: Si es un número, evaluamos la posición en el juego
+        if not is_variation:
+            try:
+                move_idx = int(vh)
+                game_len = len(self.game)
+
+                # Es variación si el índice es menor al antepenúltimo movimiento
+                if move_idx < game_len - 2:
+                    is_variation = True
+                # O si es el penúltimo, pero el usuario hizo click en el número del movimiento
+                elif move_idx < game_len - 1:
+                    __, column = self.main_window.pgn_pos_actual()
+                    if self.game.last_position.is_white:
+                        is_variation = column.key == "WHITE"
+                    else:
+                        is_variation = column.key != "WHITE"
+            except (ValueError, TypeError, AttributeError):
+                # Por si vh no es convertible a int o falla la UI
+                is_variation = False
+
+        # 3. Ejecutamos la acción correspondiente
+        if is_variation:
+            return self.mueve_variation(from_sq, to_sq, promotion)
+
         return self.messenger(from_sq, to_sq, promotion)
 
     def mueve_variation(self, from_sq, to_sq, promotion=""):

@@ -28,8 +28,8 @@ def dame_categoria(w_parent):
 
     rival = Code.configuration.engines.search(rival_key)
 
-    font_normal = Controles.FontType(more_puntos=2)
-    font_bold = Controles.FontType(more_puntos=4, peso=300)
+    font_normal = Controles.FontType(point_size_delta=2)
+    font_bold = Controles.FontType(point_size_delta=4, peso=300)
 
     menu = Controles.Menu(w_parent)
     menu.set_font(font_bold)

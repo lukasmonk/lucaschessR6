@@ -137,37 +137,16 @@ int pgn2pv(char *pgn, char * pv)
         if( promotion ) promotion += 'a' - 'A';
     }
 
-    // printf( "%s, %d-%d ply(%d)\n", pgn, from_moves, toMoves-1, board.ply);
     for (k = from_moves; k < toMoves; k++) {
         move = board.moves[k];
 
-                // printf("[%c %s%s ", NAMEPZ[move.piece], POS_AH[move.from], POS_AH[move.to]);
-        // if (move.capture) {
-            // printf("x%c ", NAMEPZ[move.capture]);
-        // }
-        // if (move.promotion) {
-            // printf("prom%c ", NAMEPZ[move.promotion]);
-        // }
-        // if (move.is_ep) {
-            // printf("ep ");
-        // }
-        // if (move.is_2p) {
-            // printf("2p ");
-        // }
-        // if (move.is_castle) {
-            // printf("castle %d ", move.is_castle);
-        // }
-        // printf("]");
-
         if( NAMEPZ[move.piece] == piece && move.to == to){
-            // printf( "\n%s: %d, %d=%d, %d\n", pgn, from_AH, move.from, move.from%8, from_AH-'a' );
             if(from_AH && (move.from%8 != (from_AH-'a'))) continue;
             if(from_18 && (move.from/8 != (from_18-'1'))) continue;
             if( move.promotion && NAMEPZ[move.promotion] != promotion ) continue;
             if( promotion && !move.promotion ) continue;
             sprintf(pv, "%s%s", POS_AH[move.from], POS_AH[move.to]);
             if( promotion ) sprintf(pv, "%s%c", pv, promotion);
-            // printf("..resp=%d\n",k);
             return k;
         }
     }
@@ -238,6 +217,7 @@ void get_move_ex( int num, char * info )
     MoveBin move;
     char castle, en_passant;
     char promotion;
+    char capture;
 
     move = board.moves[num];
 
@@ -252,7 +232,9 @@ void get_move_ex( int num, char * info )
     if( move.is_ep ) en_passant = 'E';
     else en_passant = ' ';
 
-    sprintf(info, "%s%c%c%c", info, promotion, castle, en_passant);
+    if (move.capture) capture = NAMEPZ[move.capture];
+    else capture = ' ';
+    sprintf(info, "%s%c%c%c%c", info, promotion, castle, en_passant, capture);
 }
 
 char * to_san(int num, char *san_move)

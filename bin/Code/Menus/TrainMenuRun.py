@@ -1,7 +1,6 @@
 import shutil
 
 import Code
-from Code.FindAllMoves import ManagerFindAllMoves
 from Code.Base.Constantes import (
     GT_AGAINST_GM,
     GT_TACTICS,
@@ -13,15 +12,17 @@ from Code.Coordinates import WCoordinatesBasic, WCoordinatesBlocks, WCoordinates
 from Code.CountsCaptures import WCountsCaptures
 from Code.Endings import ManagerMate, WEndingsGTB
 from Code.Expeditions import WindowEverest
+from Code.FindAllMoves import ManagerFindAllMoves
 from Code.GM import ManagerGM, WindowGM
+from Code.Leitner import WLeitner
 from Code.Mate15 import WMate15
 from Code.Memory import Memory
 from Code.QT import Iconos, QTMessages
-from Code.ZQT import WindowVisualiza, WindowPuente, WindowPotencia, WindowHorses, WindowDailyTest
 from Code.Resistance import ManagerResistance, Resistance, WindowResistance
 from Code.Tactics import ManagerTactics, Tactics, WindowTactics
 from Code.TrainPositions import TrainPositions
 from Code.TurnOnLights import ManagerTurnOnLights, TurnOnLights, WindowTurnOnLights
+from Code.ZQT import WindowVisualiza, WindowPuente, WindowPotencia, WindowHorses, WindowDailyTest
 
 
 class TrainMenuRun:
@@ -134,6 +135,10 @@ class TrainMenuRun:
             else:
                 cat = int(resp[7:])
                 mem.lanza(cat)
+        elif resp == "leitner":
+            w = WLeitner.WLeitner(self.procesador.main_window)
+            if bool(w.exec()):
+                self.procesador.play_leitner(w.result_recno)
 
     def tacticas(self, tipo, name, carpeta, ini, ntactic):
         tacticas = Tactics.Tactics(tipo, name, carpeta, ini)
