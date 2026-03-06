@@ -90,7 +90,7 @@ class CPU:
         if orden.key == KIBRUN_GAME:
             if self.ipc.has_more_data():
                 return self.recibe()
-            time.sleep(0.2)
+            time.sleep(0.1)
             if self.ipc.has_more_data():
                 return self.recibe()
         return orden

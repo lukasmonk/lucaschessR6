@@ -1899,7 +1899,7 @@ class WGames(QtWidgets.QWidget):
 
     def tw_importar_lichess_puzzles(self):
         mens_base = _("You must follow the next steps")
-        mens_puzzles = _("Download the puzzles in csv format from LiChess website")
+        mens_puzzles = _("Download the puzzles in csv format from lichess website")
         link_puzzles = "https://database.lichess.org/#puzzles"
 
         mens_7z = _("Uncompress this file with a tool like PeaZip")

@@ -121,52 +121,34 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
         self.exp_x = p.x()
         self.exp_y = p.y()
 
-    def paint_bm(self, bm, painter, _option, _widget):
+    @staticmethod
+    def paint_bm(bm, painter, is_from):
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         painter.setOpacity(bm.opacity)
-        xk = float(self.board.width_square / 32.0)
 
         physical_pos = bm.physical_pos
         dx = physical_pos.x - 1
         dy = physical_pos.y - 1
         ancho = physical_pos.ancho
         alto = physical_pos.alto
-
         rect = QtCore.QRectF(dx, dy, ancho, alto)
 
-        color = QtGui.QColor(bm.color)
-        pen = QtGui.QPen()
-        pen.setWidth(int(bm.grosor * xk))
-        pen.setColor(color)
-        pen.setStyle(bm.tipoqt())
+        if is_from:
+            border_color = QtGui.QColor(bm.colorinterior)
+        else:
+            border_color = QtGui.QColor(bm.colorinterior).darker(150)
+
+        # Borde visible
+        pen = QtGui.QPen(border_color)
+        pen.setWidth(2 if ancho < 40 else 3 if ancho < 60 else 4 if ancho < 80 else 5)
         pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
+        painter.drawRoundedRect(rect, 6, 6)
 
-        pen = QtGui.QPen()
-        pen.setColor(QtGui.QColor(bm.color))
-        pen.setWidth(int(bm.grosor * xk))
-        pen.setStyle(bm.tipoqt())
-        painter.setPen(pen)
-        if bm.colorinterior >= 0:
-            color = QtGui.QColor(bm.colorinterior)
-            if bm.colorinterior2 >= 0:
-                color2 = QtGui.QColor(bm.colorinterior2)
-                gradient = QtGui.QLinearGradient(0, 0, bm.physical_pos.ancho, bm.physical_pos.alto)
-                gradient.setColorAt(0.0, color)
-                gradient.setColorAt(1.0, color2)
-                painter.setBrush(QtGui.QBrush(gradient))
-            else:
-                painter.setBrush(color)
-
-        if bm.redEsquina:
-            red = int(bm.redEsquina * xk)
-            painter.drawRoundedRect(rect, red, red)
-        else:
-            painter.drawRect(rect)
-
-    def paint(self, painter, option, widget):
-        self.paint_bm(self.bloquebox_from, painter, option, widget)
-        self.paint_bm(self.bloquebox_to, painter, option, widget)
+    def paint(self, painter, option, widget=None):
+        self.paint_bm(self.bloquebox_from, painter, True)
+        self.paint_bm(self.bloquebox_to, painter, False)
 
     def boundingRect(self):
         physical_pos = self.bloquebox_from.physical_pos

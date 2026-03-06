@@ -58,7 +58,7 @@ class ConfigPaths:
     # ------------------------------------------------------------------------------------- TRANSLATIONS
 
     def folder_translations(self):
-        folder = Util.opj(self.LCBASEFOLDER, "Translations")
+        folder = self.folder_from_userdata("Translations")
         if not os.path.isdir(folder):
             Util.create_folder(folder)
         return folder
@@ -261,6 +261,9 @@ class ConfigPaths:
 
     def file_washing_machine(self):
         return self._to_results("washing.wsm")
+
+    def file_leitner(self):
+        return self._to_results("Leitner.db")
 
     # -------------------------------------------------------------------------------------  BMT
 

@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from PySide6 import QtCore, QtWidgets
@@ -15,6 +16,7 @@ from Code.Base.Constantes import (
 )
 from Code.Engines import CheckEngines, Priorities
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, SelectFiles, QTUtils
+from Code.Z import Util
 
 
 class WConfEngines(LCDialog.LCDialog):
@@ -53,8 +55,8 @@ class WConfEngines(LCDialog.LCDialog):
         self.tab.dispatch_change(self.cambiada_tab)
 
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("OPTION", _("UCI option"), 180)
-        o_columns.nueva("VALUE", _("Value"), 200, edicion=Delegados.MultiEditor(self))
+        o_columns.nueva("OPTION", _("UCI option"), 180, align_right=True)
+        o_columns.nueva("VALUE", _("Value"), 200, edicion=Delegados.MultiEditor(self), align_center=True)
         o_columns.nueva("DEFAULT", _("By default"), 90)
         self.grid_conf = Grid.Grid(self, o_columns, complete_row_select=False, is_editable=True)
         self.register_grid(self.grid_conf)
@@ -208,6 +210,28 @@ class WConfEngines(LCDialog.LCDialog):
     def grid_bold(self, _grid, row, _obj_column):
         op = self.li_uci_options[row]
         return str(op.default).strip().lower() != str(op.valor).strip().lower()
+
+    def grid_right_button(self, grid, row, obj_column, modif):
+        opcion = self.li_uci_options[row]
+        if opcion.tipo == "string":
+            menu = QTDialogs.LCMenu(self)
+            menu.opcion("select_file", _("Select a file"), Iconos.MasDoc())
+            menu.separador()
+            menu.opcion("select_folder", _("Select a folder"), Iconos.Carpeta())
+            resp = menu.lanza()
+            if resp is not None:
+                folder_engine = os.path.dirname(self.engine.path_exe)
+                if resp == "select_file":
+                    path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                    if path_file:
+                        folder_file = os.path.dirname(path_file)
+                        if Util.same_path(folder_file, folder_engine):
+                            path_file = os.path.basename(path_file)
+                    else:
+                        return
+                else:
+                    path_file = SelectFiles.get_existing_directory(self, folder_engine,  _("Select a folder"))
+                self.grid_setvalue(None, row, None, path_file)
 
 
 class WConfTutor(QtWidgets.QWidget):

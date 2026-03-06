@@ -156,13 +156,15 @@ class TrainMenu(BaseMenu.RootMenu):
         submenu_coordinates.new("coordinates_write", _("Visualise and write"), Iconos.CoordinatesWrite())
 
     def tactics(self):
-        self.dic_training = TrListas.dic_training()
+        self.dic_trainings = TrListas.dic_training()
 
         submenu_tactics = self.new_submenu(_("Tactics"), Iconos.Training_Tactics())
 
         self.training_positions(submenu_tactics)
 
         self.tactics_by_repetition(submenu_tactics)
+
+        submenu_tactics.new("leitner", _("Tactics with the Leitner method"), Iconos.Leitner())
 
         submenu_tactics.new("bmt", _("Find best move"), Iconos.BMT())
 
@@ -215,7 +217,7 @@ class TrainMenu(BaseMenu.RootMenu):
         submenu_turn_on_the_ligths.new("tol_oneline", _("Turn on lights in one line"), Iconos.TOLline())
 
     def tr_training(self, txt):
-        return self.dic_training.get(txt, _F(txt))
+        return self.dic_trainings.get(txt, _F(txt))
 
     def training_positions(self, submenu_tactics):
         icono_fns = Iconos.Kibitzer_Board()

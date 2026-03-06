@@ -108,10 +108,25 @@ REM -------------------------------------------------------
 REM Limpieza opcional
 REM -------------------------------------------------------
 
-del FasterCode.pyx
+echo.
+echo === Cleaning temporary files ===
+echo.
+
+if exist "build" rd /s /q "build"
+if exist "FasterCode.c" del /f /q "FasterCode.c"
+if exist "irina.lib"    del /f /q "irina.lib"
+if exist "FasterCode.pyx" del /f /q "FasterCode.pyx"
+
+
+echo.
+echo === Copying FasterCode to its destination folder ===
+echo.
+copy /Y *.pyd ..\..\OS\windows
 
 echo.
 echo ============================================
 echo Build completed successfully
 echo ============================================
+
+
 pause

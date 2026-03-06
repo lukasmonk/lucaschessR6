@@ -182,7 +182,7 @@ class WSummary(QtWidgets.QWidget):
             return v.abbrev_text_base() if v else ""
         elif key == "number":
             if self.with_figurines:
-                self.delegadoMove.setWhite("..." not in v)
+                self.delegadoMove.set_side_of_figurines("..." not in v)
             return v
         else:
             return str(v)
@@ -504,7 +504,7 @@ class WSummaryBase(QtWidgets.QWidget):
             return f"{v:.01f} %"
         elif key == "number":
             if self.with_figurines:
-                self.delegadoMove.setWhite("..." not in v)
+                self.delegadoMove.set_side_of_figurines("..." not in v)
             return v
         else:
             return str(v)

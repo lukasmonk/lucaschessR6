@@ -24,7 +24,7 @@ class StartEngineParams:
     path_exe: str = ""
     li_options_uci: Optional[list] = None
     num_multipv: int = 0
-    priority = None
+    priority : Optional[int]= None
     args: Optional[list] = None
     path_log: Optional[str] = None
     emulate_movetime: bool = False
@@ -430,6 +430,9 @@ class EngineRun(QtCore.QObject):
                             self.li_cache = []
 
                     elif st == EngineState.THINKING:
+                        emited_depth = False
+                        new_depth = 0
+                        current_time = int(time.time() * 1000)
                         if self.mrm is not None:
                             try:
                                 self.mrm.dispatch(line)
@@ -440,14 +443,14 @@ class EngineRun(QtCore.QObject):
                             if new_depth > self.last_depth_emit:
                                 self.mrm.ordena()
                                 if self.emit:
-                                    current_time = int(time.time() * 1000)
                                     if current_time - self.last_time_depth_emit >= self.time_interval_depth_emit:
+                                        self.last_depth_emit = new_depth
+                                        self.last_time_depth_emit = current_time
                                         try:
                                             self.depth_changed.emit()
+                                            emited_depth = True
                                         except:
                                             pass
-                                        self.last_time_depth_emit = new_depth
-                                        self.last_time_depth_emit = current_time
 
                         if line.startswith("bestmove"):
                             self.state = EngineState.OK
@@ -459,7 +462,10 @@ class EngineRun(QtCore.QObject):
                             self.bestmove = li[1] if len(li) > 1 else ""
                             if self.emit:
                                 try:
-                                    self.depth_changed.emit()  # sino no se ve la ultima depth
+                                    if not emited_depth:  # si no se ha emitido el depth, lo emitimos
+                                        self.last_depth_emit = new_depth
+                                        self.last_time_depth_emit = current_time
+                                        self.depth_changed.emit()  # sino no se ve la ultima depth
                                     self.bestmove_found.emit(self.bestmove)
                                 except:
                                     pass

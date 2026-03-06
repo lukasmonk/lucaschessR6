@@ -78,7 +78,6 @@ char * play(int depth, int time);
 int alphaBeta(int alpha, int beta, int depthleft, int ply);
 int quiescence(int alpha, int beta, int ply);
 
-
 // hash.c
 Bitmap rand64();
 void init_hash();

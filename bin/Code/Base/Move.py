@@ -2,7 +2,6 @@ import FasterCode
 
 import Code
 import Code.Base.Game  # To prevent recursivity in Variations -> import direct
-from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import BETTER_VARIATIONS, HIGHEST_VARIATIONS, PHASE_NODEFINED
 from Code.Engines import EngineResponse
@@ -18,6 +17,7 @@ from Code.Nags.Nags import (
 from Code.Openings import OpeningsStd
 from Code.Translations import TrListas
 from Code.Z import PGNtoGame
+from Code.Z import Util
 
 
 def crea_dic_html():
@@ -30,13 +30,13 @@ dicHTMLFigs = crea_dic_html()
 
 class Move:
     def __init__(
-        self,
-        game,
-        position_before=None,
-        position=None,
-        from_sq=None,
-        to_sq=None,
-        promotion="",
+            self,
+            game,
+            position_before=None,
+            position=None,
+            from_sq=None,
+            to_sq=None,
+            promotion="",
     ):
         self.game = game
         self.analysis = None
@@ -80,12 +80,12 @@ class Move:
 
     def only_has_move(self) -> bool:
         return not (
-            self.variations
-            or self.comment
-            or len(self.li_nags) > 0
-            or self.analysis
-            or len(self.li_themes) > 0
-            or self.time_ms
+                self.variations
+                or self.comment
+                or len(self.li_nags) > 0
+                or self.analysis
+                or len(self.li_themes) > 0
+                or self.time_ms
         )
 
     def get_themes(self) -> list:
@@ -282,6 +282,11 @@ class Move:
         if resto[0] not in "?!":
             resto = f" {resto}"
         return self.base_pgn() + resto
+
+    def pgn_base_translated(self):
+        d_conv = TrListas.dic_conv()
+        li = [d_conv.get(c, c) for c in self.base_pgn()]
+        return "".join(li)
 
     def pgn_translated(self):
         d_conv = TrListas.dic_conv()

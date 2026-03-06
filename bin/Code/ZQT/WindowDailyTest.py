@@ -253,7 +253,6 @@ class WDailyTest(LCDialog.LCDialog):
     def __init__(self, owner, li_fens, name_engine, seconds, fns):
 
         super(WDailyTest, self).__init__(owner, _("Your daily test"), Iconos.DailyTest(), "nivel")
-
         self.procesador = owner.procesador
         self.configuration = Code.configuration
 
@@ -300,14 +299,11 @@ class WDailyTest(LCDialog.LCDialog):
         self.wrm.setFixedWidth(n_with)
 
         # Tool bar
-        li_acciones = (
-            # ( _( "Start" ), Iconos.Empezar(), "empezar" ),None,
-            (_("Analysis"), Iconos.Tutor(), "analizar"),
-            (_("Cancel"), Iconos.Cancelar(), "cancelar"),
-            (_("Continue"), Iconos.Pelicula_Seguir(), "seguir"),
-            (_("Resign"), Iconos.Abandonar(), "abandonar"),
-        )
-        self.tb = Controles.TB(self, li_acciones)
+        self.tb = Controles.TBrutina(self)
+        self.tb.new(_("Analysis"), Iconos.Tutor(), self.analizar)
+        self.tb.new(_("Cancel"), Iconos.Cancelar(), self.cancelar)
+        self.tb.new(_("Continue"), Iconos.Pelicula_Seguir(), self.seguir)
+        self.tb.new(_("Resign"), Iconos.Abandonar(), self.abandonar)
 
         ly_bm = Colocacion.H().control(self.board).control(self.wrm)
         ly_dt = Colocacion.H().control(self.lbColor).control(self.lbJuego)
@@ -351,22 +347,19 @@ class WDailyTest(LCDialog.LCDialog):
         self.save_video()
         self.reject()
 
-    def process_toolbar(self):
-        accion = self.sender().key
-        if accion == "abandonar":
-            if QTMessages.pregunta(self, _("Do you want to resign?")):
-                self.finalize()
-        elif accion == "cancelar":
-            if QTMessages.pregunta(self, _("Are you sure you want to cancel?")):
-                self.finalize()
-        elif accion in "finalize":
+    def abandonar(self):
+        if QTMessages.pregunta(self, _("Do you want to resign?")):
             self.finalize()
-        elif accion == "empezar":
-            self.play_next_move()
-        elif accion == "seguir":
-            self.play_next_move()
-        elif accion == "analizar":
-            self.analizar()
+
+    def cancelar(self):
+        if QTMessages.pregunta(self, _("Are you sure you want to cancel?")):
+            self.finalize()
+
+    def empezar(self):
+        self.play_next_move()
+
+    def seguir(self):
+        self.play_next_move()
 
     def pon_toolbar(self, li_acciones):
         self.tb.clear()
@@ -381,7 +374,7 @@ class WDailyTest(LCDialog.LCDialog):
     def play_next_move(self):
         self.wrm.hide()
         ScreenUtils.shrink(self)
-        self.pon_toolbar(["abandonar"])
+        self.pon_toolbar([self.abandonar])
 
         if self.juego == self.nFens:
             self.finish_the_test()
@@ -535,7 +528,7 @@ class WDailyTest(LCDialog.LCDialog):
             self.li_data.append(DataMovement(pos, pgn, rm.abbrev_text_base(), loss, selected))
 
         if self.with_figurines:
-            self.delegado_pgn.setWhite(self.is_white)
+            self.delegado_pgn.set_side_of_figurines(self.is_white)
         self.wrm.show()
         self.wrm.refresh()
         self.wrm.goto(current_pos, 0)
@@ -544,7 +537,7 @@ class WDailyTest(LCDialog.LCDialog):
         self.li_tiempos.append(vtime)
 
         self.lbColor.set_text("")
-        self.pon_toolbar(["seguir", "cancelar", "analizar"])
+        self.pon_toolbar([self.seguir, self.cancelar, self.analizar])
 
     def analizar(self):
         Analysis.show_analysis(

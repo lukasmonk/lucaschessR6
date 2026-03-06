@@ -55,4 +55,6 @@ void close_poly(void);
 
 void set_ext_fen_body(char * ext_fen, char * ext_body, char * ext_pv );
 
+void pv_xpv_c(const char* pv, char* res);
+
 #endif

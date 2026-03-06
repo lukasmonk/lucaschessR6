@@ -160,7 +160,7 @@ def check_stockfish(check_again: bool) -> bool:
     return _manager.check(check_again)
 
 
-def check_engines(_window) -> None:
+def check_engines() -> None:
     if not Code.engines_has_been_checked:
         _manager = StockfishManager()
         _manager.check(False)

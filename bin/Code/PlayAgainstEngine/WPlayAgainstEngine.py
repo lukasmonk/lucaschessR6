@@ -4,7 +4,6 @@ from typing import Optional, List, Any
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     ADJUST_BETTER,
@@ -40,8 +39,10 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
     QTUtils,
+    SelectFiles
 )
 from Code.Voyager import Voyager
+from Code.Z import Util
 
 
 class WPlayAgainstEngine(LCDialog.LCDialog):
@@ -59,7 +60,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
     dic_saved: dict
 
     def __init__(self, procesador, titulo, direct_option):
-        LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, Iconos.Libre(), "entMaquina")
+        LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, Iconos.Libre(), "playagainst")
 
         self.font_dialog = Controles.FontType(puntos=Code.configuration.x_font_points)
 
@@ -161,7 +162,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         ly_tiempo = Colocacion.H().control(self.ed_rtime).control(self.bt_cancel_rtime).relleno(1)
 
         self.lb_depth = Controles.LB2P(self, _("Fixed depth")).set_font(font)
-        self.ed_rdepth = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(self.change_depth)
+        self.ed_rdepth = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(
+            self.change_depth)
         tooltip = _("If time and depth are given, the depth is attempted and the time becomes a maximum.")
         self.ed_rdepth.setToolTip(tooltip)
         self.bt_cancel_rdepth = Controles.PB(self, "", rutina=self.cancelar_depth).set_icono(Iconos.S_Cancelar())
@@ -180,7 +182,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.cb_unlimited = Controles.CB(self, li_unlimited, 10).set_font(font)
 
         self.lb_nodes = Controles.LB2P(self, _("Fixed nodes")).set_font(font)
-        self.ed_nodes = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(self.change_nodes)
+        self.ed_nodes = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(
+            self.change_nodes)
         tooltip = _("If time and nodes are given, the nodes is attempted and the time becomes a maximum.")
         self.ed_nodes.setToolTip(tooltip)
         self.bt_cancel_nodes = Controles.PB(self, "", rutina=self.cancelar_nodes).set_icono(Iconos.S_Cancelar())
@@ -512,15 +515,9 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         bt_default = Controles.PB(self, _("By default"), self.set_uci_default, plano=False)
 
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("OPTION", _("UCI option"), 240, align_center=True)
-        o_columns.nueva(
-            "VALUE",
-            _("Value"),
-            200,
-            align_center=True,
-            edicion=Delegados.MultiEditor(self),
-        )
-        o_columns.nueva("DEFAULT", _("By default"), 200, align_center=True)
+        o_columns.nueva("OPTION", _("UCI option"), 180, align_right=True)
+        o_columns.nueva("VALUE", _("Value"), 200, align_center=True, edicion=Delegados.MultiEditor(self))
+        o_columns.nueva("DEFAULT", _("By default"), 90)
         self.grid_uci = Grid.Grid(self, o_columns, is_editable=True)
         self.grid_uci.setFixedHeight(320)
         self.grid_uci.set_font(font)
@@ -668,6 +665,28 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         opcion = self.rival.li_uci_options_editable()[nfila]
         self.rival.set_uci_option(opcion.name, valor)
 
+    def grid_right_button(self, _grid, row, _obj_column, _modif):
+        opcion = self.rival.li_uci_options_editable()[row]
+        if opcion.tipo == "string":
+            menu = QTDialogs.LCMenu(self)
+            menu.opcion("select_file", _("Select a file"), Iconos.MasDoc())
+            menu.separador()
+            menu.opcion("select_folder", _("Select a folder"), Iconos.Carpeta())
+            resp = menu.lanza()
+            if resp is not None:
+                folder_engine = os.path.dirname(self.rival.path_exe)
+                if resp == "select_file":
+                    path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                    if path_file:
+                        folder_file = os.path.dirname(path_file)
+                        if Util.same_path(folder_file, folder_engine):
+                            path_file = os.path.basename(path_file)
+                    else:
+                        return
+                else:
+                    path_file = SelectFiles.get_existing_directory(self, folder_engine, _("Select a folder"))
+                self.grid_setvalue(None, row, None, path_file)
+
     @staticmethod
     def read_configurations():
         return ConfigurationsPAE.ConfigurationsPAE().list_visible()
@@ -703,12 +722,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         def time_depth(show):
             for obj in (
-                self.lb_depth,
-                self.ed_rdepth,
-                self.bt_cancel_rdepth,
-                self.lb_rtime,
-                self.ed_rtime,
-                self.bt_cancel_rtime,
+                    self.lb_depth,
+                    self.ed_rdepth,
+                    self.bt_cancel_rdepth,
+                    self.lb_rtime,
+                    self.ed_rtime,
+                    self.bt_cancel_rtime,
             ):
                 obj.setVisible(show)
             if not show:
@@ -866,10 +885,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def test_unlimited(self):
         visible = (
-            self.ed_rdepth.text_to_integer() == 0
-            and self.ed_rtime.text_to_float() == 0
-            and self.ed_nodes.text_to_integer() == 0
-            and not self.gb_time.isChecked()
+                self.ed_rdepth.text_to_integer() == 0
+                and self.ed_rtime.text_to_float() == 0
+                and self.ed_nodes.text_to_integer() == 0
+                and not self.gb_time.isChecked()
         )
         self.lb_unlimited.setVisible(visible)
         self.cb_unlimited.setVisible(visible)
@@ -911,26 +930,26 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         chess18 = menu.submenu(tr_chess("18"), rondo_main.otro())
         for pos, uno in enumerate(
-            (
-                "rbbqknnr",
-                "rqbbknnr",
-                "rbbnkqnr",
-                "rnbbkqnr",
-                "rbbnknqr",
-                "rnbbknqr",
-                "rqbnkbnr",
-                "rnbnkbqr",
-                "rnnbkqbr",
-                "rbnnkqbr",
-                "rqnbknbr",
-                "rnqbknbr",
-                "rbqnknbr",
-                "rbnqknbr",
-                "rnnqkbbr",
-                "rnqnkbbr",
-                "rqnnkbbr",
-            ),
-            1,
+                (
+                        "rbbqknnr",
+                        "rqbbknnr",
+                        "rbbnkqnr",
+                        "rnbbkqnr",
+                        "rbbnknqr",
+                        "rnbbknqr",
+                        "rqbnkbnr",
+                        "rnbnkbqr",
+                        "rnnbkqbr",
+                        "rbnnkqbr",
+                        "rqnbknbr",
+                        "rnqbknbr",
+                        "rbqnknbr",
+                        "rbnqknbr",
+                        "rnnqkbbr",
+                        "rnqnkbbr",
+                        "rqnnkbbr",
+                ),
+                1,
         ):
             fen = f"{uno}/pppppppp/8/8/8/8/PPPPPPPP/{uno.upper()} w KQkq - 0 1"
             chess18.opcion(fen, f"{pos}. {uno}", rondo.otro())
@@ -1054,11 +1073,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             elif menu.is_right:
                 pos, opening_block = resp
                 if QTMessages.pregunta(
-                    self,
-                    _X(
-                        _("Do you want to delete the opening %1 from the list of favourite openings?"),
-                        opening_block.tr_name,
-                    ),
+                        self,
+                        _X(
+                            _("Do you want to delete the opening %1 from the list of favourite openings?"),
+                            opening_block.tr_name,
+                        ),
                 ):
                     del self.li_preferred_openings[pos]
 

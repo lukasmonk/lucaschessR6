@@ -287,7 +287,10 @@ class WHorses(LCDialog.LCDialog):
 
         QTMessages.message_bold(
             self,
-            f"<b>{_('Congratulations, goal achieved')}<b><ul><li>{_('Moves')}: <b>{self.moves}</b> ({_('Goal')}={self.movesGoal}) </li><li>{_('Hints')}: <b>{self.hints}</b></li><li>{_('Time')}: <b>{seconds}</b></li></ul>",
+            f"<b>{_('Congratulations, goal achieved')}<b>"
+            f"<ul><li>{_('Moves')}: <b>{self.moves}</b> ({_('Minimum')}={self.min_moves}) </li>"
+            f"<li>{_('Hints')}: <b>{self.hints}</b></li>"
+            f"<li>{_('Time')}: <b>{seconds}</b></li></ul>",
         )
 
         self.save_video()

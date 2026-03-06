@@ -146,3 +146,48 @@ bool bioskey() {
     return _kbhit();
 }
 #endif
+
+
+/**
+ * Reduce una partida en formato "e2e4 d7d5..." a nomenclatura compacta xpv.
+ * @param pv Cadena de entrada (movimientos separados por espacio).
+ * @param res Buffer de salida (debe tener al menos el mismo tamaño que pv).
+ */
+void pv_xpv_c(const char* pv, char* res) {
+    int i = 0; // Índice lectura
+    int r = 0; // Índice escritura
+
+    while (pv[i] != '\0') {
+        // Saltar espacios
+        if (pv[i] == ' ') {
+            i++;
+            continue;
+        }
+
+        // Procesar origen (pv[i], pv[i+1])
+        // a1_pos: (fila - '1') * 8 + (col - 'a')
+        int src = (pv[i+1] - 49) * 8 + (pv[i] - 97);
+        res[r++] = (char)(src + 58);
+
+        // Procesar destino (pv[i+2], pv[i+3])
+        int dst = (pv[i+3] - 49) * 8 + (pv[i+2] - 97);
+        res[r++] = (char)(dst + 58);
+
+        i += 4;
+
+        // Verificar si hay promoción (ej: e7e8q)
+        if (pv[i] != '\0' && pv[i] != ' ') {
+            char prom = pv[i];
+            if (prom == 'q' || prom == 'Q') res[r++] = 50;
+            else if (prom == 'r' || prom == 'R') res[r++] = 51;
+            else if (prom == 'b' || prom == 'B') res[r++] = 52;
+            else if (prom == 'n' || prom == 'N') res[r++] = 53;
+
+            // Avanzar hasta el siguiente espacio o fin
+            while (pv[i] != '\0' && pv[i] != ' ') {
+                i++;
+            }
+        }
+    }
+    res[r] = '\0'; // Terminación nula del string resultante
+}

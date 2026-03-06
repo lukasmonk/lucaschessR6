@@ -37,6 +37,7 @@ class DictSQL(object):
     def reset(self) -> None:
         cursor = self.conexion.execute(f"SELECT KEY FROM {self.tabla}")
         self.li_keys = [reg[0] for reg in cursor.fetchall()]
+        cursor.close()
 
     def set_faster_mode(self) -> None:
         self.normal_save_mode = False
@@ -151,6 +152,7 @@ class DictSQL(object):
                     for btxt_wrong, btxt_correct in self.li_breplaces_pickle:
                         dato = dato.replace(btxt_wrong, btxt_correct)
                     dic[key] = pickle.loads(dato)
+        cursor.close()
         return dic
 
     def pack(self) -> None:
@@ -226,6 +228,7 @@ class DictObjSQL(DictSQL):
             obj = self.class_storage()
             Util.restore_obj_pickle(obj, dato)
             dic[key] = obj
+        cursor.close()
         return dic
 
 
@@ -260,7 +263,9 @@ class ListSQL:
         if self.is_reversed:
             sql += " ORDER BY ROWID DESC"
         cursor = self._conexion.execute(sql)
-        return [rowid for rowid, in cursor.fetchall()]
+        resp = [rowid for rowid, in cursor.fetchall()]
+        cursor.close()
+        return resp
 
     def refresh(self) -> None:
         self.li_row_ids = self.read_rowids()
@@ -273,7 +278,7 @@ class ListSQL:
                     del self.cache[x]
             self.cache[key] = obj
 
-    def append(self, valor: Any, with_cache: bool = False) -> None:
+    def append(self, valor: Any, with_cache: bool = False) -> int:
         sql = f"INSERT INTO {self.tabla}( DATO ) VALUES( ? )"
         obj = pickle.dumps(valor, protocol=4)
         cursor = self._conexion.execute(sql, (memoryview(obj),))
@@ -281,10 +286,13 @@ class ListSQL:
         lastrowid = cursor.lastrowid
         if self.is_reversed:
             self.li_row_ids.insert(0, lastrowid)
+            resp = 0
         else:
             self.li_row_ids.append(lastrowid)
+            resp = len(self.li_row_ids) - 1
         if with_cache:
-            self.add_cache(lastrowid, obj)
+            self.add_cache(lastrowid, valor)
+        return resp
 
     def __getitem__(self, pos: int) -> Any:
         if pos < len(self.li_row_ids):
@@ -295,6 +303,7 @@ class ListSQL:
             sql = f"select DATO from {self.tabla} where ROWID=?"
             cursor = self._conexion.execute(sql, (rowid,))
             row = cursor.fetchone()
+            cursor.close()
             if row is None:
                 self.li_row_ids = self.read_rowids()
                 return None
@@ -359,6 +368,22 @@ class ListSQL:
             return self.li_row_ids.index(rowid)
         except:
             return -1
+
+    def move_up(self, pos: int):
+        if pos == 0:
+            return
+        data_pos = self.__getitem__(pos)
+        data_pos_other = self.__getitem__(pos - 1)
+        self.__setitem__(pos, data_pos_other)
+        self.__setitem__(pos - 1, data_pos)
+
+    def move_down(self, pos: int):
+        if pos >= self.__len__() - 1:
+            return
+        data_pos = self.__getitem__(pos)
+        data_pos_other = self.__getitem__(pos + 1)
+        self.__setitem__(pos, data_pos_other)
+        self.__setitem__(pos + 1, data_pos)
 
 
 class ListSQLBig(object):
@@ -433,8 +458,9 @@ class ListObjSQL(ListSQL):
 
             sql = f"select DATO from {self.tabla} where ROWID=?"
             cursor = self._conexion.execute(sql, (rowid,))
-            obj = self.class_storage()
             x = cursor.fetchone()
+            cursor.close()
+            obj = self.class_storage()
             try:
                 if x:
                     Util.restore_obj_pickle(obj, x[0])
@@ -476,12 +502,12 @@ class IPC(object):
         sql = "SELECT dato FROM DATOS WHERE ROWID = ?"
         cursor = self._conexion.execute(sql, (nk,))
         reg = cursor.fetchone()
+        cursor.close()
         if reg:
             valor = pickle.loads(reg[0])
             self.key = nk
         else:
             valor = None
-        cursor.close()
         return valor
 
     def read_again(self) -> None:
@@ -628,11 +654,14 @@ class DictBigDB(object):
 
     def __contains__(self, key: str) -> bool:
         cursor = self.conexion.execute("SELECT KEY FROM DATA WHERE key=?;", (key,))
-        return cursor.fetchone() is not None
+        resp = cursor.fetchone() is not None
+        cursor.close()
+        return resp
 
     def __getitem__(self, key: str) -> Any:
         cursor = self.conexion.execute("SELECT VALUE FROM DATA WHERE key=?;", (key,))
         row = cursor.fetchone()
+        cursor.close()
         if row is not None:
             return pickle.loads(row[0])
         else:
@@ -649,6 +678,7 @@ class DictBigDB(object):
     def __len__(self) -> int:
         cursor = self.conexion.execute("SELECT COUNT(*) FROM DATA")
         row = cursor.fetchone()
+        cursor.close()
         return row[0] if row else 0
 
     def close(self) -> None:
@@ -669,49 +699,14 @@ class DictBigDB(object):
         self.close()
 
     def __iter__(self) -> Iterator[Tuple[str, Any]]:
-        self.cursor_iter = self.conexion.execute("SELECT KEY,VALUE FROM DATA ORDER BY KEY")
-        self.pos_iter = 0
-        self.max_iter = 0
-        return self
-
-    def __next__(self) -> Tuple[str, Any]:
-        if self.pos_iter >= self.max_iter:
-            self.rows_iter = self.cursor_iter.fetchmany(10000)
-            self.max_iter = len(self.rows_iter) if self.rows_iter else 0
-            if self.max_iter == 0:
-                raise StopIteration
-            self.pos_iter = 0
-        k, v = self.rows_iter[self.pos_iter]
-        self.pos_iter += 1
-        return k, pickle.loads(v)
-
-
-def check_table_in_db(path_db: str, table: str) -> bool:
-    conexion = sqlite3.connect(path_db)
-    cursor = conexion.cursor()
-    cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name=?", (table,))
-    resp = cursor.fetchone()[0] == 1
-    conexion.close()
-    return resp
-
-
-def list_tables(path_db: str) -> List[str]:
-    conexion = sqlite3.connect(path_db)
-    cursor = conexion.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    li_resp = cursor.fetchall()
-    if li_resp:
-        return [row[0] for row in li_resp]
-    return []
-
-
-def remove_table(path_db: str, table: str) -> None:
-    conexion = sqlite3.connect(path_db)
-    cursor = conexion.cursor()
-    cursor.execute(f"DROP TABLE IF EXISTS {table}")
-    conexion.execute("VACUUM")
-    conexion.commit()
-    conexion.close()
+        cursor = self.conexion.execute("SELECT KEY,VALUE FROM DATA ORDER BY KEY")
+        while True:
+            rows = cursor.fetchmany(10000)
+            if not rows:
+                break
+            for k, v in rows:
+                yield k, pickle.loads(v)
+        cursor.close()
 
 
 class DictTextSQL(object):
@@ -823,6 +818,7 @@ class DictTextSQL(object):
         dic = {}
         for key, dato in cursor.fetchall():
             dic[key] = dato
+        cursor.close()
         return dic
 
     def pack(self) -> None:
@@ -887,7 +883,8 @@ class DictSQLMultiProcess(object):
             raise
         return self
 
-    def _begin_immediate(self, conn: sqlite3.Connection):
+    @staticmethod
+    def _begin_immediate(conn: sqlite3.Connection):
         """Intenta iniciar una transacción inmediata con reintentos."""
         import time
         import random
@@ -1007,7 +1004,7 @@ class DictSQLMultiProcess(object):
 
 class Tickets:
     """
-    Tickets para trabajar con varios procesos a la vez. Usado en los torneos/Ligas/Suizos
+    Tickets para trabajar con varios procesos a la vez. Usado en los torneos
     """
 
     def __init__(self, path: str, get_dic_data: Callable):
@@ -1110,3 +1107,33 @@ class Tickets:
             return p.is_running() and abs(p.create_time() - start_time) < 1.0
         except (psutil.NoSuchProcess, psutil.AccessDenied, ProcessLookupError):
             return False
+
+
+def check_table_in_db(path_db: str, table: str) -> bool:
+    with sqlite3.connect(path_db) as connection:
+        cursor = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1;",
+            (table,),
+        )
+        return cursor.fetchone() is not None
+
+
+def list_tables(path_db: str) -> List[str]:
+    query = """
+        SELECT name
+        FROM sqlite_master
+        WHERE type='table'
+        AND name NOT LIKE 'sqlite_%'
+        ORDER BY name;
+    """
+    with sqlite3.connect(path_db) as connection:
+        cursor = connection.execute(query)
+        return [row[0] for row in cursor.fetchall()]
+
+
+def remove_table(path_db: str, table: str) -> None:
+    query = f'DROP TABLE IF EXISTS "{table}";'
+
+    with sqlite3.connect(path_db) as connection:
+        connection.execute(query)
+        connection.execute("VACUUM;")

@@ -900,7 +900,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.human_is_playing = False
         self.rival_is_thinking = False
-        self.put_view()
+        self.goto_end()
 
         is_white = self.game.is_white()
 
@@ -1781,28 +1781,27 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
             self.nAjustarFuerza = dic["ADJUST"]
 
-            r_t = dr["ENGINE_TIME"] * 100  # Se guarda en decimas y se pasa a milesimas
-            r_p = dr["ENGINE_DEPTH"]
-            r_n = dr["ENGINE_NODES"]
-            if r_t <= 0:
-                r_t = None
-            if r_p <= 0:
-                r_p = None
+            r_timems = dr["ENGINE_TIME"] * 100  # Se guarda en decimas y se pasa a milesimas
+            r_depth = dr["ENGINE_DEPTH"]
+            r_nodes = dr["ENGINE_NODES"]
+            r_timems = int(max(r_timems, 0))
+            r_depth = int(max(r_depth, 0))
+            r_nodes = int(max(r_nodes, 0))
 
             dr["RESIGN"] = self.resign_limit
             self.manager_rival.close()
             self.manager_rival = self.procesador.create_manager_engine(
-                rival, r_t, r_p, r_n, self.nAjustarFuerza != ADJUST_BETTER
+                rival, r_timems, r_depth, r_nodes, self.nAjustarFuerza != ADJUST_BETTER
             )
 
             self.manager_rival.is_white = not is_white
 
             rival = self.manager_rival.engine.name
             player = self.configuration.x_player
-            bl, ng = player, rival
+            lb_white, lb_black = player, rival
             if not is_white:
-                bl, ng = ng, bl
-            self.main_window.change_player_labels(bl, ng)
+                lb_white, lb_black = lb_black, lb_white
+            self.main_window.change_player_labels(lb_white, lb_black)
 
             self.show_basic_label()
 

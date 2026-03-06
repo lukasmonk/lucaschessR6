@@ -67,5 +67,5 @@ color: %s;
 
     QtGui.QFontDatabase.addApplicationFont(Code.path_resource("IntFiles", "ChessMerida.ttf"))
 
-    font = Controles.FontType(configuration.x_font_family, puntos=configuration.x_font_points)
+    font = Controles.FontTypeNew(family=configuration.x_font_family, point_size=configuration.x_font_points)
     app.setFont(font)

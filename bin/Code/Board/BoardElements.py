@@ -1,7 +1,9 @@
 import base64
 
+
 from PySide6 import QtCore, QtGui, QtWidgets
 
+import Code
 from Code.Base.Constantes import ZVALUE_PIECE, ZVALUE_PIECE_MOVING
 from Code.QT import Controles, ScreenUtils
 
@@ -53,6 +55,8 @@ class CajaSC(BloqueSC):
         self.block_data = self.bloqueCaja = block_caja
 
     def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
         bl = self.bloqueCaja
         pen = QtGui.QPen()
         pen.setColor(ScreenUtils.qt_color(bl.color))
@@ -79,6 +83,8 @@ class CirculoSC(BloqueSC):
         self.rutina = rutina
 
     def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
         bl = self.bloqueCirculo
         pen = QtGui.QPen()
         pen.setColor(QtGui.QColor(bl.color))
@@ -131,6 +137,8 @@ class TextoSC(BloqueSC):
         self.rutina = rutina
 
     def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.TextAntialiasing)
 
         pen = QtGui.QPen()
 
@@ -204,12 +212,22 @@ class PiezaSC(BloqueSC):
 
         self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
 
+        if Code.configuration.x_shadows_board:
+            shadow_scale = max(2, int(ancho * 0.1))
+            self.shadow = QtWidgets.QGraphicsDropShadowEffect()
+            self.shadow.setBlurRadius(shadow_scale)
+            self.shadow.setOffset(max(1, shadow_scale // 2), max(1, shadow_scale // 2))
+            self.shadow.setColor(QtGui.QColor(0, 0, 0, 120))
+            self.setGraphicsEffect(self.shadow)
+
     def redo_position(self):
         physical_pos = self.bloquePieza.physical_pos
         self.setPos(physical_pos.x, physical_pos.y)
         self.update()
 
     def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
         self.pixmap.render(painter, self.rect)
 
     def hoverMoveEvent(self, event):
@@ -259,7 +277,13 @@ class PiezaSC(BloqueSC):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
         if self.dragable:
             self.setZValue(ZVALUE_PIECE)
-            self.board.try_to_move(self, event.scenePos())
+            if event.button() == QtCore.Qt.MouseButton.LeftButton:
+                self.board.try_to_move(self, event.scenePos())
+            else:
+                # Botón derecho u otro: cancelar el drag y restaurar la pieza a su posición original
+                self.redo_position()
+                self.update()
+                self.board.escena.update()
 
     def activate(self, activate):
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, activate)
@@ -280,7 +304,6 @@ class PiezaSC(BloqueSC):
         # Pedir de nuevo el renderer al proveedor de piezas
         self.pixmap = self.board.pieces.render(pz)
 
-        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.NoCache)
         self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
 
         # Forzar repaint
@@ -343,6 +366,8 @@ class TiempoSC(BloqueSC):
         )
 
     def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.TextAntialiasing)
 
         pen = QtGui.QPen()
 
@@ -445,6 +470,8 @@ class PixmapSC(BloqueSC):
         self.rutina = rutina
 
     def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
         painter.drawPixmap(self.rect, self.pixmap, self.pmRect)
 
     def mousePressEvent(self, event):

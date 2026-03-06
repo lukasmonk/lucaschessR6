@@ -224,7 +224,7 @@ class ShowPGN(QtWidgets.QScrollArea):
             return pgn_work
 
         base = f"{work_move.pos_in_game}|"
-        base += "%d"
+        base += "{}"
         for nvariation, variation in enumerate(work_move.variations.list_games()):
             pgn = do_variation(variation, base.format(nvariation))
             self.add(pgn)

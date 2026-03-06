@@ -277,7 +277,6 @@ class WEdMove(QtWidgets.QWidget):
 
 class WPuenteBase(LCDialog.LCDialog):
     def __init__(self, procesador, nivel):
-
         titulo = _("Moves between two positions")
         LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, Iconos.Puente(), "puenteBase")
 
@@ -307,15 +306,10 @@ class WPuenteBase(LCDialog.LCDialog):
         self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
 
         # Tool bar
-        li_acciones = (
-            (_("Close"), Iconos.MainMenu(), "finalize"),
-            None,
-            (_("Start"), Iconos.Empezar(), "empezar"),
-            (_("Remove"), Iconos.Borrar(), "borrar"),
-            None,
-        )
-        self.tb = Controles.TB(self, li_acciones)
-        self.pon_toolbar("finalize", "empezar", "borrar")
+        self.tb = Controles.TBrutina(self)
+        self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        self.tb.new(_("Start"), Iconos.Empezar(), self.empezar)
+        self.tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
 
         # Colocamos
         ly_tb = Colocacion.H().control(self.tb).margen(0)
@@ -343,6 +337,7 @@ class WPuenteBase(LCDialog.LCDialog):
             return Util.local_date_time(reg.FECHA)
         elif col == "SEGUNDOS":
             return f"{reg.SEGUNDOS:.02f}"
+        return None
 
     def grid_color_texto(self, grid, row, obj_column):
         segs = self.historico[row].SEGUNDOS
@@ -360,18 +355,10 @@ class WPuenteBase(LCDialog.LCDialog):
             return self.colorMejorFondo
         return None
 
-    def process_toolbar(self):
-        accion = self.sender().key
-        if accion == "finalize":
-            self.save_video()
-            self.historico.close()
-            self.reject()
-
-        elif accion == "empezar":
-            self.empezar()
-
-        elif accion == "borrar":
-            self.borrar()
+    def finalize(self):
+        self.save_video()
+        self.historico.close()
+        self.reject()
 
     def borrar(self):
         li = self.ghistorico.list_selected_recnos()
@@ -380,16 +367,6 @@ class WPuenteBase(LCDialog.LCDialog):
                 self.historico.remove_list_recnos(li)
         self.ghistorico.gotop()
         self.ghistorico.refresh()
-
-    def pon_toolbar(self, *li_acciones):
-        self.tb.clear()
-        for k in li_acciones:
-            self.tb.dic_toolbar[k].setVisible(True)
-            self.tb.dic_toolbar[k].setEnabled(True)
-            self.tb.addAction(self.tb.dic_toolbar[k])
-
-        self.tb.li_acciones = list(li_acciones)
-        self.tb.update()
 
     def dame_otro(self):
         game, dic_pgn, info, from_move, linea = WindowPotencia.lee_linea_mfn()

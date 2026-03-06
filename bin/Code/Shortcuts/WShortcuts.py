@@ -1,3 +1,4 @@
+from PySide6 import QtWidgets
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs
 
 
@@ -39,7 +40,12 @@ class WShortcuts(LCDialog.LCDialog):
         f = Controles.FontType(puntos=10, peso=75)
         self.grid.set_font(f)
 
-        layout = Colocacion.V().control(tb).control(self.grid).margen(3)
+        # Status bar
+        self.status = QtWidgets.QStatusBar(self)
+        self.status.setFixedHeight(Controles.calc_fixed_width(22))
+        self.status.showMessage(_("Right-click on the LABEL field to edit it"))
+
+        layout = Colocacion.V().control(tb).control(self.grid).control(self.status).margen(3)
         self.setLayout(layout)
 
         self.restore_video(with_tam=True)

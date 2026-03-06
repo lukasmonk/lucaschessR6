@@ -3,15 +3,16 @@ import os
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import (
     GO_BACK,
     GO_FORWARD,
     MENU_PLAY_ANY_ENGINE,
     MENU_PLAY_BOTH,
     MENU_PLAY_YOUNG_PLAYERS,
+    NOTATION_ALGEBRAIC, NOTATION_LONGALGEBRAIC, NOTATION_DESCRIPTIVE,
 )
 from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
+from Code.Z import Util
 
 
 def options(parent, configuration):
@@ -49,9 +50,6 @@ def options(parent, configuration):
     form.checkbox(_("Use native dialog to select files"), not configuration.x_mode_select_lc)
 
     form.separador()
-    form.checkbox(_("Activate translator help mode"), configuration.x_translation_mode)
-
-    form.separador()
     form.checkbox(_("Show puzzles on startup"), configuration.x_show_puzzles_on_startup)
 
     form.separador()
@@ -86,7 +84,7 @@ def options(parent, configuration):
     form.add_tab(_("Sounds"))
 
     # Boards #########################################################################################################
-    # form.separador()
+    form.separador()
     form.checkbox(_("Visual effects"), configuration.x_show_effects)
 
     drap = {1: 100, 2: 125, 3: 150, 4: 175, 5: 200, 6: 225, 7: 250, 8: 275, 9: 300}
@@ -102,25 +100,6 @@ def options(parent, configuration):
     )
     form.separador()
 
-    li_mouse_sh = [
-        (_("Disable"), None),
-        (_("Fixed type: you must always indicate origin and destination"), False),
-        (_("Predictive type: program tries to guess your intention"), True),
-    ]
-    form.combobox(_("Mouse shortcuts"), li_mouse_sh, configuration.x_mouse_shortcuts)
-    form.checkbox(_("Show candidates"), configuration.x_show_candidates)
-    li_copy = [(f"{_('CTRL')} C", True), (f"{_('ALT')} C", False)]
-    form.combobox(_("Key for copying the FEN to clipboard"), li_copy, configuration.x_copy_ctrl)
-    li_wheel = [(_("Forward"), GO_FORWARD), (_("Backward"), GO_BACK)]
-    form.combobox(
-        _("Scroll direction with the mouse wheel"),
-        li_wheel,
-        configuration.x_wheel_board,
-    )
-    form.checkbox(
-        _("Always promote to queen\nALT key allows to change"),
-        configuration.x_autopromotion_q,
-    )
     form.slider(
         f'{_("Margin of pieces in square")}:<br><small>{_("By default")} 10</small>',
         0,
@@ -128,6 +107,9 @@ def options(parent, configuration):
         Code.configuration.x_margin_pieces,
         siporc=False,
     )
+    form.checkbox(_("Show shadow on pieces"), configuration.x_shadows_board)
+    form.separador()
+
     form.checkbox(_("Show cursor when engine is thinking"), configuration.x_cursor_thinking)
     form.checkbox(_("Show ratings (NAGs) on the board"), configuration.x_show_rating)
     form.checkbox(
@@ -138,6 +120,44 @@ def options(parent, configuration):
         _("The movement performed is shown by colouring the squares"),
         configuration.x_movement_doublebox_board,
     )
+    form.separador()
+
+    form.checkbox(_("Show candidates"), configuration.x_show_candidates)
+
+    form.separador()
+    form.checkbox(_("Show configuration icon"), configuration.x_opacity_tool_board > 6)
+    li_pos = [(_("Bottom"), "B"), (_("Top"), "T")]
+    form.combobox(_("Configuration icon position"), li_pos, configuration.x_position_tool_board)
+    form.separador()
+
+    form.add_tab(f'{_("Boards")} 1')
+
+    # Boards 2/2 ######################################################################################################
+    form.separador()
+    li_copy = [(f"{_('CTRL')} C", True), (f"{_('ALT')} C", False)]
+    form.combobox(_("Key for copying the FEN to clipboard"), li_copy, configuration.x_copy_ctrl)
+    form.separador()
+
+    li_wheel = [(_("Forward"), GO_FORWARD), (_("Backward"), GO_BACK)]
+    form.combobox(
+        _("Scroll direction with the mouse wheel"),
+        li_wheel,
+        configuration.x_wheel_board,
+    )
+    form.separador()
+
+    form.checkbox(
+        _("Always promote to queen\nALT key allows to change").replace("\n", ": <br><small>"),
+        configuration.x_autopromotion_q,
+    )
+    form.separador()
+
+    li_mouse_sh = [
+        (_("Disable"), None),
+        (_("Fixed type: you must always indicate origin and destination"), False),
+        (_("Predictive type: program tries to guess your intention"), True),
+    ]
+    form.combobox(_("Mouse shortcuts"), li_mouse_sh, configuration.x_mouse_shortcuts)
     form.separador()
 
     x = f" - {_('developed by')} Graham O'Neill (https://goneill.co.nz)"
@@ -160,13 +180,7 @@ def options(parent, configuration):
     ]
     if Util.is_windows():
         li_db.insert(5, (_("DGT"), "DGT"))
-
     form.combobox(_("Digital board"), li_db, configuration.x_digital_board)
-
-    form.separador()
-    form.checkbox(_("Show configuration icon"), configuration.x_opacity_tool_board > 6)
-    li_pos = [(_("Bottom"), "B"), (_("Top"), "T")]
-    form.combobox(_("Configuration icon position"), li_pos, configuration.x_position_tool_board)
     form.separador()
 
     li_gr = [
@@ -175,26 +189,25 @@ def options(parent, configuration):
         (_("Show graphics"), False),
     ]
     form.combobox(_("When position has graphic information"), li_gr, configuration.x_director_icon)
-    # form.separador()
+    form.separador()
+
     form.checkbox(_("Live graphics with the right mouse button"), configuration.x_direct_graphics)
 
-    form.add_tab(_("Boards"))
+    form.add_tab(f'{_("Boards")} 2')
 
-    # Aspect 1/2 #######################################################################################################
-    # form.separador()
-
+    # Appearance 1/2 #################################################################################################
     form.checkbox(_("By default"), False)
-    form.separador()
+
     form.apart(_("General"))
     form.font(_("Font"), configuration.x_font_family)
     form.spinbox(_("Font size"), 3, 64, sb_width_60, configuration.x_font_points)
 
-    form.separador()
+    # form.separador()
     form.apart(_("Menus"))
     form.spinbox(_("Font size"), 3, 64, sb_width_60, configuration.x_menu_points)
     form.checkbox(_("Bold"), configuration.x_menu_bold)
 
-    form.separador()
+    # form.separador()
     form.apart(_("Toolbars"))
     form.spinbox(_("Font size"), 3, 64, sb_width_60, configuration.x_tb_fontpoints)
     form.checkbox(_("Bold"), configuration.x_tb_bold)
@@ -220,16 +233,24 @@ def options(parent, configuration):
 
     form.add_tab(f"{_('Appearance')} 1")
 
-    # Aspect 2/2 #######################################################################################################
-    # form.separador()
+    # Appearance 2/2 ##################################################################################################
     form.checkbox(_("By default"), False)
-    form.separador()
+
     form.apart(_("PGN table"))
     form.spinbox(_("Width"), 283, 1000, sb_width_70, configuration.x_pgn_width)
     form.spinbox(_("Height of each row"), 18, 99, sb_width_70, configuration.x_pgn_rowheight)
     form.spinbox(_("Font size"), 3, 99, sb_width_70, configuration.x_pgn_fontpoints)
+    form.separador()
     form.checkbox(_("PGN always in English"), configuration.x_pgn_english)
     form.checkbox(_("PGN with figurines"), configuration.x_pgn_withfigurines)
+    li_notations = (
+        (f'{_("Algebraic")} ({_("By default")})', NOTATION_ALGEBRAIC),
+        (_("Long algebraic"), NOTATION_LONGALGEBRAIC),
+        (_("Descriptive"), NOTATION_DESCRIPTIVE),
+    )
+    form.combobox(_("Notation Style"), li_notations, configuration.x_notation_style)
+    form.separador()
+
     form.combobox(_("Scroll direction with the mouse wheel"), li_wheel, configuration.x_wheel_pgn)
     form.separador()
 
@@ -273,7 +294,9 @@ def options(parent, configuration):
     if resultado:
         accion, resp = resultado
 
-        li_gen, li_son, li_b, li_asp1, li_asp2, li_nc = resp
+        li_gen, li_son, li_b1, li_b2, li_asp1, li_asp2, li_nc = resp
+
+        # General #################################################################################################
 
         (
             configuration.x_player,
@@ -282,13 +305,71 @@ def options(parent, configuration):
             configuration.x_style_icons,
             configuration.x_menu_play,
             mode_native_select,
-            configuration.x_translation_mode,
             configuration.x_show_puzzles_on_startup,
             configuration.x_prevention_crashes,
             configuration.x_check_for_update,
         ) = li_gen
 
         configuration.x_mode_select_lc = not mode_native_select
+
+        # Board 1 ###################################################################################################
+        (
+            configuration.x_show_effects,
+            rapidezMovPiezas,
+            configuration.x_margin_pieces,
+            configuration.x_shadows_board,
+            configuration.x_cursor_thinking,
+            configuration.x_show_rating,
+            configuration.x_show_bestmove,
+            configuration.x_movement_doublebox_board,
+            configuration.x_show_candidates,
+            toolIcon,
+            configuration.x_position_tool_board
+        ) = li_b1
+        configuration.x_opacity_tool_board = 10 if toolIcon else 1
+        configuration.x_pieces_speed = drap[rapidezMovPiezas]
+
+        # Board 2 ###################################################################################################
+
+        (
+            configuration.x_copy_ctrl,
+            configuration.x_wheel_board,
+            configuration.x_autopromotion_q,
+            configuration.x_mouse_shortcuts,
+            dboard,
+            configuration.x_director_icon,
+            configuration.x_direct_graphics,
+        ) = li_b2
+
+        if configuration.x_digital_board != dboard:
+            if dboard:
+                if dboard == "DGT":
+                    if not QTMessages.pregunta(
+                            parent,
+                            "%s<br><br>%s %s"
+                            % (
+                                    _("Are you sure %s is the correct driver ?") % dboard,
+                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
+                                    _("Proceed at your own risk."),
+                            ),
+                    ):
+                        dboard = ""
+                else:
+                    if not QTMessages.pregunta(
+                            parent,
+                            "%s<br><br>%s %s<br><br>%s<br>%s"
+                            % (
+                                _("Are you sure %s is the correct driver ?") % dboard,
+                                _("WARNING: selecting the wrong driver might cause damage to your board."),
+                                _("Proceed at your own risk."),
+                                _("Please read the driver's user manual at:"),
+                                '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
+                            ),
+                    ):
+                        dboard = ""
+            configuration.x_digital_board = dboard
+
+        # Appearance 1 ###############################################################################################
 
         por_defecto = li_asp1[0]
         if por_defecto:
@@ -317,9 +398,11 @@ def options(parent, configuration):
             configuration.x_sizefont_messages,
         ) = li_asp1
 
+        # Appearance 2 ###############################################################################################
+
         por_defecto = li_asp2[0]
         if por_defecto:
-            li_asp2 = (348, 24, 11, False, True, True, True, False, False, 11, 16, True)
+            li_asp2 = (348, 24, 11, False, True, NOTATION_ALGEBRAIC, True, True, False, False, 11, 16)
         else:
             del li_asp2[0]
         (
@@ -328,6 +411,7 @@ def options(parent, configuration):
             configuration.x_pgn_fontpoints,
             configuration.x_pgn_english,
             configuration.x_pgn_withfigurines,
+            configuration.x_notation_style,
             configuration.x_wheel_pgn,
             configuration.x_captures_activate,
             configuration.x_info_activate,
@@ -350,55 +434,7 @@ def options(parent, configuration):
             configuration.x_sound_error,
         ) = li_son
 
-        (
-            configuration.x_show_effects,
-            rapidezMovPiezas,
-            configuration.x_mouse_shortcuts,
-            configuration.x_show_candidates,
-            configuration.x_copy_ctrl,
-            configuration.x_wheel_board,
-            configuration.x_autopromotion_q,
-            configuration.x_margin_pieces,
-            configuration.x_cursor_thinking,
-            configuration.x_show_rating,
-            configuration.x_show_bestmove,
-            configuration.x_movement_doublebox_board,
-            dboard,
-            toolIcon,
-            configuration.x_position_tool_board,
-            configuration.x_director_icon,
-            configuration.x_direct_graphics,
-        ) = li_b
-
-        configuration.x_opacity_tool_board = 10 if toolIcon else 1
-        configuration.x_pieces_speed = drap[rapidezMovPiezas]
-        if configuration.x_digital_board != dboard:
-            if dboard:
-                if dboard == "DGT":
-                    if not QTMessages.pregunta(
-                        parent,
-                        "%s<br><br>%s %s"
-                        % (
-                            _("Are you sure %s is the correct driver ?") % dboard,
-                            _("WARNING: selecting the wrong driver might cause damage to your board."),
-                            _("Proceed at your own risk."),
-                        ),
-                    ):
-                        dboard = ""
-                else:
-                    if not QTMessages.pregunta(
-                        parent,
-                        "%s<br><br>%s %s<br><br>%s<br>%s"
-                        % (
-                            _("Are you sure %s is the correct driver ?") % dboard,
-                            _("WARNING: selecting the wrong driver might cause damage to your board."),
-                            _("Proceed at your own risk."),
-                            _("Please read the driver's user manual at:"),
-                            '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
-                        ),
-                    ):
-                        dboard = ""
-            configuration.x_digital_board = dboard
+        # Elos ######################################################################################################
 
         (
             configuration.x_elo,

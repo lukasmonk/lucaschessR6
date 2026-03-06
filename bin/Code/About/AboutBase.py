@@ -151,6 +151,7 @@ class ThanksTo:
             'Rudolf Krämer',
             "Luis",
             "Stefan Akall",
+            '<a href="https://github.com/Ebola-Chan-bot">Ebola-Chan-bot</a>',
         ]
         li_resto = []
         txt += version("R", li_base, li_resto, False)
@@ -661,8 +662,8 @@ class ThanksTo:
                 f"STS<br>{_X(_('Created by %1'), 'Dann Corbit, Swaminathan')}",
                 "https://sites.google.com/site/strategictestsuite/about",
             ),
-            ("liChess database", "https://database.lichess.org"),
-            ("lichess openings", "https://github.com/lichess-org/chess-openings"),
+            ("Lichess database", "https://database.lichess.org"),
+            ("Lichess openings", "https://github.com/lichess-org/chess-openings"),
         )
         txt = '<center><table border="1" cellpadding="5" cellspacing="0" >'
         for nom, web in li:

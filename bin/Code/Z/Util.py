@@ -254,22 +254,10 @@ def today() -> datetime.datetime:
 
 
 def huella() -> str:
-    """
-    Genera un identificador único basado en timestamp y UUID.
-
-    Returns:
-        str: Identificador único de 24 caracteres base64 sin padding.
-
-    Nota:
-        - Combina timestamp actual (8 bytes) + UUID v4 (16 bytes)
-        - Proporciona alta unicidad incluso con llamadas concurrentes
-        - El timestamp asegura ordenamiento cronológico parcial
-        - UUID garantiza unicidad espacial/global
-    """
-    unique_part = uuid.uuid4().bytes
-    time_part = int(time.time()).to_bytes(8, byteorder='big')
-    combined = time_part + unique_part
-    return base64.urlsafe_b64encode(combined).decode().replace("=", "")
+    timestamp = int(time.time() * 1000).to_bytes(6, byteorder='big')
+    random_part = uuid.uuid4().bytes[:10]
+    combined = timestamp + random_part
+    return base64.urlsafe_b64encode(combined).decode().rstrip("=")
 
 
 def save_pickle(fich: Union[str, Path], obj: Any) -> bool:

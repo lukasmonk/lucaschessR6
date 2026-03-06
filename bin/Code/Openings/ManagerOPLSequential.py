@@ -210,7 +210,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
         if is_finished:
             QTMessages.message(
                 self.main_window,
-                f"{_('Congratulations, goal achieved')}\n\n{_('Next time you will start from first position')}",
+                f"{_('Congratulations, goal achieved')}\n\n{_('Next time you will start from the first position')}",
             )
             self.training["NUMLINEA_SEQUENTIAL"] = 0
 

@@ -271,6 +271,8 @@ class WFiltrar(QtWidgets.QDialog):
                     continue
                 if "%" not in valor:
                     valor = f"%{valor}%"
+                if condicion == "NOT LIKE":
+                    par0 = par1 = True   # para que "OR CAMPO is NULL" esté unido al resto con paréntesis
 
             if union:
                 where += f" {union} "
