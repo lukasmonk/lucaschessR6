@@ -269,6 +269,7 @@ class ListSQL:
 
     def refresh(self) -> None:
         self.li_row_ids = self.read_rowids()
+        self.cache = {}
 
     def add_cache(self, key: int, obj: Any) -> None:
         if self.max_cache:

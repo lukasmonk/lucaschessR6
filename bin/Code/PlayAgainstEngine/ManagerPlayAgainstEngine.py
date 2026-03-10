@@ -1540,6 +1540,11 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             seconds_move = self.tc_white.seconds_per_move
         else:
             seconds_white = seconds_black = self.unlimited_minutes * 60
+            mswhite, msblack = self.game.sum_mstimes()
+            seconds_white -= mswhite/1000
+            seconds_black -= msblack/1000
+            seconds_white = max(seconds_white, 5)  # con un mínimo de 5 segundos
+            seconds_black = max(seconds_black, 5)
             seconds_move = 0
 
         self.manager_rival.run_engine_params.update_var_time(seconds_white, seconds_black, seconds_move)

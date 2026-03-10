@@ -360,8 +360,7 @@ class Worker(QtWidgets.QWidget):
         self.is_closed = True
         self.analysis_bar.activate(False)
         Code.list_engine_managers.close_all()
-        QtWidgets.QApplication.quit()
-        Util.close_app()
+        QTUtils.close_app()
 
     def cancel_match(self):
         self.is_closed = True

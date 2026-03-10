@@ -293,6 +293,7 @@ class Leitner:
     def clone(self):
         clon = Leitner()
         clon.restore(self.save())
+        clon.huella = Util.huella()
         return clon
 
     def add_file(self, path_fns: str, num_fns):

@@ -3,38 +3,61 @@ from PySide6 import QtCore, QtGui, QtWidgets, QtSvgWidgets
 from Code.QT import Controles, Colocacion
 
 SVG_TEMPLATE_BOX = """<?xml version="1.0" encoding="UTF-8"?>
-<svg width="120" height="100" xmlns="http://www.w3.org/2000/svg">
+<svg width="120" height="110" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="cuerpoGrad{nivel}" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:{color_caja};stop-opacity:1" />
-      <stop offset="50%" style="stop-color:{color_claro};stop-opacity:1" />
+    <!-- Gradiente sutil para el cuerpo (luz desde arriba-izquierda) -->
+    <linearGradient id="cuerpoGrad{nivel}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   style="stop-color:{color_claro};stop-opacity:1" />
       <stop offset="100%" style="stop-color:{color_oscuro};stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="tapaGrad{nivel}" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:{color_tapa_claro};stop-opacity:1" />
+    <!-- Gradiente para la tapa (ligeramente más claro) -->
+    <linearGradient id="tapaGrad{nivel}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   style="stop-color:{color_tapa_claro};stop-opacity:1" />
       <stop offset="100%" style="stop-color:{color_tapa};stop-opacity:1" />
     </linearGradient>
-    <filter id="sombra{nivel}" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.3"/>
+    <!-- Sombra para la caja completa -->
+    <filter id="sombra{nivel}" x="-15%" y="-15%" width="140%" height="140%">
+      <feDropShadow dx="4" dy="4" stdDeviation="3" flood-color="#555555" flood-opacity="0.30"/>
     </filter>
   </defs>
 
-  <!-- Cuerpo principal (3D) -->
-  <path d="M 20,30 L 100,30 L 95,85 L 25,85 Z" fill="url(#cuerpoGrad{nivel})" stroke="{color_borde}" stroke-width="1.5"/>
+  <!-- Grupo con sombra -->
+  <g filter="url(#sombra{nivel})">
+    <!-- Cuerpo principal de la caja -->
+    <rect x="12" y="38" width="88" height="62" rx="3" ry="3"
+          fill="url(#cuerpoGrad{nivel})"/>
 
-  <!-- Lado izquierdo (profundidad) -->
-  <path d="M 20,30 L 15,25 L 15,80 L 25,85 Z" fill="{color_oscuro}" opacity="0.6"/>
+    <!-- Tapa -->
+    <rect x="8" y="20" width="96" height="22" rx="3" ry="3"
+          fill="url(#tapaGrad{nivel})"/>
+  </g>
 
-  <!-- Tapa -->
-  <path d="M 10,25 L 90,25 L 100,30 L 20,30 Z" fill="url(#tapaGrad{nivel})" stroke="{color_borde}" stroke-width="1.5"/>
+  <!-- Línea separadora tapa/cuerpo -->
+  <line x1="12" y1="40" x2="100" y2="40"
+        stroke="{color_borde}" stroke-width="1" opacity="0.25"/>
 
-  <!-- Borde frontal tapa -->
-  <rect x="20" y="28" width="80" height="4" fill="{color_borde}" opacity="0.3"/>
+  <!-- Asa: fondo oscuro (agujero) -->
+  <rect x="38" y="27" width="36" height="10" rx="5" ry="5"
+        fill="{color_borde}" opacity="0.55"/>
 
-  <!-- Número grande -->
-  <text x="60" y="65" font-family="Arial Black, sans-serif" font-size="24" 
-        fill="white" text-anchor="middle" font-weight="bold" 
-        stroke="{color_borde}" stroke-width="1">{numero}</text>
+  <!-- Asa: borde interior claro (efecto profundidad) -->
+  <rect x="39" y="28" width="34" height="8" rx="4" ry="4"
+        fill="none"
+        stroke="{color_tapa_claro}" stroke-width="1.2" opacity="0.5"/>
+
+  <!-- Número centrado en el cuerpo -->
+  <!-- Sombra del número -->
+  <text x="57" y="78"
+        font-family="'Arial Black', 'Impact', sans-serif"
+        font-size="26" fill="{color_borde}"
+        text-anchor="middle" font-weight="900"
+        opacity="0.25" dx="1" dy="1">{numero}</text>
+  <!-- Número principal -->
+  <text x="56" y="77"
+        font-family="'Arial Black', 'Impact', sans-serif"
+        font-size="26" fill="white"
+        text-anchor="middle" font-weight="900"
+        opacity="0.85">{numero}</text>
 </svg>"""
 
 
@@ -213,5 +236,5 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
         svg_widget.setFixedSize(*size)
 
         svg_widget.setStyleSheet("background-color: transparent;")
-    
+
         return svg_widget

@@ -1,3 +1,4 @@
+import os
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
@@ -87,3 +88,8 @@ def is_alt_pressed() -> bool:
 
 def deferred_call(mstime: int, called):
     QtCore.QTimer.singleShot(mstime, called)
+
+
+def close_app():
+    QtWidgets.QApplication.quit()
+    os._exit(0)

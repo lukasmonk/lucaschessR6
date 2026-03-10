@@ -20,7 +20,10 @@ from Code.Z import PGNtoGame
 from Code.Z import Util
 
 
-def crea_dic_html():
+def crea_dic_html() -> dict[str, str]:
+    """
+    Create the HTML mapping used to render piece figurines.
+    """
     base = '<span style="font-family:Chess Merida;"><big>%s</big></span>'
     return {x: base % x for x in "pnbrqkPNBRQK"}
 
@@ -29,6 +32,11 @@ dicHTMLFigs = crea_dic_html()
 
 
 class Move:
+    """
+    Represent a single move in a chess game, including
+    positions before/after, annotations, NAGs, and engine analysis.
+    """
+
     def __init__(
             self,
             game,
@@ -67,18 +75,33 @@ class Move:
         self._phase = PHASE_NODEFINED
 
     def is_book_move(self):
+        """
+        Return True if this move is considered a book move.
+        """
         if self.in_the_opening or self.is_book:
             return True
         fenm2 = self.position.fenm2()
         return OpeningsStd.ap.is_book_fenm2(fenm2)
 
     def set_time_ms(self, ms):
+        """
+        Set the time spent on this move in milliseconds.
+        """
         self.time_ms = ms
 
     def set_clock_ms(self, ms):
+        """
+        Set the remaining clock time after this move in milliseconds.
+
+        Negative values are clamped to zero.
+        """
         self.clock_ms = max(ms, 0)
 
     def only_has_move(self) -> bool:
+        """
+        Return True if the move has no additional information
+        (no variations, comments, NAGs, analysis, themes or time).
+        """
         return not (
                 self.variations
                 or self.comment
@@ -89,9 +112,15 @@ class Move:
         )
 
     def get_themes(self) -> list:
+        """
+        Return the list of tactic/strategic themes attached to this move.
+        """
         return self.li_themes
 
     def has_themes(self) -> bool:
+        """
+        Return True if the move has any theme associated.
+        """
         return len(self.li_themes) > 0
 
     def has_theme(self, theme):
@@ -108,6 +137,11 @@ class Move:
         self.li_themes = [theme for theme in self.li_themes if theme not in list_to_delete]
 
     def get_points_lost(self):
+        """
+        Return evaluation loss in centipawns with respect to the best engine move.
+
+        If there is no analysis attached, return None.
+        """
         if self.analysis is None:
             return None
         mrm, pos = self.analysis
@@ -116,6 +150,9 @@ class Move:
         return pts0 - pts
 
     def get_points_lost_mate(self):
+        """
+        Return (centipawn loss, mate_distance_difference) if both are available.
+        """
         if self.analysis is None:
             return None, None
         mrm, pos = self.analysis
@@ -136,10 +173,13 @@ class Move:
 
     @property
     def list_piece_moves(self):
-        li_movs = [("b", self.to_sq), ("m", self.from_sq, self.to_sq)]
+        """
+        Return a list describing piece movements and extra board actions.
+        """
+        moves_list = [("b", self.to_sq), ("m", self.from_sq, self.to_sq)]
         if self.position.li_extras:
-            li_movs.extend(self.position.li_extras)
-        return li_movs
+            moves_list.extend(self.position.li_extras)
+        return moves_list
 
     @property
     def is_check(self):
@@ -157,6 +197,10 @@ class Move:
         return self.position_before.pgn(self.from_sq, self.to_sq, self.promotion.lower())
 
     def add_nag(self, nag):
+        """
+        Add a NAG (numeric annotation glyph) to this move,
+        replacing existing primary NAGs when appropriate.
+        """
         if nag in (None, ""):
             return
         if nag <= NAG_6:
@@ -227,15 +271,19 @@ class Move:
         return self.base_pgn()
 
     def pgn_html_base(self, with_figurines):
+        """
+        Return the PGN text for this move formatted for HTML,
+        optionally using figurines.
+        """
         is_white = self.is_white()
         if not with_figurines:
             return self.pgn_translated()
-        li = []
+        parts = []
         for c in self.base_pgn():
             if c in "NBRQK":
                 c = dicHTMLFigs[c if is_white else c.lower()]
-            li.append(c)
-        return "".join(li)
+            parts.append(c)
+        return "".join(parts)
 
     def pgn_html(self, with_figurines):
         return self.pgn_html_base(with_figurines) + self.resto()
@@ -244,36 +292,40 @@ class Move:
         return self.position_before.num_moves
 
     def sounds_list(self):
+        """
+        Decompose the SAN move into a list of characters/symbols
+        useful for generating move sounds.
+        """
         pgn = self.base_pgn()
-        li_medio = []
-        li_final = []
+        middle_part = []
+        final_part = []
         if pgn[0] == "O":
             if pgn[-1] in "#+":
-                li_final = [
+                final_part = [
                     pgn[-1],
                 ]
                 pgn = pgn[:-1]
-            li_inicial = [pgn]
+            initial_part = [pgn]
 
         else:
             if "=" in pgn:
                 ult = pgn[-1]
                 if ult.lower() in "qrnb":
-                    li_final = ["=", pgn[-1]]
+                    final_part = ["=", pgn[-1]]
                     pgn = pgn[:-2]
                 else:
-                    li_final = ["=", pgn[-2], pgn[-1]]
+                    final_part = ["=", pgn[-2], pgn[-1]]
                     pgn = pgn[:-3]
             elif pgn.endswith("e.p."):
                 pgn = pgn[:-4]
-            li_medio = [pgn[-2], pgn[-1]]
+            middle_part = [pgn[-2], pgn[-1]]
             pgn = pgn[:-2]
-            li_inicial = list(pgn)
+            initial_part = list(pgn)
 
-        li = li_inicial
-        li.extend(li_medio)
-        li.extend(li_final)
-        return li
+        result = initial_part
+        result.extend(middle_part)
+        result.extend(final_part)
+        return result
 
     def pgn_english(self):
         resto = self.resto()
@@ -283,15 +335,13 @@ class Move:
             resto = f" {resto}"
         return self.base_pgn() + resto
 
-    def pgn_base_translated(self):
+    def pgn_translated(self):
         d_conv = TrListas.dic_conv()
         li = [d_conv.get(c, c) for c in self.base_pgn()]
         return "".join(li)
 
-    def pgn_translated(self):
-        d_conv = TrListas.dic_conv()
-        li = [d_conv.get(c, c) for c in self.base_pgn()]
-        base = "".join(li)
+    def pgn_translated_extend(self):
+        base = self.pgn_translated()
         resto = self.resto(translated=True)
         if not resto:
             return base
@@ -300,6 +350,9 @@ class Move:
         return base + resto
 
     def resto(self, with_variations=True, with_nag_symbols=False, translated=False):
+        """
+        Build the suffix of the PGN move: NAGs, comments, time and variations.
+        """
         resp = ""
         if self.li_nags:
             self.li_nags.sort()
@@ -514,19 +567,31 @@ class Variations:
     __slots__ = ("move_base", "li_variations")
 
     def __init__(self, move_base):
+        """
+        Manage a list of variation games attached to a base move.
+        """
         self.move_base = move_base
         self.li_variations = []
 
     def add_pgn_variation(self, pgn):
+        """
+        Add a new variation game from a PGN string.
+        """
         pgn_var = f'[FEN "{self.move_base.position_before.fen()}"]\n\n{pgn}'
         ok, game = PGNtoGame.pgn_to_game(pgn_var)
         if ok and len(game) > 0:
             self.li_variations.append(game)
 
     def save(self):
+        """
+        Serialize all variations to a list of bytes blocks.
+        """
         return [variation.save() for variation in self.li_variations]
 
     def restore(self, li):
+        """
+        Restore the variation list from serialized games.
+        """
         self.li_variations = []
         for sv in li:
             game = Code.Base.Game.Game()
@@ -543,14 +608,23 @@ class Variations:
         return self.li_variations[num_variation] if len(self.li_variations) > num_variation else None
 
     def get_pgn(self, translated=False):
+        """
+        Return all variations concatenated as PGN strings in parentheses.
+        """
         if self.li_variations:
             return " ".join([f"({v.pgn_base_raw(translated=translated)})" for v in self.li_variations])
         return ""
 
     def clear(self):
+        """
+        Remove all variations.
+        """
         self.li_variations = []
 
     def list_games(self):
+        """
+        Return the list of variation games.
+        """
         return self.li_variations
 
     def list_movimientos(self):
@@ -566,6 +640,9 @@ class Variations:
         del self.li_variations[num]
 
     def remove_all(self):
+        """
+        Remove all variations (alias for clear).
+        """
         self.li_variations = []
 
     def remove_bad(self):
@@ -589,6 +666,9 @@ class Variations:
             )
 
     def analysis_to_variations(self, mrm, pos_move, alm_variations, delete_previous):
+        """
+        Convert engine analysis into one or more variation games.
+        """
         if delete_previous:
             self.clear()
 
@@ -599,14 +679,14 @@ class Variations:
             name = mrm.name
             if mrm.max_time:
                 t = f"{float(mrm.max_time) / 1000.0:.2f}".rstrip("0").rstrip(".")
-                eti_t = f'{_("Second(s)")} {t}'
+                info_suffix = f'{_("Second(s)")} {t}'
             elif mrm.max_depth:
-                eti_t = f'{_("Depth")} {mrm.max_depth}'
+                info_suffix = f'{_("Depth")} {mrm.max_depth}'
             else:
-                eti_t = ""
-            eti_t = f" {name} {eti_t}"
+                info_suffix = ""
+            info_suffix = f" {name} {info_suffix}"
         else:
-            eti_t = ""
+            info_suffix = ""
 
         tmp_game = Code.Base.Game.Game()
         what_variations = alm_variations.what_variations
@@ -614,7 +694,7 @@ class Variations:
         highest_score = mrm.li_rm[0].centipawns_abs()
         move_score = mrm.li_rm[pos_move].centipawns_abs()
 
-        si_un_move, si_pdt = alm_variations.one_move_variation, alm_variations.si_pdt
+        one_move_variation, with_pdt = alm_variations.one_move_variation, alm_variations.si_pdt
 
         position_before = self.move_base.position_before
         limit_score = alm_variations.limit_include_variations
@@ -637,9 +717,9 @@ class Variations:
             tmp_game.set_position(position_before)
             tmp_game.read_pv(rm.pv)
             if move := tmp_game.move(0):
-                puntuacion = rm.abbrev_text_pdt() if si_pdt else rm.abbrev_text()
-                move.set_comment(f"{puntuacion}{eti_t}")
-                gm = tmp_game.copia(0 if si_un_move else None)
+                score_text = rm.abbrev_text_pdt() if with_pdt else rm.abbrev_text()
+                move.set_comment(f"{score_text}{info_suffix}")
+                gm = tmp_game.copia(0 if one_move_variation else None)
                 self.li_variations.append(gm)
                 added_variations = True
 

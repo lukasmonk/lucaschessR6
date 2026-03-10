@@ -33,6 +33,8 @@ class EngineManager:
 
         self.ms_refresh: int = 325
 
+        self.allways_faster_mode = False
+
         self.cache_analysis = UtilSQL.DictBig() if with_cache else None
 
         self.enabled_emit_depth_changed = False
@@ -67,6 +69,9 @@ class EngineManager:
         self.engine.set_multipv_var(multipv_var)
         if previo != self.engine.multiPV:
             self.change_multipv(self.engine.multiPV)
+
+    def set_faster_mode(self):
+        self.allways_faster_mode = True
 
     def set_option(self, name, value):
         if self.check_engine():
@@ -131,6 +136,7 @@ class EngineManager:
         config_enginerun.path_exe = self.engine.ejecutable()
         config_enginerun.args = self.engine.argumentos()
         config_enginerun.li_options_uci = self.engine.liUCI
+        config_enginerun.faster_mode_always = self.allways_faster_mode
         if self.engine.emulate_movetime:
             config_enginerun.emulate_movetime = True
 

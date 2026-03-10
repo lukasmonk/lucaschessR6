@@ -487,7 +487,7 @@ def maps():
 
 
 def styles():
-    return [_("By default"), _("Dark"), _("Light")]
+    return [_("By default"), _("Dark"), _("Light"), _("Mid")]
 
 
 def installation():

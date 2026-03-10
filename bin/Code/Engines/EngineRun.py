@@ -10,9 +10,9 @@ import psutil
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util, Debug
 from Code.Base import Game
 from Code.Engines import EngineResponse, Priorities
+from Code.Z import Util, Debug
 
 if __debug__:
     prln = Debug.prln
@@ -24,10 +24,11 @@ class StartEngineParams:
     path_exe: str = ""
     li_options_uci: Optional[list] = None
     num_multipv: int = 0
-    priority : Optional[int]= None
+    priority: Optional[int] = None
     args: Optional[list] = None
     path_log: Optional[str] = None
     emulate_movetime: bool = False
+    faster_mode_always: bool = False
 
 
 @dataclass
@@ -127,7 +128,7 @@ class EngineRun(QtCore.QObject):
         self._wait_loop: Optional[QtCore.QEventLoop] = None
         self.stream_line_processor = StreamLineProcessor()
 
-        self.mode_timer_poll = Code.configuration.x_msrefresh_poll_engines > 0
+        self.mode_timer_poll = Code.configuration.x_msrefresh_poll_engines > 0 and not config.faster_mode_always
 
         if self.mode_timer_poll:
             # Configuración del Timer de Polling (Queue virtual)

@@ -806,6 +806,9 @@ class Manager:
             self.must_be_autosaved = False
 
     def show_info_extra(self):
+        self.capturasActivable = True
+        self.activatable_info = True
+
         key = f"SHOW_INFO_EXTRA_{DICT_GAME_TYPES[self.game_type]}"
         dic = self.configuration.read_variables(key)
 

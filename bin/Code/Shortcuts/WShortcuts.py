@@ -1,5 +1,5 @@
 from PySide6 import QtWidgets
-from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs
+from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
 
 class WShortcuts(LCDialog.LCDialog):
@@ -106,7 +106,16 @@ class WShortcuts(LCDialog.LCDialog):
         if row >= 0:
             shortcut = self.shortcuts.li_shortcuts[row]
             self.finalize()
-            self.shortcuts.lauch_shortcut(shortcut)
+            self.shortcuts.launch_shortcut(shortcut)
+
+    def grid_right_button(self, _grid, row, _obj_column, _modif):
+        if row >= 0:
+            shortcut = self.shortcuts.li_shortcuts[row]
+            option = shortcut.get_label()
+            option = QTMessages.read_simple(self, _("Shortcuts"), _("Option"), option)
+            if option:
+                shortcut.set_label(option)
+                self.grid.refresh()
 
     def save(self):
         self.shortcuts.save()

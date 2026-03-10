@@ -114,7 +114,11 @@ class WLeitner(LCDialog.LCDialog):
         leitner = self.db.get_leitner(row)
         leitner_new = leitner.clone()
         leitner_new.zap()
-        self.db.append(leitner_new)
+        w = WEditLeitner.WEditLeitner(self, leitner_new)
+        if not w.exec():
+            return
+        self.db.add_leitner(w.leitner_work)
+        self.grid.gotop()
         self.grid.refresh()
 
     def finalizar(self, accept: bool):

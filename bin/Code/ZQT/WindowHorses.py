@@ -6,11 +6,11 @@ import time
 import FasterCode
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Board import Board
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import Base
+from Code.Z import Util
 
 
 class HorsesHistorico:
@@ -62,10 +62,12 @@ class HorsesHistorico:
         self.dbf.leer()
         self.dbf.gotop()
 
-    def fecha2txt(self, fecha):
+    @staticmethod
+    def fecha2txt(fecha):
         return f"{fecha.year:04d}{fecha.month:02d}{fecha.day:02d}{fecha.hour:02d}{fecha.minute:02d}{fecha.second:02d}"
 
-    def txt2fecha(self, txt):
+    @staticmethod
+    def txt2fecha(txt):
         def x(d, h):
             return int(txt[d:h])
 
@@ -77,8 +79,6 @@ class HorsesHistorico:
         second = x(12, 14)
         fecha = datetime.datetime(year, month, day, hour, minute, second)
         return fecha
-
-        self.dbf = self.db.dbf(self.tabla, "", orden="fecha desc")
 
     def append(self, fecha, moves, seconds, hints):
         br = self.dbf.baseRegistro()
@@ -94,8 +94,8 @@ class HorsesHistorico:
         reg.FECHA = self.txt2fecha(reg.FECHA)
         return reg
 
-    def remove_list_recnos(self, liNum):
-        self.dbf.remove_list_recnos(liNum)
+    def remove_list_recnos(self, li_num):
+        self.dbf.remove_list_recnos(li_num)
         self.dbf.pack()
         self.dbf.leer()
 
@@ -135,8 +135,8 @@ class WHorsesBase(LCDialog.LCDialog):
         self.tb = QTDialogs.LCTB(self, li_acciones)
 
         # Colocamos
-        lyTB = Colocacion.H().control(self.tb).margen(0)
-        ly = Colocacion.V().otro(lyTB).control(self.ghistorico).margen(3)
+        ly_tb = Colocacion.H().control(self.tb).margen(0)
+        ly = Colocacion.V().otro(ly_tb).control(self.ghistorico).margen(3)
 
         self.setLayout(ly)
 
@@ -145,17 +145,17 @@ class WHorsesBase(LCDialog.LCDialog):
 
         self.ghistorico.gotop()
 
-    def grid_doubleclick_header(self, grid, obj_column):
+    def grid_doubleclick_header(self, _grid, obj_column):
         key = obj_column.key
         if key in ("FECHA", "MOVES", "HINTS"):
             self.historico.put_order(key)
             self.ghistorico.gotop()
             self.ghistorico.refresh()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.historico)
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         col = obj_column.key
         reg = self.historico[row]
         if col == "FECHA":
@@ -166,6 +166,7 @@ class WHorsesBase(LCDialog.LCDialog):
             return f"{reg.SECONDS}"
         elif col == "HINTS":
             return f"{reg.HINTS}"
+        return None
 
     def finalize(self):
         self.save_video()
@@ -181,20 +182,37 @@ class WHorsesBase(LCDialog.LCDialog):
         self.ghistorico.refresh()
 
     def empezar(self):
-        w = WHorses(self, self.test, self.procesador, self.titulo, self.icono)
+        w = WHorses(self, self.test, self.titulo, self.icono)
         w.exec()
         self.ghistorico.gotop()
         self.ghistorico.refresh()
 
 
 class WHorses(LCDialog.LCDialog):
-    def __init__(self, owner, test, procesador, titulo, icono):
+    dic_min_moves: dict
+    timer: float
+    moves: int
+    hints: int
+    nayuda: int
+    num_moves: int
+    moves_parcial: int
+    pos_temporal: int
+    cp_activo: Position.Position
+    cp_inicial: Position.Position
+    base_unica: bool
+    is_white: bool
+    camino: list
+    current_position: int
+    celdas_ocupadas: list
 
+    def __init__(self, owner, test, titulo, icono):
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, "horses")
 
         self.historico = owner.historico
-        self.procesador = owner.procesador
+        self.procesador = Code.procesador
         self.configuration = Code.configuration
+
+        self.dic_min_moves = {}  # celda->min_moves
 
         self.test = test
 
@@ -221,10 +239,10 @@ class WHorses(LCDialog.LCDialog):
         self.tb = QTDialogs.LCTB(self, li_acciones)
 
         # Layout
-        lyInfo = Colocacion.H().control(self.lbInformacion).relleno().control(self.lbMoves)
-        lyT = Colocacion.V().relleno().control(self.board).otro(lyInfo).relleno().margen(10)
+        ly_info = Colocacion.H().control(self.lbInformacion).relleno().control(self.lbMoves)
+        ly_t = Colocacion.V().relleno().control(self.board).otro(ly_info).relleno().margen(10)
 
-        ly = Colocacion.V().control(self.tb).otro(lyT).relleno().margen(0)
+        ly = Colocacion.V().control(self.tb).otro(ly_t).relleno().margen(0)
 
         self.setLayout(ly)
 
@@ -234,44 +252,42 @@ class WHorses(LCDialog.LCDialog):
         self.reset()
 
     def reset(self):
-        self.preparaTest()
+        self.prepara_test()
         self.board.set_side_bottom(True)
-        self.board.set_position(self.cpInicial)
+        self.board.set_position(self.cp_inicial)
         self.board.remove_arrows()
-        self.min_moves = 0
         self.timer = time.time()
         self.moves = 0
         self.hints = 0
         self.nayuda = 0  # para que haga un rondo al elegir en la get_help de todos los caminos uno de ellos
-        self.ponSiguiente()
+        self.pon_siguiente()
 
-    def ponNumMoves(self):
-        color = "red" if self.numMoves <= self.movesParcial else "green"
-        self.lbMoves.set_text(f'<font color="{color}">{self.movesParcial}/{self.numMoves}</font>')
+    def pon_num_moves(self):
+        color = "red" if self.num_moves <= self.moves_parcial else "green"
+        self.lbMoves.set_text(f'<font color="{color}">{self.moves_parcial}/{self.num_moves}</font>')
 
-    def ponSiguiente(self):
+    def pon_siguiente(self):
+        pos_desde = self.camino[0 if self.base_unica else self.current_position]
+        pos_hasta = self.camino[self.current_position + 1]
+        tlist = FasterCode.li_n_min(pos_desde, pos_hasta, self.celdas_ocupadas)
+        self.num_moves = len(tlist[0]) - 1
+        self.dic_min_moves[pos_hasta] = self.num_moves
+        self.moves_parcial = 0
 
-        posDesde = self.camino[0 if self.baseUnica else self.current_position]
-        posHasta = self.camino[self.current_position + 1]
-        tlist = FasterCode.li_n_min(posDesde, posHasta, self.celdas_ocupadas)
-        self.numMoves = len(tlist[0]) - 1
-        self.min_moves += self.numMoves
-        self.movesParcial = 0
+        cp = self.cp_inicial.copia()
 
-        cp = self.cpInicial.copia()
-
-        self.posTemporal = posDesde
-        ca = FasterCode.pos_a1(posDesde)
+        self.pos_temporal = pos_desde
+        ca = FasterCode.pos_a1(pos_desde)
         cp.squares[ca] = "N" if self.is_white else "n"
-        cs = FasterCode.pos_a1(posHasta)
+        cs = FasterCode.pos_a1(pos_hasta)
         cp.squares[cs] = "k" if self.is_white else "K"
 
-        self.cpActivo = cp
+        self.cp_activo = cp
 
         self.board.set_position(cp)
         self.board.activate_side(self.is_white)
 
-        self.ponNumMoves()
+        self.pon_num_moves()
 
     def avanza(self):
         self.board.remove_arrows()
@@ -279,16 +295,18 @@ class WHorses(LCDialog.LCDialog):
         if self.current_position == len(self.camino) - 1:
             self.final()
             return
-        self.ponSiguiente()
+        self.pon_siguiente()
 
     def final(self):
         seconds = int(time.time() - self.timer)
         self.historico.append(Util.today(), self.moves, seconds, self.hints)
 
+        min_moves = sum(value for value in self.dic_min_moves.values())
+
         QTMessages.message_bold(
             self,
             f"<b>{_('Congratulations, goal achieved')}<b>"
-            f"<ul><li>{_('Moves')}: <b>{self.moves}</b> ({_('Minimum')}={self.min_moves}) </li>"
+            f"<ul><li>{_('Moves')}: <b>{self.moves}</b> ({_('Minimum')}={min_moves}) </li>"
             f"<li>{_('Hints')}: <b>{self.hints}</b></li>"
             f"<li>{_('Time')}: <b>{seconds}</b></li></ul>",
         )
@@ -301,31 +319,30 @@ class WHorses(LCDialog.LCDialog):
         p1 = FasterCode.a1_pos(to_sq)
         if p1 in FasterCode.dict_n[p0]:
             self.moves += 1
-            self.movesParcial += 1
-            self.ponNumMoves()
+            self.moves_parcial += 1
+            self.pon_num_moves()
             if p1 not in self.camino:
                 return False
-            self.cpActivo.squares[from_sq] = None
-            self.cpActivo.squares[to_sq] = "N" if self.is_white else "n"
-            self.board.set_position(self.cpActivo)
+            self.cp_activo.squares[from_sq] = None
+            self.cp_activo.squares[to_sq] = "N" if self.is_white else "n"
+            self.board.set_position(self.cp_activo)
             self.board.activate_side(self.is_white)
-            self.posTemporal = p1
+            self.pos_temporal = p1
             if p1 == self.camino[self.current_position + 1]:
                 self.avanza()
                 return True
             return True
         return False
 
-    def preparaTest(self):
-        self.cpInicial = Position.Position()
-        self.cpInicial.read_fen("8/8/8/8/8/8/8/8 w - - 0 1")
-        squares = self.cpInicial.squares
-        self.baseUnica = self.test > 3
+    def prepara_test(self):
+        self.cp_inicial = Position.Position()
+        self.cp_inicial.read_fen("8/8/8/8/8/8/8/8 w - - 0 1")
+        squares = self.cp_inicial.squares
+        self.base_unica = self.test > 3
         self.is_white = random.randint(1, 2) == 1
 
-        if self.test in (1, 4, 5):
-            celdas_ocupadas = []
-        elif self.test == 2:  # 4 peones
+        celdas_ocupadas = []
+        if self.test == 2:  # 4 peones
             if self.is_white:
                 celdas_ocupadas = [18, 21, 9, 11, 12, 14, 42, 45, 33, 35, 36, 38]
             else:
@@ -377,19 +394,19 @@ class WHorses(LCDialog.LCDialog):
 
     def reiniciar(self):
         # Si no esta en la position actual, le lleva a la misma
-        pa = self.posTemporal
-        pi = self.camino[0 if self.baseUnica else self.current_position]
+        pa = self.pos_temporal
+        pi = self.camino[0 if self.base_unica else self.current_position]
 
         if pa == pi:
             self.reset()
         else:
-            self.ponSiguiente()
+            self.pon_siguiente()
 
     def get_help(self):
         self.hints += 1
         self.board.remove_arrows()
-        self.ponSiguiente()
-        pa = self.camino[0 if self.baseUnica else self.current_position]
+        self.pon_siguiente()
+        pa = self.camino[0 if self.base_unica else self.current_position]
         ps = self.camino[self.current_position + 1]
         tlist = FasterCode.li_n_min(pa, ps, self.celdas_ocupadas)
         if self.nayuda >= len(tlist):
@@ -404,7 +421,7 @@ class WHorses(LCDialog.LCDialog):
         self.board.refresh()
 
 
-def windowHorses(procesador, test, titulo, icono):
+def window_horses(procesador, test, titulo, icono):
     tabla = f"TEST{test}"
     w = WHorsesBase(procesador, test, titulo, tabla, icono)
     w.exec()

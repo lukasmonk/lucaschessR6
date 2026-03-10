@@ -647,7 +647,7 @@ class WBase(QtWidgets.QWidget):
             if move.comment:
                 image_initial += "C"
 
-        pgn = move.pgn_figurines() if Code.configuration.x_pgn_withfigurines else move.pgn_base_translated()
+        pgn = move.pgn_figurines() if Code.configuration.x_pgn_withfigurines else move.pgntranslated()
         if color_nag:
             color = Nags.nag_color(color_nag)
 

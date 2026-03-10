@@ -841,49 +841,82 @@ def file_crc(ruta_archivo):
 
 
 def startfile(path: Union[str, Path]) -> bool:
+    """
+    Opens a file or directory with the default system application.
+    Returns True if the operation was launched successfully, False otherwise.
+    """
     try:
         path_obj = Path(path).absolute()
+
+        if not path_obj.exists():
+            return False
+
         if is_windows():
             os.startfile(str(path_obj))
-        else:  # Linux
-            opener = None
+            return True
 
-            if path_obj.is_dir():
-                desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
-                if "kde" in desktop and which("dolphin"):
-                    opener = "dolphin"
-                elif "gnome" in desktop and which("nautilus"):
-                    opener = "nautilus"
-                elif which("xdg-open"):
-                    opener = "xdg-open"
-            elif which("xdg-open"):
-                opener = "xdg-open"
+        # Linux
+        opener = _resolve_linux_opener(path_obj)
+        if not opener:
+            return False
 
-            if not opener:
-                return False
-
-            env = os.environ.copy()
-            env.pop("LD_LIBRARY_PATH", None)
-            env['DISPLAY'] = os.getenv('DISPLAY', ':0')
-            env['DBUS_SESSION_BUS_ADDRESS'] = os.getenv(
-                'DBUS_SESSION_BUS_ADDRESS', f'unix:path=/run/user/{os.getuid()}/bus'
-            )
-            env['HOME'] = os.getenv('HOME', str(Path.home()))
-
-            subprocess.Popen(
-                [opener, str(path_obj)],
-                env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+        env = _build_linux_env()
+        subprocess.Popen(
+            [opener, str(path_obj)],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,  # detach from parent process
+        )
         return True
-    except Exception:
+
+    except OSError:
         return False
+
+
+def _resolve_linux_opener(path_obj: Path) -> Optional[str]:
+    """Resolves the best available opener for the given path on Linux."""
+    if path_obj.is_dir():
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        candidates = []
+
+        if "kde" in desktop:
+            candidates.append("dolphin")
+        elif "gnome" in desktop:
+            candidates.append("nautilus")
+        elif "xfce" in desktop:
+            candidates.append("thunar")
+        elif "lxde" in desktop or "lxqt" in desktop:
+            candidates.append("pcmanfm")
+
+        candidates.append("xdg-open")  # universal fallback
+
+        return next((cmd for cmd in candidates if which(cmd)), None)
+
+    return "xdg-open" if which("xdg-open") else None
+
+
+def _build_linux_env() -> dict:
+    """Builds a sanitized environment for launching GUI applications on Linux."""
+    uid = os.getuid()
+    env = os.environ.copy()
+
+    # Remove vars that can break subprocess linking against different libs
+    for var in ("LD_LIBRARY_PATH", "LD_PRELOAD"):
+        env.pop(var, None)
+
+    env.setdefault("DISPLAY", ":0")
+    env.setdefault("HOME", str(Path.home()))
+    env.setdefault(
+        "DBUS_SESSION_BUS_ADDRESS",
+        f"unix:path=/run/user/{uid}/bus",
+    )
+    # Wayland support
+    env.setdefault("WAYLAND_DISPLAY", f"wayland-{uid}")
+    env.setdefault("XDG_RUNTIME_DIR", f"/run/user/{uid}")
+
+    return env
 
 
 def clamp(n: Union[int, float], smallest: Union[int, float], largest: Union[int, float]) -> Union[int, float]:
     return max(smallest, min(n, largest))
-
-
-def close_app():
-    os._exit(0)

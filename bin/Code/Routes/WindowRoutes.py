@@ -202,7 +202,7 @@ class WTranssiberian(LCDialog.LCDialog):
 
     def play(self):
         self.accept()
-        self.procesador.playRoute(self.route)
+        self.procesador.play_route(self.route)
 
     def main_menu(self):
         self.reject()

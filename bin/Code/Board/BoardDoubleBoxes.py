@@ -124,27 +124,29 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
     @staticmethod
     def paint_bm(bm, painter, is_from):
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setOpacity(bm.opacity)
+        # painter.setOpacity(bm.opacity)
 
         physical_pos = bm.physical_pos
         dx = physical_pos.x - 1
         dy = physical_pos.y - 1
         ancho = physical_pos.ancho
         alto = physical_pos.alto
-        rect = QtCore.QRectF(dx, dy, ancho, alto)
+        rect = QtCore.QRectF(dx+2, dy+2, ancho-2, alto-2)
 
         if is_from:
-            border_color = QtGui.QColor(bm.colorinterior)
-        else:
             border_color = QtGui.QColor(bm.colorinterior).darker(150)
+        else:
+            border_color = QtGui.QColor(bm.color).darker(150)
 
         # Borde visible
         pen = QtGui.QPen(border_color)
-        pen.setWidth(2 if ancho < 40 else 3 if ancho < 60 else 4 if ancho < 80 else 5)
+        penwidth = 2 if ancho < 40 else 3 if ancho < 60 else 4 if ancho < 80 else 5
+        pen.setWidth(penwidth)
         pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
-        painter.drawRoundedRect(rect, 6, 6)
+        painter.drawRoundedRect(rect, 5, 5)
+        # painter.drawRect(rect)
 
     def paint(self, painter, option, widget=None):
         self.paint_bm(self.bloquebox_from, painter, True)
