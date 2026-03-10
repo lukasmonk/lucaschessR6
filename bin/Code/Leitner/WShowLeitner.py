@@ -2,6 +2,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QLabel,
     QFrame,
+    QWidget,
+    QSizePolicy
 )
 
 from Code.Leitner import WShowBoxesLeitner
@@ -35,13 +37,58 @@ class WShowLeitner(LCDialog.LCDialog):
 
     def create_header(self):
         """Crea el toolbar con botones Entrenar y Cancelar usando TBrutina"""
+        pb_train = Controles.PB(self, _("Train"), rutina=self.train).set_icono(Iconos.Entrenar(), 32)
+        pb_train.setStyleSheet("""
+    QPushButton {
+        /* Fondo gris medio con un degradado sutil para dar volumen */
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                    stop:0 #757b85, stop:1 #5d636b);
+        
+        /* Texto en blanco suave (off-white) para que no canse */
+        color: #f1f1f1;
+        
+        /* Bordes definidos pero suaves */
+        border: 1px solid #4a4f57;
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    QPushButton:hover {
+        /* Aclaramos el tono un poco al pasar el ratón */
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                    stop:0 #868c96, stop:1 #6b727c);
+        border: 1px solid #9aa0a9;
+    }
+
+    QPushButton:pressed {
+        /* Efecto de hundimiento con sombra interior simulada */
+        background-color: #4a4f57;
+        padding-left: 14px;
+        padding-top: 14px;
+        border: 2px solid #3a3f46;
+    }
+
+    QPushButton:disabled {
+        background-color: #a0a0a0;
+        color: #d1d1d1;
+        border: 1px solid #8e8e8e;
+    }
+""")
+        font = Controles.FontTypeNew(family="Segoe UI", bold=True, point_size_delta=14)
+        pb_train.setFont(font)
+        pb_train.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
         tb = Controles.TBrutina(self)
+
         if self.leitner.is_the_end():
             tb.new(_("Close"), Iconos.Close(), self.cancel)
         else:
-            tb.new(_("Train"), Iconos.Entrenar(), self.train)
+            # tb.new(_("Train"), Iconos.Entrenar(), self.train)
             tb.new(_("Cancel"), Iconos.Cancelar(), self.cancel)
-        return tb
+        w = QWidget(self)
+        ly = Colocacion.H().control(pb_train).control(tb)
+        w.setLayout(ly)
+        return w
 
     def create_boxes(self):
         """Crea el widget de cajas usando WShowBoxesLeitner"""

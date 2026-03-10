@@ -20,7 +20,7 @@ if n_args == 1:
 
 elif n_args >= 2:
     arg = sys.argv[1].lower()
-    if arg.endswith((".pgn", ".lcdb", ".lcsb", ".bmt")) or arg in ("-play", "-playagainst"):
+    if arg.endswith((".pgn", ".lcdb", ".lcsb", ".bmt", ".shortcut")) or arg in ("-play", "-playagainst"):
         import Code.Base.Init
 
         Code.Base.Init.init()

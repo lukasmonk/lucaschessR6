@@ -134,7 +134,7 @@ class Configuration:
         self.x_opacity_tool_board = 10
         self.x_position_tool_board = "T"
 
-        self.x_movement_doublebox_board = False
+        self.x_movement_doublebox_board = True
 
         self.x_shadows_board = True
 

@@ -96,7 +96,7 @@ class TrainMenuRun:
 
         elif resp.startswith("map_"):
             nada, mapa = resp.split("_")
-            self.procesador.trainingMap(mapa)
+            self.procesador.training_map(mapa)
 
         elif resp == "transsiberian":
             self.procesador.show_route()
@@ -207,7 +207,7 @@ class TrainMenuRun:
         WindowPuente.window_puente(self.procesador, nivel)
 
     def horses(self, test, titulo, icono):
-        WindowHorses.windowHorses(self.procesador, test, titulo, icono)
+        WindowHorses.window_horses(self.procesador, test, titulo, icono)
 
     def bmt(self):
         WindowBMT.window_bmt(self.procesador)
@@ -266,7 +266,7 @@ class TrainMenuRun:
             self.procesador.manager.start(num_theme, num_block, tol)
 
     def washing_machine(self):
-        self.procesador.showWashing()
+        self.procesador.show_washing()
 
     def captures(self):
         w = WCountsCaptures.WCountsCaptures(self.procesador, True)

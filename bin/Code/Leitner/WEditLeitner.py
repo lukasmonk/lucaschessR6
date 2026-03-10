@@ -26,11 +26,11 @@ class WEditLeitner(LCDialog.LCDialog):
 
         lb_elems = Controles.LB(self, f"{_('Elements per session')}: ")
         elems = Util.clamp(self.leitner_work.elems_session, 1, 99)
-        self.sb_elems = Controles.SB(self, elems, 1, 99)
+        self.sb_elems = Controles.SB(self, elems, 1, 99).capture_changes(self.changes)
 
         lb_min = Controles.LB(self, f"{_('Minimum elements per session')}: ")
         min_val = Util.clamp(self.leitner_work.min_elems_session, 1, elems)
-        self.sb_min = Controles.SB(self, min_val, 1, 99)
+        self.sb_min = Controles.SB(self, min_val, 1, 99).capture_changes(self.changes)
 
         # Files
         tb_files = QTDialogs.LCTB(self, with_text=False, icon_size=24)
@@ -77,6 +77,12 @@ class WEditLeitner(LCDialog.LCDialog):
 
         layout = Colocacion.V().control(tb).control(gb_files).otro(ly_top).espacio(10)
         self.setLayout(layout)
+
+    def changes(self):
+        v = self.sb_elems.valor()
+        vmin = self.sb_min.valor()
+        if vmin > v:
+            self.sb_elems.set_value(vmin)
 
     def check_errors(self):
         num_puzzles = self.leitner_work.num_puzzles()

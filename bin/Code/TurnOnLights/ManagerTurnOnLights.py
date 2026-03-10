@@ -346,7 +346,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
     def end_game(self):
         self.procesador.start()
-        self.procesador.showTurnOnLigths(self.tol.name)
+        self.procesador.show_turn_on_ligths(self.tol.name)
 
     def final_x(self):
         self.procesador.start()

@@ -750,7 +750,7 @@ def message_menu(owner, main, the_message, delayed, zzpos=True, dont_show=False)
         q.setTextWidth(owner.width())
         q.setUseDesignMetrics(True)
         qto = QtGui.QTextOption()
-        qto.setWrapMode(qto.WordWrap)
+        qto.setWrapMode(QtGui.QTextOption.WrapMode.WordWrap)
         q.setDefaultTextOption(qto)
         q.adjustSize()
 

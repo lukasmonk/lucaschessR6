@@ -279,7 +279,7 @@ class ManagerWashingReplay(Manager.Manager):
 
     def finalize(self):
         self.procesador.start()
-        self.procesador.showWashing()
+        self.procesador.show_washing()
 
     def final_x(self):
         self.procesador.start()
@@ -495,7 +495,7 @@ class ManagerWashingTactics(Manager.Manager):
 
     def end_game(self):
         self.procesador.start()
-        self.procesador.showWashing()
+        self.procesador.show_washing()
 
     def final_x(self):
         self.procesador.start()
@@ -792,7 +792,7 @@ class ManagerWashingCreate(Manager.Manager):
         self.main_window.active_game(False, False)
         self.remove_captures()
         self.procesador.start()
-        self.procesador.showWashing()
+        self.procesador.show_washing()
 
     def final_x(self):
         if len(self.game) > 0:

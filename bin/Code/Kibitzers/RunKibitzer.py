@@ -174,7 +174,7 @@ class CPU:
 
     @staticmethod
     def close_app():
-        Util.close_app()
+        QTUtils.close_app()
 
     def show_window(self):
         app = QtWidgets.QApplication([])

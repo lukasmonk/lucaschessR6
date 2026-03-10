@@ -54,6 +54,7 @@ class WRun(LCDialog.LCDialog):
         self.engine_manager: EngineManagerPlay.EngineManagerPlay = procesador.create_manager_engine(
             engine, int(work.seconds * 1000), work.depth, work.nodes, engine.multiPV
         )
+        self.engine_manager.set_faster_mode()
 
         self.playing = False
         self.configuration = Code.configuration

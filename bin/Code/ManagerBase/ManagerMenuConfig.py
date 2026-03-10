@@ -37,7 +37,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
             )
 
         menu.separador()
-        menu_notation = menu.submenu(_("Notation style"), Iconos.Write())
+        menu_notation = menu.submenu(_("Notation Style"), Iconos.Write())
 
         def ac(notation, txt):
             return txt + ("  ✅" if self.configuration.x_notation_style == notation else "")

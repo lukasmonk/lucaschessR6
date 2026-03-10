@@ -7,7 +7,7 @@ REM -------------------------------------------------------
 
 :: Change these paths to match your local environment
 set "PYTHON_EXE=H:\lucaschessR6\.venv\Scripts\python.exe"
-set "VS_PATH=C:\Program Files\Microsoft Visual Studio\2022\Community"
+set "VS_PATH=C:\Program Files\Microsoft Visual Studio\18\Community"
 
 REM -------------------------------------------------------
 REM VALIDATION

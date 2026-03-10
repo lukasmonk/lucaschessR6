@@ -156,7 +156,7 @@ class ManagerEverest(Manager.Manager):
 
     def finalize(self):
         self.procesador.start()
-        self.procesador.showEverest(self.expedition.recno)
+        self.procesador.show_everest(self.expedition.recno)
 
     def reiniciar(self):
         self.main_window.active_information_pgn(False)

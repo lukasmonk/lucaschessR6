@@ -16,7 +16,7 @@ class EngineManagerRefresh(EngineManager.EngineManager):
                 if st in (EngineRun.EngineState.THINKING, EngineRun.EngineState.READING_EVAL_STOCKFISH):
                     self.pending_game = game
                     self.pending_fen = None
-                    self.engine_run.stop()
+                    # self.engine_run.stop()
                 else:
                     self.pending_game = None
                     self.pending_fen = None
