@@ -24,6 +24,7 @@ class ManagerLeitner(Manager.Manager):
         self.leitner = leitner_db.get_leitner(pos_db)
         self.leitner_db = leitner_db
         self.pos_db = pos_db
+        self.with_error = False
 
         self.is_tutor_enabled = False
         self.is_competitive = False
@@ -32,7 +33,15 @@ class ManagerLeitner(Manager.Manager):
 
     def reiniciar_puzzle(self):
         if len(self.leitner.current_ids_session) == 0:
-            QTMessages.message(self.main_window, _("Session finished"))
+            self.leitner.check_session()
+
+            if self.leitner.is_the_end():
+                message = _("Congratulations, goal achieved")
+            else:
+                message = _("Session finished")
+            QTMessages.message(self.main_window, message)
+
+            self.leitner_db.set_leitner(self.pos_db, self.leitner)
             self.finalizar()
             return
 
@@ -113,7 +122,7 @@ class ManagerLeitner(Manager.Manager):
             return False
 
         move_obj = self.game_obj.move(self.pos_obj)
-        is_main, is_var = move_obj.check_a1h8(from_sq+to_sq+promotion)
+        is_main, is_var = move_obj.check_a1h8(move.movimiento())
         if is_main:
             self.game.add_move(move)
             self.pos_obj += 1
@@ -167,6 +176,7 @@ class ManagerLeitner(Manager.Manager):
             self.puzzle_finished()
         self.leitner_db.close()
         self.procesador.start()
+        self.procesador.show_leitner(self.pos_db)
 
     def final_x(self):
         return self.finalizar()

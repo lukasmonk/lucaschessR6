@@ -8,7 +8,7 @@ from Code.Config import Configuration, Usuarios
 from Code.MainWindow import InitApp
 from Code.QT import Colocacion, Controles, GarbageCollector, Iconos
 from Code.Shortcuts import Shortcuts
-from Code.Translations import SelectLanguage
+from Code.Translations import WSelectLanguage
 from Code.Z import XRun
 
 
@@ -77,7 +77,7 @@ def run_gui(procesador):
             configuration.graba()
 
         else:
-            SelectLanguage.menu_select_language(None)
+            WSelectLanguage.menu_select_language(None)
 
     translator = QtCore.QTranslator()
     translations_path = QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.LibraryPath.TranslationsPath)

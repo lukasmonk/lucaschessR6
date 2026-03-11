@@ -7,7 +7,7 @@ from Code.Menus import BaseMenu
 from Code.QT import Iconos, SelectFiles, WColors
 from Code.Shortcuts import Shortcuts, WShortcuts
 from Code.Sound import WindowSonido
-from Code.Translations import SelectLanguage
+from Code.Translations import WSelectLanguage
 from Code.Z import RemoveResults, Util
 
 
@@ -51,13 +51,9 @@ class OptionsMenu(BaseMenu.RootMenu):
         rem.menu()
 
     def select_language(self):
-        wsl = SelectLanguage.SelectLanguage(self.wparent)
+        wsl = WSelectLanguage.WSelectLanguage(self.wparent)
         if wsl.exec():
             self.reiniciar()
-        # from Code.MainWindow import LucasChessGui
-        # if LucasChessGui.select_language(self.wparent, False):
-        #     wsl = SelectLanguage.SelectLanguage(self.wparent)
-        #     wsl.exec()
 
     def cambiaconfiguration(self):
         if WindowConfig.options(self.wparent, Code.configuration):

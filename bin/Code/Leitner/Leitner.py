@@ -10,6 +10,8 @@ import Code
 from Code import Util
 from Code.SQL import UtilSQL
 
+NUM_BOXES = 4
+
 
 def round_prob(value: float) -> int:
     lower = math.floor(value)
@@ -111,24 +113,25 @@ class LeitnerReg:
 
 
 class Leitner:
-    def __init__(self, elems_session: int = 30, min_elems_session: int = 10, num_boxes: int = 5):
+    def __init__(self, elems_session: int = 30, min_elems_session: int = 10):
         self.huella = Util.huella()
         self.reference = ""
         self.source_files: List[FNSFileTraining] = []
         self.elems_session = elems_session
         self.min_elems_session = min_elems_session
         self.random_order = True
-        self.num_boxes = num_boxes
-        self.win_box = num_boxes + 1
+        self.num_boxes = NUM_BOXES
+        self.win_box = self.num_boxes + 1
+        self.max_retries = self.num_boxes
         self.current_num_session = 0
         self.dic_regs = {}
         self.current_ids_session = []
         self.init_date = None
         self.end_date = None
         # num_boxes + 1, box 0 = elementos a repartir
-        self.percentages = [100] + distribute_exponentially(num_boxes, 7, 1.)
+        self.percentages = [100] + distribute_exponentially(self.num_boxes, 7, 1.)
 
-    def new_session(self) -> bool:
+    def new_session(self, num_try=1) -> bool:
         if self.is_the_end():
             return False
         if self.init_date is None:
@@ -173,17 +176,23 @@ class Leitner:
         if pending():
             get(0, True)
 
-        # If the minimum is not reached, the winnings are used.
-        if len(self.current_ids_session) < self.min_elems_session:
-            reg: LeitnerReg
-            li = [reg for reg in self.dic_regs.values() if reg.in_box == self.win_box]
-            li.sort(key=lambda reg1: reg1.date_win)  # the oldest ones won first
+        if num_try < self.max_retries:
+            if len(self.current_ids_session) < self.min_elems_session:
+                return self.new_session(num_try+1)
+        else:
+            # If the minimum is not reached, the winnings are used.
+            if len(self.current_ids_session) < self.min_elems_session:
+                reg: LeitnerReg
+                li = [reg for reg in self.dic_regs.values() if reg.in_box == self.win_box]
+                li.sort(key=lambda reg1: reg1.date_win)  # the oldest ones won first
 
-            for reg in li:
-                if reg.reg_id not in self.current_ids_session:
-                    self.current_ids_session.append(reg.reg_id)
-                if len(self.current_ids_session) == self.min_elems_session:
-                    break
+                for reg in li:
+                    if reg.reg_id not in self.current_ids_session:
+                        self.current_ids_session.append(reg.reg_id)
+                    if len(self.current_ids_session) == self.min_elems_session:
+                        break
+            if len(self.current_ids_session) == 0:
+                self.check_session()
 
         # They are all awarded as chosen in this session.
         for reg_id in self.current_ids_session:
@@ -199,8 +208,7 @@ class Leitner:
         # Check the session and return if new session has been created
         if not self.is_the_end():
             if len(self.current_ids_session) == 0:
-                self.new_session()
-                return True
+                return self.new_session()
         return False
 
     def assign_result(self, reg_id: str, success: bool) -> int:
@@ -334,6 +342,13 @@ class Leitner:
             li[self.dic_regs[reg_id].in_box] += 1
         return li
 
+    def right_wrong(self) -> tuple[int, int]:
+        right = wrong = 0
+        for reg in self.dic_regs.values():
+            right += reg.right
+            wrong += reg.wrong
+        return right, wrong
+
 
 class LeitnerDB(UtilSQL.ListSQL):
     def __init__(self):
@@ -418,12 +433,11 @@ class FnsAnalyzer:
 
         return results
 
-
 # if __name__ == '__main__':
 #     import time
 #
 #     t = time.time()
-#     lt = Leitner(elems_session=20, min_elems_session=10, num_boxes=5)
+#     lt = Leitner(elems_session=20, min_elems_session=10)
 #     for x in range(300):
 #         lt.new_reg("line")
 #     xdic_regs = lt.dic_regs

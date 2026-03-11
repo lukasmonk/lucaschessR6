@@ -8,7 +8,7 @@ from Code.QT import Colocacion, Iconos, QTDialogs
 from Code.QT import Controles, LCDialog, ScreenUtils, QTUtils
 
 
-class SelectLanguage(LCDialog.LCDialog):
+class WSelectLanguage(LCDialog.LCDialog):
     pbar_labels: QtWidgets.QProgressBar
     pbar_openings: QtWidgets.QProgressBar
     labels_group: QtWidgets.QGroupBox
@@ -41,10 +41,10 @@ class SelectLanguage(LCDialog.LCDialog):
 
         # Selector de idioma
         self.dic_translations = Code.configuration.dic_translations()
-        lng_default = Code.configuration.translator()
-        self.lng_current = lng_default
+        self.lng_default = Code.configuration.translator()
+        self.lng_current = self.lng_default
 
-        self.pb_lang = Controles.PB(self, " " * 5 + self.dic_translations[lng_default]["NAME"], rutina=self.select_lang)
+        self.pb_lang = Controles.PB(self, " " * 5 + self.dic_translations[self.lng_default]["NAME"], rutina=self.select_lang)
         self.pb_lang.set_icono(Iconos.Language(), 32)
         self.pb_lang.setObjectName("PbLang")
 
@@ -257,7 +257,7 @@ QGroupBox::title {
         # Toolbar
         self.tb.clear()
         self.tb.new(_("Accept"), Iconos.Aceptar(), self.accept_selection)
-        self.tb.new(_("Cancel"), Iconos.Cancelar(), self.reject)
+        self.tb.new(_("Cancel"), Iconos.Cancelar(), self.reject_all)
 
         # Button language
         self.pb_lang.set_text(" " * 5 + dic["NAME"])
@@ -313,6 +313,15 @@ QGroupBox::title {
         self.parent.final_processes()
         self.parent.accept()
         QTUtils.exit_application(ExitProgram.REINIT)
+
+    def reject_all(self):
+        if self.lng_default != self.lng_current:
+            configuration = Code.configuration
+            lng = self.lng_default
+            configuration.set_translator(lng)
+            configuration.graba()
+            configuration.load_translation()
+        self.reject()
 
 
 def menu_select_language(owner):

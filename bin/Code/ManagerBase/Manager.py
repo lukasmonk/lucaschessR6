@@ -1144,7 +1144,7 @@ class Manager:
                 self.continue_human()
                 return None
         if promotion:
-            movimiento += promotion
+            movimiento += promotion.lower()
 
         ok, error, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:

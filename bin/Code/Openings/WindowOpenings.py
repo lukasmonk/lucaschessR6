@@ -77,7 +77,7 @@ class WOpenings(LCDialog.LCDialog):
         o_columns.nueva("TYPE", "", 24, edicion=Delegados.PmIconosBMT(dict_icons=dic_tipos))
         o_columns.nueva("OPENING", _("Possible continuation"), 480)
 
-        row_high = int(3.6 * self.configuration.x_pgn_fontpoints)
+        row_high = int(4.2 * self.configuration.x_pgn_fontpoints)
 
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, heigh_row=row_high)
         self.grid.setFont(Controles.FontType(puntos=self.configuration.x_pgn_fontpoints))

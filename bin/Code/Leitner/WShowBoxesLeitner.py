@@ -1,4 +1,4 @@
-from PySide6 import QtCore, QtGui, QtWidgets, QtSvgWidgets
+from PySide6 import QtCore, QtWidgets, QtSvgWidgets
 
 from Code.QT import Controles, Colocacion
 
@@ -71,11 +71,11 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
         self.box_session_not_trained = box_session[0]
 
         # Iconos para cada nivel
-        self.iconos = {1: "🚧", 2: "🔥", 3: "✨", 4: "💫", 5: "🌟"}
+        self.iconos = {0: "⛽", 1: "🚧", 2: "🔥", 3: "✨", 4: "💫", 5: "🌟"}
 
         # Paleta de colores
         self.colors = {
-            1: {
+            0: {
                 "principal": "#5D6D7E",
                 "secundario": "#85929E",
                 "claro": "#AEB6BF",
@@ -85,6 +85,17 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
                 "borde": "#5D6D7E",
                 "tapa_claro": "#AEB6BF",
                 "tapa": "#85929E",
+            },
+            1: {
+                "principal": "#C0392B",
+                "secundario": "#E74C3C",
+                "claro": "#F1948A",
+                "oscuro": "#922B21",
+                "fondo": "#FDEDEC",
+                "texto": "#641E16",
+                "borde": "#C0392B",
+                "tapa_claro": "#F1948A",
+                "tapa": "#E74C3C",
             },
             2: {
                 "principal": "#27AE60",
@@ -120,26 +131,31 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
                 "tapa": "#F8C471",
             },
             5: {
-                "principal": "#E67E22",
-                "secundario": "#F0B27A",
-                "claro": "#F5CBA7",
-                "oscuro": "#CA6F1E",
-                "fondo": "#FDF2E9",
-                "texto": "#784212",
-                "borde": "#E67E22",
-                "tapa_claro": "#F5CBA7",
-                "tapa": "#F0B27A",
+                "principal": "#7D3C98",
+                "secundario": "#A569BD",
+                "claro": "#C39BD3",
+                "oscuro": "#5B2C6F",
+                "fondo": "#F5EEF8",
+                "texto": "#4A235A",
+                "borde": "#7D3C98",
+                "tapa_claro": "#C39BD3",
+                "tapa": "#A569BD",
             },
         }
 
         layout = Colocacion.H()
-        for i in range(1, 6):
-            wbox = self.create_box(i, box_contents[i], box_session[i])
-            if i != 1:
-                conector = Controles.LB(self, "→")
-                conector.setStyleSheet(f"font-size: 24px; color: {self.colors[i]['principal']}; font-weight: bold;")
-                layout.control(conector)
+        for num_box in range(0, 6):
+            wbox = self.create_box(num_box, box_contents[num_box], box_session[num_box])
             layout.control(wbox)
+            if num_box != 5:
+                if num_box in (0, 4):
+                    conector = "⇒"
+                else:
+                    conector = "→"
+                lb_conector = Controles.LB(self, conector)
+                lb_conector.setStyleSheet(f"font-size: 24px; color: {self.colors[num_box]['principal']};"
+                                          " font-weight: bold;")
+                layout.control(lb_conector)
         layout.relleno()
 
         self.setLayout(layout)
@@ -155,44 +171,42 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
                 background-color: {self.colors[num_box]['fondo']};
                 border-radius: 16px;
                 border: 3px solid {self.colors[num_box]['borde']};
-                padding: 12px;
-            }}
-            QFrame#cajaCard{num_box}:hover {{
-                border: 3px solid {self.colors[num_box]['claro']};
-                background-color: white;
+                padding: 8px;
             }}
         """
         )
-        card.setFixedSize(160, 200)
-
-        # Efecto de sombra si tiene contenido
-        if num_elements > 0:
-            shadow = QtWidgets.QGraphicsDropShadowEffect()
-            shadow.setBlurRadius(20)
-            shadow.setColor(QtGui.QColor(self.colors[num_box]['principal']))
-            shadow.setOffset(0, 4)
-            card.setGraphicsEffect(shadow)
+        card.setFixedSize(150, 200)
 
         layout = Colocacion.V(card)
-        layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # Header con icono y nombre
         header = Colocacion.H()
         header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        icono = Controles.LB(self, self.iconos[num_box])
-        icono.setStyleSheet("font-size: 24px; background: transparent;")
-        header.control(icono)
+        if 0 < num_box < 5:
+            icono = Controles.LB(self, self.iconos[num_box] + f" {num_box}")
+            icono.setStyleSheet("font-size: 24px; background: transparent;")
+            header.control(icono)
 
-        nombre = Controles.LB(self, f'{_("Box")} {num_box}')
-        nombre.setStyleSheet(
+        if num_box == 0:
+            text = _("Never trained")
+            symbol = '💼'
+        elif num_box == 5:
+            text = _("Completed")
+            symbol = ''
+        else:
+            text = f'{num_box}'
+            text = ''
+            symbol = '💼'
+        lb_name = Controles.LB(self, text).set_wrap()
+        lb_name.setStyleSheet(
             f"""
             color: {self.colors[num_box]['texto']}; 
             font-weight: bold; 
             background: transparent;
         """
         )
-        header.control(nombre)
+        header.control(lb_name)
         layout.otro(header)
 
         svg_box = self.create_svg(num_box, num_elements)
@@ -200,16 +214,11 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
 
         txt = ""
         if num_elements_session > 0:
-            txt = f"💼 {num_elements_session}"
-        if num_box == 5 and self.box_session_win > 0:
-            txt += f" + 👑 {self.box_session_win}"
-        elif num_box == 1 and self.box_session_not_trained > 0:
-            txt = f"⛽{self.box_session_not_trained} {txt}".strip()
-        if txt:
-            lb_train = Controles.LB(self, txt)
-            lb_train.set_font(Controles.FontTypeNew(point_size_delta=-1))
-            lb_train.setStyleSheet("background: transparent;")
-            layout.controld(lb_train)
+            txt = f"{symbol} {num_elements_session}"
+        lb_train = Controles.LB(self, txt)
+        lb_train.set_font(Controles.FontTypeNew(point_size_delta=-1))
+        lb_train.setStyleSheet("background: transparent;")
+        layout.controld(lb_train)
 
         return card
 

@@ -984,7 +984,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.mrm_tutor = self.manager_tutor.get_current_mrm()
             self.is_tutor_analysing = False
             self.manager_tutor.add_cache_position(self.game.last_position, self.mrm_tutor)
-            self.main_window.pensando_tutor(False)
+            # self.main_window.pensando_tutor(False)
             if self.player_has_moved_a1h8:
                 move = self.player_has_moved_a1h8
                 self.player_has_moved_a1h8 = None
@@ -1334,7 +1334,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         si_analisis = False
         fen_base = self.last_fen()
         fen_basem2 = FasterCode.fen_fenm2(fen_base)
-        self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
+        # self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
 
         # TUTOR---------------------------------------------------------------------------------------------------------
         is_mate = move.is_mate
@@ -1343,20 +1343,21 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if not self.tutor_book.si_esta(fen_base, a1h8):
                 rm_user, n = self.mrm_tutor.search_rm(a1h8)
                 if not rm_user:
-                    self.main_window.pensando_tutor(True)
+                    # self.main_window.pensando_tutor(True)
                     self.state = ST_TUTOR_THINKING
                     self.is_tutor_analysing = True
                     self.is_analyzing = True
-                    self.pon_toolbar(ToolbarState.TUTOR_THINKING)
+                    # self.pon_toolbar(ToolbarState.TUTOR_THINKING)
                     self.mrm_tutor = self.manager_tutor.analyze_tutor_move(self.game, a1h8)
                     self.state = ST_PLAYING
                     self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
-                    self.main_window.pensando_tutor(False)
                     if self.mrm_tutor is None:
                         self.tc_player.restart()
                         self.enable_toolbar()
+                        self.main_window.pensando_tutor(False)
                         return False
                     rm_user, n = self.mrm_tutor.search_rm(a1h8)
+                self.main_window.pensando_tutor(False)
                 self.cache_analysis[fen_basem2] = self.mrm_tutor
 
                 si_analisis = True
@@ -1388,7 +1389,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                 while True:
                                     rm_tutor = self.mrm_tutor.rm_best()
                                     menu = QTDialogs.LCMenu(self.main_window)
-                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine())
+                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine(), is_disabled=True)
                                     menu.separador()
                                     resp = rm_tutor.abbrev_text_base()
                                     if not resp:
@@ -1409,7 +1410,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                         break
                                     elif resp == "tutor":
                                         break
-                                    else:
+                                    elif resp == "try":
                                         self.tc_player.restart()
                                         self.continue_human()
                                         self.play_human()
@@ -1439,6 +1440,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                             del tutor
 
         # --------------------------------------------------------------------------------------------------------------
+        self.main_window.pensando_tutor(False)
         time_s = self.tc_player.stop()
         if self.timed:
             self.show_clocks()
