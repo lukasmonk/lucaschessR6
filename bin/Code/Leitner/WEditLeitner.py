@@ -82,7 +82,7 @@ class WEditLeitner(LCDialog.LCDialog):
         v = self.sb_elems.valor()
         vmin = self.sb_min.valor()
         if vmin > v:
-            self.sb_elems.set_value(vmin)
+            self.sb_min.set_value(v)
 
     def check_errors(self):
         num_puzzles = self.leitner_work.num_puzzles()

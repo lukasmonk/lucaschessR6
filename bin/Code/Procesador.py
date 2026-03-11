@@ -59,7 +59,7 @@ from Code.GM import ManagerGM
 from Code.Kibitzers import KibitzersManager
 from Code.Leagues import ManagerLeague
 from Code.LearnGame import ManagerPlayGame, WindowLearnGame, WindowPlayGame
-from Code.Leitner import Leitner, ManagerLeitner
+from Code.Leitner import Leitner, ManagerLeitner, WShowLeitner
 from Code.MainWindow import MainWindow, Presentacion
 from Code.Maps import ManagerMateMap, WindowWorkMap
 from Code.Menus import (
@@ -782,6 +782,14 @@ class Procesador:
         db_leitner = Leitner.LeitnerDB()
         self.manager = ManagerLeitner.ManagerLeitner(self)
         self.manager.start(db_leitner, pos)
+
+    def show_leitner(self, pos: int):
+        db_leitner = Leitner.LeitnerDB()
+        leitner = db_leitner.get_leitner(pos)
+        db_leitner.close()
+        w = WShowLeitner.WShowLeitner(self.main_window, leitner)
+        if w.exec():
+            self.play_leitner(pos)
 
     def users(self):
         WindowUsuarios.edit_users(self)

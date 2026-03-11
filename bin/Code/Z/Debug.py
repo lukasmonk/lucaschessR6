@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import traceback
+import inspect
 
 from Code.Z import Util
 
@@ -52,6 +53,14 @@ def stack():
     prln("=" * 100)
 
 
+def stack0(txt=None):
+    frame = inspect.stack()[2]
+    archivo = frame.filename
+    linea = frame.lineno
+    funcion = frame.function
+    prln(f"Llamado desde: función '{funcion}' en {archivo}, línea {linea}, {str(txt or '')}")
+
+
 def printf(*txt):
     with open("stack.txt", "at", encoding="utf-8") as q:
         for t in txt:
@@ -87,6 +96,7 @@ def timeit(func):
 
 
 setattr(builtins, "stack", stack)
+setattr(builtins, "stack0", stack0)
 
 
 class LogDebug:
