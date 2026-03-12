@@ -421,6 +421,10 @@ class Configuration:
         return [(x, x) for x in QtWidgets.QStyleFactory.keys()]
 
     def graba(self):
+        if self.x_translation_mode:   # se comprueba que se haya cambiado desde la ventana de ayuda a la traduccion
+            dic = Util.restore_pickle(self.paths.file)
+            if dic.get("x_quit_translation_mode"):
+                self.x_translation_mode = False
         dic = {x: getattr(self, x) for x in dir(self) if x.startswith("x_")}
         # dic["PALETTE"] = self.palette
         dic["PERSONALITIES"] = self.li_personalities

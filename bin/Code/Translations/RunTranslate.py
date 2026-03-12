@@ -141,6 +141,8 @@ class WTranslate(LCDialog.LCDialog):
         self.check_sended_from_lucas()
 
     def quit_mode(self):
+        # para que se tenga en cuenta si se graba en la ventana principal, variable temporal
+        Code.configuration.x_quit_translation_mode = True
         Code.configuration.x_translation_mode = False
         Code.configuration.graba()
         self.save()
