@@ -1015,7 +1015,7 @@ class DBgames:
                         conexion.executemany(sql, li_regs)
                         li_regs = []
                         st_xpv_bloque = set()
-            if dl_tmp.is_canceled:
+            if dl_tmp.is_canceled():
                 break
         dl_tmp.actualiza(erroneos + duplicados + importados, erroneos, duplicados, importados, 100.00)
         dl_tmp.ponSaving()

@@ -11,8 +11,7 @@ def run_lucas(*args):
         li.append("LucasR.py")
     else:
         if Util.is_windows():
-            li.append("python.exe")
-            li.append("LucasR.pyc")
+            li.append("LucasR.exe")
         else:
             li.append("./LucasR")
     li.extend(args)
