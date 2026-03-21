@@ -45,9 +45,11 @@ class StockfishManager:
         if not conf:
             return True
 
+        exe_exists = Util.exist_file(conf.path_exe)
+
         if saved_name := self._read_saved_name():
             conf.name = saved_name
-            if not check_again:
+            if not check_again and exe_exists:
                 return True
 
         versions = self._read_versions(conf)
