@@ -230,6 +230,7 @@ class Manager:
     def reset_shortcuts_mouse(self):
         self.atajosRatonDestino = None
         self.atajosRatonOrigen = None
+        self.board.hide_selection()
 
     @staticmethod
     def other_candidates(li_moves, position, li_c):
@@ -331,6 +332,7 @@ class Manager:
         FasterCode.set_fen(position.fen())
         li_moves = FasterCode.get_exmoves()
         if not li_moves:
+            self.reset_shortcuts_mouse()
             return
 
         # Se verifica si algun movimiento puede empezar o finalize ahi
@@ -373,6 +375,7 @@ class Manager:
             if li_destinos:
                 self.atajosRatonOrigen = a1h8
                 self.atajosRatonDestino = None
+                self.board.show_selection(a1h8)
                 show_candidates()
                 return
             elif li_origenes:
@@ -382,6 +385,7 @@ class Manager:
                 else:
                     self.atajosRatonOrigen = None
                     self.atajosRatonDestino = None
+                    self.board.show_selection(a1h8)
                     show_candidates()
             return
 
@@ -393,6 +397,7 @@ class Manager:
                 self.atajosRatonOrigen = li_origenes[0]
                 mueve()
             else:
+                self.board.show_selection(a1h8)
                 show_candidates()
             return
 
@@ -404,6 +409,7 @@ class Manager:
                 self.atajosRatonDestino = li_destinos[0]
                 mueve()
             else:
+                self.board.show_selection(a1h8)
                 show_candidates()
             return
 
