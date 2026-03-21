@@ -153,8 +153,22 @@ class ConfigEngines:
                 for key, value in dic.get("TUTOR", []):
                     eng.set_uci_option(key, value)
                 return eng
-        self.configuration.x_tutor_clave = self.configuration.tutor_default
-        return self.engine_tutor()
+
+        default = self.configuration.tutor_default
+        if alias_tutor != default:
+            self.configuration.x_tutor_clave = default
+            return self.engine_tutor()
+
+        from Code.Engines import CheckEngines
+        CheckEngines.check_stockfish(True)
+
+        if default in self._dic_engines:
+            eng = self._dic_engines[default]
+            if eng.can_be_tutor_analyzer() and Util.exist_file(eng.path_exe):
+                eng.reset_uci_options()
+                return eng
+
+        return None
 
     def engine_analyzer(self):
         alias_analyzer = self.configuration.x_analyzer_clave
@@ -166,8 +180,22 @@ class ConfigEngines:
                 for key, value in dic.get("ANALYZER", []):
                     eng.set_uci_option(key, value)
                 return eng
-        self.configuration.x_analyzer_clave = self.configuration.analyzer_default
-        return self.engine_analyzer()
+
+        default = self.configuration.analyzer_default
+        if alias_analyzer != default:
+            self.configuration.x_analyzer_clave = default
+            return self.engine_analyzer()
+
+        from Code.Engines import CheckEngines
+        CheckEngines.check_stockfish(True)
+
+        if default in self._dic_engines:
+            eng = self._dic_engines[default]
+            if eng.can_be_tutor_analyzer() and Util.exist_file(eng.path_exe):
+                eng.reset_uci_options()
+                return eng
+
+        return None
 
     def set_logs(self, ok):
         path_log = Util.opj(self.configuration.paths.folder_userdata(), "active_logs.engines")
