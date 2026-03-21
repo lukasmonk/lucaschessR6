@@ -19,3 +19,4 @@ UserData/
 # Runtime-generated engine (copied from best CPU-specific variant at startup)
 Resources/OS/windows/Engines/stockfish/Stockfish-18-64.exe
 
+bin/bug.log
