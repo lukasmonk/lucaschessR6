@@ -1,5 +1,0 @@
-.git
-bin/OS/linux/FasterCode.*
-Dockerfile
-.dockerignore
-UserData

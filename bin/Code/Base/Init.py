@@ -1,4 +1,3 @@
-import os
 import sys
 
 import Code
@@ -7,6 +6,7 @@ from Code.Base.Constantes import ExitProgram
 from Code.MainWindow import LucasChessGui
 from Code.Sound import Sound
 from Code.Z import Util, XRun
+from Code.QT import QTUtils
 
 
 def init():
@@ -25,4 +25,4 @@ def init():
     if resp == ExitProgram.REINIT.value:
         XRun.run_lucas()
 
-    os._exit(0)
+    QTUtils.close_app()

@@ -8,16 +8,9 @@
 import sys
 import warnings
 
+import Code
+
 warnings.simplefilter("ignore")
-
-try:
-    from Code.Update import UpdateLockedFiles
-    import os
-
-    bin_dir = os.path.dirname(os.path.abspath(__file__))
-    deleted = UpdateLockedFiles.cleanup_old_files(bin_dir, recursive=True)
-except Exception:
-    pass
 
 n_args = len(sys.argv)
 if n_args == 1:
@@ -27,7 +20,7 @@ if n_args == 1:
 
 elif n_args >= 2:
     arg = sys.argv[1].lower()
-    if arg.endswith((".pgn", ".lcdb", ".lcsb", ".bmt")) or arg in ("-play", "-playagainst"):
+    if arg.endswith((".pgn", ".lcdb", ".lcsb", ".bmt", ".shortcut")) or arg in ("-play", "-playagainst"):
         import Code.Base.Init
 
         Code.Base.Init.init()
@@ -38,15 +31,14 @@ elif n_args >= 2:
         Code.Kibitzers.RunKibitzer.run(sys.argv[2])
 
     elif arg == "-translate":
-        from Code.Translations.RunTranslate import run_wtranslation
-
-        run_wtranslation(sys.argv[2])
+        from Code.Translations import RunTranslate
+        RunTranslate.run_wtranslation(sys.argv[2])
 
     elif arg == "-tournament":
         import Code.Tournaments.RunTournament
 
-        user = sys.argv[4] if len(sys.argv) >= 5 else ""
-        Code.Tournaments.RunTournament.run(user, sys.argv[2], sys.argv[3])
+        user = sys.argv[3] if len(sys.argv) >= 4 else ""
+        Code.Tournaments.RunTournament.run(user, sys.argv[2])
 
     elif arg == "-league":
         import Code.Leagues.RunLeague

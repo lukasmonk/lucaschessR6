@@ -443,10 +443,10 @@ class League:
 
         self.resign = 350
         self.slow_pieces = False
-        self.draw_min_ply = 50
+        self.draw_min_ply = 80
         self.draw_range = 10
         self.move_evaluator = Code.configuration.tutor_default
-        self.arbiter_time = 5.0
+        self.adjudicator_time = 5.0
         self.time_engine_human = (15.0, 6)
         self.time_engine_engine = (3.0, 0)
         self.time_added_human = 0.0
@@ -466,7 +466,7 @@ class League:
         self.dic_opponents = None
         self.restore()
 
-    def arbiter_active(self):
+    def adjudicator_active(self):
         return self.resign > 0 or self.draw_range > 0
 
     def remove_work(self):
@@ -605,8 +605,8 @@ class League:
             "SLOW_PIECES": self.slow_pieces,
             "DRAW_MIN_PLY": self.draw_min_ply,
             "DRAW_RANGE": self.draw_range,
-            "arbiter": self.move_evaluator,
-            "ARBITER_TIME": self.arbiter_time,
+            "adjudicator": self.move_evaluator,
+            "ADJUDICATOR_TIME": self.adjudicator_time,
             "TIME_ENGINE_HUMAN": self.time_engine_human,
             "TIME_ENGINE_ENGINE": self.time_engine_engine,
             "MIGRATION": self.migration,
@@ -632,8 +632,8 @@ class League:
         self.slow_pieces = dic_data.get("SLOW_PIECES", self.slow_pieces)
         self.draw_min_ply = dic_data.get("DRAW_MIN_PLY", self.draw_min_ply)
         self.draw_range = dic_data.get("DRAW_RANGE", self.draw_range)
-        self.move_evaluator = dic_data.get("arbiter", self.move_evaluator)
-        self.arbiter_time = dic_data.get("ARBITER_TIME", self.arbiter_time)
+        self.move_evaluator = dic_data.get("adjudicator", self.move_evaluator)
+        self.adjudicator_time = dic_data.get("ADJUDICATOR_TIME", self.adjudicator_time)
         self.time_engine_human = dic_data.get("TIME_ENGINE_HUMAN", self.time_engine_human)
         self.time_engine_engine = dic_data.get("TIME_ENGINE_ENGINE", self.time_engine_engine)
         self.migration = dic_data.get("MIGRATION", self.migration)

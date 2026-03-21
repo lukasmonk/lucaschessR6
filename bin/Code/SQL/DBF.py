@@ -218,8 +218,8 @@ class DBF:
     def leeOtroCampo(self, recno, campo):
         xid = self.rowid(recno)
         self.cursor.execute("SELECT %s FROM %s WHERE rowid =%d" % (campo, self.ctabla, xid))
-        liValores = self.cursor.fetchone()
-        return liValores[0]
+        li_valores = self.cursor.fetchone()
+        return li_valores[0]
 
     def goto(self, numRecno):
         """

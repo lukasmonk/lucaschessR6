@@ -1,11 +1,11 @@
 import os.path
 import pickle
+from datetime import date
 
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 
 import Code
-from Code.Z import Util
 from Code.Analysis import AnalysisEval
 from Code.Base.Constantes import (
     DBSHOW_INITIAL_POSITION,
@@ -15,6 +15,7 @@ from Code.Base.Constantes import (
     INACCURACY,
     MENU_PLAY_BOTH,
     POS_TUTOR_HORIZONTAL,
+    NOTATION_ALGEBRAIC
 )
 from Code.Board import ConfBoards
 from Code.Config import ConfigEngines, ConfigPaths
@@ -22,6 +23,7 @@ from Code.Engines import Priorities
 from Code.QT import IconosBase, ScreenUtils
 from Code.SQL import UtilSQL
 from Code.Translations import Translate, TrListas
+from Code.Z import Util
 
 
 def int_toolbutton(xint):
@@ -29,11 +31,11 @@ def int_toolbutton(xint):
         (
             tbi
             for tbi in (
-                Qt.ToolButtonStyle.ToolButtonIconOnly,
-                Qt.ToolButtonStyle.ToolButtonTextOnly,
-                Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-                Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
-            )
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+        )
             if xint == tbi.value
         ),
         Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
@@ -42,10 +44,10 @@ def int_toolbutton(xint):
 
 def toolbutton_int(qt_tbi):
     if qt_tbi in (
-        Qt.ToolButtonStyle.ToolButtonIconOnly,
-        Qt.ToolButtonStyle.ToolButtonTextOnly,
-        Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-        Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
     ):
         return qt_tbi.value
     return Qt.ToolButtonStyle.ToolButtonTextUnderIcon.value
@@ -93,7 +95,12 @@ class Configuration:
         self.x_save_folder = "UserData"
         self.x_save_pgn_folder = ""
         self.x_save_lcsb = ""
+
         self.x_translator = ""
+        self.x_translator_google = False
+        self.x_translator_google_openings = False
+        self.x_translation_mode = False
+        self.x_translation_local = True
 
         self.x_show_effects = False
         self.x_pieces_speed = 100
@@ -127,7 +134,9 @@ class Configuration:
         self.x_opacity_tool_board = 10
         self.x_position_tool_board = "T"
 
-        self.x_movement_doublebox_board = False
+        self.x_movement_doublebox_board = True
+
+        self.x_shadows_board = True
 
         self.x_director_icon = False
         self.x_direct_graphics = False
@@ -146,6 +155,8 @@ class Configuration:
 
         self.x_pgn_english = False
 
+        self.x_notation_style = NOTATION_ALGEBRAIC
+
         self.x_autopromotion_q = False
 
         self.x_copy_ctrl = True  # False = Alt C
@@ -163,13 +174,13 @@ class Configuration:
 
         self.x_cursor_thinking = True
 
-        self.x_rival_inicial = "rocinante" if Util.is_linux() else "irina"
+        self.x_rival_inicial = "irina"
 
         self.tutor_default = "stockfish"
         self.x_tutor_clave = self.tutor_default
         self.x_tutor_multipv = 10  # 0: maximo
         self.x_tutor_diftype = INACCURACY
-        self.x_tutor_mstime = 3000
+        self.x_tutor_mstime = int(3000)
         self.x_tutor_depth = 0
         self.x_tutor_priority = Priorities.priorities.low
         self.x_tutor_view = POS_TUTOR_HORIZONTAL
@@ -241,9 +252,6 @@ class Configuration:
         self.li_personalities = []
 
         self.rival = None
-
-        self.x_translation_mode = False
-        self.x_use_googletranslator = False
 
         self.x_style = "Fusion"
         self.x_style_mode = "By default"
@@ -365,6 +373,13 @@ class Configuration:
     def set_translator(self, xtranslator):
         self.x_translator = xtranslator
 
+    def set_translation_values(self, lng, help_mode, use_local, google_labels, google_openings):
+        self.x_translator = lng
+        self.x_translator_google = google_labels
+        self.x_translator_google_openings = google_openings
+        self.x_translation_mode = help_mode
+        self.x_translation_local = use_local
+
     def type_icons(self):
         return int_toolbutton(self.x_tb_icons)
 
@@ -406,6 +421,10 @@ class Configuration:
         return [(x, x) for x in QtWidgets.QStyleFactory.keys()]
 
     def graba(self):
+        if self.x_translation_mode:   # se comprueba que se haya cambiado desde la ventana de ayuda a la traduccion
+            dic = Util.restore_pickle(self.paths.file)
+            if dic.get("x_quit_translation_mode"):
+                self.x_translation_mode = False
         dic = {x: getattr(self, x) for x in dir(self) if x.startswith("x_")}
         # dic["PALETTE"] = self.palette
         dic["PERSONALITIES"] = self.li_personalities
@@ -469,6 +488,16 @@ class Configuration:
                     li.append((uno.name, dic["NAME"], int(dic["%"]), dic.get("AUTHOR", "")))
         return sorted(li, key=lambda lng: f"AAA{lng[0]}" if lng[1] > "Z" else lng[1])
 
+    @staticmethod
+    def dic_translations():
+        dic = {}
+        dlang = Code.path_resource("Locale")
+        for uno in Util.listdir(dlang):
+            fini = Util.opj(dlang, uno.name, "lang.ini")
+            if os.path.isfile(fini):
+                dic[uno.name] = Util.ini_dic(fini)
+        return dic
+
     def elo_current(self):
         return self.x_elo
 
@@ -515,24 +544,35 @@ class Configuration:
 
     def temporary_file(self, extension):
         dir_tmp = Util.opj(self.paths.folder_userdata(), "tmp")
-        return Util.temporary_file(dir_tmp, extension)
+        return str(Util.temporary_file(dir_tmp, extension))
 
     def clean_tmp_folder(self):
         try:
+            # Obtenemos la fecha de hoy para comparar
+            today = date.today()
 
-            def remove_folder(folder, root):
+            def remove_folder(folder, is_root):
                 if "UserData" in folder and "tmp" in folder:
-                    entry: os.DirEntry
                     for entry in Util.listdir(folder):
                         if entry.is_dir():
                             remove_folder(entry.path, False)
+                            try:
+                                if not is_root and not os.listdir(entry.path):
+                                    os.rmdir(entry.path)
+                            except:
+                                pass
+
                         elif entry.is_file():
-                            Util.remove_file(entry.path)
-                    if not root:
-                        os.rmdir(folder)
+                            # Obtenemos la fecha de última modificación del fichero
+                            mtime = date.fromtimestamp(entry.stat().st_mtime)
+
+                            # Si la fecha de modificación es anterior a hoy, se borra
+                            if mtime < today:
+                                Util.remove_file(entry.path)
 
             remove_folder(self.temporary_folder(), True)
-        except:
+
+        except Exception:
             pass
 
     def read_variables(self, key_var):
@@ -557,8 +597,8 @@ class Configuration:
             self.dic_conf_boards_pk = db.as_dictionary()
             if "BASE" not in self.dic_conf_boards_pk:
                 with open(
-                    Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
-                    "rb",
+                        Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
+                        "rb",
                 ) as f:
                     var = pickle.loads(f.read())
                     alto = ScreenUtils.desktop_height()

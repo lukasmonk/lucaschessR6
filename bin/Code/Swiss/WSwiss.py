@@ -53,7 +53,7 @@ class WSwiss(LCDialog.LCDialog):
 
         self.tb = QTDialogs.LCTB(self)
 
-        self.tab = Controles.Tab(self).set_font_type(puntos=10).set_position("S")
+        self.tab = Controles.Tab(self).set_font_type(puntos=10).set_position_south()
         self.tab.dispatch_change(self.tab_changed)
         font = Controles.FontType(puntos=10)
 

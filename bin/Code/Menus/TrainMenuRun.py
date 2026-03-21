@@ -1,7 +1,6 @@
 import shutil
 
 import Code
-from Code.FindAllMoves import ManagerFindAllMoves
 from Code.Base.Constantes import (
     GT_AGAINST_GM,
     GT_TACTICS,
@@ -13,15 +12,17 @@ from Code.Coordinates import WCoordinatesBasic, WCoordinatesBlocks, WCoordinates
 from Code.CountsCaptures import WCountsCaptures
 from Code.Endings import ManagerMate, WEndingsGTB
 from Code.Expeditions import WindowEverest
+from Code.FindAllMoves import ManagerFindAllMoves
 from Code.GM import ManagerGM, WindowGM
+from Code.Leitner import WLeitner
 from Code.Mate15 import WMate15
 from Code.Memory import Memory
 from Code.QT import Iconos, QTMessages
-from Code.ZQT import WindowVisualiza, WindowPuente, WindowPotencia, WindowHorses, WindowDailyTest
 from Code.Resistance import ManagerResistance, Resistance, WindowResistance
 from Code.Tactics import ManagerTactics, Tactics, WindowTactics
 from Code.TrainPositions import TrainPositions
 from Code.TurnOnLights import ManagerTurnOnLights, TurnOnLights, WindowTurnOnLights
+from Code.ZQT import WindowVisualiza, WindowPuente, WindowPotencia, WindowHorses, WindowDailyTest
 
 
 class TrainMenuRun:
@@ -95,7 +96,7 @@ class TrainMenuRun:
 
         elif resp.startswith("map_"):
             nada, mapa = resp.split("_")
-            self.procesador.trainingMap(mapa)
+            self.procesador.training_map(mapa)
 
         elif resp == "transsiberian":
             self.procesador.show_route()
@@ -134,6 +135,10 @@ class TrainMenuRun:
             else:
                 cat = int(resp[7:])
                 mem.lanza(cat)
+        elif resp == "leitner":
+            w = WLeitner.WLeitner(self.procesador.main_window)
+            if bool(w.exec()):
+                self.procesador.play_leitner(w.result_recno)
 
     def tacticas(self, tipo, name, carpeta, ini, ntactic):
         tacticas = Tactics.Tactics(tipo, name, carpeta, ini)
@@ -202,7 +207,7 @@ class TrainMenuRun:
         WindowPuente.window_puente(self.procesador, nivel)
 
     def horses(self, test, titulo, icono):
-        WindowHorses.windowHorses(self.procesador, test, titulo, icono)
+        WindowHorses.window_horses(self.procesador, test, titulo, icono)
 
     def bmt(self):
         WindowBMT.window_bmt(self.procesador)
@@ -261,7 +266,7 @@ class TrainMenuRun:
             self.procesador.manager.start(num_theme, num_block, tol)
 
     def washing_machine(self):
-        self.procesador.showWashing()
+        self.procesador.show_washing()
 
     def captures(self):
         w = WCountsCaptures.WCountsCaptures(self.procesador, True)

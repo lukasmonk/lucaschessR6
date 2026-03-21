@@ -68,7 +68,7 @@ class WLeague(LCDialog.LCDialog):
 
         self.tb = QTDialogs.LCTB(self)
 
-        self.tab = Controles.Tab(self).set_font_type(puntos=10).set_position("S")
+        self.tab = Controles.Tab(self).set_font_type(puntos=10).set_position_south()
         self.tab.dispatch_change(self.tab_changed)
         font = Controles.FontType(puntos=10)
 
@@ -93,7 +93,7 @@ class WLeague(LCDialog.LCDialog):
         if num_divisions > 12:
             for dv in range(13, num_divisions + 1):
                 li_nom_divisions.append("%d %s" % (dv, _("Division")))
-        tr = Controles.Tab(self).set_font_type(puntos=10)  # .set_position("S")
+        tr = Controles.Tab(self).set_font_type(puntos=10)
         sw = "◻  "
         sb = "◼  "
         for division in range(num_divisions):
@@ -126,7 +126,7 @@ class WLeague(LCDialog.LCDialog):
 
         # CROSSTABS ----------------------------------------------------------------------------------------------------
         ly = Colocacion.H()
-        tr = Controles.Tab(self).set_font_type(puntos=10)  # .set_position("S")
+        tr = Controles.Tab(self).set_font_type(puntos=10)
         for num_division in range(num_divisions):
             o_col = Columnas.ListaColumnas()
             o_col.nueva("ORDER", _("Order"), 30, align_center=True)

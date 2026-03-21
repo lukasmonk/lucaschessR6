@@ -1,14 +1,14 @@
 import os
 
 import Code
-from Code.Z import RemoveResults, Util
 from Code.Board import WBoardColors
 from Code.Config import WindowConfig
-from Code.MainWindow import LucasChessGui
 from Code.Menus import BaseMenu
 from Code.QT import Iconos, SelectFiles, WColors
 from Code.Shortcuts import Shortcuts, WShortcuts
 from Code.Sound import WindowSonido
+from Code.Translations import WSelectLanguage
+from Code.Z import RemoveResults, Util
 
 
 class OptionsMenu(BaseMenu.RootMenu):
@@ -32,7 +32,7 @@ class OptionsMenu(BaseMenu.RootMenu):
         self.new("set_password", _("Set password"), Iconos.Password())
 
         if Code.configuration.is_main:
-            self.new("usuarios", _("Users"), Iconos.Usuarios())
+            self.new("users", _("Users"), Iconos.Usuarios())
 
             submenu_user_folder = self.new_submenu(_("User data folder"), Iconos.Carpeta())
             submenu_user_folder.new(
@@ -51,7 +51,8 @@ class OptionsMenu(BaseMenu.RootMenu):
         rem.menu()
 
     def select_language(self):
-        if LucasChessGui.select_language(self.wparent, False):
+        wsl = WSelectLanguage.WSelectLanguage(self.wparent)
+        if wsl.exec():
             self.reiniciar()
 
     def cambiaconfiguration(self):
@@ -90,6 +91,9 @@ class OptionsMenu(BaseMenu.RootMenu):
         shortcuts = Shortcuts.Shortcuts(self.procesador)
         w = WShortcuts.WShortcuts(shortcuts)
         w.exec()
+
+    def users(self):
+        self.procesador.users()
 
     def run_select(self, resp):
         getattr(self, resp)()

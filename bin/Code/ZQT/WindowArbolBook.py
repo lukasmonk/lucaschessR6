@@ -15,10 +15,10 @@ class UnMove:
         self.book = book
         self.fen_base = fen_base
         self.from_sq, self.to_sq, self.promotion, label, self.ratio = mov_book
-        label = label.replace(" - ", " ").strip()
-        while "  " in label:
-            label = label.replace("  ", " ")
-        self.pgn, self.porcentaje, self.absoluto = label.split(" ")
+        li = [x.strip() for x in label.split(" -")]
+        while len(li) < 3:
+            li.append("0")
+        self.pgn, self.porcentaje, self.absoluto = li[:3]
         self.porcentaje += "  " * list_moves_parent.nivel
         self.absoluto += "  " * list_moves_parent.nivel
 
@@ -154,7 +154,6 @@ class TreeMoves(QtWidgets.QTreeWidget):
         self.sortItems(4, QtCore.Qt.SortOrder.AscendingOrder)
 
     def set_moves(self, lista_moves):
-
         li_moves = lista_moves.liMoves
         if li_moves:
             move_owner = lista_moves.moveOwner

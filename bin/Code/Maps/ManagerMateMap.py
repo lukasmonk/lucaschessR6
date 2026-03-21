@@ -107,7 +107,7 @@ class ManagerMateMap(Manager.Manager):
     def run_action(self, key):
         if key == TB_CLOSE:
             self.end_game()
-            self.procesador.trainingMap(self.workmap.mapa)
+            self.procesador.training_map(self.workmap.mapa)
 
         elif key == TB_REINIT:
             self.reiniciar()

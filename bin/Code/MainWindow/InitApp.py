@@ -9,14 +9,14 @@ from Code.QT import Controles
 
 def init_app_style(app, configuration):
     app.setStyle(QtWidgets.QStyleFactory.create(configuration.x_style))
-    file = configuration.x_style_mode
-    path = Code.path_resource("Styles", f"{file}.qss")
+    style = configuration.x_style_mode
+    path = Code.path_resource("Styles", f"{style}.qss")
     if not os.path.isfile(path):
-        configuration.x_style_mode = "By default"
+        style = configuration.x_style_mode = "By default"
         configuration.graba()
-        path = Code.path_resource("Styles", f"{configuration.x_style_mode}.qss")
+        path = Code.path_resource("Styles", f"{style}.qss")
 
-    path_colors = Code.path_resource("Styles", f"{file}.colors")
+    path_colors = Code.path_resource("Styles", f"{style}.colors")
     Code.dic_colors = Util.ini_base2dic(path_colors)
     dic_personal = Util.ini_base2dic(configuration.paths.file_colors(), rfind_equal=True)
     Code.dic_colors.update(dic_personal)
@@ -67,5 +67,5 @@ color: %s;
 
     QtGui.QFontDatabase.addApplicationFont(Code.path_resource("IntFiles", "ChessMerida.ttf"))
 
-    font = Controles.FontType(configuration.x_font_family, puntos=configuration.x_font_points)
+    font = Controles.FontTypeNew(family=configuration.x_font_family, point_size=configuration.x_font_points)
     app.setFont(font)

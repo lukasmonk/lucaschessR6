@@ -14,6 +14,7 @@ class SVGSC(BoardBlocks.BloqueEspSC):
         self.distBordes = 0.30 * block_imgsvg.width_square
 
         self.pixmap = QtSvg.QSvgRenderer(QtCore.QByteArray(block_imgsvg.xml.encode("utf-8")))
+        # self.setFlag(QtWidgets.QGraphicsItem.ItemHasNoContents, False)
 
         self.physical_pos2xy()
 
@@ -215,6 +216,10 @@ class SVGSC(BoardBlocks.BloqueEspSC):
 
     def paint(self, painter, option, widget=None):
         bm = self.block_data
+
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform, True)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.TextAntialiasing, True)
 
         physical_pos = bm.physical_pos
         dx = physical_pos.x - 1

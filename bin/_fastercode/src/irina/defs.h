@@ -76,7 +76,7 @@ typedef struct
    Bitmap   hashkey;
    unsigned ply;
    unsigned idx_moves;
-   MoveBin     moves[MAX_MOVES];
+   MoveBin  moves[MAX_MOVES];
    unsigned ply_moves[MAX_GAMELINE];
    History  history[MAX_GAMELINE];
 } Board;

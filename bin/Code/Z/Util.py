@@ -32,13 +32,13 @@ class Log:
 
     def write(self, buf: str) -> None:
         if buf.startswith("Traceback"):
-            buf = f"{today()}\n{buf}"
+            import Code
+            buf = f"{Code.VERSION}-{today()}\n{buf}"
         with self.logname.open("at", encoding="utf-8") as ferr:
             ferr.write(buf)
 
     def writeln(self, buf: str) -> None:
-        with self.logname.open("at", encoding="utf-8") as ferr:
-            ferr.write(f"{buf}\n")
+        self.write(f"{buf}\n")
 
     def flush(self) -> None:
         pass  # To remove error 120 at exit
@@ -254,22 +254,10 @@ def today() -> datetime.datetime:
 
 
 def huella() -> str:
-    """
-    Genera un identificador único basado en timestamp y UUID.
-
-    Returns:
-        str: Identificador único de 24 caracteres base64 sin padding.
-
-    Nota:
-        - Combina timestamp actual (8 bytes) + UUID v4 (16 bytes)
-        - Proporciona alta unicidad incluso con llamadas concurrentes
-        - El timestamp asegura ordenamiento cronológico parcial
-        - UUID garantiza unicidad espacial/global
-    """
-    unique_part = uuid.uuid4().bytes
-    time_part = int(time.time()).to_bytes(8, byteorder='big')
-    combined = time_part + unique_part
-    return base64.urlsafe_b64encode(combined).decode().replace("=", "")
+    timestamp = int(time.time() * 1000).to_bytes(6, byteorder='big')
+    random_part = uuid.uuid4().bytes[:10]
+    combined = timestamp + random_part
+    return base64.urlsafe_b64encode(combined).decode().rstrip("=")
 
 
 def save_pickle(fich: Union[str, Path], obj: Any) -> bool:
@@ -853,44 +841,81 @@ def file_crc(ruta_archivo):
 
 
 def startfile(path: Union[str, Path]) -> bool:
+    """
+    Opens a file or directory with the default system application.
+    Returns True if the operation was launched successfully, False otherwise.
+    """
     try:
         path_obj = Path(path).absolute()
+
+        if not path_obj.exists():
+            return False
+
         if is_windows():
             os.startfile(str(path_obj))
-        else:  # Linux
-            opener = None
+            return True
 
-            if path_obj.is_dir():
-                desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
-                if "kde" in desktop and which("dolphin"):
-                    opener = "dolphin"
-                elif "gnome" in desktop and which("nautilus"):
-                    opener = "nautilus"
-                elif which("xdg-open"):
-                    opener = "xdg-open"
-            elif which("xdg-open"):
-                opener = "xdg-open"
+        # Linux
+        opener = _resolve_linux_opener(path_obj)
+        if not opener:
+            return False
 
-            if not opener:
-                return False
-
-            env = os.environ.copy()
-            env.pop("LD_LIBRARY_PATH", None)
-            env['DISPLAY'] = os.getenv('DISPLAY', ':0')
-            env['DBUS_SESSION_BUS_ADDRESS'] = os.getenv(
-                'DBUS_SESSION_BUS_ADDRESS', f'unix:path=/run/user/{os.getuid()}/bus'
-            )
-            env['HOME'] = os.getenv('HOME', str(Path.home()))
-
-            subprocess.Popen(
-                [opener, str(path_obj)],
-                env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+        env = _build_linux_env()
+        subprocess.Popen(
+            [opener, str(path_obj)],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,  # detach from parent process
+        )
         return True
-    except Exception:
+
+    except OSError:
         return False
+
+
+def _resolve_linux_opener(path_obj: Path) -> Optional[str]:
+    """Resolves the best available opener for the given path on Linux."""
+    if path_obj.is_dir():
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        candidates = []
+
+        if "kde" in desktop:
+            candidates.append("dolphin")
+        elif "gnome" in desktop:
+            candidates.append("nautilus")
+        elif "xfce" in desktop:
+            candidates.append("thunar")
+        elif "lxde" in desktop or "lxqt" in desktop:
+            candidates.append("pcmanfm")
+
+        candidates.append("xdg-open")  # universal fallback
+
+        return next((cmd for cmd in candidates if which(cmd)), None)
+
+    return "xdg-open" if which("xdg-open") else None
+
+
+def _build_linux_env() -> dict:
+    """Builds a sanitized environment for launching GUI applications on Linux."""
+    uid = os.getuid()
+    env = os.environ.copy()
+
+    # Remove vars that can break subprocess linking against different libs
+    for var in ("LD_LIBRARY_PATH", "LD_PRELOAD"):
+        env.pop(var, None)
+
+    env.setdefault("DISPLAY", ":0")
+    env.setdefault("HOME", str(Path.home()))
+    env.setdefault(
+        "DBUS_SESSION_BUS_ADDRESS",
+        f"unix:path=/run/user/{uid}/bus",
+    )
+    # Wayland support
+    env.setdefault("WAYLAND_DISPLAY", f"wayland-{uid}")
+    env.setdefault("XDG_RUNTIME_DIR", f"/run/user/{uid}")
+
+    return env
 
 
 def clamp(n: Union[int, float], smallest: Union[int, float], largest: Union[int, float]) -> Union[int, float]:

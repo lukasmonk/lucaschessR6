@@ -1,4 +1,5 @@
-from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs
+from PySide6 import QtWidgets
+from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
 
 class WShortcuts(LCDialog.LCDialog):
@@ -39,7 +40,12 @@ class WShortcuts(LCDialog.LCDialog):
         f = Controles.FontType(puntos=10, peso=75)
         self.grid.set_font(f)
 
-        layout = Colocacion.V().control(tb).control(self.grid).margen(3)
+        # Status bar
+        self.status = QtWidgets.QStatusBar(self)
+        self.status.setFixedHeight(Controles.calc_fixed_width(22))
+        self.status.showMessage(_("Right-click on the LABEL field to edit it"))
+
+        layout = Colocacion.V().control(tb).control(self.grid).control(self.status).margen(3)
         self.setLayout(layout)
 
         self.restore_video(with_tam=True)
@@ -100,7 +106,16 @@ class WShortcuts(LCDialog.LCDialog):
         if row >= 0:
             shortcut = self.shortcuts.li_shortcuts[row]
             self.finalize()
-            self.shortcuts.lauch_shortcut(shortcut)
+            self.shortcuts.launch_shortcut(shortcut)
+
+    def grid_right_button(self, _grid, row, _obj_column, _modif):
+        if row >= 0:
+            shortcut = self.shortcuts.li_shortcuts[row]
+            option = shortcut.get_label()
+            option = QTMessages.read_simple(self, _("Shortcuts"), _("Option"), option)
+            if option:
+                shortcut.set_label(option)
+                self.grid.refresh()
 
     def save(self):
         self.shortcuts.save()

@@ -1,4 +1,3 @@
-import ast
 
 from PySide6 import QtCore, QtWidgets
 
@@ -51,8 +50,8 @@ class WindowTutor(LCDialog.LCDialog):
         self.board_tutor, lytbtutor, self.tbtutor = create_board("tutor")
         self.board_user, lytbuser, self.tbuser = create_board("user")
         self.board_rival, lytbRival, self.tbrival = create_board("rival", with_rival)
-        self.boardOpening, lytbOpening, self.tbOpening = create_board("opening", with_openings, si_libre=False)
-        tutor.ponBoardsGUI(self.board_tutor, self.board_user, self.board_rival, self.boardOpening)
+        self.board_opening, lytbopening, self.tbopening = create_board("opening", with_openings, si_libre=False)
+        tutor.ponBoardsGUI(self.board_tutor, self.board_user, self.board_rival, self.board_opening)
 
         tb_analisis = Controles.TBrutina(self, icon_size=16, with_text=False)
         tb_analisis.new("", Iconos.Analisis(), self.launch_analysis, tool_tip=_("Analysis"))
@@ -78,15 +77,15 @@ class WindowTutor(LCDialog.LCDialog):
         # Openings
         ly_openings = None
         if with_openings:
-            self.tutor.set_toolbaropening_gui(self.tbOpening)
+            self.tutor.set_toolbaropening_gui(self.tbopening)
             li_options = self.tutor.opcionesOpenings()
             self.cbOpenings = Controles.CB(self, li_options, 0)
             self.cbOpenings.setFont(flba)
-            self.cbOpenings.set_multiline(self.boardOpening.width())
+            self.cbOpenings.set_multiline(self.board_opening.width())
             self.cbOpenings.capture_changes(self.tutor.cambiarOpening)
 
             lb_openings = Controles.LB(self, _("Opening")).set_font(f).align_center()
-            lb_openings.setFixedWidth(self.boardOpening.ancho)
+            lb_openings.setFixedWidth(self.board_opening.ancho)
             lb_openings.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             manager.configuration.set_property(lb_openings, "tutor-tutor" if has_hints else "tutor-tutor-disabled")
             if has_hints:
@@ -126,7 +125,7 @@ class WindowTutor(LCDialog.LCDialog):
         if with_rival:
             layout.controlc(self.lb_rival, fr, cr).controlc(self.board_rival, fr + 1, cr).otro(lytbRival, fr + 2, cr)
         elif with_openings:
-            layout.otroc(ly_openings, fr, cr).controlc(self.boardOpening, fr + 1, cr).otro(lytbOpening, fr + 2, cr)
+            layout.otroc(ly_openings, fr, cr).controlc(self.board_opening, fr + 1, cr).otro(lytbopening, fr + 2, cr)
 
         layout.margen(8)
 
@@ -155,16 +154,16 @@ class WindowTutor(LCDialog.LCDialog):
         self.run_toolbar(self.sender().key)
 
     def run_toolbar(self, accion):
-        x = accion.index("Mover")
+        x = accion.index("move")
         quien = accion[:x]
-        que = accion[x + 5 :]
+        que = accion[x + 5:]
         self.tutor.mueve(quien, que)
 
     def board_wheel_event(self, board, forward):
         forward = Code.configuration.wheel_board(forward)
-        for t in ["Tutor", "Usuario", "Rival", "Opening"]:
-            if ast.literal_eval(f"self.board{t} == board"):
-                self.run_toolbar(f"{t.lower()}Mover{'Adelante' if forward else 'Atras'}")
+        for t in ["tutor", "user", "rival", "opening"]:
+            if getattr(self, f"board_{t}") == board:
+                self.run_toolbar(f"{t.lower()}move_{'forward' if forward else 'back'}")
                 return
 
     def consult_book(self):

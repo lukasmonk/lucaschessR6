@@ -493,7 +493,7 @@ class WEverest(LCDialog.LCDialog):
 def everest(procesador):
     w = WEverest(procesador)
     if w.exec():
-        procesador.showEverest(w.selected)
+        procesador.show_everest(w.selected)
 
 
 def show_expedition(wowner, configuration, recno):

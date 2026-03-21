@@ -27,7 +27,8 @@ class ToolsMenu(BaseMenu.RootMenu):
                     if not xelem.is_folder:
                         haz_elem(submenu_new, xelem)
             else:
-                submenu.new(f"dbase_R{elem.path}", elem.name, nico.otro(), sep=False)
+                icon = Iconos.Link() if elem.path.endswith("link") else nico.otro()
+                submenu.new(f"dbase_R{elem.path}", elem.name, icon, sep=False)
 
         dbli = QTDialogs.lista_db(Code.configuration, True)
         for relem in dbli.li_elems:

@@ -54,7 +54,7 @@ class ConfigEngines:
         if alias in self._dic_engines:
             return self._dic_engines[alias].clone()
         if defecto is None:
-            defecto = self.configuration.x_rival_inicial
+            defecto = self.configuration.tutor_default
         return self.search(defecto)
 
     def search_tutor(self, key):

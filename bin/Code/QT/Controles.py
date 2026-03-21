@@ -2,6 +2,8 @@ import datetime
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
+from typing import Optional
+
 
 def calc_fixed_width(fixed_width: int) -> int:
     metricas = QtGui.QFontMetrics(QtWidgets.QApplication.font())
@@ -375,7 +377,7 @@ class LB(QtWidgets.QLabel):
     def set_font_type(
             self,
             name="",
-            puntos=8,
+            puntos=None,
             peso=50,
             is_italic=False,
             is_underlined=False,
@@ -1115,13 +1117,13 @@ class FontType(QtGui.QFont):
             is_underlined=False,
             is_striked=False,
             txt=None,
-            more_puntos=0,
+            point_size_delta=0,
     ):
         QtGui.QFont.__init__(self)
         if txt is None:
-            if puntos == 0 or more_puntos > 0:
+            if puntos == 0 or point_size_delta > 0:
                 font = QtWidgets.QApplication.font()
-                puntos = font.pointSize() + more_puntos
+                puntos = font.pointSize() + point_size_delta
             cursiva = 1 if is_italic else 0
             subrayado = 1 if is_underlined else 0
             tachado = 1 if is_striked else 0
@@ -1130,6 +1132,60 @@ class FontType(QtGui.QFont):
                 name = font.family()
             txt = f"{name},{puntos},-1,5,{peso},{cursiva},{subrayado},{tachado},0,0"
         self.fromString(txt)
+
+
+class FontTypeNew(QtGui.QFont):
+    """
+    QFont wrapper supporting base font inheritance
+    and relative point size adjustments.
+    """
+
+    def __init__(
+        self,
+        family: str = "",
+        point_size: int = 0,
+        bold: Optional[bool] = None,
+        extra_bold: Optional[bool] = None,
+        italic: Optional[bool] = None,
+        underline: Optional[bool] = None,
+        strike_out: Optional[bool] = None,
+        txt: Optional[str] = None,
+        point_size_delta: int = 0,
+    ) -> None:
+        super().__init__()
+
+        if txt is not None:
+            self.fromString(txt)
+            return
+
+        base_font = QtWidgets.QApplication.font()
+
+        resolved_family = family or base_font.family()
+
+        resolved_point_size = (
+            base_font.pointSize() if point_size == 0 else point_size
+        )
+        resolved_point_size += point_size_delta
+
+        if resolved_point_size <= 0:
+            resolved_point_size = base_font.pointSize()
+
+        self.setFamily(resolved_family)
+        self.setPointSize(resolved_point_size)
+
+        if bold is not None:
+            self.setBold(bold)
+        elif extra_bold is not None:
+            self.setWeight(QtGui.QFont.Weight.ExtraBold)
+
+        if italic is not None:
+            self.setItalic(italic)
+
+        if underline is not None:
+            self.setUnderline(underline)
+
+        if strike_out is not None:
+            self.setStrikeOut(strike_out)
 
 
 class Tab(QtWidgets.QTabWidget):
@@ -1164,6 +1220,18 @@ class Tab(QtWidgets.QTabWidget):
         elif pos == "W":
             rpos = self.TabPosition.West
         self.setTabPosition(rpos)
+        return self
+
+    def set_position_south(self):
+        self.setTabPosition(self.TabPosition.South)
+        return self
+
+    def set_position_east(self):
+        self.setTabPosition(self.TabPosition.East)
+        return self
+
+    def set_position_west(self):
+        self.setTabPosition(self.TabPosition.West)
         return self
 
     def set_icono(self, pos, icono):

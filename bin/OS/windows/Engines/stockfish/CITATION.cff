@@ -1,0 +1,5 @@
+>> setoption name SyzygyPath value H:/lucaschessR6/Resources/OS/windows
+<< info string Found 0 WDL and 0 DTZ tablebase files (up to 0-man).
+>> ucinewgame
+<< info string Found 0 WDL and 0 DTZ tablebase files (up to 0-man).
+>> setoption name MultiPV value 1

@@ -13,7 +13,7 @@ def edit_variation(
 ):
     window = procesador.main_window
     manager_tutor = procesador.get_manager_tutor()
-    procesador_variations = procesador.clonVariations(window, manager_tutor, is_competitive=is_competitive)
+    procesador_variations = procesador.clon_variations(window, manager_tutor, is_competitive=is_competitive)
 
     manager_variations = ManagerVariations.ManagerVariations(procesador_variations)
     manager_variations.start(game, is_white_bottom, with_engine_active, is_competitive, go_to_move)
@@ -30,7 +30,7 @@ def edit_variation(
 def edit_variation_moves(procesador, window, is_white_bottom, fen, linea_pgn, titulo=None):
     game = Game.fen_game(fen, linea_pgn)
     manager_tutor = procesador.get_manager_tutor()
-    procesador_variations = procesador.clonVariations(window, manager_tutor, is_competitive=False)
+    procesador_variations = procesador.clon_variations(window, manager_tutor, is_competitive=False)
 
     manager_variations = ManagerVariations.ManagerVariations(procesador_variations)
     manager_variations.start(game, is_white_bottom, False, False)

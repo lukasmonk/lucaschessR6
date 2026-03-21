@@ -28,7 +28,7 @@ def genera_pm(pieces):
     if pieces.is_only_board():
         pieces = pieces.get_default()
 
-    for k in "KQRNBkqrnb":
+    for k in "KQRNBPkqrnbp":
         dicPZ[k] = pieces.render(k)
 
 
@@ -122,7 +122,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
         self.si_indicador_inicial = si_indicador_inicial
         QtWidgets.QStyledItemDelegate.__init__(self, None)
 
-    def setWhite(self, is_white):
+    def set_side_of_figurines(self, is_white):
         self.is_white = is_white
         self.with_figurines = is_white is not None
 
@@ -166,7 +166,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
         post_pz = None
         salto_fin_pz = 0
         if self.with_figurines and pgn and len(pgn) > 2:
-            if pgn[0] in "QBKRN":
+            if pgn[0] in "PQBKRN":
                 ini_pz = pgn[0] if self.is_white else pgn[0].lower()
                 pgn = pgn[1:]
             elif pgn[-1] in "QBRN":
@@ -209,6 +209,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
             painter.translate(x_total, y_total)
             painter.drawPixmap(0, 0, dicPM[indicador_inicial])
             painter.restore()
+
         if theme:
             painter.save()
             themes = Code.get_themes()
@@ -495,7 +496,7 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
         if li_nags:
             if post_pz is None:
                 post_pz = ""
-            post_pz += f" {' '.join(li_nags)}"
+            post_pz = f"{post_pz} {' '.join(li_nags)}"
 
         rect = option.rect
         width = rect.width()

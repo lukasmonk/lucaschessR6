@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 
 import Code
 from Code.Z import Util
@@ -17,38 +17,54 @@ from Code.Shortcuts import WShortcuts
 
 
 class Shortcut:
+    __slots__ = ("key_menu", "key", "label")
+
     key_menu: str
     key: str
     label: str
 
-    def set_label(self, label):
+    def __init__(self, key_menu: str = "", key: str = "", label: str = "") -> None:
+        self.key_menu = key_menu
+        self.key = key
         self.label = label
 
-    def save(self):
+    def set_label(self, label: str) -> None:
+        self.label = label
+
+    def get_label(self) -> str:
+        return self.label
+
+    def save(self) -> dict[str, str]:
         return {
             "key_menu": self.key_menu,
             "key": self.key,
             "label": self.label,
         }
 
-    def read(self, dic):
-        self.key_menu = dic["key_menu"]
-        self.key = dic["key"]
-        self.label = dic["label"]
+    def to_dict(self) -> dict[str, str]:
+        return self.save()
+
+    def read(self, dic: dict) -> None:
+        self.key_menu = dic.get("key_menu", "")
+        self.key = dic.get("key", "")
+        self.label = dic.get("label", "")
+
+    def from_dict(self, dic: dict) -> None:
+        self.read(dic)
 
 
 class Shortcuts:
-    def __init__(self, procesador):
+    def __init__(self, procesador) -> None:
         self.procesador = procesador
         self.wparent = procesador.main_window
-        self._play_menu = None
-        self._train_menu = None
-        self._compete_menu = None
-        self._tools_menu = None
-        self._engines_menu = None
-        self._options_menu = None
-        self._information_menu = None
-        self.li_shortcuts = []
+        self._play_menu: Optional[PlayMenu.PlayMenu] = None
+        self._train_menu: Optional[TrainMenu.TrainMenu] = None
+        self._compete_menu: Optional[CompeteMenu.CompeteMenu] = None
+        self._tools_menu: Optional[ToolsMenu.ToolsMenu] = None
+        self._engines_menu: Optional[EnginesMenu.EnginesMenu] = None
+        self._options_menu: Optional[OptionsMenu.OptionsMenu] = None
+        self._information_menu: Optional[InformationMenu.InformationMenu] = None
+        self.li_shortcuts: list[Shortcut] = []
         self.read()
 
     def play_menu(self):
@@ -86,39 +102,43 @@ class Shortcuts:
             self._information_menu = InformationMenu.InformationMenu(self.procesador)
         return self._information_menu
 
-    def get_txtmenu(self, txt_menu):
+    def get_txtmenu(self, txt_menu: str):
         return getattr(self, f"{txt_menu}_menu")()
 
-    def read(self):
+    def read(self) -> None:
         lista = Util.restore_pickle(Code.configuration.paths.file_shortcuts())
-        if lista is None:
-            lista = []
-        self.li_shortcuts = []
+        if not lista:
+            self.li_shortcuts = []
+            return
+        shortcuts: list[Shortcut] = []
         for dic in lista:
+            if not isinstance(dic, dict):
+                continue
             s = Shortcut()
-            s.read(dic)
-            self.li_shortcuts.append(s)
+            try:
+                s.read(dic)
+            except Exception:
+                continue
+            shortcuts.append(s)
+        self.li_shortcuts = shortcuts
 
-    def save(self):
-        lista = []
-        for shortcut in self.li_shortcuts:
-            lista.append(shortcut.save())
+    def save(self) -> None:
+        lista: list[dict[str, str]] = [shortcut.save() for shortcut in self.li_shortcuts]
         Util.save_pickle(Code.configuration.paths.file_shortcuts(), lista)
 
-    def get_grid_column(self, nshortcut, column):
+    def get_grid_column(self, nshortcut: int, column: Literal["OPTION", "MENU", "LABEL"]):
         shortcut: Shortcut = self.li_shortcuts[nshortcut]
+        if column == "LABEL":
+            return shortcut.label
+        tb_menu = self.get_txtmenu(shortcut.key_menu)
         if column == "OPTION":
-            tb_menu = self.get_txtmenu(shortcut.key_menu)
             option = tb_menu.locate_key(shortcut.key)
             return option.label
-        elif column == "MENU":
-            tb_menu = self.get_txtmenu(shortcut.key_menu)
+        if column == "MENU":
             return _F(tb_menu.name)
-        elif column == "LABEL":
-            return shortcut.label
         return None
 
-    def remove(self, nshortcut):
+    def remove(self, nshortcut: int) -> None:
         del self.li_shortcuts[nshortcut]
 
     def go_up(self, nshortcut):
@@ -133,7 +153,24 @@ class Shortcuts:
             self.li_shortcuts[nshortcut],
         )
 
-    def menu(self):
+    @staticmethod
+    def _format_label_and_shortcut(
+            label: str, alt: int, with_add: bool
+    ) -> tuple[str, Optional[str], int]:
+        shortcut_text: Optional[str]
+        if alt <= 9 and with_add:
+            shortcut_text = f"ALT+{alt}"
+            alt += 1
+        else:
+            if alt <= 9 and Util.is_windows():
+                label = f"&{alt}. {label}"
+                alt += 1
+            shortcut_text = None
+        return label, shortcut_text, alt
+
+    def menu_base(self, with_add: bool):
+        if not with_add and not self.li_shortcuts:
+            return None
         menu = QTDialogs.LCMenu(self.wparent)
         alt = 1
         option: Optional[BaseMenu.Option]
@@ -143,41 +180,47 @@ class Shortcuts:
             tb_menu = self.get_txtmenu(key_menu)
             option = tb_menu.locate_key(key)
             if option is not None:
-                if alt <= 9:
-                    sh = f"ALT+{alt}"
-                    alt += 1
-                else:
-                    sh = None
+                label, sh, alt = self._format_label_and_shortcut(option.label, alt, with_add)
                 menu.opcion(
                     shortcut,
-                    shortcut.label,
+                    label,
                     option.icon,
                     not option.enabled,
                     shortcut=sh,
                 )
                 menu.separador()
-        menu.separador()
-        menu.opcion("shortcuts", _("Add new shortcuts"), Iconos.Mas())
-        resp = menu.lanza()
+        if with_add:
+            menu.separador()
+            menu.opcion("shortcuts", _("Add new shortcuts"), Iconos.Mas())
+        return menu.lanza()
+
+    def menu(self) -> None:
+        resp = self.menu_base(True)
         if resp == "shortcuts":
             w = WShortcuts.WShortcuts(self)
             w.exec()
         elif resp is not None:
             shortcut: Shortcut = resp
-            self.lauch_shortcut(shortcut)
+            self.launch_shortcut(shortcut)
 
-    def launch_alt(self, number):
+    def launch_alt(self, number: int) -> bool:
         if 0 < number <= len(self.li_shortcuts):
             shortcut: Shortcut = self.li_shortcuts[number - 1]
-            self.lauch_shortcut(shortcut)
+            self.launch_shortcut(shortcut)
+            return True
+        return False
 
-    def lauch_shortcut(self, shortcut):
+    def launch_key(self, key: str) -> bool:
+        for shortcut in self.li_shortcuts:
+            if shortcut.key == key:
+                self.launch_shortcut(shortcut)
+                return True
+        return False
+
+    def launch_shortcut(self, shortcut: Shortcut) -> None:
         menu_gen = self.get_txtmenu(shortcut.key_menu)
         menu_gen.run_exec(shortcut.key)
 
-    def add_shortcut(self, menu, copt, label):
-        shortcut = Shortcut()
-        shortcut.key_menu = menu
-        shortcut.key = copt
-        shortcut.label = label
+    def add_shortcut(self, menu: str, copt: str, label: str) -> None:
+        shortcut = Shortcut(menu, copt, label)
         self.li_shortcuts.append(shortcut)

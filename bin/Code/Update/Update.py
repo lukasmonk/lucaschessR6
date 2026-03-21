@@ -55,7 +55,6 @@ def update_file(titulo: str, urlfichero: str, tam: int, sha256: Optional[str] = 
         True if update successful, False otherwise
     """
     logger = UpdateLogger.get_logger()
-    backup_path = None
 
     try:
         # Clean up and create actual folder
@@ -484,7 +483,7 @@ def update_manual(main_window):
 
         # Extract
         UpdateLogger.log_extraction_start(archive_type)
-        with QTMessages.one_moment_please(main_window, _("Extracting...")):
+        with QTMessages.one_moment_please(main_window, _("Extracting update...")):
             UpdateCompression.extract_archive(local_file, folder_actual)
         UpdateLogger.log_extraction_complete()
 

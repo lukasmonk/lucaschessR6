@@ -129,7 +129,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
         ly_left = Colocacion.V().control(tab_grid).otro(ly_rb).margen(0)
         ly_up = Colocacion.H().otro(ly_left).control(self.board)
 
-        Controles.Tab().set_position("W")
+        Controles.Tab().set_position_west()
         ancho = self.board.width() + ancho_grid
         self.htotal = [
             Histogram.Histogram(self, alm.hgame, grid_all, ancho, True),
@@ -313,7 +313,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
     def _grid_dato_moves_best(self, obj_column, column, move):
         if self.with_figurines:
             delegado = obj_column.edicion
-            delegado.setWhite(move.is_white())
+            delegado.set_side_of_figurines(move.is_white())
         mrm, pos = move.analysis
         rm0 = mrm.li_rm[pos if column == "MOVE" else 0]
         pv1 = rm0.pv.split(" ")[0]

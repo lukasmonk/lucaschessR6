@@ -224,7 +224,7 @@ class MainWindow(LCDialog.LCDialog):
         nue = ScreenUtils.EstadoWindow(self.windowState())
         ant = ScreenUtils.EstadoWindow(event.oldState())
 
-        if getattr(self.manager, "siPresentacion", False):
+        if getattr(self.manager, "in_the_presentation", False):
             self.manager.presentacion(False)
 
         if nue.fullscreen:
@@ -602,3 +602,6 @@ class MainWindow(LCDialog.LCDialog):
 
     def get_noboard_width(self):
         return self.base.analysis_bar.width() + self.pgn_information.width() + Code.configuration.x_pgn_width
+
+    def update_figurines(self):
+        self.base.update_figurines()

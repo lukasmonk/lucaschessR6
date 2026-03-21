@@ -59,7 +59,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
 
     def grid_doble_click(self, _grid, row, _obj_column):
         if row == 0 and not self.tactica.finished():
-            self.entrenar()
+            self.do_training()
 
     def grid_dato(self, _grid, row, obj_column):
         col = obj_column.key
@@ -149,9 +149,9 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         self.reject()
 
     def nuevo(self):
-        self.entrenar()
+        self.do_training()
 
-    def entrenar(self):
+    def do_training(self):
         if self.tactica.finished():
             menu = QTDialogs.LCMenu(self)
             menu.opcion("auto", _("Default settings"), Iconos.PuntoAzul())
@@ -195,7 +195,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         if self.tactica.finished():
             self.tb.new(_("New"), Iconos.Nuevo(), self.nuevo)
         else:
-            self.tb.new(_("Train"), Iconos.Empezar(), self.entrenar)
+            self.tb.new(_("Train"), Iconos.Empezar(), self.do_training)
         if self.ghistorico.reccount():
             self.tb.new(_("Remove"), Iconos.Borrar(), self.borrar)
 

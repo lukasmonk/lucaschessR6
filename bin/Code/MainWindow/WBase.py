@@ -54,10 +54,10 @@ from Code.Base.Constantes import (  # TB_BOXROOMS_PGN,
     TB_TOOLS,
     TB_TRAIN,
     TB_TUTOR_STOP,
-    TB_ARBITER_STOP,
+    TB_ADJUDICATOR_STOP,
     TB_UTILITIES,
     TB_VARIATIONS,
-    TB_ARBITER,
+    TB_ADJUDICATOR,
 )
 from Code.Board import Board
 from Code.MainWindow import WAnalysisBar, WindowSolve
@@ -246,8 +246,8 @@ class WBase(QtWidgets.QWidget):
             TB_REPLAY: (_("Replay"), Iconos.Pelicula()),
             TB_SETTINGS: (_("Options"), Iconos.Preferencias()),
             TB_TUTOR_STOP: (_("Stop"), Iconos.StopTraining()),
-            TB_ARBITER_STOP: (_("Stop"), Iconos.StopTraining()),
-            TB_ARBITER: (_("Arbiter"), Iconos.Arbiter()),
+            TB_ADJUDICATOR_STOP: (_("Stop"), Iconos.StopTraining()),
+            TB_ADJUDICATOR: (_("Adjudicator"), Iconos.Adjudicator()),
         }
 
     def launch_shortcuts(self):
@@ -294,6 +294,14 @@ class WBase(QtWidgets.QWidget):
         o_columns = self.pgn.o_columns
         o_columns.li_columns[1].head = white if white else _("White")
         o_columns.li_columns[2].head = black if black else _("Black")
+
+    def update_figurines(self):
+        with_figurines = Code.configuration.x_pgn_withfigurines
+        o_columns = self.pgn.o_columns
+        col_white = o_columns.locate_column("WHITE")
+        col_white.edicion.set_side_of_figurines(True if with_figurines else None)
+        col_black = o_columns.locate_column("BLACK")
+        col_black.edicion.set_side_of_figurines(False if with_figurines else None)
 
     def create_information_block(self):
         configuration = self.manager.configuration
@@ -630,7 +638,7 @@ class WBase(QtWidgets.QWidget):
             if color_nag == NAG_0:  # Son prioritarios los nags manuales
                 nothing, color_nag = mrm.set_nag_color(rm)
 
-        is_opening = move.is_book_move()
+        is_opening = move.in_the_opening
 
         if is_opening or move.comment or move.variations:
             image_initial = "O" if is_opening else ""

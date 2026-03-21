@@ -17,6 +17,7 @@ from Code.QT import (
     LCDialog,
     QTDialogs,
     QTMessages,
+    SelectFiles
 )
 
 
@@ -38,8 +39,8 @@ class WExternalEngines(LCDialog.LCDialog):
         self.wexternals = WConfExternals(self)
 
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("OPTION", _("UCI option"), 180)
-        o_columns.nueva("VALUE", _("Value"), 200, edicion=Delegados.MultiEditor(self))
+        o_columns.nueva("OPTION", _("UCI option"), 180, align_right=True)
+        o_columns.nueva("VALUE", _("Value"), 200, edicion=Delegados.MultiEditor(self), align_center=True)
         o_columns.nueva("DEFAULT", _("By default"), 90)
         self.grid_conf = Grid.Grid(self, o_columns, complete_row_select=False, is_editable=True)
         self.register_grid(self.grid_conf)
@@ -133,10 +134,32 @@ class WExternalEngines(LCDialog.LCDialog):
             return editor.valor()
         return None
 
-    def grid_setvalue(self, _grid, nfila, _column, valor):
-        opcion = self.li_uci_options[nfila]
+    def grid_setvalue(self, _grid, row, _column, valor):
+        opcion = self.li_uci_options[row]
         self.engine.set_uci_option(opcion.name, valor)
         self.wexternals.set_changed()
+
+    def grid_right_button(self, grid, row, obj_column, modif):
+        opcion = self.li_uci_options[row]
+        if opcion.tipo == "string":
+            menu = QTDialogs.LCMenu(self)
+            menu.opcion("select_file", _("Select a file"), Iconos.MasDoc())
+            menu.separador()
+            menu.opcion("select_folder", _("Select a folder"), Iconos.Carpeta())
+            resp = menu.lanza()
+            if resp is not None:
+                folder_engine = os.path.dirname(self.engine.path_exe)
+                if resp == "select_file":
+                    path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                    if path_file:
+                        folder_file = os.path.dirname(path_file)
+                        if Util.same_path(folder_file, folder_engine):
+                            path_file = os.path.basename(path_file)
+                    else:
+                        return
+                else:
+                    path_file = SelectFiles.get_existing_directory(self, folder_engine,  _("Select a folder"))
+                self.grid_setvalue(None, row, None, path_file)
 
     def save(self):
         self.wexternals.save()
@@ -326,7 +349,6 @@ class WConfExternals(QtWidgets.QWidget):
         me = WEngines.select_engine(self)
         if not me:
             return
-
         w = WEngineFast(self, self.lista_motores, me)
         if w.exec():
             self.lista_motores.append(me)
@@ -449,7 +471,10 @@ class WEngineFast(QtWidgets.QDialog):
         )
 
         self.external_engine = engine
-        self.list_engines = list_engines
+        self.st_other_alias = set(engine.key.lower() for engine in Code.configuration.engines.list_name_internal())
+        for xengine in list_engines:
+            if xengine != engine:
+                self.st_other_alias.add(xengine.key.lower())
         self.is_tournament = is_tournament
         self.imported = engine.parent_external is not None
 
@@ -495,15 +520,14 @@ class WEngineFast(QtWidgets.QDialog):
             return
 
         # Comprobamos que no se repita el alias
-        for engine in self.list_engines:
-            if (self.external_engine != engine) and (engine.key == alias):
-                QTMessages.message_error(
-                    self,
-                    _(
-                        "There is already another engine with the same alias, the alias must change in order to have both."
-                    ),
-                )
-                return
+        if alias.lower() in self.st_other_alias:
+            QTMessages.message_error(
+                self,
+                _(
+                    "There is already another engine with the same alias, the alias must change in order to have both."
+                ),
+            )
+            return
         self.external_engine.key = alias
         if not self.imported:
             name = self.edNombre.texto().strip()

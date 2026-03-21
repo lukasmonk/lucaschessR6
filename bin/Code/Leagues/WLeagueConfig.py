@@ -129,12 +129,12 @@ class WLeagueConfig(LCDialog.LCDialog):
         self.cbJmotor, self.lbJmotor = QTMessages.combobox_lb(
             self, self.list_engines, league.move_evaluator, _("Engine")
         )
-        self.edJtiempo = Controles.ED(self).type_float(league.arbiter_time).relative_width(50)
+        self.edJtiempo = Controles.ED(self).type_float(league.adjudicator_time).relative_width(50)
         self.lbJtiempo = Controles.LB2P(self, _("Time in seconds"))
         ly = Colocacion.G()
         ly.controld(self.lbJmotor, 3, 0).control(self.cbJmotor, 3, 1)
         ly.controld(self.lbJtiempo, 4, 0).control(self.edJtiempo, 4, 1)
-        self.gbJ = Controles.GB(self, _("Arbiter"), ly)
+        self.gbJ = Controles.GB(self, _("Adjudicator"), ly)
 
         lb_slow = Controles.LB(self, f"{_('Slow down the movement of pieces')}: ")
         self.chb_slow = Controles.CHB(self, " ", league.slow_pieces)
@@ -338,8 +338,8 @@ class WLeagueConfig(LCDialog.LCDialog):
         self.league.draw_min_ply = self.ed_draw_min_ply.text_to_integer()
         self.league.draw_range = self.ed_draw_range.text_to_integer()
         self.league.move_evaluator = self.cbJmotor.valor()
-        self.league.arbiter_time = self.edJtiempo.text_to_float()
-        self.league.arbiter_active = True
+        self.league.adjudicator_time = self.edJtiempo.text_to_float()
+        self.league.adjudicator_active = True
         self.league.slow_pieces = self.chb_slow.valor()
         mnt = self.ed_minutes_eng_eng.text_to_float()
         if mnt <= 0:
@@ -377,7 +377,7 @@ class WLeagueConfig(LCDialog.LCDialog):
     def borra_draw_range(self):
         previo = self.ed_draw_range.text_to_integer()
         self.ed_draw_range.type_integer(0 if previo else 10)
-        self.ed_draw_min_ply.type_integer(0 if previo else 50)
+        self.ed_draw_min_ply.type_integer(0 if previo else 80)
 
     @staticmethod
     def read():

@@ -3348,8 +3348,38 @@ def pmProgreso():
 def Progreso():
     return iget("Progreso")
 
-def pmArbiter():
-    return iget("pmArbiter")
+def pmAdjudicator():
+    return iget("pmAdjudicator")
 
-def Arbiter():
-    return iget("Arbiter")
+def Adjudicator():
+    return iget("Adjudicator")
+
+def pmLink():
+    return iget("pmLink")
+
+def Link():
+    return iget("Link")
+
+def pmLeitner():
+    return iget("pmLeitner")
+
+def Leitner():
+    return iget("Leitner")
+
+def pmBoardOld():
+    return iget("pmBoardOld")
+
+def BoardOld():
+    return iget("BoardOld")
+
+def pmBoardNorm():
+    return iget("pmBoardNorm")
+
+def BoardNorm():
+    return iget("BoardNorm")
+
+def pmBoardLong():
+    return iget("pmBoardLong")
+
+def BoardLong():
+    return iget("BoardLong")

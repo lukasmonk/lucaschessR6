@@ -266,19 +266,19 @@ class Tournament:
         return self.config("slow_pieces", valor, False)
 
     def draw_min_ply(self, valor=None):
-        return self.config("drawminply", valor, 50)
+        return self.config("drawminply", valor, 80)
 
     def draw_range(self, valor=None):
         return self.config("drawrange", valor, 10)
 
-    def arbiter_active(self, valor=None):
-        return self.config("arbiter_active", valor, False)
+    def adjudicator_active(self, valor=None):
+        return self.config("adjudicator_active", valor, False)
 
     def move_evaluator(self, valor=None):
         return self.config("move_evaluator", valor, Code.configuration.tutor_default)
 
-    def arbiter_time(self, valor=None):
-        return self.config("arbiter_time", valor, 5.0)
+    def adjudicator_time(self, valor=None):
+        return self.config("adjudicator_time", valor, 5.0)
 
     def last_folder_engines(self, valor=None):
         return self.config("last_folder_engines", valor, None)
@@ -367,28 +367,11 @@ class Tournament:
     def game_queued(self, pos):
         return self.db_games_queued[pos]
 
-    def get_tgame_queued(self, file_worker):
-        self.db_games_queued.refresh()
-        num_queued = self.num_games_queued()
-        if num_queued > 0:
-            li = list(range(num_queued))
-            random.shuffle(li)
-            for pos in li:
-                game = self.game_queued(pos)
-                if game.worker is None:
-                    if game.minutos is None:
-                        continue
-                    game.worker = file_worker
-                    self.db_games_queued[pos] = game
-                    return game
-                elif Util.same_path(file_worker, game.worker):
-                    return game
-                else:
-                    if Util.remove_file(game.worker):
-                        game.worker = file_worker
-                        self.db_games_queued[pos] = game
-                        return game
-        return None
+    def get_dic_games_queued(self):
+        dic = {}
+        for tgame in self.db_games_queued:
+            dic[tgame.id_game] = tgame
+        return dic
 
     def game_finished(self, pos):
         return self.db_games_finished[pos]

@@ -20,6 +20,7 @@ from Code.Base.Constantes import (
 from Code.Board import Board
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
+from Code.Engines import EngineManagerAnalysis
 
 
 class UnMove:
@@ -850,23 +851,22 @@ class WindowArbol(LCDialog.LCDialog):
         if alm is None:
             return
         if alm.engine == "default":
-            xengine = self.procesador.analyzer_clone(alm.vtime, alm.depth, alm.multiPV)
+            xengine = self.procesador.analyzer_clone(alm.vtime, alm.depth, alm.nodes, alm.multiPV)
         else:
             conf_motor = Code.configuration.engines.search(alm.engine)
             conf_motor.set_multipv_var(alm.multiPV)
-            xengine = self.procesador.create_manager_engine(conf_motor, alm.vtime, alm.depth, has_multipv=True)
+            xengine: EngineManagerAnalysis.EngineManagerAnalysis = (
+                self.procesador.create_manager_engine(conf_motor, alm.vtime, alm.depth, alm.nodes, has_multipv=True))
 
         with QTMessages.analizando(self, True) as me:
 
-            def test_me(rm):
+            def test_me(rm, ms):
                 if me.is_canceled():
                     xengine.stop()
                 return True
 
-            xengine.set_gui_dispatch(test_me)
-
-            mrm = xengine.analiza(fen)
-            xengine.finalize()
+            mrm = xengine.analyze_fen(fen, test_me)
+            xengine.close()
             canceled = me.is_canceled()
 
         if not canceled:

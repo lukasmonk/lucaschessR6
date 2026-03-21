@@ -90,7 +90,7 @@ class CPU:
         if orden.key == KIBRUN_GAME:
             if self.ipc.has_more_data():
                 return self.recibe()
-            time.sleep(0.2)
+            time.sleep(0.1)
             if self.ipc.has_more_data():
                 return self.recibe()
         return orden
@@ -167,9 +167,14 @@ class CPU:
             self.ipc.close()
             self.ventana.finalizar()
             self.ventana.reject()
+            self.close_app()
 
     def save_video(self, dic):
         self.configuration.save_video(self.key_video, dic)
+
+    @staticmethod
+    def close_app():
+        QTUtils.close_app()
 
     def show_window(self):
         app = QtWidgets.QApplication([])

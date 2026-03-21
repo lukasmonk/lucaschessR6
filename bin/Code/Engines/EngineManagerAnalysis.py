@@ -11,6 +11,7 @@ from Code.Engines import EngineManager, EngineResponse, EngineRun, Engines
 class EngineManagerAnalysis(EngineManager.EngineManager):
     def __init__(self, engine: Engines.Engine, run_engine_params: EngineRun.RunEngineParams):
         super().__init__(engine, run_engine_params, True)
+        self.set_faster_mode()
 
     def _run_analysis_loop(
         self, dispacher: Optional[Callable], run_engine_params: Optional[EngineRun.RunEngineParams] = None
@@ -95,7 +96,6 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
                     return mrm, pos
 
         self.engine_run.set_game_position(game, movement if len(game) > 0 else None, True)
-        self.engine_run.play(self.run_engine_params)
 
         self.elapsed_time.start()
 
@@ -136,9 +136,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         try:
             self.engine_run.set_multipv(1)
             self.engine_run.set_game_position(game, movement, False)
-            self.engine_run.play(tmp_play_params)
-
-            self._run_analysis_loop(dispacher)
+            self._run_analysis_loop(dispacher, run_engine_params=tmp_play_params)
 
             mrm = self.engine_run.mrm
 
@@ -270,7 +268,6 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             return None
 
         self.engine_run.set_fen_position(fen)
-        self.engine_run.play(self.run_engine_params)
 
         self.elapsed_time.start()
 

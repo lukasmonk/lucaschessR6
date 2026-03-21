@@ -900,7 +900,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.human_is_playing = False
         self.rival_is_thinking = False
-        self.put_view()
+        self.goto_end()
 
         is_white = self.game.is_white()
 
@@ -984,7 +984,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.mrm_tutor = self.manager_tutor.get_current_mrm()
             self.is_tutor_analysing = False
             self.manager_tutor.add_cache_position(self.game.last_position, self.mrm_tutor)
-            self.main_window.pensando_tutor(False)
+            # self.main_window.pensando_tutor(False)
             if self.player_has_moved_a1h8:
                 move = self.player_has_moved_a1h8
                 self.player_has_moved_a1h8 = None
@@ -1334,7 +1334,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         si_analisis = False
         fen_base = self.last_fen()
         fen_basem2 = FasterCode.fen_fenm2(fen_base)
-        self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
+        # self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
 
         # TUTOR---------------------------------------------------------------------------------------------------------
         is_mate = move.is_mate
@@ -1343,20 +1343,21 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if not self.tutor_book.si_esta(fen_base, a1h8):
                 rm_user, n = self.mrm_tutor.search_rm(a1h8)
                 if not rm_user:
-                    self.main_window.pensando_tutor(True)
+                    # self.main_window.pensando_tutor(True)
                     self.state = ST_TUTOR_THINKING
                     self.is_tutor_analysing = True
                     self.is_analyzing = True
-                    self.pon_toolbar(ToolbarState.TUTOR_THINKING)
+                    # self.pon_toolbar(ToolbarState.TUTOR_THINKING)
                     self.mrm_tutor = self.manager_tutor.analyze_tutor_move(self.game, a1h8)
                     self.state = ST_PLAYING
                     self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
-                    self.main_window.pensando_tutor(False)
                     if self.mrm_tutor is None:
                         self.tc_player.restart()
                         self.enable_toolbar()
+                        self.main_window.pensando_tutor(False)
                         return False
                     rm_user, n = self.mrm_tutor.search_rm(a1h8)
+                self.main_window.pensando_tutor(False)
                 self.cache_analysis[fen_basem2] = self.mrm_tutor
 
                 si_analisis = True
@@ -1388,7 +1389,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                 while True:
                                     rm_tutor = self.mrm_tutor.rm_best()
                                     menu = QTDialogs.LCMenu(self.main_window)
-                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine())
+                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine(), is_disabled=True)
                                     menu.separador()
                                     resp = rm_tutor.abbrev_text_base()
                                     if not resp:
@@ -1409,7 +1410,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                         break
                                     elif resp == "tutor":
                                         break
-                                    else:
+                                    elif resp == "try":
                                         self.tc_player.restart()
                                         self.continue_human()
                                         self.play_human()
@@ -1439,6 +1440,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                             del tutor
 
         # --------------------------------------------------------------------------------------------------------------
+        self.main_window.pensando_tutor(False)
         time_s = self.tc_player.stop()
         if self.timed:
             self.show_clocks()
@@ -1540,6 +1542,11 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             seconds_move = self.tc_white.seconds_per_move
         else:
             seconds_white = seconds_black = self.unlimited_minutes * 60
+            mswhite, msblack = self.game.sum_mstimes()
+            seconds_white -= mswhite/1000
+            seconds_black -= msblack/1000
+            seconds_white = max(seconds_white, 5)  # con un mínimo de 5 segundos
+            seconds_black = max(seconds_black, 5)
             seconds_move = 0
 
         self.manager_rival.run_engine_params.update_var_time(seconds_white, seconds_black, seconds_move)
@@ -1781,28 +1788,27 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
             self.nAjustarFuerza = dic["ADJUST"]
 
-            r_t = dr["ENGINE_TIME"] * 100  # Se guarda en decimas y se pasa a milesimas
-            r_p = dr["ENGINE_DEPTH"]
-            r_n = dr["ENGINE_NODES"]
-            if r_t <= 0:
-                r_t = None
-            if r_p <= 0:
-                r_p = None
+            r_timems = dr["ENGINE_TIME"] * 100  # Se guarda en decimas y se pasa a milesimas
+            r_depth = dr["ENGINE_DEPTH"]
+            r_nodes = dr["ENGINE_NODES"]
+            r_timems = int(max(r_timems, 0))
+            r_depth = int(max(r_depth, 0))
+            r_nodes = int(max(r_nodes, 0))
 
             dr["RESIGN"] = self.resign_limit
             self.manager_rival.close()
             self.manager_rival = self.procesador.create_manager_engine(
-                rival, r_t, r_p, r_n, self.nAjustarFuerza != ADJUST_BETTER
+                rival, r_timems, r_depth, r_nodes, self.nAjustarFuerza != ADJUST_BETTER
             )
 
             self.manager_rival.is_white = not is_white
 
             rival = self.manager_rival.engine.name
             player = self.configuration.x_player
-            bl, ng = player, rival
+            lb_white, lb_black = player, rival
             if not is_white:
-                bl, ng = ng, bl
-            self.main_window.change_player_labels(bl, ng)
+                lb_white, lb_black = lb_black, lb_white
+            self.main_window.change_player_labels(lb_white, lb_black)
 
             self.show_basic_label()
 

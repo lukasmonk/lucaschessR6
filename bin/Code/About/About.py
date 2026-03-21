@@ -23,7 +23,7 @@ class WAbout(QtWidgets.QDialog):
             | QtCore.Qt.WindowType.WindowMaximizeButtonHint
         )
 
-        f = Controles.FontType(puntos=10)  # 0, peso=75 )
+        f = Controles.FontTypeNew(point_size=10)
 
         head = f'<span style="font-size:30pt; font-weight="700"; font-family:arial; >{Code.lucas_chess}</span><br>'
         head += f'<span style="font-size:15pt;">{_X(_("version %1"), Code.VERSION)}</span><br>'
@@ -58,7 +58,6 @@ class WAbout(QtWidgets.QDialog):
                 if num == "1":
                     sub_tab = Controles.Tab()
                     sub_tab.set_font(f)
-                    # sub_tab.set_position("S")
                     tab.addTab(sub_tab, _("Engines"))
                 lm = ib.list_engines(num)
                 titulo = f"{lm[0][0].split(' ')[1]} - {lm[-1][0].split(' ')[1]}"

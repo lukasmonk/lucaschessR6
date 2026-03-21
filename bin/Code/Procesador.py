@@ -3,7 +3,6 @@ import sys
 
 import Code
 from Code import Update
-from Code.Z import Adjournments, CPU, ManagerGame, ManagerSolo, Util
 from Code.Base import Position
 from Code.Base.Constantes import (
     GT_AGAINST_CHILD_ENGINE,
@@ -43,12 +42,13 @@ from Code.Books import (
 )
 from Code.CompetitionWithTutor import ManagerCompeticion
 from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
-from Code.Config import Configuration, WindowConfig
+from Code.Config import Configuration, WindowConfig, WindowUsuarios
 from Code.Databases import DBgames
 from Code.Engines import (
     CheckEngines,
     EngineManagerAnalysis,
     EngineManagerPlay,
+    EngineManagerRefresh,
     EngineRun,
     Engines,
     ListEngineManagers,
@@ -59,6 +59,7 @@ from Code.GM import ManagerGM
 from Code.Kibitzers import KibitzersManager
 from Code.Leagues import ManagerLeague
 from Code.LearnGame import ManagerPlayGame, WindowLearnGame, WindowPlayGame
+from Code.Leitner import Leitner, ManagerLeitner, WShowLeitner
 from Code.MainWindow import MainWindow, Presentacion
 from Code.Maps import ManagerMateMap, WindowWorkMap
 from Code.Menus import (
@@ -81,6 +82,7 @@ from Code.Shortcuts import Shortcuts
 from Code.Swiss import ManagerSwiss
 from Code.Washing import ManagerWashing, WindowWashing
 from Code.WritingDown import ManagerWritingDown, WritingDown
+from Code.Z import Adjournments, CPU, ManagerGame, ManagerSolo, Util
 
 
 class Procesador:
@@ -93,13 +95,17 @@ class Procesador:
     is_first_time = None
     manager_tutor: EngineManagerAnalysis.EngineManagerAnalysis | None
     manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None
+    in_the_presentation: bool
+    initial_position: Position.Position
+    kibitzers_manager: KibitzersManager.Manager
+    cpu: CPU.CPU
+    manager_rival = None
 
     def __init__(self):
         if Code.list_engine_managers is None:
             Code.list_engine_managers = ListEngineManagers.ListEngineManagers()
 
         self.main_window = None
-        # self.kibitzers_manager = KibitzersManager(self)
 
     def start_with_user(self, user):
         self.user = user
@@ -117,6 +123,9 @@ class Procesador:
 
         self.configuration = Configuration.Configuration(user)
         self.configuration.start()
+
+        CheckEngines.check_engines()
+
         Code.procesador = self
         Code.runSound.read_sounds()
         OpeningsStd.ap.reset()
@@ -128,26 +137,26 @@ class Procesador:
             self.configuration.clean_tmp_folder()
 
         # Tras crear configuración miramos si hay Adjournments
-        self.test_opcion_Adjournments()
+        self.check_option_adjournments()
 
         Code.all_pieces = Piezas.AllPieces()
 
         self.manager = None
 
         self.is_first_time = True
-        self.siPresentacion = False  # si esta funcionando la presentacion
+        self.in_the_presentation = False  # si esta funcionando la presentacion
 
-        self.posicionInicial = Position.Position()
-        self.posicionInicial.set_pos_initial()
+        self.initial_position = Position.Position()
+        self.initial_position.set_pos_initial()
 
         self.manager_rival = None
         self.manager_tutor = None  # creaTutor lo usa asi que hay que definirlo antes
         self.manager_analyzer = None  # cuando se juega ManagerEntMaq y el tutor danzando a toda maquina,
         # se necesita otro diferente
-        self.replay = None
-        self.replayBeep = None
+        # self.replay = None
+        # self.replayBeep = None
 
-    def test_opcion_Adjournments(self):
+    def check_option_adjournments(self):
         must_adjourn = len(Adjournments.Adjournments()) > 0
         if TB_ADJOURNMENTS in self.li_opciones_inicio:
             if not must_adjourn:
@@ -188,23 +197,27 @@ class Procesador:
             comando = sys.argv[1]
             comando_l = comando.lower()
             if comando_l.endswith(".lcsb"):
-                self.jugarSoloExtern(comando)
+                self.play_solo_extern(comando)
                 return
             elif comando_l.endswith(".lcdb"):
                 self.extern_database(comando)
                 return
             elif comando_l.endswith(".bmt"):
                 self.start()
-                self.externBMT(comando)
+                self.play_bmt_extern(comando)
+                return
+            elif comando_l.endswith(".shortcut"):
+                self.start()
+                self.launch_shortcut_key(comando[:-9])
                 return
             elif comando == "-play":
                 fich_tmp = sys.argv[2]
-                self.juegaExterno(fich_tmp)
+                self.play_in_external_mode(fich_tmp)
                 return
 
             elif comando == "-playagainst":
                 recplay = sys.argv[2]
-                self.juegaExternoAgainst(recplay)
+                self.play_against_extern(recplay)
 
         else:
             self.start()
@@ -220,7 +233,7 @@ class Procesador:
         tmr = ToolsMenuRun.ToolsMenuRun(tm)
         tmr.openings_lines()
 
-    def externBMT(self, file):
+    def play_bmt_extern(self, file):
         self.configuration.paths.set_file_bmt(file)
         WindowBMT.window_bmt(self)
 
@@ -235,12 +248,12 @@ class Procesador:
         self.main_window.set_manager_active(self)  # Necesario, no borrar
         self.board.side_indicator_sc.setVisible(False)
         self.board.blindfold_remove()
-        self.test_opcion_Adjournments()
+        self.check_option_adjournments()
         self.main_window.pon_toolbar(self.li_opciones_inicio, shortcuts=True)
         self.main_window.active_game(False, False)
         self.main_window.thinking(False)
         self.board.do_pressed_number = None
-        self.board.set_position(self.posicionInicial)
+        self.board.set_position(self.initial_position)
         self.board.remove_movables()
         self.board.remove_arrows()
         self.main_window.adjust_size()
@@ -257,7 +270,7 @@ class Procesador:
             self.manager = None
         self.reset()
         if self.configuration.paths.is_first_time:
-            self.cambiaconfigurationPrimeraVez()
+            self.change_configuration_first_time()
             self.configuration.paths.is_first_time = False
             self.main_window.set_title()
         if self.is_first_time:
@@ -266,13 +279,13 @@ class Procesador:
                 self.presentacion()
         self.kibitzers_manager.stop()
 
-    def presentacion(self, siEmpezar=True):
-        self.siPresentacion = siEmpezar
-        if not siEmpezar:
+    def presentacion(self, if_start=True):
+        self.in_the_presentation = if_start
+        if not if_start:
             self.cpu.stop()
             self.board.set_side_bottom(True)
             self.board.activa_menu_visual(True)
-            self.board.set_position(self.posicionInicial)
+            self.board.set_position(self.initial_position)
             self.board.setToolTip("")
             self.board.lock_rotation(False)
 
@@ -326,6 +339,15 @@ class Procesador:
     def analyzer_clone(self, mstime, depth, nodes, multipv):
         return self.create_manager_analyzer(mstime, depth, nodes, multipv)
 
+    def analyzer_refresh_clone(self, mstime, depth, nodes, multipv):
+        engine = self.configuration.engines.engine_analyzer()
+        engine.set_multipv_var(self.configuration.x_analyzer_multipv if multipv is None else multipv)
+        run_engine_params = EngineRun.RunEngineParams()
+        run_engine_params.update(engine, mstime, depth, nodes, engine.multiPV)
+        xanalyzer = EngineManagerRefresh.EngineManagerRefresh(engine, run_engine_params)
+        xanalyzer.set_priority(self.configuration.x_analyzer_priority)
+        return xanalyzer
+
     def change_manager_analyzer(self):
         if self.manager_analyzer is not None:
             self.manager_analyzer.close()
@@ -334,7 +356,7 @@ class Procesador:
 
     @staticmethod
     def create_manager_analysis(
-        engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
+            engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
     ):
         assert type(mstime) is int and mstime >= 0
         assert type(depth) is int and depth >= 0
@@ -350,7 +372,8 @@ class Procesador:
 
     @staticmethod
     def create_manager_engine(
-        engine: Engines.Engine, mstime: int, depth: int, nodes: int, has_multipv=False, priority=None
+            engine: Engines.Engine, mstime: int, depth: int, nodes: int, has_multipv=False, priority=None,
+            faster_mode=False
     ):
         assert type(mstime) is int and mstime >= 0
         assert type(depth) is int and depth >= 0
@@ -359,6 +382,8 @@ class Procesador:
         run_engine_params = EngineRun.RunEngineParams()
         multipv = engine.multiPV if has_multipv else 1
         run_engine_params.update(engine, mstime, depth, nodes, multipv)
+        if faster_mode:
+            run_engine_params.faster_mode_always = True
         engine_manager = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
         if priority is not None:
             engine_manager.set_priority(priority)
@@ -408,7 +433,7 @@ class Procesador:
     def run_action(self, key):
         self.main_window.deactivate_eboard(0)
 
-        if self.siPresentacion:
+        if self.in_the_presentation:
             self.presentacion(False)
 
         if key == TB_QUIT:
@@ -419,31 +444,24 @@ class Procesador:
             self.main_window.accept()
 
         elif key == TB_PLAY:
-            self.check_engines()
             self.menu_play()
 
         elif key == TB_COMPETE:
-            self.check_engines()
             self.menu_compete()
 
         elif key == TB_TRAIN:
-            self.check_engines()
             self.menu_train()
 
         elif key == TB_ENGINES:
-            self.check_engines()
             self.menu_engines()
 
         elif key == TB_OPTIONS:
-            self.check_engines()
             self.menu_options()
 
         elif key == TB_TOOLS:
-            self.check_engines()
             self.menu_tools()
 
         elif key == TB_INFORMATION:
-            self.check_engines()
             self.menu_information()
 
         elif key == TB_ADJOURNMENTS:
@@ -503,7 +521,7 @@ class Procesador:
             else:
                 Adjournments.Adjournments().remove(key)
 
-            self.test_opcion_Adjournments()
+            self.check_option_adjournments()
             self.main_window.pon_toolbar(self.li_opciones_inicio, shortcuts=True)
 
     def launch_shortcuts(self):
@@ -514,7 +532,11 @@ class Procesador:
         shortcuts = Shortcuts.Shortcuts(self)
         shortcuts.launch_alt(key)
 
-    def cambiaconfigurationPrimeraVez(self):
+    def launch_shortcut_key(self, key_shortcut):
+        shortcuts = Shortcuts.Shortcuts(self)
+        shortcuts.launch_key(key_shortcut)
+
+    def change_configuration_first_time(self):
         if WindowConfig.options_first_time(self.main_window, self.configuration):
             self.configuration.graba()
 
@@ -533,7 +555,7 @@ class Procesador:
             manager = ManagerWritingDown.ManagerWritingDown(self)
             manager.start(game, if_white_below)
 
-    def trainingMap(self, mapa):
+    def training_map(self, mapa):
         resp = WindowWorkMap.train_map(self, mapa)
         if resp:
             self.manager = ManagerMateMap.ManagerMateMap(self)
@@ -542,9 +564,9 @@ class Procesador:
     def train_book(self):
         w = WBooksTrain.WBooksTrain(self)
         if w.exec() and w.book_player:
-            self.type_play = GT_BOOK
-            self.estado = ST_PLAYING
             self.manager = ManagerTrainBooks.ManagerTrainBooks(self)
+            self.manager.state = ST_PLAYING
+            self.manager.game_type = GT_BOOK
             self.manager.start(
                 w.book_player,
                 w.player_highest,
@@ -572,7 +594,7 @@ class Procesador:
         else:
             dbli_books_train.close()
 
-    def juegaExterno(self, fich_tmp):
+    def play_in_external_mode(self, fich_tmp):
         dic_sended = Util.restore_pickle(fich_tmp)
         dic = WPlayAgainstEngine.play_position(self, _("Play a position"), dic_sended["ISWHITE"])
         if dic is None:
@@ -585,11 +607,11 @@ class Procesador:
             self.manager = ManagerPlayAgainstEngine.ManagerPlayAgainstEngine(self)
             self.manager.play_position(dic, dic_sended["GAME"])
 
-    def jugarSoloExtern(self, file_lcsb):
+    def play_solo_extern(self, file_lcsb):
         self.manager = ManagerSolo.ManagerSolo(self)
         self.manager.leeFichero(file_lcsb)
 
-    def juegaExternoAgainst(self, recplay):
+    def play_against_extern(self, recplay):
         recplay = int(recplay)
         db = WindowPlayGame.DBPlayGame(self.configuration.paths.file_play_game())
         w = WindowPlayGame.WPlay1(self.main_window, self.configuration, db, recplay)
@@ -605,7 +627,7 @@ class Procesador:
             db.close()
         return
 
-    def playRoute(self, route):
+    def play_route(self, route):
         if route.state == Routes.BETWEEN:
             self.manager = ManagerRoutes.ManagerRoutesTactics(self)
             self.manager.start(route)
@@ -619,13 +641,13 @@ class Procesador:
     def show_route(self):
         WindowRoutes.train_train(self)
 
-    def playEverest(self, recno):
+    def play_everest(self, recno):
         self.manager = ManagerEverest.ManagerEverest(self)
         self.manager.start(recno)
 
-    def showEverest(self, recno):
+    def show_everest(self, recno):
         if WindowEverest.show_expedition(self.main_window, self.configuration, recno):
-            self.playEverest(recno)
+            self.play_everest(recno)
 
     def play_game(self):
         w = WindowPlayGame.WPlayGameBase(self)
@@ -660,16 +682,16 @@ class Procesador:
         w = WindowLearnGame.WLearnBase(self.main_window)
         w.exec()
 
-    def showTurnOnLigths(self, name):
+    def show_turn_on_ligths(self, name):
         tm = TrainMenu.TrainMenu(self)
         tm.run_exec(f"tol_{name}")
 
-    def playWashing(self):
+    def play_washing(self):
         ManagerWashing.manager_washing(self)
 
-    def showWashing(self):
+    def show_washing(self):
         if WindowWashing.window_washing(self):
-            self.playWashing()
+            self.play_washing()
 
     def read_pgn(self, pgn):
         tm = ToolsMenu.ToolsMenu(self)
@@ -692,7 +714,7 @@ class Procesador:
     def final_x0():
         return True
 
-    def clonVariations(self, window, manager_tutor=None, is_competitive=False):
+    def clon_variations(self, window, manager_tutor=None, is_competitive=False):
         return ProcesadorVariations(
             window,
             manager_tutor,
@@ -701,14 +723,14 @@ class Procesador:
         )
 
     def manager_game(
-        self,
-        window,
-        game,
-        is_complete,
-        only_consult,
-        father_board,
-        with_previous_next=None,
-        save_routine=None,
+            self,
+            window,
+            game,
+            is_complete,
+            only_consult,
+            father_board,
+            with_previous_next=None,
+            save_routine=None,
     ):
         clon_procesador = ProcesadorVariations(
             window,
@@ -756,8 +778,21 @@ class Procesador:
         else:
             self.manager.start(swiss, xmatch)
 
-    def check_engines(self):
-        return CheckEngines.check_engines(self.main_window)
+    def play_leitner(self, pos: int):
+        db_leitner = Leitner.LeitnerDB()
+        self.manager = ManagerLeitner.ManagerLeitner(self)
+        self.manager.start(db_leitner, pos)
+
+    def show_leitner(self, pos: int):
+        db_leitner = Leitner.LeitnerDB()
+        leitner = db_leitner.get_leitner(pos)
+        db_leitner.close()
+        w = WShowLeitner.WShowLeitner(self.main_window, leitner)
+        if w.exec():
+            self.play_leitner(pos)
+
+    def users(self):
+        WindowUsuarios.edit_users(self)
 
 
 class ProcesadorVariations(Procesador):
@@ -778,7 +813,7 @@ class ProcesadorVariations(Procesador):
             TB_INFORMATION,
         ]  # Lo incluimos aqui porque sino no lo lee, en caso de aplazada
 
-        self.siPresentacion = False
+        self.in_the_presentation = False
 
         self.main_window = MainWindow.MainWindow(self, window, extparam="mainv")
         self.main_window.set_manager_active(self)
@@ -790,8 +825,8 @@ class ProcesadorVariations(Procesador):
         self.manager_rival = None
         self.manager_analyzer = None
 
-        self.replayBeep = None
+        # self.replayBeep = None
 
-        self.posicionInicial = None
+        self.initial_position = None
 
         self.cpu = CPU.CPU(self.main_window)
