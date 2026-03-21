@@ -231,6 +231,8 @@ class Board(QtWidgets.QGraphicsView):
 
         self.arrow_sc = None
 
+        self._selection_sc = None
+
     def set_analysis_bar(self, analysis_bar: Any):
         self.analysis_bar = analysis_bar
 
@@ -1376,6 +1378,7 @@ class Board(QtWidgets.QGraphicsView):
 
         si_izq = event.button() == QtCore.Qt.MouseButton.LeftButton
         if si_izq and a1h8 is not None:
+            self.hide_selection()
             self.remove_movables()
 
             if self.active_premove:
@@ -1385,6 +1388,8 @@ class Board(QtWidgets.QGraphicsView):
         if a1h8 is None:
             if self.atajos_raton:
                 self.atajos_raton(self.last_position, None)
+            else:
+                self.hide_selection()
             QtWidgets.QGraphicsView.mousePressEvent(self, event)
             return
 
@@ -1395,7 +1400,10 @@ class Board(QtWidgets.QGraphicsView):
         elif hasattr(self.main_window, "manager"):
             if hasattr(self.main_window.manager, "colect_candidates"):
                 if li_c := self.main_window.manager.colect_candidates(a1h8):
+                    self.show_selection(a1h8)
                     self.show_candidates(li_c)
+                else:
+                    self.hide_selection()
 
         QtWidgets.QGraphicsView.mousePressEvent(self, event)
 
@@ -1470,6 +1478,31 @@ class Board(QtWidgets.QGraphicsView):
             svg = BoardSVGs.SVGCandidate(self.escena, reg_svg, False)
             self.pendingRelease.append(svg)
         self.escena.update()
+
+    def show_selection(self, a1h8):
+        self.hide_selection()
+        df, dc, _, _ = self.a1h8_fc(a1h8 + a1h8)
+        origin = self.margin_center + self.tamFrontera // 2
+
+        box = BoardTypes.Caja()
+        box.tipo = 1
+        box.color = "#d7b400"
+        box.colorRelleno = "#fff176"
+        box.grosor = max(2, self.width_square // 18)
+        box.physical_pos.x = origin + self.width_square * (dc - 1)
+        box.physical_pos.y = origin + self.width_square * (df - 1)
+        box.physical_pos.ancho = self.width_square
+        box.physical_pos.alto = self.width_square
+        box.physical_pos.orden = 9
+
+        rect = BoardElements.CajaSC(self.escena, box)
+        rect.setOpacity(0.45)
+        self._selection_sc = rect
+
+    def hide_selection(self):
+        if self._selection_sc is not None:
+            self.escena.removeItem(self._selection_sc)
+            self._selection_sc = None
 
     def mouseDoubleClickEvent(self, event):
         if item := self.itemAt(event.pos()):
@@ -1574,6 +1607,7 @@ class Board(QtWidgets.QGraphicsView):
 
     def set_position(self, position, remove_movables_now=True, variation_history=None):
         self.active_premove = False
+        self.hide_selection()
         if self.dirvisual:
             self.dirvisual.changed_position_before()
         elif self.dbVisual.save_always():
