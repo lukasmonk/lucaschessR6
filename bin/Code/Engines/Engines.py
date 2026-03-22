@@ -169,6 +169,8 @@ class Engine:
                             is_changed = True
                     else:
                         is_changed = True
+                    if op.name == "MultiPV":
+                        self.set_multipv(valor, op.maximo)
                     break
         for pos, (xcomando, xvalor) in enumerate(self.liUCI):
             if xcomando == name:

@@ -542,7 +542,26 @@ class WKibitzerLive(LCDialog.LCDialog):
             li.append([f"{opcion.name}{label_default}", valor, "%d" % num])
         return li
 
+    def commit_current_editor(self):
+        index = self.grid_values.currentIndex()
+        if not index.isValid():
+            return
+        editor = QtWidgets.QApplication.focusWidget()
+        while editor is not None and not isinstance(editor, (Controles.ED, Controles.SB, Controles.CB)):
+            if not self.grid_values.isAncestorOf(editor):
+                editor = None
+                break
+            editor = editor.parentWidget()
+        if editor is None or not self.grid_values.isAncestorOf(editor):
+            return
+        delegate = self.grid_values.itemDelegateForColumn(index.column())
+        if delegate is None:
+            return
+        delegate.commitData.emit(editor)
+        delegate.closeEditor.emit(editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint)
+
     def grabar(self):
+        self.commit_current_editor()
         self.has_changes = self.li_options != self.liOriginal
         if self.has_changes:
             self.kibitzers.save()
