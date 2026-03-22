@@ -486,6 +486,7 @@ class WKibitzerLive(LCDialog.LCDialog):
     # result_posicionBase: Position
     result_max_time: float
     result_max_depth: int
+    has_changes: bool
 
     def __init__(self, w_parent, configuration, num_kibitzer):
         self.kibitzers = Kibitzers.Kibitzers()
@@ -496,6 +497,7 @@ class WKibitzerLive(LCDialog.LCDialog):
         LCDialog.LCDialog.__init__(self, w_parent, titulo, icono, extparam)
 
         self.configuration = configuration
+        self.has_changes = False
 
         self.li_options = self.read_options()
         self.liOriginal = self.read_options()
@@ -541,7 +543,9 @@ class WKibitzerLive(LCDialog.LCDialog):
         return li
 
     def grabar(self):
-        self.kibitzers.save()
+        self.has_changes = self.li_options != self.liOriginal
+        if self.has_changes:
+            self.kibitzers.save()
         lidif_opciones = []
         xprioridad = None
         xpointofview = None

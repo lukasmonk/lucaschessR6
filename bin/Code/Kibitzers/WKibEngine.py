@@ -109,14 +109,12 @@ class WKibEngine(WKibCommon.WKibCommon):
         self.stopped = False
 
     def change_options(self):
-        self.pause()
         w = WindowKibitzers.WKibitzerLive(self, self.cpu.configuration, self.cpu.num_kibitzer)
-        if w.exec():
+        if w.exec() and w.has_changes:
             self.kibitzer = self.cpu.reset_kibitzer()
             self.engine_run.close()
             self.launch_engine()
             self.cpu.reprocesa()
-        self.play()
         self.grid.refresh()
 
     def stop(self):
@@ -245,7 +243,7 @@ class WKibEngine(WKibCommon.WKibCommon):
     def launch_engine(self):
         if self.is_candidates:
             num_multipv = self.kibitzer.current_multipv()
-            if num_multipv <= 1:
+            if num_multipv <= 0:
                 num_multipv = min(self.kibitzer.maxMultiPV, 10)
         else:
             num_multipv = 1

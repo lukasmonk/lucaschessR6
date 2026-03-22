@@ -204,14 +204,12 @@ class WKibLine(QtWidgets.QMainWindow):
         self.cpu.check_input()
 
     def change_options(self):
-        self.pause()
         w = WindowKibitzers.WKibitzerLive(self, self.cpu.configuration, self.cpu.num_kibitzer)
-        if w.exec():
+        if w.exec() and w.has_changes:
             self.kibitzer = self.cpu.reset_kibitzer()
             self.engine_run.close()
             self.launch_engine()
             self.cpu.reprocesa()
-        self.play()
 
     def set_flags(self):
         flags = QtCore.Qt.WindowType.FramelessWindowHint
