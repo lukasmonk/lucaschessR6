@@ -486,6 +486,7 @@ class WKibitzerLive(LCDialog.LCDialog):
     # result_posicionBase: Position
     result_max_time: float
     result_max_depth: int
+    has_changes: bool
 
     def __init__(self, w_parent, configuration, num_kibitzer):
         self.kibitzers = Kibitzers.Kibitzers()
@@ -496,6 +497,7 @@ class WKibitzerLive(LCDialog.LCDialog):
         LCDialog.LCDialog.__init__(self, w_parent, titulo, icono, extparam)
 
         self.configuration = configuration
+        self.has_changes = False
 
         self.li_options = self.read_options()
         self.liOriginal = self.read_options()
@@ -540,8 +542,29 @@ class WKibitzerLive(LCDialog.LCDialog):
             li.append([f"{opcion.name}{label_default}", valor, "%d" % num])
         return li
 
+    def commit_current_editor(self):
+        index = self.grid_values.currentIndex()
+        if not index.isValid():
+            return
+        editor = QtWidgets.QApplication.focusWidget()
+        while editor is not None and not isinstance(editor, (Controles.ED, Controles.SB, Controles.CB)):
+            if not self.grid_values.isAncestorOf(editor):
+                editor = None
+                break
+            editor = editor.parentWidget()
+        if editor is None or not self.grid_values.isAncestorOf(editor):
+            return
+        delegate = self.grid_values.itemDelegateForColumn(index.column())
+        if delegate is None:
+            return
+        delegate.commitData.emit(editor)
+        delegate.closeEditor.emit(editor, QtWidgets.QAbstractItemDelegate.EndEditHint.NoHint)
+
     def grabar(self):
-        self.kibitzers.save()
+        self.commit_current_editor()
+        self.has_changes = self.li_options != self.liOriginal
+        if self.has_changes:
+            self.kibitzers.save()
         lidif_opciones = []
         xprioridad = None
         xpointofview = None
