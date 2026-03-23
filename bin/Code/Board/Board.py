@@ -430,8 +430,15 @@ class Board(QtWidgets.QGraphicsView):
 
     @staticmethod
     def xremove_item(item):
-        if scene := item.scene():
-            scene.removeItem(item)
+        try:
+            scene = item.scene()
+        except RuntimeError:
+            return
+        if scene:
+            try:
+                scene.removeItem(item)
+            except RuntimeError:
+                return
 
     def keyPressEvent(self, event):
         k = event.key()
