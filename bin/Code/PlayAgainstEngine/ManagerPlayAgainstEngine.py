@@ -45,12 +45,12 @@ from Code.Base.Constantes import (
     WHITE,
     MULTIPV_MAXIMIZE
 )
-from Code.Books import Books, WBooks
+from Code.Books import Books, DBPolyglot, WBooks, WFactory
 from Code.Engines import EngineManagerPlay, EngineResponse, Engines, SelectEngines
 from Code.ManagerBase import Manager
 from Code.Openings import Opening, OpeningLines
 from Code.PlayAgainstEngine import Personalities, WPlayAgainstEngine
-from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils
+from Code.QT import FormLayout, Iconos, QTDialogs, QTMessages, QTUtils
 from Code.Translations import TrListas
 from Code.Tutor import Tutor
 from Code.Voyager import Voyager
@@ -448,7 +448,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                     li.append(TB_STOP)
                 self.set_toolbar(li)
                 for key in li:
-                    self.main_window.enable_option_toolbar(key, key == TB_STOP)
+                    self.main_window.enable_option_toolbar(key, key in (TB_STOP, TB_UTILITIES))
 
             haz_engine(False)
 
@@ -570,6 +570,10 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             li_mas_opciones = []
             if self.human_is_playing or self.is_finished():
                 li_mas_opciones.append(("books", _("Consult a book"), Iconos.Libros()))
+            if len(self.game) > 0:
+                if li_mas_opciones:
+                    li_mas_opciones.append((None, None, None))
+                li_mas_opciones.append(("add_line_to_book", _("Add current line to a book"), Iconos.FactoryPolyglot()))
             # li_mas_opciones.append((None, None, None))
             # li_mas_opciones.append(("start_position", _("Change the starting position"), Iconos.PGN()))
 
@@ -580,6 +584,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 if li_movs and si_en_vivo:
                     from_sq, to_sq, promotion = li_movs[-1]
                     self.player_has_moved_dispatcher(from_sq, to_sq, promotion)
+            elif resp == "add_line_to_book":
+                self.add_current_line_to_book()
 
         elif key == TB_ADJOURN:
             self.adjourn()
@@ -615,6 +621,92 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         dic["summary"] = self.summary
 
         return dic
+
+    def add_current_line_to_book(self):
+        if len(self.game) == 0:
+            QTMessages.message_error(self.main_window, _("There are no moves to add"))
+            return
+
+        path_lcbin = WFactory.polyglots_factory(self.procesador)
+        if not path_lcbin:
+            return
+
+        key_vars = "PLAY_ENGINE_ADD_LINE_TO_BOOK"
+        dic_vars = self.configuration.read_variables(key_vars)
+        white_weight = dic_vars.get("WHITE_WEIGHT", 1)
+        black_weight = dic_vars.get("BLACK_WEIGHT", 1)
+
+        li_gen = [
+            (None, _("Weights to add")),
+            (FormLayout.Spinbox(_("White"), 0, 999999, 70), white_weight),
+            (FormLayout.Spinbox(_("Black"), 0, 999999, 70), black_weight),
+        ]
+        resultado = FormLayout.fedit(
+            li_gen,
+            title=_("Add current line to a book"),
+            parent=self.main_window,
+            icon=Iconos.FactoryPolyglot(),
+            minimum_width=360,
+        )
+        if not resultado:
+            return
+
+        accion, li_resp = resultado
+        white_weight, black_weight = li_resp
+        dic_vars["WHITE_WEIGHT"] = white_weight
+        dic_vars["BLACK_WEIGHT"] = black_weight
+        self.configuration.write_variables(key_vars, dic_vars)
+
+        added_moves = self._add_current_line_to_polyglot(path_lcbin, white_weight, black_weight)
+        if added_moves == 0:
+            QTMessages.message_error(self.main_window, _("No moves were added to the book"))
+            return
+
+        DBPolyglot.IndexPolyglot().update_soft()
+
+        book_name = os.path.basename(path_lcbin)[:-6]
+        message = _X(_("Saved %1 move(s) into %2"), str(added_moves), book_name)
+        QTMessages.temporary_message(self.main_window, message, 1.8)
+        if self.si_check_kibitzers():
+            self.check_kibitzers(True)
+
+    def _add_current_line_to_polyglot(self, path_lcbin: str, white_weight: int, black_weight: int) -> int:
+        added_moves = 0
+        with DBPolyglot.DBPolyglot(path_lcbin) as db_polyglot:
+            for move in self.game.li_moves:
+                weight = white_weight if move.is_white() else black_weight
+                if weight <= 0:
+                    continue
+
+                entry = self._polyglot_entry_for_move(move, weight)
+                if entry is None:
+                    continue
+
+                db_polyglot.replace_entry(entry, "add")
+                added_moves += 1
+            db_polyglot.commit()
+        return added_moves
+
+    @staticmethod
+    def _polyglot_entry_for_move(move: Move.Move, weight: int):
+        position_before = move.position_before.copia()
+        objective_move = move.movimiento().lower()
+
+        for info_move in position_before.get_exmoves():
+            if info_move.move().lower() != objective_move:
+                continue
+
+            bin_move = FasterCode.BinMove(info_move)
+            entry = FasterCode.Entry()
+            entry.key = FasterCode.hash_polyglot8(position_before.fen())
+            entry.move = bin_move.imove()
+            entry.weight = weight
+            entry.score = 0
+            entry.depth = 0
+            entry.learn = 0
+            return entry
+
+        return None
 
     def restore_state(self, dic: Dict[str, Any]):
         self.base_inicio(dic)
@@ -1783,6 +1875,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 self.reinicio[k] = v
 
             is_white = dic["ISWHITE"]
+            side_changed = is_white != self.is_human_side_white
 
             self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
 
@@ -1805,19 +1898,57 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
             rival = self.manager_rival.engine.name
             player = self.configuration.x_player
+            self.rival_name = rival
+            self.player_name = player
             lb_white, lb_black = player, rival
             if not is_white:
                 lb_white, lb_black = lb_black, lb_white
-            self.main_window.change_player_labels(lb_white, lb_black)
 
             self.show_basic_label()
 
             self.put_pieces_bottom(is_white)
-            if is_white != self.is_human_side_white:
+            if side_changed:
+                if self.timed:
+                    self._swap_clock_sides()
                 self.is_human_side_white = is_white
                 self.is_engine_side_white = not is_white
 
+            self.tc_player = self.tc_white if self.is_human_side_white else self.tc_black
+            self.tc_rival = self.tc_white if self.is_engine_side_white else self.tc_black
+            self.main_window.change_player_labels(lb_white, lb_black)
+            if self.timed:
+                self._refresh_clock_visibility()
+                self.show_clocks()
+
+            if side_changed:
                 self.play_next_move()
+
+    def _current_clock_state(self, tc):
+        pending_time, _ = tc.get_seconds2()
+        return tc.total_time, pending_time, tc.zeitnot_marker, 0.0
+
+    def _swap_clock_sides(self):
+        state_white = self._current_clock_state(self.tc_white)
+        state_black = self._current_clock_state(self.tc_black)
+
+        self.tc_white.restore(state_black)
+        self.tc_black.restore(state_white)
+
+        for move_number, states in list(self.dic_times_prev_move.items()):
+            saved_white, saved_black = states
+            self.dic_times_prev_move[move_number] = saved_black, saved_white
+
+    def _refresh_clock_visibility(self):
+        self.main_window.active_game(True, self.timed)
+        self.tc_white.set_displayed(self.timed)
+        self.tc_black.set_displayed(self.timed)
+        if self.disable_user_time:
+            if self.is_human_side_white:
+                self.tc_white.set_displayed(False)
+                self.main_window.hide_clock_white()
+            else:
+                self.tc_black.set_displayed(False)
+                self.main_window.hide_clock_black()
 
     def show_dispatch(self, tp: int, rm: EngineResponse.EngineResponse):
         if rm.time or rm.depth:

@@ -8,7 +8,7 @@ from Code.Base.Constantes import (
     KIB_INDEXES,
     KIB_POLYGLOT,
 )
-from Code.Books import Books, WBooks
+from Code.Books import Books, DBPolyglot, WBooks
 from Code.Engines import Priorities
 from Code.Kibitzers import Kibitzers
 from Code.QT import (
@@ -23,6 +23,7 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
 )
+from Code.Z import Util
 
 KIB_BEFORE_MOVE, KIB_AFTER_MOVE = True, False
 
@@ -253,6 +254,17 @@ class WKibitzers(LCDialog.LCDialog):
         for book in list_books.lista:
             submenu.opcion(("book", book), book.name, rondo.otro())
             submenu.separador()
+        index_polyglots = DBPolyglot.IndexPolyglot()
+        li_factory = index_polyglots.list()
+        if li_factory:
+            subfactory = submenu.submenu(_("Polyglot book factory"), Iconos.FactoryPolyglot())
+            folder_factory = Code.configuration.paths.folder_polyglots_factory()
+            for reg in li_factory:
+                name = reg["FILENAME"][:-6]
+                path = Util.opj(folder_factory, reg["FILENAME"])
+                book = Books.Book("P", name, path, True)
+                subfactory.opcion(("book", book), name, rondo.otro())
+                subfactory.separador()
         submenu.opcion(("installbook", None), _("Registered books"), Iconos.Nuevo())
         menu.separador()
 
