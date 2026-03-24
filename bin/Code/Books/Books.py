@@ -12,7 +12,7 @@ from Code.Base.Constantes import (
     BOOK_RANDOM_PROPORTIONAL,
     BOOK_RANDOM_UNIFORM,
 )
-from Code.Books import Polyglot
+from Code.Books import DBPolyglot, Polyglot
 
 
 class ListBooks:
@@ -130,7 +130,7 @@ class Book:
     def __init__(self, tipo, name, path, pordefecto, extras=None):
         self.tipo = tipo
         self.name = name
-        self.path = Util.norm_path(path)
+        self.path = Util.norm_path(os.fspath(path))
         self.pordefecto = pordefecto
         self.orden = 100  # futuro ?
         self.extras = extras  # futuro ?
@@ -151,7 +151,7 @@ class Book:
     def from_dic(self, dic):
         self.tipo = dic["tipo"]
         self.name = dic["name"]
-        self.path = dic["path"]
+        self.path = Util.norm_path(os.fspath(dic["path"]))
         self.pordefecto = dic["pordefecto"]
         self.orden = dic["orden"]
         self.extras = dic["extras"]
@@ -165,11 +165,25 @@ class Book:
     def existe(self):
         return os.path.isfile(self.path)
 
+    def is_factory_polyglot(self):
+        return os.fspath(self.path).lower().endswith(".lcbin")
+
     def polyglot(self):
-        self.book = Polyglot.Polyglot(self.path)
+        self.book = None if self.is_factory_polyglot() else Polyglot.Polyglot(self.path)
+
+    def _entries(self, fen):
+        if self.is_factory_polyglot():
+            with DBPolyglot.DBPolyglot(self.path) as db_polyglot:
+                li = db_polyglot.get_entries(fen)
+            li.sort(key=lambda entry: entry.weight, reverse=True)
+            return li
+
+        if not getattr(self, "book", None):
+            self.book = Polyglot.Polyglot(self.path)
+        return self.book.lista(self.path, fen)
 
     def get_list_moves(self, fen):
-        li = self.book.lista(self.path, fen)
+        li = self._entries(fen)
         position = Position.Position()
         position.read_fen(fen)
 
@@ -193,7 +207,7 @@ class Book:
         return lista_jugadas
 
     def alm_list_moves(self, fen):
-        li = self.book.lista(self.path, fen)
+        li = self._entries(fen)
         position = Position.Position()
         position.read_fen(fen)
 
@@ -244,7 +258,7 @@ class Book:
     def select_move_type(self, fen, tipo):
         maxim = 0
         li_max = []
-        li = self.book.lista(self.path, fen)
+        li = self._entries(fen)
         nli = len(li)
         if nli == 0:
             return None

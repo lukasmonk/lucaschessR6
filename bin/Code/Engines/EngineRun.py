@@ -82,6 +82,7 @@ class EngineState(Enum):
     STARTED = auto()
     OK = auto()
     THINKING = auto()
+    PONDERING = auto()
     ERROR = auto()
     READING_UCI = auto()
     READING_EVAL_STOCKFISH = auto()
@@ -430,7 +431,7 @@ class EngineRun(QtCore.QObject):
                                     pass
                             self.li_cache = []
 
-                    elif st == EngineState.THINKING:
+                    elif st in (EngineState.THINKING, EngineState.PONDERING):
                         emited_depth = False
                         new_depth = 0
                         current_time = int(time.time() * 1000)
@@ -747,6 +748,19 @@ class EngineRun(QtCore.QObject):
 
         self._send_command(f"position {order}")
 
+    def set_game_position_ponder(self, game: Game.Game, ponder_move: str):
+        self.stop()
+        self.isready()
+
+        order = "startpos" if game.is_fen_initial() else f"fen {game.first_position.fen()}"
+        pv = game.pv()
+        if pv:
+            order += f" moves {pv}"
+        order += f" {ponder_move}" if pv else f" moves {ponder_move}"
+
+        self._send_command(f"position {order}")
+        self.is_white = not game.is_white()
+
     def set_fen_position(self, fen: str):
         self.stop()
         self.isready()
@@ -777,6 +791,57 @@ class EngineRun(QtCore.QObject):
 
         if run_engine_params.fixed_ms > 0:
             self._timerstop_run(int(run_engine_params.fixed_ms + 100))
+
+        if run_engine_params.fixed_depth > 0:
+            send_go(f"depth {run_engine_params.fixed_depth}")
+            return
+
+        if run_engine_params.fixed_nodes > 0:
+            send_go(f"nodes {run_engine_params.fixed_nodes}")
+            return
+
+        if run_engine_params.fixed_ms > 0:
+            if self.config.emulate_movetime:
+                send_go("infinite")
+                return
+            send_go(f"movetime {int(run_engine_params.fixed_ms)}")
+            return
+
+        if run_engine_params.timems_white > 0:
+            order = f"wtime {run_engine_params.timems_white} btime {run_engine_params.timems_black}"
+            if run_engine_params.inc_timems_move:
+                order += f" winc {run_engine_params.inc_timems_move} binc {run_engine_params.inc_timems_move}"
+            send_go(order)
+            return
+
+        send_go("infinite")
+
+    def ponderhit(self):
+        if self.state == EngineState.PONDERING:
+            self.play_time_begin = time.time()
+            self.state = EngineState.THINKING
+            self._send_command("ponderhit")
+
+    def play_ponder(self, run_engine_params: RunEngineParams):
+
+        def send_go(args: str):
+            self.last_depth_emit = 0
+            self.last_time_depth_emit = 0
+
+            self.play_time_begin = time.time()
+            self.state = EngineState.PONDERING
+
+            if self.mode_timer_poll:
+                self._start_polling()
+
+            self._send_command(f"go ponder {args}")
+            if run_engine_params.fixed_ms or run_engine_params.fixed_depth:
+                if self.mrm:
+                    self.mrm.set_time_depth(run_engine_params.fixed_ms, run_engine_params.fixed_depth)
+            if run_engine_params.fixed_nodes and self.mrm:
+                self.mrm.set_nodes(run_engine_params.fixed_nodes)
+
+        self.mrm = EngineResponse.MultiEngineResponse(self.config.name, self.is_white)
 
         if run_engine_params.fixed_depth > 0:
             send_go(f"depth {run_engine_params.fixed_depth}")

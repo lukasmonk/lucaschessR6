@@ -311,6 +311,7 @@ class MultiEngineResponse:
     def reset(self):
         self.vtime = 0
         self.depth = 0
+        self.ponder_move = ""
 
         self.max_time = 0
         self.max_depth = 0
@@ -336,6 +337,7 @@ class MultiEngineResponse:
             "is_white": self.is_white,
             "vtime": self.vtime,
             "depth": self.depth,
+            "ponder_move": self.ponder_move,
             "max_time": self.max_time,
             "max_depth": self.max_depth,
             "nodes": self.nodes,
@@ -348,6 +350,7 @@ class MultiEngineResponse:
         self.is_white = dic["is_white"]
         self.vtime = dic["vtime"]
         self.depth = dic["depth"]
+        self.ponder_move = dic.get("ponder_move", "")
         self.max_time = dic["max_time"]
         self.max_depth = dic["max_depth"]
         self.nodes = dic.get("nodes", 0)
@@ -610,6 +613,7 @@ class MultiEngineResponse:
 
         rm.sinInicializar = False
         d_claves = self.check_claves(bestmove, {"bestmove", "ponder"})
+        self.ponder_move = d_claves.get("ponder", "").strip().lower()
         rm.from_sq = ""
         rm.to_sq = ""
         rm.promotion = ""

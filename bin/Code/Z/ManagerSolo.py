@@ -8,7 +8,9 @@ import Code
 from Code import Util
 from Code.Analysis import Analysis
 from Code.Base import Game, Move, Position
+from Code.Books import Books, DBPolyglot, WFactory
 from Code.Base.Constantes import (
+    BOOK_BEST_MOVE,
     GT_ALONE,
     ST_ENDGAME,
     ST_PLAYING,
@@ -25,7 +27,7 @@ from Code.Base.Constantes import (
 from Code.ManagerBase import Manager
 from Code.Openings import WindowOpenings
 from Code.PlayAgainstEngine import WPlayAgainstEngine
-from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils, SelectFiles
+from Code.QT import FormLayout, Iconos, QTDialogs, QTMessages, QTUtils, SelectFiles
 from Code.Voyager import Voyager
 from Code.ZQT import WindowPgnTags
 
@@ -59,6 +61,10 @@ class ManagerSolo(Manager.Manager):
         self.board.set_accept_drop_pgns(self.dropPGN)
 
         self.dicRival = {}
+        self.book_rival = dic.get("BOOKR", None)
+        self.book_rival_active = self.book_rival is not None
+        if self.book_rival_active:
+            self.book_rival.polyglot()
 
         self.play_against_engine = dic.get("PLAY_AGAINST_ENGINE", False) if not self.manager_rival else True
 
@@ -467,28 +473,41 @@ class ManagerSolo(Manager.Manager):
         mt = _X(_("Disable %1"), mt) if self.play_against_engine else _X(_("Enable %1"), mt)
         sep = (None, None, None, None)
 
-        li_extra_options = (
+        li_extra_options = [
             ("books", _("Consult a book"), Iconos.Libros()),
             sep,
-            (None, _("Change the starting position"), Iconos.Board()),
-            sep,
-            ("position", _("Board editor"), Iconos.Datos(), "Ctrl+S"),
-            sep,
-            ("initial", _("Basic position"), Iconos.Board(), "Ctrl+B"),
-            sep,
-            ("opening", _("Opening"), Iconos.Opening()),
-            sep,
-            ("pasteposicion", _("Paste FEN position"), Iconos.Pegar16(), "Ctrl+V"),
-            sep,
-            ("leerpgn", _("Read PGN file"), Iconos.PGN_Importar()),
-            sep,
-            ("pastepgn", _("Paste PGN"), Iconos.Pegar16(), "Ctrl+V"),
-            sep,
-            ("voyager", _("Voyager 2"), Iconos.Voyager()),
-            (None, None, True),
-            sep,
-            ("engine", mt, Iconos.Engines()),
-            sep,
+            ("edit_book", f"{_('Edit')}: {_('Current position')} - {_('Polyglot book')}", Iconos.Modificar()),
+        ]
+        if len(self.game) > 0:
+            li_extra_options.extend(
+                [
+                    sep,
+                    ("add_line_to_book", _("Add current line to a book"), Iconos.FactoryPolyglot()),
+                ]
+            )
+        li_extra_options.extend(
+            [
+                sep,
+                (None, _("Change the starting position"), Iconos.Board()),
+                sep,
+                ("position", _("Board editor"), Iconos.Datos(), "Ctrl+S"),
+                sep,
+                ("initial", _("Basic position"), Iconos.Board(), "Ctrl+B"),
+                sep,
+                ("opening", _("Opening"), Iconos.Opening()),
+                sep,
+                ("pasteposicion", _("Paste FEN position"), Iconos.Pegar16(), "Ctrl+V"),
+                sep,
+                ("leerpgn", _("Read PGN file"), Iconos.PGN_Importar()),
+                sep,
+                ("pastepgn", _("Paste PGN"), Iconos.Pegar16(), "Ctrl+V"),
+                sep,
+                ("voyager", _("Voyager 2"), Iconos.Voyager()),
+                (None, None, True),
+                sep,
+                ("engine", mt, Iconos.Engines()),
+                sep,
+            ]
         )
 
         resp = self.utilities(li_extra_options)
@@ -498,6 +517,12 @@ class ManagerSolo(Manager.Manager):
                 for x in range(len(li_movs) - 1, -1, -1):
                     from_sq, to_sq, promotion = li_movs[x]
                     self.player_has_moved_dispatcher(from_sq, to_sq, promotion)
+
+        elif resp == "edit_book":
+            self.edit_current_book()
+
+        elif resp == "add_line_to_book":
+            self.add_current_line_to_book()
 
         elif resp == "initial":
             self.basic_initial_position()
@@ -546,6 +571,137 @@ class ManagerSolo(Manager.Manager):
                 dic["WHITEBOTTOM"] = self.board.is_white_bottom
                 self.reiniciar(dic)
                 self.set_as_changed()
+
+    def add_current_line_to_book(self):
+        if len(self.game) == 0:
+            QTMessages.message_error(self.main_window, _("There are no moves to add"))
+            return
+
+        path_lcbin = WFactory.polyglots_factory(self.procesador)
+        if not path_lcbin:
+            return
+
+        key_vars = "CREATE_OWN_GAME_ADD_LINE_TO_BOOK"
+        dic_vars = self.configuration.read_variables(key_vars)
+        white_weight = dic_vars.get("WHITE_WEIGHT", 1)
+        black_weight = dic_vars.get("BLACK_WEIGHT", 1)
+
+        li_gen = [
+            (None, _("Weights to add")),
+            (FormLayout.Spinbox(_("White"), 0, 999999, 70), white_weight),
+            (FormLayout.Spinbox(_("Black"), 0, 999999, 70), black_weight),
+        ]
+        resultado = FormLayout.fedit(
+            li_gen,
+            title=_("Add current line to a book"),
+            parent=self.main_window,
+            icon=Iconos.FactoryPolyglot(),
+            minimum_width=360,
+        )
+        if not resultado:
+            return
+
+        accion, li_resp = resultado
+        white_weight, black_weight = li_resp
+        dic_vars["WHITE_WEIGHT"] = white_weight
+        dic_vars["BLACK_WEIGHT"] = black_weight
+        self.configuration.write_variables(key_vars, dic_vars)
+
+        added_moves = self._add_current_line_to_polyglot(path_lcbin, white_weight, black_weight)
+        if added_moves == 0:
+            QTMessages.message_error(self.main_window, _("No moves were added to the book"))
+            return
+
+        DBPolyglot.IndexPolyglot().update_soft()
+        self._apply_polyglot_book_immediately(path_lcbin)
+
+        book_name = os.path.basename(path_lcbin)[:-6]
+        message = _X(_("Saved %1 move(s) into %2"), str(added_moves), book_name)
+        QTMessages.temporary_message(self.main_window, message, 1.8)
+        if self.si_check_kibitzers():
+            self.check_kibitzers(True)
+
+    def edit_current_book(self):
+        path_lcbin = WFactory.polyglots_factory(self.procesador)
+        if not path_lcbin:
+            return
+
+        self._apply_polyglot_book_immediately(path_lcbin)
+
+        editor = WFactory.edit_polyglot(
+            self.procesador,
+            path_lcbin,
+            position=self.board.last_position.copia(),
+            is_white_bottom=self.board.is_white_bottom,
+            position_provider=self._current_polyglot_editor_position,
+            modal=False,
+        )
+        self._register_polyglot_editor(editor)
+
+    def _current_polyglot_editor_position(self):
+        return self.board.last_position, self.board.is_white_bottom
+
+    def _apply_polyglot_book_immediately(self, path_lcbin: str):
+        book_name = os.path.basename(path_lcbin)[:-6]
+        book = Books.Book("P", book_name, path_lcbin, False)
+        book.polyglot()
+
+        self.book_rival = book
+        self.book_rival_active = True
+
+        if self.reinicio is not None:
+            self.reinicio["BOOKR"] = book
+
+    def _register_polyglot_editor(self, editor):
+        if editor is None:
+            return
+        if not hasattr(self, "_polyglot_editors"):
+            self._polyglot_editors = []
+        self._polyglot_editors.append(editor)
+
+        def cleanup(_obj=None, editor_ref=editor):
+            if editor_ref in self._polyglot_editors:
+                self._polyglot_editors.remove(editor_ref)
+
+        editor.destroyed.connect(cleanup)
+
+    def _add_current_line_to_polyglot(self, path_lcbin: str, white_weight: int, black_weight: int) -> int:
+        added_moves = 0
+        with DBPolyglot.DBPolyglot(path_lcbin) as db_polyglot:
+            for move in self.game.li_moves:
+                weight = white_weight if move.is_white() else black_weight
+                if weight <= 0:
+                    continue
+
+                entry = self._polyglot_entry_for_move(move, weight)
+                if entry is None:
+                    continue
+
+                db_polyglot.replace_entry(entry, "add")
+                added_moves += 1
+            db_polyglot.commit()
+        return added_moves
+
+    @staticmethod
+    def _polyglot_entry_for_move(move: Move.Move, weight: int):
+        position_before = move.position_before.copia()
+        objective_move = move.movimiento().lower()
+
+        for info_move in position_before.get_exmoves():
+            if info_move.move().lower() != objective_move:
+                continue
+
+            bin_move = FasterCode.BinMove(info_move)
+            entry = FasterCode.Entry()
+            entry.key = FasterCode.hash_polyglot8(position_before.fen())
+            entry.move = bin_move.imove()
+            entry.weight = weight
+            entry.score = 0
+            entry.depth = 0
+            entry.learn = 0
+            return entry
+
+        return None
 
     def paste_position(self):
         texto = QTUtils.get_txt_clipboard()
@@ -660,6 +816,12 @@ class ManagerSolo(Manager.Manager):
 
     def play_rival(self):
         if not self.is_finished():
+            if self.book_rival_active:
+                pv = self.book_rival.select_move_type(self.game.last_position.fen(), BOOK_BEST_MOVE)
+                if pv:
+                    self.player_has_moved_dispatcher(pv[:2], pv[2:4], pv[4:])
+                    return
+
             self.thinking(True)
             rm = self.manager_rival.play_game(self.game)
             self.thinking(False)
@@ -684,8 +846,8 @@ class ManagerSolo(Manager.Manager):
             rival = dr["CM"]
             if hasattr(rival, "icono"):
                 delattr(rival, "icono")  # problem with configuration.write_variables and saving qt variables
-            r_t = dr["ENGINE_TIME"] * 100  # Se guarda en decimas -> milesimas
-            r_p = dr["ENGINE_DEPTH"]
+            r_t = int(round(float(dr["ENGINE_TIME"]) * 100))  # Se guarda en decimas -> milesimas
+            r_p = int(dr["ENGINE_DEPTH"])
             if r_t <= 0:
                 r_t = 0
             if r_p <= 0:
@@ -693,7 +855,7 @@ class ManagerSolo(Manager.Manager):
             if r_t == 0 and r_p == 0 and not dic.get("SITIEMPO", False):
                 r_t = 1000
 
-            nodes = dr.get("ENGINE_NODES", 0)
+            nodes = int(dr.get("ENGINE_NODES", 0) or 0)
 
             self.manager_rival = self.procesador.create_manager_engine(rival, r_t, r_p, 0, 0)
             if nodes:
