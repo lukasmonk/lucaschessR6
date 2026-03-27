@@ -34,7 +34,7 @@ from Code.Kibitzers import (
     WKibLine,
     WKibStockfishEval,
 )
-from Code.MainWindow import InitApp
+from Code.Main import InitApp
 from Code.Openings import OpeningsStd
 from Code.QT import GarbageCollector, QTUtils
 from Code.SQL import UtilSQL
@@ -80,20 +80,23 @@ class CPU:
         self.procesa(orden)
 
     def recibe(self):
-        dv = self.ipc.pop()
-        if not dv:
-            return None
+        while True:
+            dv = self.ipc.pop()
+            if not dv:
+                return None
 
-        orden = Orden()
-        orden.key = dv["__CLAVE__"]
-        orden.dv = dv
-        if orden.key == KIBRUN_GAME:
-            if self.ipc.has_more_data():
-                return self.recibe()
-            time.sleep(0.1)
-            if self.ipc.has_more_data():
-                return self.recibe()
-        return orden
+            orden = Orden()
+            orden.key = dv["__CLAVE__"]
+            orden.dv = dv
+            
+            if orden.key == KIBRUN_GAME:
+                if self.ipc.has_more_data():
+                    continue
+                time.sleep(0.1)
+                if self.ipc.has_more_data():
+                    continue
+            
+            return orden
 
     def reprocesa(self):
         self.ipc.read_again()

@@ -10,6 +10,7 @@ from Code.Base.Constantes import (
 from Code.Openings import Opening
 from Code.PlayAgainstEngine import ManagerPlayAgainstEngine
 from Code.QT import QTDialogs
+from Code.Z import TimeControl
 
 
 class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
@@ -71,7 +72,9 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
             bl, ng = ng, bl
 
         if self.timed:
+            self.time_mode = TimeControl.TimeMode.FISCHER
             tp_bl, tp_ng = self.tc_white.label(), self.tc_black.label()
+            self.dic_times_prev_move = {}
 
             self.main_window.set_data_clock(bl, tp_bl, ng, tp_ng)
             self.refresh()

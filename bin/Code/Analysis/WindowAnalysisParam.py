@@ -514,7 +514,7 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
 
     li_gen.append((f"{_('Only selected games')}:", multiple_selected))
     li_gen.append(SEPARADOR)
-    cores = Util.cpu_count()
+    cores = Util.cpu_count()*4
     li_gen.append(
         (
             FormLayout.Spinbox(_("Number of parallel processes"), 1, cores, 40),

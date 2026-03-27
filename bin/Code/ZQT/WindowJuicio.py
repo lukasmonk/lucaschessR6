@@ -1,25 +1,28 @@
 from PySide6 import QtCore
 
-from Code.Z import Util
-from Code.Analysis import Analysis
 from Code.Base import Game
 from Code.Board import Board
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, ScreenUtils
+from Code.Z import Util
 
 
 class WJuicio(LCDialog.LCDialog):
+    max_moves: int
+    si_mueve_tiempo: bool
+    game: Game.Game
+
     def __init__(
-        self,
-        manager,
-        xengine,
-        name_op,
-        position,
-        mrm,
-        rm_obj,
-        rm_usu,
-        analysis,
-        is_competitive=None,
-        continue_tt=False,
+            self,
+            manager,
+            xengine,
+            name_op,
+            position,
+            mrm,
+            rm_obj,
+            rm_usu,
+            analysis,
+            is_competitive=None,
+            continue_tt=False,
     ):
         self.is_competitive = manager.is_competitive if is_competitive is None else is_competitive
         self.name_op = name_op
@@ -31,6 +34,7 @@ class WJuicio(LCDialog.LCDialog):
         self.analysis_changed = False
         self.xengine = xengine
         self.manager = manager
+        self.pos_movement = 0
 
         self.list_rm, self.posOP = self.do_lirm()
 
@@ -49,7 +53,7 @@ class WJuicio(LCDialog.LCDialog):
         self.board.draw_window()
         self.board.set_side_bottom(position.is_white)
 
-        ly_bm, tb_bm = QTDialogs.ly_mini_buttons(self, "", siLibre=False, icon_size=24, siMas=continue_tt)
+        ly_bm, tb_bm = QTDialogs.ly_mini_buttons(self, "", icon_size=24, if_more=continue_tt)
 
         bt_continue = Controles.PB(self, _("Continue"), self.finalize, plano=False).set_icono(Iconos.Aceptar())
         ly_control = Colocacion.H().relleno().otro(ly_bm).relleno()
@@ -80,14 +84,14 @@ class WJuicio(LCDialog.LCDialog):
         self.set_score()
         self.restore_video()
 
-    def difPuntos(self):
+    def point_difference(self):
         return self.rm_usu.score_abs5() - self.rm_obj.score_abs5()
 
-    def difPuntosMax(self):
+    def point_difference_max(self):
         return self.mrm.best_rm_ordered().score_abs5() - self.rm_usu.score_abs5()
 
     def set_score(self):
-        pts = self.difPuntos()
+        pts = self.point_difference()
         if pts > 0:
             txt = _('Centipawns won %d') % pts
             color = "green"
@@ -101,7 +105,7 @@ class WJuicio(LCDialog.LCDialog):
         self.lbComentario.set_foreground(color)
 
     def finalize(self):
-        self.siMueveTiempo = False
+        self.si_mueve_tiempo = False
         self.accept()
 
     def process_toolbar(self):
@@ -116,12 +120,10 @@ class WJuicio(LCDialog.LCDialog):
             self.mueve(is_end=True)
         elif accion == "move_timed":
             self.move_timed()
-        elif accion == "MoverMas":
-            self.mueveMas()
-        elif accion == "MoverLibre":
-            self.mueveLibre()
+        elif accion == "move_mas":
+            self.move_mas()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.list_rm)
 
     def do_lirm(self):
@@ -170,10 +172,10 @@ class WJuicio(LCDialog.LCDialog):
 
         return li, pos_op
 
-    def grid_bold(self, grid, row, column):
+    def grid_bold(self, _grid, row, _obj_column):
         return self.list_rm[row].is_selected
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         if obj_column.key == "PLAYER":
             return self.list_rm[row].player
         elif obj_column.key == "POSREAL":
@@ -181,38 +183,38 @@ class WJuicio(LCDialog.LCDialog):
         else:
             return self.list_rm[row].texto
 
-    def grid_color_texto(self, grid, row, obj_column):
+    def grid_color_texto(self, _grid, row, _obj_column):
         return None if self.list_rm[row].centipawns_abs >= 0 else self.colorNegativo
 
-    def grid_color_fondo(self, grid, row, obj_column):
+    def grid_color_fondo(self, _grid, row, _obj_column):
         if row % 2 == 1:
             return self.colorImpares
         else:
             return None
 
-    def grid_cambiado_registro(self, grid, row, column):
+    def grid_cambiado_registro(self, _grid, row, _obj_column):
         self.game = Game.Game(self.position)
         self.game.read_pv(self.list_rm[row].rm.pv)
-        self.maxMoves = len(self.game)
+        self.max_moves = len(self.game)
         self.mueve(si_inicio=True)
 
         self.grid.setFocus()
 
     def mueve(self, si_inicio=False, n_saltar=0, is_end=False, is_base=False):
         if n_saltar:
-            pos = self.posMueve + n_saltar
-            if 0 <= pos < self.maxMoves:
-                self.posMueve = pos
+            pos = self.pos_movement + n_saltar
+            if 0 <= pos < self.max_moves:
+                self.pos_movement = pos
             else:
                 return False
         elif si_inicio:
-            self.posMueve = 0
+            self.pos_movement = 0
         elif is_base:
-            self.posMueve = -1
+            self.pos_movement = -1
         elif is_end:
-            self.posMueve = self.maxMoves - 1
+            self.pos_movement = self.max_moves - 1
         if len(self.game):
-            move = self.game.move(self.posMueve if self.posMueve > -1 else 0)
+            move = self.game.move(self.pos_movement if self.pos_movement > -1 else 0)
             if is_base:
                 self.board.set_position(move.position_before)
             else:
@@ -226,16 +228,16 @@ class WJuicio(LCDialog.LCDialog):
             return
         self.is_moving_time = True
         self.mueve(is_base=True)
-        self.mueveTiempoWork()
+        self.work_timed_move()
 
-    def mueveTiempoWork(self):
+    def work_timed_move(self):
         if self.is_moving_time:
             if not self.mueve(n_saltar=1):
                 self.is_moving_time = False
                 return
-            QtCore.QTimer.singleShot(1000, self.mueveTiempoWork)
+            QtCore.QTimer.singleShot(1000, self.work_timed_move)
 
-    def mueveMas(self):
+    def move_mas(self):
         mrm = self.xengine.get_mrm()
 
         rm_usu_n, pos = mrm.search_rm(self.rm_usu.movimiento())
@@ -257,8 +259,3 @@ class WJuicio(LCDialog.LCDialog):
         self.set_score()
         self.list_rm, self.posOP = self.do_lirm()
         self.grid.refresh()
-
-    def mueveLibre(self):
-        move = self.game.move(self.posMueve)
-        pts = self.list_rm[self.grid.recno()].rm.texto()
-        Analysis.AnalisisVariations(self, self.xengine, move, self.position.is_white, pts)

@@ -31,7 +31,6 @@ make_pv = FasterCode.make_pv
 num_move = FasterCode.num_move
 move_num = FasterCode.move_num
 
-
 drots = {x.upper(): x for x in STANDARD_TAGS}
 
 BODY_SAVE = b"BODY "
@@ -844,7 +843,7 @@ class DBgames:
             except sqlite3.Error:
                 pass
 
-    def import_pgns(self, ficheros, dl_tmp, rem_comvar_run=None):
+    def import_pgns(self, ficheros, dl_tmp, rem_comvar_run=None, filter_func=None):
         erroneos = duplicados = importados = 0
 
         allows_fen = self.allows_positions
@@ -898,11 +897,11 @@ class DBgames:
                     if n == next_n:
                         if time.time() - t1 > 0.5:
                             if not dl_tmp.actualiza(
-                                erroneos + duplicados + importados,
-                                erroneos,
-                                duplicados,
-                                importados,
-                                btell * 100.0 / bsize,
+                                    erroneos + duplicados + importados,
+                                    erroneos,
+                                    duplicados,
+                                    importados,
+                                    btell * 100.0 / bsize,
                             ):
                                 break
                             t1 = time.time()
@@ -919,6 +918,14 @@ class DBgames:
                     d_cab = {decode(k).replace(" ", ""): decode(v) for k, v in bdCab.items()}
                     d_cablwr = {decode(k).replace(" ", ""): decode(v) for k, v in bdCablwr.items()}
                     dcabs.update(d_cablwr)
+
+                    # Filtro previo: descartar partidas que no cumplan la condición
+                    if filter_func:
+                        d_cab["PLYCOUNT"] = len(pv.split(" "))
+                        if not filter_func(d_cab):
+                            erroneos += 1
+                            dl_tmp.refresh_gui()
+                            continue
 
                     xpv = pv_xpv(pv)
 
@@ -991,8 +998,8 @@ class DBgames:
                             data = None
                             if rem_comvar_run:
                                 body = rem_comvar_run(body)
-                                is_raw = not (
-                                    b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
+                                is_raw = body is None or not (
+                                        b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
                                 )
                             if not is_raw:
                                 data = memoryview(BODY_SAVE + body)
@@ -1018,7 +1025,7 @@ class DBgames:
             if dl_tmp.is_canceled():
                 break
         dl_tmp.actualiza(erroneos + duplicados + importados, erroneos, duplicados, importados, 100.00)
-        dl_tmp.ponSaving()
+        dl_tmp.put_saving()
 
         if li_regs:
             conexion.executemany(sql, li_regs)
@@ -1028,7 +1035,7 @@ class DBgames:
             self.db_stat.commit()
         conexion.commit()
 
-        dl_tmp.ponContinuar()
+        dl_tmp.put_continue()
 
         self.save_config("dcabs", dcabs)
 
@@ -1137,14 +1144,14 @@ class DBgames:
                     self.db_stat.commit()
 
         dl_tmp.actualiza(erroneos + duplicados + importados, erroneos, duplicados, importados, 100.00)
-        dl_tmp.ponSaving()
+        dl_tmp.put_saving()
         if li_regs:
             conexion.executemany(sql, li_regs)
         if self.with_db_stat:
             self.db_stat.massive_append_set(False)
             self.db_stat.commit()
         conexion.commit()
-        dl_tmp.ponContinuar()
+        dl_tmp.put_continue()
         return si_cols_cambiados
 
     def check_game(self, game):

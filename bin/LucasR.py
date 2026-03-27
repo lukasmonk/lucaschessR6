@@ -6,24 +6,28 @@
 # Licence : GPL 3.0
 # ==============================================================================
 import sys
-import warnings
 
-import Code
+import warnings
 
 warnings.simplefilter("ignore")
 
+if __debug__:
+    import faulthandler
+
+    faulthandler.enable()
+
 n_args = len(sys.argv)
 if n_args == 1:
-    import Code.Base.Init
+    import Code.Main.Init
 
-    Code.Base.Init.init()
+    Code.Main.Init.init()
 
 elif n_args >= 2:
     arg = sys.argv[1].lower()
     if arg.endswith((".pgn", ".lcdb", ".lcsb", ".bmt", ".shortcut")) or arg in ("-play", "-playagainst"):
-        import Code.Base.Init
+        import Code.Main.Init
 
-        Code.Base.Init.init()
+        Code.Main.Init.init()
 
     elif arg == "-kibitzer":
         import Code.Kibitzers.RunKibitzer

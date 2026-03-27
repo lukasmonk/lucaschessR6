@@ -142,7 +142,7 @@ class TrainMenuRun:
 
     def tacticas(self, tipo, name, carpeta, ini, ntactic):
         tacticas = Tactics.Tactics(tipo, name, carpeta, ini)
-        tactica = tacticas.eligeTactica(ntactic, Code.configuration.paths.folder_results())
+        tactica = tacticas.elige_tactica(ntactic, Code.configuration.paths.folder_results())
         if tactica:
             self.tactics_train(tactica)
 

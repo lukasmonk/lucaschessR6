@@ -8,7 +8,7 @@ from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import BLACK, LI_BASIC_TAGS, WHITE
 from Code.Board import Board, Board2
-from Code.Databases import WindowDatabase
+from Code.Databases import WDatabase
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
@@ -170,7 +170,7 @@ class WLearnBase(LCDialog.LCDialog):
     def nuevo(self):
         menu = QTDialogs.LCMenu(self)
         if not QTDialogs.lista_db(self.configuration, True).is_empty():
-            menu.opcion("db", _("Game in a database"), Iconos.Database())
+            menu.opcion("db", _("Game in a database"), Iconos.Databases())
             menu.separador()
         menu.opcion("pgn", _("Game in a pgn"), Iconos.Filtrar())
         menu.separador()
@@ -181,7 +181,7 @@ class WLearnBase(LCDialog.LCDialog):
         elif resp == "db":
             db = QTDialogs.select_db(self, self.configuration, True, False)
             if db:
-                w = WindowDatabase.WBDatabase(self, self.procesador, db, False, True)
+                w = WDatabase.WBDatabase(self, self.procesador, db, False, True)
                 resp = w.exec()
                 if resp:
                     game = w.game

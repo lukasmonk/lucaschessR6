@@ -393,7 +393,7 @@ class ManagerCompeticion(Manager.Manager):
             self.analyze_begin()
 
     def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, promotion: str = ""):
-        """Viene desde el board via MainWindow, es previo, ya que si está pendiente el análisis, sólo se indica que ha
+        """Viene desde el board via Main, es previo, ya que si está pendiente el análisis, sólo se indica que ha
         elegido una jugada"""
         move = self.check_human_move(from_sq, to_sq, promotion, not self.is_tutor_enabled)
         if not move:

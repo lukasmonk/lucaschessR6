@@ -299,7 +299,7 @@ class TrainMenu(BaseMenu.RootMenu):
                         if os.path.isfile(ini):
                             xname = entry.name
                             tacticas = Tactics.Tactics(tipo, xname, xcarpeta, ini)
-                            li_menus = tacticas.listaMenus()
+                            li_menus = tacticas.lista_menus()
                             n_menus = len(li_menus)
                             if n_menus == 0:
                                 continue

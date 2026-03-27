@@ -554,7 +554,7 @@ class EngineRun(QtCore.QObject):
     def stop(self):
         try:
             self._timerstop_off()
-            if self.state != EngineState.OFF:
+            if self.state not in (EngineState.OFF, EngineState.OK):
                 self._send_command("stop")
         except:
             if __debug__:

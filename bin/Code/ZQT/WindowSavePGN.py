@@ -342,9 +342,9 @@ class WSave(LCDialog.LCDialog):
         game = self.game_base.copia()
         if game.opening:
             if not game.get_tag("ECO"):
-                game.set_tag("ECO", self.game.opening.eco)
+                game.set_tag("ECO", game.opening.eco)
             if not game.get_tag("Opening"):
-                game.set_tag("Opening", self.game.opening.tr_name)
+                game.set_tag("Opening", game.opening.tr_name)
         if with_seventags:
             game.add_seventags()
         return game

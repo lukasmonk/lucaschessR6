@@ -610,6 +610,7 @@ class WBoardColors(LCDialog.LCDialog):
         self.board.remove_arrows()
         self.board.crea_doubleboxes("f2", "f4")
         self.board.show_one_arrow_temp("f2", "f4", True)
+        self.board.show_one_arrow_temp("c3", "a4", True)
         self.board.show_one_arrow_temp("d1", "d4", False)
         self.board.show_arrow_mov("f5", "d7", "ms")
         self.board.show_arrow_mov("d6", "b4", "mt")

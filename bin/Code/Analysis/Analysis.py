@@ -1,11 +1,11 @@
 from typing import List, Tuple
 
 import Code
-from Code.Analysis import AnalysisIndexes, WindowAnalysis, WindowAnalysisVariations
+from Code.Analysis import AnalysisIndexes, WindowAnalysis
 from Code.Base import Game, Move
 from Code.Base.Constantes import TOP_RIGHT
 from Code.Engines import EngineResponse, EngineManagerAnalysis
-from Code.QT import QTDialogs, QTMessages, QTUtils
+from Code.QT import QTMessages
 
 
 class ControlAnalysis:
@@ -167,13 +167,13 @@ class ControlAnalysis:
         return game_send
 
     def change_mov_active(self, accion):
-        if accion == "Adelante":
+        if accion == "forward":
             self.pos_mov_active += 1
-        elif accion == "Atras":
+        elif accion == "back":
             self.pos_mov_active -= 1
-        elif accion == "Inicio":
+        elif accion == "to_beginning":
             self.pos_mov_active = -1
-        elif accion == "Final":
+        elif accion == "to_end":
             self.pos_mov_active = len(self.game) - 1
 
     def set_pos_mov_active(self, pos):
@@ -187,10 +187,10 @@ class ControlAnalysis:
         move = self.game.move(max(self.pos_mov_active, 0))
         return move.position.fen()
 
-    def external_analysis(self, wowner, is_white):
-        move = self.game.move(max(self.pos_mov_active, 0))
-        pts = self.score_active()
-        AnalisisVariations(wowner, self.xengine, move, is_white, pts)
+    # def external_analysis(self, wowner, is_white):
+    #     move = self.game.move(max(self.pos_mov_active, 0))
+    #     pts = self.score_active()
+    #     AnalisisVariations(wowner, self.xengine, move, is_white, pts)
 
     def save_base(self, game, rm, is_complete):
         name = self.time_engine()
@@ -294,178 +294,3 @@ def show_analysis(
             xengine = uno.xengine
             if not manager_analyzer or xengine.engine.key != manager_analyzer.engine.key:
                 xengine.finalize()
-
-
-class AnalisisVariations:
-    def __init__(self, owner, xanalyzer, move, is_white, cbase_points):
-
-        self.owner = owner
-        self.manager_analyzer = xanalyzer
-        self.move = move
-        self.is_white = is_white
-        self.position_before = move.position_before
-        self.is_moving_time = False
-
-        self.time_function = None
-        self.time_pos_max = None
-        self.time_pos = None
-        self.time_others_tb = None
-        self.rm = None
-        self.pos_analyzer = None
-        self.max_analyzer = None
-        self.game_analyzer = None
-
-        if self.manager_analyzer.mstime_engine:
-            segundos_pensando = self.manager_analyzer.mstime_engine / 1000  # esta en milesimas
-            if self.manager_analyzer.mstime_engine % 1000 > 0:
-                segundos_pensando += 1
-        else:
-            segundos_pensando = 3
-
-        self.w = WindowAnalysisVariations.WAnalisisVariations(
-            self, self.owner, segundos_pensando, self.is_white, cbase_points
-        )
-        self.reset()
-        self.w.exec()
-
-    def reset(self):
-        self.w.board.set_position(self.position_before)
-        self.w.board.put_arrow_sc(self.move.from_sq, self.move.to_sq)
-        self.w.board.set_dispatcher(self.player_has_moved_dispatcher)
-        self.w.board.activate_side(not self.move.position.is_white)
-
-    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
-
-        # Peon coronando
-        if not promotion and self.position_before.pawn_can_promote(from_sq, to_sq):
-            promotion = self.w.board.pawn_promoting(not self.move.position.is_white)
-            if promotion is None:
-                return False
-
-        si_bien, mens, new_move = Move.get_game_move(None, self.position_before, from_sq, to_sq, promotion)
-
-        if si_bien:
-            game = Game.Game(self.position_before)
-            game.add_move(new_move)
-            self.move_the_pieces(new_move.list_piece_moves)
-            self.w.board.put_arrow_sc(new_move.from_sq, new_move.to_sq)
-            self.analysis_move(new_move)
-            return True
-        else:
-            return False
-
-    def analysis_move(self, new_move):
-        with QTMessages.WaitingMessage(self.w, _("Analyzing the move....")):
-            secs = self.w.get_seconds()
-            self.manager_analyzer.remove_gui_dispatch()
-            self.rm = self.manager_analyzer.analyzes_variation(new_move, secs * 1000, self.is_white)
-
-        self.game_analyzer = Game.Game(new_move.position)
-        self.game_analyzer.read_pv(self.rm.pv)
-
-        if len(self.game_analyzer):
-            self.w.boardT.set_position(self.game_analyzer.move(0).position)
-
-        self.w.set_score(self.rm.texto())
-
-        self.pos_analyzer = 0
-        self.max_analyzer = len(self.game_analyzer)
-
-        self.moving_analyzer(si_inicio=True)
-
-    def move_the_pieces(self, li_movs):
-        """
-        Hace los movimientos de pieces en el board
-        """
-        for movim in li_movs:
-            if movim[0] == "b":
-                self.w.board.remove_piece(movim[1])
-            elif movim[0] == "m":
-                self.w.board.move_piece(movim[1], movim[2])
-            elif movim[0] == "c":
-                self.w.board.change_piece(movim[1], movim[2])
-
-        self.w.board.disable_all()
-
-        self.w.board.escena.update()
-        self.w.update()
-        QTUtils.refresh_gui()
-
-    def process_toolbar(self, accion):
-        if self.rm:
-            if accion == "move_forward":
-                self.moving_analyzer(n_saltar=1)
-            elif accion == "move_back":
-                self.moving_analyzer(n_saltar=-1)
-            elif accion == "move_to_beginning":
-                self.moving_analyzer(si_inicio=True)
-            elif accion == "move_to_end":
-                self.moving_analyzer(si_final=True)
-            elif accion == "move_timed":
-                self.move_timed()
-            elif accion == "MoverLibre":
-                self.external_analysis()
-            elif accion == "MoverFEN":
-                move = self.game_analyzer.move(self.pos_analyzer)
-                QTUtils.set_clipboard(move.position.fen())
-                QTDialogs.fen_is_in_clipboard(self.w)
-
-    def moving_analyzer(self, si_inicio=False, n_saltar=0, si_final=False, is_base=False):
-        if n_saltar:
-            pos = self.pos_analyzer + n_saltar
-            if 0 <= pos < self.max_analyzer:
-                self.pos_analyzer = pos
-            else:
-                return
-        elif si_inicio or is_base:
-            self.pos_analyzer = 0
-        elif si_final:
-            self.pos_analyzer = self.max_analyzer - 1
-        if self.game_analyzer.num_moves():
-            move = self.game_analyzer.move(self.pos_analyzer)
-            if is_base:
-                self.w.boardT.set_position(move.position_before)
-            else:
-                self.w.boardT.set_position(move.position)
-                self.w.boardT.put_arrow_sc(move.from_sq, move.to_sq)
-        self.w.boardT.escena.update()
-        self.w.update()
-        QTUtils.refresh_gui()
-
-    def move_timed(self):
-        if self.is_moving_time:
-            self.is_moving_time = False
-            self.time_others_tb(True)
-            self.w.stop_clock()
-            return
-
-        def otros_tb(si_habilitar):
-            for accion in self.w.tb.li_acciones:
-                if not accion.key.endswith("move_timed"):
-                    accion.setEnabled(si_habilitar)
-
-        self.time_function = self.moving_analyzer
-        self.time_pos_max = self.max_analyzer
-        self.time_pos = -1
-        self.time_others_tb = otros_tb
-        self.is_moving_time = True
-        otros_tb(False)
-        self.moving_analyzer(is_base=True)
-        self.w.start_clock(self.moving_time_1)
-
-    def moving_time_1(self):
-        self.time_pos += 1
-        if self.time_pos == self.time_pos_max:
-            self.is_moving_time = False
-            self.time_others_tb(True)
-            self.w.stop_clock()
-            return
-        if self.time_pos == 0:
-            self.time_function(si_inicio=True)
-        else:
-            self.time_function(n_saltar=1)
-
-    def external_analysis(self):
-        move = self.game_analyzer.move(self.pos_analyzer)
-        pts = self.rm.texto()
-        AnalisisVariations(self.w, self.manager_analyzer, move, self.is_white, pts)

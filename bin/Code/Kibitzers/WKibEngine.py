@@ -259,7 +259,8 @@ class WKibEngine(WKibCommon.WKibCommon):
         self.run_engine_params.multipv = num_multipv
         self.run_engine_params.fixed_ms = int(self.kibitzer.max_time * 1000)
         self.run_engine_params.fixed_depth = self.kibitzer.max_depth
-        if self.kibitzer.max_depth == 0 and self.kibitzer.max_time == 0:
+        self.run_engine_params.fixed_nodes = self.kibitzer.nodes
+        if self.kibitzer.max_depth == 0 and self.kibitzer.max_time == 0 and self.kibitzer.nodes == 0:
             self.run_engine_params.infinite = True
         # fixed_nodes: int = 0
 

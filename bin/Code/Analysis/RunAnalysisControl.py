@@ -1,18 +1,22 @@
+import contextlib
+
 from PySide6 import QtCore, QtWidgets
 
 import Code
-import contextlib
-from Code.Z import Util, XRun
 from Code.Base import Game
 from Code.Base.Constantes import (
     RUNA_CONFIGURATION,
     RUNA_GAME,
     RUNA_HALT,
     RUNA_TERMINATE,
+    RUNA_PAUSE,
+    RUNA_RESUME,
+    RUNA_PROGRESS,
 )
 from Code.BestMoveTraining import BMT
-from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTUtils
+from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTUtils, ScreenUtils
 from Code.SQL import UtilSQL
+from Code.Z import Util, XRun
 
 
 class Orden:
@@ -32,12 +36,13 @@ class Orden:
 
 
 class IPCAnalysis:
-    def __init__(self, alm, huella, num_worker):
+    def __init__(self, alm, huella):
         self.closed = False
+        self.is_paused = False
         configuration = Code.configuration
 
         folder_tmp = Code.configuration.temporary_folder()
-        filebase = Util.opj(folder_tmp, f"{huella}_{num_worker}")
+        filebase = Util.opj(folder_tmp, huella)
         file_send = f"{filebase}_send.sqlite"
         file_receive = f"{filebase}_receive.sqlite"
 
@@ -47,8 +52,9 @@ class IPCAnalysis:
         orden = Orden()
         orden.key = RUNA_CONFIGURATION
         orden.set("USER", configuration.user)
+        orden.set("HUELLA", huella)
         orden.set("ALM", alm)
-        orden.set("NUM_WORKER", num_worker)
+        orden.set("SHOW_WINDOW", False)
 
         self.send(orden)
 
@@ -66,13 +72,6 @@ class IPCAnalysis:
             return False
         return self.popen.poll() is None
 
-    def send_game(self, game, recno):
-        orden = Orden()
-        orden.key = RUNA_GAME
-        orden.dv["GAME"] = game
-        orden.dv["RECNO"] = recno
-        self.send(orden)
-
     def _send_orden(self, key):
         orden = Orden()
         orden.key = key
@@ -80,6 +79,14 @@ class IPCAnalysis:
 
     def send_halt(self):
         self._send_orden(RUNA_HALT)
+
+    def send_pause(self):
+        self.is_paused = True
+        self._send_orden(RUNA_PAUSE)
+
+    def send_resume(self):
+        self.is_paused = False
+        self._send_orden(RUNA_RESUME)
 
     def send_terminate(self):
         self._send_orden(RUNA_TERMINATE)
@@ -93,6 +100,74 @@ class IPCAnalysis:
                     self.popen.terminate()
                 self.popen = None
             self.closed = True
+
+
+class Worker:
+    def __init__(self, alm):
+        self.huella = Util.huella()
+        self.ipc = IPCAnalysis(alm, self.huella)
+
+    def send_game(self, game, recno):
+        orden = Orden()
+        orden.key = RUNA_GAME
+        orden.dv["GAME"] = game
+        orden.dv["RECNO"] = recno
+        self.ipc.send(orden)
+
+    def close(self):
+        if not self.ipc.closed:
+            self.ipc.send_halt()
+            self.ipc.close()
+
+    def is_closed(self):
+        return self.ipc.closed
+
+    def is_working(self):
+        return self.ipc.working()
+
+    def receive(self):
+        return self.ipc.receive()
+
+    def is_paused(self):
+        return self.ipc.is_paused
+
+    def send_resume(self):
+        self.ipc.send_resume()
+
+    def send_pause(self):
+        self.ipc.send_pause()
+
+    def send_terminate(self):
+        self.ipc.send_terminate()
+
+
+class ListRegs:
+    def __init__(self, db_games, nregs: int, li_seleccionadas):
+        self.db_games = db_games
+        self.li_recnos = li_seleccionadas if li_seleccionadas else list(range(nregs))
+        self.dic_worker = {}
+
+    def get_game(self, worker):
+        if self.is_finished():
+            return None
+        recno = self.li_recnos.pop(0)
+        self.dic_worker[worker.huella] = recno
+        return recno
+
+    def received_game(self, worker):
+        self.dic_worker[worker.huella] = None
+
+    def is_finished(self):
+        return len(self.li_recnos) == 0
+
+    def pending(self):
+        return len(self.li_recnos)
+
+    def remove_worker(self, worker: Worker):
+        recno = self.dic_worker.get(worker.huella)
+        if recno is not None:
+            self.li_recnos.insert(0, recno)
+            self.dic_worker[worker.huella] = None
 
 
 class AnalysisMassiveWithWorkers:
@@ -112,43 +187,52 @@ class AnalysisMassiveWithWorkers:
         self.alm = alm
 
         self.li_workers = []
+        self.dic_huellas_workers = {}
 
         self.window = None
 
+        self.list_regs = ListRegs(self.db_games, nregs, li_seleccionadas)
+
     def gen_workers(self):
-        huella = Util.huella()
         num_workers = min(self.alm.workers, self.nregs)
         for num_worker in range(num_workers):
-            worker = IPCAnalysis(self.alm, huella, num_worker)
+            worker = Worker(self.alm)
             self.li_workers.append(worker)
-            if not self.send_game_worker(num_worker):
+            if not self.send_game_worker(worker):
                 break
+            self.dic_huellas_workers[worker.huella] = worker
 
-    def send_game_worker(self, num_worker):
-        self.pos_reg += 1
-        if self.pos_reg >= self.nregs:
-            for worker in self.li_workers:
-                worker.send_terminate()
+    def get_worker(self, huella):
+        return self.dic_huellas_workers.get(huella)
+
+    def add_worker(self, worker: Worker):
+        self.li_workers.append(worker)
+        self.dic_huellas_workers[worker.huella] = worker
+
+    def remove_worker(self, worker: Worker):
+        del self.dic_huellas_workers[worker.huella]
+        self.li_workers.remove(worker)
+        self.list_regs.remove_worker(worker)
+
+    def send_game_worker(self, worker: Worker):
+        recno = self.list_regs.get_game(worker)
+        if recno is None:
+            worker.send_terminate()
             return False
-        if self.alm.multiple_selected:
-            recno = self.li_seleccionadas[self.pos_reg]
-        else:
-            recno = self.pos_reg
 
         game = self.db_games.read_game_recno(recno)
-        self.li_workers[num_worker].send_game(game, recno)
+        worker.send_game(game, recno)
         return True
 
     def close(self):
-        worker: IPCAnalysis
+        worker: Worker
         for worker in self.li_workers:
-            if not worker.closed:
-                worker.send_halt()
-                worker.close()
+            worker.close()
         self.window.xclose()
 
-    def run_game(self, num_worker, order):
-        self.send_game_worker(num_worker)
+    def run_game(self, worker: Worker, order: Orden):
+        self.list_regs.received_game(worker)
+        self.send_game_worker(worker)
 
         game: Game.Game = order.get("GAME")
         if self.alm.accuracy_tags:
@@ -174,6 +258,7 @@ class AnalysisMassiveWithWorkers:
                     with open(par1, "at", encoding="utf-8", errors="ignore") as f:
                         f.write(par2)
 
+
     def processing(self):
         QTUtils.refresh_gui()
         if self.window.is_canceled():
@@ -185,11 +270,11 @@ class AnalysisMassiveWithWorkers:
 
         actives = 0
 
-        worker: IPCAnalysis
-        for num_worker, worker in enumerate(self.li_workers):
-            if worker.closed:
+        worker: Worker
+        for worker in self.li_workers:
+            if worker.is_closed():
                 continue
-            if not worker.working():
+            if not worker.is_working():
                 worker.close()
                 continue
 
@@ -198,16 +283,33 @@ class AnalysisMassiveWithWorkers:
             order: Orden = worker.receive()
             if order is None:
                 pass
+
             elif order.key == RUNA_GAME:
-                self.run_game(num_worker, order)
+                self.run_game(worker, order)
 
             elif order.key == RUNA_TERMINATE:
                 worker.close()
                 actives -= 1
                 continue
 
+            elif order.key == RUNA_PROGRESS:
+                huella = order.get("HUELLA")
+                current = order.get("CURRENT")
+                total = order.get("TOTAL")
+                if self.window:
+                    worker = self.get_worker(huella)
+                    if worker:
+                        self.window.update_worker_progress(worker, current, total)
+
         if actives == 0:
             self.close()
+
+    def send_pause_resume(self, is_paused):
+        for worker in self.li_workers:
+            if is_paused:
+                worker.send_pause()
+            else:
+                worker.send_resume()
 
     @staticmethod
     def save_bmt(bmt):
@@ -215,14 +317,16 @@ class AnalysisMassiveWithWorkers:
             return
 
     def run(self):
-        self.window = WProgress(self.wowner, self, self.nregs)
-
         self.gen_workers()
-        self.processing()
+        self.window = WProgress(self.wowner, self, self.nregs)
+        self.window.show()
+        self.window.setMinimumWidth(360)
+        ScreenUtils.shrink(self.window)
         self.window.exec()
+
         for bmt_lista, name in (
-            (self.bmt_blunders, self.alm.bmtblunders),
-            (self.bmt_brillancies, self.alm.bmtbrilliancies),
+                (self.bmt_blunders, self.alm.bmtblunders),
+                (self.bmt_brillancies, self.alm.bmtbrilliancies),
         ):
             if bmt_lista and len(bmt_lista) > 0:
                 bmt = BMT.BMT(Code.configuration.paths.file_bmt())
@@ -258,28 +362,165 @@ class WProgress(LCDialog.LCDialog):
         self.pb_moves = QtWidgets.QProgressBar(self)
         self.pb_moves.setFormat(f"{_('Game')} %v/%m")
         self.pb_moves.setRange(0, nregs)
+        self.pb_moves.setValue(0)
+        self.pb_moves.setStyleSheet("""
+            QProgressBar {
+                border: 1px solid #aaa;
+                border-radius: 4px;
+                text-align: center;
+                height: 24px;
+                font-weight: bold;
+            }
+            QProgressBar::chunk {
+                background-color: #2196F3;
+                border-radius: 3px;
+            }
+        """)
+
+        self.lb_time = Controles.LB(self, "")
+        self.lb_time.setStyleSheet("font-size: 10px; color: #666;")
 
         self._is_paused = False
-        self.bt_pause = Controles.PB(self, "", self.pause_continue, plano=True)
-        self.icon_pause_continue()
-        pb_cancel = Controles.PB(self, _("Cancel"), self.xcancel, plano=False).set_icono(Iconos.Delete())
+        self.bt_pause = Controles.PB(self, "", self.pause_resume, plano=True)
+        self.icon_pause_resume()
+        pb_cancel = Controles.PB(self, _("Cancel"), self.xcancel, plano=False)
+        font = Controles.FontTypeNew(point_size_delta=-2)
+        pb_cancel.setFont(font)
+
+        self._create_workers_panel(amww)
+
+        bt_add_worker = Controles.PB(self, _("Add worker"), self.add_worker, plano=True).set_icono(Iconos.Mas())
 
         lay = Colocacion.H().control(self.lb_game).control(self.pb_moves).control(self.bt_pause)
-        lay2 = Colocacion.H().relleno().control(pb_cancel)
-        layout = Colocacion.V().otro(lay).espacio(20).otro(lay2)
+        lay_time = Colocacion.H().relleno().control(self.lb_time)
+        lay2 = Colocacion.H().control(bt_add_worker).relleno().control(pb_cancel)
+        layout = Colocacion.V().otro(lay).otro(lay_time).espacio(10).control(self.frame_workers).otro(lay2)
         self.setLayout(layout)
 
         self.amww: AnalysisMassiveWithWorkers = amww
         self._is_canceled = False
         self._is_closed = False
 
-        self.restore_video(default_width=400, default_height=40)
+        self._games_done = 0
+        self._estimator = Util.SmoothedEstimator(total=self.pb_moves.maximum())
+
+        self.restore_video(default_width=550, default_height=220)
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.xreceive)
         self.timer.start(200)
 
         self.restore_video()
         self.working = False
+
+    def _create_workers_panel(self, amww: "AnalysisMassiveWithWorkers"):
+        self.workers_layout = QtWidgets.QVBoxLayout()
+        self.workers_layout.setSpacing(4)
+        self.frame_workers = QtWidgets.QGroupBox(_("Workers"), self)
+        self.frame_workers.setLayout(self.workers_layout)
+        self.frame_workers.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #888;
+                border-radius: 4px;
+                margin-top: 8px;
+                padding-top: 8px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 5px;
+                color: #333;
+            }
+            QProgressBar {
+                border: 1px solid #aaa;
+                border-radius: 3px;
+                text-align: center;
+                height: 18px;
+            }
+            QProgressBar::chunk {
+                background-color: #4CAF50;
+                border-radius: 2px;
+            }
+        """)
+
+        self.dic_worker_widgets = {}
+
+        worker: Worker
+        for worker in amww.li_workers:
+            self._add_worker_widget(worker)
+
+    def _add_worker_widget(self, worker):
+        worker_frame = QtWidgets.QFrame(self)
+        worker_layout = QtWidgets.QHBoxLayout(worker_frame)
+        worker_layout.setContentsMargins(5, 2, 5, 2)
+
+        pb_worker = QtWidgets.QProgressBar(worker_frame)
+        pb_worker.setFormat(f"{_('Movement')} %v/%m")
+        # pb_worker.setRange(0, 100)
+        # pb_worker.setValue(0)
+        pb_worker.setFont(Controles.FontTypeNew(extra_bold=True))
+
+        bt_pause_worker = Controles.PB(
+            worker_frame, "", lambda checked, w=worker: self.pause_worker(w), plano=True
+        )
+        bt_pause_worker.set_icono(Iconos.PauseColor())
+
+        bt_close_worker = Controles.PB(
+            worker_frame, "", lambda checked, w=worker: self.close_worker(w), plano=True
+        )
+        bt_close_worker.set_icono(Iconos.Borrar())
+
+        worker_layout.addWidget(pb_worker, 1)
+        worker_layout.addWidget(bt_pause_worker)
+        worker_layout.addWidget(bt_close_worker)
+
+        self.workers_layout.addWidget(worker_frame)
+
+        self.dic_worker_widgets[worker.huella] = {
+            "frame": worker_frame,
+            "progress_bar": pb_worker,
+            "pause_button": bt_pause_worker,
+            "close_button": bt_close_worker,
+            "current_game": 0,
+            "total_moves": 0,
+        }
+
+    def add_worker(self):
+        worker = Worker(self.amww.alm)
+        self.amww.add_worker(worker)
+        self._add_worker_widget(worker)
+
+        self.amww.send_game_worker(worker)
+
+    def pause_worker(self, worker: Worker):
+        if worker.is_paused():
+            worker.send_resume()
+            self.dic_worker_widgets[worker.huella]["pause_button"].set_icono(Iconos.PauseColor())
+        else:
+            worker.send_pause()
+            self.dic_worker_widgets[worker.huella]["pause_button"].set_icono(Iconos.ContinueColor())
+
+    def close_worker(self, worker: Worker):
+        if not worker.is_closed():
+            worker.send_terminate()
+            worker.close()
+
+        widget_info = self.dic_worker_widgets[worker.huella]
+        widget_info["frame"].hide()
+        self.workers_layout.removeWidget(widget_info["frame"])
+        widget_info["frame"].deleteLater()
+
+        self.dic_worker_widgets.pop(worker.huella)
+
+        self.amww.remove_worker(worker)
+
+    def update_worker_progress(self, worker: Worker, current_move: int, total_moves: int):
+        widget = self.dic_worker_widgets[worker.huella]
+        widget["current_game"] = current_move
+        widget["total_moves"] = total_moves
+        if total_moves > 0:
+            widget["progress_bar"].setRange(0, total_moves)
+            widget["progress_bar"].setValue(current_move)
 
     def xreceive(self):
         QTUtils.refresh_gui()
@@ -293,11 +534,12 @@ class WProgress(LCDialog.LCDialog):
         self._is_canceled = True
         self.amww.close()
 
-    def pause_continue(self):
+    def pause_resume(self):
         self._is_paused = not self._is_paused
-        self.icon_pause_continue()
+        self.icon_pause_resume()
+        self.amww.send_pause_resume(self._is_paused)
 
-    def icon_pause_continue(self):
+    def icon_pause_resume(self):
         self.bt_pause.set_icono(Iconos.ContinueColor() if self._is_paused else Iconos.PauseColor())
 
     def is_canceled(self):
@@ -309,6 +551,11 @@ class WProgress(LCDialog.LCDialog):
     def set_pos(self, pos):
         if not self._is_canceled:
             self.pb_moves.setValue(pos)
+            str_estimate = self._estimator.estimated(pos)
+            if str_estimate is not None:
+                self.lb_time.set_text(f'{_("Estimated time")}: {str_estimate}')
+            else:
+                self.lb_time.set_text("")
 
     def xclose(self):
         if not self._is_closed:

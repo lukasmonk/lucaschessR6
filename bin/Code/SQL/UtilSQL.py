@@ -499,6 +499,8 @@ class IPC(object):
         self.key = 0
 
     def pop(self) -> Any:
+        if self._conexion is None:
+            return None
         nk = self.key + 1
         sql = "SELECT dato FROM DATOS WHERE ROWID = ?"
         cursor = self._conexion.execute(sql, (nk,))
@@ -523,10 +525,11 @@ class IPC(object):
         return reg is not None
 
     def push(self, valor: Any) -> None:
-        dato = sqlite3.Binary(pickle.dumps(valor, protocol=4))
-        sql = "INSERT INTO DATOS (dato) values(?)"
-        self._conexion.execute(sql, [dato])
-        self._conexion.commit()
+        if self._conexion:
+            dato = sqlite3.Binary(pickle.dumps(valor, protocol=4))
+            sql = "INSERT INTO DATOS (dato) values(?)"
+            self._conexion.execute(sql, [dato])
+            self._conexion.commit()
 
     def close(self) -> None:
         if self._conexion:

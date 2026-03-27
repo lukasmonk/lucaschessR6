@@ -2,8 +2,7 @@ Irina
 =====
 
 
-It is a free adaptation of Winglet, chess engine created by Stef Luijten.
-[Sources of Winglet](http://aghaznawi.comuf.com/computer%20chess/winglet/index.htm)
+It is a free adaptation of [Winglet](https://www.chessprogramming.org/Winglet), chess engine created by Stef Luijten.
 
 Used to implement child personalities of Lucas Chess.
 

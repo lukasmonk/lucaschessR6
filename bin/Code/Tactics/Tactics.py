@@ -182,7 +182,7 @@ class Tactics:
         if "COMMON" in self.dic:
             self.folder = self.dic["COMMON"].get("FOLDER", self.folder)
 
-    def listaMenus(self):
+    def lista_menus(self):
         li_menu = []
         for k in self.dic:
             if k.upper().startswith("TACTIC"):
@@ -191,12 +191,22 @@ class Tactics:
                 li_menu.append((k, menu.split(",")))
         return li_menu
 
-    def eligeTactica(self, resp, folder_data):
+    def elige_tactica(self, resp, folder_data):
         return Tactic(self, resp, self.tipo, folder_data)
 
 
 class Tactic:
     w_next_position: int
+    reinforcement: Reinforcement
+    liFNS: list
+    liOrder: list
+    posActive: int
+
+    w_error: bool
+    w_reinforcement_working: bool
+    w_current_position: int
+    w_total_positions: int
+    w_label: str
 
     def __init__(self, tactics, name, tipo, folder_user):
         self.tactics = tactics
@@ -247,7 +257,7 @@ class Tactic:
         self.advanced = False
 
         self.read_dic(self.tactics.dic[self.name])
-        self.leeDatos()
+        self.lee_datos()
 
     def title_extended(self):
         return f"{self.tactics.name} {self.title}"
@@ -328,10 +338,10 @@ class Tactic:
 
     def historico(self):
         with self.dbdatos() as db:
-            liHisto = db["HISTO"]
-            return [] if liHisto is None else liHisto
+            li_histo = db["HISTO"]
+            return [] if li_histo is None else li_histo
 
-    def leeDatos(self):
+    def lee_datos(self):
         with self.dbdatos() as db:
 
             def read_db(key, default):
@@ -358,14 +368,14 @@ class Tactic:
 
         self.reinforcement = Reinforcement(self)
 
-    def listaFicheros(self, key):
+    def lista_ficheros(self, key):
         dalias = self.tactics.dic.get("ALIAS", {})
         if key in dalias:
-            return self.listaFicheros(dalias[key])
+            return self.lista_ficheros(dalias[key])
         lif = []
         if "," in key:
             for uno in key.split(","):
-                lif.extend(self.listaFicheros(uno))
+                lif.extend(self.lista_ficheros(uno))
         elif "*" in key or "?" in key or "[" in key:
             li = Util.listfiles(self.tactics.folder, key)
             lif.extend(li)
@@ -373,11 +383,11 @@ class Tactic:
             lif.append(Util.opj(self.tactics.folder, key))
         return lif
 
-    def calculaTotales(self):
+    def calcula_totales(self):
         li = []
         for f, w, d, h in self.filesw:
             t = 0
-            for fich in self.listaFicheros(f):
+            for fich in self.lista_ficheros(f):
                 with Util.OpenCodec(fich, "rt") as q:
                     for linea in q:
                         linea = linea.strip()
@@ -396,9 +406,9 @@ class Tactic:
             wt = 0
             for f, w, d, h in self.filesw:
                 lif0 = []
-                for fich in self.listaFicheros(f):
-                    with open(fich, "rt", encoding="utf-8", errors="ignore") as f:
-                        for linea in f:
+                for fich in self.lista_ficheros(f):
+                    with open(fich, "rt", encoding="utf-8", errors="ignore") as fhandle:
+                        for linea in fhandle:
                             linea = linea.strip()
                             if linea and "|" in linea:
                                 lif0.append(linea)
@@ -420,7 +430,7 @@ class Tactic:
                 if n == len(lif):
                     n = 0
 
-            liFNS = []
+            li_fns = []
             for li in lif:
                 n = li[0]
                 lif0 = li[1]
@@ -428,23 +438,24 @@ class Tactic:
                     n = len(lif0)
                 lir = lif0[:n]
                 for x in lir:
-                    liFNS.append(x)
+                    li_fns.append(x)
 
-            db["LIFNS"] = liFNS
-            self.liFNS = liFNS
+            db["LIFNS"] = li_fns
+            self.liFNS = li_fns
 
-            numPuzzles = len(liFNS)
+            num_puzzles = len(li_fns)
 
             # Deteminamos la lista indice con el orden de cada fen en liFNS
-            liJUMPS = self.jumps
+            li_jumps = self.jumps
 
-            li = [None] * (len(liJUMPS) * 2 * numPuzzles)  # Creamos un list muy grande, mayor del que vamos a usar
+            # Creamos un list muy grande, mayor del que vamos a usar
+            li: list = [None] * (len(li_jumps) * 2 * num_puzzles)
 
             def busca(from_sq, salto):
                 if salto == 0:
-                    for x in range(from_sq, len(li)):
-                        if li[x] is None:
-                            return x
+                    for xpos in range(from_sq, len(li)):
+                        if li[xpos] is None:
+                            return xpos
                     li.extend([None] * 1000)
                     return busca(from_sq, salto)
                 else:
@@ -453,10 +464,10 @@ class Tactic:
                         salto -= 1
                     return from_sq
 
-            for x in range(numPuzzles):
+            for x in range(num_puzzles):
                 n = busca(0, 0)
                 li[n] = x
-                for m in liJUMPS:
+                for m in li_jumps:
                     n = busca(n + 1, int(m))
                     li[n] = x
 
@@ -494,7 +505,7 @@ class Tactic:
             li_histo = db["HISTO"]
             if not li_histo:
                 li_histo = []
-            dicActual = {
+            dic_actual = {
                 "FINICIAL": Util.today(),
                 "FFINAL": None,
                 "SECONDS": 0.0,
@@ -510,7 +521,7 @@ class Tactic:
                 "REINFORCEMENT_CYCLES": self.reinforcement_cycles,
                 "ADVANCED": self.advanced,
             }
-            li_histo.insert(0, dicActual)
+            li_histo.insert(0, dic_actual)
             db["HISTO"] = li_histo
             db["SECONDS"] = 0.0
             db["ERRORS"] = 0
@@ -527,9 +538,9 @@ class Tactic:
             siauto = db["AUTOJUMP"]
             return False if siauto is None else siauto
 
-    def set_automatic_jump(self, siSalto):
+    def set_automatic_jump(self, si_salto):
         with self.dbdatos() as db:
-            db["AUTOJUMP"] = siSalto
+            db["AUTOJUMP"] = si_salto
 
     def set_advanced(self, enable):
         with self.dbdatos() as db:
@@ -547,8 +558,8 @@ class Tactic:
     def total_positions(self):
         return len(self.liOrder)
 
-    def numFNS(self):
-        return len(self.liFNS)
+    # def numFNS(self):
+    #     return len(self.liFNS)
 
     def penalization_positions(self, current, total):
         if self.penalization:
@@ -570,53 +581,53 @@ class Tactic:
                 n = 0
             return int(n)
 
-    def masSegundos(self, mas):
+    def mas_segundos(self, mas):
         with self.dbdatos() as db:
             if "SECONDS" in db:
                 db["SECONDS"] += mas
 
-    def segundosActivo(self):
+    def segundos_activo(self):
         with self.dbdatos() as db:
             return db["SECONDS"]
 
-    def referenciaActivo(self):
+    def referencia_activo(self):
         with self.dbdatos() as db:
             return db["REFERENCE"]
 
-    def erroresActivo(self):
+    def errores_activo(self):
         with self.dbdatos() as db:
             return db["ERRORS"]
 
     def end_training(self):
         with self.dbdatos() as db:
-            liHisto = db["HISTO"]
-            if not liHisto:
-                liHisto = []
-                dicActual = {
+            li_histo = db["HISTO"]
+            if not li_histo:
+                li_histo = []
+                dic_actual = {
                     "FINICIAL": Util.today(),
                     "FFINAL": None,
                     "SECONDS": 0.0,
                     "POS": self.total_positions(),
                     "ERRORS": 0,
                 }
-                liHisto.insert(0, dicActual)
-            liHisto[0]["FFINAL"] = Util.today()
-            liHisto[0]["SECONDS"] = db["SECONDS"]
-            liHisto[0]["ERRORS"] = db["ERRORS"]
-            liHisto[0]["REFERENCE"] = db["REFERENCE"]
+                li_histo.insert(0, dic_actual)
+            li_histo[0]["FFINAL"] = Util.today()
+            li_histo[0]["SECONDS"] = db["SECONDS"]
+            li_histo[0]["ERRORS"] = db["ERRORS"]
+            li_histo[0]["REFERENCE"] = db["REFERENCE"]
 
-            db["HISTO"] = liHisto
+            db["HISTO"] = li_histo
             db["POSACTIVE"] = None
 
-    def borraListaHistorico(self, liNum):
+    def borra_lista_historico(self, li_num):
         with self.dbdatos() as db:
-            liHisto = self.historico()
-            liNueHisto = []
-            for x in range(len(liHisto)):
-                if x not in liNum:
-                    liNueHisto.append(liHisto[x])
-            db["HISTO"] = liNueHisto
-            if 0 in liNum:
+            li_histo = self.historico()
+            li_nue_histo = []
+            for x in range(len(li_histo)):
+                if x not in li_num:
+                    li_nue_histo.append(li_histo[x])
+            db["HISTO"] = li_nue_histo
+            if 0 in li_num:
                 db["POSACTIVE"] = None
                 del db["DICREINFORCEMENT"]
 
@@ -662,8 +673,11 @@ class Tactic:
         ok, game_obj = Game.pgn_game(f'[FEN "{fen}"]\n{solucion}')
 
         game_base = None
-        if len(li) > 3:
-            txt = li[3].replace("]", "]\n").replace(" [", "[")
+        if len(li) > 3 and li[3].strip():
+            txt = li[3].strip()
+            if txt[0] != "[":
+                txt = f'[Event "?"] {txt}'
+            txt = txt.replace("]", "]\n").replace(" [", "[")
             ok, game_base = Game.pgn_game(txt)
             if ok:
                 cp = Position.Position()

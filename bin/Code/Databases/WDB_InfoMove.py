@@ -70,12 +70,13 @@ class WInfomove(QtWidgets.QWidget):
 
         self.interval_replay = configuration.x_interval_replay
         self.beep_replay = configuration.x_beep_replay
-        lybt, bt = QTDialogs.ly_mini_buttons(self, "", siTiempo=True, siLibre=False, icon_size=24, siJugar=True)
+        lybt, bt = QTDialogs.ly_mini_buttons(self, "", with_timed=True, icon_size=24, if_play=True)
 
         self.lbPGN = LBKey(self).relative_width(self.board.ancho).set_wrap()
-        self.lbPGN.setTextInteractionFlags(
-            Qt.TextInteractionFlag.LinksAccessibleByMouse | Qt.TextInteractionFlag.LinksAccessibleByKeyboard
-        )
+        self.lbPGN.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        # self.lbPGN.setTextInteractionFlags(
+        #     Qt.TextInteractionFlag.LinksAccessibleByMouse | Qt.TextInteractionFlag.LinksAccessibleByKeyboard
+        # )
         self.lbPGN.wowner = self
         self.lbPGN.set_font_type(puntos=configuration.x_pgn_fontpoints)
         Code.configuration.set_property(self.lbPGN, "pgn")

@@ -99,7 +99,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         elif col == "SECONDS":
             seconds = reg.get("SECONDS", None)
             if row == 0 and not seconds:
-                seconds = self.tactica.segundosActivo()
+                seconds = self.tactica.segundos_activo()
             if seconds:
                 hours = int(seconds / 3600)
                 seconds -= hours * 3600
@@ -111,7 +111,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
 
         elif col == "ERRORS":
             if row == 0 and not self.tactica.finished():
-                errors = self.tactica.erroresActivo()
+                errors = self.tactica.errores_activo()
             else:
                 errors = reg.get("ERRORS", None)
             if errors is None:
@@ -121,7 +121,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
 
         elif col == "FACTOR":
             if row == 0 and not self.tactica.finished():
-                errors = self.tactica.erroresActivo()
+                errors = self.tactica.errores_activo()
             else:
                 errors = reg.get("ERRORS", 0)
             if "POS" in reg:
@@ -137,7 +137,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
 
         elif col == "REFERENCE":
             if row == 0 and not self.tactica.finished():
-                reference = self.tactica.referenciaActivo()
+                reference = self.tactica.referencia_activo()
             else:
                 reference = reg.get("REFERENCE", "")
             return reference
@@ -182,7 +182,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         li = self.ghistorico.list_selected_recnos()
         if len(li) > 0:
             if QTMessages.pregunta(self, _("Do you want to delete all selected records?")):
-                self.tactica.borraListaHistorico(li)
+                self.tactica.borra_lista_historico(li)
                 self.li_histo = self.tactica.historico()
         self.ghistorico.gotop()
         self.ghistorico.refresh()
@@ -212,7 +212,7 @@ class WConfTactics(QtWidgets.QWidget):
             reg_historico = None
 
         # Total por ficheros
-        self.liFTOTAL = tactica.calculaTotales()
+        self.liFTOTAL = tactica.calcula_totales()
         total = sum(self.liFTOTAL)
 
         # N. puzzles

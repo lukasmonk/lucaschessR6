@@ -887,13 +887,13 @@ class WSwiss(LCDialog.LCDialog):
     def export(self):
         menu = QTDialogs.LCMenu(self)
         submenu = menu.submenu(_("Save all games to a database"), Iconos.DatabaseMas())
-        QTDialogs.menuDB(
+        QTDialogs.menu_db(
             submenu,
             Code.configuration,
             True,
             indicador_previo="dbf_",
             remove_autosave=True,
-            siNew=True,
+            is_new=True,
         )
         menu.separador()
 

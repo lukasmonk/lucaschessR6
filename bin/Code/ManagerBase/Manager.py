@@ -1,10 +1,10 @@
+import collections
 import random
 import time
 
 import FasterCode
 
 import Code
-from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
     BLACK,
@@ -58,13 +58,15 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
     QTUtils,
+    ScreenUtils
 )
-from Code.ZQT import WReplay, WindowArbolBook, WindowArbol
+from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
+from Code.ZQT import WindowArbolBook, WindowArbol
+from Code.Replay import WReplay
 
 
 class Manager:
     def __init__(self, procesador):
-
         self.fen = None
 
         self.procesador = procesador
@@ -230,6 +232,7 @@ class Manager:
     def reset_shortcuts_mouse(self):
         self.atajosRatonDestino = None
         self.atajosRatonOrigen = None
+        self.board.hide_selection()
 
     @staticmethod
     def other_candidates(li_moves, position, li_c):
@@ -331,6 +334,7 @@ class Manager:
         FasterCode.set_fen(position.fen())
         li_moves = FasterCode.get_exmoves()
         if not li_moves:
+            self.reset_shortcuts_mouse()
             return
 
         # Se verifica si algun movimiento puede empezar o finalize ahi
@@ -373,6 +377,7 @@ class Manager:
             if li_destinos:
                 self.atajosRatonOrigen = a1h8
                 self.atajosRatonDestino = None
+                self.board.show_selection(a1h8)
                 show_candidates()
                 return
             elif li_origenes:
@@ -382,6 +387,7 @@ class Manager:
                 else:
                     self.atajosRatonOrigen = None
                     self.atajosRatonDestino = None
+                    self.board.show_selection(a1h8)
                     show_candidates()
             return
 
@@ -393,6 +399,7 @@ class Manager:
                 self.atajosRatonOrigen = li_origenes[0]
                 mueve()
             else:
+                self.board.show_selection(a1h8)
                 show_candidates()
             return
 
@@ -404,6 +411,7 @@ class Manager:
                 self.atajosRatonDestino = li_destinos[0]
                 mueve()
             else:
+                self.board.show_selection(a1h8)
                 show_candidates()
             return
 
@@ -419,7 +427,7 @@ class Manager:
             ant_show = self.configuration.x_show_effects
             ant_speed = self.configuration.x_pieces_speed
             self.configuration.x_show_effects = True
-            self.configuration.x_pieces_speed = 200
+            self.configuration.x_pieces_speed = 100
             self.move_the_pieces(move.list_piece_moves, True)
             self.configuration.x_show_effects = ant_show
             self.configuration.x_pieces_speed = ant_speed
@@ -428,7 +436,6 @@ class Manager:
             self.main_window.base.pgn.refresh()
             self.main_window.base.pgn.gobottom(1 if move.is_white() else 2)
             self.board.put_arrow_sc(move.from_sq, move.to_sq)
-            # self.goto_end()
 
     def move_the_pieces(self, li_moves, is_rival=False):
         self.main_window.end_think_analysis_bar()
@@ -449,8 +456,8 @@ class Manager:
                         dc = ord(from_sq[0]) - ord(to_sq[0])
                         df = int(from_sq[1]) - int(to_sq[1])
                         # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
-                        dist = (dc**2 + df**2) ** 0.5
-                        seconds = 4.0 * dist / (9.9 * rapidez)
+                        dist = (dc ** 2 + df ** 2) ** 0.5
+                        seconds = 8.0 * dist / (9.9 * rapidez)
                     cpu.move_piece(movim[1], movim[2], seconds)
 
             if seconds is None:
@@ -503,11 +510,11 @@ class Manager:
                 self.board.show_lichess_graphics(move.comment)
 
         if (
-            self.main_window.siCapturas
-            or self.main_window.siInformacionPGN
-            or self.kibitzers_manager.some_working()
-            or self.configuration.x_show_bestmove
-            or self.configuration.x_show_rating
+                self.main_window.siCapturas
+                or self.main_window.siInformacionPGN
+                or self.kibitzers_manager.some_working()
+                or self.configuration.x_show_bestmove
+                or self.configuration.x_show_rating
         ):
             if move and (self.configuration.x_show_bestmove or self.configuration.x_show_rating):
                 move_check = move
@@ -544,6 +551,12 @@ class Manager:
                 else:
                     self.kibitzers_manager.stop()
         self.check_changed()
+        
+        # Actualizar overlay de espacio controlado si estamos en modo replay
+        if hasattr(self, 'xpelicula') and self.xpelicula:
+            if hasattr(self.xpelicula, 'space_number') and self.xpelicula.space_number is not None:
+                if hasattr(self.xpelicula, '_update_space_control'):
+                    self.xpelicula._update_space_control()
 
     def check_captures(self):
         if self.main_window.siCapturas and self.board.last_position is not None:
@@ -660,7 +673,8 @@ class Manager:
 
     def set_dispatcher(self, messenger):
         self.messenger = messenger
-        self.board.set_dispatcher(self.player_has_moved_base, self.atajos_raton)
+        atajos_raton = self.atajos_raton if self.configuration.x_mouse_shortcuts else None
+        self.board.set_dispatcher(self.player_has_moved_base, atajos_raton)
 
     def put_arrow_sc(self, from_sq, to_sq, lipvvar=None):
         self.board.remove_arrows()
@@ -915,8 +929,8 @@ class Manager:
     def last_fen(self):
         return self.game.last_fen()
 
-    def analyze_with_tutor(self, with_cursor=False):
-        return self.manager_analysis.analyze_with_tutor(with_cursor)
+    # def analyze_with_tutor(self, with_cursor=False):
+    #     return self.manager_analysis.analyze_with_tutor(with_cursor)
 
     def is_finished(self):
         return self.game.is_finished()
@@ -1032,36 +1046,46 @@ class Manager:
             if si_activar:
                 # Que move esta en el board
                 fen = self.board.fen_active()  # fen_active()
-                is_white = " w " in fen
-                if number == 2:
-                    si_mb = is_white
-                else:
-                    si_mb = not is_white
-                if si_mb != is_white:
-                    fen = FasterCode.fen_other(fen)
                 cp = Position.Position()
                 cp.read_fen(fen)
-                li_movs = cp.aura()
+                is_white = " w " in fen
+                dic_movs_side = {
+                    is_white: cp.aura()
+                }
+
+                fen = FasterCode.fen_other(fen)
+                cp.read_fen(fen)
+                dic_movs_side[not is_white] = cp.aura()
+
+                li_movs = dic_movs_side[number == 2]
+
+                dic_frec = collections.Counter(li_movs)
 
                 self.li_marcos_tmp = []
                 reg_marco = BoardTypes.Marco()
-                color = self.board.config_board.flechaActivoDefecto().colorinterior
-                if color == -1:
-                    color = self.board.config_board.flechaActivoDefecto().color
+                side = "W" if number == 2 else "B"
+                dic_colors = {pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"])
+                              for pos in range(6)}
 
-                st = set()
-                for h8 in li_movs:
-                    if h8 not in st:
+                for c in "abcdefgh":
+                    for r in "12345678":
+                        h8 = f"{c}{r}"
+                        frec = dic_frec.get(h8, 0)
+                        if frec > 5:
+                            frec = 5
+                        color = dic_colors[frec]
                         reg_marco.a1h8 = h8 + h8
                         reg_marco.siMovible = True
                         reg_marco.color = color
                         reg_marco.colorinterior = color
-                        reg_marco.opacity = 0.5
                         box = self.board.create_marco(reg_marco)
+                        box.setZValue(5)
                         self.li_marcos_tmp.append(box)
-                        st.add(h8)
+
+                self.board.escena.update()
 
             else:
+                self.remove_label3()
                 for box in self.li_marcos_tmp:
                     self.board.xremove_item(box)
                 self.li_marcos_tmp = []
@@ -1175,7 +1199,7 @@ class Manager:
 
     def can_be_analysed(self):
         return len(self.game) > 0 and not (
-            self.game_type in (GT_ELO, GT_MICELO, GT_WICKER) and self.is_competitive and self.state == ST_PLAYING
+                self.game_type in (GT_ELO, GT_MICELO, GT_WICKER) and self.is_competitive and self.state == ST_PLAYING
         )
 
     def check_help_to_move(self):
@@ -1440,15 +1464,15 @@ class Manager:
         gm.set_tag("Site", Code.lucas_chess)
         gm.set_tag("Event", _("Play current position"))
         for previous in (
-            "Event",
-            "Site",
-            "Date",
-            "Round",
-            "White",
-            "Black",
-            "Result",
-            "WhiteElo",
-            "BlackElo",
+                "Event",
+                "Site",
+                "Date",
+                "Round",
+                "White",
+                "Black",
+                "Result",
+                "WhiteElo",
+                "BlackElo",
         ):
             ori = self.game.get_tag(previous)
             if ori:
@@ -1628,7 +1652,7 @@ class Manager:
         navigating_variations = variation_history.count("|") >= 2
         if is_shift or is_control or is_alt:
             if not navigating_variations:
-                variation_history = f'{variation_history.split("|")[0]}|0|0'
+                variation_history = f"{variation_history.split('|')[0]}|0|0"
                 self.main_window.pgn_information.variantes.link_variation_pressed(variation_history)
                 return None
 
@@ -1673,7 +1697,6 @@ class Manager:
             self.main_window.pgn_information.variantes.link_variation_pressed(link)
 
         else:
-
             li_var = variation_history.split("|")
             last = int(li_var[-1])
 

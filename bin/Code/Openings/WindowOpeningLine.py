@@ -686,7 +686,7 @@ class WLines(LCDialog.LCDialog):
             frommenu.separador()
             frommenu.opcion(("polyglot", game_base), _("Polyglot book"), Iconos.Libros())
             frommenu.separador()
-            frommenu.opcion(("database", game_base), _("Database"), Iconos.Database())
+            frommenu.opcion(("database", game_base), _("Database"), Iconos.Databases())
             frommenu.separador()
             frommenu.opcion(
                 ("summary", game_base),

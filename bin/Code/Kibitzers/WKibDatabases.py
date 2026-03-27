@@ -18,7 +18,7 @@ class InfoMoveReplace:
 
 class WKibDatabases(WKibCommon.WKibCommon):
     def __init__(self, cpu):
-        WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Database())
+        WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Databases())
 
         self.db = DBgames.DBgames(self.kibitzer.path_exe)
         Code.procesador = self
@@ -59,7 +59,7 @@ class WKibDatabases(WKibCommon.WKibCommon):
         self.status.setFixedHeight(22)
 
         self.setWindowTitle(cpu.titulo)
-        self.setWindowIcon(Iconos.Database())
+        self.setWindowIcon(Iconos.Databases())
 
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint

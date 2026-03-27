@@ -668,7 +668,7 @@ class Position:
 
         return int(from_a1h8[1]) == ori and int(to_a1h8[1]) == dest
 
-    def aura(self):
+    def aura(self) -> list:
         """
         Compute the list of squares controlled by the side to move (piece "aura").
         """

@@ -53,7 +53,7 @@ class WManualSave(LCDialog.LCDialog):
             ["BlackElo", ""],
             ["Result", ""],
         ]
-        self.li_labels.extend([["", ""] for x in range(10)])
+        self.li_labels.extend([["", ""] for _x in range(10)])
 
         self.li_analysis = []
         self.analyzing = False
@@ -79,7 +79,7 @@ class WManualSave(LCDialog.LCDialog):
         self.board.draw_window()
         self.board.set_side_bottom(True)
         ##
-        lybt, bt = QTDialogs.ly_mini_buttons(self, "", siLibre=False, icon_size=24, siTiempo=False)
+        lybt, bt = QTDialogs.ly_mini_buttons(self, "", icon_size=24, with_timed=False)
         ##
         self.em_solucion = Controles.EM(self, is_html=False).minimum_height(40).capture_changes(self.reset_game)
         ##
@@ -93,8 +93,8 @@ class WManualSave(LCDialog.LCDialog):
         gb = Controles.GB(self, _("Solution"), ly)
         ###
         lybtp = Colocacion.H().control(bt_change_position).espacio(20).control(self.bt_solucion)
-        lyT = Colocacion.V().otro(lybtp).control(self.board).otro(lybt).control(gb)
-        gb_left = Controles.GB(self, "", lyT)
+        ly_t = Colocacion.V().otro(lybtp).control(self.board).otro(lybt).control(gb)
+        gb_left = Controles.GB(self, "", ly_t)
 
         # Ficheros PGN + FNS
         lb_pgn = Controles.LB(self, f"{_('PGN')}: ")
@@ -106,12 +106,12 @@ class WManualSave(LCDialog.LCDialog):
 
         # #Codec
         lb_codec = Controles.LB(self, f"{_('Encoding')}: ")
-        liCodecs = [k for k in set(v for k, v in encodings.aliases.aliases.items())]
-        liCodecs.sort()
-        liCodecs = [(k, k) for k in liCodecs]
-        liCodecs.insert(0, (f"{_('By default')}: {_('UTF-8')}", "default"))
+        li_codecs = [k for k in set(v for k, v in encodings.aliases.aliases.items())]
+        li_codecs.sort()
+        li_codecs = [(k, k) for k in li_codecs]
+        li_codecs.insert(0, (f"{_('By default')}: {_('UTF-8')}", "default"))
         self.codec = "default"
-        self.cb_codecs = Controles.CB(self, liCodecs, self.codec)
+        self.cb_codecs = Controles.CB(self, li_codecs, self.codec)
         ###
         ly0 = Colocacion.G().control(lb_pgn, 0, 0).control(self.bt_pgn, 0, 1).control(bt_no_pgn, 0, 2)
         ly0.control(lb_fns, 1, 0).control(self.bt_fns, 1, 1).control(bt_no_fns, 1, 2)
@@ -251,7 +251,7 @@ class WManualSave(LCDialog.LCDialog):
     def grid_num_datos(self, grid):
         return len(self.li_labels if grid.id == 1 else self.li_analysis)
 
-    def grid_setvalue(self, grid, row, obj_column, valor):
+    def grid_setvalue(self, _grid, row, obj_column, valor):
         n = 0 if obj_column.key == "LABEL" else 1
         self.li_labels[row][n] = valor
 
@@ -265,7 +265,7 @@ class WManualSave(LCDialog.LCDialog):
             else:
                 return self.li_analysis[row].ms_pgn
 
-    def grid_doble_click(self, grid, row, obj_column):
+    def grid_doble_click(self, grid, row, _obj_column):
         if grid == self.grid_analysis:
             self.em_solucion.set_text(self.li_analysis[row].ms_pgn)
             self.reset_game()
@@ -340,7 +340,7 @@ class WManualSave(LCDialog.LCDialog):
         pc = self.crea_game()
         pc.recno = 0
 
-        def save(recno, game):
+        def save(_recno, game):
             self.position = game.first_position
             self.em_solucion.set_text(game.pgn_base_raw())
 
@@ -352,20 +352,20 @@ class WManualSave(LCDialog.LCDialog):
             if codec == "default":
                 codec = "UTF-8"
             try:
-                f = open(fich, "at", encoding=codec, errors="ignore")
+                xf = open(fich, "at", encoding=codec, errors="ignore")
             except:
                 QTMessages.message_error(self, _('Error opening file %s') % fich)
-                f = None
-            return f
+                xf = None
+            return xf
 
-        def write_file(fich, f, txt, quien):
+        def write_file(fich, xf, xtxt, quien):
             time = 0.5 if (self.pgn and self.fns) else 1.0
             try:
-                f.write(txt)
+                f.write(xtxt)
                 QTMessages.temporary_message(self, f"{quien}: {_('Saved')}", time)
             except:
                 QTMessages.message_error(self, _('Error writing to file %s') % fich)
-            f.close()
+            xf.close()
 
         pc = self.crea_game()
 

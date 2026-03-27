@@ -26,7 +26,7 @@ from Code.Engines import (
     EngineRun,
     ListEngineManagers,
 )
-from Code.MainWindow import WAnalysisBar
+from Code.Main import WAnalysisBar
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, QTDialogs, QTUtils, ScreenUtils
 from Code.Sound import Sound
 from Code.Z import ControlPGN, CPU, TimeControl, Util

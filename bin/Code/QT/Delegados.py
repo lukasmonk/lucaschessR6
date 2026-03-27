@@ -147,6 +147,8 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
                         symbol = dic_symbol_nags(x)
                         if symbol:
                             li.append(symbol)
+                        else:
+                            li.append(f'${x}')
                 li_nags = li
         else:
             pgn, color, txt_analysis, indicador_inicial, li_nags = (

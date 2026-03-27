@@ -201,7 +201,7 @@ class WWashing(LCDialog.LCDialog):
         submenu.opcion("save_pgn", _("A PGN file"), Iconos.FichPGN())
         submenu.separador()
         menu_db = submenu.submenu(_("Database"), Iconos.DatabaseMas())
-        QTDialogs.menuDB(menu_db, self.configuration, True, indicador_previo="dbf_")  # , remove_autosave=True)
+        QTDialogs.menu_db(menu_db, self.configuration, True, indicador_previo="dbf_")  # , remove_autosave=True)
         submenu.separador()
 
         resp = menu.lanza()

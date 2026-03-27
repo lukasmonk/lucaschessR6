@@ -3,7 +3,7 @@ from Code.Base.Constantes import GT_FICS, GT_FIDE, GT_LICHESS
 from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
 from Code.CompetitionWithTutor import ManagerCompeticion, WCompetitionWithTutor
 from Code.Engines import WEngines
-from Code.MainWindow import Presentacion
+from Code.Main import Presentacion
 from Code.Menus import BaseMenu
 from Code.QT import Iconos, QTDialogs
 from Code.SingularMoves import ManagerSingularM, WindowSingularM
@@ -106,9 +106,9 @@ class CompeteMenu(BaseMenu.RootMenu):
             default_seconds = dic.get("SECONDS", 0)
             resp_t = QTDialogs.vtime(
                 self.wparent,
-                minMinutos=0,
-                minSegundos=0,
-                maxMinutos=999,
+                min_minutes=0,
+                min_seconds=0,
+                max_minutes=999,
                 max_seconds=999,
                 default_minutes=default_minutes,
                 default_seconds=default_seconds,
@@ -129,9 +129,9 @@ class CompeteMenu(BaseMenu.RootMenu):
             default_seconds = dic.get("SECONDS", 0)
             resp_t = QTDialogs.vtime(
                 self.wparent,
-                minMinutos=0,
-                minSegundos=0,
-                maxMinutos=999,
+                min_minutes=0,
+                min_seconds=0,
+                max_minutes=999,
                 max_seconds=999,
                 default_minutes=default_minutes,
                 default_seconds=default_seconds,

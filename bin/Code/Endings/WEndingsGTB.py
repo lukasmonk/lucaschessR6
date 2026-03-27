@@ -75,8 +75,7 @@ class WEndingsGTB(LCDialog.LCDialog):
         ly_bt, self.bt_movs = QTDialogs.ly_mini_buttons(
             self,
             "",
-            siTiempo=True,
-            siLibre=False,
+            with_timed=True,
             rutina=self.run_botones,
             icon_size=24,
         )
@@ -666,7 +665,7 @@ class WEndingsGTB(LCDialog.LCDialog):
         submenu.separador()
         submenu.opcion("pgn", _("PGN"), Iconos.Board())
         submenu.separador()
-        submenu.opcion("database", _("Database"), Iconos.Database())
+        submenu.opcion("database", _("Database"), Iconos.Databases())
         submenu.separador()
         submenu.opcion("fns", _("Text file"), Iconos.Fichero())
 

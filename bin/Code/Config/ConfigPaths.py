@@ -8,11 +8,16 @@ class ConfigPaths:
     LCFILEFOLDER: str = os.path.realpath("../lc.folder")
     LCBASEFOLDER: str = os.path.realpath("../UserData")
 
-    def __init__(self, configuration):
+    def __init__(self, configuration, user):
         self.configuration = configuration
         self.userdata_folder = self._get_userdata_folder()
         if not os.path.isdir(self.userdata_folder):
             Util.create_folder(self.userdata_folder)
+        if user:
+            self.userdata_folder = Util.opj(self.userdata_folder, "users", str(user.number))
+            if not os.path.isdir(self.userdata_folder):
+                Util.create_folder(self.userdata_folder)
+
         self.file = self._to_config("lk.pk2")
         self.is_first_time = not Util.exist_file(self.file)
 

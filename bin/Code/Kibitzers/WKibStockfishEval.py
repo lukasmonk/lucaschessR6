@@ -12,7 +12,7 @@ class WStockfishEval(WKibCommon.WKibCommon):
     engine_run: Optional[EngineRun.EngineRun]
 
     def __init__(self, cpu):
-        WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Book())
+        WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Eval())
 
         self.em = Controles.EM(self, is_html=False).read_only()
         f = Controles.FontType(name=Code.font_mono, puntos=10)

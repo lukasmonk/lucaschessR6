@@ -1,7 +1,7 @@
 import Code
 from Code.Z import Util
 from Code.CountsCaptures import CountsCaptures, WRunCaptures, WRunCounts
-from Code.Databases import DBgames, WindowDatabase
+from Code.Databases import DBgames, WDatabase
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
 
@@ -88,7 +88,7 @@ class WCountsCaptures(LCDialog.LCDialog):
         elif resp == "db":
             db = QTDialogs.select_db(self, Code.configuration, True, False)
             if db:
-                w = WindowDatabase.WBDatabase(self, Code.procesador, db, False, True)
+                w = WDatabase.WBDatabase(self, Code.procesador, db, False, True)
                 resp = w.exec()
                 if resp:
                     game = w.game

@@ -48,6 +48,11 @@ class H(QtWidgets.QHBoxLayout):
         self.setAlignment(control, QtCore.Qt.AlignmentFlag.AlignRight)
         return self
 
+    def controlc(self, control: QtWidgets.QWidget) -> "H":
+        self.addWidget(control)
+        self.setAlignment(control, QtCore.Qt.AlignmentFlag.AlignCenter)
+        return self
+
     def controli(self, control: QtWidgets.QWidget) -> "H":
         self.addWidget(control)
         self.setAlignment(control, QtCore.Qt.AlignmentFlag.AlignLeft)

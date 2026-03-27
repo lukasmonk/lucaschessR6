@@ -235,13 +235,13 @@ class Tutor:
 
         funcion = getattr(self, f"moving_{quien}")
 
-        if que == "Adelante":
+        if que == "forward":
             funcion(n_saltar=1)
-        elif que == "Atras":
+        elif que == "back":
             funcion(n_saltar=-1)
-        elif que == "Inicio":
+        elif que == "to_beginning":
             funcion(is_base=True)
-        elif que == "Final":
+        elif que == "to_end":
             funcion(is_end=True)
         elif que == "Libre":
             self.analiza(quien)

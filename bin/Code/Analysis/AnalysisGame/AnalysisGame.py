@@ -361,7 +361,8 @@ class AnalysisGame(QtCore.QObject):
         fen = move.position_before.fen()
 
         if analysis_params.include_variations and allow_add_variations:
-            if not move.analysis_to_variations(self.analysis_params, analysis_params.delete_previous):
+            delete_previous = analysis_params.delete_previous and move.analysis is not None
+            if not move.analysis_to_variations(self.analysis_params, delete_previous):
                 move.remove_all_variations()
 
         if training_state.si_blunders and nag in self.kblunders_condition_list:

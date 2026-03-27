@@ -65,7 +65,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         menu_save.separador()
 
         menu_save_db = menu_save.submenu(_("To a database"), Iconos.DatabaseMas())
-        QTDialogs.menuDB(menu_save_db, self.configuration, True, indicador_previo="dbf_")  # , remove_autosave=True)
+        QTDialogs.menu_db(menu_save_db, self.configuration, True, indicador_previo="dbf_")  # , remove_autosave=True)
         menu_save.separador()
 
         menu_save_image = menu_save.submenu(_("Board -> Image"), ico_camara)

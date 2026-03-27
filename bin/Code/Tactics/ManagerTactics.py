@@ -19,7 +19,7 @@ from Code.ManagerBase import Manager
 from Code.QT import Iconos, QTMessages, QTUtils
 from Code.Tactics import Tactics, WindowTactics
 from Code.Base import Game
-from Code.MainWindow import WindowSolve
+from Code.Main import WindowSolve
 
 
 class ManagerTactics(Manager.Manager):
@@ -38,7 +38,7 @@ class ManagerTactics(Manager.Manager):
     def start(self, tactic: Tactics.Tactic):
         self.reiniciando = False
         self.tactic = tactic
-        self.tactic.leeDatos()
+        self.tactic.lee_datos()
         self.tactic.work_reset_positions()
         self.is_tutor_enabled = False
         self.ayudas_iniciales = 0
@@ -118,7 +118,7 @@ class ManagerTactics(Manager.Manager):
             self.play_next_move()
 
     def advanced_return(self, solved):
-        self.tactic.masSegundos(time.time() - self.ini_clock)
+        self.tactic.mas_segundos(time.time() - self.ini_clock)
         self.wsolve.hide()
         self.board.show_coordinates(True)
         more_errors = self.wsolve.errors
@@ -343,7 +343,7 @@ class ManagerTactics(Manager.Manager):
             return False
 
         seconds = time.time() - self.ini_clock
-        self.tactic.masSegundos(seconds)
+        self.tactic.mas_segundos(seconds)
 
         self.add_move(move, True)
         self.num_bad_tries = 0

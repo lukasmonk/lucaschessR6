@@ -23,6 +23,7 @@ from Code.Base.Constantes import (
     TB_TAKEBACK,
     VERY_GOOD_MOVE,
     ZVALUE_PIECE,
+    HIGHLIGHT_STYLE_ARROW
 )
 from Code.Board import (
     BoardArrows,
@@ -231,6 +232,8 @@ class Board(QtWidgets.QGraphicsView):
 
         self.arrow_sc = None
 
+        self._selection_sc = None
+
     def set_analysis_bar(self, analysis_bar: Any):
         self.analysis_bar = analysis_bar
 
@@ -284,7 +287,7 @@ class Board(QtWidgets.QGraphicsView):
 
             if key == Qt.Key.Key_O and is_alt:
                 if hasattr(self.main_window, "manager") and \
-                        hasattr(self.main_window.manager.main_window, "pressed_shortcut_alt_o"):  #LCDialog
+                        hasattr(self.main_window.manager.main_window, "pressed_shortcut_alt_o"):  # LCDialog
                     self.main_window.manager.main_window.pressed_shortcut_alt_o()
                 return
 
@@ -541,15 +544,20 @@ class Board(QtWidgets.QGraphicsView):
 
     def calc_width_mx_piece(self):
         if self.siF11:
-            sz_width, sz_height = ScreenUtils.desktop_size()
-            limit = min(sz_width, sz_height)
+            # Pantalla completa: usar geometría total (incluyendo barra del SO)
+            geometry = ScreenUtils.get_screen(self).geometry()
         else:
-            sz_width, sz_height = ScreenUtils.desktop_size()
-            limit = min(sz_width, sz_height)
-            if Code.configuration.x_tb_orientation_horizontal:
-                limit -= 80
+            # Maximizado: availableGeometry ya descuenta la barra del SO
+            geometry = ScreenUtils.get_screen(self).availableGeometry()
 
-            limit -= 42
+        limit = min(geometry.width(), geometry.height())
+
+        if self.siF11:
+            limit -= 42  # margen para no quedar pegado a los bordes en pantalla completa
+        else:
+            if Code.configuration.x_tb_orientation_horizontal:
+                limit -= 80  # margen adicional para barra de tareas horizontal interna
+            limit -= 42  # margen para bordes/título de la ventana
 
         tr = 1.0 * self.config_board.tamRecuadro() / 100.0
 
@@ -1309,7 +1317,7 @@ class Board(QtWidgets.QGraphicsView):
     def mouseMoveEvent(self, event):
         if self.dirvisual and self.dirvisual.mouseMoveEvent(event):
             return None
-        pos = event.pos()
+        pos = event.position()
         x = pos.x()
         y = pos.y()
         minimo = self.margin_center
@@ -1339,7 +1347,7 @@ class Board(QtWidgets.QGraphicsView):
             self.mouse_release_graph_live(event)
 
     def event2a1h8(self, event):
-        pos = event.pos()
+        pos = event.position()
         x = pos.x()
         y = pos.y()
         minimo = self.margin_center
@@ -1376,6 +1384,7 @@ class Board(QtWidgets.QGraphicsView):
 
         si_izq = event.button() == QtCore.Qt.MouseButton.LeftButton
         if si_izq and a1h8 is not None:
+            self.hide_selection()
             self.remove_movables()
 
             if self.active_premove:
@@ -1385,6 +1394,8 @@ class Board(QtWidgets.QGraphicsView):
         if a1h8 is None:
             if self.atajos_raton:
                 self.atajos_raton(self.last_position, None)
+            else:
+                self.hide_selection()
             QtWidgets.QGraphicsView.mousePressEvent(self, event)
             return
 
@@ -1395,7 +1406,10 @@ class Board(QtWidgets.QGraphicsView):
         elif hasattr(self.main_window, "manager"):
             if hasattr(self.main_window.manager, "colect_candidates"):
                 if li_c := self.main_window.manager.colect_candidates(a1h8):
+                    self.show_selection(a1h8)
                     self.show_candidates(li_c)
+                else:
+                    self.hide_selection()
 
         QtWidgets.QGraphicsView.mousePressEvent(self, event)
 
@@ -1675,7 +1689,7 @@ class Board(QtWidgets.QGraphicsView):
         self.place_the_piece(bloque_pieza, pos_a1_h8)
         pieza_sc = BoardElements.PiezaSC(self.escena, bloque_pieza, self)
 
-        # pieza_sc.setOpacity(self.opacity[0 if cpieza.isupper() else 1])
+        # pieza_sc.setOpacity(0 if cpieza.isupper() else 1)
 
         self.li_pieces.append([cpieza, pieza_sc, True])
         return pieza_sc
@@ -1709,22 +1723,6 @@ class Board(QtWidgets.QGraphicsView):
         if npieza >= 0:
             return self.li_pieces[npieza][1]
         return None
-
-    # def dameNomPiezaEn(self, pos_a1):
-    #     npieza = self.get_num_piece_at(pos_a1)
-    #     if npieza >= 0:
-    #         return self.li_pieces[npieza][0]
-    #     return None
-
-    # def move_pieceTemporal(self, from_a1h8, to_a1h8):
-    #     npieza = self.get_num_piece_at(from_a1h8)
-    #     if npieza >= 0:
-    #         pieza_sc = self.li_pieces[npieza][1]
-    #         row = int(to_a1h8[1])
-    #         column = ord(to_a1h8[0]) - 96
-    #         x = self.columna2punto(column)
-    #         y = self.fila2punto(row)
-    #         pieza_sc.setPos(x, y)
 
     def move_piece(self, from_a1h8, to_a1h8):
         npieza = self.get_num_piece_at(from_a1h8)
@@ -1919,10 +1917,10 @@ class Board(QtWidgets.QGraphicsView):
 
         bf.tamFrontera = self.tamFrontera
 
-        if self.configuration.x_movement_doublebox_board:
-            return BoardDoubleBoxes.DoubleBoxesSC(self.escena, bf, self.pressed_arrow_sc)
-        else:
+        if self.configuration.x_move_highlight_style == HIGHLIGHT_STYLE_ARROW:
             return BoardArrows.ArrowSC(self.escena, bf, self.pressed_arrow_sc)
+        else:
+            return BoardDoubleBoxes.DoubleBoxesSC(self.escena, bf, self.pressed_arrow_sc)
 
     def show_one_arrow_temp(self, from_a1h8, to_a1h8, is_main):
         bf = copy.deepcopy(self.config_board.fTransicion() if is_main else self.config_board.fAlternativa())
@@ -2458,7 +2456,6 @@ class Board(QtWidgets.QGraphicsView):
         self.escena.update()
         self.setFocus()
 
-
     def finalize(self):
         if self.dirvisual:
             self.dirvisual.finalize()
@@ -2547,6 +2544,33 @@ class Board(QtWidgets.QGraphicsView):
             elem.tamFrontera = self.tamFrontera
 
             self.register_movable(self.create_arrow(elem))
+
+    def show_selection(self, a1h8):
+        self.hide_selection()
+        if self.atajos_raton is None:
+            return
+        df, dc, __, __ = self.a1h8_fc(a1h8 + a1h8)
+        origin = self.margin_center + self.tamFrontera // 2
+
+        box = BoardTypes.Caja()
+        box.tipo = 1
+        box.color = Code.dic_colors["SELECTION_BOARD_BOX"]
+        box.colorRelleno = Code.dic_colors["SELECTION_BOARD_FILLING"]
+        box.grosor = max(2, self.width_square // 18)
+        box.physical_pos.x = origin + self.width_square * (dc - 1)
+        box.physical_pos.y = origin + self.width_square * (df - 1)
+        box.physical_pos.ancho = self.width_square
+        box.physical_pos.alto = self.width_square
+        box.physical_pos.orden = 9
+
+        rect = BoardElements.CajaSC(self.escena, box)
+        rect.setOpacity(0.45)
+        self._selection_sc = rect
+
+    def hide_selection(self):
+        if self._selection_sc is not None:
+            self.escena.removeItem(self._selection_sc)
+            self._selection_sc = None
 
     # -----------------------------------------------------------------------------------------------------  VISUALMENU
 

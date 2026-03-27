@@ -133,7 +133,7 @@ class WKibCommon(QtWidgets.QDialog):
         FasterCode.set_fen(self.game.last_position.fen())
         if FasterCode.make_move(from_sq + to_sq + promocion):
             self.game.read_pv(from_sq + to_sq + promocion)
-            self.reset()
+        self.reset()
 
     def set_flags(self):
         flags = self.windowFlags()

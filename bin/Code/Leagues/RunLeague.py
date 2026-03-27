@@ -7,7 +7,7 @@ from Code.Z import Util
 from Code.Base import Game
 from Code.Config import Configuration
 from Code.Leagues import Leagues, LeaguesWork
-from Code.MainWindow import InitApp
+from Code.Main import InitApp
 from Code.Openings import OpeningsStd
 from Code.QT import Piezas, Iconos
 from Code.Workers import RunWorker, Worker

@@ -359,6 +359,12 @@ class ThanksTo:
                 "https://openclipart.org/detail/218905/simple-washing-machine",
                 "Public domain",
             ),
+            (
+                "SVG Repo",
+                "SVG Repo",
+                "https://www.svgrepo.com/",
+                "Open-licensed SVG Vector and Icons",
+            ),
         ]
         for tipo, autor, web, licencia in li:
             txt += "<tr>"

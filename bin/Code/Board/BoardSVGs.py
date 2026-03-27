@@ -53,7 +53,6 @@ class SVGSC(BoardBlocks.BloqueEspSC):
         bm = self.block_data
         physical_pos = bm.physical_pos
         ac = self.board.width_square
-        tf = self.board.tamFrontera
 
         df, dc, hf, hc = self.board.a1h8_fc(bm.a1h8)
 
@@ -62,8 +61,8 @@ class SVGSC(BoardBlocks.BloqueEspSC):
         if dc > hc:
             dc, hc = hc, dc
 
-        physical_pos.x = ac * (dc - 1) + tf / 2
-        physical_pos.y = ac * (df - 1) + tf / 2
+        physical_pos.x = ac * (dc - 1) + 1
+        physical_pos.y = ac * (df - 1) + 1
         physical_pos.ancho = (hc - dc + 1) * ac
         physical_pos.alto = (hf - df + 1) * ac
 

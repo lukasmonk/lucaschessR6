@@ -2,7 +2,7 @@ import random
 import sys
 
 import Code
-from Code import Update
+from Code.Z import Update
 from Code.Base import Position
 from Code.Base.Constantes import (
     GT_AGAINST_CHILD_ENGINE,
@@ -60,7 +60,7 @@ from Code.Kibitzers import KibitzersManager
 from Code.Leagues import ManagerLeague
 from Code.LearnGame import ManagerPlayGame, WindowLearnGame, WindowPlayGame
 from Code.Leitner import Leitner, ManagerLeitner, WShowLeitner
-from Code.MainWindow import MainWindow, Presentacion
+from Code.Main import MainWindow, Presentacion
 from Code.Maps import ManagerMateMap, WindowWorkMap
 from Code.Menus import (
     CompeteMenu,

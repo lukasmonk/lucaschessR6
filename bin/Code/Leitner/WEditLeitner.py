@@ -129,7 +129,7 @@ class WEditLeitner(LCDialog.LCDialog):
             name = os.path.basename(path_fns)[:-4]
             folder = os.path.dirname(path_fns)
             folder1 = os.path.basename(folder)
-            self.ed_reference.set_text(f"{folder1}: {name}")
+            self.ed_reference.set_text(f"{_F(folder1)}: {_F(name)}")
 
     def grid_num_datos(self, grid):
         return len(self.leitner_work.source_files)

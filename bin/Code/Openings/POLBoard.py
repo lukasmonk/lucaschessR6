@@ -89,7 +89,7 @@ class BoardLines(QtWidgets.QWidget):
 
         tipo_letra = Controles.FontType(puntos=configuration.x_pgn_fontpoints)
 
-        lybt, bt = QTDialogs.ly_mini_buttons(self, "", siTiempo=True, siLibre=False, icon_size=24)
+        lybt, bt = QTDialogs.ly_mini_buttons(self, "", with_timed=True, icon_size=24)
 
         self.lbPGN = LBKey(self, " ").set_wrap()
         # Por alguna razón es necesario ese espacio en blanco, para aperturas sin movs iniciales
@@ -210,14 +210,6 @@ class BoardLines(QtWidgets.QWidget):
     def adjust_width(self):
         self.setFixedWidth(self.board.ancho + 20)
         self.lbPGN.relative_width(self.board.ancho)
-
-    # def camposEdicion(self, visible):
-    #     if self.with_moves:
-    #         self.lbValoracion.setVisible(visible)
-    #         self.cbValoracion.setVisible(visible)
-    #         self.lbVentaja.setVisible(visible)
-    #         self.cbVentaja.setVisible(visible)
-    #         self.emComentario.setVisible(visible)
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         cp_actual = self.game.move(self.pos_move).position if self.pos_move >= 0 else self.game.first_position

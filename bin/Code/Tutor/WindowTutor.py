@@ -37,20 +37,20 @@ class WindowTutor(LCDialog.LCDialog):
 
         # Boards
 
-        def create_board(name, si=True, si_libre=False, si_mas=False):
+        def create_board(name, si=True, if_more=False):
             if not si:
                 return None, None, None
             board = Board.Board(self, config_board)
             board.draw_window()
             board.set_side_bottom(is_white)
             board.disable_eboard_here()
-            lytb, tb = QTDialogs.ly_mini_buttons(self, name, si_libre, siMas=si_mas)
+            lytb, tb = QTDialogs.ly_mini_buttons(self, name, if_more=if_more)
             return board, lytb, tb
 
         self.board_tutor, lytbtutor, self.tbtutor = create_board("tutor")
         self.board_user, lytbuser, self.tbuser = create_board("user")
         self.board_rival, lytbRival, self.tbrival = create_board("rival", with_rival)
-        self.board_opening, lytbopening, self.tbopening = create_board("opening", with_openings, si_libre=False)
+        self.board_opening, lytbopening, self.tbopening = create_board("opening", with_openings)
         tutor.ponBoardsGUI(self.board_tutor, self.board_user, self.board_rival, self.board_opening)
 
         tb_analisis = Controles.TBrutina(self, icon_size=16, with_text=False)

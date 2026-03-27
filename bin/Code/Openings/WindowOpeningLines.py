@@ -125,7 +125,7 @@ class WOpeningLines(LCDialog.LCDialog):
         base = self.configuration.paths.folder_base_openings()
         li = [x for x in os.listdir(base) if os.path.isdir(Util.opj(base, x))]
         menu = QTDialogs.LCMenu(self)
-        rondo = QTDialogs.rondoFolders()
+        rondo = QTDialogs.rondo_folders()
         for x in li:
             menu.opcion(x, x, rondo.otro())
         menu.separador()
