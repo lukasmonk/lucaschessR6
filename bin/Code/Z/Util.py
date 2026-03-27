@@ -5,6 +5,7 @@ import glob
 import hashlib
 import os
 import pickle
+import queue
 import random
 import shutil
 import stat
@@ -920,3 +921,37 @@ def _build_linux_env() -> dict:
 
 def clamp(n: Union[int, float], smallest: Union[int, float], largest: Union[int, float]) -> Union[int, float]:
     return max(smallest, min(n, largest))
+
+
+class SmoothedEstimator:
+    def __init__(self, total):
+        self.total = total
+        self.start_time = time.time()
+        self.q_est = queue.Queue(maxsize=100)
+
+    def estimated(self, current_pos):
+        if current_pos <= 0:
+            return self.format_seconds(None)
+
+        remaining_units = self.total - current_pos
+        dif_time = time.time() - self.start_time
+        cur_est = dif_time / current_pos  # Dividir por current_pos en lugar de current_pos+1
+
+        # Manejar la cola correctamente
+        if self.q_est.full():
+            self.q_est.get()  # Eliminar el elemento más antiguo
+        self.q_est.put(cur_est)
+
+        # Calcular el promedio de la cola
+        items = list(self.q_est.queue)
+        media = sum(items) / len(items) if items else cur_est
+
+        return self.format_seconds(media * remaining_units)
+
+    @staticmethod
+    def format_seconds(seconds):
+        if seconds is None or seconds < 0:
+            return "--:--:--"
+        hours, rem = divmod(int(seconds), 3600)
+        minutes, secs = divmod(rem, 60)
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"

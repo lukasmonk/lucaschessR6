@@ -32,6 +32,10 @@ def qt_color_rgb(r, g, b):
     return QtGui.QColor(r, g, b)
 
 
+def qt_int(str_color):
+    return QtGui.QColor(str_color).rgba()
+
+
 def qt_brush(n_color):
     """
     Genera un brush a partir de un dato numerico
@@ -202,10 +206,11 @@ class MaintainGeometry:
 
 
 def shrink(widget: QtWidgets.QWidget):
-    if widget.layout():
-        widget.layout().invalidate()
+    # if widget.layout():
+    #     widget.layout().invalidate()
+    widget.layout().activate()  # fuerza recálculo del layout
     widget.adjustSize()
-    widget.resize(widget.minimumSizeHint())
+    # widget.resize(widget.minimumSizeHint())
 
 
 class EstadoWindow:
@@ -225,3 +230,4 @@ def get_width_text(widget, text):
 def get_height_text(widget, text):
     metrics = QtGui.QFontMetrics(widget.font())
     return metrics.boundingRect(text).height()
+

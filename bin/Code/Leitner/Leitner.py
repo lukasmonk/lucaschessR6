@@ -432,39 +432,3 @@ class FnsAnalyzer:
                     results[path.name] = tree
 
         return results
-
-# if __name__ == '__main__':
-#     import time
-#
-#     t = time.time()
-#     lt = Leitner(elems_session=20, min_elems_session=10)
-#     for x in range(300):
-#         lt.new_reg("line")
-#     xdic_regs = lt.dic_regs
-#
-#     while not lt.is_the_end():
-#         if not lt.new_session():
-#             break  # No hay más cartas disponibles que cumplan el criterio
-#
-#         status = [0] * (lt.num_boxes + 2)
-#         for rid in lt.current_ids_session:
-#             status[xdic_regs[rid].in_box] += 1
-#         print(f"Sesión {lt.current_num_session} | Cajas: {status} | {sum(status)}")
-#         # Copia de la lista para iterar
-#         session_ids = list(lt.current_ids_session)
-#         for regid in session_ids:
-#             # Simular éxito/fallo
-#             xbox = lt.dic_regs[regid].in_box
-#             if xbox < lt.win_box:
-#                 lt.assign_result(regid, random.random() > 0.2)
-#             else:
-#                 lt.assign_result(regid, random.random() > 0.005)
-#
-#         # Monitorización
-#         status = [0] * (lt.num_boxes + 2)
-#         for r in xdic_regs.values():
-#             status[r.in_box] += 1
-#
-#         print(f"Sesión {lt.current_num_session} | Cajas: {status}")
-#
-#     print(time.time() - t)

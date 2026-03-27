@@ -2,20 +2,21 @@ import time
 
 from Code.Base import Game
 from Code.Base.Constantes import GT_TACTICS, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, ON_TOOLBAR
-
 from Code.Leitner import Leitner
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages
+from Code.Z import FNSLine
 
 
 class ManagerLeitner(Manager.Manager):
     leitner: Leitner.Leitner
     leitner_db: Leitner.LeitnerDB
+    line_fns: FNSLine.FNSLine
+    pos_obj: int
+    game_obj: Game.Game
     pos_db: int
     reg: Leitner.LeitnerReg
     label_puzzle: str
-    game_obj: Game.Game
-    pos_obj: int
     requested_help: bool
     with_error: bool
     ini_clock: float
@@ -48,25 +49,27 @@ class ManagerLeitner(Manager.Manager):
         reg_id = self.leitner.current_ids_session[0]
         self.reg = self.leitner.dic_regs[reg_id]
 
-        # Parse FEN|Label|Solution
-        li = self.reg.line.split("|")
-        fen = li[0]
-        if fen.endswith(" 0"):
-            fen = f"{fen[:-1]}1"
-        self.label_puzzle = li[1]
-        solucion = li[2]
-
-        ok, self.game_obj = Game.pgn_game(f'[FEN "{fen}"]\n{solucion}')
-
+        # Parse FEN|Label|Solution|<game original>
+        self.line_fns = FNSLine.FNSLine(self.reg.line)
+        self.game_obj = self.line_fns.game_obj
         self.pos_obj = 0
+        self.label_puzzle = self.line_fns.label
+
         self.requested_help = False
         self.with_error = False
 
         cp = self.game_obj.first_position
+        if self.line_fns.with_game_original():
+            self.game = self.line_fns.game_original
+        else:
+            self.game.set_position(cp)
+            if self.game_obj:
+                self.game.set_first_comment(self.game_obj.first_comment, True)
+        self.game.pending_opening = False
+
         self.is_human_side_white = cp.is_white
         self.is_engine_side_white = not cp.is_white
 
-        self.game.set_position(cp)
         self.game.set_first_comment(self.game_obj.first_comment, True)
         self.game_type = GT_TACTICS
 
@@ -86,35 +89,17 @@ class ManagerLeitner(Manager.Manager):
 
         self.show_label_positions()
         self.state = ST_PLAYING
+
+        self.pgn_refresh(self.is_human_side_white)
+        if self.line_fns.with_game_original():
+            self.repeat_last_movement()
+
         self.play_next_move()
 
     def show_label_positions(self):
         txt = f'{_("Puzzles pending in this session")}: {len(self.leitner.current_ids_session)}'
         html = f'<table border="1" align="center" cellpadding="5"><tr><td><h4>{txt}</h4></td></tr></table>'
         self.set_label2(html)
-
-    def play_next_move(self):
-        if self.state == ST_ENDGAME:
-            return
-
-        self.human_is_playing = False
-        is_white = self.game.last_position.is_white
-        self.set_side_indicator(is_white)
-
-        if self.pos_obj == len(self.game_obj) or self.game.is_mate():
-            self.puzzle_finished()
-            return
-
-        if is_white == self.is_engine_side_white:
-            move = self.game_obj.move(self.pos_obj).clone(self.game)
-            self.game.add_move(move)
-            self.pos_obj += 1
-            self.board.set_position(move.position)
-            self.play_next_move()
-        else:
-            self.human_is_playing = True
-            self.activate_side(is_white)
-            self.ini_clock = time.time()
 
     def has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
@@ -124,9 +109,7 @@ class ManagerLeitner(Manager.Manager):
         move_obj = self.game_obj.move(self.pos_obj)
         is_main, is_var = move_obj.check_a1h8(move.movimiento())
         if is_main:
-            self.game.add_move(move)
-            self.pos_obj += 1
-            self.board.set_position(move.position)
+            self.add_move(True)
             self.play_next_move()
             return True
         elif is_var:
@@ -194,3 +177,52 @@ class ManagerLeitner(Manager.Manager):
 
         else:
             self.routine_default(key)
+
+    def play_next_move(self):
+        if self.state == ST_ENDGAME:
+            return
+
+        self.human_is_playing = False
+        is_white = self.game.last_position.is_white
+        self.set_side_indicator(is_white)
+
+        if self.pos_obj == len(self.game_obj) or self.game.is_mate():
+            self.puzzle_finished()
+            return
+
+        is_white = self.game.last_position.is_white
+
+        self.set_side_indicator(is_white)
+        self.refresh()
+        self.put_view()
+
+        is_rival_move = is_white == self.is_engine_side_white
+
+        if is_rival_move:
+            self.play_rival()
+
+        else:
+            self.play_human()
+
+    def play_rival(self):
+        self.add_move(False)
+        self.play_next_move()
+
+    def play_human(self):
+        self.human_is_playing = True
+        self.activate_side(self.is_human_side_white)
+        self.ini_clock = time.time()
+
+    def add_move(self, is_our_move: bool) -> None:
+        move_obj = self.game_obj.move(self.pos_obj)
+        self.pos_obj += 1
+        move = move_obj.clone(self.game)
+        self.game.add_move(move)
+
+        self.beep_extended(is_our_move)
+        if not is_our_move:
+            self.move_the_pieces(move.list_piece_moves, True)
+        self.board.set_position(move.position)
+        self.main_window.base.pgn.refresh()
+        self.main_window.base.pgn.gobottom(1 if move.is_white() else 2)
+        self.board.put_arrow_sc(move.from_sq, move.to_sq)

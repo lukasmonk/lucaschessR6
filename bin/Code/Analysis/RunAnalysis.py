@@ -9,7 +9,6 @@ from typing import Any, Optional
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Analysis import AnalysisIndexes, RunAnalysisControl
 from Code.Base import Game
 from Code.Base.Constantes import (
@@ -24,17 +23,20 @@ from Code.Base.Constantes import (
     RUNA_GAME,
     RUNA_HALT,
     RUNA_TERMINATE,
+    RUNA_PAUSE,
+    RUNA_RESUME,
+    RUNA_PROGRESS,
 )
 from Code.BestMoveTraining import BMT
 from Code.Config import Configuration
 from Code.Engines import EngineManager, EngineRun, ListEngineManagers
 from Code.Engines.EngineManagerAnalysis import EngineManagerAnalysis
-from Code.MainWindow import InitApp
 from Code.Nags.Nags import NAG_3
 from Code.Openings import OpeningsStd
-from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTUtils
+from Code.QT import QTUtils
 from Code.SQL import UtilSQL
 from Code.Themes import AssignThemes
+from Code.Z import Util
 
 
 class CPU:
@@ -47,7 +49,6 @@ class CPU:
 
         # Estado del análisis
         self.configuration: Optional[Configuration.Configuration] = None
-        self.window: Optional[WAnalysis] = None
         self.engine_manager: Optional[EngineManager.EngineManager] = None
         self.queue_orders = Queue()
         self.timer: Optional[QtCore.QTimer] = None
@@ -55,19 +56,17 @@ class CPU:
         # Flags de estado
         self.is_closed = False
         self.is_analyzing = False
+        self.is_paused = False
 
         # Datos de análisis
         self.alm: Optional[Any] = None
         self.ag: Optional[AnalyzeGame] = None
-        self.num_worker: Optional[int] = None
+        self.huella: Optional[str] = None
 
     def xreceive(self) -> None:
         """Recibe órdenes del proceso principal"""
         if self.is_closed:
             return
-
-        if self.window:
-            QTUtils.refresh_gui()
 
         dv = self.ipc_receive.pop()
         if not dv:
@@ -101,6 +100,10 @@ class CPU:
             self._process_game(orden)
         elif key == RUNA_TERMINATE:
             self.close()
+        elif key == RUNA_PAUSE:
+            self.is_paused = True
+        elif key == RUNA_RESUME:
+            self.is_paused = False
 
     def _process_configuration(self, orden: RunAnalysisControl.Orden) -> None:
         """Procesa la configuración inicial"""
@@ -114,10 +117,10 @@ class CPU:
         OpeningsStd.ap.reset()
 
         self.alm = orden.dv["ALM"]
-        self.num_worker = orden.dv["NUM_WORKER"]
+        self.huella = orden.dv["HUELLA"]
 
-        self.xreceive()
-        self.lanzawindow()
+        self.launch_analysis()
+        self._check_data()
 
     def _process_game(self, orden: RunAnalysisControl.Orden) -> None:
         """Procesa un juego para análisis"""
@@ -125,28 +128,25 @@ class CPU:
         recno = orden.dv["RECNO"]
         self.analyze(game, recno)
 
-    def lanzawindow(self) -> int:
-        """Inicia la ventana de análisis"""
-        app = QtWidgets.QApplication([])
-        InitApp.init_app_style(app, self.configuration)
-        self.configuration.load_translation()
-
-        self.window = WAnalysis(self)
-        self.ag = AnalyzeGame(self, self.alm)
-
-        self.window.show()
+    def _check_data(self):
+        self.xreceive()
         self.procesa()
 
-        return app.exec()
+    def launch_analysis(self):
+
+        self.ag = AnalyzeGame(self, self.alm)
+
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(200)  # Revisar cada x ms
+        self.timer.timeout.connect(self._check_data)
+        self.timer.start()
 
     def close(self) -> None:
         """Cierra el proceso de análisis"""
         if self.is_closed:
             return
         self.is_closed = True
-        if self.window:
-            self.window.finalizar()
-        QTUtils.refresh_gui()
+        self.timer.stop()
 
         orden = RunAnalysisControl.Orden()
         orden.key = RUNA_TERMINATE
@@ -155,7 +155,7 @@ class CPU:
         self.ipc_send.close()
         self.ipc_receive.close()
 
-        if hasattr(Code, 'list_engine_managers'):
+        if hasattr(Code, "list_engine_managers"):
             Code.list_engine_managers.close_all()
 
         QtWidgets.QApplication.quit()
@@ -175,7 +175,6 @@ class CPU:
         if self.is_closed:
             return
 
-        self.window.init_game(recno)
         self.is_analyzing = True
         self.ag.xprocesa(game)
         self.is_analyzing = False
@@ -189,11 +188,15 @@ class CPU:
             orden.set("EXTRA", li_save_extra)
 
         self.send(orden)
-        self.procesa()
 
     def progress(self, npos: int, n_moves: int) -> bool:
-        """Actualiza la barra de progreso"""
-        self.window.progress(npos, n_moves)
+        """Envia orde para actualizar la barra de progreso"""
+        orden = RunAnalysisControl.Orden()
+        orden.key = RUNA_PROGRESS
+        orden.set("HUELLA", self.huella)
+        orden.set("CURRENT", npos)
+        orden.set("TOTAL", n_moves)
+        self.send(orden)
         QTUtils.refresh_gui()
         return not self.is_closed
 
@@ -203,93 +206,11 @@ def run(filebase: str) -> None:
     if not __debug__:
         sys.stderr = Util.Log("./bug.analysis")
 
+    app = QtWidgets.QApplication([])
     cpu = CPU(filebase)
     cpu.xreceive()
     cpu.procesa()
-
-
-class WAnalysis(LCDialog.LCDialog):
-    """Ventana de progreso del análisis"""
-
-    def __init__(self, cpu: CPU):
-        self.cpu: CPU = cpu
-        self.game: Optional[Game.Game] = None
-
-        self.is_paused: bool = False
-
-        title = f"{_('Mass analysis')} - {_('Worker')} {cpu.num_worker + 1}"
-        LCDialog.LCDialog.__init__(
-            self,
-            None,
-            title,
-            Iconos.Analizar(),
-            f"worker_analyisis_{self.cpu.num_worker}",
-        )
-        flags = self.windowFlags()
-        flags |= QtCore.Qt.WindowType.WindowStaysOnTopHint
-        self.setWindowFlags(flags)
-
-        # UI Elements
-        self.lb_game = Controles.LB(self)
-        self.pb_moves = QtWidgets.QProgressBar()
-        self.pb_moves.setFormat(f"{_('Move')} %v/%m")
-
-        self.bt_pause = Controles.PB(self, "", self.pause_continue, plano=True)
-        self.icon_pause_continue()
-
-        # Layout
-        layout = Colocacion.H().control(self.lb_game).control(self.pb_moves).control(self.bt_pause)
-        self.setLayout(layout)
-        self.restore_video(default_width=400, default_height=40)
-
-        # Timer setup
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.xreceive)
-        self.timer.start(200)
-        self.is_closed = False
-
-    def xreceive(self) -> None:
-        """Maneja las actualizaciones periódicas"""
-        self.cpu.xreceive()
-        if not self.cpu.is_analyzing:
-            self.cpu.procesa()
-
-    def init_game(self, num_game: int) -> None:
-        """Inicializa la visualización para un nuevo juego"""
-        self.lb_game.set_text(f"{_('Game')} {num_game + 1}")
-        QTUtils.refresh_gui()
-
-    def closeEvent(self, event) -> None:
-        """Maneja el cierre de la ventana"""
-        self.finalizar()
-
-    def finalizar(self) -> None:
-        """Finaliza el análisis"""
-        if not self.is_closed:
-            self.is_closed = True
-            self.cpu.is_closed = True
-            self.timer.stop()
-            self.accept()
-
-    def progress(self, npos: int, nmoves: int) -> None:
-        """Actualiza la barra de progreso"""
-        self.pb_moves.setRange(0, nmoves)
-        self.pb_moves.setValue(npos)
-
-    def pause_continue(self):
-        if self.is_paused:
-            self.is_paused = False
-            self.icon_pause_continue()
-        else:
-            self.is_paused = True
-            self.icon_pause_continue()
-            while self.is_paused and not self.is_closed:
-                time.sleep(0.05)
-                QTUtils.refresh_gui()
-
-    def icon_pause_continue(self):
-        # self.bt_pause.set_icono(Iconos.Kibitzer_Play() if self.is_paused else Iconos.Kibitzer_Pause())
-        self.bt_pause.set_icono(Iconos.ContinueColor() if self.is_paused else Iconos.PauseColor())
+    app.exec()
 
 
 class AnalyzeGame:
@@ -473,8 +394,8 @@ class AnalyzeGame:
             return
 
         # Esta creado el folder
-        before = f'{_("Avoid the blunder")}.fns'
-        after = f'{_("Take advantage of blunder")}.fns'
+        before = f"{_('Avoid the blunder')}.fns"
+        after = f"{_('Take advantage of blunder')}.fns"
 
         with contextlib.suppress(OSError):
             if not os.path.isdir(self.tacticblunders):
@@ -483,10 +404,10 @@ class AnalyzeGame:
                     Util.create_folder(dtactics)
                 Util.create_folder(self.tacticblunders)
                 with open(
-                    Util.opj(self.tacticblunders, "Config.ini"),
-                    "wt",
-                    encoding="utf-8",
-                    errors="ignore",
+                        Util.opj(self.tacticblunders, "Config.ini"),
+                        "wt",
+                        encoding="utf-8",
+                        errors="ignore",
                 ) as f:
                     f.write(
                         f"""[COMMON]
@@ -494,10 +415,10 @@ class AnalyzeGame:
     REPEAT=0
     SHOWTEXT=1
     [TACTIC1]
-    MENU={_('Avoid the blunder')}
+    MENU={_("Avoid the blunder")}
     FILESW={before}:100
     [TACTIC2]
-    MENU={_('Take advantage of blunder')}
+    MENU={_("Take advantage of blunder")}
     FILESW={after}:100
     """
                     )
@@ -576,7 +497,7 @@ class AnalyzeGame:
         t = t.rstrip("0")
         if t[-1] == ".":
             t = t[:-1]
-        eti_t = f'{t} {_("Second(s)")}'
+        eti_t = f"{t} {_('Second(s)')}"
 
         jg0.set_comment(f"{name} {eti_t}: {rm.texto()}\n")
         if mj:
@@ -748,21 +669,22 @@ class AnalyzeGame:
         for npos, pos_move in enumerate(li_pos_moves, 1):
             if not self.cpu.progress(npos, n_moves):
                 return
-
             if pos_move in st_borrar:
                 continue
 
-            if self.cpu.is_closed:
-                return
-
             move = game.move(pos_move)
-
-            if self.cpu.is_closed:
-                return
 
             li_moves_games = move.list_all_moves() if self.alm.analyze_variations else [(move, game, pos_move)]
 
             for move, game_move, pos_current_move in li_moves_games:
+                if self.cpu.is_closed:
+                    return
+
+                while self.cpu.is_paused:
+                    QTUtils.refresh_gui()
+                    if self.cpu.is_closed:
+                        return
+                    time.sleep(0.1)
 
                 # # white y black
                 white_move = move.position_before.is_white
@@ -808,15 +730,14 @@ class AnalyzeGame:
                 move.add_nag(nag)
 
                 if si_blunders or si_brilliancies or self.with_variations:
-
                     mj = mrm.li_rm[0]
 
                     fen = move.position_before.fen()
 
                     if (
-                        self.with_variations
-                        and allow_add_variations
-                        and not move.analysis_to_variations(self.alm, self.delete_previous)
+                            self.with_variations
+                            and allow_add_variations
+                            and not move.analysis_to_variations(self.alm, self.delete_previous)
                     ):
                         move.remove_all_variations()
 
@@ -825,13 +746,13 @@ class AnalyzeGame:
                         self.graba_tactic(game, pos_move, mrm, pos_act)
 
                         if self.save_pgn(
-                            self.pgnblunders,
-                            mrm.name,
-                            game.dic_tags(),
-                            fen,
-                            move,
-                            rm,
-                            mj,
+                                self.pgnblunders,
+                                mrm.name,
+                                game.dic_tags(),
+                                fen,
+                                move,
+                                rm,
+                                mj,
                         ):
                             si_poner_pgn_original_blunders = True
 
@@ -845,13 +766,13 @@ class AnalyzeGame:
                         self.save_brilliancies_fns(self.fnsbrilliancies, fen, mrm, game, pos_current_move)
 
                         if self.save_pgn(
-                            self.pgnbrilliancies,
-                            mrm.name,
-                            game.dic_tags(),
-                            fen,
-                            move,
-                            rm,
-                            None,
+                                self.pgnbrilliancies,
+                                mrm.name,
+                                game.dic_tags(),
+                                fen,
+                                move,
+                                rm,
+                                None,
                         ):
                             si_poner_pgn_original_brilliancies = True
 

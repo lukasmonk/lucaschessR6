@@ -213,25 +213,35 @@ class WConfEngines(LCDialog.LCDialog):
 
     def grid_right_button(self, grid, row, obj_column, modif):
         opcion = self.li_uci_options[row]
+        menu = QTDialogs.LCMenu(self)
         if opcion.tipo == "string":
-            menu = QTDialogs.LCMenu(self)
             menu.opcion("select_file", _("Select a file"), Iconos.MasDoc())
             menu.separador()
             menu.opcion("select_folder", _("Select a folder"), Iconos.Carpeta())
-            resp = menu.lanza()
-            if resp is not None:
-                folder_engine = os.path.dirname(self.engine.path_exe)
-                if resp == "select_file":
-                    path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
-                    if path_file:
-                        folder_file = os.path.dirname(path_file)
-                        if Util.same_path(folder_file, folder_engine):
-                            path_file = os.path.basename(path_file)
-                    else:
-                        return
+            menu.separador()
+        menu.opcion("by_default", _("By default"), Iconos.Defecto())
+        resp = menu.lanza()
+        if resp is not None:
+            folder_engine = os.path.dirname(self.engine.path_exe)
+            if resp == "select_file":
+                path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                if path_file:
+                    folder_file = os.path.dirname(path_file)
+                    if Util.same_path(folder_file, folder_engine):
+                        path_file = os.path.basename(path_file)
                 else:
-                    path_file = SelectFiles.get_existing_directory(self, folder_engine,  _("Select a folder"))
-                self.grid_setvalue(None, row, None, path_file)
+                    return
+                value = path_file
+            elif resp == "select_folder":
+                path_folder = SelectFiles.get_existing_directory(self, folder_engine,  _("Select a folder"))
+                if path_folder:
+                    value = path_folder
+                else:
+                    return
+            else:
+                value = opcion.default
+
+            self.grid_setvalue(None, row, None, value)
 
 
 class WConfTutor(QtWidgets.QWidget):

@@ -36,7 +36,7 @@ class BoardVisualMenu:
         menu.separador()
         c = str(board.main_window)
         ok = True
-        if "MainWindow" in c:
+        if "Main" in c:
             ok = not board.main_window.isMaximized()
 
         if ok:

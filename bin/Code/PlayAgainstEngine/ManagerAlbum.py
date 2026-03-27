@@ -1,6 +1,5 @@
 from typing import Any
 
-from Code.Z import Adjournments
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_ALBUM,
@@ -16,6 +15,7 @@ from Code.Base.Constantes import (
 from Code.ManagerBase import Manager
 from Code.PlayAgainstEngine import Albums
 from Code.QT import QTMessages
+from Code.Z import Adjournments
 
 
 class ManagerAlbum(Manager.Manager):
@@ -263,6 +263,6 @@ class ManagerAlbum(Manager.Manager):
         self.set_toolbar((TB_CLOSE, TB_CONFIG, TB_UTILITIES))
 
     def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, promotion: str = ""):
-        """Viene desde el board via MainWindow, es previo, ya que si está pendiente el análisis, sólo se indica que ha
+        """Viene desde el board via Main, es previo, ya que si está pendiente el análisis, sólo se indica que ha
         elegido una jugada"""
         return self.player_has_moved(from_sq, to_sq, promotion)

@@ -329,7 +329,7 @@ class PolyglotImport:
         menu = QTDialogs.LCMenu(self.wpolyglot)
         menu.opcion("pgn", _("PGN"), Iconos.Board())
         menu.separador()
-        menu.opcion("database", _("Database"), Iconos.Database())
+        menu.opcion("database", _("Database"), Iconos.Databases())
         menu.separador()
         menu.opcion("polyglot", _("Polyglot book"), Iconos.BinBook())
         menu.separador()

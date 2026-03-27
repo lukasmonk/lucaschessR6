@@ -386,7 +386,7 @@ class ManagerGM(Manager.Manager):
                 analysis = mrm, pos_gm
                 rm_user = w.rm_usu
                 rm_gm = w.rm_obj
-                dpts = w.difPuntos()
+                dpts = w.point_difference()
 
             self.puntos += dpts
 

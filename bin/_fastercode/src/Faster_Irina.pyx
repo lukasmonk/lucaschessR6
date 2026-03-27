@@ -1,13 +1,13 @@
-# cython: language_level=2
+# cython: language_level=3
 cimport cython
 import sys
 import os.path
 import os
 import shutil
+import tempfile
+from collections import deque
 from libc.stdio cimport FILE
 from libc.stdlib cimport malloc, free
-
-import tempfile
 from typing import Dict, Tuple, Iterator, List, Optional
 
 """
@@ -86,30 +86,29 @@ cdef extern from "irina.h":
     void init_board()
     void fen_board(char *fen)
     char *board_fen(char *fen)
-
     int movegen()
     int pgn2pv(char *pgn, char *pv)
     int make_nummove(int num)
     char * play_fen(char *fen, int depth, int time)
-    int num_moves( )
-    void get_move( int num, char * pv )
-    int num_base_move( )
-    int search_move( char *xfrom, char *xto, char * promotion )
-    void get_move_ex( int num, char * info )
+    int num_moves()
+    void get_move(int num, char *pv)
+    int num_base_move()
+    int search_move(char *xfrom, char *xto, char *promotion)
+    void get_move_ex(int num, char *info)
     char * to_san(int num, char *sanMove)
     char incheck()
     void set_level(int lv)
 
-    void pgn_start(int depth);
-    void pgn_stop();
-    int pgn_read(char * body, char * fen);
-    char * pgn_pv();
-    int pgn_raw();
-    char * pgn_fen(int num);
-    int pgn_numfens();
+    void pgn_start(int depth)
+    void pgn_stop()
+    int pgn_read(char * body, char * fen)
+    char * pgn_pv()
+    int pgn_raw()
+    char * pgn_fen(int num)
+    int pgn_numfens()
 
-    int parse_body( char * fen, char * body, char * resp )
-    int parse_pgn(char * pgn, char * resp )
+    int parse_body(char *fen, char *body, char *resp )
+    int parse_pgn(char *pgn, char *resp)
 
     unsigned long long hash_from_fen(char *fen)
     void write_integer(int size, unsigned long long n)
@@ -123,7 +122,6 @@ cdef extern from "irina.h":
 
 def bmi2():
     return is_bmi2()
-
 
 
 class PGNreader:
@@ -146,6 +144,7 @@ class PGNreader:
         self.inicio: int = 0
         self.final: int = 0
         self.ok: bool = False
+        self._started: bool = False  # FIX 1: rastrear si pgn_start() completó
 
         self._prepare_file()
 
@@ -185,18 +184,21 @@ class PGNreader:
         self.path_file = temp_path
         self.tmp_file = temp_path
 
-    def __enter__(self) -> "PGNReader":
+    def __enter__(self) -> "PGNreader":
         self.f = open(self.path_file, "rb")
-
         if self.utf_bom:
             self.f.seek(3)
-
+        self._started = False
         pgn_start(self.depth)
+        self._started = True
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> bool:
         if hasattr(self, "f"):
-            self.f.close()
+            try:
+                self.f.close()
+            except Exception:
+                pass
 
         if self.tmp_file:
             try:
@@ -204,8 +206,14 @@ class PGNreader:
             except OSError:
                 pass
 
-        pgn_stop()
-        return False
+        if self._started:
+            try:
+                pgn_stop()
+            except Exception:
+                pass
+            self._started = False
+
+        return False  # no suprimir excepciones del bloque with
 
     def __iter__(self) -> Iterator:
         return self
@@ -255,7 +263,7 @@ class PGNreader:
         try:
             pgn_read(body, fen)
         except Exception as e:
-            raise RuntimeError(f"Backend PGN error: {e}")
+            return self.__next__()
 
         pv = pgn_pv()
         is_raw = pgn_raw()
@@ -295,9 +303,11 @@ class PGNreader:
         values[key_upper] = value
         keys[key_upper] = key
 
-    def bpgn(self):
+    def bpgn(self) -> bytes:
+        if not hasattr(self, "f") or self.f.closed:
+            return b""
         self.f.seek(self.inicio)
-        return self.f.read(self.final-self.inicio)
+        return self.f.read(self.final - self.inicio)
 
 
 
@@ -580,14 +590,14 @@ def set_fen(fen):
 
 
 def get_fen():
-    cdef char fen[100]
+    cdef char fen[256]
     board_fen(fen)
     x = fen.decode("utf-8")
     return x
 
 
 def get_moves():
-    cdef char pv[10]
+    cdef char pv[32]
     cdef int nmoves, x, nbase
     nmoves = num_moves()
 
@@ -601,7 +611,7 @@ def get_moves():
 
 
 def get_pgn(from_a1h8: str, to_a1h8: str, promotion: str) -> str:
-    cdef char san[10]
+    cdef char san[32]
 
     bfrom_a1h8 = from_a1h8.encode("utf-8")
     bto_a1h8 = to_a1h8.encode("utf-8")
@@ -616,7 +626,7 @@ def get_pgn(from_a1h8: str, to_a1h8: str, promotion: str) -> str:
 
 
 def get_pgn_b(bfrom_a1h8, bto_a1h8, bpromotion):
-    cdef char san[10]
+    cdef char san[32]
 
     num = search_move(bfrom_a1h8, bto_a1h8, bpromotion)
     if num == -1:
@@ -627,7 +637,7 @@ def get_pgn_b(bfrom_a1h8, bto_a1h8, bpromotion):
 
 
 def xpv_pgn(xpv):
-    cdef char san[10]
+    cdef char san[32]
 
     set_init_fen()
     is_white = True
@@ -659,7 +669,7 @@ def xpv_pgn(xpv):
     return (b"".join(li)).decode("utf-8")
 
 def lipv_pgn(fen, lipv):
-    cdef char san[10]
+    cdef char san[32]
     set_fen(fen)
     is_white = " w " in fen
     li_pv = fen.split(" ")
@@ -903,6 +913,11 @@ def xparse_body(fen, body):
         return None
 
 def xparse_pgn(pgn):
+    pgn = pgn.strip()
+    if len(pgn) == 0:
+        return None
+    if pgn[0] != "[":
+        pgn = f'[Event "?"]\n{pgn}'
     pgn = bytes(pgn, "utf-8")
     resp = bytearray(len(pgn)*14//10)
     tam = parse_pgn( pgn, resp )

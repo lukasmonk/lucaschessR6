@@ -112,7 +112,7 @@ class RowidReader(QThread):
         # para evitar que se emitan señales durante la limpieza
         try:
             self.rowids_received.disconnect()
-        except (RuntimeError, TypeError):
+        except (RuntimeError, TypeError, RuntimeWarning):
             pass  # Ya estaba desconectado o no hay conexiones
 
         try:

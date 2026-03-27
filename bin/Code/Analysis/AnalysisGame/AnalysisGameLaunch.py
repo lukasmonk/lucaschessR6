@@ -3,8 +3,8 @@ from typing import Optional
 from Code.Z import Util
 from Code.Analysis import WindowAnalysisParam
 from Code.Analysis.AnalysisGame import AnalysisGame
-from Code.Databases import WDB_Utils
 from Code.Engines import EngineResponse
+from Code.Databases import WDB_Trainings
 
 
 def analysis_game(manager):
@@ -116,7 +116,7 @@ def analysis_game(manager):
                 li_no_creados.append(analysis_params.bmtbrilliancies)
 
         if li_creados or li_no_creados:
-            WDB_Utils.message_creating_trainings(main_window, li_creados, li_no_creados)
+            WDB_Trainings.message_creating_trainings(main_window, li_creados, li_no_creados)
 
     manager.goto_end()
 

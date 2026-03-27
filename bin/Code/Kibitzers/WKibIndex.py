@@ -36,7 +36,7 @@ class WKibIndex(QtWidgets.QDialog):
         self.liData = []
 
         self.setWindowTitle(cpu.titulo)
-        self.setWindowIcon(Iconos.Engine())
+        self.setWindowIcon(Iconos.Index())
 
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint

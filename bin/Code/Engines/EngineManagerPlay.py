@@ -215,7 +215,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
         # Hay que tener en cuenta
         # Si estamos en la apertura -> mas rápido
         # Si hay muchas opciones -> mas lento
-        # Si hay pocas pieces
+        # Si hay pocas piezas
         # Si son las primeras 20 jugadas, el procentaje aumenta de 1 a 100
         # para el resto
         movestogo = 40

@@ -9,7 +9,7 @@ class WShowLeitner(LCDialog.LCDialog):
         self.leitner = leitner
         self.box_contents = leitner.box_contents()
 
-        titulo = f'{_("Leitner Training")}: {self.leitner.reference}'
+        titulo = f'{_("Leitner Training")} - {self.leitner.reference}'
         icon = Iconos.Leitner()
         LCDialog.LCDialog.__init__(self, owner, titulo, icon, "WShowLeitner")
 

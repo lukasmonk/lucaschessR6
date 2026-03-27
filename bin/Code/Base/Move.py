@@ -331,8 +331,6 @@ class Move:
         resto = self.resto()
         if not resto:
             return self.base_pgn()
-        if resto[0] not in "?!":
-            resto = f" {resto}"
         return self.base_pgn() + resto
 
     def pgn_translated(self):
@@ -345,30 +343,32 @@ class Move:
         resto = self.resto(translated=True)
         if not resto:
             return base
-        if resto[0] not in "?!":
-            resto = f" {resto}"
         return base + resto
 
     def resto(self, with_variations=True, with_nag_symbols=False, translated=False):
         """
         Build the suffix of the PGN move: NAGs, comments, time and variations.
+        NAGs are written directly after the move without a leading space,
+        as required by the PGN standard and expected by Lichess.
         """
-        resp = ""
+        nag_part = ""
+        suffix = ""
+
         if self.li_nags:
             self.li_nags.sort()
             if with_nag_symbols:
-                resp += " ".join([html_nag_symbol(nag) for nag in self.li_nags])
+                nag_part = " ".join([html_nag_symbol(nag) for nag in self.li_nags])
             else:
-                resp += " ".join([html_nag_txt(nag) for nag in self.li_nags])
+                nag_part = " ".join([html_nag_txt(nag) for nag in self.li_nags])
 
         comment = self.comment
         if self.li_themes:
             comment += f"[%theme {','.join(self.li_themes)}]"
         if comment:
-            resp += " "
+            suffix += " "
             for txt in comment.strip().split("\n"):
                 if txt:
-                    resp += "{%s}" % txt.strip()
+                    suffix += "{%s}" % txt.strip()
         if self.time_ms:
             s = self.time_ms / 1000
             if int(s * 100) > 0:
@@ -376,7 +376,7 @@ class Move:
                 s -= h * 3600
                 m = int(s // 60)
                 s -= m * 60
-                resp += "{[%%emt %02d:%02d:%02.2f]}" % (h, m, s)
+                suffix += "{[%%emt %02d:%02d:%02.2f]}" % (h, m, s)
         if self.clock_ms:
             s = self.clock_ms / 1000
             if int(s * 100) > 0:
@@ -384,12 +384,23 @@ class Move:
                 s -= h * 3600
                 m = int(s // 60)
                 s -= m * 60
-                resp += "{[%%clk %02d:%02d:%02.2f]}" % (h, m, s)
+                suffix += "{[%%clk %02d:%02d:%02.2f]}" % (h, m, s)
         if with_variations and len(self.variations):
-            resp += f" {self.variations.get_pgn(translated)}"
+            suffix += f" {self.variations.get_pgn(translated)}"
 
-        resp = resp.strip()
-        return f" {resp}" if resp else ""
+        suffix = suffix.strip()
+
+        if nag_part:
+            if nag_part[0] == "$":
+                nag_part = f" {nag_part}"
+            if suffix:
+                return f"{nag_part} {suffix}"
+            else:
+                return nag_part
+        elif suffix:
+            return f" {suffix}"
+        else:
+            return ""
 
     def analysis_to_variations(self, alm_variations, delete_previous):
         if not self.analysis:
