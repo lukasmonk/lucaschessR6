@@ -55,6 +55,7 @@ from Code.Translations import TrListas
 from Code.Tutor import Tutor
 from Code.Voyager import Voyager
 from Code.Z import Adjournments, Util
+from Code.Z import TimeControl
 
 
 class ToolbarState(Enum):
@@ -77,6 +78,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
     tc_player: Any = None
     tc_rival: Any = None
+
+    time_used_user: float = 0.0
 
     player_name: str
     rival_name: str
@@ -246,22 +249,75 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.tc_player = self.tc_white if self.is_human_side_white else self.tc_black
         self.tc_rival = self.tc_white if self.is_engine_side_white else self.tc_black
 
-        self.timed = dic_var["WITHTIME"]
+        self.timed = dic_var.get("WITHTIME", False)
         self.tc_white.set_displayed(self.timed)
         self.tc_black.set_displayed(self.timed)
-        if self.timed:
-            self.max_seconds = dic_var["MINUTES"] * 60.0
-            self.seconds_per_move = dic_var["SECONDS"]
-            self.secs_extra = dic_var.get("MINEXTRA", 0) * 60.0
-            zeitnot = dic_var.get("ZEITNOT", 0)
 
-            self.disable_user_time = dic_var.get("DISABLEUSERTIME", False)
-            if self.disable_user_time:
-                self.secs_extra = 3 * 60 * 60  # 3 horas
-                self.tc_player.set_displayed(False)
+        if not self.timed:
+            return
 
-            self.tc_player.config_clock(self.max_seconds, self.seconds_per_move, zeitnot, self.secs_extra)
-            self.tc_rival.config_clock(self.max_seconds, self.seconds_per_move, zeitnot, 0)
+        self.time_mode = dic_var.get("TIME_MODE", TimeControl.TimeMode.FISCHER)
+
+        # ── Common fields
+        base_minutes = dic_var.get("MINUTES", 10.0)
+        self.max_seconds = base_minutes * 60.0
+        self.seconds_per_move = dic_var.get("SECONDS", 0)  # increment / delay
+        self.secs_extra = dic_var.get("MINEXTRA", 0) * 60.0
+        zeitnot = dic_var.get("ZEITNOT", 0)
+
+        self.disable_user_time = dic_var.get("DISABLEUSERTIME", False)
+        if self.disable_user_time:
+            # Player clock is hidden; give 3 h so it never runs out visually
+            self.secs_extra = 3 * 60 * 60
+            self.tc_player.set_displayed(False)
+
+        # ── Configure each clock according to the selected mode ───────────────
+        def _configure(tc, is_player: bool):
+            extra = self.secs_extra if is_player else 0
+
+            if self.time_mode == TimeControl.TimeMode.SUDDEN_DEATH:
+                tc.config_clock(self.max_seconds + extra, 0, zeitnot, 0)
+
+            elif self.time_mode == TimeControl.TimeMode.FISCHER:
+                tc.config_fischer(self.max_seconds + extra, self.seconds_per_move, zeitnot)
+
+            elif self.time_mode == TimeControl.TimeMode.BRONSTEIN:
+                tc.config_bronstein(self.max_seconds + extra, self.seconds_per_move, zeitnot)
+
+            elif self.time_mode == TimeControl.TimeMode.DELAY_SIMPLE:
+                tc.config_delay(self.max_seconds + extra, self.seconds_per_move, zeitnot)
+
+            elif self.time_mode == TimeControl.TimeMode.HOURGLASS:
+                tc.config_hourglass(self.max_seconds + extra)
+
+            elif self.time_mode == TimeControl.TimeMode.MOVES_IN_TIME:
+                phases = []
+                for key in ("PHASE1", "PHASE2", "PHASE3"):
+                    val = dic_var.get(key)
+                    if val:
+                        moves, mins, bonus = val
+                        if mins > 0:
+                            phases.append((moves, int(mins * 60), bonus))
+                if not phases:
+                    # Fallback: treat as Fischer if no phases defined
+                    tc.config_fischer(self.max_seconds + extra, self.seconds_per_move, zeitnot)
+                else:
+                    tc.config_moves_in_time(phases, zeitnot)
+                    # For the player, add extra time to the first phase total
+                    if is_player and extra > 0:
+                        tc.pending_time += extra
+                        tc.total_time += extra
+            else:
+                # Unknown mode: safe fallback to Fischer
+                tc.config_fischer(self.max_seconds + extra, self.seconds_per_move, zeitnot)
+
+        _configure(self.tc_player, is_player=True)
+        _configure(self.tc_rival, is_player=False)
+
+        # ── Hourglass: wire the two clocks together
+        if self.time_mode == TimeControl.TimeMode.HOURGLASS:
+            self.tc_player.set_opponent(self.tc_rival)
+            self.tc_rival.set_opponent(self.tc_player)
 
     def _init_hints(self, dic_var: Dict[str, Any]):
         self.hints = dic_var["HINTS"]
@@ -348,15 +404,61 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.game.add_tag_timestart()
 
-        time_control = f"{int(self.max_seconds)}"
-        if self.seconds_per_move:
-            time_control += f"+{self.seconds_per_move}"
+        # ── Build PGN TimeControl tag
+        # Format follows PGN standard + common extensions:
+        #   Sudden Death : "300"
+        #   Fischer      : "300+3"
+        #   Bronstein    : "300b3"    (b = Bronstein, non-standard but widely used)
+        #   Simple Delay : "300d5"    (d = delay, used by SCID/ChessBase)
+        #   Hourglass    : "300h"     (h = hourglass)
+        #   Moves/Time   : "40/5400:20/1800:900+30"  (FIDE standard multi-phase)
+        mode = getattr(self, "time_mode", TimeControl.TimeMode.FISCHER)
+        base = int(self.max_seconds)
+
+        if mode == TimeControl.TimeMode.SUDDEN_DEATH:
+            time_control = f"{base}"
+
+        elif mode == TimeControl.TimeMode.FISCHER:
+            inc = int(self.seconds_per_move)
+            time_control = f"{base}+{inc}" if inc else f"{base}"
+
+        elif mode == TimeControl.TimeMode.BRONSTEIN:
+            time_control = f"{base}b{int(self.seconds_per_move)}"
+
+        elif mode == TimeControl.TimeMode.DELAY_SIMPLE:
+            time_control = f"{base}d{int(self.seconds_per_move)}"
+
+        elif mode == TimeControl.TimeMode.HOURGLASS:
+            time_control = f"{base}h"
+
+        elif mode == TimeControl.TimeMode.MOVES_IN_TIME:
+            parts = []
+            for key in ("PHASE1", "PHASE2", "PHASE3"):
+                val = dic_var.get(key)
+                if val:
+                    moves, mins, bonus = val
+                    secs = int(mins * 60)
+                    if secs > 0:
+                        if moves:
+                            chunk = f"{moves}/{secs}"
+                        else:
+                            chunk = f"{secs}"
+                        if bonus:
+                            chunk += f"+{bonus}"
+                        parts.append(chunk)
+            time_control = ":".join(parts) if parts else f"{base}"
+        else:
+            time_control = f"{base}"
+
         self.game.set_tag("TimeControl", time_control)
-        if self.secs_extra:
+
+        # ── Extra time tag (player only)
+        if self.secs_extra and self.timed:
+            side_key = f"TimeExtra{'White' if self.is_human_side_white else 'Black'}"
             if self.disable_user_time:
-                self.game.set_tag(f"TimeExtra{'White' if self.is_human_side_white else 'Black'}", _("No limit"))
+                self.game.set_tag(side_key, _("No limit"))
             else:
-                self.game.set_tag(f"TimeExtra{'White' if self.is_human_side_white else 'Black'}", f"{self.secs_extra}")
+                self.game.set_tag(side_key, f"{self.secs_extra}")
 
     def _init_rival(self, dic_var: Dict[str, Any]):
         dr = dic_var["RIVAL"]
@@ -1160,6 +1262,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             lista_jugadas = book.get_list_moves(fen)
             if lista_jugadas:
                 resp = WBooks.select_move_books(self.main_window, lista_jugadas, self.game.last_position.is_white)
+                if not resp or len(resp) < 3:
+                    return False, None, None, None
                 return True, resp[0], resp[1], resp[2]
         else:
             pv = book.select_move_type(fen, book_select)
@@ -1215,7 +1319,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.analyze_begin()
 
     def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, promotion: str = ""):
-        """Viene desde el board via MainWindow, es previo, ya que si está pendiente el análisis, sólo se indica que ha
+        """Viene desde el board via Main, es previo, ya que si está pendiente el análisis, sólo se indica que ha
         elegido una jugada"""
         if self.rival_is_thinking:
             return self.check_premove(from_sq, to_sq)
@@ -1227,7 +1331,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if not self.player_has_moved_mandatory(move):
             return False
 
-        self.tc_player.pause()
+        self.time_used_user = self.tc_player.stop()
         self.tc_player.set_labels()
 
         if self.is_tutor_analysing:
@@ -1325,7 +1429,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 test_book = True
             if test_book:
                 self.dic_reject["book_player"] += 1
-                self.book_player_active = self.dic_reject["book_player"] > 5
+                self.book_player_active = self.dic_reject["book_player"] <= 5
             self.show_basic_label()
         return True
 
@@ -1389,7 +1493,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                 while True:
                                     rm_tutor = self.mrm_tutor.rm_best()
                                     menu = QTDialogs.LCMenu(self.main_window)
-                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine(), is_disabled=True)
+                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine(),
+                                                is_disabled=True)
                                     menu.separador()
                                     resp = rm_tutor.abbrev_text_base()
                                     if not resp:
@@ -1441,14 +1546,13 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         # --------------------------------------------------------------------------------------------------------------
         self.main_window.pensando_tutor(False)
-        time_s = self.tc_player.stop()
         if self.timed:
             self.show_clocks()
 
-        move.set_time_ms(time_s * 1000)
+        move.set_time_ms(self.time_used_user * 1000)
         if not self.disable_user_time:
             move.set_clock_ms(self.tc_player.pending_time * 1000)
-        self.set_summary("TIMEUSER", time_s)
+        self.set_summary("TIMEUSER", self.time_used_user)
 
         if si_analisis:
             rm, n_pos = self.mrm_tutor.search_rm(move.movimiento())
@@ -1536,16 +1640,42 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.thinking(True)
         self.pon_toolbar(ToolbarState.ENGINE_PLAYING)
 
+        mode = getattr(self, "time_mode", TimeControl.TimeMode.FISCHER)
+
         if self.timed:
+            # ── Time available for the engine call
             seconds_white = self.tc_white.pending_time
             seconds_black = self.tc_black.pending_time
-            seconds_move = self.tc_white.seconds_per_move
+            tc_engine = self.tc_white if self.is_engine_side_white else self.tc_black
+
+            if mode == TimeControl.TimeMode.HOURGLASS:
+                # Hourglass: time pools keep changing; pass current values
+                seconds_move = 0
+
+            elif mode == TimeControl.TimeMode.BRONSTEIN:
+                # Bronstein: increment is the max delay per move, not additive
+                seconds_move = tc_engine.seconds_per_move
+
+            elif mode == TimeControl.TimeMode.DELAY_SIMPLE:
+                # Delay: engine gets the full delay each move
+                seconds_move = tc_engine.seconds_per_move
+
+            elif mode == TimeControl.TimeMode.MOVES_IN_TIME:
+                # Moves-in-time: pass current pending time; increment from
+                # current phase bonus (stored as seconds_per_move after a phase ends)
+                seconds_move = tc_engine.seconds_per_move
+
+            else:
+                # Fischer / Sudden Death / fallback
+                seconds_move = tc_engine.seconds_per_move
+
         else:
+            # ── Untimed game: simulate a reasonable time pool ─────────────────
             seconds_white = seconds_black = self.unlimited_minutes * 60
             mswhite, msblack = self.game.sum_mstimes()
-            seconds_white -= mswhite/1000
-            seconds_black -= msblack/1000
-            seconds_white = max(seconds_white, 5)  # con un mínimo de 5 segundos
+            seconds_white -= mswhite / 1000
+            seconds_black -= msblack / 1000
+            seconds_white = max(seconds_white, 5)
             seconds_black = max(seconds_black, 5)
             seconds_move = 0
 
@@ -1554,10 +1684,11 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if self.humanize:
             if not self.timed:
                 seconds_white = seconds_black = 600
-
             self.manager_rival.humanize(self.humanize, self.game, seconds_white, seconds_black, seconds_move)
 
-        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game, dispacher=self.dispatch_rival)
+        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(
+            game=self.game, dispacher=self.dispatch_rival
+        )
         if rm_rival is not None:
             self.rival_has_moved(rm_rival)
 
@@ -1663,7 +1794,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.board.remove_movables()
         self.check_boards_setposition()
 
-        self.put_arrow_sc(move.from_sq, move.to_sq)
+        # self.put_arrow_sc(move.from_sq, move.to_sq)
 
         self.show_hints()
 

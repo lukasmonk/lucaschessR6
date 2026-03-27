@@ -614,7 +614,7 @@ class TabsAnalisis(QtWidgets.QWidget):
         menu = QTDialogs.LCMenu(self)
         menu.opcion("book", _("Polyglot book"), Iconos.Libros())
         menu.separador()
-        menu.opcion("database", _("Database"), Iconos.Database())
+        menu.opcion("database", _("Database"), Iconos.Databases())
         menu.separador()
         menu.opcion("summary", _("Database opening explorer"), Iconos.Arbol())
         resp = menu.lanza()
@@ -651,7 +651,7 @@ class TabsAnalisis(QtWidgets.QWidget):
                 self.set_position(self.game, self.njg, pos)
                 name = os.path.basename(nomfichgames)[:-5]
                 self.tabs.new_tab(tabdb, name, pos)
-                self.tabs.setTabIcon(pos, Iconos.Database())
+                self.tabs.setTabIcon(pos, Iconos.Databases())
         self.tabs.activate(pos)
 
     def set_position(self, game, njg, num_tab=None):

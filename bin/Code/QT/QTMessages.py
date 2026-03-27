@@ -494,6 +494,12 @@ class ProgressBarSimple(QtWidgets.QProgressDialog):
         if width:
             self.setFixedWidth(width)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cerrar()
+
     def mostrar(self):
         if self.owner:
             self.move(

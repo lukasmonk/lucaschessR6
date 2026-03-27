@@ -42,8 +42,8 @@ class WAnalisisVariations(QtWidgets.QDialog):
 
         bt_terminar = Controles.PB(self, _("Close"), self.close).set_flat(False)
         bt_reset = Controles.PB(self, _("Another change"), o_base.reset).set_icono(Iconos.MoverLibre()).set_flat(False)
-        li_mas_acciones = ((f'FEN: {_("Copy to clipboard")}', "MoverFEN", Iconos.Clipboard()),)
-        lytb_tutor, self.tb = QTDialogs.ly_mini_buttons(self, "", siLibre=True, liMasAcciones=li_mas_acciones)
+        list_more_actions = ((f'FEN: {_("Copy to clipboard")}', "MoverFEN", Iconos.Clipboard()),)
+        lytb_tutor, self.tb = QTDialogs.ly_mini_buttons(self, "", list_more_actions=list_more_actions)
 
         self.seconds, lb_segundos = QTMessages.spinbox_lb(
             self, segundos_pensando, 1, 999, max_width=40, etiqueta=_("Second(s)")

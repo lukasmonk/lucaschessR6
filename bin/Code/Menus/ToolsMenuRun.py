@@ -6,7 +6,7 @@ import Code
 from Code.Z import ManagerSolo, Util
 from Code.Base.Constantes import TB_QUIT
 from Code.Books import WBooks, WFactory, WPolyglot
-from Code.Databases import DBgames, WDB_GUtils, WindowDatabase
+from Code.Databases import DBgames, WDB_GUtils, WDatabase
 from Code.Openings import (
     ManagerOPLEngines,
     ManagerOPLPositions,
@@ -84,7 +84,7 @@ class ToolsMenuRun:
 
         if accion == "R":
             Code.configuration.set_last_database(Util.relative_path(dbpath))
-            w = WindowDatabase.WBDatabase(self.wparent, self.procesador, dbpath, is_temporary, False)
+            w = WDatabase.WBDatabase(self.wparent, self.procesador, dbpath, is_temporary, False)
             if self.wparent:
                 with ScreenUtils.EscondeWindow(self.wparent):
                     if path_pgn:
@@ -260,7 +260,7 @@ class ToolsMenuRun:
                 return game
             db.close()
 
-            w = WindowDatabase.WBDatabase(self.wparent, self, file_db, True, True)
+            w = WDatabase.WBDatabase(self.wparent, self, file_db, True, True)
             if w.exec():
                 return w.game
 

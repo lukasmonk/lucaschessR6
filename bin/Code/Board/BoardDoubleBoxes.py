@@ -1,5 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
+import Code
+from Code.Base.Constantes import HIGHLIGHT_STYLE_NONE, HIGHLIGHT_STYLE_FILL
 from Code.Board import BoardBlocks, BoardTypes
 
 
@@ -8,6 +10,8 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
     def __init__(self, escena, bloque_flecha, routine_if_pressed=None):
 
         super(DoubleBoxesSC, self).__init__(escena, bloque_flecha)
+
+        self.style = Code.configuration.x_move_highlight_style
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None
@@ -121,22 +125,34 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
         self.exp_x = p.x()
         self.exp_y = p.y()
 
-    @staticmethod
-    def paint_bm(bm, painter, is_from):
+    def paint_bm(self, bm, painter, is_from):
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        # painter.setOpacity(bm.opacity)
+        if self.style == HIGHLIGHT_STYLE_NONE:
+            painter.setOpacity(0.1)
 
         physical_pos = bm.physical_pos
-        dx = physical_pos.x - 1
-        dy = physical_pos.y - 1
+        tf = self.board.tamFrontera
+        dx = physical_pos.x - 1 - tf / 2
+        dy = physical_pos.y - 1 - tf / 2
         ancho = physical_pos.ancho
         alto = physical_pos.alto
-        rect = QtCore.QRectF(dx+2, dy+2, ancho-2, alto-2)
+        rect = QtCore.QRectF(dx + 2, dy + 2, ancho - 2, alto - 2)
 
         if is_from:
             border_color = QtGui.QColor(bm.colorinterior).darker(150)
         else:
             border_color = QtGui.QColor(bm.color).darker(150)
+
+        if self.style == HIGHLIGHT_STYLE_FILL:
+            color = QtGui.QColor(bm.colorinterior)
+            if bm.colorinterior2 >= 0:
+                color2 = QtGui.QColor(bm.colorinterior2)
+                gradient = QtGui.QLinearGradient(0, 0, bm.physical_pos.ancho, bm.physical_pos.alto)
+                gradient.setColorAt(0.0, color)
+                gradient.setColorAt(1.0, color2)
+                painter.setBrush(QtGui.QBrush(gradient))
+            else:
+                painter.setBrush(color)
 
         # Borde visible
         pen = QtGui.QPen(border_color)
@@ -146,7 +162,6 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
         pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
         painter.drawRoundedRect(rect, 5, 5)
-        # painter.drawRect(rect)
 
     def paint(self, painter, option, widget=None):
         self.paint_bm(self.bloquebox_from, painter, True)

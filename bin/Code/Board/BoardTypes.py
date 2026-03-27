@@ -233,11 +233,7 @@ class Caja(Bloque):
             ("colorRelleno", "n", -1),
             ("grosor", "n", 1),
             ("redEsquina", "n", 0),
-            (
-                "tipo",
-                "n",
-                1,
-            ),  # 1=SolidLine, 2=DashLine, 3=DotLine, 4=DashDotLine, 5=DashDotDotLine, 0=NoPen
+            ("tipo", "n", 1),  # 1=SolidLine, 2=DashLine, 3=DotLine, 4=DashDotLine, 5=DashDotDotLine, 0=NoPen
         ]
         Bloque.__init__(self, li_vars)
 

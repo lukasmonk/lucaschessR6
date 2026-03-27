@@ -154,6 +154,9 @@ class WKibitzers(LCDialog.LCDialog):
         elif key == "max_depth":
             control = "ed"
             valor = str(kibitzer.max_depth)
+        elif key == "nodes":
+            control = "ed"
+            valor = str(kibitzer.nodes)
         elif key.startswith("opcion"):
             opcion = kibitzer.li_uci_options_editable()[int(key[7:])]
             tipo = opcion.tipo
@@ -225,6 +228,11 @@ class WKibitzers(LCDialog.LCDialog):
                 kibitzer.max_depth = int(valor)
             except ValueError:
                 pass
+        elif self.me_key == "nodes":
+            try:
+                kibitzer.nodes = int(valor)
+            except ValueError:
+                pass
         elif self.me_key.startswith("opcion"):
             opcion = kibitzer.li_uci_options_editable()[int(self.me_key[7:])]
             opcion.valor = valor
@@ -270,8 +278,8 @@ class WKibitzers(LCDialog.LCDialog):
             menu.opcion(("gaviota", None), _("Gaviota Tablebases"), Iconos.Finales())
             menu.separador()
 
-        submenu = menu.submenu(_("Database"), Iconos.Database())
-        QTDialogs.menuDB(
+        submenu = menu.submenu(_("Database"), Iconos.Databases())
+        QTDialogs.menu_db(
             submenu,
             Code.configuration,
             True,
@@ -314,7 +322,7 @@ class WKibitzers(LCDialog.LCDialog):
         form.combobox(_("Engine"), self.configuration.engines.list_name_alias(), "stockfish")
         form.separador()
 
-        li_tipos = Kibitzers.Tipos().comobo_with_indices()
+        li_tipos = Kibitzers.Tipos().combo_with_indices()
         form.combobox(_("Type"), li_tipos, KIB_CANDIDATES)
         form.separador()
 
@@ -467,6 +475,7 @@ class WKibitzers(LCDialog.LCDialog):
             self.liKibActual.append((_("Information"), me.id_info, "info"))
             self.liKibActual.append((_("Fixed time in seconds"), me.max_time, "max_time"))
             self.liKibActual.append((_("Fixed depth"), me.max_depth, "max_depth"))
+            self.liKibActual.append((_("Fixed nodes"), me.nodes, "nodes"))
 
             for num, opcion in enumerate(me.li_uci_options_editable()):
                 default = opcion.label_default()
@@ -530,6 +539,7 @@ class WKibitzerLive(LCDialog.LCDialog):
             [_("Point of view"), self.kibitzer.cpointofview(), "pointofview"],
             [_("Fixed time in seconds"), self.kibitzer.max_time, "max_time"],
             [_("Fixed depth"), self.kibitzer.max_depth, "max_depth"],
+            [_("Fixed nodes"), self.kibitzer.nodes, "nodes"],
         ]
         for num, opcion in enumerate(self.kibitzer.li_uci_options_editable()):
             default = opcion.label_default()
@@ -561,6 +571,8 @@ class WKibitzerLive(LCDialog.LCDialog):
                     xmax_time = self.kibitzer.max_time
                 elif key == "max_depth":
                     xmax_depth = self.kibitzer.max_depth
+                elif key == "nodes":
+                    xmax_depth = self.kibitzer.nodes
                 else:
                     opcion = self.kibitzer.li_uci_options_editable()[int(key)]
                     lidif_opciones.append((opcion.name, opcion.valor))
@@ -592,6 +604,9 @@ class WKibitzerLive(LCDialog.LCDialog):
         elif key == "max_depth":
             control = "ed"
             valor = str(self.kibitzer.max_depth)
+        elif key == "nodes":
+            control = "ed"
+            valor = str(self.kibitzer.nodes)
         else:
             opcion = self.kibitzer.li_uci_options_editable()[int(key)]
             tipo = opcion.tipo
@@ -659,11 +674,18 @@ class WKibitzerLive(LCDialog.LCDialog):
             except ValueError:
                 pass
 
+        elif self.me_key == "nodes":
+            try:
+                self.kibitzer.nodes = int(valor)
+                self.li_options[4][1] = self.kibitzer.nodes
+            except ValueError:
+                pass
+
         else:
             nopcion = int(self.me_key)
             opcion = self.kibitzer.li_uci_options_editable()[nopcion]
             opcion.valor = valor
-            self.li_options[nopcion + 4][1] = valor
+            self.li_options[nopcion + 5][1] = valor
             self.kibitzer.set_uci_option(opcion.name, valor)
 
     def grid_num_datos(self, _grid):

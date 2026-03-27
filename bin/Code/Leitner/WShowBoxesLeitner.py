@@ -181,35 +181,36 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
 
         # Header con icono y nombre
         header = Colocacion.H()
-        header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         if 0 < num_box < 5:
             icono = Controles.LB(self, self.iconos[num_box] + f" {num_box}")
             icono.setStyleSheet("font-size: 24px; background: transparent;")
             header.control(icono)
-
-        if num_box == 0:
-            text = _("Never trained")
-            symbol = '💼'
-        elif num_box == 5:
-            text = _("Completed")
-            symbol = ''
+            header.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         else:
-            text = f'{num_box}'
-            text = ''
-            symbol = '💼'
-        lb_name = Controles.LB(self, text).set_wrap()
-        lb_name.setStyleSheet(
-            f"""
-            color: {self.colors[num_box]['texto']}; 
-            font-weight: bold; 
-            background: transparent;
-        """
-        )
-        header.control(lb_name)
+            text = _("Never trained") if num_box == 0 else _("Completed")
+            lb_name = Controles.LB(self, text)
+            lb_name.setStyleSheet(
+                f"""
+                color: {self.colors[num_box]['texto']}; 
+                font-weight: bold; 
+                background: transparent;
+            """
+            )
+            lb_name.setWordWrap(True)
+            lb_name.align_center()
+            header.controlc(lb_name)
         layout.otro(header)
 
+        if num_box == 0:
+            symbol = '💼'
+        elif num_box == 5:
+            symbol = '👑'
+        else:
+            symbol = '💼'
+
         svg_box = self.create_svg(num_box, num_elements)
+        layout.relleno()
         layout.controlc(svg_box)
 
         txt = ""
@@ -219,6 +220,7 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
         lb_train.set_font(Controles.FontTypeNew(point_size_delta=-1))
         lb_train.setStyleSheet("background: transparent;")
         layout.controld(lb_train)
+        layout.relleno()
 
         return card
 

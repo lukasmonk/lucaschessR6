@@ -102,17 +102,17 @@ class PlayMenu(BaseMenu.RootMenu):
 
     def person(self, opcion):
         assistant = self.procesador
-        uno = QTDialogs.blancasNegrasTiempo(self.wparent)
+        uno = QTDialogs.white_black_time(self.wparent)
         if not uno:
             return
-        is_white, si_tiempo, minutos, seconds, fastmoves = uno
+        is_white, with_timed, minutos, seconds, fastmoves = uno
         if is_white is None:
             return
 
         dic = {
             "ISWHITE": is_white,
             "RIVAL": opcion,
-            "WITHTIME": si_tiempo and minutos > 0,
+            "WITHTIME": with_timed and minutos > 0,
             "MINUTES": minutos,
             "SECONDS": seconds,
             "FASTMOVES": fastmoves,

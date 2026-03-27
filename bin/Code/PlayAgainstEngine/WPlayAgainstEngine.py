@@ -42,6 +42,7 @@ from Code.QT import (
     SelectFiles
 )
 from Code.Voyager import Voyager
+from Code.Z import TimeControl
 from Code.Z import Util
 
 
@@ -330,52 +331,208 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def _init_tab_time(self):
         font = self.font_dialog
+
+        # -- Mode selector
+        li_modes = [
+            (_("Sudden Death"), TimeControl.TimeMode.SUDDEN_DEATH),
+            (_("Fischer"), TimeControl.TimeMode.FISCHER),
+            (_("Bronstein"), TimeControl.TimeMode.BRONSTEIN),
+            (_("Simple Delay"), TimeControl.TimeMode.DELAY_SIMPLE),
+            (_("Hourglass"), TimeControl.TimeMode.HOURGLASS),
+            (_("Moves in Time"), TimeControl.TimeMode.MOVES_IN_TIME),
+        ]
+        lb_mode = Controles.LB2P(self, _("Mode")).set_font(font)
+        self.cb_time_mode = (
+            Controles.CB(self, li_modes, TimeControl.TimeMode.FISCHER)
+            .set_font(font)
+            .capture_changes(self._on_time_mode_changed)
+        )
+        ly_mode = Colocacion.H().control(lb_mode).control(self.cb_time_mode).relleno()
+
+        # -- Base time (shared by all modes)
         self.lb_minutos = Controles.LB(self, f"{_('Total minutes')}:").set_font(font)
         self.ed_minutos = Controles.ED(self).type_float(10.0).set_font(font).relative_width(70)
+
+        # -- Increment / delay (Fischer / Bronstein / Delay)
         self.ed_segundos, self.lb_segundos = QTMessages.spinbox_lb(
-            self,
-            6,
-            -999,
-            999,
-            max_width=50,
+            self, 6, -999, 999, max_width=50,
             etiqueta=_("Seconds added per move"),
             fuente=font,
         )
+
+        # -- Extra minutes for the player
         self.edMinExtra, self.lbMinExtra = QTMessages.spinbox_lb(
-            self,
-            0,
-            0,
-            10000,
-            max_width=50,
+            self, 0, 0, 10000, max_width=50,
             etiqueta=_("Extra minutes for the player"),
             fuente=font,
         )
-        self.chb_disable_usertime = Controles.CHB(self, _("Disable user time control"), False).set_font(font)
+
+        # -- Disable user time
+        self.chb_disable_usertime = Controles.CHB(
+            self, _("Disable user time control"), False
+        ).set_font(font)
+
+        # -- Zeitnot
         self.edZeitnot, self.lbZeitnot = QTMessages.spinbox_lb(
-            self,
-            0,
-            -999,
-            999,
-            max_width=50,
+            self, 0, -999, 999, max_width=50,
             etiqueta=_("Zeitnot: alarm sounds when remaining seconds"),
             fuente=font,
         )
+
+        # -- Moves-in-time phases
+        # Phase 1
+        self.lb_ph1 = Controles.LB(self, f'{_("Phase")} 1').set_font(font)
+        self.sb_ph1_moves = Controles.SB(self, 40, 1, 200).set_font(font).relative_width(50)
+        self.lb_ph1_moves = Controles.LB(self, _("moves")).set_font(font)
+        self.ed_ph1_mins = Controles.ED(self).type_float(90.0).set_font(font).relative_width(60)
+        self.lb_ph1_mins = Controles.LB(self, _("minutes")).set_font(font)
+        self.sb_ph1_bonus = Controles.SB(self, 0, 0, 600).set_font(font).relative_width(50)
+        self.lb_ph1_bonus = Controles.LB(self, _("Seconds added per move")).set_font(font)
+
+        # Phase 2
+        self.lb_ph2 = Controles.LB(self, f'{_("Phase")} 2').set_font(font)
+        self.sb_ph2_moves = Controles.SB(self, 20, 0, 200).set_font(font).relative_width(50)
+        self.lb_ph2_moves = Controles.LB(self, f'{_("moves")} ({_("0=rest")})').set_font(font)
+        self.ed_ph2_mins = Controles.ED(self).type_float(30.0).set_font(font).relative_width(60)
+        self.lb_ph2_mins = Controles.LB(self, _("minutes")).set_font(font)
+        self.sb_ph2_bonus = Controles.SB(self, 30, 0, 600).set_font(font).relative_width(50)
+        self.lb_ph2_bonus = Controles.LB(self, _("Seconds added per move")).set_font(font)
+
+        # Phase 3
+        self.lb_ph3 = Controles.LB(self, f'{_("Phase")} 3').set_font(font)
+        self.lb_ph3_moves = Controles.LB(self, _("Rest of moves")).set_font(font)
+        self.ed_ph3_mins = Controles.ED(self).type_float(15.0).set_font(font).relative_width(60)
+        self.lb_ph3_mins = Controles.LB(self, _("minutes")).set_font(font)
+        self.sb_ph3_bonus = Controles.SB(self, 30, 0, 600).set_font(font).relative_width(50)
+        self.lb_ph3_bonus = Controles.LB(self, _("Seconds added per move")).set_font(font)
+
+        # -- Layouts
+
+        # Row: base time + increment
         ly_h = Colocacion.H()
         ly_h.control(self.lb_minutos).control(self.ed_minutos).espacio(30)
         ly_h.control(self.lb_segundos).control(self.ed_segundos).relleno()
+
+        # Row: extra + disable
         ly_h2 = Colocacion.H()
         ly_h2.control(self.lbMinExtra).control(self.edMinExtra).espacio(30)
         ly_h2.control(self.chb_disable_usertime).relleno()
+
+        # Row: zeitnot
         ly_h3 = Colocacion.H()
         ly_h3.control(self.lbZeitnot).control(self.edZeitnot).relleno()
-        ly = Colocacion.V().otro(ly_h).otro(ly_h2).otro(ly_h3)
 
-        self.gb_time = Controles.GB(self, _("Activate the time control"), ly)
+        # Rows: phases
+        ly_ph = Colocacion.G()
+
+        def _phase_row(row, lb, sb_m, lb_m, ed_min, lb_min, sb_b, lb_b):
+            ly_ph.control(lb, row, 0)
+            if sb_m:
+                ly_ph.control(sb_m, row, 1)
+                ly_ph.control(lb_m, row, 2)
+            else:
+                ly_ph.controlc(lb_m, row, 1, num_columns=2)
+            ly_ph.control(ed_min, row, 3)
+            ly_ph.control(lb_min, row, 4)
+            ly_ph.control(sb_b, row, 5)
+            ly_ph.control(lb_b, row, 6)
+
+        _phase_row(0, self.lb_ph1, self.sb_ph1_moves, self.lb_ph1_moves,
+                   self.ed_ph1_mins, self.lb_ph1_mins,
+                   self.sb_ph1_bonus, self.lb_ph1_bonus)
+        _phase_row(1, self.lb_ph2, self.sb_ph2_moves, self.lb_ph2_moves,
+                   self.ed_ph2_mins, self.lb_ph2_mins,
+                   self.sb_ph2_bonus, self.lb_ph2_bonus)
+        _phase_row(2, self.lb_ph3, None, self.lb_ph3_moves,
+                   self.ed_ph3_mins, self.lb_ph3_mins,
+                   self.sb_ph3_bonus, self.lb_ph3_bonus)
+        ly_ph.relleno_column(2,1)
+        ly_ph.relleno_column(4,1)
+        ly_ph.relleno_column(6,4)
+
+        # Collect all widgets into groups so _on_time_mode_changed can hide them
+        self._time_widgets_increment = [
+            self.lb_segundos, self.ed_segundos,
+        ]
+        self._time_widgets_phases = [
+            self.lb_ph1, self.sb_ph1_moves, self.lb_ph1_moves,
+            self.ed_ph1_mins, self.lb_ph1_mins, self.sb_ph1_bonus, self.lb_ph1_bonus,
+            self.lb_ph2, self.sb_ph2_moves, self.lb_ph2_moves,
+            self.ed_ph2_mins, self.lb_ph2_mins, self.sb_ph2_bonus, self.lb_ph2_bonus,
+            self.lb_ph3, self.lb_ph3_moves,
+            self.ed_ph3_mins, self.lb_ph3_mins, self.sb_ph3_bonus, self.lb_ph3_bonus,
+        ]
+        self._time_widgets_basetime = [
+            self.lb_minutos, self.ed_minutos,
+        ]
+        self._time_widgets_advantage = [
+            self.edMinExtra, self.lbMinExtra
+        ]
+        self._time_widgets_disable = [
+            self.chb_disable_usertime,
+        ]
+
+        # Assemble groupbox content
+        ly_inner = Colocacion.V()
+        ly_inner.otro(ly_mode)
+        ly_inner.otro(ly_h)
+        ly_inner.otro(ly_h2)
+        ly_inner.otro(ly_h3)
+        ly_inner.otro(ly_ph)
+
+        self.gb_time = Controles.GB(self, _("Activate the time control"), ly_inner)
         self.gb_time.to_connect(self.test_unlimited)
         self.configuration.set_property(self.gb_time, "1")
 
         ly = Colocacion.V().control(self.gb_time).relleno()
         self._new_tab(ly, _("Time"))
+
+        # Apply initial visibility
+        self._on_time_mode_changed()
+
+    def _on_time_mode_changed(self):
+        mode = self.cb_time_mode.valor()
+
+        # Increment label changes per mode
+        labels = {
+            TimeControl.TimeMode.SUDDEN_DEATH: None,
+            TimeControl.TimeMode.FISCHER: _("Seconds added per move"),
+            TimeControl.TimeMode.BRONSTEIN: f'{_("Delay")} ({_("seconds")})',
+            TimeControl.TimeMode.DELAY_SIMPLE: f'{_("Delay")} ({_("seconds")})',
+            TimeControl.TimeMode.HOURGLASS: None,
+            TimeControl.TimeMode.MOVES_IN_TIME: None,
+        }
+        show_increment = mode in (TimeControl.TimeMode.FISCHER, TimeControl.TimeMode.BRONSTEIN,
+                                  TimeControl.TimeMode.DELAY_SIMPLE)
+        show_phases = mode == TimeControl.TimeMode.MOVES_IN_TIME
+        show_basetime = mode != TimeControl.TimeMode.MOVES_IN_TIME
+        show_advantage = mode != TimeControl.TimeMode.MOVES_IN_TIME
+        show_disable_time = mode not in (TimeControl.TimeMode.HOURGLASS, TimeControl.TimeMode.MOVES_IN_TIME)
+
+        # Update increment label text
+        if show_increment and labels.get(mode):
+            self.lb_segundos.set_text(f"{labels[mode]}:")
+
+        for w in self._time_widgets_increment:
+            w.setVisible(show_increment)
+        for w in self._time_widgets_phases:
+            w.setVisible(show_phases)
+        for w in self._time_widgets_basetime:
+            w.setVisible(show_basetime)
+        for w in self._time_widgets_advantage:
+            w.setVisible(show_advantage)
+        for w in self._time_widgets_disable:
+            w.setVisible(show_disable_time)
+            if not show_disable_time:
+                w.set_value(False)
+
+        # Hourglass tooltip
+        if mode == TimeControl.TimeMode.HOURGLASS:
+            self.ed_minutos.setToolTip(
+                _("Time for each player. Time used is transferred to the opponent.")
+            )
+        else:
+            self.ed_minutos.setToolTip("")
 
     def _init_tab_initial_moves(self):
         font = self.font_dialog
@@ -667,25 +824,36 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def grid_right_button(self, _grid, row, _obj_column, _modif):
         opcion = self.rival.li_uci_options_editable()[row]
+        menu = QTDialogs.LCMenu(self)
         if opcion.tipo == "string":
-            menu = QTDialogs.LCMenu(self)
             menu.opcion("select_file", _("Select a file"), Iconos.MasDoc())
             menu.separador()
             menu.opcion("select_folder", _("Select a folder"), Iconos.Carpeta())
-            resp = menu.lanza()
-            if resp is not None:
-                folder_engine = os.path.dirname(self.rival.path_exe)
-                if resp == "select_file":
-                    path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
-                    if path_file:
-                        folder_file = os.path.dirname(path_file)
-                        if Util.same_path(folder_file, folder_engine):
-                            path_file = os.path.basename(path_file)
-                    else:
-                        return
+            menu.separador()
+        menu.opcion("by_default", _("By default"), Iconos.Defecto())
+
+        resp = menu.lanza()
+        if resp is not None:
+            folder_engine = os.path.dirname(self.rival.path_exe)
+            if resp == "select_file":
+                path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                if path_file:
+                    folder_file = os.path.dirname(path_file)
+                    if Util.same_path(folder_file, folder_engine):
+                        path_file = os.path.basename(path_file)
+                    value = path_file
                 else:
-                    path_file = SelectFiles.get_existing_directory(self, folder_engine, _("Select a folder"))
-                self.grid_setvalue(None, row, None, path_file)
+                    return
+            elif resp == "select_folder":
+                path_folder = SelectFiles.get_existing_directory(self, folder_engine, _("Select a folder"))
+                if path_folder:
+                    value = path_folder
+                else:
+                    return
+            else:
+                value = opcion.default
+
+            self.grid_setvalue(None, row, None, value)
 
     @staticmethod
     def read_configurations():
@@ -970,6 +1138,85 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
         menu.opcion(fen, _("Without castle"), rondo_main.otro())
 
+        menu.separador()
+
+        # --- Definición de Submenús ---
+        ip_b = Code.all_pieces.default_icon("p")
+        # ip_w = Code.all_pieces.default_icon("P")
+        in_b = Code.all_pieces.default_icon("n")
+        in_w = Code.all_pieces.default_icon("N")
+        # ib_b = Code.all_pieces.default_icon("b")
+        # ib_w = Code.all_pieces.default_icon("B")
+        ir_b = Code.all_pieces.default_icon("r")
+        ir_w = Code.all_pieces.default_icon("R")
+        iq_b = Code.all_pieces.default_icon("q")
+        iq_w = Code.all_pieces.default_icon("Q")
+        # ik_w = Code.all_pieces.default_icon("K")
+
+        submenu_handicaps = menu.submenu(_("With handicaps"), Iconos.Handicap())
+        submenu_handicaps_w = submenu_handicaps.submenu(_("White advantage"), Iconos.Blancas())
+        submenu_handicaps_b = submenu_handicaps.submenu(_("Black advantage"), Iconos.Negras())
+
+        # ---------------------------------------------------------------
+        # BLACK ADVANTAGE — White gives odds (ordered by increasing severity)
+        # ---------------------------------------------------------------
+
+        # Move odds
+        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
+                                   _("Black plays first"), Iconos.Negras())
+
+        # Knight odds
+        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",
+                                   _("Remove White queenside Knight"), in_w)
+        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1",
+                                   _("Remove White kingside Knight"), in_w)
+
+        # Rook odds
+        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1",
+                                   _("Remove White queenside Rook"), ir_w)
+
+        # Queen for Knight odds
+        submenu_handicaps_b.opcion("r1bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1",
+                                   _("Remove White Queen and Black queenside Knight"), iq_w)
+
+        # Rook + minor piece odds
+        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/2BQKBNR w Kkq - 0 1",
+                                   _("Remove White queenside Rook and Knight"), ir_w)
+
+        # Queen odds
+        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1",
+                                   _("Remove White Queen"), iq_w)
+
+        # ---------------------------------------------------------------
+        # WHITE ADVANTAGE — Black gives odds (ordered by increasing severity)
+        # ---------------------------------------------------------------
+
+        # Pawn odds
+        submenu_handicaps_w.opcion("rnbqkbnr/ppppp1pp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                                   _("Remove Black f7 Pawn"), ip_b)
+
+        # Knight odds
+        submenu_handicaps_w.opcion("r1bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                                   _("Remove Black queenside Knight"), in_b)
+        submenu_handicaps_w.opcion("rnbqkb1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                                   _("Remove Black kingside Knight"), in_b)
+
+        # Rook odds
+        submenu_handicaps_w.opcion("1nbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1",
+                                   _("Remove Black queenside Rook"), ir_b)
+
+        # Queen for Knight odds
+        submenu_handicaps_w.opcion("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",
+                                   _("Remove Black Queen and White queenside Knight"), iq_b)
+
+        # Rook + minor piece odds
+        submenu_handicaps_w.opcion("2bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1",
+                                   _("Remove Black queenside Rook and Knight"), ir_b)
+
+        # Queen odds
+        submenu_handicaps_w.opcion("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                                   _("Remove Black Queen"), iq_b)
+
         resp = menu.lanza()
         if resp:
 
@@ -1160,21 +1407,23 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         return li_uci
 
     def save_dic(self):
-        dic = {}
+        dic: dict = {
+            "SIDE": "B" if self.rb_white.isChecked() else ("N" if self.rb_black.isChecked() else "R")
+        }
 
         # Básico
-        dic["SIDE"] = "B" if self.rb_white.isChecked() else ("N" if self.rb_black.isChecked() else "R")
+        dr: dict = {
+            "ENGINE": self.rival.key,
+            "TYPE": self.rival.type,
+            "ALIAS": self.rival.key,
+            "LIUCI": self.current_values_uci(),
+            "ENGINE_TIME": int(self.ed_rtime.text_to_float() * 10),
+            "ENGINE_DEPTH": self.ed_rdepth.text_to_integer(),
+            "ENGINE_NODES": self.ed_nodes.text_to_integer(),
+            "ENGINE_UNLIMITED": self.cb_unlimited.valor()
+        }
 
-        dr = dic["RIVAL"] = {}
-        dr["ENGINE"] = self.rival.key
-        dr["TYPE"] = self.rival.type
-        dr["ALIAS"] = self.rival.key
-        dr["LIUCI"] = self.current_values_uci()
-
-        dr["ENGINE_TIME"] = int(self.ed_rtime.text_to_float() * 10)
-        dr["ENGINE_DEPTH"] = self.ed_rdepth.text_to_integer()
-        dr["ENGINE_NODES"] = self.ed_nodes.text_to_integer()
-        dr["ENGINE_UNLIMITED"] = self.cb_unlimited.valor()
+        dic["RIVAL"] = dr
 
         dic["LEVEL_HUMANIZE"] = self.cb_humanize.valor()
         if Code.eboard:
@@ -1199,13 +1448,39 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         dic["LIMIT_PWW"] = self.ed_limit_pww.text_to_integer()
 
         # Tiempo
+        # --------------------------------------------------------------------------
+        # save_dic  (replace only the "# Tiempo" block inside the original method)
+        # --------------------------------------------------------------------------
+        # Locate the comment "# Tiempo" in save_dic and replace everything up to
+        # "# Mov. iniciales" with this block:
+
+        # Tiempo
         dic["WITHTIME"] = self.gb_time.isChecked()
+        dic["TIME_MODE"] = self.cb_time_mode.valor()
         if dic["WITHTIME"]:
+            mode = dic["TIME_MODE"]
             dic["MINUTES"] = self.ed_minutos.text_to_float()
             dic["SECONDS"] = self.ed_segundos.value()
             dic["MINEXTRA"] = self.edMinExtra.value()
             dic["DISABLEUSERTIME"] = self.chb_disable_usertime.valor()
             dic["ZEITNOT"] = self.edZeitnot.value()
+
+            if mode == TimeControl.TimeMode.MOVES_IN_TIME:
+                dic["PHASE1"] = (
+                    self.sb_ph1_moves.value(),
+                    self.ed_ph1_mins.text_to_float(),
+                    self.sb_ph1_bonus.value(),
+                )
+                dic["PHASE2"] = (
+                    self.sb_ph2_moves.value(),
+                    self.ed_ph2_mins.text_to_float(),
+                    self.sb_ph2_bonus.value(),
+                )
+                dic["PHASE3"] = (
+                    0,
+                    self.ed_ph3_mins.text_to_float(),
+                    self.sb_ph3_bonus.value(),
+                )
 
         # Mov. iniciales
         dic["OPENIGSFAVORITES"] = self.li_preferred_openings
@@ -1277,15 +1552,41 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.chbTakeback.setChecked(dic.get("TAKEBACK", True))
 
         # Tiempo
-        if dic.get("WITHTIME", False):
-            self.gb_time.setChecked(True)
-            self.ed_minutos.set_float(float(dic["MINUTES"]))
-            self.ed_segundos.setValue(dic["SECONDS"])
+
+        # --------------------------------------------------------------------------
+        # restore_dic  (replace only the "# Tiempo" block inside the original method)
+        # --------------------------------------------------------------------------
+        # Locate the comment "# Tiempo" in restore_dic and replace everything up to
+        # "# Mov. iniciales" with this block:
+
+        # Tiempo
+        with_time = dic.get("WITHTIME", False)
+        self.gb_time.setChecked(with_time)
+
+        mode = dic.get("TIME_MODE", TimeControl.TimeMode.FISCHER)
+        self.cb_time_mode.set_value(mode)
+
+        if with_time:
+            self.ed_minutos.set_float(float(dic.get("MINUTES", 10.0)))
+            self.ed_segundos.setValue(dic.get("SECONDS", 6))
             self.edMinExtra.setValue(dic.get("MINEXTRA", 0))
             self.chb_disable_usertime.set_value(dic.get("DISABLEUSERTIME", False))
             self.edZeitnot.setValue(dic.get("ZEITNOT", 0))
-        else:
-            self.gb_time.setChecked(False)
+
+            # Moves-in-time phases
+            ph1 = dic.get("PHASE1", (40, 90.0, 0))
+            ph2 = dic.get("PHASE2", (20, 30.0, 30))
+            ph3 = dic.get("PHASE3", (0, 15.0, 30))
+            self.sb_ph1_moves.setValue(ph1[0])
+            self.ed_ph1_mins.set_float(ph1[1])
+            self.sb_ph1_bonus.setValue(ph1[2])
+            self.sb_ph2_moves.setValue(ph2[0])
+            self.ed_ph2_mins.set_float(ph2[1])
+            self.sb_ph2_bonus.setValue(ph2[2])
+            self.ed_ph3_mins.set_float(ph3[1])
+            self.sb_ph3_bonus.setValue(ph3[2])
+
+        self._on_time_mode_changed()
 
         # Mov. iniciales
         if dic.get("BOOKR"):

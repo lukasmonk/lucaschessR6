@@ -25,7 +25,8 @@ from Code.ManagerBase import Manager
 from Code.PlayAgainstEngine import WPlayAgainstEngine
 from Code.QT import Iconos, QTMessages, QTUtils
 from Code.Voyager import Voyager
-from Code.ZQT import WReplay, WindowPgnTags
+from Code.ZQT import WindowPgnTags
+from Code.Replay import WReplay
 
 
 class ManagerGame(Manager.Manager):

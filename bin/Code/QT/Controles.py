@@ -574,10 +574,12 @@ class RB(QtWidgets.QRadioButton):
     RadioButton: lista de alternativas
     """
 
-    def __init__(self, w_parent, texto, rutina=None):
+    def __init__(self, w_parent, texto, init_value=None, rutina=None):
         QtWidgets.QRadioButton.__init__(self, texto, w_parent)
         if rutina:
             self.clicked.connect(rutina)
+        if init_value is not None:
+            self.activate(init_value)
 
     def activate(self, activate=True):
         self.setChecked(activate)

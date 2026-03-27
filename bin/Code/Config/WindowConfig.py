@@ -4,12 +4,10 @@ from PySide6 import QtCore
 
 import Code
 from Code.Base.Constantes import (
-    GO_BACK,
-    GO_FORWARD,
-    MENU_PLAY_ANY_ENGINE,
-    MENU_PLAY_BOTH,
-    MENU_PLAY_YOUNG_PLAYERS,
+    GO_BACK, GO_FORWARD,
+    MENU_PLAY_ANY_ENGINE, MENU_PLAY_BOTH, MENU_PLAY_YOUNG_PLAYERS,
     NOTATION_ALGEBRAIC, NOTATION_LONGALGEBRAIC, NOTATION_DESCRIPTIVE,
+    HIGHLIGHT_STYLE_ARROW, HIGHLIGHT_STYLE_OUTLINE, HIGHLIGHT_STYLE_FILL, HIGHLIGHT_STYLE_NONE
 )
 from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
 from Code.Z import Util
@@ -116,10 +114,13 @@ def options(parent, configuration):
         _("Arrow with the best move when there is an analysis"),
         configuration.x_show_bestmove,
     )
-    form.checkbox(
-        _("The movement performed is shown by colouring the squares"),
-        configuration.x_movement_doublebox_board,
+    li_hstyle = (
+        (_("Arrow"), HIGHLIGHT_STYLE_ARROW),
+        (_("Square Outline"), HIGHLIGHT_STYLE_OUTLINE),
+        (_("Square Fill"), HIGHLIGHT_STYLE_FILL),
+        (_("None"), HIGHLIGHT_STYLE_NONE),
     )
+    form.combobox(_("Move Highlight Style"), li_hstyle, configuration.x_move_highlight_style)
     form.separador()
 
     form.checkbox(_("Show candidates"), configuration.x_show_candidates)
@@ -321,7 +322,7 @@ def options(parent, configuration):
             configuration.x_cursor_thinking,
             configuration.x_show_rating,
             configuration.x_show_bestmove,
-            configuration.x_movement_doublebox_board,
+            configuration.x_move_highlight_style,
             configuration.x_show_candidates,
             toolIcon,
             configuration.x_position_tool_board
@@ -359,11 +360,11 @@ def options(parent, configuration):
                             parent,
                             "%s<br><br>%s %s<br><br>%s<br>%s"
                             % (
-                                _("Are you sure %s is the correct driver ?") % dboard,
-                                _("WARNING: selecting the wrong driver might cause damage to your board."),
-                                _("Proceed at your own risk."),
-                                _("Please read the driver's user manual at:"),
-                                '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
+                                    _("Are you sure %s is the correct driver ?") % dboard,
+                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
+                                    _("Proceed at your own risk."),
+                                    _("Please read the driver's user manual at:"),
+                                    '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
                             ),
                     ):
                         dboard = ""

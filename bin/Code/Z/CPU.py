@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 
 from PySide6 import QtCore
 
-from Code.MainWindow import Tareas
+from Code.Main import Tareas
 
 
 class CPU(QtCore.QObject):

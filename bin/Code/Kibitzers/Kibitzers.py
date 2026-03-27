@@ -35,27 +35,19 @@ class Tipos:
         self.li_tipos = (
             (KIB_CANDIDATES, _("Candidates"), Iconos.pmKibitzer().scaledToWidth(16)),
             (KIB_BESTMOVE, _("Best move"), Iconos.pmKibitzer().scaledToWidth(16)),
-            (KIB_INDEXES, f"{_('Indexes')} - RodentII", Iconos.pmPuntoNegro()),
-            (
-                KIB_BESTMOVE_ONELINE,
-                _("Best move in one line"),
-                Iconos.pmKibitzer().scaledToWidth(16),
-            ),
-            (KIB_STOCKFISH, _("Stockfish evaluation"), Iconos.pmPuntoAmarillo()),
-            (KIB_THREATS, _("Threats"), Iconos.pmPuntoAzul()),
+            (KIB_INDEXES, f"{_('Indexes')} - RodentII", Iconos.pmIndex().scaledToWidth(16)),
+            (KIB_BESTMOVE_ONELINE, _("Best move in one line"), Iconos.pmKibitzer().scaledToWidth(16)),
+            (KIB_STOCKFISH, _("Stockfish evaluation"), Iconos.pmEval().scaledToWidth(16)),
+            (KIB_THREATS, _("Threats"), Iconos.pmThreads().scaledToWidth(16)),
             (KIB_POLYGLOT, _("Polyglot book"), Iconos.pmBook().scaledToWidth(16)),
-            (
-                KIB_GAVIOTA,
-                _("Gaviota Tablebases"),
-                Iconos.pmFinales().scaledToWidth(16),
-            ),
+            (KIB_GAVIOTA, _("Gaviota Tablebases"), Iconos.pmFinales().scaledToWidth(16)),
             (KIB_DATABASES, _("Databases"), Iconos.pmDatabase().scaledToWidth(16)),
         )
 
     def combo(self):
         return [(label, key) for key, label, pm in self.li_tipos]
 
-    def comobo_with_indices(self):
+    def combo_with_indices(self):
         return [
             (label, key)
             for key, label, pm in self.li_tipos

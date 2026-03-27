@@ -55,7 +55,7 @@ class WOpenings(LCDialog.LCDialog):
         # Movimiento
         self.is_moving_time = False
 
-        ly_bm, tb_bm = QTDialogs.ly_mini_buttons(self, "", siLibre=False, icon_size=24)
+        ly_bm, tb_bm = QTDialogs.ly_mini_buttons(self, "", icon_size=24)
         self.tbBM = tb_bm
 
         # Tool bar
@@ -169,11 +169,6 @@ class WOpenings(LCDialog.LCDialog):
         self.actualiza_posicion()
         self.grid.refresh()
         self.grid.gotop()
-
-        # w = self.width()
-        # self.adjustSize()
-        # if self.width() != w:
-        #     self.resize(w, self.height())
 
     def actualiza_posicion(self):
         if self.posCurrent > -1:

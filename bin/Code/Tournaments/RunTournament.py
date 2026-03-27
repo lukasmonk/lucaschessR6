@@ -7,7 +7,7 @@ import Code
 from Code.Base import Game
 from Code.Base.Constantes import BOOK_RANDOM_UNIFORM
 from Code.Config import Configuration
-from Code.MainWindow import InitApp
+from Code.Main import InitApp
 from Code.Openings import OpeningsStd
 from Code.QT import Piezas, Iconos
 from Code.SQL import UtilSQL

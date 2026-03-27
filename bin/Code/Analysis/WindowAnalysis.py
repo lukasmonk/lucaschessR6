@@ -168,18 +168,16 @@ class OneAnalysis(QtWidgets.QWidget):
 
     def process_toolbar(self, accion):
         accion = accion[5:]
-        if accion in ("Adelante", "Atras", "Inicio", "Final"):
+        if accion in ("forward", "back", "to_beginning", "to_end"):
             self.tab_analysis.change_mov_active(accion)
             self.set_board()
-        elif accion == "Libre":
-            self.tab_analysis.external_analysis(self.owner, self.owner.is_white)
-        elif accion == "Tiempo":
+        elif accion == "timed":
             self.launch_time()
-        elif accion == "Grabar":
+        elif accion == "save":
             self.grabar()
-        elif accion == "GrabarTodos":
+        elif accion == "save_all":
             self.save_all()
-        elif accion == "Jugar":
+        elif accion == "play":
             self.play_position()
         elif accion == "FEN":
             QTUtils.set_clipboard(self.tab_analysis.fen_active())
@@ -198,13 +196,13 @@ class OneAnalysis(QtWidgets.QWidget):
     def launch_time(self):
         self.siTiempoActivo = not self.siTiempoActivo
         if self.siTiempoActivo:
-            self.tab_analysis.change_mov_active("Inicio")
+            self.tab_analysis.change_mov_active("to_beginning")
             self.set_board()
             QtCore.QTimer.singleShot(Code.configuration.x_interval_replay, self.next_time)
 
     def next_time(self):
         if self.siTiempoActivo:
-            self.tab_analysis.change_mov_active("Adelante")
+            self.tab_analysis.change_mov_active("forward")
             self.set_board()
             if self.tab_analysis.is_final_position():
                 self.siTiempoActivo = False
@@ -311,15 +309,14 @@ class WAnalisis(LCDialog.LCDialog):
 
         self.setStyleSheet("QStatusBar::item { border-style: outset; border: 1px solid LightSlateGray ;}")
 
-        li_mas_acciones = ((f'FEN:{_("Copy to clipboard")}', "MoverFEN", Iconos.Clipboard()),)
+        list_more_actions = ((f'FEN:{_("Copy to clipboard")}', "MoverFEN", Iconos.Clipboard()),)
         lytb, self.tb = QTDialogs.ly_mini_buttons(
             self,
             "",
-            siLibre=True,
             must_save=must_save,
-            siGrabarTodos=must_save,
-            siJugar=True,
-            liMasAcciones=li_mas_acciones,
+            if_save_all=must_save,
+            if_play=True,
+            list_more_actions=list_more_actions,
             icon_size=24,
         )
 
@@ -379,8 +376,6 @@ class WAnalisis(LCDialog.LCDialog):
             self.muestraActual.wmu.primero()
         elif k == QtCore.Qt.Key.Key_PageDown:
             self.muestraActual.wmu.ultimo()
-        elif k in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
-            self.muestraActual.wmu.process_toolbar("MoverLibre")
         elif k == QtCore.Qt.Key.Key_Escape:
             self.finalize()
 

@@ -1794,42 +1794,6 @@ def pmMotoresExternos():
 def MotoresExternos():
     return iget("MotoresExternos")
 
-def pmDatabase():
-    return iget("pmDatabase")
-
-def Database():
-    return iget("Database")
-
-def pmDatabaseMas():
-    return iget("pmDatabaseMas")
-
-def DatabaseMas():
-    return iget("DatabaseMas")
-
-def pmDatabaseImport():
-    return iget("pmDatabaseImport")
-
-def DatabaseImport():
-    return iget("DatabaseImport")
-
-def pmDatabaseExport():
-    return iget("pmDatabaseExport")
-
-def DatabaseExport():
-    return iget("DatabaseExport")
-
-def pmDatabaseDelete():
-    return iget("pmDatabaseDelete")
-
-def DatabaseDelete():
-    return iget("DatabaseDelete")
-
-def pmDatabaseMaintenance():
-    return iget("pmDatabaseMaintenance")
-
-def DatabaseMaintenance():
-    return iget("DatabaseMaintenance")
-
 def pmAtacante():
     return iget("pmAtacante")
 
@@ -3383,3 +3347,69 @@ def pmBoardLong():
 
 def BoardLong():
     return iget("BoardLong")
+
+def pmHandicap():
+    return iget("pmHandicap")
+
+def Handicap():
+    return iget("Handicap")
+
+def pmDatabases():
+    return iget("pmDatabases")
+
+def Databases():
+    return iget("Databases")
+
+def pmDatabase():
+    return iget("pmDatabase")
+
+def Database():
+    return iget("Database")
+
+def pmDatabaseMas():
+    return iget("pmDatabaseMas")
+
+def DatabaseMas():
+    return iget("DatabaseMas")
+
+def pmDatabaseImport():
+    return iget("pmDatabaseImport")
+
+def DatabaseImport():
+    return iget("DatabaseImport")
+
+def pmDatabaseExport():
+    return iget("pmDatabaseExport")
+
+def DatabaseExport():
+    return iget("DatabaseExport")
+
+def pmDatabaseDelete():
+    return iget("pmDatabaseDelete")
+
+def DatabaseDelete():
+    return iget("DatabaseDelete")
+
+def pmDatabaseMaintenance():
+    return iget("pmDatabaseMaintenance")
+
+def DatabaseMaintenance():
+    return iget("DatabaseMaintenance")
+
+def pmThreads():
+    return iget("pmThreads")
+
+def Threads():
+    return iget("Threads")
+
+def pmIndex():
+    return iget("pmIndex")
+
+def Index():
+    return iget("Index")
+
+def pmEval():
+    return iget("pmEval")
+
+def Eval():
+    return iget("Eval")

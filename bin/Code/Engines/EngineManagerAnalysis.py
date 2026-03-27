@@ -140,6 +140,9 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
             mrm = self.engine_run.mrm
 
+        except AttributeError:
+            mrm = None
+
         finally:
             if self.engine_run is not None:
                 self.engine_run.set_multipv(self.multipv)

@@ -2,7 +2,7 @@ import Code
 from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import LI_BASIC_TAGS
-from Code.Databases import WindowDatabase
+from Code.Databases import WDatabase
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
@@ -137,7 +137,7 @@ class WPlayGameBase(LCDialog.LCDialog):
     def new(self):
         menu = QTDialogs.LCMenu(self)
         if not QTDialogs.lista_db(self.configuration, True).is_empty():
-            menu.opcion("db", _("Game in a database"), Iconos.Database())
+            menu.opcion("db", _("Game in a database"), Iconos.Databases())
             menu.separador()
         menu.opcion("pgn", _("Game in a pgn"), Iconos.Filtrar())
         menu.separador()
@@ -148,7 +148,7 @@ class WPlayGameBase(LCDialog.LCDialog):
         elif resp == "db":
             db = QTDialogs.select_db(self, self.configuration, True, False)
             if db:
-                w = WindowDatabase.WBDatabase(self, self.procesador, db, False, True)
+                w = WDatabase.WBDatabase(self, self.procesador, db, False, True)
                 if w.exec():
                     game = w.game
         if game and len(game) > 0:

@@ -4,6 +4,7 @@ from PySide6 import QtCore, QtWidgets
 import Code
 from Code.Base import Game, Move
 from Code.QT import Colocacion, Controles, Iconos, QTDialogs, QTMessages
+from Code.Base.Constantes import GT_VARIATIONS, GT_ALONE, GT_GAME, ST_ENDGAME
 
 
 class LBPGN(Controles.LB):
@@ -136,8 +137,11 @@ class ShowPGN(QtWidgets.QScrollArea):
                 menu.opcion("down_line", _("Down"), Iconos.Abajo())
 
         if total_lines > 0:
-            menu.separador()
-            menu.opcion("conv_mainline", _("Convert into the main line"), Iconos.Variation())
+            manager = self.wowner.get_manager()
+            not_ok = manager.state != ST_ENDGAME and manager.game_type not in (GT_VARIATIONS, GT_ALONE, GT_GAME)
+            if not not_ok:
+                menu.separador()
+                menu.opcion("conv_mainline", _("Convert into the main line"), Iconos.Variation())
 
         resp = menu.lanza()
         if resp is None:

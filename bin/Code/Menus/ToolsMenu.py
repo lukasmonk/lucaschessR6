@@ -13,9 +13,7 @@ class ToolsMenu(BaseMenu.RootMenu):
         self.add_openings()
 
     def add_databases(self):
-        submenu_databases = self.new_submenu(_("Databases"), Iconos.Database())
-
-        nico = QTDialogs.rondo_puntos()
+        submenu_databases = self.new_submenu(_("Databases"), Iconos.Databases())
 
         def haz_elem(submenu, elem: QTDialogs.ElemDB):
             if elem.is_folder:
@@ -27,7 +25,7 @@ class ToolsMenu(BaseMenu.RootMenu):
                     if not xelem.is_folder:
                         haz_elem(submenu_new, xelem)
             else:
-                icon = Iconos.Link() if elem.path.endswith("link") else nico.otro()
+                icon = Iconos.Link() if elem.path.endswith("link") else Iconos.Database()
                 submenu.new(f"dbase_R{elem.path}", elem.name, icon, sep=False)
 
         dbli = QTDialogs.lista_db(Code.configuration, True)

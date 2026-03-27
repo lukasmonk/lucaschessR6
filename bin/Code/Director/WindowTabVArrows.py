@@ -241,7 +241,7 @@ class WTVArrows(LCDialog.LCDialog):
         self.restore_video()
 
         # Ejemplos
-        li_movs = ["d2d6", "a8h8", "h5b7"]
+        li_movs = ["d2d6", "a8h8", "b7a5"]
         self.liEjemplos = []
         reg_flecha = BoardTypes.Flecha()
         for a1h8 in li_movs:

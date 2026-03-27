@@ -360,7 +360,7 @@ class ManagerFideFicsLichess(Manager.Manager):
             )
             w.exec()
             analysis = w.analysis
-            dpts = w.difPuntos()
+            dpts = w.point_difference()
             self.puntos += dpts
             self.set_score()
             comentario_usu += f" {w.rm_usu.abbrev_text()}"

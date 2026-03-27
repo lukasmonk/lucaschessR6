@@ -7,6 +7,7 @@ from Code.Z import Util
 from Code.Base.Constantes import (
     ENG_FIXED,
 )
+from Code.Engines import CheckEngines
 
 
 class ConfigEngines:
@@ -154,6 +155,7 @@ class ConfigEngines:
                     eng.set_uci_option(key, value)
                 return eng
         self.configuration.x_tutor_clave = self.configuration.tutor_default
+        CheckEngines.check_stockfish(True)
         return self.engine_tutor()
 
     def engine_analyzer(self):
@@ -167,6 +169,7 @@ class ConfigEngines:
                     eng.set_uci_option(key, value)
                 return eng
         self.configuration.x_analyzer_clave = self.configuration.analyzer_default
+        CheckEngines.check_stockfish(True)
         return self.engine_analyzer()
 
     def set_logs(self, ok):

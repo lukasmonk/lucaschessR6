@@ -59,8 +59,8 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
 
         dc = f(physical_pos.x - tf / 2) + 1
         df = f(physical_pos.y - tf / 2) + 1
-        hc = f(physical_pos.x + physical_pos.ancho)
-        hf = f(physical_pos.y + physical_pos.alto)
+        hc = f(physical_pos.x + physical_pos.ancho - tf / 2)
+        hf = f(physical_pos.y + physical_pos.alto - tf / 2)
 
         def bien(fc):
             return (fc < 9) and (fc > 0)
@@ -82,8 +82,8 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
             return ((t.x()) ** 2 + (t.y()) ** 2) ** 0.5
 
         physical_pos = self.block_data.physical_pos
-        dx = physical_pos.x
-        dy = physical_pos.y
+        dx = physical_pos.x - 1
+        dy = physical_pos.y - 1
         ancho = physical_pos.ancho
         alto = physical_pos.alto
 
@@ -239,30 +239,31 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
         physical_pos = bm.physical_pos
         dx = physical_pos.x - 1
         dy = physical_pos.y - 1
-        ancho = physical_pos.ancho
-        alto = physical_pos.alto
+        ancho = physical_pos.ancho + 1
+        alto = physical_pos.alto + 1
+
+        grosor = int(bm.grosor * xk)
 
         self.rect = QtCore.QRectF(dx, dy, ancho, alto)
+        
+        eff_grosor = max(1, grosor)
+        offset = (eff_grosor - 1) // 2
+        draw_rect = QtCore.QRectF(dx + offset, dy + offset, ancho - eff_grosor, alto - eff_grosor)
 
         color = QtGui.QColor(bm.color)
         pen = QtGui.QPen()
-        pen.setWidth(int(bm.grosor * xk))
+        pen.setWidth(grosor)
         pen.setColor(color)
         pen.setStyle(bm.tipoqt())
         pen.setCapStyle(QtCore.Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(QtCore.Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
 
-        pen = QtGui.QPen()
-        pen.setColor(QtGui.QColor(bm.color))
-        pen.setWidth(int(bm.grosor * xk))
-        pen.setStyle(bm.tipoqt())
-        painter.setPen(pen)
         if bm.colorinterior >= 0:
             color = QtGui.QColor(bm.colorinterior)
             if bm.colorinterior2 >= 0:
                 color2 = QtGui.QColor(bm.colorinterior2)
-                gradient = QtGui.QLinearGradient(0, 0, bm.physical_pos.ancho, bm.physical_pos.alto)
+                gradient = QtGui.QLinearGradient(dx, dy, dx + ancho, dy + alto)
                 gradient.setColorAt(0.0, color)
                 gradient.setColorAt(1.0, color2)
                 painter.setBrush(QtGui.QBrush(gradient))
@@ -271,10 +272,11 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
 
         if bm.redEsquina:
             red = int(bm.redEsquina * xk)
-            painter.drawRoundedRect(self.rect, red, red)
+            painter.drawRoundedRect(draw_rect, red, red)
         else:
-            painter.drawRect(self.rect)
+            painter.drawRect(draw_rect)
 
     def boundingRect(self):
-        x = self.block_data.grosor
-        return QtCore.QRectF(self.rect).adjusted(-x, -x, x * 2, x * 2)
+        xk = float(self.board.width_square / 32.0)
+        x = int(self.block_data.grosor * xk)
+        return QtCore.QRectF(self.rect).adjusted(-x, -x, x, x)

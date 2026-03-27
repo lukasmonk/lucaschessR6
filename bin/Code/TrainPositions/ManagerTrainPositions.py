@@ -26,7 +26,7 @@ from Code.Base.Constantes import (
 )
 from Code.CompetitionWithTutor import WCompetitionWithTutor
 from Code.Engines import EngineResponse
-from Code.MainWindow import WindowSolve
+from Code.Main import WindowSolve
 from Code.ManagerBase import Manager
 from Code.QT import Iconos, QTMessages, QTUtils
 from Code.SQL import UtilSQL
@@ -591,7 +591,7 @@ class ManagerTrainPositions(Manager.Manager):
             self.manager_tutor.stop()
 
     def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, promotion: str = ""):
-        """Viene desde el board via MainWindow, es previo, ya que si está pendiente el análisis, sólo se indica que ha
+        """Viene desde el board via Main, es previo, ya que si está pendiente el análisis, sólo se indica que ha
         elegido una jugada"""
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:

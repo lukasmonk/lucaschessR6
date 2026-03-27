@@ -15,7 +15,8 @@ from Code.Base.Constantes import (
     INACCURACY,
     MENU_PLAY_BOTH,
     POS_TUTOR_HORIZONTAL,
-    NOTATION_ALGEBRAIC
+    NOTATION_ALGEBRAIC,
+    HIGHLIGHT_STYLE_ARROW
 )
 from Code.Board import ConfBoards
 from Code.Config import ConfigEngines, ConfigPaths
@@ -81,10 +82,9 @@ class Configuration:
     def __init__(self, user):
 
         Code.configuration = self
-
-        self.paths = ConfigPaths.ConfigPaths(self)
-
         self.user = user
+
+        self.paths = ConfigPaths.ConfigPaths(self, user)
 
         self.is_main = user == "" or user is None
 
@@ -134,7 +134,7 @@ class Configuration:
         self.x_opacity_tool_board = 10
         self.x_position_tool_board = "T"
 
-        self.x_movement_doublebox_board = True
+        self.x_move_highlight_style = HIGHLIGHT_STYLE_ARROW
 
         self.x_shadows_board = True
 
@@ -420,13 +420,11 @@ class Configuration:
     def estilos():
         return [(x, x) for x in QtWidgets.QStyleFactory.keys()]
 
+    def read_dic_x(self) -> dict:
+        return {x: getattr(self, x) for x in dir(self) if x.startswith("x_")}
+
     def graba(self):
-        if self.x_translation_mode:   # se comprueba que se haya cambiado desde la ventana de ayuda a la traduccion
-            dic = Util.restore_pickle(self.paths.file)
-            if dic.get("x_quit_translation_mode"):
-                self.x_translation_mode = False
-        dic = {x: getattr(self, x) for x in dir(self) if x.startswith("x_")}
-        # dic["PALETTE"] = self.palette
+        dic = self.read_dic_x()
         dic["PERSONALITIES"] = self.li_personalities
         Util.save_pickle(self.paths.file, dic)
 
@@ -435,9 +433,6 @@ class Configuration:
             for x in dir(self):
                 if x.startswith("x_") and x in dic:
                     setattr(self, x, dic[x])
-            if "x_sizefont_players" not in dic:
-                self.x_sizefont_players = self.x_sizefont_infolabels + 2
-            # self.palette = dic.get("PALETTE", self.palette)
             self.li_personalities = dic.get("PERSONALITIES", self.li_personalities)
 
         for x in os.listdir(Code.current_dir):

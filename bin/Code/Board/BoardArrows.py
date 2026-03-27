@@ -238,7 +238,9 @@ class ArrowSC(BoardBlocks.BloqueEspSC):
 
         bf = self.block_data
 
-        if resp := paint_arrow(painter, bf):
+        tf = self.board.tamFrontera
+
+        if resp := paint_arrow(painter, bf, tf):
             self.poligonoSizeBottom, self.poligonoMove, self.poligonoSizeTop = resp
             if self.is_activated:
                 pen = QtGui.QPen()
@@ -252,12 +254,34 @@ class ArrowSC(BoardBlocks.BloqueEspSC):
                 painter.drawPolygon(self.poligonoSizeTop)
 
 
-def paint_arrow(painter, bf):
+def _get_curve_info(linea, path, t, length):
+    if path:
+        t = max(0.0, min(1.0, t))
+        p = path.pointAtPercent(t)
+        p_prev = path.pointAtPercent(max(0.0, t - 0.01))
+        if p == p_prev:
+            p_prev = path.pointAtPercent(min(1.0, t + 0.01))
+            tangent = QtCore.QLineF(p, p_prev)
+        else:
+            tangent = QtCore.QLineF(p_prev, p)
+        l90 = tangent.normalVector()
+        l90.setLength(length)
+        l90.translate(p - l90.p1())
+        return p, l90
+    else:
+        p = linea.pointAt(t)
+        l90 = linea.normalVector()
+        l90.setLength(length)
+        l90.translate(p - linea.p1())
+        return p, l90
+
+
+def paint_arrow(painter, bf, tf):
     physical_pos = bf.physical_pos
-    dx = physical_pos.x
-    dy = physical_pos.y
-    hx = physical_pos.ancho
-    hy = physical_pos.alto
+    dx = physical_pos.x - tf / 2
+    dy = physical_pos.y - tf / 2
+    hx = physical_pos.ancho - tf / 2
+    hy = physical_pos.alto - tf / 2
 
     p_ini = QtCore.QPointF(dx, dy)
     p_fin = QtCore.QPointF(hx, hy)
@@ -265,6 +289,14 @@ def paint_arrow(painter, bf):
     line_size = linea.length()
     if linea.isNull():
         return None
+
+    is_knight_move = False
+    if bf.a1h8 and len(bf.a1h8) >= 4:
+        c1, r1 = ord(bf.a1h8[0]), ord(bf.a1h8[1])
+        c2, r2 = ord(bf.a1h8[2]), ord(bf.a1h8[3])
+        if 97 <= c1 <= 104 and 49 <= r1 <= 56 and 97 <= c2 <= 104 and 49 <= r2 <= 56:
+            if abs((c1 - c2) * (r1 - r2)) == 2:
+                is_knight_move = True
 
     color = QtGui.QColor(bf.color)
     pen = QtGui.QPen()
@@ -281,40 +313,46 @@ def paint_arrow(painter, bf):
     ancho = float(bf.ancho) * xk
     vuelo = float(bf.vuelo) * xk
 
+    path = None
+    curve_length = line_size
+    control = None
+    if is_knight_move and line_size > 0:
+        c_mid = QtCore.QPointF((p_ini.x() + p_fin.x()) / 2, (p_ini.y() + p_fin.y()) / 2)
+        nv = linea.normalVector()
+        nv.setLength(line_size * 0.15)
+        nv.translate(c_mid - p_ini)
+        control = nv.p2()
+
+        path = QtGui.QPainterPath(p_ini)
+        path.quadTo(control, p_fin)
+        curve_length = path.length()
+
     alto_cab = float(bf.altocabeza) * xk
-    if line_size * 0.65 < alto_cab:
-        nv = line_size * 0.65
-        prc = nv / alto_cab
-        alto_cab = nv
+    if curve_length * 0.65 < alto_cab:
+        nv_len = curve_length * 0.65
+        prc = nv_len / alto_cab
+        alto_cab = nv_len
         ancho *= prc
         vuelo *= prc
 
-    xp = 1.0 - float(alto_cab) / line_size
-    pbc = linea.pointAt(xp)  # base de la cabeza
+    xp = 1.0 - float(alto_cab) / curve_length
+    pbc, l90 = _get_curve_info(linea, path, xp, ancho + vuelo * 2)
+    p_ala1 = l90.pointAt(0.5)
+    l90.translate(p_ala1 - l90.p2())
+    p_ala2 = l90.p1()
 
-    # Usamos una linea a 90 grados para calcular los puntos del final de la cabeza de arrow
-    l90 = linea.normalVector()
-    l90.setLength(ancho + vuelo * 2)
-    l90.translate(pbc - p_ini)  # la llevamos a la base de la cabeza
-    p_ala1 = l90.pointAt(0.5)  # final del ala de un lado
-    l90.translate(p_ala1 - l90.p2())  # La colocamos que empiece en ala1
-    p_ala2 = l90.p1()  # final del ala de un lado
+    xp = 1.0 - float(alto_cab - bf.descuelgue) / curve_length
+    p_basecab, _ = _get_curve_info(linea, path, xp, 1.0) 
 
-    xp = 1.0 - float(alto_cab - bf.descuelgue) / line_size
-    p_basecab = linea.pointAt(xp)  # Punto teniendo en cuenta el angulo en la base de la cabeza, valido para tipo c y p
+    p_ini_base, l90_base = _get_curve_info(linea, path, 0.0, ancho)
+    p_base1 = l90_base.pointAt(0.5)
+    l90_base.translate(p_base1 - l90_base.p2())
+    p_base2 = l90_base.p1()
 
-    # Puntos de la base, se calculan aunque no se dibujen para determinar el poligono de control
-    l90 = linea.normalVector()
-    l90.setLength(ancho)
-    p_base1 = l90.pointAt(0.5)  # final de la base de un lado
-    l90.translate(p_base1 - l90.p2())
-    p_base2 = l90.p1()  # final de la base de un lado
-
-    lf = QtCore.QLineF(p_ini, p_basecab)
-    lf.translate(p_base1 - p_ini)
-    p_cab1 = lf.p2()
-    lf.translate(p_base2 - p_base1)
-    p_cab2 = lf.p2()
+    p_head, l90_head = _get_curve_info(linea, path, xp, ancho)
+    p_cab1 = l90_head.pointAt(0.5)
+    l90_head.translate(p_cab1 - l90_head.p2())
+    p_cab2 = l90_head.p1()
 
     # Poligonos para determinar si se ha pulsado sobre la arrow
     xancho = max(ancho + vuelo * 2.0, 16.0)
@@ -341,9 +379,11 @@ def paint_arrow(painter, bf):
     poligono_size_top = QtGui.QPolygonF([xp_medio1t, xp_final1, xp_final2, xp_medio2t, xp_medio1t])
 
     forma = bf.forma
-    # Abierta, forma normal
     if forma == "a":
-        painter.drawLine(linea)
+        if path:
+            painter.drawPath(path)
+        else:
+            painter.drawLine(linea)
 
         if alto_cab:
             lf = QtCore.QLineF(p_fin, p_ala1)
@@ -365,50 +405,82 @@ def paint_arrow(painter, bf):
             else:
                 painter.setBrush(color)
 
-        # Cabeza cerrada
         if forma == "c":
-            lf = QtCore.QLineF(p_ini, p_basecab)
-            painter.drawLine(lf)
+            if path:
+                body_path = QtGui.QPainterPath(p_ini)
+                cx = p_ini.x() + (control.x() - p_ini.x()) * xp
+                cy = p_ini.y() + (control.y() - p_ini.y()) * xp
+                body_path.quadTo(QtCore.QPointF(cx, cy), p_basecab)
+                painter.drawPath(body_path)
+            else:
+                lf = QtCore.QLineF(p_ini, p_basecab)
+                painter.drawLine(lf)
+                
             painter.drawPolygon(QtGui.QPolygonF([p_fin, p_ala1, p_basecab, p_ala2, p_fin]))
 
-        # Poligonal
         elif forma in "123":
+            c_left, c_right = None, None
+            if path:
+                __, l90_mid = _get_curve_info(linea, path, 0.5, ancho)
+                c_left_pt = l90_mid.pointAt(0.5)
+                l90_mid.translate(c_left_pt - l90_mid.p2())
+                c_right_pt = l90_mid.p1()
+                
+                mid_path = path.pointAtPercent(0.5)
+                offset_c_left = QtCore.QPointF(c_left_pt.x() - mid_path.x(), c_left_pt.y() - mid_path.y())
+                offset_c_right = QtCore.QPointF(c_right_pt.x() - mid_path.x(), c_right_pt.y() - mid_path.y())
+                
+                c_left = QtCore.QPointF(control.x() + offset_c_left.x(), control.y() + offset_c_left.y())
+                c_right = QtCore.QPointF(control.x() + offset_c_right.x(), control.y() + offset_c_right.y())
 
-            # tipo 1
             if forma == "1":
-                painter.drawPolygon(
-                    QtGui.QPolygonF(
-                        [
-                            p_base1,
-                            p_cab1,
-                            p_ala1,
-                            p_fin,
-                            p_ala2,
-                            p_cab2,
-                            p_base2,
-                            p_base1,
-                        ]
+                if path:
+                    poly = QtGui.QPainterPath(p_base1)
+                    poly.quadTo(c_left, p_cab1)
+                    poly.lineTo(p_ala1)
+                    poly.lineTo(p_fin)
+                    poly.lineTo(p_ala2)
+                    poly.lineTo(p_cab2)
+                    poly.quadTo(c_right, p_base2)
+                    poly.closeSubpath()
+                    painter.drawPath(poly)
+                else:
+                    painter.drawPolygon(
+                        QtGui.QPolygonF(
+                            [p_base1, p_cab1, p_ala1, p_fin, p_ala2, p_cab2, p_base2, p_base1]
+                        )
                     )
-                )
-            # tipo 2 base = un punto
             elif forma == "2":
-                painter.drawPolygon(QtGui.QPolygonF([p_ini, p_cab1, p_ala1, p_fin, p_ala2, p_cab2, p_ini]))
-            # tipo 3 base cabeza = un punto
+                if path:
+                    poly = QtGui.QPainterPath(p_ini_base)
+                    poly.quadTo(c_left, p_cab1)
+                    poly.lineTo(p_ala1)
+                    poly.lineTo(p_fin)
+                    poly.lineTo(p_ala2)
+                    poly.lineTo(p_cab2)
+                    poly.quadTo(c_right, p_ini_base)
+                    poly.closeSubpath()
+                    painter.drawPath(poly)
+                else:
+                    painter.drawPolygon(QtGui.QPolygonF([p_ini_base, p_cab1, p_ala1, p_fin, p_ala2, p_cab2,
+                                                         p_ini_base]))
             elif forma == "3":
-                painter.drawPolygon(
-                    QtGui.QPolygonF(
-                        [
-                            p_base1,
-                            p_basecab,
-                            p_ala1,
-                            p_fin,
-                            p_ala2,
-                            p_basecab,
-                            p_base2,
-                            p_base1,
-                        ]
+                if path:
+                    poly = QtGui.QPainterPath(p_base1)
+                    poly.quadTo(c_left, p_basecab)
+                    poly.lineTo(p_ala1)
+                    poly.lineTo(p_fin)
+                    poly.lineTo(p_ala2)
+                    poly.lineTo(p_basecab)
+                    poly.quadTo(c_right, p_base2)
+                    poly.closeSubpath()
+                    painter.drawPath(poly)
+                else:
+                    painter.drawPolygon(
+                        QtGui.QPolygonF(
+                            [p_base1, p_basecab, p_ala1, p_fin, p_ala2, p_basecab, p_base2, p_base1]
+                        )
                     )
-                )
 
     return poligono_size_bottom, poligono_move, poligono_size_top
 
@@ -423,7 +495,7 @@ def pixmap_arrow(bf, width, height):
     painter.begin(pm)
     painter.setRenderHint(painter.RenderHint.Antialiasing, True)
     painter.setRenderHint(painter.RenderHint.SmoothPixmapTransform, True)
-    paint_arrow(painter, bf)
+    paint_arrow(painter, bf, 0)
     painter.end()
 
     return pm
