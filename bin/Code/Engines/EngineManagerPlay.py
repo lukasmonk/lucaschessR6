@@ -66,6 +66,8 @@ class EngineManagerPlay(EngineManager.EngineManager):
         self.playbook: Optional[PlayBook] = None
         self.playbook_active: bool = False
         self.seconds_humanize: float = 0
+        self.is_pondering: bool = False
+        self.ponder_move: str = ""
 
         # Ctrl engines Wicker is a change in engine options at the end of the game to engines of type Wicker.
         # Once this is done, it switches to None.
@@ -263,6 +265,121 @@ class EngineManagerPlay(EngineManager.EngineManager):
         self.engine_run.set_game_position(game, None, False)
         self.engine_run.play(self.run_engine_params)
         return True
+
+    def start_ponder(self, game: Game.Game, ponder_move: str) -> bool:
+        if not self.check_engine():
+            return False
+        if self.engine_run is None:
+            return False
+
+        self.is_pondering = True
+        self.ponder_move = ponder_move
+        self.engine_run.set_game_position_ponder(game, ponder_move)
+        self.engine_run.play_ponder(self.run_engine_params)
+        return True
+
+    def play_ponderhit(self, dispacher: Optional[Callable] = None) -> Optional[EngineResponse.EngineResponse]:
+        if self.engine_run is None:
+            return None
+
+        self.is_pondering = False
+        self.ponder_move = ""
+        self._is_canceled = False
+
+        if self.engine_run.state == EngineRun.EngineState.OK:
+            if self.engine_run.mrm is None:
+                return None
+            self.mrm = self.engine_run.mrm.clone()
+            self.mrm.ordena()
+            return self.mrm.best_rm_ordered()
+
+        with_timer = (
+            self.run_engine_params.fixed_nodes > 10000
+            or self.run_engine_params.fixed_ms > 1000
+            or self.run_engine_params.fixed_depth > 5
+            or (
+                self.run_engine_params.fixed_nodes
+                + self.run_engine_params.fixed_ms
+                + self.run_engine_params.fixed_depth
+            )
+            == 0
+            or self.seconds_humanize > 0
+        )
+        state = SimpleNamespace(
+            ini_time=time.time(), secs_humanize=self.seconds_humanize, with_timer=with_timer, found_bestmove=False
+        )
+
+        self.seconds_humanize = 0
+
+        def check_state(bestmove):
+            def close():
+                if self.engine_run is not None:
+                    try:
+                        self.engine_run.bestmove_found.disconnect(check_state)
+                    except (RuntimeError, TypeError):
+                        pass
+                if state.with_timer and timer is not None:
+                    timer.stop()
+                loop.quit()
+
+            if self.engine_run is None:
+                self._is_canceled = True
+                close()
+                return
+
+            if dispacher and self.engine_run.mrm:
+                if not dispacher(rm=self.engine_run.mrm.best_rm_ordered()):
+                    self._is_canceled = True
+                    close()
+
+            if bestmove is not None:
+                state.found_bestmove = True
+
+            if state.found_bestmove:
+                if state.secs_humanize > 0:
+                    used_time = time.time() - state.ini_time
+                    if used_time < state.secs_humanize:
+                        return
+                close()
+
+        loop = QtCore.QEventLoop()
+        timer = None
+        try:
+            self.engine_run.bestmove_found.connect(check_state)
+            self.engine_run.ponderhit()
+
+            if state.with_timer:
+                timer = QtCore.QTimer(loop)
+                timer.setInterval(self.ms_refresh)
+                timer.timeout.connect(lambda: check_state(None))
+                timer.start()
+
+            self.active_loop = loop
+            loop.exec()
+        except AttributeError:
+            pass
+        finally:
+            self.active_loop = None
+            try:
+                if self.engine_run is not None:
+                    self.engine_run.bestmove_found.disconnect(check_state)
+            except (RuntimeError, TypeError):
+                pass
+            if timer is not None:
+                timer.stop()
+
+        if self.engine_run is None or self._is_canceled or self.engine_run.mrm is None:
+            return None
+
+        self.mrm = self.engine_run.mrm.clone()
+        self.mrm.ordena()
+        return self.mrm.best_rm_ordered()
+
+    def stop_ponder(self):
+        self.is_pondering = False
+        self.ponder_move = ""
+        if self.engine_run and self.engine_run.state == EngineRun.EngineState.PONDERING:
+            self.engine_run.stop()
 
     def set_book(self, path: str, resp_type, max_tries: int, max_depth):
         self.playbook = PlayBook(path, resp_type, max_tries, max_depth)

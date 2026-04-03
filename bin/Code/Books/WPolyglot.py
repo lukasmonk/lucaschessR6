@@ -6,17 +6,19 @@ from PySide6 import QtCore
 from Code.Base import Position
 from Code.Board import Board
 from Code.Books import DBPolyglot, PolyglotImportExports
-from Code.QT import Colocacion, Columnas, Delegados, Grid, Iconos, LCDialog, QTDialogs
+from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs
 from Code.Voyager import Voyager
 
 
 class WPolyglot(LCDialog.LCDialog):
-    def __init__(self, wowner, configuration, path_lcbin):
+    def __init__(self, wowner, configuration, path_lcbin, position=None, is_white_bottom=None, position_provider=None):
         self.title = os.path.basename(path_lcbin)[:-6]
         LCDialog.LCDialog.__init__(self, wowner, self.title, Iconos.Book(), "polyglot")
 
         self.configuration = configuration
         self.path_lcbin = path_lcbin
+        self.position_provider = position_provider
+        self.external_position_mode = position_provider is not None
 
         self.owner = wowner
 
@@ -27,11 +29,16 @@ class WPolyglot(LCDialog.LCDialog):
 
         self.li_moves = []
         self.history = []
+        self.sync_timer = None
 
-        conf_board = configuration.config_board("WPOLYGLOT", 48)
-        self.board = Board.Board(self, conf_board)
-        self.board.draw_window()
-        self.board.set_dispatcher(self.mensajero)
+        self.board = None
+        if not self.external_position_mode:
+            conf_board = configuration.config_board("WPOLYGLOT", 48)
+            self.board = Board.Board(self, conf_board)
+            self.board.draw_window()
+            self.board.set_dispatcher(self.mensajero)
+            if is_white_bottom is not None:
+                self.board.set_side_bottom(is_white_bottom)
         self.with_figurines = configuration.x_pgn_withfigurines
 
         o_columnas = Columnas.ListaColumnas()
@@ -78,24 +85,41 @@ class WPolyglot(LCDialog.LCDialog):
 
         self.tb = QTDialogs.LCTB(self)
         self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
-        self.tb.new(_("Takeback"), Iconos.Atras(), self.takeback)
-        self.tb.new(_("Voyager"), Iconos.Voyager32(), self.voyager)
+        if not self.external_position_mode:
+            self.tb.new(_("Takeback"), Iconos.Atras(), self.takeback)
+            self.tb.new(_("Voyager"), Iconos.Voyager32(), self.voyager)
         self.tb.new(_("Import"), Iconos.Import8(), self.pol_import.importar)
         # (_("Create book"), Iconos.BinBook(), self.pol_export.exportar),
         # None,
         self.tb.new(_("Export"), Iconos.Export8(), self.pol_export.export)
 
-        ly2 = Colocacion.V().control(self.tb).control(self.grid_moves)
+        ly2 = Colocacion.V().control(self.tb)
+        if self.external_position_mode:
+            self.lb_external = Controles.LB(self, _("Current position")).set_font_type(puntos=10)
+            ly2.control(self.lb_external)
+        ly2.control(self.grid_moves)
 
-        layout = Colocacion.H().control(self.board).otro(ly2)
+        if self.external_position_mode:
+            layout = Colocacion.V().otro(ly2)
+        else:
+            layout = Colocacion.H().control(self.board).otro(ly2)
         self.setLayout(layout)
 
         self.restore_video()
 
         self.position = None
-        position = Position.Position()
-        position.set_pos_initial()
-        self.set_position(position, True)
+        initial_position = position.copia() if position is not None else self._provider_position()
+        if initial_position is None:
+            initial_position = Position.Position()
+            initial_position.set_pos_initial()
+        elif position is None and not self.external_position_mode:
+            initial_position.set_pos_initial()
+        self.set_position(initial_position, True)
+
+        if self.external_position_mode:
+            self.sync_timer = QtCore.QTimer(self)
+            self.sync_timer.timeout.connect(self.sync_with_external_position)
+            self.sync_timer.start(250)
 
     def set_position(self, position, save_history):
         self.position = position
@@ -119,14 +143,17 @@ class WPolyglot(LCDialog.LCDialog):
             binmove.porc = binmove.weight() * 100.0 / tt if tt > 0 else 0
 
         self.li_moves.sort(key=lambda x: x.weight(), reverse=True)
-        self.board.set_position(position)
-        self.board.activate_side(position.is_white)
+        if self.board:
+            self.board.set_position(position)
+            self.board.activate_side(position.is_white)
         if save_history:
             self.history.append(self.position.fen())
         self.grid_moves.refresh()
         self.grid_moves.gotop()
 
     def grid_doble_click(self, _grid, row, col):
+        if self.external_position_mode:
+            return
         if col.key == "move":
             bin_move = self.li_moves[row]
             xfrom = bin_move.info_move.xfrom()
@@ -135,6 +162,8 @@ class WPolyglot(LCDialog.LCDialog):
             self.mensajero(xfrom, xto, promotion)
 
     def grid_cambiado_registro(self, _grid, row, _obj_column):
+        if not self.board:
+            return
         if -1 < row < len(self.li_moves):
             bin_move = self.li_moves[row]
             self.board.put_arrow_sc(bin_move.info_move.xfrom(), bin_move.info_move.xto())
@@ -213,6 +242,8 @@ class WPolyglot(LCDialog.LCDialog):
         grid.refresh()
 
     def mensajero(self, from_sq, to_sq, promocion=""):
+        if self.external_position_mode:
+            return
         FasterCode.set_fen(self.position.fen())
         if FasterCode.make_move(from_sq + to_sq + promocion):
             fen = FasterCode.get_fen()
@@ -227,10 +258,14 @@ class WPolyglot(LCDialog.LCDialog):
         self.finalizar()
 
     def finalizar(self):
+        if self.sync_timer:
+            self.sync_timer.stop()
         self.db_entries.close()
         self.save_video()
 
     def takeback(self):
+        if self.external_position_mode:
+            return
         if len(self.history) > 1:
             self.history = self.history[:-1]
             fen = self.history[-1]
@@ -238,6 +273,25 @@ class WPolyglot(LCDialog.LCDialog):
             self.set_position(self.position, False)
 
     def voyager(self):
+        if self.external_position_mode:
+            return
         position, is_white_bottom = Voyager.voyager_position(self, self.position, wownerowner=self.owner)
         if position:
             self.set_position(position, True)
+
+    def _provider_position(self):
+        if not self.position_provider:
+            return None
+        resp = self.position_provider()
+        if not resp:
+            return None
+        position = resp[0] if isinstance(resp, tuple) else resp
+        return position.copia() if position is not None else None
+
+    def sync_with_external_position(self):
+        position = self._provider_position()
+        if position is None:
+            return
+        if self.position and self.position.fen() == position.fen():
+            return
+        self.set_position(position, False)

@@ -166,6 +166,17 @@ def polyglots_factory(procesador):
     return w.resultado if w.exec() else None
 
 
-def edit_polyglot(procesador, path_dbbin):
-    w = WPolyglot.WPolyglot(procesador.main_window, Code.configuration, path_dbbin)
-    w.exec()
+def edit_polyglot(procesador, path_dbbin, position=None, is_white_bottom=None, position_provider=None, modal=True):
+    w = WPolyglot.WPolyglot(
+        procesador.main_window,
+        Code.configuration,
+        path_dbbin,
+        position=position,
+        is_white_bottom=is_white_bottom,
+        position_provider=position_provider,
+    )
+    if modal:
+        w.exec()
+    else:
+        w.show()
+    return w

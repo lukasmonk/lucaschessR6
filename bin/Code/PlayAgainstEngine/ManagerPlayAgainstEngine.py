@@ -45,17 +45,16 @@ from Code.Base.Constantes import (
     WHITE,
     MULTIPV_MAXIMIZE
 )
-from Code.Books import Books, WBooks
+from Code.Books import Books, DBPolyglot, WBooks, WFactory
 from Code.Engines import EngineManagerPlay, EngineResponse, Engines, SelectEngines
 from Code.ManagerBase import Manager
 from Code.Openings import Opening, OpeningLines
 from Code.PlayAgainstEngine import Personalities, WPlayAgainstEngine
-from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils
+from Code.QT import FormLayout, Iconos, QTDialogs, QTMessages, QTUtils
 from Code.Translations import TrListas
 from Code.Tutor import Tutor
 from Code.Voyager import Voyager
 from Code.Z import Adjournments, Util
-from Code.Z import TimeControl
 
 
 class ToolbarState(Enum):
@@ -78,8 +77,6 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
     tc_player: Any = None
     tc_rival: Any = None
-
-    time_used_user: float = 0.0
 
     player_name: str
     rival_name: str
@@ -119,6 +116,9 @@ class ManagerPlayAgainstEngine(Manager.Manager):
     premove: Optional[Tuple[str, str]] = None
     last_time_show_arrows: Optional[float] = None
     rival_is_thinking: bool = False
+    ponder_enabled: bool = False
+    ponder_move: str = ""
+    ponder_display_timer: Optional[QtCore.QTimer] = None
     humanize: int = 0
     unlimited_minutes: int = 6
     is_human_side_white: bool
@@ -191,6 +191,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.play_while_win = dic_var.get("WITH_LIMIT_PWW", False)
         self.limit_pww = dic_var.get("LIMIT_PWW", 90)
+        self.ponder_enabled = dic_var.get("PONDER", False)
+        self.ponder_move = ""
 
         self.dic_times_prev_move = {}
 
@@ -249,75 +251,22 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.tc_player = self.tc_white if self.is_human_side_white else self.tc_black
         self.tc_rival = self.tc_white if self.is_engine_side_white else self.tc_black
 
-        self.timed = dic_var.get("WITHTIME", False)
+        self.timed = dic_var["WITHTIME"]
         self.tc_white.set_displayed(self.timed)
         self.tc_black.set_displayed(self.timed)
+        if self.timed:
+            self.max_seconds = dic_var["MINUTES"] * 60.0
+            self.seconds_per_move = dic_var["SECONDS"]
+            self.secs_extra = dic_var.get("MINEXTRA", 0) * 60.0
+            zeitnot = dic_var.get("ZEITNOT", 0)
 
-        if not self.timed:
-            return
+            self.disable_user_time = dic_var.get("DISABLEUSERTIME", False)
+            if self.disable_user_time:
+                self.secs_extra = 3 * 60 * 60  # 3 horas
+                self.tc_player.set_displayed(False)
 
-        self.time_mode = dic_var.get("TIME_MODE", TimeControl.TimeMode.FISCHER)
-
-        # ── Common fields
-        base_minutes = dic_var.get("MINUTES", 10.0)
-        self.max_seconds = base_minutes * 60.0
-        self.seconds_per_move = dic_var.get("SECONDS", 0)  # increment / delay
-        self.secs_extra = dic_var.get("MINEXTRA", 0) * 60.0
-        zeitnot = dic_var.get("ZEITNOT", 0)
-
-        self.disable_user_time = dic_var.get("DISABLEUSERTIME", False)
-        if self.disable_user_time:
-            # Player clock is hidden; give 3 h so it never runs out visually
-            self.secs_extra = 3 * 60 * 60
-            self.tc_player.set_displayed(False)
-
-        # ── Configure each clock according to the selected mode ───────────────
-        def _configure(tc, is_player: bool):
-            extra = self.secs_extra if is_player else 0
-
-            if self.time_mode == TimeControl.TimeMode.SUDDEN_DEATH:
-                tc.config_clock(self.max_seconds + extra, 0, zeitnot, 0)
-
-            elif self.time_mode == TimeControl.TimeMode.FISCHER:
-                tc.config_fischer(self.max_seconds + extra, self.seconds_per_move, zeitnot)
-
-            elif self.time_mode == TimeControl.TimeMode.BRONSTEIN:
-                tc.config_bronstein(self.max_seconds + extra, self.seconds_per_move, zeitnot)
-
-            elif self.time_mode == TimeControl.TimeMode.DELAY_SIMPLE:
-                tc.config_delay(self.max_seconds + extra, self.seconds_per_move, zeitnot)
-
-            elif self.time_mode == TimeControl.TimeMode.HOURGLASS:
-                tc.config_hourglass(self.max_seconds + extra)
-
-            elif self.time_mode == TimeControl.TimeMode.MOVES_IN_TIME:
-                phases = []
-                for key in ("PHASE1", "PHASE2", "PHASE3"):
-                    val = dic_var.get(key)
-                    if val:
-                        moves, mins, bonus = val
-                        if mins > 0:
-                            phases.append((moves, int(mins * 60), bonus))
-                if not phases:
-                    # Fallback: treat as Fischer if no phases defined
-                    tc.config_fischer(self.max_seconds + extra, self.seconds_per_move, zeitnot)
-                else:
-                    tc.config_moves_in_time(phases, zeitnot)
-                    # For the player, add extra time to the first phase total
-                    if is_player and extra > 0:
-                        tc.pending_time += extra
-                        tc.total_time += extra
-            else:
-                # Unknown mode: safe fallback to Fischer
-                tc.config_fischer(self.max_seconds + extra, self.seconds_per_move, zeitnot)
-
-        _configure(self.tc_player, is_player=True)
-        _configure(self.tc_rival, is_player=False)
-
-        # ── Hourglass: wire the two clocks together
-        if self.time_mode == TimeControl.TimeMode.HOURGLASS:
-            self.tc_player.set_opponent(self.tc_rival)
-            self.tc_rival.set_opponent(self.tc_player)
+            self.tc_player.config_clock(self.max_seconds, self.seconds_per_move, zeitnot, self.secs_extra)
+            self.tc_rival.config_clock(self.max_seconds, self.seconds_per_move, zeitnot, 0)
 
     def _init_hints(self, dic_var: Dict[str, Any]):
         self.hints = dic_var["HINTS"]
@@ -404,61 +353,15 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.game.add_tag_timestart()
 
-        # ── Build PGN TimeControl tag
-        # Format follows PGN standard + common extensions:
-        #   Sudden Death : "300"
-        #   Fischer      : "300+3"
-        #   Bronstein    : "300b3"    (b = Bronstein, non-standard but widely used)
-        #   Simple Delay : "300d5"    (d = delay, used by SCID/ChessBase)
-        #   Hourglass    : "300h"     (h = hourglass)
-        #   Moves/Time   : "40/5400:20/1800:900+30"  (FIDE standard multi-phase)
-        mode = getattr(self, "time_mode", TimeControl.TimeMode.FISCHER)
-        base = int(self.max_seconds)
-
-        if mode == TimeControl.TimeMode.SUDDEN_DEATH:
-            time_control = f"{base}"
-
-        elif mode == TimeControl.TimeMode.FISCHER:
-            inc = int(self.seconds_per_move)
-            time_control = f"{base}+{inc}" if inc else f"{base}"
-
-        elif mode == TimeControl.TimeMode.BRONSTEIN:
-            time_control = f"{base}b{int(self.seconds_per_move)}"
-
-        elif mode == TimeControl.TimeMode.DELAY_SIMPLE:
-            time_control = f"{base}d{int(self.seconds_per_move)}"
-
-        elif mode == TimeControl.TimeMode.HOURGLASS:
-            time_control = f"{base}h"
-
-        elif mode == TimeControl.TimeMode.MOVES_IN_TIME:
-            parts = []
-            for key in ("PHASE1", "PHASE2", "PHASE3"):
-                val = dic_var.get(key)
-                if val:
-                    moves, mins, bonus = val
-                    secs = int(mins * 60)
-                    if secs > 0:
-                        if moves:
-                            chunk = f"{moves}/{secs}"
-                        else:
-                            chunk = f"{secs}"
-                        if bonus:
-                            chunk += f"+{bonus}"
-                        parts.append(chunk)
-            time_control = ":".join(parts) if parts else f"{base}"
-        else:
-            time_control = f"{base}"
-
+        time_control = f"{int(self.max_seconds)}"
+        if self.seconds_per_move:
+            time_control += f"+{self.seconds_per_move}"
         self.game.set_tag("TimeControl", time_control)
-
-        # ── Extra time tag (player only)
-        if self.secs_extra and self.timed:
-            side_key = f"TimeExtra{'White' if self.is_human_side_white else 'Black'}"
+        if self.secs_extra:
             if self.disable_user_time:
-                self.game.set_tag(side_key, _("No limit"))
+                self.game.set_tag(f"TimeExtra{'White' if self.is_human_side_white else 'Black'}", _("No limit"))
             else:
-                self.game.set_tag(side_key, f"{self.secs_extra}")
+                self.game.set_tag(f"TimeExtra{'White' if self.is_human_side_white else 'Black'}", f"{self.secs_extra}")
 
     def _init_rival(self, dic_var: Dict[str, Any]):
         dr = dic_var["RIVAL"]
@@ -484,7 +387,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 rival_time_ms = 0
             if rival_depth <= 0:
                 rival_depth = 0
-            self.engine_rival.liUCI = dr["LIUCI"]
+            self.engine_rival.liUCI = dr.get("LIUCI", getattr(self.engine_rival, "liUCI", []))
 
             self.limit_time_seconds = None
             if rival_depth > 0 or self.nodes > 0:
@@ -507,6 +410,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.resign_limit = -99999  # never
         self.resign_limit = dic_var["RESIGN"]
         self.humanize = dic_var.get("LEVEL_HUMANIZE", 0)
+        self.manager_rival.set_option("Ponder", "true" if self.ponder_enabled else "false")
 
     def pon_toolbar(self, tb_state: ToolbarState):
         self.tb_huella = Util.huella()
@@ -550,7 +454,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                     li.append(TB_STOP)
                 self.set_toolbar(li)
                 for key in li:
-                    self.main_window.enable_option_toolbar(key, key == TB_STOP)
+                    self.main_window.enable_option_toolbar(key, key in (TB_STOP, TB_UTILITIES))
 
             haz_engine(False)
 
@@ -672,6 +576,12 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             li_mas_opciones = []
             if self.human_is_playing or self.is_finished():
                 li_mas_opciones.append(("books", _("Consult a book"), Iconos.Libros()))
+            if li_mas_opciones:
+                li_mas_opciones.append((None, None, None))
+            li_mas_opciones.append(("edit_book", f"{_('Edit')}: {_('Current position')} - {_('Polyglot book')}", Iconos.Modificar()))
+            if len(self.game) > 0:
+                li_mas_opciones.append((None, None, None))
+                li_mas_opciones.append(("add_line_to_book", _("Add current line to a book"), Iconos.FactoryPolyglot()))
             # li_mas_opciones.append((None, None, None))
             # li_mas_opciones.append(("start_position", _("Change the starting position"), Iconos.PGN()))
 
@@ -682,6 +592,10 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 if li_movs and si_en_vivo:
                     from_sq, to_sq, promotion = li_movs[-1]
                     self.player_has_moved_dispatcher(from_sq, to_sq, promotion)
+            elif resp == "edit_book":
+                self.edit_current_book()
+            elif resp == "add_line_to_book":
+                self.add_current_line_to_book()
 
         elif key == TB_ADJOURN:
             self.adjourn()
@@ -717,6 +631,146 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         dic["summary"] = self.summary
 
         return dic
+
+    def add_current_line_to_book(self):
+        if len(self.game) == 0:
+            QTMessages.message_error(self.main_window, _("There are no moves to add"))
+            return
+
+        path_lcbin = WFactory.polyglots_factory(self.procesador)
+        if not path_lcbin:
+            return
+
+        key_vars = "PLAY_ENGINE_ADD_LINE_TO_BOOK"
+        dic_vars = self.configuration.read_variables(key_vars)
+        white_weight = dic_vars.get("WHITE_WEIGHT", 1)
+        black_weight = dic_vars.get("BLACK_WEIGHT", 1)
+
+        li_gen = [
+            (None, _("Weights to add")),
+            (FormLayout.Spinbox(_("White"), 0, 999999, 70), white_weight),
+            (FormLayout.Spinbox(_("Black"), 0, 999999, 70), black_weight),
+        ]
+        resultado = FormLayout.fedit(
+            li_gen,
+            title=_("Add current line to a book"),
+            parent=self.main_window,
+            icon=Iconos.FactoryPolyglot(),
+            minimum_width=360,
+        )
+        if not resultado:
+            return
+
+        accion, li_resp = resultado
+        white_weight, black_weight = li_resp
+        dic_vars["WHITE_WEIGHT"] = white_weight
+        dic_vars["BLACK_WEIGHT"] = black_weight
+        self.configuration.write_variables(key_vars, dic_vars)
+
+        added_moves = self._add_current_line_to_polyglot(path_lcbin, white_weight, black_weight)
+        if added_moves == 0:
+            QTMessages.message_error(self.main_window, _("No moves were added to the book"))
+            return
+
+        DBPolyglot.IndexPolyglot().update_soft()
+        self._apply_polyglot_book_immediately(path_lcbin)
+
+        book_name = os.path.basename(path_lcbin)[:-6]
+        message = _X(_("Saved %1 move(s) into %2"), str(added_moves), book_name)
+        QTMessages.temporary_message(self.main_window, message, 1.8)
+        if self.si_check_kibitzers():
+            self.check_kibitzers(True)
+
+    def edit_current_book(self):
+        path_lcbin = WFactory.polyglots_factory(self.procesador)
+        if not path_lcbin:
+            return
+
+        self._apply_polyglot_book_immediately(path_lcbin)
+
+        editor = WFactory.edit_polyglot(
+            self.procesador,
+            path_lcbin,
+            position=self.board.last_position.copia(),
+            is_white_bottom=self.board.is_white_bottom,
+            position_provider=self._current_polyglot_editor_position,
+            modal=False,
+        )
+        self._register_polyglot_editor(editor)
+
+    def _current_polyglot_editor_position(self):
+        return self.board.last_position, self.board.is_white_bottom
+
+    def _apply_polyglot_book_immediately(self, path_lcbin: str):
+        book_name = os.path.basename(path_lcbin)[:-6]
+        book = Books.Book("P", book_name, path_lcbin, False)
+        book.polyglot()
+
+        self.book_rival = book
+        self.book_rival_active = True
+        self.book_rival_depth = 0
+        self.book_rival_select = BOOK_BEST_MOVE
+
+        if self.reinicio is not None:
+            self.reinicio["BOOKR"] = book
+            self.reinicio["BOOKRDEPTH"] = 0
+            self.reinicio["BOOKRR"] = BOOK_BEST_MOVE
+
+        if hasattr(self, "dic_reject") and self.dic_reject is not None:
+            self.dic_reject["book_rival"] = 0
+
+        self.show_basic_label()
+
+    def _register_polyglot_editor(self, editor):
+        if editor is None:
+            return
+        if not hasattr(self, "_polyglot_editors"):
+            self._polyglot_editors = []
+        self._polyglot_editors.append(editor)
+
+        def cleanup(_obj=None, editor_ref=editor):
+            if editor_ref in self._polyglot_editors:
+                self._polyglot_editors.remove(editor_ref)
+
+        editor.destroyed.connect(cleanup)
+
+    def _add_current_line_to_polyglot(self, path_lcbin: str, white_weight: int, black_weight: int) -> int:
+        added_moves = 0
+        with DBPolyglot.DBPolyglot(path_lcbin) as db_polyglot:
+            for move in self.game.li_moves:
+                weight = white_weight if move.is_white() else black_weight
+                if weight <= 0:
+                    continue
+
+                entry = self._polyglot_entry_for_move(move, weight)
+                if entry is None:
+                    continue
+
+                db_polyglot.replace_entry(entry, "add")
+                added_moves += 1
+            db_polyglot.commit()
+        return added_moves
+
+    @staticmethod
+    def _polyglot_entry_for_move(move: Move.Move, weight: int):
+        position_before = move.position_before.copia()
+        objective_move = move.movimiento().lower()
+
+        for info_move in position_before.get_exmoves():
+            if info_move.move().lower() != objective_move:
+                continue
+
+            bin_move = FasterCode.BinMove(info_move)
+            entry = FasterCode.Entry()
+            entry.key = FasterCode.hash_polyglot8(position_before.fen())
+            entry.move = bin_move.imove()
+            entry.weight = weight
+            entry.score = 0
+            entry.depth = 0
+            entry.learn = 0
+            return entry
+
+        return None
 
     def restore_state(self, dic: Dict[str, Any]):
         self.base_inicio(dic)
@@ -768,9 +822,13 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if not QTMessages.pregunta(self.main_window, _("Restart the game?")):
                 return
         self.crash_adjourn_end()
+        self.stop_ponder()
         if self.timed:
             self.main_window.stop_clock()
         self.analyze_terminate()
+        if self.manager_rival is not None:
+            self.manager_rival.close()
+            self.manager_rival = None
         if self.book_rival_select == SELECTED_BY_PLAYER or self.nAjustarFuerza == ADJUST_SELECTED_BY_PLAYER:
             self.cache = {}
         self.reinicio["cache"] = self.cache
@@ -888,14 +946,18 @@ class ManagerPlayAgainstEngine(Manager.Manager):
     def final_x(self):
         return self.finalizar()
 
+    def _stop_rival_engine_for_end(self):
+        if self.manager_rival is not None:
+            self.manager_rival.stop()
+
     def stop_engine(self):
         if not self.human_is_playing:
-            if self.manager_rival is not None:
-                self.manager_rival.stop()
+            self._stop_rival_engine_for_end()
 
     def finalizar(self):
         if self.state == ST_ENDGAME:
             return True
+        self._stop_rival_engine_for_end()
 
         def close_comun():
             if self.timed:
@@ -934,6 +996,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if with_question:
                 if not QTMessages.pregunta(self.main_window, _("Do you want to resign?")):
                     return False  # no abandona
+            self._stop_rival_engine_for_end()
             if self.timed:
                 self.main_window.stop_clock()
                 self.show_clocks()
@@ -1262,8 +1325,6 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             lista_jugadas = book.get_list_moves(fen)
             if lista_jugadas:
                 resp = WBooks.select_move_books(self.main_window, lista_jugadas, self.game.last_position.is_white)
-                if not resp or len(resp) < 3:
-                    return False, None, None, None
                 return True, resp[0], resp[1], resp[2]
         else:
             pv = book.select_move_type(fen, book_select)
@@ -1318,8 +1379,20 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.analyze_begin()
 
+        if self.ponder_enabled and self.ponder_move:
+            if self.timed:
+                seconds_white = self.tc_white.pending_time
+                seconds_black = self.tc_black.pending_time
+                seconds_move = self.tc_white.seconds_per_move
+            else:
+                seconds_white = seconds_black = self.unlimited_minutes * 60
+                seconds_move = 0
+            self.manager_rival.run_engine_params.update_var_time(seconds_white, seconds_black, seconds_move)
+            self.manager_rival.start_ponder(self.game, self.ponder_move)
+            self._start_ponder_display_timer()
+
     def player_has_moved_dispatcher(self, from_sq: str, to_sq: str, promotion: str = ""):
-        """Viene desde el board via Main, es previo, ya que si está pendiente el análisis, sólo se indica que ha
+        """Viene desde el board via MainWindow, es previo, ya que si está pendiente el análisis, sólo se indica que ha
         elegido una jugada"""
         if self.rival_is_thinking:
             return self.check_premove(from_sq, to_sq)
@@ -1331,7 +1404,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if not self.player_has_moved_mandatory(move):
             return False
 
-        self.time_used_user = self.tc_player.stop()
+        self.tc_player.pause()
         self.tc_player.set_labels()
 
         if self.is_tutor_analysing:
@@ -1429,7 +1502,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 test_book = True
             if test_book:
                 self.dic_reject["book_player"] += 1
-                self.book_player_active = self.dic_reject["book_player"] <= 5
+                self.book_player_active = self.dic_reject["book_player"] > 5
             self.show_basic_label()
         return True
 
@@ -1493,8 +1566,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                 while True:
                                     rm_tutor = self.mrm_tutor.rm_best()
                                     menu = QTDialogs.LCMenu(self.main_window)
-                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine(),
-                                                is_disabled=True)
+                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine(), is_disabled=True)
                                     menu.separador()
                                     resp = rm_tutor.abbrev_text_base()
                                     if not resp:
@@ -1546,13 +1618,14 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         # --------------------------------------------------------------------------------------------------------------
         self.main_window.pensando_tutor(False)
+        time_s = self.tc_player.stop()
         if self.timed:
             self.show_clocks()
 
-        move.set_time_ms(self.time_used_user * 1000)
+        move.set_time_ms(time_s * 1000)
         if not self.disable_user_time:
             move.set_clock_ms(self.tc_player.pending_time * 1000)
-        self.set_summary("TIMEUSER", self.time_used_user)
+        self.set_summary("TIMEUSER", time_s)
 
         if si_analisis:
             rm, n_pos = self.mrm_tutor.search_rm(move.movimiento())
@@ -1594,6 +1667,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         # CACHE---------------------------------------------------------------------------------------------------------
         fen_ultimo = self.last_fen()
         if fen_ultimo in self.cache:
+            self.stop_ponder()
             move = self.cache[fen_ultimo]
             self.move_the_pieces(move.list_piece_moves, True)
             self.add_move(move)
@@ -1628,6 +1702,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         # --------------------------------------------------------------------------------------------------------------
         if is_choosed:
+            self.stop_ponder()
             rm_rival = EngineResponse.EngineResponse("Opening", self.is_engine_side_white)
             rm_rival.from_sq = from_sq
             rm_rival.to_sq = to_sq
@@ -1637,45 +1712,33 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.play_engine_rival()
 
     def play_engine_rival(self):
+        self._stop_ponder_display_timer()
         self.thinking(True)
         self.pon_toolbar(ToolbarState.ENGINE_PLAYING)
 
-        mode = getattr(self, "time_mode", TimeControl.TimeMode.FISCHER)
+        if self.ponder_enabled and self.manager_rival.is_pondering and self.ponder_move:
+            last_move = self.game.last_jg()
+            if last_move:
+                human_move = last_move.movimiento()
+                if human_move == self.ponder_move:
+                    self.ponder_move = ""
+                    rm_rival = self.manager_rival.play_ponderhit(dispacher=self.dispatch_rival)
+                    if rm_rival is not None:
+                        self.rival_has_moved(rm_rival)
+                    return
+            self.manager_rival.stop_ponder()
+            self.ponder_move = ""
 
         if self.timed:
-            # ── Time available for the engine call
             seconds_white = self.tc_white.pending_time
             seconds_black = self.tc_black.pending_time
-            tc_engine = self.tc_white if self.is_engine_side_white else self.tc_black
-
-            if mode == TimeControl.TimeMode.HOURGLASS:
-                # Hourglass: time pools keep changing; pass current values
-                seconds_move = 0
-
-            elif mode == TimeControl.TimeMode.BRONSTEIN:
-                # Bronstein: increment is the max delay per move, not additive
-                seconds_move = tc_engine.seconds_per_move
-
-            elif mode == TimeControl.TimeMode.DELAY_SIMPLE:
-                # Delay: engine gets the full delay each move
-                seconds_move = tc_engine.seconds_per_move
-
-            elif mode == TimeControl.TimeMode.MOVES_IN_TIME:
-                # Moves-in-time: pass current pending time; increment from
-                # current phase bonus (stored as seconds_per_move after a phase ends)
-                seconds_move = tc_engine.seconds_per_move
-
-            else:
-                # Fischer / Sudden Death / fallback
-                seconds_move = tc_engine.seconds_per_move
-
+            seconds_move = self.tc_white.seconds_per_move
         else:
-            # ── Untimed game: simulate a reasonable time pool ─────────────────
             seconds_white = seconds_black = self.unlimited_minutes * 60
             mswhite, msblack = self.game.sum_mstimes()
-            seconds_white -= mswhite / 1000
-            seconds_black -= msblack / 1000
-            seconds_white = max(seconds_white, 5)
+            seconds_white -= mswhite/1000
+            seconds_black -= msblack/1000
+            seconds_white = max(seconds_white, 5)  # con un mínimo de 5 segundos
             seconds_black = max(seconds_black, 5)
             seconds_move = 0
 
@@ -1684,11 +1747,10 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if self.humanize:
             if not self.timed:
                 seconds_white = seconds_black = 600
+
             self.manager_rival.humanize(self.humanize, self.game, seconds_white, seconds_black, seconds_move)
 
-        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(
-            game=self.game, dispacher=self.dispatch_rival
-        )
+        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game, dispacher=self.dispatch_rival)
         if rm_rival is not None:
             self.rival_has_moved(rm_rival)
 
@@ -1733,6 +1795,9 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             rm_rival.promotion,
         )
         self.rm_rival = rm_rival
+        self.ponder_move = ""
+        if self.ponder_enabled and self.manager_rival.mrm:
+            self.ponder_move = self.manager_rival.mrm.ponder_move
         if ok:
             fen_ultimo = self.last_fen()
             move.set_time_ms(int(time_s * 1000))
@@ -1766,6 +1831,37 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.board.remove_arrows()
             self.premove = None
 
+    def stop_ponder(self):
+        self._stop_ponder_display_timer()
+        self.ponder_move = ""
+        if self.manager_rival:
+            self.manager_rival.stop_ponder()
+
+    def _start_ponder_display_timer(self):
+        self._stop_ponder_display_timer()
+        if self.thoughtOp <= -1 and self.nArrows <= 0:
+            return
+        self.ponder_display_timer = QtCore.QTimer(self.main_window)
+        self.ponder_display_timer.setInterval(1000)
+        self.ponder_display_timer.timeout.connect(self._ponder_display_update)
+        self.ponder_display_timer.start()
+
+    def _stop_ponder_display_timer(self):
+        if self.ponder_display_timer is not None:
+            self.ponder_display_timer.stop()
+            self.ponder_display_timer = None
+
+    def _ponder_display_update(self):
+        if not self.ponder_enabled or not self.manager_rival or not self.manager_rival.is_pondering:
+            self._stop_ponder_display_timer()
+            return
+        mrm = self.manager_rival.get_current_mrm()
+        if mrm is None:
+            return
+        rm = mrm.best_rm_ordered()
+        if rm is not None:
+            self.dispatch_rival(rm)
+
     def pww_centipawns_lost(
             self, mrm: EngineResponse.MultiEngineResponse, rm_user: EngineResponse.EngineResponse
     ) -> int:
@@ -1794,7 +1890,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.board.remove_movables()
         self.check_boards_setposition()
 
-        # self.put_arrow_sc(move.from_sq, move.to_sq)
+        self.put_arrow_sc(move.from_sq, move.to_sq)
 
         self.show_hints()
 
@@ -1874,6 +1970,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
     def show_result(self):
         self.state = ST_ENDGAME
+        self._stop_rival_engine_for_end()
         self.disable_all()
         self.human_is_playing = False
         if self.timed:
@@ -1914,6 +2011,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 self.reinicio[k] = v
 
             is_white = dic["ISWHITE"]
+            side_changed = is_white != self.is_human_side_white
 
             self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
 
@@ -1936,19 +2034,57 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
             rival = self.manager_rival.engine.name
             player = self.configuration.x_player
+            self.rival_name = rival
+            self.player_name = player
             lb_white, lb_black = player, rival
             if not is_white:
                 lb_white, lb_black = lb_black, lb_white
-            self.main_window.change_player_labels(lb_white, lb_black)
 
             self.show_basic_label()
 
             self.put_pieces_bottom(is_white)
-            if is_white != self.is_human_side_white:
+            if side_changed:
+                if self.timed:
+                    self._swap_clock_sides()
                 self.is_human_side_white = is_white
                 self.is_engine_side_white = not is_white
 
+            self.tc_player = self.tc_white if self.is_human_side_white else self.tc_black
+            self.tc_rival = self.tc_white if self.is_engine_side_white else self.tc_black
+            self.main_window.change_player_labels(lb_white, lb_black)
+            if self.timed:
+                self._refresh_clock_visibility()
+                self.show_clocks()
+
+            if side_changed:
                 self.play_next_move()
+
+    def _current_clock_state(self, tc):
+        pending_time, _ = tc.get_seconds2()
+        return tc.total_time, pending_time, tc.zeitnot_marker, 0.0
+
+    def _swap_clock_sides(self):
+        state_white = self._current_clock_state(self.tc_white)
+        state_black = self._current_clock_state(self.tc_black)
+
+        self.tc_white.restore(state_black)
+        self.tc_black.restore(state_white)
+
+        for move_number, states in list(self.dic_times_prev_move.items()):
+            saved_white, saved_black = states
+            self.dic_times_prev_move[move_number] = saved_black, saved_white
+
+    def _refresh_clock_visibility(self):
+        self.main_window.active_game(True, self.timed)
+        self.tc_white.set_displayed(self.timed)
+        self.tc_black.set_displayed(self.timed)
+        if self.disable_user_time:
+            if self.is_human_side_white:
+                self.tc_white.set_displayed(False)
+                self.main_window.hide_clock_white()
+            else:
+                self.tc_black.set_displayed(False)
+                self.main_window.hide_clock_black()
 
     def show_dispatch(self, tp: int, rm: EngineResponse.EngineResponse):
         if rm.time or rm.depth:
