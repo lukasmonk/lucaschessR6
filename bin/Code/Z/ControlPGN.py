@@ -95,6 +95,9 @@ class ControlPGN:
         starts_with_black = self.manager.game.starts_with_black
 
         if row == 0 and is_white and starts_with_black:
+            # Clicking the empty White cell in a Black-first game: show the initial position
+            self.manager.set_position(self.manager.game.first_position, variation_history="-1")
+            self.manager.refresh()
             return
 
         lj = self.manager.game.li_moves
