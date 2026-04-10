@@ -17,7 +17,6 @@ from Code.Z import Util, Debug
 if __debug__:
     prln = Debug.prln
 
-
 @dataclass
 class StartEngineParams:
     name: str = ""
@@ -29,7 +28,6 @@ class StartEngineParams:
     path_log: Optional[str] = None
     emulate_movetime: bool = False
     faster_mode_always: bool = False
-
 
 @dataclass
 class RunEngineParams:
@@ -76,19 +74,18 @@ class RunEngineParams:
     def is_fast(self):
         return 0 < self.fixed_ms < 2000 or 0 < self.fixed_depth < 8 or 0 < self.fixed_nodes < 5000
 
-
 class EngineState(Enum):
     OFF = auto()
     STARTED = auto()
     OK = auto()
     THINKING = auto()
+    PONDERING = auto()
     ERROR = auto()
     READING_UCI = auto()
     READING_EVAL_STOCKFISH = auto()
     INVALID_ENGINE = auto()
     PENDING_READYOK = auto()
     CLOSED = auto()
-
 
 class StreamLineProcessor:
     def __init__(self):
@@ -102,7 +99,6 @@ class StreamLineProcessor:
         if not salida_str.endswith("\n"):
             self._pending = lineas.pop() if lineas else salida_str
         return lineas
-
 
 class EngineRun(QtCore.QObject):
     depth_changed = QtCore.Signal()
@@ -127,6 +123,8 @@ class EngineRun(QtCore.QObject):
         self.config = config
         self._wait_loop: Optional[QtCore.QEventLoop] = None
         self.stream_line_processor = StreamLineProcessor()
+        self.play_time_begin = None
+        self._awaiting_first_depth = False
 
         self.mode_timer_poll = Code.configuration.x_msrefresh_poll_engines > 0 and not config.faster_mode_always
 
@@ -188,7 +186,6 @@ class EngineRun(QtCore.QObject):
             self.set_multipv(config.num_multipv)
 
         self._ucinewgame()
-        self.play_time_begin = None
         self.emit = True
 
     def _start_polling(self):
@@ -226,6 +223,8 @@ class EngineRun(QtCore.QObject):
             except:
                 pass
             self.log = None
+
+    @staticmethod
 
     # --- utils ---
     @staticmethod
@@ -430,7 +429,30 @@ class EngineRun(QtCore.QObject):
                                     pass
                             self.li_cache = []
 
-                    elif st == EngineState.THINKING:
+                    elif st in (EngineState.THINKING, EngineState.PONDERING):
+                        # Filter stale output from previous search before depth 1 of new search
+                        if self._awaiting_first_depth:
+                            if line.startswith("info ") and " depth " in line:
+                                parts = line.split()
+                                for idx, tok in enumerate(parts):
+                                    if tok == "depth" and idx + 1 < len(parts):
+                                        try:
+                                            d = int(parts[idx + 1])
+                                            if d <= 1:
+                                                self._awaiting_first_depth = False
+                                            else:
+                                                self.mrm = EngineResponse.MultiEngineResponse(self.config.name, self.is_white)
+                                                continue
+                                        except ValueError:
+                                            pass
+                                        break
+                            elif line.startswith("bestmove"):
+                                # do NOT skip bestmove while _awaiting_first_depth;
+                                # ponderhit may cause the engine to reply immediately with
+                                # bestmove before any info depth line, which would hang the
+                                # event loop forever.
+                                self._awaiting_first_depth = False
+
                         emited_depth = False
                         new_depth = 0
                         current_time = int(time.time() * 1000)
@@ -454,6 +476,8 @@ class EngineRun(QtCore.QObject):
                                             pass
 
                         if line.startswith("bestmove"):
+                            if self.mrm is not None and len(self.mrm.li_rm) == 0:
+                                continue
                             self.state = EngineState.OK
                             if self.mode_timer_poll:
                                 # APAGAMOS POLLING
@@ -747,6 +771,19 @@ class EngineRun(QtCore.QObject):
 
         self._send_command(f"position {order}")
 
+    def set_game_position_ponder(self, game: Game.Game, ponder_move: str):
+        self.stop()
+        self.isready()
+
+        order = "startpos" if game.is_fen_initial() else f"fen {game.first_position.fen()}"
+        pv = game.pv()
+        if pv:
+            order += f" moves {pv}"
+        order += f" {ponder_move}" if pv else f" moves {ponder_move}"
+
+        self._send_command(f"position {order}")
+        self.is_white = not game.is_white()
+
     def set_fen_position(self, fen: str):
         self.stop()
         self.isready()
@@ -761,6 +798,7 @@ class EngineRun(QtCore.QObject):
 
             self.play_time_begin = time.time()
             self.state = EngineState.THINKING
+            self._awaiting_first_depth = True
 
             if self.mode_timer_poll:
                 # ACTIVAMOS POLLING
@@ -802,6 +840,64 @@ class EngineRun(QtCore.QObject):
 
         send_go("infinite")
 
+    def ponderhit(self):
+        if self.state == EngineState.PONDERING:
+            self.play_time_begin = time.time()
+            self.state = EngineState.THINKING
+            # do NOT set _awaiting_first_depth here. ponderhit continues
+            # the same search (engine won't reset to depth 1), so all subsequent
+            # info lines have high depth. _awaiting_first_depth would cause the
+            # mrm to be replaced with an empty one, and the bestmove would then
+            # be skipped by the "len(self.mrm.li_rm) == 0" guard, hanging the
+            # event loop forever.
+            self._send_command("ponderhit")
+
+    def play_ponder(self, run_engine_params: RunEngineParams):
+
+        def send_go(args: str):
+            self.last_depth_emit = 0
+            self.last_time_depth_emit = 0
+
+            self.play_time_begin = time.time()
+            self.state = EngineState.PONDERING
+            self._awaiting_first_depth = True
+
+            if self.mode_timer_poll:
+                self._start_polling()
+
+            self._send_command(f"go ponder {args}")
+            if run_engine_params.fixed_ms or run_engine_params.fixed_depth:
+                if self.mrm:
+                    self.mrm.set_time_depth(run_engine_params.fixed_ms, run_engine_params.fixed_depth)
+            if run_engine_params.fixed_nodes and self.mrm:
+                self.mrm.set_nodes(run_engine_params.fixed_nodes)
+
+        self.mrm = EngineResponse.MultiEngineResponse(self.config.name, self.is_white)
+
+        if run_engine_params.fixed_depth > 0:
+            send_go(f"depth {run_engine_params.fixed_depth}")
+            return
+
+        if run_engine_params.fixed_nodes > 0:
+            send_go(f"nodes {run_engine_params.fixed_nodes}")
+            return
+
+        if run_engine_params.fixed_ms > 0:
+            if self.config.emulate_movetime:
+                send_go("infinite")
+                return
+            send_go(f"movetime {int(run_engine_params.fixed_ms)}")
+            return
+
+        if run_engine_params.timems_white > 0:
+            order = f"wtime {run_engine_params.timems_white} btime {run_engine_params.timems_black}"
+            if run_engine_params.inc_timems_move:
+                order += f" winc {run_engine_params.inc_timems_move} binc {run_engine_params.inc_timems_move}"
+            send_go(order)
+            return
+
+        send_go("infinite")
+
     def set_mrm_cached(self, mrm: EngineResponse.MultiEngineResponse):
         self.mrm = mrm
 
@@ -818,3 +914,4 @@ class EngineRun(QtCore.QObject):
             self._start_polling()
 
         self._send_command("eval")
+

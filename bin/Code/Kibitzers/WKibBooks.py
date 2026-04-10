@@ -1,16 +1,24 @@
 from PySide6 import QtCore
 
-from Code.Books import Books
+from Code.Books import Books, DBPolyglot
 from Code.Kibitzers import WKibCommon
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos
+from Code.Z import Util
 
 
 class WPolyglot(WKibCommon.WKibCommon):
     def __init__(self, cpu):
         WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Book())
 
-        self.book = Books.Book("P", cpu.kibitzer.name, cpu.kibitzer.path_exe, True)
-        self.book.polyglot()
+        self.path_book = str(cpu.kibitzer.path_exe)
+        self.is_lcbin = self.path_book.lower().endswith(".lcbin")
+        self.db_polyglot = None
+        if self.is_lcbin:
+            self.db_polyglot = DBPolyglot.DBPolyglot(self.path_book)
+            self.book = None
+        else:
+            self.book = Books.Book("P", cpu.kibitzer.name, self.path_book, True)
+            self.book.polyglot()
 
         o_columns = Columnas.ListaColumnas()
         delegado = Delegados.EtiquetaPOS(True, with_lines=False) if self.with_figurines else None
@@ -122,12 +130,44 @@ class WPolyglot(WKibCommon.WKibCommon):
             self.is_white = position.is_white
             self.board.set_position(position)
             self.board.activate_side(self.is_white)
-            self.li_moves = self.book.alm_list_moves(position.fen())
+            if self.is_lcbin:
+                self.li_moves = self.alm_list_moves_lcbin(position.fen())
+            else:
+                self.li_moves = self.book.alm_list_moves(position.fen())
             self.grid.gotop()
             self.grid.refresh()
             self.place_arrow(0)
 
         self.test_tb_home()
+
+    def alm_list_moves_lcbin(self, fen):
+        position = self.game.last_position
+        li_entries = self.db_polyglot.get_entries(fen)
+
+        total = 0
+        for entry in li_entries:
+            total += entry.weight
+
+        li_moves = []
+        for entry in li_entries:
+            alm = Util.Record()
+            pv = alm.pv = entry.pv()
+            alm.from_sq, alm.to_sq, alm.promotion = pv[:2], pv[2:4], pv[4:]
+            alm.pgn = position.pgn_translated(alm.from_sq, alm.to_sq, alm.promotion)
+            alm.pgnRaw = position.pgn(alm.from_sq, alm.to_sq, alm.promotion)
+            alm.fen = fen
+            alm.porc = f"{entry.weight * 100.0 / total:0.02f}%" if total else ""
+            alm.weight = entry.weight
+            li_moves.append(alm)
+
+        li_moves.sort(key=lambda alm: alm.weight, reverse=True)
+        return li_moves
+
+    def finalizar(self):
+        if self.db_polyglot:
+            self.db_polyglot.close()
+            self.db_polyglot = None
+        super().finalizar()
 
     def test_tb_home(self):
         self.tb.set_action_visible(self.home, not self.is_home())

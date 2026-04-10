@@ -23,7 +23,7 @@ from Code.Base.Constantes import (
     FEN_INITIAL,
     SELECTED_BY_PLAYER,
 )
-from Code.Books import Books, WBooks
+from Code.Books import Books, DBPolyglot, WBooks, WFactory
 from Code.Engines import SelectEngines, WConfEngines, WExternalEngines, Engines
 from Code.Openings import OpeningsStd, WindowOpeningLines, WindowOpenings
 from Code.PlayAgainstEngine import Chess2880, Personalities, ConfigurationsPAE
@@ -249,7 +249,14 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         lb_humanize = Controles.LB(self, _("To humanize the time it takes for the engine to respond")).set_font(font)
         ly_humanize = Colocacion.H().control(self.cb_humanize).control(lb_humanize).relleno()
 
+        self.chb_ponder = Controles.CHB(
+            self,
+            _("Ponder") + " - " + _("Engine thinks during your turn"),
+            False,
+        ).set_font(font)
+
         ly.otro(ly_humanize)
+        ly.control(self.chb_ponder)
 
         self._new_tab(ly, _("Basic configuration"))
 
@@ -587,7 +594,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         hbox = Colocacion.H().relleno().control(self.bt_opening_line_remove).control(self.bt_opening_line).relleno()
         gb_opening_line = self._new_groupbox(f"{_('Opening lines')}: {self.configuration.nom_player()}", hbox)
 
-        li_books = [(x.name, x) for x in self.list_books.lista]
+        li_books = self._book_combo_options()
         lib_inicial = li_books[0][1] if li_books else None
 
         li_resp_book = [
@@ -598,7 +605,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         ]
 
         self.cbBooksR = QTMessages.combobox_lb(self, li_books, lib_inicial).set_font(font)
-        self.btNuevoBookR = Controles.PB(self, "", self.new_book).set_icono(Iconos.Mas())
+        self.btNuevoBookR = Controles.PB(self, "", lambda: self.book_menu(True)).set_icono(Iconos.Mas())
+        self.btEditBookR = Controles.PB(self, "", lambda: self.edit_selected_book(True)).set_icono(Iconos.Modificar())
         self.cbBooksRR = QTMessages.combobox_lb(self, li_resp_book, BOOK_BEST_MOVE).set_font(font)
         self.lbDepthBookR = Controles.LB2P(self, _("Max depth")).set_font(font)
         self.edDepthBookR = Controles.ED(self).set_font(font).type_integer(0).relative_width(30)
@@ -607,6 +615,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             Colocacion.H()
             .control(self.cbBooksR)
             .control(self.btNuevoBookR)
+            .control(self.btEditBookR)
             .relleno()
             .control(self.cbBooksRR)
             .relleno()
@@ -615,31 +624,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         )
         self.gb_book_rival = self._new_groupbox(f"{_('Activate book')}: {_('Opponent')}", hbox, checkable=True)
 
-        self.cbBooksP = QTMessages.combobox_lb(self, li_books, lib_inicial).set_font(font)
-        self.btNuevoBookP = Controles.PB(self, "", self.new_book).set_icono(Iconos.Mas())
-        self.lbDepthBookP = Controles.LB2P(self, _("Max depth")).set_font(font)
-        self.edDepthBookP = Controles.ED(self).set_font(font).type_integer(0).relative_width(30)
-        hbox = (
-            Colocacion.H()
-            .control(self.cbBooksP)
-            .control(self.btNuevoBookP)
-            .relleno()
-            .control(self.lbDepthBookP)
-            .control(self.edDepthBookP)
-        )
-        self.gb_book_player = self._new_groupbox(
-            f"{_('Activate book')}: {self.configuration.nom_player()}",
-            hbox,
-            checkable=True,
-        )
-
         ly = (
             Colocacion.V()
             .control(gb_start_position)
             .control(gb_opening)
             .control(gb_opening_line)
             .control(self.gb_book_rival)
-            .control(self.gb_book_player)
         )
         self._new_tab(ly, _("Initial moves"))
 
@@ -1426,6 +1416,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         dic["RIVAL"] = dr
 
         dic["LEVEL_HUMANIZE"] = self.cb_humanize.valor()
+        dic["PONDER"] = self.chb_ponder.valor()
         if Code.eboard:
             dic["ACTIVATE_EBOARD"] = self.chb_eboard.valor()
         # dic["ANALYSIS_BAR"] = self.chb_analysis_bar.valor()
@@ -1493,10 +1484,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         dic["BOOKR"] = self.cbBooksR.valor() if is_book else None
         dic["BOOKRR"] = self.cbBooksRR.valor() if is_book else None
         dic["BOOKRDEPTH"] = self.edDepthBookR.text_to_integer() if is_book else None
-
-        is_book = self.gb_book_player.isChecked()
-        dic["BOOKP"] = self.cbBooksP.valor() if is_book else None
-        dic["BOOKPDEPTH"] = self.edDepthBookP.text_to_integer() if is_book else None
+        dic["BOOKP"] = None
+        dic["BOOKPDEPTH"] = None
 
         # Avanzado
         dic["ADJUST"] = self.cbAjustarRival.valor()
@@ -1529,6 +1518,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.cb_unlimited.set_value(dr.get("ENGINE_UNLIMITED", 10))
 
         self.cb_humanize.set_value(dic.get("LEVEL_HUMANIZE", 0))
+        self.chb_ponder.set_value(dic.get("PONDER", False))
         if Code.eboard:
             self.chb_eboard.set_value(dic.get("ACTIVATE_EBOARD", False))
         # self.chb_analysis_bar.set_value(dic.get("ANALYSIS_BAR", False))
@@ -1595,11 +1585,6 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.cbBooksRR.set_value(dic["BOOKRR"])
             self.edDepthBookR.set_integer(dic["BOOKRDEPTH"])
 
-        if dic.get("BOOKP"):
-            self.gb_book_player.setChecked(True)
-            self.cbBooksP.set_value(dic["BOOKP"])
-            self.edDepthBookP.set_integer(dic["BOOKPDEPTH"])
-
         self.opening_line = dic.get("OPENING_LINE", None)
 
         self.li_preferred_openings = dic.get("OPENIGSFAVORITES", [])
@@ -1633,16 +1618,6 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.cbBooksRR.set_value(book_rr)
             self.edDepthBookR.set_integer(dic.get("BOOKRDEPTH", 0))
 
-        book_p = dic.get("BOOKP", None)
-        self.gb_book_player.setChecked(book_p is not None)
-        if book_p:
-            for bk in self.list_books.lista:
-                if bk.path == book_p.path:
-                    book_p = bk
-                    break
-            self.cbBooksP.set_value(book_p)
-            self.edDepthBookP.set_integer(dic.get("BOOKPDEPTH", 0))
-
         # Avanzado
         self.cbAjustarRival.set_value(dic.get("ADJUST", ADJUST_BETTER))
         self.cb_resign.set_value(dic.get("RESIGN", -800))
@@ -1675,10 +1650,73 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def new_book(self):
         WBooks.registered_books(self)
-        self.list_books = Books.ListBooks()
+        self.refresh_book_combos()
+
+    def book_menu(self, is_rival):
+        menu = QTDialogs.LCMenu(self)
+        menu.opcion("registered", _("Registered books"), Iconos.Book())
+        menu.separador()
+        menu.opcion("factory", _("Polyglot book factory"), Iconos.FactoryPolyglot())
+        resp = menu.lanza()
+        if resp == "registered":
+            self.new_book()
+        elif resp == "factory":
+            self.select_factory_book(is_rival)
+
+    def _book_combo_options(self):
         li = [(x.name, x) for x in self.list_books.lista]
-        self.cbBooksR.rehacer(li, self.cbBooksR.valor())
-        self.cbBooksP.rehacer(li, self.cbBooksP.valor())
+        st_paths = {Util.norm_path(book.path) for _, book in li}
+
+        for reg in DBPolyglot.IndexPolyglot().list():
+            path_lcbin = Util.opj(self.configuration.paths.folder_polyglots_factory(), reg["FILENAME"])
+            norm_path = Util.norm_path(path_lcbin)
+            if norm_path in st_paths:
+                continue
+            name = os.path.basename(path_lcbin)[:-6]
+            li.append((f"{name} (.lcbin)", Books.Book("P", name, path_lcbin, False)))
+            st_paths.add(norm_path)
+
+        return li
+
+    def refresh_book_combos(self):
+        current_r = self.cbBooksR.valor() if hasattr(self, "cbBooksR") else None
+
+        self.list_books = Books.ListBooks()
+        li = self._book_combo_options()
+
+        if hasattr(self, "cbBooksR"):
+            self.cbBooksR.rehacer(li, current_r)
+
+    def select_factory_book(self, _is_rival=True):
+        path_lcbin = WFactory.polyglots_factory(self.procesador)
+        if not path_lcbin:
+            return
+
+        DBPolyglot.IndexPolyglot().update_soft()
+        self.refresh_book_combos()
+
+        book_name = os.path.basename(path_lcbin)[:-6]
+        book = Books.Book("P", book_name, path_lcbin, False)
+
+        self.gb_book_rival.setChecked(True)
+        self.cbBooksR.set_value(book)
+
+    def edit_selected_book(self, _is_rival=True):
+        book = self.cbBooksR.valor()
+        if book is None:
+            QTMessages.message_error(self, _("There is no book selected"))
+            return
+
+        if not book.is_factory_polyglot():
+            QTMessages.message_error(
+                self,
+                _("Standard Polyglot .bin books are read-only here. Select a .lcbin factory book to edit it."),
+            )
+            return
+
+        DBPolyglot.IndexPolyglot().update_soft()
+        WFactory.edit_polyglot(self.procesador, book.path)
+        self.refresh_book_combos()
 
     def opening_remove(self):
         self.opening_block = None
