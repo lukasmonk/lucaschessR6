@@ -22,7 +22,7 @@ class SwissWork:
         return UtilSQL.DictSQLMultiProcess(self.path, table)
 
     def put_swiss(
-            self,
+        self,
     ):
         season = self.swiss.read_season()
 

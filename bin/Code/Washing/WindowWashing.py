@@ -163,8 +163,7 @@ class WWashing(LCDialog.LCDialog):
         o_columns.nueva("INDEX", _("Index"), 60, align_center=True)
 
         self.grid = grid = Grid.Grid(self, o_columns, complete_row_select=True)
-        n_ancho_pgn = self.grid.width_columns_displayables() + 20
-        self.grid.setMinimumWidth(n_ancho_pgn)
+        n_ancho_pgn = self.grid.fix_min_width()
         self.register_grid(grid)
 
         ly0 = Colocacion.V().control(self.grid)

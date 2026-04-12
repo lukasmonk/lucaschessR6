@@ -230,7 +230,7 @@ class WKibCommon(QtWidgets.QDialog):
         self.orden_game(self.game)
 
     def stop(self):
-        if hasattr(self, 'engine_run') and self.engine_run:
+        if hasattr(self, "engine_run") and self.engine_run:
             self.engine_run.stop()
 
     def keyPressEvent(self, event):

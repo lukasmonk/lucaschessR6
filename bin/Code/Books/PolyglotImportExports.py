@@ -78,11 +78,11 @@ class WExportarPGN(QtWidgets.QDialog):
         self.lb_games = self.lb_games_white_number if side == WHITE else self.lb_games_black_number
 
     def set_positions(self, num):
-        self.lb_positions.setText(f'{num:,}'.replace(',', '.'))
+        self.lb_positions.setText(f"{num:,}".replace(",", "."))
         QTUtils.refresh_gui()
 
     def set_games(self, num):
-        self.lb_games.setText(f'{num:,}'.replace(',', '.'))
+        self.lb_games.setText(f"{num:,}".replace(",", "."))
         QTUtils.refresh_gui()
 
     def cancelar(self):
@@ -203,7 +203,7 @@ class PolyglotExport:
 
     def export_pgn(self):
         dir_salvados = Code.configuration.pgn_folder()
-        path = SelectFiles.salvaFichero(self.wpolyglot, _("File to save"), dir_salvados, "pgn", False)
+        path = SelectFiles.save_file(self.wpolyglot, _("File to save"), dir_salvados, "pgn", False)
         if not path:
             return
         folder = os.path.dirname(path)
@@ -362,7 +362,7 @@ class PolyglotImport:
 
         folder = dic.get("FOLDER_BIN", "")
 
-        path_bin = SelectFiles.leeFichero(self.wpolyglot, folder, "bin", titulo=_("Polyglot bin file name"))
+        path_bin = SelectFiles.read_file(self.wpolyglot, folder, "bin", titulo=_("Polyglot bin file name"))
         if not path_bin:
             return
 
@@ -680,7 +680,7 @@ class ImportarPGNDB(QtWidgets.QDialog):
             else:
                 previsto = int(tm1 * (self.total - valor))
                 time_message = QTMessages.time_message(previsto)
-                self.lb_previsto.set_text(f'{_("Pending time")}: {time_message}')
+                self.lb_previsto.set_text(f"{_('Pending time')}: {time_message}")
 
         QTUtils.refresh_gui()
         return not self._is_canceled

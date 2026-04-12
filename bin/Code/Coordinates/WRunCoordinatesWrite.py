@@ -106,19 +106,19 @@ class BoardEstaticoMensajeK(Board2.BoardEstatico):
     @staticmethod
     def gen_svg(txt, fill, stroke):
         plant_svg = (
-            '<svg height="40" width="40" xmlns="https://www.w3.org/2000/svg">'
+            '<svg height="40" width="40" xmlns="http://www.w3.org/2000/svg">'
             '<path style="fill:FILL;fill-opacity:1;stroke:STROKE;'
-            'stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;'
+            "stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;"
             'stroke-opacity:1;paint-order:stroke markers fill" d="M4.055 7.004h31.889v25.993H4.055z"/>'
             '<text alignment-baseline="middle" font-family="Arial" font-size="24" text-anchor="middle" '
             'x="19.789" y="28.59" style="fill:#feffff;fill-opacity:1;stroke:#feffff;stroke-opacity:1">'
-            'SQ</text></svg>'
+            "SQ</text></svg>"
         )
         return plant_svg.replace("SQ", txt).replace("FILL", fill).replace("STROKE", stroke)
 
     def show_svg_sq(self, sq, fill, stroke):
         svg = self.gen_svg(sq, fill, stroke)
-        dic = {'xml': svg, 'name': sq, 'ordenVista': 7}
+        dic = {"xml": svg, "name": sq, "ordenVista": 7}
         reg_svg = BoardTypes.Marker(dic=dic)
         reg_svg.a1h8 = sq + sq
         reg_svg.siMovible = False
@@ -145,7 +145,7 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
         LCDialog.LCDialog.__init__(
             self,
             owner,
-            f'{_("Coordinates")}: {_("Visualise and write")}',
+            f"{_('Coordinates')}: {_('Visualise and write')}",
             Iconos.CoordinatesWrite(),
             "runcoordinateswrite",
         )
@@ -205,27 +205,27 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
             self.show_info()
 
     def show_info(self):
-        done = f'{_("Done")}: {self.coord.str_done_info(self.pieces)}'
+        done = f"{_('Done')}: {self.coord.str_done_info(self.pieces)}"
         add_seconds = int(time.time() - self.time_ini) if self.time_ini else 0
-        tm = f'{_("Time")}: {self.coord.str_time(add_seconds)}'
-        errors = f'{_("Errors")}: {self.coord.errors}'
+        tm = f"{_('Time')}: {self.coord.str_time(add_seconds)}"
+        errors = f"{_('Errors')}: {self.coord.errors}"
         side = _("White") if self.side == WHITE else _("Black")
-        point = f'{_("Point of view")}: {side}'
-        self.lb_info.set_text(f'{done}<br><br>{tm}<br><br>{errors}<br><br>{point}')
+        point = f"{_('Point of view')}: {side}"
+        self.lb_info.set_text(f"{done}<br><br>{tm}<br><br>{errors}<br><br>{point}")
 
     def go_next(self):
         self.time_ini = None
         self.show_info()
         if self.coord.finished():
             mens = (
-                f'{_("Congratulations, goal achieved")}<br><br>'
-                f'{_("Errors")}: {self.coord.errors}<br>'
-                f'{_("Time")}: {self.coord.str_time()}<br>'
+                f"{_('Congratulations, goal achieved')}<br><br>"
+                f"{_('Errors')}: {self.coord.errors}<br>"
+                f"{_('Time')}: {self.coord.str_time()}<br>"
             )
             self.db_coordinates.refresh()
             if len(self.db_coordinates) > 1:
                 if self.coord.is_record:
-                    mens += f'<h2>{_("New record!")}<h2>'
+                    mens += f"<h2>{_('New record!')}<h2>"
             QTMessages.message_bold(self, mens)
             self.finalize()
             return

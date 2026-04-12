@@ -831,7 +831,6 @@ class ManagerTrainPositions(Manager.Manager):
         tmp_bp.mostrar()
         with open(nom_fns, "wt", encoding="utf-8", errors="ignore") as q:
             for n in range(nregs):
-
                 if tmp_bp.is_canceled():
                     break
 
@@ -842,7 +841,7 @@ class ManagerTrainPositions(Manager.Manager):
                 fen = li[0]
                 if len(li) < 3 or not li[2]:
                     # tutor a trabajar
-                    mrm = self.manager_rival.analiza(fen)
+                    mrm = self.manager_rival.analyze_fen(fen)
                     if not mrm.li_rm:
                         continue
                     rm = mrm.li_rm[0]

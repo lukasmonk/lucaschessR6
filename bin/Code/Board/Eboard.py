@@ -330,6 +330,7 @@ class Eboard:
             self.setup = False
             if Util.is_windows():
                 from ctypes import wintypes
+
                 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
                 kernel32.FreeLibrary.argtypes = [wintypes.HMODULE]
                 kernel32.FreeLibrary.restype = wintypes.BOOL

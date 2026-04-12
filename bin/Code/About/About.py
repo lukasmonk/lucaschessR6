@@ -14,7 +14,7 @@ class WAbout(QtWidgets.QDialog):
 
         # gen_web_bootstrap()
 
-        self.setWindowTitle(_("About"))  # noqa: F821
+        self.setWindowTitle(_("About"))
         self.setWindowIcon(Iconos.Aplicacion64())
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
@@ -23,13 +23,14 @@ class WAbout(QtWidgets.QDialog):
             | QtCore.Qt.WindowType.WindowMaximizeButtonHint
         )
 
-        f = Controles.FontTypeNew(point_size=10)
+        self.resize(1100, 700)  # Wider to see more tabs at once
+
+        self.f = Controles.FontTypeNew(point_size=10)
 
         head = f'<span style="font-size:30pt; font-weight="700"; font-family:arial; >{Code.lucas_chess}</span><br>'
         head += f'<span style="font-size:15pt;">{_X(_("version %1"), Code.VERSION)}</span><br>'
         head += (
-            f'<span style="font-size:10pt;>{_("Author")}: '
-            f'<a href="mailto:lukasmonk@gmail.com">Lucas Monge</a></span>'
+            f'<span style="font-size:10pt;>{_("Author")}: <a href="mailto:lukasmonk@gmail.com">Lucas Monge</a></span>'
         )
         head += f' - <a style="font-size:10pt;" href="{Code.web}">{Code.web}</a>'
         head += f' - <a style="font-size:10pt;" href="{Code.blog}">Blog : Fresh news</a>'
@@ -42,33 +43,78 @@ class WAbout(QtWidgets.QDialog):
         lb_ico = Controles.LB(self).put_image(Iconos.pmAplicacion64())
         lb_titulo = Controles.LB(self, head)
 
-        # Tabs
-        tab = Controles.Tab()
-        tab.set_font(f)
+        # Tabs setup
+        self.tab = Controles.Tab()
+        self.tab.set_font(self.f)
+        self.tab.currentChanged.connect(self.on_tab_changed)
 
-        ib = AboutBase.ThanksTo()
+        self.ib = AboutBase.ThanksTo()
+        self.tab_metadata = {}  # index -> (key, sa)
+        self.subtab_metadata = {}  # index -> (key, num, sa)
+        self.loaded_tabs = set()
+        self.loaded_subtabs = set()
 
-        sub_tab = None
-        for k, titulo in ib.dic.items():
-            txt = ib.texto(k)
-            lb = Controles.LB(self, txt)
-            lb.set_font(f)
+        self.sub_tab = None
+        self.engines_main_idx = -1
+
+        for k, titulo in self.ib.dic.items():
             if "-" in k:
                 base, num = k.split("-")
                 if num == "1":
-                    sub_tab = Controles.Tab()
-                    sub_tab.set_font(f)
-                    tab.addTab(sub_tab, _("Engines"))
-                lm = ib.list_engines(num)
-                titulo = f"{lm[0][0].split(' ')[1]} - {lm[-1][0].split(' ')[1]}"
-                sub_tab.addTab(lb, titulo)
+                    self.sub_tab = Controles.Tab()
+                    self.sub_tab.set_font(self.f)
+                    self.sub_tab.currentChanged.connect(self.on_subtab_changed)
+                    self.engines_main_idx = self.tab.addTab(self.sub_tab, _("Engines"))
+
+                # Create scroll area placeholder
+                sa = QtWidgets.QScrollArea(self)
+                sa.setWidgetResizable(True)
+
+                # Need title for subtabs (e.g. "Abrok - Cheng")
+                # This is relatively fast compared to generating the whole HTML
+                lm = self.ib.list_engines(num)
+                titulo_sub = f"{lm[0][0].split(' ')[1]} - {lm[-1][0].split(' ')[1]}"
+
+                idx = self.sub_tab.addTab(sa, titulo_sub)
+                self.subtab_metadata[idx] = (k, sa)
             else:
-                tab.addTab(lb, titulo)
+                sa = QtWidgets.QScrollArea(self)
+                sa.setWidgetResizable(True)
+                idx = self.tab.addTab(sa, titulo)
+                self.tab_metadata[idx] = (k, sa)
 
         ly_v1 = Colocacion.H().control(lb_ico).espacio(15).control(lb_titulo).relleno()
-        layout = Colocacion.V().otro(ly_v1).espacio(10).control(tab).margen(10)
+        layout = Colocacion.V().otro(ly_v1).espacio(10).control(self.tab).margen(10)
 
         self.setLayout(layout)
+
+        # Trigger load for the first tab
+        self.on_tab_changed(0)
+
+    def on_tab_changed(self, index):
+        if index == self.engines_main_idx:
+            # Ensure the current subtab is loaded
+            self.on_subtab_changed(self.sub_tab.currentIndex())
+            return
+
+        if index in self.tab_metadata and index not in self.loaded_tabs:
+            key, sa = self.tab_metadata[index]
+            self._fill_sa(key, sa)
+            self.loaded_tabs.add(index)
+
+    def on_subtab_changed(self, index):
+        if index in self.subtab_metadata and index not in self.loaded_subtabs:
+            key, sa = self.subtab_metadata[index]
+            self._fill_sa(key, sa)
+            self.loaded_subtabs.add(index)
+
+    def _fill_sa(self, key, sa):
+        txt = self.ib.texto(key)
+        lb = Controles.LB(self, txt)
+        lb.set_font(self.f)
+        lb.set_wrap()
+        sa.setWidget(lb)
+
 
 
 # def gen_web_bootstrap():

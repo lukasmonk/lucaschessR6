@@ -43,7 +43,7 @@ class ControlAnalysis:
             t = t.rstrip("0")
             if t[-1] == ".":
                 t = t[:-1]
-            return f'{_("Second(s)")}: {t}'
+            return f"{_('Second(s)')}: {t}"
         elif self.mrm.max_depth:
             return "%s: %d" % (_("Depth"), self.mrm.max_depth)
         else:
@@ -91,9 +91,9 @@ class ControlAnalysis:
 
     def pgn_active(self):
         num_mov = self.game.first_num_move()
-        style_number = f'color:{Code.dic_colors["PGN_NUMBER"]}; font-weight: bold;'
-        style_select = f'color:{Code.dic_colors["PGN_SELECT"]};font-weight: bold;'
-        style_moves = f'color:{Code.dic_colors["PGN_MOVES"]};'
+        style_number = f"color:{Code.dic_colors['PGN_NUMBER']}; font-weight: bold;"
+        style_select = f"color:{Code.dic_colors['PGN_SELECT']};font-weight: bold;"
+        style_moves = f"color:{Code.dic_colors['PGN_MOVES']};"
         li_pgn = []
         if self.game.starts_with_black:
             li_pgn.append('<span style="%s">%d...</span>' % (style_number, num_mov))
@@ -222,7 +222,6 @@ class CreateAnalysis:
             with QTMessages.WaitingMessage(
                 main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT, with_cancel=True
             ) as me:
-
                 game = move.game
                 mrm, pos = xengine.analyze_move(game, game.move_pos(move), me.dispatcher_analysis)
                 if pos >= 0:

@@ -219,6 +219,7 @@ class AnalyzeGame:
     si_bmt_blunders: bool
     si_tactic_blunders: bool
     si_bmt_brilliancies: bool
+    si_mates: bool
     li_selected: list | None
     bmt_listaBlunders: BMT.BMTLista | None
     bmt_listaBrilliancies: BMT.BMTLista | None
@@ -242,6 +243,8 @@ class AnalyzeGame:
 
         # Listas para resultados
         self.li_save_extra = []
+
+        self.si_mate = False
 
     def _setup_engine(self) -> None:
         """Configura el motor de análisis"""
@@ -287,6 +290,15 @@ class AnalyzeGame:
             if self.alm.tacticblunders
             else None
         )
+
+        self.mate_save_folder = (
+            Util.opj(Code.configuration.paths.folder_personal_trainings(),
+                     Util.valid_filename(self.alm.mates_saved_name)
+                     )
+            if self.alm.mates_saved_name
+            else None
+        )
+
         self.pgnblunders = self.alm.pgnblunders
         self.oriblunders = self.alm.oriblunders
         self.bmtblunders = self.alm.bmtblunders
@@ -404,10 +416,10 @@ class AnalyzeGame:
                     Util.create_folder(dtactics)
                 Util.create_folder(self.tacticblunders)
                 with open(
-                        Util.opj(self.tacticblunders, "Config.ini"),
-                        "wt",
-                        encoding="utf-8",
-                        errors="ignore",
+                    Util.opj(self.tacticblunders, "Config.ini"),
+                    "wt",
+                    encoding="utf-8",
+                    errors="ignore",
                 ) as f:
                     f.write(
                         f"""[COMMON]
@@ -562,9 +574,58 @@ class AnalyzeGame:
         tipo = "bmt_blunders" if si_blunder else "bmt_brilliancies"
         self.xsave_extra(tipo, bmt_uno, cl_game, txt_game)
 
+    def graba_mate(self, mate_save_folder, fen, mrm, game: Game.Game, njg):
+        """
+        Graba los mates encontrados en archivos "Mate in N.fns"
+        @param mate_save_folder: carpeta donde guardar los mates
+        @param fen: posición
+        @param mrm: multirespuesta del engine
+        @param game: partida
+        @param njg: número de jugada de la partida
+        """
+        if not mate_save_folder:
+            return
+
+        rm = mrm.li_rm[0]
+        if not rm.mate or rm.mate <= 0:
+            return
+
+        with contextlib.suppress(OSError):
+            # Crear la carpeta si no existe
+            if not os.path.isdir(mate_save_folder):
+                Util.create_folder(mate_save_folder)
+
+            # Calcular el número de movimientos hasta el mate (convertir plies a movimientos)
+            elems = len(rm.pv.split(" "))
+            mate_moves = elems // 2 + 1
+
+            # Crear el nombre del archivo
+            mate_filename = f"Mate in {mate_moves}.fns"
+            path = Util.opj(mate_save_folder, mate_filename)
+
+            # Preparar cabecera con etiquetas del PGN
+            cab = ""
+            for k, v in game.dic_tags().items():
+                ku = k.upper()
+                if ku not in ("RESULT", "FEN"):
+                    cab += f'[{k} "{v}"]'
+
+            # Crear un juego con el mate
+            p = Game.Game(fen=fen)
+            p.read_pv(rm.pv)
+
+            # Obtener la partida sin variaciones
+            game_raw = Game.game_without_variations(game)
+
+            # Grabar la línea usando xsave_extra
+            texto = f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg - 1)}\n"
+            self.xsave_extra("file", path, texto)
+            self.si_mate = True
+
     def xprocesa(self, game):
         self.si_bmt_blunders = False
         self.si_bmt_brilliancies = False
+        self.si_mates = False
 
         if self.alm.num_moves:
             li_moves = []
@@ -591,6 +652,7 @@ class AnalyzeGame:
 
         si_blunders = self.pgnblunders or self.oriblunders or self.bmtblunders or self.tacticblunders
         si_brilliancies = self.fnsbrilliancies or self.pgnbrilliancies or self.bmtbrilliancies
+        si_mates = bool(self.mate_save_folder)
 
         if self.bmtblunders and self.bmt_listaBlunders is None:
             self.bmt_listaBlunders = BMT.BMTLista()
@@ -729,15 +791,15 @@ class AnalyzeGame:
                 nag, color = mrm.set_nag_color(rm)
                 move.add_nag(nag)
 
-                if si_blunders or si_brilliancies or self.with_variations:
+                if si_blunders or si_brilliancies or si_mates or self.with_variations:
                     mj = mrm.li_rm[0]
 
                     fen = move.position_before.fen()
 
                     if (
-                            self.with_variations
-                            and allow_add_variations
-                            and not move.analysis_to_variations(self.alm, self.delete_previous)
+                        self.with_variations
+                        and allow_add_variations
+                        and not move.analysis_to_variations(self.alm, self.delete_previous)
                     ):
                         move.remove_all_variations()
 
@@ -746,13 +808,13 @@ class AnalyzeGame:
                         self.graba_tactic(game, pos_move, mrm, pos_act)
 
                         if self.save_pgn(
-                                self.pgnblunders,
-                                mrm.name,
-                                game.dic_tags(),
-                                fen,
-                                move,
-                                rm,
-                                mj,
+                            self.pgnblunders,
+                            mrm.name,
+                            game.dic_tags(),
+                            fen,
+                            move,
+                            rm,
+                            mj,
                         ):
                             si_poner_pgn_original_blunders = True
 
@@ -766,13 +828,13 @@ class AnalyzeGame:
                         self.save_brilliancies_fns(self.fnsbrilliancies, fen, mrm, game, pos_current_move)
 
                         if self.save_pgn(
-                                self.pgnbrilliancies,
-                                mrm.name,
-                                game.dic_tags(),
-                                fen,
-                                move,
-                                rm,
-                                None,
+                            self.pgnbrilliancies,
+                            mrm.name,
+                            game.dic_tags(),
+                            fen,
+                            move,
+                            rm,
+                            None,
                         ):
                             si_poner_pgn_original_brilliancies = True
 
@@ -780,6 +842,13 @@ class AnalyzeGame:
                             txt_game = Game.game_without_variations(game).save()
                             self.save_bmt(False, fen, mrm, pos_act, cl_game, txt_game)
                             self.si_bmt_brilliancies = True
+
+                    if si_mates:
+                        if mrm and mrm.li_rm:
+                            rm_best = mrm.rm_best()
+                            if rm_best and rm_best.mate > 0:
+                                self.graba_mate(self.mate_save_folder, fen, mrm, game, pos_current_move)
+                                self.si_mates = True
 
         # Ponemos el texto original en la ultima
         if si_poner_pgn_original_blunders and self.oriblunders:

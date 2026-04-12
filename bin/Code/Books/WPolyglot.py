@@ -74,7 +74,7 @@ class WPolyglot(LCDialog.LCDialog):
             edicion=Delegados.LineaTexto(is_integer=True),
         )
         self.grid_moves = Grid.Grid(self, o_columnas, is_editable=True)
-        self.grid_moves.setMinimumWidth(self.grid_moves.width_columns_displayables() + 20)
+        self.grid_moves.fix_min_width()
 
         self.tb = QTDialogs.LCTB(self)
         self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)

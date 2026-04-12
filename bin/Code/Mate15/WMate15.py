@@ -53,7 +53,7 @@ class WMate15(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.width_columns_displayables() + 30)
+        self.restore_video(default_width=self.glista.width_and_vbar() + 10)
 
         self.glista.gotop()
 

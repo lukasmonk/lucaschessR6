@@ -113,7 +113,7 @@ class PGNtoGame:
             return
 
         label: str = kv[:pos]
-        value: str = kv[pos + 1:].strip()
+        value: str = kv[pos + 1 :].strip()
         label_upper: str = label.upper()
 
         if label_upper == "FEN":

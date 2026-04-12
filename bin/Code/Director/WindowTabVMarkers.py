@@ -246,7 +246,7 @@ class WTVMarkers(LCDialog.LCDialog):
             key = "MARKERS"
             dic = Code.configuration.read_variables(key)
             folder = dic.get("PATH_SEEK", Code.configuration.paths.folder_userdata())
-            file = SelectFiles.leeFichero(self, folder, "svg", titulo=_("Image"))
+            file = SelectFiles.read_file(self, folder, "svg", titulo=_("Image"))
             if not file:
                 return
             dic["PATH_SEEK"] = os.path.dirname(file)

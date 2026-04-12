@@ -4,7 +4,9 @@ from typing import Callable, Optional
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util, Debug
+from Code.Z import Util
+if __debug__:
+    from Code import Debug
 from Code.Engines import EngineResponse, EngineRun, Engines, Priorities
 from Code.SQL import UtilSQL
 
@@ -137,6 +139,7 @@ class EngineManager:
         config_enginerun.args = self.engine.argumentos()
         config_enginerun.li_options_uci = self.engine.liUCI
         config_enginerun.faster_mode_always = self.allways_faster_mode
+        config_enginerun.priority = self.priority
         if self.engine.emulate_movetime:
             config_enginerun.emulate_movetime = True
 
@@ -159,8 +162,6 @@ class EngineManager:
     def stop(self):
         if self.engine_run:
             if __debug__:
-                from Code import Debug
-
                 Debug.prln(f"EngineManager.stop() called for {self.engine.name}", color="yellow")
             self.engine_run.stop()
 
@@ -168,8 +169,6 @@ class EngineManager:
         if self.is_closed:
             return
         if __debug__:
-            from Code import Debug
-
             Debug.prln(f"EngineManager.close() called for {self.engine.name} {self.huella}", color="yellow")
         self.is_closed = True
 
@@ -193,6 +192,9 @@ class EngineManager:
             except:
                 pass
             self.cache_analysis = None
+
+        if Code.list_engine_managers:
+            Code.list_engine_managers.cleanup_closed()
 
     def log_open(self):
         if self.fichero_log:
@@ -224,8 +226,7 @@ class EngineManager:
 
     def get_current_mrm(self) -> EngineResponse.MultiEngineResponse | None:
         if self.engine_run:
-            mrm = self.engine_run.get_mrm()
-            return mrm.clone() if mrm is not None else None
+            return self.engine_run.get_mrm()
         return None
 
     def is_run_fixed(self):

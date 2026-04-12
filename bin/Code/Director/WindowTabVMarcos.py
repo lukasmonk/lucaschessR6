@@ -27,7 +27,7 @@ class WTVMarco(QtWidgets.QDialog):
             reg_marco = TabVisual.PMarco()
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Save"), Iconos.Aceptar(), self.grabar),
+        (tb.new(_("Save"), Iconos.Aceptar(), self.grabar),)
         tb.new(_("Cancel"), Iconos.Cancelar(), self.reject)
 
         # Board

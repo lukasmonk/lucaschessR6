@@ -10,7 +10,7 @@ import Code
 from Code.Base import Game
 from Code.Base.Constantes import FEN_INITIAL, STANDARD_TAGS, TACTICTHEMES
 from Code.Databases import DBgamesST
-from Code.Openings import OpeningsStd
+from Code.Openings import OpeningsStd, ECO
 from Code.SQL import UtilSQL, RowidReader
 from Code.Z import Util
 
@@ -137,16 +137,16 @@ class DBgames:
                 lifields.append(f'"{key}"')
         sql_create = ",".join(licreate)
         sql_fields = ",".join(lifields)
-        sql_select = ",".join(['Games_old."%s"' % f.replace('"', '') for f in lifields])
+        sql_select = ",".join(['Games_old."%s"' % f.replace('"', "") for f in lifields])
 
         for sql in (
-                "PRAGMA foreign_keys=off;",
-                "BEGIN TRANSACTION;",
-                "ALTER TABLE Games RENAME TO Games_old;",
-                f"CREATE TABLE Games ({sql_create});",
-                f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
-                "DROP TABLE Games_old;",
-                "CREATE INDEX XPV_INDEX ON Games (XPV);",
+            "PRAGMA foreign_keys=off;",
+            "BEGIN TRANSACTION;",
+            "ALTER TABLE Games RENAME TO Games_old;",
+            f"CREATE TABLE Games ({sql_create});",
+            f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
+            "DROP TABLE Games_old;",
+            "CREATE INDEX XPV_INDEX ON Games (XPV);",
         ):
             try:
                 self.conexion.execute(sql)
@@ -170,13 +170,13 @@ class DBgames:
             cursor = self.conexion.execute("pragma table_info(Games)")
             if not cursor.fetchall():
                 for sql in (
-                        "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
-                        "CREATE INDEX XPV_INDEX ON Games (XPV);",
-                        "PRAGMA journal_mode = WAL;",
-                        "PRAGMA synchronous = NORMAL;",
-                        "PRAGMA temp_store = MEMORY;",
-                        "PRAGMA cache_size = -32000;",
-                        "PRAGMA mmap_size = 268435456;",
+                    "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
+                    "CREATE INDEX XPV_INDEX ON Games (XPV);",
+                    "PRAGMA journal_mode = WAL;",
+                    "PRAGMA synchronous = NORMAL;",
+                    "PRAGMA temp_store = MEMORY;",
+                    "PRAGMA cache_size = -32000;",
+                    "PRAGMA mmap_size = 268435456;",
                 ):
                     self.conexion.execute(sql)
                 self.conexion.commit()
@@ -718,7 +718,7 @@ class DBgames:
         fen, pv = self.read_xpv(raw["XPV"])
         if xpgn:
             if xpgn.startswith(BODY_SAVE):
-                pgn_read = xpgn[len(BODY_SAVE):].strip()
+                pgn_read = xpgn[len(BODY_SAVE) :].strip()
                 if fen:
                     pgn_read = b'[FEN "%s"]\n' % fen.encode() + pgn_read
                 ok, game = Game.pgn_game(pgn_read)
@@ -780,12 +780,17 @@ class DBgames:
         self.conexion.execute(sql, [value for field, value in li_field_value])
         self.conexion.commit()
 
-    def fill_pgn(self, field):
+    def fill_pgn(self, field, um):
         sql = "SELECT ROWID, XPV FROM Games"
         if self.filter:
             sql += f" WHERE {self.filter}"
         cursor = self.conexion.execute(sql)
-        for rowid, xpv in cursor.fetchall():
+        li = cursor.fetchall()
+        um.set_total_progressbar(len(li))
+        for pos, (rowid, xpv) in enumerate(li, 1):
+            if um.is_canceled():
+                break
+            um.set_value_progressbar(pos)
             if xpv.startswith("|"):
                 nada, fen, xpv = xpv.split("|")
                 pv = FasterCode.xpv_pv(xpv)
@@ -795,21 +800,50 @@ class DBgames:
             pgn = pgn.replace("\n", " ")
             sql = f"UPDATE Games SET {field}=? WHERE ROWID=?"
             self.conexion.execute(sql, [pgn, rowid])
+        um.set_hide_progressbar()
         self.conexion.commit()
 
-    def fill_opening(self, field):
+    def fill_opening(self, field, um):
         sql = "SELECT ROWID, XPV FROM Games"
         if self.filter:
             sql += f" WHERE {self.filter}"
         cursor = self.conexion.execute(sql)
         op_std = OpeningsStd.ap
-        for rowid, xpv in cursor.fetchall():
+        li = cursor.fetchall()
+        um.set_total_progressbar(len(li))
+        for pos, (rowid, xpv) in enumerate(li, 1):
+            if um.is_canceled():
+                break
+            um.set_value_progressbar(pos)
+
             if xpv.startswith("|"):
                 continue
             name = op_std.xpv(xpv)
             if name:
                 sql = f"UPDATE Games SET {field}=? WHERE ROWID=?"
                 self.conexion.execute(sql, [name, rowid])
+        um.set_hide_progressbar()
+        self.conexion.commit()
+
+    def fill_eco(self, field, um):
+        sql = "SELECT ROWID, XPV FROM Games"
+        if self.filter:
+            sql += f" WHERE {self.filter}"
+        cursor = self.conexion.execute(sql)
+        eco_std = ECO.get_eco()
+        li = cursor.fetchall()
+        um.set_total_progressbar(len(li))
+        for pos, (rowid, xpv) in enumerate(li, 1):
+            if um.is_canceled():
+                break
+            um.set_value_progressbar(pos)
+            if xpv.startswith("|"):
+                continue
+            pv = xpv_pv(xpv)
+            eco = eco_std.assign(pv)
+            sql = f"UPDATE Games SET {field}=? WHERE ROWID=?"
+            self.conexion.execute(sql, [eco, rowid])
+        um.set_hide_progressbar()
         self.conexion.commit()
 
     def pack(self):
@@ -897,11 +931,11 @@ class DBgames:
                     if n == next_n:
                         if time.time() - t1 > 0.5:
                             if not dl_tmp.actualiza(
-                                    erroneos + duplicados + importados,
-                                    erroneos,
-                                    duplicados,
-                                    importados,
-                                    btell * 100.0 / bsize,
+                                erroneos + duplicados + importados,
+                                erroneos,
+                                duplicados,
+                                importados,
+                                btell * 100.0 / bsize,
                             ):
                                 break
                             t1 = time.time()
@@ -968,7 +1002,6 @@ class DBgames:
 
                     for k in d_cab:
                         if k.upper() not in self.st_fields:
-
                             # Grabamos lo que hay
                             if li_regs:
                                 n_regs = 0
@@ -999,7 +1032,7 @@ class DBgames:
                             if rem_comvar_run:
                                 body = rem_comvar_run(body)
                                 is_raw = body is None or not (
-                                        b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
+                                    b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
                                 )
                             if not is_raw:
                                 data = memoryview(BODY_SAVE + body)
@@ -1083,11 +1116,11 @@ class DBgames:
             if btell == next_n:
                 if time.time() - t1 > 0.9:
                     if not dl_tmp.actualiza(
-                            erroneos + duplicados + importados,
-                            erroneos,
-                            duplicados,
-                            importados,
-                            btell * 100.0 / bsize,
+                        erroneos + duplicados + importados,
+                        erroneos,
+                        duplicados,
+                        importados,
+                        btell * 100.0 / bsize,
                     ):
                         break
                     t1 = time.time()
@@ -1399,7 +1432,7 @@ class DBgames:
 
         if li_rowids:
             for rowid in li_rowids:
-                li.append(f'ROWID = {rowid}')
+                li.append(f"ROWID = {rowid}")
 
         condicion = f"({' OR '.join(li)})"
         self.filter = condicion

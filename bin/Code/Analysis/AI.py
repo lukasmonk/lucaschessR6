@@ -130,7 +130,7 @@ class WPrompts(LCDialog.LCDialog):
         o_columns.nueva("name", _("Name"), 300)
         o_columns.nueva("web", _("Web"), 300)
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Close"), Iconos.MainMenu(), self.aceptar)

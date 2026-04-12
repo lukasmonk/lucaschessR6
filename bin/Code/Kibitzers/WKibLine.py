@@ -102,8 +102,8 @@ class WKibLine(QtWidgets.QMainWindow):
         self.bt_continue = add_bt(_("Continue"), Iconos.Kibitzer_Play(), self.play)
         self.bt_pause = add_bt(_("Pause"), Iconos.Kibitzer_Pause(), self.pause)
         bt_side = add_bt(_("Analyze color"), Iconos.Kibitzer_Side(), self.color)
-        self.bt_top = add_bt(f'{_("Enable")}: {_("window on top")}', Iconos.Pin(), self.window_top)
-        self.bt_bottom = add_bt(f'{_("Disable")}: {_("window on top")}', Iconos.Unpin(), self.window_bottom)
+        self.bt_top = add_bt(f"{_('Enable')}: {_('window on top')}", Iconos.Pin(), self.window_top)
+        self.bt_bottom = add_bt(f"{_('Disable')}: {_('window on top')}", Iconos.Unpin(), self.window_bottom)
         bt_options = add_bt(_("Options"), Iconos.Opciones(), self.change_options)
 
         self.em = Controles.EM(self)

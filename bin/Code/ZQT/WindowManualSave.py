@@ -130,8 +130,7 @@ class WManualSave(LCDialog.LCDialog):
         )
         o_columns.nueva("VALUE", _("Value"), 280, edicion=Delegados.LineaTextoUTF8())
         self.grid_labels = Grid.Grid(self, o_columns, is_editable=True, xid=1)
-        n = self.grid_labels.width_columns_displayables()
-        self.grid_labels.setFixedWidth(n + 20)
+        self.grid_labels.fix_width()
         self.register_grid(self.grid_labels)
 
         ##
@@ -285,7 +284,6 @@ class WManualSave(LCDialog.LCDialog):
 
     def depth_changed(self, mrm):
         if self.analyzing:
-
             li = []
             for rm in mrm.li_rm:
                 game = Game.Game(self.position)
@@ -306,7 +304,7 @@ class WManualSave(LCDialog.LCDialog):
 
     def pgn_select(self):
         dir_salvados = self.configuration.save_folder()
-        path = SelectFiles.salvaFichero(self, _("File to save"), dir_salvados, "pgn", False)
+        path = SelectFiles.save_file(self, _("File to save"), dir_salvados, "pgn", False)
         if path:
             carpeta, file = os.path.split(path)
             if carpeta != self.configuration.save_folder():
@@ -324,7 +322,7 @@ class WManualSave(LCDialog.LCDialog):
         dir_inicial = (
             self.configuration.paths.folder_personal_trainings() if self.fns is None else os.path.dirname(self.fns)
         )
-        path = SelectFiles.salvaFichero(self, _("File to save"), dir_inicial, "fns", False)
+        path = SelectFiles.save_file(self, _("File to save"), dir_inicial, "fns", False)
         if path:
             self.fns = path
             self.bt_fns.set_text(path)
@@ -354,7 +352,7 @@ class WManualSave(LCDialog.LCDialog):
             try:
                 xf = open(fich, "at", encoding=codec, errors="ignore")
             except:
-                QTMessages.message_error(self, _('Error opening file %s') % fich)
+                QTMessages.message_error(self, _("Error opening file %s") % fich)
                 xf = None
             return xf
 
@@ -364,7 +362,7 @@ class WManualSave(LCDialog.LCDialog):
                 f.write(xtxt)
                 QTMessages.temporary_message(self, f"{quien}: {_('Saved')}", time)
             except:
-                QTMessages.message_error(self, _('Error writing to file %s') % fich)
+                QTMessages.message_error(self, _("Error writing to file %s") % fich)
             xf.close()
 
         pc = self.crea_game()

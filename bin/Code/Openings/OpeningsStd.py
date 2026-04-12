@@ -7,60 +7,91 @@ from Code.Z import Util
 from Code.Base import Position
 from Code.Translations import TrListas
 
+# ---------------------------------------------------------------------------
+# Piece-letter set used by tr_pgn (pre-computed at module level)
+# ---------------------------------------------------------------------------
+_PIECE_LETTERS = frozenset("KQRBNPkqrbnp")
+
 
 class Opening:
-    def __init__(self, key):
-        self.name = key
-        self.parent_fm2 = ""
-        self.children_fm2 = []
-        self.a1h8 = ""
-        self.pgn = ""
-        self.eco = ""
-        self.is_basic = False
-        self.fm2 = None
+    __slots__ = ("name", "parent_fm2", "children_fm2", "a1h8", "pgn", "eco", "is_basic", "fm2")
+
+    def __init__(self, key: str):
+        self.name: str = key
+        self.parent_fm2: str = ""
+        self.children_fm2: list = []
+        self.a1h8: str = ""
+        self.pgn: str = ""
+        self.eco: str = ""
+        self.is_basic: bool = False
+        self.fm2: str | None = None
 
     @property
-    def tr_name(self):
+    def tr_name(self) -> str:
         return _FO(self.name)
 
-    def tr_pgn(self):
-        p = ""
-        pzs = "KQRBNPkqrbnp"
+    def tr_pgn(self) -> str:
+        """Return the PGN notation with piece letters translated to the UI language."""
+        parts = []
         pgn = self.pgn
+        last = len(pgn) - 1
         for n, c in enumerate(pgn):
-            if c in pzs and not pgn[n + 1].isdigit():
+            if c in _PIECE_LETTERS and (n == last or not pgn[n + 1].isdigit()):
                 c = TrListas.letter_piece(c)
-            p += c
-        return p
+            parts.append(c)
+        return "".join(parts)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} {self.pgn}"
+
+    def __repr__(self) -> str:
+        return f"Opening({self.name!r}, eco={self.eco!r})"
 
 
 class ListaOpeningsStd:
     def __init__(self):
-        self.st_fenm2_test = set()
-        self.dic_fenm2_op, self.dic_fenm2_op_all = {}, {}
+        self.st_fenm2_test: set = set()
+        self.dic_fenm2_op: dict = {}
+        self.dic_fenm2_op_all: dict = {}
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
 
     @staticmethod
-    def read_fenm2_test():
-        path = Code.path_resource("Openings", "openings.lkfen")
-        with open(path, "rt") as q:
-            st_fenm2 = set(q.read().split("|"))
+    def _iter_lkop_lines():
+        """Yield parsed field-tuples from openings.lkop."""
+        path = Code.path_resource("Openings", "openings.lkop")
+        with open(path, "rt", encoding="utf-8") as fh:
+            for linea in fh:
+                yield linea.rstrip("\n").split("|")
 
-        return st_fenm2
+    # ------------------------------------------------------------------
+    # Static readers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def read_fenm2_test() -> set:
+        path = Code.path_resource("Openings", "openings.lkfen")
+        with open(path, "rt") as fh:
+            return set(fh.read().split("|"))
 
     @staticmethod
     def read_fenm2_op():
+        """Read the main openings file and return the three data structures."""
         path = Code.path_resource("Openings", "openings.lkop")
-        dic_fenm2_op = {}
-        dic_fenm2_op_all = collections.defaultdict(set)
-        st_fenm2_test = set()
-        with open(path, "rt", encoding="utf-8") as q:
-            for linea in q:
-                name, a1h8, pgn, eco, basic, fenm2, hijos, parent, lfenm2 = linea.strip().split("|")
+        dic_fenm2_op: dict = {}
+        dic_fenm2_op_all: collections.defaultdict = collections.defaultdict(set)
+        st_fenm2_test: set = set()
 
-                dic_fenm2_op[fenm2] = op = Opening(name)
+        INITIAL_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -"
+
+        with open(path, "rt", encoding="utf-8") as fh:
+            for linea in fh:
+                fields = linea.rstrip("\n").split("|")
+                name, a1h8, pgn, eco, basic, fenm2, _hijos, parent, lfenm2 = fields
+
+                op = Opening(name)
                 op.a1h8 = a1h8
                 op.eco = eco
                 op.pgn = pgn
@@ -68,55 +99,62 @@ class ListaOpeningsStd:
                 op.is_basic = basic == "Y"
                 op.fm2 = fenm2
 
+                dic_fenm2_op[fenm2] = op
+                dic_fenm2_op_all[fenm2].add(op)
+                st_fenm2_test.add(fenm2)
                 if parent:
                     st_fenm2_test.add(parent)
-                st_fenm2_test.add(fenm2)
-                dic_fenm2_op_all[fenm2].add(op)
 
                 li_pv = a1h8.split(" ")
                 li_fenm2 = lfenm2.split(",")
-                for x in range(len(li_pv)):
-                    fenm2 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -" if x == 0 else li_fenm2[x - 1]
-                    dic_fenm2_op_all[fenm2].add(op)
-                    st_fenm2_test.add(fenm2)
+                for x, _ in enumerate(li_pv):
+                    fm2_x = INITIAL_FEN if x == 0 else li_fenm2[x - 1]
+                    dic_fenm2_op_all[fm2_x].add(op)
+                    st_fenm2_test.add(fm2_x)
 
         return dic_fenm2_op, dic_fenm2_op_all, st_fenm2_test
 
     @staticmethod
-    def dic_fen64():
+    def dic_fen64() -> dict:
+        """Return {fen64: [pv, ...]} for every intermediate position in openings.lkop."""
         path = Code.path_resource("Openings", "openings.lkop")
-        dd = collections.defaultdict(list)
-        with open(path, "rt", encoding="utf-8") as q:
-            for linea in q:
-                name, a1h8, pgn, eco, basic, fenm2, hijos, parent, lfenm2 = linea.strip().split("|")
+        dd: collections.defaultdict = collections.defaultdict(list)
 
-                li_fen = [p for p in lfenm2.split(",")]
-                li_fen.append(fenm2)
-                li = a1h8.split(" ")
+        with open(path, "rt", encoding="utf-8") as fh:
+            for linea in fh:
+                fields = linea.rstrip("\n").split("|")
+                _name, a1h8, _pgn, _eco, _basic, _fenm2, _hijos, _parent, lfenm2 = fields
 
-                for pos in range(len(li)):
-                    pv = " ".join(li[: pos + 1])
-                    # xpv = FasterCode.pv_xpv(pv)
-                    fen = li_fen[pos]
-                    fen64 = Util.fen_fen64(fen)
+                li_fen = lfenm2.split(",")
+                li_moves = a1h8.split(" ")
+
+                for pos, move in enumerate(li_moves):
+                    pv = " ".join(li_moves[: pos + 1])
+                    fen64 = Util.fen_fen64(li_fen[pos])
                     if pv not in dd[fen64]:
                         dd[fen64].append(pv)
+
         return dd
 
+    # ------------------------------------------------------------------
+    # Initialisation / reload
+    # ------------------------------------------------------------------
+
     def reset(self):
+        """(Re)load all opening data from disk."""
         self.dic_fenm2_op, self.dic_fenm2_op_all, self.st_fenm2_test = self.read_fenm2_op()
         self.read_personal()
 
     def read_personal(self):
+        """Merge user-defined personal openings into the loaded data."""
         fichero_pers = Code.configuration.paths.file_pers_openings()
         lista = Util.restore_pickle(fichero_pers, [])
         for reg in lista:
-            estandar = reg["ESTANDAR"]
             op = Opening(reg["NOMBRE"])
             op.eco = reg["ECO"]
             op.a1h8 = reg["A1H8"]
             op.pgn = reg["PGN"]
-            op.is_basic = estandar
+            op.is_basic = reg["ESTANDAR"]
             li_uci = op.a1h8.split(" ")
             num = len(li_uci)
             for x in range(num):
@@ -128,19 +166,34 @@ class ListaOpeningsStd:
                     self.dic_fenm2_op[fm2] = op
                     op.fm2 = fm2
 
-    def assign_opening(self, game):
+    # ------------------------------------------------------------------
+    # Opening assignment
+    # ------------------------------------------------------------------
+
+    def assign_opening(self, game) -> None:
+        """Assign the deepest matching opening to *game*.
+
+        Sets ``game.opening`` (an :class:`Opening` or ``None``) and marks
+        moves up to the last recognised position with ``in_the_opening = True``.
+
+        The search stops early after 10 consecutive unrecognised positions to
+        avoid scanning the rest of a long game needlessly.
+        """
         game.opening = None
         game.pending_opening = True
 
         without = 0
         last_move_opening = -1
+        st = self.st_fenm2_test
+        dic = self.dic_fenm2_op
+
         for nj, move in enumerate(game.li_moves):
             fm2 = move.position.fenm2()
-            if fm2 in self.st_fenm2_test:
-                if fm2 in self.dic_fenm2_op:
-                    game.opening = self.dic_fenm2_op[fm2]
+            if fm2 in st:
+                if fm2 in dic:
+                    game.opening = dic[fm2]
                 last_move_opening = nj
-
+                without = 0  # reset streak on any recognised fen
             else:
                 without += 1
                 if without == 10:
@@ -148,59 +201,93 @@ class ListaOpeningsStd:
                     break
 
         if last_move_opening >= 0:
-            for np in range(last_move_opening+1):
+            for np in range(last_move_opening + 1):
                 game.move(np).in_the_opening = True
 
-    def list_possible_openings(self, game):
-        li_openings = []
+    # ------------------------------------------------------------------
+    # Possible-openings query
+    # ------------------------------------------------------------------
+
+    def list_possible_openings(self, game) -> list:
+        """Return openings reachable from *game*'s current position, sorted."""
         fm2 = game.last_position.fenm2()
-        if fm2 in self.dic_fenm2_op_all:
-            op_select = self.dic_fenm2_op.get(fm2)
-            for op in self.dic_fenm2_op_all[fm2]:
-                if op != op_select:
-                    li_openings.append(op)
+        if fm2 not in self.dic_fenm2_op_all:
+            return []
+
+        op_select = self.dic_fenm2_op.get(fm2)
+        li_openings = [op for op in self.dic_fenm2_op_all[fm2] if op != op_select]
+
+        # Remove openings whose a1h8 is a prefix of another (keep the longer ones)
         li_openings.sort(key=lambda xop: xop.a1h8)
-        li = []
-        ultima = "zzzz"
+        deduped = []
+        last_a1h8 = ""
         for op in li_openings:
-            if not op.a1h8.startswith(ultima):
-                ultima = op.a1h8
-                li.append(op)
-        li.sort(key=lambda xop: ("A" if xop.is_basic else "B") + xop.tr_name.upper())
-        return li
+            if not op.a1h8.startswith(last_a1h8):
+                last_a1h8 = op.a1h8
+                deduped.append(op)
 
-    def base_xpv(self, xpv):
-        lipv = FasterCode.xpv_pv(xpv).split(" ")
+        deduped.sort(key=lambda xop: ("A" if xop.is_basic else "B") + xop.tr_name.upper())
+        return deduped
+
+    # ------------------------------------------------------------------
+    # xpv / pv helpers (shared implementation)
+    # ------------------------------------------------------------------
+
+    def _lookup_last_opening(self, pv_str: str):
+        """Walk *pv_str* move by move and return the deepest matching Opening."""
         last_ap = None
-
         FasterCode.set_init_fen()
-        for n, pv in enumerate(lipv):
+        for pv in pv_str.split(" "):
             FasterCode.make_move(pv)
-            fen = FasterCode.get_fen()
-            fenm2 = Position.legal_fenm2(fen)
+            fenm2 = Position.legal_fenm2(FasterCode.get_fen())
             if fenm2 in self.dic_fenm2_op:
                 last_ap = self.dic_fenm2_op[fenm2]
         return last_ap
 
-    def xpv(self, xpv):
+    def base_xpv(self, xpv):
+        return self._lookup_last_opening(FasterCode.xpv_pv(xpv))
+
+    def xpv(self, xpv) -> str:
         last_ap = self.base_xpv(xpv)
         return last_ap.tr_name if last_ap else ""
 
-    def assign_pv(self, pv):
-        lipv = pv.split(" ")
-        last_ap = None
+    def xpv_eco(self, xpv) -> str:
+        last_ap = self.base_xpv(xpv)
+        return last_ap.eco if last_ap else ""
 
-        FasterCode.set_init_fen()
-        for n, pv in enumerate(lipv):
-            FasterCode.make_move(pv)
-            fen = FasterCode.get_fen()
-            fenm2 = Position.legal_fenm2(fen)
-            if fenm2 in self.dic_fenm2_op:
-                last_ap = self.dic_fenm2_op[fenm2]
-        return last_ap
+    def assign_pv(self, pv: str):
+        """Return the deepest Opening matching the UCI pv string, or None."""
+        return self._lookup_last_opening(pv)
 
-    def is_book_fenm2(self, fenm2):
+    # ------------------------------------------------------------------
+    # Utility
+    # ------------------------------------------------------------------
+
+    def is_book_fenm2(self, fenm2: str) -> bool:
+        """Return True if *fenm2* is part of any known opening."""
         return fenm2 in self.st_fenm2_test
 
 
-ap = ListaOpeningsStd()
+# ---------------------------------------------------------------------------
+# Module-level singleton – lazy initialisation so import is free
+# ---------------------------------------------------------------------------
+class _LazySingleton:
+    """Proxy that initialises ListaOpeningsStd on first attribute access."""
+
+    _instance: ListaOpeningsStd | None = None
+
+    def _get(self) -> ListaOpeningsStd:
+        if self._instance is None:
+            inst = ListaOpeningsStd.__new__(ListaOpeningsStd)
+            ListaOpeningsStd.__init__(inst)
+            self._instance = inst
+        return self._instance
+
+    def __getattr__(self, name):
+        return getattr(self._get(), name)
+
+    def reset(self):
+        self._get().reset()
+
+
+ap: ListaOpeningsStd = _LazySingleton()  # type: ignore[assignment]

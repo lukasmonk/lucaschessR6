@@ -1,4 +1,3 @@
-
 import Code
 from Code.Z import Util
 from Code.QT import Iconos, QTDialogs, QTMessages
@@ -35,7 +34,7 @@ class RemoveResults:
         resp = menu.lanza()
         if resp:
             action, label = resp
-            mens = f'{label}\n\n{_("Remove results")}\n\n\n{_("Are you sure?")}'
+            mens = f"{label}\n\n{_('Remove results')}\n\n\n{_('Are you sure?')}"
             if not QTMessages.pregunta(self.wowner, mens):
                 return
             action()

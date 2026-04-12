@@ -36,7 +36,7 @@ def dame_categoria(w_parent):
 
     menu.separador()
     submenu_rival = menu.submenu(
-        f'{_("Opponent")}: {rival.name} [{categorias.puntuacion()} {_("pts")}]',
+        f"{_('Opponent')}: {rival.name} [{categorias.puntuacion()} {_('pts')}]",
         Iconos.NuevaPartida(),
     )
     submenu_rival.setFont(font_normal)
@@ -104,7 +104,7 @@ def dame_categoria(w_parent):
     menu.separador()
     menu.opcion(
         None,
-        f'{_("Total score")}: {dbm.puntuacion()} {_("pts")}',
+        f"{_('Total score')}: {dbm.puntuacion()} {_('pts')}",
         Iconos.MoverMas(),
         font_type=font_bold,
     )
@@ -172,10 +172,10 @@ class WDatos(QtWidgets.QDialog):
 
         # Rival
         lb_r_motor = (
-            Controles.LB(self, f'<b>{_("Engine")}</b> : {rival.name}').set_font(flb).set_wrap().relative_width(400)
+            Controles.LB(self, f"<b>{_('Engine')}</b> : {rival.name}").set_font(flb).set_wrap().relative_width(400)
         )
         lb_r_autor = (
-            Controles.LB(self, f'<b>{_("Author")}</b> : {rival.autor}').set_font(flb).set_wrap().relative_width(400)
+            Controles.LB(self, f"<b>{_('Author')}</b> : {rival.autor}").set_font(flb).set_wrap().relative_width(400)
         )
         lb_r_web = (
             Controles.LB(self, f'<b>{_("Web")}</b> : <a href="{rival.url}">{rival.url}</a>')
@@ -190,10 +190,10 @@ class WDatos(QtWidgets.QDialog):
         # Tutor
         tutor = Code.configuration.engines.engine_tutor()
         lb_t_motor = (
-            Controles.LB(self, f'<b>{_("Engine")}</b> : {tutor.name}').set_font(flb).set_wrap().relative_width(400)
+            Controles.LB(self, f"<b>{_('Engine')}</b> : {tutor.name}").set_font(flb).set_wrap().relative_width(400)
         )
         lb_t_autor = (
-            Controles.LB(self, f'<b>{_("Author")}</b> : {tutor.autor}').set_font(flb).set_wrap().relative_width(400)
+            Controles.LB(self, f"<b>{_('Author')}</b> : {tutor.autor}").set_font(flb).set_wrap().relative_width(400)
         )
         ly = Colocacion.V().control(lb_t_motor).control(lb_t_autor)
 
@@ -246,7 +246,7 @@ class WDatos(QtWidgets.QDialog):
             color = "B" if self.rb_white.isChecked() else "N"
             if color not in self.maxNivelHecho:
                 p = self.max_puntos
-        self.lbPuntos.setText(f'{p} {_("points")}')
+        self.lbPuntos.setText(f"{p} {_('points')}")
         self.puntos = p
 
 

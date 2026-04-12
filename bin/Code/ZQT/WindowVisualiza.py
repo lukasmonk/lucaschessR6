@@ -46,7 +46,7 @@ class WControl(LCDialog.LCDialog):
         o_columns.nueva("ISATTACKED", _("Is attacked?"), 80, align_center=True)
         o_columns.nueva("ISATTACKING", _("Is attacking?"), 80, align_center=True)
         self.ghistorico = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
+        self.ghistorico.fix_min_width()
 
         # Toolbar
         self.tb = QTDialogs.LCTB(self)
@@ -268,7 +268,7 @@ class WPlay(LCDialog.LCDialog):
         self.liFENs = dicdatos["FENS"]
 
         mas = "x" if self.intervalo_por_pieza else ""
-        titulo = f'{site} ({mas}{self.intervalo})'
+        titulo = f"{site} ({mas}{self.intervalo})"
 
         super(WPlay, self).__init__(owner, titulo, Iconos.Gafas(), "visualplay")
 

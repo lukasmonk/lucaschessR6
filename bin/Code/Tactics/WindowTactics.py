@@ -37,7 +37,7 @@ class WHistoricoTacticas(LCDialog.LCDialog):
         o_columns.nueva("ERRORS", _("Errors"), 100, align_center=True)
         o_columns.nueva("FACTOR", "∇", 120, align_center=True)
         self.ghistorico = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
+        self.ghistorico.fix_min_width()
 
         # Toolbar
         self.tb = Controles.TBrutina(self)
@@ -263,7 +263,7 @@ class WConfTactics(QtWidgets.QWidget):
             edicion=Delegados.LineaTexto(is_integer=True),
         )
         self.grid_jumps = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="j")
-        self.grid_jumps.setMinimumWidth(self.grid_jumps.width_columns_displayables() + 20)
+        self.grid_jumps.fix_min_width()
         ly = Colocacion.V().control(tb).control(self.grid_jumps)
         gb_jumps = Controles.GB(self, _("Repetitions of each puzzle"), ly).set_font(f)
         self.grid_jumps.gotop()
@@ -285,7 +285,7 @@ class WConfTactics(QtWidgets.QWidget):
             edicion=Delegados.ComboBox(self.liREPEATtxt),
         )
         self.grid_repeat = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="r")
-        self.grid_repeat.setMinimumWidth(self.grid_repeat.width_columns_displayables() + 20)
+        self.grid_repeat.fix_min_width()
         ly = Colocacion.V().control(tb).control(self.grid_repeat)
         gb_repeat = Controles.GB(self, _("Blocks"), ly).set_font(f)
         self.grid_repeat.gotop()
@@ -307,7 +307,7 @@ class WConfTactics(QtWidgets.QWidget):
         )
         o_col.nueva("PENAL_%", _("Affected"), 100, align_center=True)
         self.grid_penal = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="p")
-        self.grid_penal.setMinimumWidth(self.grid_penal.width_columns_displayables() + 20)
+        self.grid_penal.fix_min_width()
         ly = Colocacion.V().control(tb).control(self.grid_penal)
         gb_penal = Controles.GB(self, _("Penalties"), ly).set_font(f)
         self.grid_penal.gotop()
@@ -330,7 +330,7 @@ class WConfTactics(QtWidgets.QWidget):
         )
         o_col.nueva("SHOW_%", _("Affected"), 100, align_center=True)
         self.grid_show = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="s")
-        self.grid_show.setMinimumWidth(self.grid_show.width_columns_displayables() + 20)
+        self.grid_show.fix_min_width()
         ly = Colocacion.V().control(tb).control(self.grid_show)
         gb_show = Controles.GB(self, _("Show the reference associated with each puzzle"), ly).set_font(f)
         self.grid_show.gotop()
@@ -399,7 +399,7 @@ class WConfTactics(QtWidgets.QWidget):
             edicion=Delegados.LineaTexto(is_integer=True),
         )
         self.grid_files = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True, xid="f")
-        self.grid_files.setMinimumWidth(self.grid_files.width_columns_displayables() + 20)
+        self.grid_files.fix_min_width()
         ly = Colocacion.V().control(self.grid_files)
         gb_files = Controles.GB(self, _("FNS files"), ly).set_font(f)
         self.grid_files.gotop()

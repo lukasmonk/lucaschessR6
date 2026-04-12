@@ -67,13 +67,13 @@ class WPanelDirector(LCDialog.LCDialog):
                 _("Remove"),
                 Iconos.Remove1(),
                 self.gborrar,
-                f"{_("Remove")} - {_("Backspace key")}",
+                f"{_('Remove')} - {_('Backspace key')}",
             ),
             (
                 _("Remove all"),
                 Iconos.Borrar(),
                 self.remove_all,
-                f"{_("Remove all")} - {_("Delete key")}",
+                f"{_('Remove all')} - {_('Delete key')}",
             ),
             None,
             (_("Up"), Iconos.Arriba(), self.garriba),
@@ -687,7 +687,7 @@ class WPanelDirector(LCDialog.LCDialog):
 
     # def grabarFichero(self):
     #     dir_salvados = self.configuration.save_folder()
-    #     resp = SelectFiles.salvaFichero(self, _("File to save"), dir_salvados, "png", False)
+    #     resp = SelectFiles.save_file(self, _("File to save"), dir_salvados, "png", False)
     #     if resp:
     #         self.board.save_as_img(resp, "png")
     #         txt = resp

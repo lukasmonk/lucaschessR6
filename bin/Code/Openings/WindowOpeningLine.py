@@ -863,6 +863,9 @@ class WLines(LCDialog.LCDialog):
         form.spinbox(_("Depth"), 3, 999, 50, dic_vars.get("IPGN_DEPTH", 999))
         form.separador()
 
+        form.checkbox(_("Only in the opening phase"), dic_vars.get("IPGN_OPENING", False) )
+        form.separador()
+
         li_variations = (
             (_("All"), ALL),
             (_("None"), NONE),
@@ -884,19 +887,20 @@ class WLines(LCDialog.LCDialog):
         if resultado:
             accion, li_resp = resultado
             dic_vars["IPGN_DEPTH"] = depth = li_resp[0]
-            dic_vars["IPGN_VARIATIONSMODE"] = variations = li_resp[1]
-            dic_vars["IPGN_COMMENTS"] = comments = li_resp[2]
+            dic_vars["IPGN_OPENING"] = in_opening = li_resp[1]
+            dic_vars["IPGN_VARIATIONSMODE"] = variations = li_resp[2]
+            dic_vars["IPGN_COMMENTS"] = comments = li_resp[3]
             self.write_config_vars(dic_vars)
-            return depth, variations, comments
+            return depth, in_opening, variations, comments
         else:
-            return None, None, None
+            return None, None, None, None
 
     def import_database(self, game):
         path_db = QTDialogs.select_db(self, self.configuration, True, False)
         if not path_db:
             return
 
-        depth, variations, comments = self.read_params_import(path_db)
+        depth, in_opening, variations, comments = self.read_params_import(path_db)
         if depth is not None:
             self.dbop.import_db(self, game, path_db, depth, variations, comments)
             self.glines.refresh()
@@ -912,17 +916,17 @@ class WLines(LCDialog.LCDialog):
         dic_vars = self.read_config_vars()
         carpeta = dic_vars.get("CARPETAPGN", self.configuration.paths.folder_userdata())
 
-        li_path_pgn = SelectFiles.leeFicheros(self, carpeta, "pgn", titulo=_("File to import"))
+        li_path_pgn = SelectFiles.read_files(self, carpeta, "pgn", titulo=_("File to import"))
         if not li_path_pgn:
             return
         dic_vars["CARPETAPGN"] = os.path.dirname(li_path_pgn[0])
         self.write_config_vars(dic_vars)
 
-        depth, variations, comments = self.read_params_import(li_path_pgn[0])
+        depth, in_opening, variations, comments = self.read_params_import(li_path_pgn[0])
 
         if depth is not None:
             for path_pgn in li_path_pgn:
-                if not self.dbop.import_pgn(self, game, path_pgn, depth, variations, comments):
+                if not self.dbop.import_pgn(self, game, path_pgn, depth, in_opening, variations, comments):
                     break
             self.glines.refresh()
             self.glines.gotop()
@@ -957,7 +961,7 @@ class WLines(LCDialog.LCDialog):
         dic_var = self.read_config_vars()
         carpeta = dic_var.get("CARPETAPGN", self.configuration.paths.folder_userdata())
 
-        li_path_pgn = SelectFiles.leeFicheros(self, carpeta, "pgn", titulo=_("File to import"))
+        li_path_pgn = SelectFiles.read_files(self, carpeta, "pgn", titulo=_("File to import"))
         if not li_path_pgn:
             return
         fichero_pgn = li_path_pgn[0]
@@ -973,7 +977,7 @@ class WLines(LCDialog.LCDialog):
     def ta_import_other_comments(self):
         current_path = self.dbop.path_file
 
-        file_opk = SelectFiles.leeFichero(self, os.path.dirname(current_path), "opk", titulo=_("Opening lines"))
+        file_opk = SelectFiles.read_file(self, os.path.dirname(current_path), "opk", titulo=_("Opening lines"))
         if not file_opk or Util.same_path(current_path, file_opk):
             return
 
@@ -1151,7 +1155,7 @@ class WLines(LCDialog.LCDialog):
                 with QTMessages.WaitingMessage(self, mens, with_cancel=True) as wmsg:
 
                     def dispatch(rm, ms):
-                        wmsg.label(f'{mens}<br><small>{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}')
+                        wmsg.label(f"{mens}<br><small>{_('Depth')}: {rm.depth} {_('Time')}: {ms / 1000:.01f}")
                         return not wmsg.is_canceled()
 
                     mrm, pos = xanalyzer.analyze_move(game, len(game) - 1, dispatch)
@@ -1309,7 +1313,7 @@ class WLines(LCDialog.LCDialog):
         elif resp == "lines":
             li_gen = [FormLayout.separador]
             config = FormLayout.Editbox(
-                f"<div align=\"right\">{_('Lines')}<br>{_('By example:')} -5,8-12,14,19-",
+                f'<div align="right">{_("Lines")}<br>{_("By example:")} -5,8-12,14,19-',
                 rx=r"[0-9,\-]*",
             )
             li_gen.append((config, ""))
@@ -1484,7 +1488,7 @@ class WLines(LCDialog.LCDialog):
                                 del dic_a1h8[a1h8]
 
                 if xmanager and len(dic_a1h8) > 1:
-                    mrm = xmanager.analiza(fen)
+                    mrm = xmanager.analyze_fen(fen)
                     li_analisis = []
                     for a1h8 in dic_a1h8:
                         rm, pos = mrm.search_rm(a1h8)

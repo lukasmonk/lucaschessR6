@@ -42,7 +42,7 @@ class WritingDown(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.width_columns_displayables() + 20)
+        self.restore_video(default_width=self.glista.width_and_vbar())
         self.glista.gotop()
 
     def grid_doble_click(self, grid, row, obj_column):
@@ -112,7 +112,7 @@ class WritingDown(LCDialog.LCDialog):
             else:
                 return "%d/%d" % (moves, total)
         elif col == "TIME":
-            return f"{reg['TIME']:0.2f}\""
+            return f'{reg["TIME"]:0.2f}"'
         elif col == "HINTS":
             return str(reg["HINTS"])
         elif col == "ERRORS":

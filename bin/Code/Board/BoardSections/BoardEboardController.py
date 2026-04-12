@@ -20,7 +20,6 @@ class BoardEboardController:
         if Code.eboard.fen_eboard == board.last_position.fen():
             return 0
         if board.allow_takeback():
-
             against_engine = board.main_window.manager.xrival is not None
             if against_engine and hasattr(board.main_window.manager, "play_against_engine"):
                 against_engine = board.main_window.manager.play_against_engine
@@ -44,7 +43,6 @@ class BoardEboardController:
     def dispatch_eboard(self, quien, a1h8):
         board = self._board
         if board.mensajero and board.pieces_are_active and board.allow_eboard:
-
             if quien == "whiteMove":
                 Code.eboard.allowHumanTB = False
                 if not board.side_pieces_active:

@@ -1,4 +1,3 @@
-import os
 import re
 import time
 
@@ -53,7 +52,7 @@ class WImportPGN(LCDialog.LCDialog):
 
     def _create_source_section(self):
         """Crea la sección de selección de origen."""
-        gb = QtWidgets.QGroupBox(_("1. " + _("Source")))
+        gb = QtWidgets.QGroupBox("1. " + _("Source"))
         Code.configuration.set_property(gb, "title")
 
         ly = Colocacion.V().margen(10)
@@ -72,7 +71,7 @@ class WImportPGN(LCDialog.LCDialog):
 
     def _create_filter_section(self):
         """Crea la sección de pre-filtro."""
-        gb = QtWidgets.QGroupBox(_("2. " + _("Filter")))
+        gb = QtWidgets.QGroupBox("2. " + _("Filter"))
         Code.configuration.set_property(gb, "title")
 
         ly = Colocacion.V().margen(10)
@@ -80,9 +79,7 @@ class WImportPGN(LCDialog.LCDialog):
         self.chb_filter = Controles.CHB(self, _("Use pre-filter"), False)
         self.chb_filter.setIcon(Iconos.Filtrar())
 
-        lb_info = Controles.LB(
-            self, _("Scan games and filter by: Event, White, Black, Result, Elo, Year, etc.")
-        )
+        lb_info = Controles.LB(self, _("Scan games and filter by: Event, White, Black, Result, Elo, Year, etc."))
         font = Controles.FontTypeNew(point_size_delta=-2)
         lb_info.setFont(font)
 
@@ -144,7 +141,7 @@ class WImportPGN(LCDialog.LCDialog):
         )
 
         # Crear GroupBox collapsible
-        self.gb_remove = gb = QtWidgets.QGroupBox(_("3. " + _("Remove elements")))
+        self.gb_remove = gb = QtWidgets.QGroupBox("3. " + _("Remove elements"))
         gb.setCheckable(True)
         gb.setChecked(False)
         # Code.configuration.set_property(gb, "1")
@@ -270,8 +267,6 @@ class WImportPGN(LCDialog.LCDialog):
         self.filter_func = None
         if self.chb_filter.valor():
             st_tags = {}
-            total_n = 0
-            total_partial = False
 
             max_time = 5.0
             min_time = 1.0
@@ -292,10 +287,7 @@ class WImportPGN(LCDialog.LCDialog):
                 w_filter = WDB_Filters.WFiltrarPGN(
                     self,
                     st_tags,
-                    dic_tags_complete,
-                    total_n,
-                    total_partial,
-                    os.path.basename(self.files[0]) if len(self.files) == 1 else _("multiple files"),
+                    dic_tags_complete
                 )
                 if w_filter.exec():
                     self.filter_func = WDB_Filters.make_filter_func(w_filter.li_filter)

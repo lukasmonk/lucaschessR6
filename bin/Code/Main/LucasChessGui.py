@@ -128,7 +128,7 @@ class WPassword(QtWidgets.QDialog):
         lb_p = Controles.LB(self, f"{_('Password')}:").set_font(font)
         self.edP = Controles.ED(self).password().set_font(font)
 
-        btaceptar = Controles.PB(self, _("Accept"), rutina=self.accept, plano=False).set_font(font)
+        btaceptar = Controles.PB(self, _("Accept"), rutina=self.run_accept, plano=False).set_font(font)
         btcancelar = Controles.PB(self, _("Cancel"), rutina=self.reject, plano=False).set_font(font)
 
         ly = Colocacion.G()
@@ -142,10 +142,17 @@ class WPassword(QtWidgets.QDialog):
         self.setLayout(layout)
         self.edP.setFocus()
 
+        self.usuario = None
+
     def resultado(self):
+        return self.usuario
+
+    def run_accept(self):
         nusuario = self.cbU.valor()
         usuario = self.liUsuarios[nusuario]
-        return usuario if self.edP.texto().strip() == usuario.password else None
+        self.usuario = usuario if self.edP.texto().strip() == usuario.password else None
+
+        self.accept()
 
 
 def pide_usuario(li_usuarios):

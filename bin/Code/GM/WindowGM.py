@@ -337,13 +337,13 @@ class WGM(LCDialog.LCDialog):
             f = dic["FECHA"]
             return f"{f.day}/{f.month:02d}/{f.year}"
         elif key == "PACIERTOS":
-            return f"{dic["PACIERTOS"]}%"
+            return f"{dic['PACIERTOS']}%"
         elif key == "PUNTOS":
             return str(dic["PUNTOS"])
         elif key == "ENGINE":
             s = f"{dic['TIEMPO'] / 10.0:.02f}"
             s = s.rstrip("0").rstrip(".")
-            return f"{dic['JUEZ']} {s}\""
+            return f'{dic["JUEZ"]} {s}"'
         elif key == "RESUMEN":
             return dic.get("RESUMEN", "")
         return None
@@ -670,8 +670,7 @@ class WImportar(LCDialog.LCDialog):
         o_columns.nueva("BORN", _("Birth date"), 80, align_center=True)
 
         self.grid = Grid.Grid(self, o_columns, alternate=False)
-        n = self.grid.width_columns_displayables()
-        self.grid.setMinimumWidth(n + 20)
+        n = self.grid.fix_min_width()
 
         self.register_grid(self.grid)
 
@@ -681,7 +680,7 @@ class WImportar(LCDialog.LCDialog):
 
         self.last_order = "NOMBRE", False
 
-        self.restore_video(default_width=n + 26, default_height=400)
+        self.restore_video(default_width=n, default_height=400)
 
     def importar(self):
         self.save_video()
@@ -689,14 +688,13 @@ class WImportar(LCDialog.LCDialog):
 
     def marcar(self):
         menu = QTDialogs.LCMenu(self)
-        f = Controles.FontType(puntos=8, peso=75)
-        menu.set_font(f)
-        menu.opcion(1, _("All"), Iconos.PuntoVerde())
-        menu.opcion(2, _("None"), Iconos.PuntoNaranja())
+        menu.opcion("all", _("All"), Iconos.All())
+        menu.separador()
+        menu.opcion("none", _("None"), Iconos.PuntoRojo())
         resp = menu.lanza()
         if resp:
             for obj in self.li_gm:
-                obj["ELEGIDO"] = resp == 1
+                obj["ELEGIDO"] = resp == "all"
             self.grid.refresh()
 
     def grid_num_datos(self, _grid):
@@ -754,7 +752,7 @@ def importar_gm(owner_gm):
             if linea:
                 gm, name, ctam, cpart, wm, cyear = linea.split("|")
                 file = GM.get_folder_gm() / f"{gm}.xgm"
-                if file.stat().st_size != int(ctam):  # si no existe tam = -1
+                if not file.exists() or file.stat().st_size != int(ctam):
                     dic = {
                         "GM": gm,
                         "NOMBRE": name,
@@ -774,6 +772,7 @@ def importar_gm(owner_gm):
 
     w = WImportar(owner_gm, li_gm)
     if w.exec():
+        ok_import = False
         for dic in li_gm:
             if dic["ELEGIDO"]:
                 gm = dic["GM"]
@@ -789,7 +788,10 @@ def importar_gm(owner_gm):
                                 file = GM.get_folder_gm() / name
                                 with file.open("wb") as outfile:
                                     outfile.write(zfobj.read(name))
+                        ok_import = True
                         Path(fzip).unlink(missing_ok=True)
+        if ok_import:
+            QTMessages.temporary_message(owner_gm, _("Done"), 1.2)
 
         return True
 
@@ -818,8 +820,7 @@ class SelectGame(LCDialog.LCDialog):
         o_columns.nueva("RESULT", _("Result"), 64, align_center=True)
         o_columns.nueva("NUMMOVES", _("Moves"), 64, align_center=True)
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        width_pgn = self.grid.width_columns_displayables() + 20
-        self.grid.setMinimumWidth(width_pgn)
+        self.grid.fix_min_width()
         self.grid.alternate_colors()
 
         self.register_grid(self.grid)

@@ -245,7 +245,7 @@ class WExpedition(LCDialog.LCDialog):
         o_columns.nueva("TRIES", _("Max tries"), 80, align_center=True)
         o_columns.nueva("TOLERANCE", _("Tolerance"), 80, align_center=True)
         grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=False)
-        grid.setMinimumWidth(grid.width_columns_displayables() + 20)
+        grid.fix_min_width()
         grid.alternate_colors()
 
         ly_g = Colocacion.V().otro(ly_rot).control(grid).margen(0)
@@ -356,7 +356,7 @@ class WEverest(LCDialog.LCDialog):
         o_columns.nueva("TOLERANCE", _("Tolerance"), 90, align_center=True)
         o_columns.nueva("TRIES", _("Tries"), 90, align_center=True)
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         li_acciones = (
             (_("Close"), Iconos.MainMenu(), self.finalize),

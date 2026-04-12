@@ -367,7 +367,7 @@ class LCNumero(QtWidgets.QWidget):
 
 class TwoImages(QtWidgets.QLabel):
     _valor: bool
-    
+
     def __init__(self, pm_true, pm_false):
         self.pm = {True: pm_true, False: pm_false}
         self.pm_false = pm_false
@@ -881,15 +881,27 @@ class MensajeFide(QtWidgets.QDialog):
 
 def list_irina():
     return (
-        ("Monkey", _("Monkey"), Iconos.Monkey(), 108 * 1 + 50),
-        ("Donkey", _("Donkey"), Iconos.Donkey(), 108 * 2 + 50),
-        ("Bull", _("Bull"), Iconos.Bull(), 108 * 3 + 50),
-        ("Wolf", _("Wolf"), Iconos.Wolf(), 108 * 4 + 50),
-        ("Lion", _("Lion"), Iconos.Lion(), 108 * 5 + 50),
-        ("Rat", _("Rat"), Iconos.Rat(), 108 * 6 + 50),
-        ("Snake", _("Snake"), Iconos.Snake(), 108 * 7 + 50),
+        ("Monkey", _("Monkey"), Iconos.Monkey(), 100),
+        ("Donkey", _("Donkey"), Iconos.Donkey(), 169),
+        ("Bull", _("Bull"), Iconos.Bull(), 171),
+        ("Wolf", _("Wolf"), Iconos.Wolf(), 221),
+        ("Lion", _("Lion"), Iconos.Lion(), 383),
+        ("Rat", _("Rat"), Iconos.Rat(), 488),
+        ("Deer", _("Deer"), Iconos.Deer(), 489),
+        ("Snake", _("Snake"), Iconos.Snake(), 503),
+        ("Bear", _("Bear"), Iconos.Bear(), 556),
+        ("Crocodile", _("Crocodile"), Iconos.Crocodile(), 691),
+        ("Hippo", _("Hippo"), Iconos.Hippo(), 854),
+        ("Horse", _("Horse"), Iconos.Horse(), 914),
+        ("Panda", _("Panda"), Iconos.Panda(), 950),
+        ("Rhino", _("Rhino"), Iconos.Rhino(), 959),
+        ("Shark", _("Shark"), Iconos.Shark(), 1063),
+        ("Bulldog", _("Bulldog"), Iconos.Bulldog(), 1131),
         ("Knight", _("Knight || Medieval knight"), Iconos.KnightMan(), 1200),
+        ("Eagle", _("Eagle"), Iconos.Shark(), 1298),
         ("Steven", _("Steven"), Iconos.Steven(), 1400),
+        ("Tiger", _("Tiger"), Iconos.Tiger(), 1480),
+        ("Elephant", _("Elephant"), Iconos.Elephant(), 1490),
     )
 
 

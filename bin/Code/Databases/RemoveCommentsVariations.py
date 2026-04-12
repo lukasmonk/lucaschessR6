@@ -231,13 +231,13 @@ class RemoveCommentsVariations:
 
     @staticmethod
     def remove_comando_brackets(texto, comando):
-        pattern = rf'%{comando}\s+[^\]\s]+(\s+|\])'
-        texto = re.sub(pattern, lambda m: ']' if ']' in m.group(1) else '', texto)
+        pattern = rf"%{comando}\s+[^\]\s]+(\s+|\])"
+        texto = re.sub(pattern, lambda m: "]" if "]" in m.group(1) else "", texto)
         # texto = re.sub(rf'%{comando} [^%\]]*', '', texto)
         # texto = re.sub(rf'%{comando}\s+[^\]\s]+(\s+|\])]*', '', texto)
 
         # Eliminar corchetes vacíos
-        texto = re.sub(r'\[\s*]', '', texto)
+        texto = re.sub(r"\[\s*]", "", texto)
 
         # Limpiar espacios extra dentro de los corchetes restantes
         # texto = re.sub(r'\[ +', '[', texto)
@@ -323,7 +323,7 @@ class RemoveCommentsVariations:
                 while "{ " in texto:
                     texto = texto.replace("{ ", "{")
                 texto = texto.replace("{}", "")
-                texto = re.sub(r'\d+\.\.\.', '', texto)
+                texto = re.sub(r"\d+\.\.\.", "", texto)
                 while "  " in texto:
                     texto = texto.replace("  ", " ")
         return texto.encode("utf-8", errors="ignore")

@@ -44,7 +44,9 @@ class WSelectLanguage(LCDialog.LCDialog):
         self.lng_default = Code.configuration.translator()
         self.lng_current = self.lng_default
 
-        self.pb_lang = Controles.PB(self, " " * 5 + self.dic_translations[self.lng_default]["NAME"], rutina=self.select_lang)
+        self.pb_lang = Controles.PB(
+            self, " " * 5 + self.dic_translations[self.lng_default]["NAME"], rutina=self.select_lang
+        )
         self.pb_lang.set_icono(Iconos.Language(), 32)
         self.pb_lang.setObjectName("PbLang")
 
@@ -96,7 +98,8 @@ QGroupBox::title {
     left: 15px;
     padding: 0 5px;
     color: gray;
-}""")
+}"""
+        )
 
     def _create_horizontal_section(self, title, content_layout):
         """Helper to create a horizontal section with title and content inside the same frame"""
@@ -186,10 +189,7 @@ QGroupBox::title {
         layout.setContentsMargins(20, 20, 20, 20)
 
         # Description with better formatting
-        desc_text = (
-            f"<h2>{_('Translation Help Mode')}</h2>"
-            'Enable this mode if you want to help improve translations:'
-        )
+        desc_text = f"<h2>{_('Translation Help Mode')}</h2>Enable this mode if you want to help improve translations:"
         self.desc_label = Controles.LB(self, desc_text)
         self.desc_label.setWordWrap(True)
         layout.control(self.desc_label)
@@ -286,15 +286,12 @@ QGroupBox::title {
             f'{_("Current translators")}: <span style="color: #007aff;">{current}</span>'
         )
         if previous:
-            self.lb_previous_translators.set_text(f'{_("Previous translators")}: {previous}')
+            self.lb_previous_translators.set_text(f"{_('Previous translators')}: {previous}")
         self.lb_previous_translators.setVisible(bool(previous))
 
         # Tab help mode
         self.chb_help_mode.setText(_("Activate translator help mode"))
-        desc_text = (
-            f"<h2>{_('Translation Help Mode')}</h2>"
-            'Enable this mode if you want to help improve translations:'
-        )
+        desc_text = f"<h2>{_('Translation Help Mode')}</h2>Enable this mode if you want to help improve translations:"
         self.desc_label.set_text(desc_text)
         self.chb_use_local.setText(_("Use locally translated content for everyday operations"))
 
@@ -328,7 +325,7 @@ def menu_select_language(owner):
     configuration = Code.configuration
     li = configuration.list_translations(True)
 
-    lng_default = Code.configuration.translator()
+    lng_current = lng_default = Code.configuration.translator()
     name_default = Code.configuration.language()
     li_info = locale.getdefaultlocale()
     if len(li_info) == 2:
@@ -340,7 +337,7 @@ def menu_select_language(owner):
 
     menu = QTDialogs.LCMenuRondo(owner)
     menu.set_font_type(Code.font_mono, puntos=10, peso=700)
-    menu.opcion(lng_default, f"By default: {name_default}", Iconos.AceptarPeque())
+    menu.opcion(lng_default, name_default)
     menu.separador()
 
     for k, name, porc, author, others in li:
@@ -360,7 +357,7 @@ def menu_select_language(owner):
                 author = "      "
             option = f"{option}{spaces}({porc}%) {author}"
 
-        if k == lng_default:
+        if k == lng_current:
             menu.opcion(k, option, Iconos.AceptarPeque())
         else:
             menu.opcion(k, option)

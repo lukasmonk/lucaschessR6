@@ -39,7 +39,7 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
     QTUtils,
-    SelectFiles
+    SelectFiles,
 )
 from Code.Voyager import Voyager
 from Code.Z import TimeControl
@@ -163,8 +163,9 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         ly_tiempo = Colocacion.H().control(self.ed_rtime).control(self.bt_cancel_rtime).relleno(1)
 
         self.lb_depth = Controles.LB2P(self, _("Fixed depth")).set_font(font)
-        self.ed_rdepth = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(
-            self.change_depth)
+        self.ed_rdepth = (
+            Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(self.change_depth)
+        )
         tooltip = _("If time and depth are given, the depth is attempted and the time becomes a maximum.")
         self.ed_rdepth.setToolTip(tooltip)
         self.bt_cancel_rdepth = Controles.PB(self, "", rutina=self.cancelar_depth).set_icono(Iconos.S_Cancelar())
@@ -183,8 +184,9 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.cb_unlimited = Controles.CB(self, li_unlimited, 10).set_font(font)
 
         self.lb_nodes = Controles.LB2P(self, _("Fixed nodes")).set_font(font)
-        self.ed_nodes = Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(
-            self.change_nodes)
+        self.ed_nodes = (
+            Controles.ED(self).type_integer().ancho_maximo(80).set_font(font).capture_changes(self.change_nodes)
+        )
         tooltip = _("If time and nodes are given, the nodes is attempted and the time becomes a maximum.")
         self.ed_nodes.setToolTip(tooltip)
         self.bt_cancel_nodes = Controles.PB(self, "", rutina=self.cancelar_nodes).set_icono(Iconos.S_Cancelar())
@@ -351,37 +353,40 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         # -- Base time (shared by all modes)
         self.lb_minutos = Controles.LB(self, f"{_('Total minutes')}:").set_font(font)
-        self.ed_minutos = Controles.ED(self).type_float(10.0).set_font(font).relative_width(70)
+        self.ed_minutos = Controles.ED(self).type_float(10.0).set_font(font).relative_width(40)
 
         # -- Increment / delay (Fischer / Bronstein / Delay)
         self.ed_segundos, self.lb_segundos = QTMessages.spinbox_lb(
-            self, 6, -999, 999, max_width=50,
+            self,
+            6,
+            -999,
+            999,
+            max_width=50,
             etiqueta=_("Seconds added per move"),
             fuente=font,
         )
 
         # -- Extra minutes for the player
-        self.edMinExtra, self.lbMinExtra = QTMessages.spinbox_lb(
-            self, 0, 0, 10000, max_width=50,
-            etiqueta=_("Extra minutes for the player"),
-            fuente=font,
-        )
+        self.lbMinExtra = Controles.LB(self, f"{_("Extra minutes for the player")}:").set_font(font)
+        self.edMinExtra = Controles.ED(self).type_float(0.0).set_font(font).relative_width(40)
 
         # -- Disable user time
-        self.chb_disable_usertime = Controles.CHB(
-            self, _("Disable user time control"), False
-        ).set_font(font)
+        self.chb_disable_usertime = Controles.CHB(self, _("Disable user time control"), False).set_font(font)
 
         # -- Zeitnot
         self.edZeitnot, self.lbZeitnot = QTMessages.spinbox_lb(
-            self, 0, -999, 999, max_width=50,
+            self,
+            0,
+            -999,
+            999,
+            max_width=50,
             etiqueta=_("Zeitnot: alarm sounds when remaining seconds"),
             fuente=font,
         )
 
         # -- Moves-in-time phases
         # Phase 1
-        self.lb_ph1 = Controles.LB(self, f'{_("Phase")} 1').set_font(font)
+        self.lb_ph1 = Controles.LB(self, f"{_('Phase')} 1").set_font(font)
         self.sb_ph1_moves = Controles.SB(self, 40, 1, 200).set_font(font).relative_width(50)
         self.lb_ph1_moves = Controles.LB(self, _("moves")).set_font(font)
         self.ed_ph1_mins = Controles.ED(self).type_float(90.0).set_font(font).relative_width(60)
@@ -390,16 +395,16 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         self.lb_ph1_bonus = Controles.LB(self, _("Seconds added per move")).set_font(font)
 
         # Phase 2
-        self.lb_ph2 = Controles.LB(self, f'{_("Phase")} 2').set_font(font)
+        self.lb_ph2 = Controles.LB(self, f"{_('Phase')} 2").set_font(font)
         self.sb_ph2_moves = Controles.SB(self, 20, 0, 200).set_font(font).relative_width(50)
-        self.lb_ph2_moves = Controles.LB(self, f'{_("moves")} ({_("0=rest")})').set_font(font)
+        self.lb_ph2_moves = Controles.LB(self, f"{_('moves')} ({_('0=rest')})").set_font(font)
         self.ed_ph2_mins = Controles.ED(self).type_float(30.0).set_font(font).relative_width(60)
         self.lb_ph2_mins = Controles.LB(self, _("minutes")).set_font(font)
         self.sb_ph2_bonus = Controles.SB(self, 30, 0, 600).set_font(font).relative_width(50)
         self.lb_ph2_bonus = Controles.LB(self, _("Seconds added per move")).set_font(font)
 
         # Phase 3
-        self.lb_ph3 = Controles.LB(self, f'{_("Phase")} 3').set_font(font)
+        self.lb_ph3 = Controles.LB(self, f"{_('Phase')} 3").set_font(font)
         self.lb_ph3_moves = Controles.LB(self, _("Rest of moves")).set_font(font)
         self.ed_ph3_mins = Controles.ED(self).type_float(15.0).set_font(font).relative_width(60)
         self.lb_ph3_mins = Controles.LB(self, _("minutes")).set_font(font)
@@ -437,37 +442,72 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             ly_ph.control(sb_b, row, 5)
             ly_ph.control(lb_b, row, 6)
 
-        _phase_row(0, self.lb_ph1, self.sb_ph1_moves, self.lb_ph1_moves,
-                   self.ed_ph1_mins, self.lb_ph1_mins,
-                   self.sb_ph1_bonus, self.lb_ph1_bonus)
-        _phase_row(1, self.lb_ph2, self.sb_ph2_moves, self.lb_ph2_moves,
-                   self.ed_ph2_mins, self.lb_ph2_mins,
-                   self.sb_ph2_bonus, self.lb_ph2_bonus)
-        _phase_row(2, self.lb_ph3, None, self.lb_ph3_moves,
-                   self.ed_ph3_mins, self.lb_ph3_mins,
-                   self.sb_ph3_bonus, self.lb_ph3_bonus)
-        ly_ph.relleno_column(2,1)
-        ly_ph.relleno_column(4,1)
-        ly_ph.relleno_column(6,4)
+        _phase_row(
+            0,
+            self.lb_ph1,
+            self.sb_ph1_moves,
+            self.lb_ph1_moves,
+            self.ed_ph1_mins,
+            self.lb_ph1_mins,
+            self.sb_ph1_bonus,
+            self.lb_ph1_bonus,
+        )
+        _phase_row(
+            1,
+            self.lb_ph2,
+            self.sb_ph2_moves,
+            self.lb_ph2_moves,
+            self.ed_ph2_mins,
+            self.lb_ph2_mins,
+            self.sb_ph2_bonus,
+            self.lb_ph2_bonus,
+        )
+        _phase_row(
+            2,
+            self.lb_ph3,
+            None,
+            self.lb_ph3_moves,
+            self.ed_ph3_mins,
+            self.lb_ph3_mins,
+            self.sb_ph3_bonus,
+            self.lb_ph3_bonus,
+        )
+        ly_ph.relleno_column(2, 1)
+        ly_ph.relleno_column(4, 1)
+        ly_ph.relleno_column(6, 4)
 
         # Collect all widgets into groups so _on_time_mode_changed can hide them
         self._time_widgets_increment = [
-            self.lb_segundos, self.ed_segundos,
+            self.lb_segundos,
+            self.ed_segundos,
         ]
         self._time_widgets_phases = [
-            self.lb_ph1, self.sb_ph1_moves, self.lb_ph1_moves,
-            self.ed_ph1_mins, self.lb_ph1_mins, self.sb_ph1_bonus, self.lb_ph1_bonus,
-            self.lb_ph2, self.sb_ph2_moves, self.lb_ph2_moves,
-            self.ed_ph2_mins, self.lb_ph2_mins, self.sb_ph2_bonus, self.lb_ph2_bonus,
-            self.lb_ph3, self.lb_ph3_moves,
-            self.ed_ph3_mins, self.lb_ph3_mins, self.sb_ph3_bonus, self.lb_ph3_bonus,
+            self.lb_ph1,
+            self.sb_ph1_moves,
+            self.lb_ph1_moves,
+            self.ed_ph1_mins,
+            self.lb_ph1_mins,
+            self.sb_ph1_bonus,
+            self.lb_ph1_bonus,
+            self.lb_ph2,
+            self.sb_ph2_moves,
+            self.lb_ph2_moves,
+            self.ed_ph2_mins,
+            self.lb_ph2_mins,
+            self.sb_ph2_bonus,
+            self.lb_ph2_bonus,
+            self.lb_ph3,
+            self.lb_ph3_moves,
+            self.ed_ph3_mins,
+            self.lb_ph3_mins,
+            self.sb_ph3_bonus,
+            self.lb_ph3_bonus,
         ]
         self._time_widgets_basetime = [
-            self.lb_minutos, self.ed_minutos,
+            self.lb_minutos,
+            self.ed_minutos,
         ]
-        self._time_widgets_advantage = [
-            self.edMinExtra, self.lbMinExtra
-        ]
+        self._time_widgets_advantage = [self.edMinExtra, self.lbMinExtra]
         self._time_widgets_disable = [
             self.chb_disable_usertime,
         ]
@@ -497,13 +537,16 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         labels = {
             TimeControl.TimeMode.SUDDEN_DEATH: None,
             TimeControl.TimeMode.FISCHER: _("Seconds added per move"),
-            TimeControl.TimeMode.BRONSTEIN: f'{_("Delay")} ({_("seconds")})',
-            TimeControl.TimeMode.DELAY_SIMPLE: f'{_("Delay")} ({_("seconds")})',
+            TimeControl.TimeMode.BRONSTEIN: f"{_('Delay')} ({_('seconds')})",
+            TimeControl.TimeMode.DELAY_SIMPLE: f"{_('Delay')} ({_('seconds')})",
             TimeControl.TimeMode.HOURGLASS: None,
             TimeControl.TimeMode.MOVES_IN_TIME: None,
         }
-        show_increment = mode in (TimeControl.TimeMode.FISCHER, TimeControl.TimeMode.BRONSTEIN,
-                                  TimeControl.TimeMode.DELAY_SIMPLE)
+        show_increment = mode in (
+            TimeControl.TimeMode.FISCHER,
+            TimeControl.TimeMode.BRONSTEIN,
+            TimeControl.TimeMode.DELAY_SIMPLE,
+        )
         show_phases = mode == TimeControl.TimeMode.MOVES_IN_TIME
         show_basetime = mode != TimeControl.TimeMode.MOVES_IN_TIME
         show_advantage = mode != TimeControl.TimeMode.MOVES_IN_TIME
@@ -528,9 +571,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         # Hourglass tooltip
         if mode == TimeControl.TimeMode.HOURGLASS:
-            self.ed_minutos.setToolTip(
-                _("Time for each player. Time used is transferred to the opponent.")
-            )
+            self.ed_minutos.setToolTip(_("Time for each player. Time used is transferred to the opponent."))
         else:
             self.ed_minutos.setToolTip("")
 
@@ -836,7 +877,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         if resp is not None:
             folder_engine = os.path.dirname(self.rival.path_exe)
             if resp == "select_file":
-                path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                path_file = SelectFiles.read_or_create_file(self, folder_engine, "*", _("Select a file"))
                 if path_file:
                     folder_file = os.path.dirname(path_file)
                     if Util.same_path(folder_file, folder_engine):
@@ -890,12 +931,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         def time_depth(show):
             for obj in (
-                    self.lb_depth,
-                    self.ed_rdepth,
-                    self.bt_cancel_rdepth,
-                    self.lb_rtime,
-                    self.ed_rtime,
-                    self.bt_cancel_rtime,
+                self.lb_depth,
+                self.ed_rdepth,
+                self.bt_cancel_rdepth,
+                self.lb_rtime,
+                self.ed_rtime,
+                self.bt_cancel_rtime,
             ):
                 obj.setVisible(show)
             if not show:
@@ -1053,10 +1094,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def test_unlimited(self):
         visible = (
-                self.ed_rdepth.text_to_integer() == 0
-                and self.ed_rtime.text_to_float() == 0
-                and self.ed_nodes.text_to_integer() == 0
-                and not self.gb_time.isChecked()
+            self.ed_rdepth.text_to_integer() == 0
+            and self.ed_rtime.text_to_float() == 0
+            and self.ed_nodes.text_to_integer() == 0
+            and not self.gb_time.isChecked()
         )
         self.lb_unlimited.setVisible(visible)
         self.cb_unlimited.setVisible(visible)
@@ -1098,26 +1139,26 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         chess18 = menu.submenu(tr_chess("18"), rondo_main.otro())
         for pos, uno in enumerate(
-                (
-                        "rbbqknnr",
-                        "rqbbknnr",
-                        "rbbnkqnr",
-                        "rnbbkqnr",
-                        "rbbnknqr",
-                        "rnbbknqr",
-                        "rqbnkbnr",
-                        "rnbnkbqr",
-                        "rnnbkqbr",
-                        "rbnnkqbr",
-                        "rqnbknbr",
-                        "rnqbknbr",
-                        "rbqnknbr",
-                        "rbnqknbr",
-                        "rnnqkbbr",
-                        "rnqnkbbr",
-                        "rqnnkbbr",
-                ),
-                1,
+            (
+                "rbbqknnr",
+                "rqbbknnr",
+                "rbbnkqnr",
+                "rnbbkqnr",
+                "rbbnknqr",
+                "rnbbknqr",
+                "rqbnkbnr",
+                "rnbnkbqr",
+                "rnnbkqbr",
+                "rbnnkqbr",
+                "rqnbknbr",
+                "rnqbknbr",
+                "rbqnknbr",
+                "rbnqknbr",
+                "rnnqkbbr",
+                "rnqnkbbr",
+                "rqnnkbbr",
+            ),
+            1,
         ):
             fen = f"{uno}/pppppppp/8/8/8/8/PPPPPPPP/{uno.upper()} w KQkq - 0 1"
             chess18.opcion(fen, f"{pos}. {uno}", rondo.otro())
@@ -1162,64 +1203,81 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         # ---------------------------------------------------------------
 
         # Move odds
-        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1",
-                                   _("Black plays first"), Iconos.Negras())
+        submenu_handicaps_b.opcion(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1", _("Black plays first"), Iconos.Negras()
+        )
 
         # Knight odds
-        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",
-                                   _("Remove White queenside Knight"), in_w)
-        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1",
-                                   _("Remove White kingside Knight"), in_w)
+        submenu_handicaps_b.opcion(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1", _("Remove White queenside Knight"), in_w
+        )
+        submenu_handicaps_b.opcion(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1", _("Remove White kingside Knight"), in_w
+        )
 
         # Rook odds
-        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1",
-                                   _("Remove White queenside Rook"), ir_w)
+        submenu_handicaps_b.opcion(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1", _("Remove White queenside Rook"), ir_w
+        )
 
         # Queen for Knight odds
-        submenu_handicaps_b.opcion("r1bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1",
-                                   _("Remove White Queen and Black queenside Knight"), iq_w)
+        submenu_handicaps_b.opcion(
+            "r1bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1",
+            _("Remove White Queen and Black queenside Knight"),
+            iq_w,
+        )
 
         # Rook + minor piece odds
-        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/2BQKBNR w Kkq - 0 1",
-                                   _("Remove White queenside Rook and Knight"), ir_w)
+        submenu_handicaps_b.opcion(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/2BQKBNR w Kkq - 0 1", _("Remove White queenside Rook and Knight"), ir_w
+        )
 
         # Queen odds
-        submenu_handicaps_b.opcion("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1",
-                                   _("Remove White Queen"), iq_w)
+        submenu_handicaps_b.opcion(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - 0 1", _("Remove White Queen"), iq_w
+        )
 
         # ---------------------------------------------------------------
         # WHITE ADVANTAGE — Black gives odds (ordered by increasing severity)
         # ---------------------------------------------------------------
 
         # Pawn odds
-        submenu_handicaps_w.opcion("rnbqkbnr/ppppp1pp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                                   _("Remove Black f7 Pawn"), ip_b)
+        submenu_handicaps_w.opcion(
+            "rnbqkbnr/ppppp1pp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", _("Remove Black f7 Pawn"), ip_b
+        )
 
         # Knight odds
-        submenu_handicaps_w.opcion("r1bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                                   _("Remove Black queenside Knight"), in_b)
-        submenu_handicaps_w.opcion("rnbqkb1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                                   _("Remove Black kingside Knight"), in_b)
+        submenu_handicaps_w.opcion(
+            "r1bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", _("Remove Black queenside Knight"), in_b
+        )
+        submenu_handicaps_w.opcion(
+            "rnbqkb1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", _("Remove Black kingside Knight"), in_b
+        )
 
         # Rook odds
-        submenu_handicaps_w.opcion("1nbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1",
-                                   _("Remove Black queenside Rook"), ir_b)
+        submenu_handicaps_w.opcion(
+            "1nbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1", _("Remove Black queenside Rook"), ir_b
+        )
 
         # Queen for Knight odds
-        submenu_handicaps_w.opcion("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",
-                                   _("Remove Black Queen and White queenside Knight"), iq_b)
+        submenu_handicaps_w.opcion(
+            "rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/R1BQKBNR w KQkq - 0 1",
+            _("Remove Black Queen and White queenside Knight"),
+            iq_b,
+        )
 
         # Rook + minor piece odds
-        submenu_handicaps_w.opcion("2bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1",
-                                   _("Remove Black queenside Rook and Knight"), ir_b)
+        submenu_handicaps_w.opcion(
+            "2bqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQk - 0 1", _("Remove Black queenside Rook and Knight"), ir_b
+        )
 
         # Queen odds
-        submenu_handicaps_w.opcion("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                                   _("Remove Black Queen"), iq_b)
+        submenu_handicaps_w.opcion(
+            "rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", _("Remove Black Queen"), iq_b
+        )
 
         resp = menu.lanza()
         if resp:
-
             if resp.startswith("2880"):
                 o2880 = Chess2880.Chess2880()
                 opcion = resp.split("|")[1]
@@ -1320,11 +1378,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             elif menu.is_right:
                 pos, opening_block = resp
                 if QTMessages.pregunta(
-                        self,
-                        _X(
-                            _("Do you want to delete the opening %1 from the list of favourite openings?"),
-                            opening_block.tr_name,
-                        ),
+                    self,
+                    _X(
+                        _("Do you want to delete the opening %1 from the list of favourite openings?"),
+                        opening_block.tr_name,
+                    ),
                 ):
                     del self.li_preferred_openings[pos]
 
@@ -1407,9 +1465,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         return li_uci
 
     def save_dic(self):
-        dic: dict = {
-            "SIDE": "B" if self.rb_white.isChecked() else ("N" if self.rb_black.isChecked() else "R")
-        }
+        dic: dict = {"SIDE": "B" if self.rb_white.isChecked() else ("N" if self.rb_black.isChecked() else "R")}
 
         # Básico
         dr: dict = {
@@ -1420,7 +1476,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             "ENGINE_TIME": int(self.ed_rtime.text_to_float() * 10),
             "ENGINE_DEPTH": self.ed_rdepth.text_to_integer(),
             "ENGINE_NODES": self.ed_nodes.text_to_integer(),
-            "ENGINE_UNLIMITED": self.cb_unlimited.valor()
+            "ENGINE_UNLIMITED": self.cb_unlimited.valor(),
         }
 
         dic["RIVAL"] = dr
@@ -1461,7 +1517,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             mode = dic["TIME_MODE"]
             dic["MINUTES"] = self.ed_minutos.text_to_float()
             dic["SECONDS"] = self.ed_segundos.value()
-            dic["MINEXTRA"] = self.edMinExtra.value()
+            dic["MINEXTRA"] = self.edMinExtra.text_to_float()
             dic["DISABLEUSERTIME"] = self.chb_disable_usertime.valor()
             dic["ZEITNOT"] = self.edZeitnot.value()
 
@@ -1569,7 +1625,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         if with_time:
             self.ed_minutos.set_float(float(dic.get("MINUTES", 10.0)))
             self.ed_segundos.setValue(dic.get("SECONDS", 6))
-            self.edMinExtra.setValue(dic.get("MINEXTRA", 0))
+            self.edMinExtra.set_float(float(dic.get("MINEXTRA", 0)))
             self.chb_disable_usertime.set_value(dic.get("DISABLEUSERTIME", False))
             self.edZeitnot.setValue(dic.get("ZEITNOT", 0))
 

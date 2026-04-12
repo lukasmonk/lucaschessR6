@@ -24,6 +24,7 @@ int num_moves( void );
 void get_move( int num, char * pv );
 
 char *board_fen(char *fen);
+char *board_fenM2(char *fen);
 
 int num_base_move( void );
 int search_move( char *desde, char *hasta, char * promotion );

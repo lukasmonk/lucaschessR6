@@ -82,8 +82,7 @@ class WTurnOnLights(LCDialog.LCDialog):
         self.grid = grid = Grid.Grid(self, o_columns, heigh_row=42, background="white")
         self.grid.setAlternatingRowColors(False)
         self.grid.font_type(puntos=10, peso=500)
-        n_ancho_pgn = self.grid.width_columns_displayables() + 20
-        self.grid.setMinimumWidth(n_ancho_pgn)
+        n_ancho_pgn = self.grid.fix_min_width()
         self.register_grid(grid)
 
         # Colocamos ---------------------------------------------------------------

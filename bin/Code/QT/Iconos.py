@@ -3413,3 +3413,21 @@ def pmEval():
 
 def Eval():
     return iget("Eval")
+
+def pmSpaceBoth():
+    return iget("pmSpaceBoth")
+
+def SpaceBoth():
+    return iget("SpaceBoth")
+
+def pmSpaceWhite():
+    return iget("pmSpaceWhite")
+
+def SpaceWhite():
+    return iget("SpaceWhite")
+
+def pmSpaceBlack():
+    return iget("pmSpaceBlack")
+
+def SpaceBlack():
+    return iget("SpaceBlack")

@@ -110,7 +110,7 @@ class WRegisteredBooks(LCDialog.LCDialog):
         self.accept()
 
     def new(self):
-        if fbin := SelectFiles.leeFichero(self, self.list_books.path, "bin", titulo=_("Polyglot book")):
+        if fbin := SelectFiles.read_file(self, self.list_books.path, "bin", titulo=_("Polyglot book")):
             self.list_books.path = os.path.dirname(fbin)
             name = os.path.basename(fbin)[:-4]
             book = Books.Book("P", name, fbin, True)

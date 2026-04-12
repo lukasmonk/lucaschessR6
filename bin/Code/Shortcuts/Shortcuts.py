@@ -154,9 +154,7 @@ class Shortcuts:
         )
 
     @staticmethod
-    def _format_label_and_shortcut(
-            label: str, alt: int, with_add: bool
-    ) -> tuple[str, Optional[str], int]:
+    def _format_label_and_shortcut(label: str, alt: int, with_add: bool) -> tuple[str, Optional[str], int]:
         shortcut_text: Optional[str]
         if alt <= 9 and with_add:
             shortcut_text = f"ALT+{alt}"

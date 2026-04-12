@@ -30,7 +30,7 @@ class ManagerResistance(Manager.Manager):
     is_battle: bool
     movements_rival: int
     manager_adjudicator: EngineManagerPlay.EngineManagerPlay
-    
+
     def start(self, resistance, num_engine, str_side):
 
         self.game_type = GT_RESISTANCE
@@ -213,7 +213,6 @@ class ManagerResistance(Manager.Manager):
                 self.play_next_move()
 
         else:
-
             self.human_is_playing = True
             self.activate_side(is_white)
 
@@ -221,10 +220,9 @@ class ManagerResistance(Manager.Manager):
         if len(self.game) < (3 if self.is_engine_side_white else 4):
             return False
         if self.manager_rival.engine.key != self.manager_adjudicator.engine.key:
-
             with QTMessages.WaitingMessage(self.main_window, _("Checking...")):
                 rm1 = self.manager_adjudicator.play(self.game)
-                self.rival_points = -rm1.centipawns_abs()   # el movimiento del rival está ya en game
+                self.rival_points = -rm1.centipawns_abs()  # el movimiento del rival está ya en game
                 self.put_current_label()
                 if self.maxerror:
                     game1 = self.game.copia()

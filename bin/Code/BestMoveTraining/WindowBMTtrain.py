@@ -117,8 +117,7 @@ class WTrainBMT(LCDialog.LCDialog):
             edicion=Delegados.EtiquetaPGN(False if with_figurines else None),
         )
         self.pgn = Grid.Grid(self, o_columns, is_column_header_movable=False)
-        n_ancho_pgn = self.pgn.width_columns_displayables() + 20
-        self.pgn.setMinimumWidth(n_ancho_pgn)
+        self.pgn.fix_min_width()
 
         self.pgn.setVisible(False)
 
@@ -287,7 +286,7 @@ class WTrainBMT(LCDialog.LCDialog):
         self.set_score(0)
         self.set_time_seconds()
         self.set_clock()
-        
+
     def end_training(self):
         self.finalize()
         self.accept()
@@ -309,7 +308,6 @@ class WTrainBMT(LCDialog.LCDialog):
             or (t_estado != at_estado)
             or len(self.borrar_fen_lista) > 0
         ):
-
             reg = self.dbf.baseRegistro()
 
             reg.BMT_LISTA = Util.var2zip(self.bmt_lista)
@@ -638,7 +636,7 @@ class WTrainBMT(LCDialog.LCDialog):
                 self.activate_move1(n)
             self.bmt_uno.finished = True
             diferencia_pts_primero = self.ptsPrimero - self.ptsMejor
-            self.lbPrimera.set_text(f"{self.texto_lbPrimera} ({-diferencia_pts_primero / 100.0:0.02f} {_("pws lost")})")
+            self.lbPrimera.set_text(f"{self.texto_lbPrimera} ({-diferencia_pts_primero / 100.0:0.02f} {_('pws lost')})")
             self.muestra(num)
             self.set_score(0)
             bt = self.liBT[self.actualP]
@@ -812,9 +810,9 @@ class WTrainBMT(LCDialog.LCDialog):
         site = tag("SITE")
         result = tag("RESULT")
         white = tag("WHITE")
-        white = f'{_("White")}: {white}' if white else ""
+        white = f"{_('White')}: {white}" if white else ""
         black = tag("BLACK")
-        black = f'{_("Black")}: {black}' if black else ""
+        black = f"{_('Black')}: {black}" if black else ""
         date = tag("DATE")
         info = f"{event} {site} {date}\n{white} - {black} {result}"
         info = info.strip()

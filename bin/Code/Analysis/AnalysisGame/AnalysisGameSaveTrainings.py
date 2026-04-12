@@ -2,10 +2,10 @@ import copy
 import os
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import INFINITE
 from Code.BestMoveTraining import BMT
+from Code.Z import Util
 
 
 def terminar_bmt(bmt_lista, name):
@@ -73,10 +73,10 @@ def graba_tactic(tacticblunders, game, njg, mrm, pos_act) -> bool:
             Util.create_folder(dtactics)
         Util.create_folder(tacticblunders)
         with open(
-            Util.opj(tacticblunders, "Config.ini"),
-            "wt",
-            encoding="utf-8",
-            errors="ignore",
+                Util.opj(tacticblunders, "Config.ini"),
+                "wt",
+                encoding="utf-8",
+                errors="ignore",
         ) as f:
             f.write(
                 f"""[COMMON]
@@ -84,10 +84,10 @@ ed_reference=20
 REPEAT=0
 SHOWTEXT=1
 [TACTIC1]
-MENU={_('Avoid the blunder')}
+MENU={_("Avoid the blunder")}
 FILESW={before}:100
 [TACTIC2]
-MENU={_('Take advantage of blunder')}
+MENU={_("Take advantage of blunder")}
 FILESW={after}:100
 """
             )
@@ -182,14 +182,14 @@ def save_pgn(file, name, dic_cab, fen, move, rm, mj):
 
 
 def save_bmt(
-    si_blunder,
-    fen,
-    mrm,
-    pos_act,
-    cl_game,
-    txt_game,
-    bmt_lista_blunders,
-    bmt_lista_brilliancies,
+        si_blunder,
+        fen,
+        mrm,
+        pos_act,
+        cl_game,
+        txt_game,
+        bmt_lista_blunders,
+        bmt_lista_brilliancies,
 ):
     """
     Se graba una position en un entrenamiento BMT
@@ -235,3 +235,54 @@ def save_bmt(
     bmt_lista = bmt_lista_blunders if si_blunder else bmt_lista_brilliancies
     bmt_lista.nuevo(bmt_uno)
     bmt_lista.check_game(cl_game, txt_game)
+
+
+def graba_mate(mate_save_folder, fen, mrm, game: Game.Game, njg) -> bool:
+    """
+    Graba los mates encontrados en archivos "Mate in N.fns"
+    @param mate_save_folder: carpeta donde guardar los mates
+    @param fen: posición
+    @param mrm: multirespuesta del engine
+    @param game: partida
+    @param njg: número de jugada de la partida
+    """
+    if not mate_save_folder:
+        return False
+
+    rm = mrm.li_rm[0]
+    if not rm.mate or rm.mate <= 0:
+        return False
+
+    try:
+        # Crear la carpeta si no existe
+        if not os.path.isdir(mate_save_folder):
+            Util.create_folder(mate_save_folder)
+
+        # Calcular el número de movimientos hasta el mate (convertir plies a movimientos)
+        elems = len(rm.pv.split(" "))
+        mate_moves = elems // 2 + 1
+
+        # Crear el nombre del archivo
+        mate_file = Util.opj(mate_save_folder, f"Mate in {mate_moves}.fns")
+
+        # Preparar cabecera con etiquetas del PGN
+        cab = ""
+        for k, v in game.dic_tags().items():
+            ku = k.upper()
+            if ku not in ("RESULT", "FEN"):
+                cab += f'[{k} "{v}"]'
+
+        # Crear un juego con el mate
+        p = Game.Game(fen=fen)
+        p.read_pv(rm.pv)
+
+        # Obtener la partida sin variaciones
+        game_raw = Game.game_without_variations(game)
+
+        # Grabar la línea
+        with open(mate_file, "at", encoding="utf-8", errors="ignore") as f:
+            f.write(f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg - 1)}\n")
+
+        return True
+    except Exception:
+        return False

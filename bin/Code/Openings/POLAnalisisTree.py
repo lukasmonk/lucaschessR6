@@ -414,7 +414,7 @@ class TabTree(QtWidgets.QWidget):
         list_openings = OpeningLines.ListaOpenings()
         path_opening = Util.opj(list_openings.folder, f"{filename}.opk")
         if os.path.isfile(path_opening):
-            QTMessages.message_error(self, f"{_('This file already exists')}\n{f"{filename}.opk"}")
+            QTMessages.message_error(self, f"{_('This file already exists')}\n{f'{filename}.opk'}")
             return
         with QTMessages.one_moment_please(self):
             dbop_current: OpeningLines.Opening = self.tabsAnalisis.dbop

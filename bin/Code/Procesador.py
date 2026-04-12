@@ -256,6 +256,7 @@ class Procesador:
         self.board.set_position(self.initial_position)
         self.board.remove_movables()
         self.board.remove_arrows()
+        self.board.hide_selection()
         self.main_window.adjust_size()
         self.main_window.set_title()
         self.close_engines()
@@ -356,7 +357,7 @@ class Procesador:
 
     @staticmethod
     def create_manager_analysis(
-            engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
+        engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
     ):
         assert type(mstime) is int and mstime >= 0
         assert type(depth) is int and depth >= 0
@@ -372,8 +373,7 @@ class Procesador:
 
     @staticmethod
     def create_manager_engine(
-            engine: Engines.Engine, mstime: int, depth: int, nodes: int, has_multipv=False, priority=None,
-            faster_mode=False
+        engine: Engines.Engine, mstime: int, depth: int, nodes: int, has_multipv=False, priority=None, faster_mode=False
     ):
         assert type(mstime) is int and mstime >= 0
         assert type(depth) is int and depth >= 0
@@ -609,7 +609,7 @@ class Procesador:
 
     def play_solo_extern(self, file_lcsb):
         self.manager = ManagerSolo.ManagerSolo(self)
-        self.manager.leeFichero(file_lcsb)
+        self.manager.read_file(file_lcsb)
 
     def play_against_extern(self, recplay):
         recplay = int(recplay)
@@ -723,14 +723,14 @@ class Procesador:
         )
 
     def manager_game(
-            self,
-            window,
-            game,
-            is_complete,
-            only_consult,
-            father_board,
-            with_previous_next=None,
-            save_routine=None,
+        self,
+        window,
+        game,
+        is_complete,
+        only_consult,
+        father_board,
+        with_previous_next=None,
+        save_routine=None,
     ):
         clon_procesador = ProcesadorVariations(
             window,
@@ -793,6 +793,11 @@ class Procesador:
 
     def users(self):
         WindowUsuarios.edit_users(self)
+
+    def select_1_pgn(self, wparent=None):
+        tm = ToolsMenu.ToolsMenu(self)
+        tmr = ToolsMenuRun.ToolsMenuRun(tm)
+        return tmr.select_1_pgn(wparent)
 
 
 class ProcesadorVariations(Procesador):

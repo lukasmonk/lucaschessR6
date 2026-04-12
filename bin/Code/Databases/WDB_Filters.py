@@ -128,12 +128,12 @@ class WFiltrar(QtWidgets.QDialog):
             self.lee_filtro(self.li_filter)
 
         for widget in (
-                lb_col,
-                lb_par0,
-                lb_par1,
-                lb_con,
-                lb_val,
-                lb_uni,
+            lb_col,
+            lb_par0,
+            lb_par1,
+            lb_con,
+            lb_val,
+            lb_uni,
         ):
             widget.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
 
@@ -449,25 +449,10 @@ class WFiltrarPGN(LCDialog.LCDialog):
 
     NUM_ROWS = 6
 
-    def __init__(self, w_parent, st_tags, dic_tags, n_scanned, is_partial, file_name):
+    def __init__(self, w_parent, st_tags, dic_tags):
         LCDialog.LCDialog.__init__(self, w_parent, _("Pre-filter for PGN import"), Iconos.Filtrar(), "filtrar_pgn")
 
         self.li_filter = []
-
-        # --- Información del escaneo ---
-        if is_partial:
-            info = _X(
-                _("Scanned first %1 games of %2 (partial scan)"),
-                f"{n_scanned:,}".replace(",", "."),
-                file_name,
-            )
-        else:
-            info = _X(
-                _("Scanned %1 games of %2"),
-                f"{n_scanned:,}".replace(",", "."),
-                file_name,
-            )
-        lb_info = Controles.LB(self, f"<b>{info}</b>").align_center()
 
         # --- Listas para los combos ---
         # Campos disponibles: etiquetas encontradas, ordenadas
@@ -535,7 +520,7 @@ class WFiltrarPGN(LCDialog.LCDialog):
         tb.new(_("Cancel"), Iconos.Cancelar(), self.reject)
         tb.new(_("Reinit"), Iconos.Reiniciar(), self.reiniciar)
 
-        layout = Colocacion.V().control(tb).control(lb_info).espacio(6).otro(ly).margen(6)
+        layout = Colocacion.V().control(tb).espacio(6).otro(ly).margen(6)
         self.setLayout(layout)
 
         self.restore_video(with_tam=False)

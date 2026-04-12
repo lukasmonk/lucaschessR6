@@ -125,7 +125,7 @@ class WGif(LCDialog.LCDialog):
 
         self.li_frames[0].save(
             path_gif,
-            format='GIF',
+            format="GIF",
             append_images=self.li_frames[1:],
             save_all=True,
             duration=seconds * 1000,

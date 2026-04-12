@@ -39,7 +39,7 @@ class WKibDatabases(WKibCommon.WKibCommon):
 
         dic_video = self.cpu.dic_video
         if not dic_video:
-            dic_video = {'_SIZE_': '886,581'}
+            dic_video = {"_SIZE_": "886,581"}
 
         self.siTop = dic_video.get("SITOP", True)
 
@@ -204,9 +204,9 @@ class WKibDatabases(WKibCommon.WKibCommon):
                     dicmove = li_moves[-1]
                     # win y lost es al revés
                     message += (
-                        f'  ||   {_("Wins")}: {dicmove["lost"]}  '
-                        f'{_("Losses")}: {dicmove["win"]}  '
-                        f'{_("Draws")}: {dicmove["draw"]}'
+                        f"  ||   {_('Wins')}: {dicmove['lost']}  "
+                        f"{_('Losses')}: {dicmove['win']}  "
+                        f"{_('Draws')}: {dicmove['draw']}"
                     )
             self.status.showMessage(message, 0)
 

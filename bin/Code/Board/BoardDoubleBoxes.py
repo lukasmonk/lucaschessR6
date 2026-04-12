@@ -6,7 +6,6 @@ from Code.Board import BoardBlocks, BoardTypes
 
 
 class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
-
     def __init__(self, escena, bloque_flecha, routine_if_pressed=None):
 
         super(DoubleBoxesSC, self).__init__(escena, bloque_flecha)
@@ -128,7 +127,7 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
     def paint_bm(self, bm, painter, is_from):
         painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
         if self.style == HIGHLIGHT_STYLE_NONE:
-            painter.setOpacity(0.1)
+            painter.setOpacity(0.001)
 
         physical_pos = bm.physical_pos
         tf = self.board.tamFrontera

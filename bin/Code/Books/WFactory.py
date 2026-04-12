@@ -55,7 +55,7 @@ class WFactoryPolyglots(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.width_columns_displayables() + 20, default_height=324)
+        self.restore_video(default_width=self.glista.width_and_vbar(), default_height=324)
 
         self.glista.gotop()
 

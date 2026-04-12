@@ -43,7 +43,7 @@ from Code.Base.Constantes import (
     TERMINATION_RESIGN,
     TERMINATION_WIN_ON_TIME,
     WHITE,
-    MULTIPV_MAXIMIZE
+    MULTIPV_MAXIMIZE,
 )
 from Code.Books import Books, WBooks
 from Code.Engines import EngineManagerPlay, EngineResponse, Engines, SelectEngines
@@ -600,8 +600,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if tc.time_is_consumed():
                 t = time.time()
                 if is_player and QTMessages.pregunta(
-                        self.main_window,
-                        f"{_X(_('%1 has won on time.'), self.rival_name)}\n\n{_('Add time and keep playing?')}",
+                    self.main_window,
+                    f"{_X(_('%1 has won on time.'), self.rival_name)}\n\n{_('Add time and keep playing?')}",
                 ):
                     min_x = WPlayAgainstEngine.get_extra_minutes(self.main_window)
                     if min_x:
@@ -908,7 +908,6 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.manager_tutor.close()
 
         if len(self.game) > 0:
-
             if not QTMessages.pregunta(self.main_window, _("End game?")):
                 return False  # no abandona
 
@@ -1254,7 +1253,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 return resp
 
     def select_book_move_base(
-            self, book: Books.Book, book_select: int
+        self, book: Books.Book, book_select: int
     ) -> Tuple[bool, Optional[int], Optional[int], Optional[str]]:
         fen = self.last_fen()
 
@@ -1493,8 +1492,12 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                 while True:
                                     rm_tutor = self.mrm_tutor.rm_best()
                                     menu = QTDialogs.LCMenu(self.main_window)
-                                    menu.opcion("None", _("There are %d best movements") % num, Iconos.Engine(),
-                                                is_disabled=True)
+                                    menu.opcion(
+                                        "None",
+                                        _("There are %d best movements") % num,
+                                        Iconos.Engine(),
+                                        is_disabled=True,
+                                    )
                                     menu.separador()
                                     resp = rm_tutor.abbrev_text_base()
                                     if not resp:
@@ -1686,9 +1689,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 seconds_white = seconds_black = 600
             self.manager_rival.humanize(self.humanize, self.game, seconds_white, seconds_black, seconds_move)
 
-        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(
-            game=self.game, dispacher=self.dispatch_rival
-        )
+        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game, dispatcher=self.dispatch_rival)
         if rm_rival is not None:
             self.rival_has_moved(rm_rival)
 
@@ -1767,7 +1768,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.premove = None
 
     def pww_centipawns_lost(
-            self, mrm: EngineResponse.MultiEngineResponse, rm_user: EngineResponse.EngineResponse
+        self, mrm: EngineResponse.MultiEngineResponse, rm_user: EngineResponse.EngineResponse
     ) -> int:
         if len(self.game.li_moves) == 0:
             best = mrm.best_rm_ordered()
@@ -1960,7 +1961,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 nodes = ""
             seldepth = f"/{rm.seldepth}" if rm.seldepth else ""
             li = [
-                f'{rm.name}',
+                f"{rm.name}",
                 f'<b>{rm.abbrev_text_base()}</b> | <b>{rm.depth}</b>{seldepth} | <b>{rm.time // 1000}"</b>{nodes}',
             ]
             pv = rm.pv

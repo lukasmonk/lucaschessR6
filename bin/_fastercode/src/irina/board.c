@@ -23,6 +23,8 @@ void fen_board(char *fen) {
     init_data();
 
     board = stb;
+    board.fifty = 0;
+    board.fullmove = 1;
 
     sscanf(fen, "%s %s %s %s %d %d", xmoves, xcolor, xcastle, xep, &board.fifty, &board.fullmove);
 
@@ -57,6 +59,10 @@ void fen_board(char *fen) {
 
             case '7':
                 c += 7;
+                break;
+
+            case '8':
+                c += 8;
                 break;
 
             case 'p':
@@ -189,66 +195,8 @@ void bitmap_pz(unsigned pz[], Bitmap bm, int piece) {
 }
 
 char *board_fen(char *fen) {
-    int pos, vacios, f, c;
-    char *ah;
-
-    pos = 0;
-    vacios = 0;
-
-    for (f = 7; f > -1; f--) {
-        for (c = 0; c < 8; c++) {
-            if (board.pz[f * 8 + c] == EMPTY) {
-                vacios++;
-            } else {
-                if (vacios) {
-                    fen[pos++] = vacios + '0';
-                    vacios = 0;
-                }
-                fen[pos++] = NAMEPZ[board.pz[f * 8 + c]];
-            }
-        }
-        if (vacios) {
-            fen[pos++] = vacios + '0';
-            vacios = 0;
-        }
-        if (f) {
-            fen[pos++] = '/';
-        }
-    }
-    fen[pos++] = ' ';
-
-    fen[pos++] = board.color == WHITE ? 'w' : 'b';
-    fen[pos++] = ' ';
-
-    if (board.castle) {
-        if (board.castle & CASTLE_OO_WHITE) {
-            fen[pos++] = 'K';
-        }
-        if (board.castle & CASTLE_OOO_WHITE) {
-            fen[pos++] = 'Q';
-        }
-        if (board.castle & CASTLE_OO_BLACK) {
-            fen[pos++] = 'k';
-        }
-        if (board.castle & CASTLE_OOO_BLACK) {
-            fen[pos++] = 'q';
-        }
-    } else {
-        fen[pos++] = '-';
-    }
-    fen[pos++] = ' ';
-
-    if (board.ep) {
-        ah = POS_AH[board.ep];
-        fen[pos++] = ah[0];
-        fen[pos++] = ah[1];
-    } else {
-        fen[pos++] = '-';
-    }
-    fen[pos++] = 0;
-
-    sprintf(fen, "%s %d %d", fen, board.fifty, board.fullmove);
-
+    board_fenM2(fen);
+    sprintf(fen + strlen(fen), " %d %d", board.fifty, board.fullmove);
     return fen;
 }
 
@@ -302,7 +250,28 @@ char *board_fenM2(char *fen) {
     }
     fen[pos++] = ' ';
 
+    /* Solo escribir EP si hay un peón del bando activo que pueda capturar */
+    int ep_valid = 0;
     if (board.ep) {
+        if (board.color == WHITE) {
+            /* Blanca para mover. El peón negro acaba de saltar a la fila 5 (32-39).
+               El cuadro EP está en fila 6 (40-47).
+               Capturan peones blancos en fila 5 (32-39). */
+            if ((board.ep % 8) > 0 && board.pz[board.ep - 9] == WHITE_PAWN)
+                ep_valid = 1;
+            if ((board.ep % 8) < 7 && board.pz[board.ep - 7] == WHITE_PAWN)
+                ep_valid = 1;
+        } else {
+            /* Negra para mover. El peón blanco acaba de saltar a la fila 4 (24-31).
+               El cuadro EP está en fila 3 (16-23).
+               Capturan peones negros en fila 4 (24-31). */
+            if ((board.ep % 8) > 0 && board.pz[board.ep + 7] == BLACK_PAWN)
+                ep_valid = 1;
+            if ((board.ep % 8) < 7 && board.pz[board.ep + 9] == BLACK_PAWN)
+                ep_valid = 1;
+        }
+    }
+    if (ep_valid) {
         ah = POS_AH[board.ep];
         fen[pos++] = ah[0];
         fen[pos++] = ah[1];

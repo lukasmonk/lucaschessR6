@@ -3,13 +3,13 @@ from Code.Z import ManagerVariations
 
 
 def edit_variation(
-        procesador,
-        game,
-        titulo=None,
-        with_engine_active=False,
-        is_competitive=False,
-        is_white_bottom=None,
-        go_to_move=None,
+    procesador,
+    game,
+    titulo=None,
+    with_engine_active=False,
+    is_competitive=False,
+    is_white_bottom=None,
+    go_to_move=None,
 ):
     window = procesador.main_window
     manager_tutor = procesador.get_manager_tutor()

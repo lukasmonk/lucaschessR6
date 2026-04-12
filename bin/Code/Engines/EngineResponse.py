@@ -109,7 +109,7 @@ class EngineResponse:
             self.to_sq = mv_insert[2:4]
             self.promotion = mv_insert[4:]
 
-    def is_better_than(self, otra: 'EngineResponse', control_difpts: int = 0, control_difporc: int = 0) -> bool:
+    def is_better_than(self, otra: "EngineResponse", control_difpts: int = 0, control_difporc: int = 0) -> bool:
         if self.mate:
             if otra.mate < 0:
                 if self.mate < 0:
@@ -204,12 +204,12 @@ class EngineResponse:
             if not self.is_white:
                 pt = -pt
             cp = f"{pt / 100.0:+0.2f}"
-            return f"{cp} {_("pawns")}"
+            return f"{cp} {_('pawns')}"
 
     def abbrev_text(self) -> str:
         c = self.abbrev_text_base()
         if self.mate == 0:
-            c = f"{c} {_("pws")}"
+            c = f"{c} {_('pws')}"
         return c
 
     def abbrev_text_pdt(self) -> str:
@@ -255,7 +255,7 @@ class EngineResponse:
             else:
                 return f"{pts // 100:+d}"
 
-    def copia(self) -> 'EngineResponse':
+    def copia(self) -> "EngineResponse":
         rm = EngineResponse(self.name, self.is_white)
         rm.restore(self.save())
         return rm
@@ -787,7 +787,7 @@ class MultiEngineResponse:
         if maxmate:
             if 0 < rm0.mate <= maxmate:
                 if fdbg:
-                    fdbg.write(f"1. {rm0.pv}: {_("Mate")} {rm0.mate} <= {maxmate}\n")
+                    fdbg.write(f"1. {rm0.pv}: {_('Mate')} {rm0.mate} <= {maxmate}\n")
                 return True
         if mindifpuntos:
             game_base: Game.Game = self.game  # asignada por el engine_manager
@@ -808,7 +808,7 @@ class MultiEngineResponse:
             )  # son puntos ganados por el engine y perdidos por el player
             if difpuntos > mindifpuntos:
                 if fdbg:
-                    fdbg.write(f"1. {rm0.pv}: {_("Centipawns lost")} {difpuntos} > {mindifpuntos}\n")
+                    fdbg.write(f"1. {rm0.pv}: {_('Centipawns lost')} {difpuntos} > {mindifpuntos}\n")
                 return True
         return False
 
@@ -846,7 +846,7 @@ class MultiEngineResponse:
         # Comprobamos donde estamos, si medio o final
         tipo = "F" if len(cp) <= x("MAXPIEZASFINAL") else ""
         if dbg:
-            fdbg.write(f"{_("Endgame") if tipo == "F" else _("Middlegame")}\n\n")
+            fdbg.write(f"{_('Endgame') if tipo == 'F' else _('Middlegame')}\n\n")
 
         # Variable a analizar
         x_mpn = x(f"MOVERPEON{tipo}")
@@ -882,7 +882,7 @@ class MultiEngineResponse:
                 pgn = " ".join(lip)
 
                 if rm.mate:
-                    fdbg.write(f"{num + 1:2d}. {pgn}: {rm.mate} {_("Mate")}\n")
+                    fdbg.write(f"{num + 1:2d}. {pgn}: {rm.mate} {_('Mate')}\n")
                 else:
                     fdbg.write(f"{num + 1:2d}. {pgn}: {rm.puntos}\n")
 
@@ -893,7 +893,7 @@ class MultiEngineResponse:
                 if base_position.squares.get(first_move.from_sq, "").lower() == "p":
                     rm.puntos += x_mpn
                     if dbg:
-                        fdbg.write(f"    {_("To move a pawn")}: {x_mpn} -> {rm.puntos}\n")
+                        fdbg.write(f"    {_('To move a pawn')}: {x_mpn} -> {rm.puntos}\n")
 
             if x_apz:
                 if base_position.squares.get(first_move.from_sq, "p").lower() != "p":
@@ -908,25 +908,25 @@ class MultiEngineResponse:
                     if has_advanced:
                         rm.puntos += x_apz
                         if dbg:
-                            fdbg.write(f"    {_("Advance piece")}: {x_apz} -> {rm.puntos}\n")
+                            fdbg.write(f"    {_('Advance piece')}: {x_apz} -> {rm.puntos}\n")
 
             if x_j:
                 if first_move.is_check:
                     rm.puntos += x_j
                     if dbg:
-                        fdbg.write(f"    {_("Make check")}: {x_j} -> {rm.puntos}\n")
+                        fdbg.write(f"    {_('Make check')}: {x_j} -> {rm.puntos}\n")
 
             if x_c:
                 if first_move.is_capture():
                     rm.puntos += x_c
                     if dbg:
-                        fdbg.write(f"    {_("Capture")}: {x_c} -> {rm.puntos}\n")
+                        fdbg.write(f"    {_('Capture')}: {x_c} -> {rm.puntos}\n")
 
             if x2_b:
                 if last_position.num_pieces("B" if side_engine else "b") == 2:
                     rm.puntos += x2_b
                     if dbg:
-                        fdbg.write(f"    {_("Keep the two bishops")}: {x2_b} -> {rm.puntos} \n")
+                        fdbg.write(f"    {_('Keep the two bishops')}: {x2_b} -> {rm.puntos} \n")
 
             if x_av_pr:
                 if tipo == "F":
@@ -940,7 +940,7 @@ class MultiEngineResponse:
                 if has_advanced:
                     rm.puntos += x_av_pr
                     if dbg:
-                        fdbg.write(f'    {_("Advance")} : {x_av_pr} -> {rm.puntos}\n')
+                        fdbg.write(f"    {_('Advance')} : {x_av_pr} -> {rm.puntos}\n")
 
             if x_jpr:
                 n = True
@@ -948,7 +948,7 @@ class MultiEngineResponse:
                     if n and move.is_check:
                         rm.puntos += x_jpr
                         if dbg:
-                            fdbg.write(f"    {_("Make check")} : {x_jpr} -> {rm.puntos}\n")
+                            fdbg.write(f"    {_('Make check')} : {x_jpr} -> {rm.puntos}\n")
                         break
                     n = not n
 
@@ -958,7 +958,7 @@ class MultiEngineResponse:
                     if n and move.is_capture():
                         rm.puntos += x_cpr
                         if dbg:
-                            fdbg.write(f"    {_("Capture")}: {x_cpr} -> {rm.puntos}\n")
+                            fdbg.write(f"    {_('Capture')}: {x_cpr} -> {rm.puntos}\n")
                         break
                     n = not n
 

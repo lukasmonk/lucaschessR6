@@ -345,7 +345,7 @@ class Everest:
 
     def _svg(self, height):
         c_svg = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns:rdf="https://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="https://www.w3.org/2000/svg" height="517.48px" width="1169.9px" version="1.1" xmlns:cc="https://creativecommons.org/ns#" xmlns:dc="https://purl.org/dc/elements/1.1/" viewBox="0 0 1169.8729 517.47516">
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="517.48px" width="1169.9px" version="1.1" xmlns:cc="https://creativecommons.org/ns#" xmlns:dc="https://purl.org/dc/elements/1.1/" viewBox="0 0 1169.8729 517.47516">
  <defs>
   <linearGradient id="linearGradient4458" x1="593.87" gradientUnits="userSpaceOnUse" y1="908.21" gradientTransform="matrix(1.0069 0 0 .99999 -11.397 -884.63)" x2="593.87" y2="1402.4">
    <stop stop-color="#9dc7da" offset="0"/>

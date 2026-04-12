@@ -467,8 +467,8 @@ class ManagerMate(Manager.Manager):
         resp = menu.lanza()
         if resp == "reset":
             if QTMessages.pregunta(
-                    self.main_window,
-                    f"{_('Recreate all levels and start over')}\n{_('Are you sure?')}",
+                self.main_window,
+                f"{_('Recreate all levels and start over')}\n{_('Are you sure?')}",
             ):
                 Util.remove_file(self.control_mate.file_path)
                 self.start(self.mate)
@@ -522,7 +522,6 @@ class ManagerMate(Manager.Manager):
             self.end_game()
 
         else:
-
             self.init_position(position_mate)
 
     def repeat_mate(self, si_mensaje, si_error):

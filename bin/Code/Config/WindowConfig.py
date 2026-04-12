@@ -4,10 +4,18 @@ from PySide6 import QtCore
 
 import Code
 from Code.Base.Constantes import (
-    GO_BACK, GO_FORWARD,
-    MENU_PLAY_ANY_ENGINE, MENU_PLAY_BOTH, MENU_PLAY_YOUNG_PLAYERS,
-    NOTATION_ALGEBRAIC, NOTATION_LONGALGEBRAIC, NOTATION_DESCRIPTIVE,
-    HIGHLIGHT_STYLE_ARROW, HIGHLIGHT_STYLE_OUTLINE, HIGHLIGHT_STYLE_FILL, HIGHLIGHT_STYLE_NONE
+    GO_BACK,
+    GO_FORWARD,
+    MENU_PLAY_ANY_ENGINE,
+    MENU_PLAY_BOTH,
+    MENU_PLAY_YOUNG_PLAYERS,
+    NOTATION_ALGEBRAIC,
+    NOTATION_LONGALGEBRAIC,
+    NOTATION_DESCRIPTIVE,
+    HIGHLIGHT_STYLE_ARROW,
+    HIGHLIGHT_STYLE_OUTLINE,
+    HIGHLIGHT_STYLE_FILL,
+    HIGHLIGHT_STYLE_NONE, HIGHLIGHT_STYLE_ARROW_CURVED,
 )
 from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
 from Code.Z import Util
@@ -90,7 +98,7 @@ def options(parent, configuration):
     for x in drap:
         drap_v[drap[x]] = x
     form.slider(
-        f"{_('Speed')} ({_('By default')}=1)",
+        f"{_('Speed')}:<br><small>{_('By default')}=1",
         1,
         len(drap),
         drap_v.get(configuration.x_pieces_speed, 100),
@@ -99,7 +107,7 @@ def options(parent, configuration):
     form.separador()
 
     form.slider(
-        f'{_("Margin of pieces in square")}:<br><small>{_("By default")} 10</small>',
+        f"{_('Margin of pieces in square')}:<br><small>{_('By default')}=10</small>",
         0,
         20,
         Code.configuration.x_margin_pieces,
@@ -116,6 +124,7 @@ def options(parent, configuration):
     )
     li_hstyle = (
         (_("Arrow"), HIGHLIGHT_STYLE_ARROW),
+        (_("Arrow curved in the case of knight moves"), HIGHLIGHT_STYLE_ARROW_CURVED),
         (_("Square Outline"), HIGHLIGHT_STYLE_OUTLINE),
         (_("Square Fill"), HIGHLIGHT_STYLE_FILL),
         (_("None"), HIGHLIGHT_STYLE_NONE),
@@ -131,7 +140,7 @@ def options(parent, configuration):
     form.combobox(_("Configuration icon position"), li_pos, configuration.x_position_tool_board)
     form.separador()
 
-    form.add_tab(f'{_("Boards")} 1')
+    form.add_tab(f"{_('Boards')} 1")
 
     # Boards 2/2 ######################################################################################################
     form.separador()
@@ -159,6 +168,15 @@ def options(parent, configuration):
         (_("Predictive type: program tries to guess your intention"), True),
     ]
     form.combobox(_("Mouse shortcuts"), li_mouse_sh, configuration.x_mouse_shortcuts)
+    form.slider(
+        f"{_("Show square pressed")}:<br><small>{_('By default')}=50%",
+        0,
+        100,
+        Code.configuration.x_show_square_shortcut,
+        siporc=True,
+        interval=10,
+        step=5
+    )
     form.separador()
 
     x = f" - {_('developed by')} Graham O'Neill (https://goneill.co.nz)"
@@ -194,7 +212,7 @@ def options(parent, configuration):
 
     form.checkbox(_("Live graphics with the right mouse button"), configuration.x_direct_graphics)
 
-    form.add_tab(f'{_("Boards")} 2')
+    form.add_tab(f"{_('Boards')} 2")
 
     # Appearance 1/2 #################################################################################################
     form.checkbox(_("By default"), False)
@@ -245,7 +263,7 @@ def options(parent, configuration):
     form.checkbox(_("PGN always in English"), configuration.x_pgn_english)
     form.checkbox(_("PGN with figurines"), configuration.x_pgn_withfigurines)
     li_notations = (
-        (f'{_("Algebraic")} ({_("By default")})', NOTATION_ALGEBRAIC),
+        (f"{_('Algebraic')} ({_('By default')})", NOTATION_ALGEBRAIC),
         (_("Long algebraic"), NOTATION_LONGALGEBRAIC),
         (_("Descriptive"), NOTATION_DESCRIPTIVE),
     )
@@ -325,7 +343,7 @@ def options(parent, configuration):
             configuration.x_move_highlight_style,
             configuration.x_show_candidates,
             toolIcon,
-            configuration.x_position_tool_board
+            configuration.x_position_tool_board,
         ) = li_b1
         configuration.x_opacity_tool_board = 10 if toolIcon else 1
         configuration.x_pieces_speed = drap[rapidezMovPiezas]
@@ -337,6 +355,7 @@ def options(parent, configuration):
             configuration.x_wheel_board,
             configuration.x_autopromotion_q,
             configuration.x_mouse_shortcuts,
+            configuration.x_show_square_shortcut,
             dboard,
             configuration.x_director_icon,
             configuration.x_direct_graphics,
@@ -346,26 +365,26 @@ def options(parent, configuration):
             if dboard:
                 if dboard == "DGT":
                     if not QTMessages.pregunta(
-                            parent,
-                            "%s<br><br>%s %s"
-                            % (
-                                    _("Are you sure %s is the correct driver ?") % dboard,
-                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
-                                    _("Proceed at your own risk."),
-                            ),
+                        parent,
+                        "%s<br><br>%s %s"
+                        % (
+                            _("Are you sure %s is the correct driver ?") % dboard,
+                            _("WARNING: selecting the wrong driver might cause damage to your board."),
+                            _("Proceed at your own risk."),
+                        ),
                     ):
                         dboard = ""
                 else:
                     if not QTMessages.pregunta(
-                            parent,
-                            "%s<br><br>%s %s<br><br>%s<br>%s"
-                            % (
-                                    _("Are you sure %s is the correct driver ?") % dboard,
-                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
-                                    _("Proceed at your own risk."),
-                                    _("Please read the driver's user manual at:"),
-                                    '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
-                            ),
+                        parent,
+                        "%s<br><br>%s %s<br><br>%s<br>%s"
+                        % (
+                            _("Are you sure %s is the correct driver ?") % dboard,
+                            _("WARNING: selecting the wrong driver might cause damage to your board."),
+                            _("Proceed at your own risk."),
+                            _("Please read the driver's user manual at:"),
+                            '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
+                        ),
                     ):
                         dboard = ""
             configuration.x_digital_board = dboard

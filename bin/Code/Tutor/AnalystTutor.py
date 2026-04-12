@@ -43,7 +43,7 @@ class AnalystTutor:
         self.user_move = None
         dispatcher_bestmove = self.bestmove_found
         self.manager_tutor.analyze_tutor(
-            game, dispacher_bestmove=dispatcher_bestmove, dispacher_changedepth=self.changed_depth
+            game, dispatcher_bestmove=dispatcher_bestmove, dispatcher_changedepth=self.changed_depth
         )
 
     def analyze_end(self):

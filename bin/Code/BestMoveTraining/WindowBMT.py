@@ -66,8 +66,6 @@ class WHistorialBMT(LCDialog.LCDialog):
         o_columns.nueva("FFINAL", _("End date"), 90, align_center=True)
 
         self.grid = grid = Grid.Grid(self, o_columns, xid=False, is_editable=True)
-        # n = grid.width_columns_displayables()
-        # grid.setMinimumWidth( n + 20 )
         self.register_grid(grid)
 
         # Colocamos ---------------------------------------------------------------
@@ -206,7 +204,7 @@ class WBMT(LCDialog.LCDialog):
 
     def titulo(self):
         fdir, fnam = os.path.split(self.configuration.paths.file_bmt())
-        return f'{_("Find best move")} : {fnam} ({Util.relative_path(fdir)})'
+        return f"{_('Find best move')} : {fnam} ({Util.relative_path(fdir)})"
 
     def finalize(self):
         self.bmt.cerrar()
@@ -263,7 +261,7 @@ class WBMT(LCDialog.LCDialog):
         menu.separador()
         menu.opcion(
             "odt",
-            f'{_("Export to")}: {_("Open Document Format")} (*.odt)',
+            f"{_('Export to')}: {_('Open Document Format')} (*.odt)",
             Iconos.ODT(),
         )
 
@@ -312,7 +310,7 @@ class WBMT(LCDialog.LCDialog):
             current_pos = dic["POS"]
             total = dic["TOTAL"]
             if current_pos == -1:
-                wodt.create_document(f'{_("Lucas Chess")} - {_("Find best move")}: {dbf.NOMBRE}', True)
+                wodt.create_document(f"{_('Lucas Chess')} - {_('Find best move')}: {dbf.NOMBRE}", True)
                 current_pos += 1
             else:
                 wodt.odt_doc.add_pagebreak()
@@ -360,7 +358,7 @@ class WBMT(LCDialog.LCDialog):
 
                 lst_moves = get_move_list(base_game)
                 pts_lost = best_score - rm.centipawns_abs()
-                txt_lost = f' ({pts_lost / 100} {_("pws lost")})' if pts_lost > 0 else ""
+                txt_lost = f" ({pts_lost / 100} {_('pws lost')})" if pts_lost > 0 else ""
                 txt = "%d: %s = %s%s" % (
                     rm.nivelBMT + 1,
                     base_game.move(0).pgn_translated(),
@@ -387,9 +385,9 @@ class WBMT(LCDialog.LCDialog):
 
                 tag_txt = f"{_('Actual game')}: "
                 if "White" in di_tags and "Black" in di_tags:
-                    tag_txt += f'{di_tags["White"]} vs {di_tags["Black"]}'
+                    tag_txt += f"{di_tags['White']} vs {di_tags['Black']}"
                 if "Date" in di_tags:
-                    tag_txt += f' ({di_tags["Date"]})'
+                    tag_txt += f" ({di_tags['Date']})"
 
                 if "Site" in di_tags and di_tags["Site"].startswith("http"):
                     gamelink = di_tags["Site"]
@@ -497,7 +495,6 @@ class WBMT(LCDialog.LCDialog):
         game = Game.Game()
 
         for pos in range(tam_lista):
-
             uno = bmt_lista.dame_uno(pos)
 
             fen = uno.fen
@@ -508,7 +505,7 @@ class WBMT(LCDialog.LCDialog):
                 _is_canceled = True
                 break
 
-            mrm = xmanager.analiza(fen)
+            mrm = xmanager.analyze_fen(fen)
 
             cp.read_fen(fen)
 
@@ -655,7 +652,7 @@ class WBMT(LCDialog.LCDialog):
             return
         reg = dbf.registroActual()  # Importante ya que dbf puede cambiarse mientras se edita
         config = FormLayout.Editbox(
-            f"<div align=\"right\">{_('List of positions')}<br>{_('By example:')} -5,7-9,14,19-",
+            f'<div align="right">{_("List of positions")}<br>{_("By example:")} -5,7-9,14,19-',
             rx=r"[0-9,\-,\,]*",
         )
         li_gen: list = [(None, None), (config, "")]
@@ -728,7 +725,6 @@ class WBMT(LCDialog.LCDialog):
             return
 
         with QTMessages.one_moment_please(self):
-
             accion, li_gen = resultado
             name = li_gen[0].strip()
             extra = li_gen[1]
@@ -787,7 +783,7 @@ class WBMT(LCDialog.LCDialog):
             self.releer()
 
     def cambiar(self):
-        if bmtt := SelectFiles.salvaFichero(
+        if bmtt := SelectFiles.save_file(
             self,
             _("Select/create another file of training"),
             self.configuration.paths.file_bmt(),
@@ -815,7 +811,7 @@ class WBMT(LCDialog.LCDialog):
         if recno >= 0:
             reg_actual = dbf.registroActual()
             carpeta = f"{os.path.dirname(self.configuration.paths.file_bmt())}/{dbf.NOMBRE}.bm1"
-            if bmt1 := SelectFiles.salvaFichero(self, _("Export the current training"), carpeta, "bm1", True):
+            if bmt1 := SelectFiles.save_file(self, _("Export the current training"), carpeta, "bm1", True):
                 bmt_lista = self.zip2var_bmt_lista(dbf, recno)
                 if bmt_lista is not None:
                     if si_limpiar:
@@ -875,7 +871,7 @@ class WBMT(LCDialog.LCDialog):
 
     def importar(self):
         carpeta = os.path.dirname(self.configuration.paths.file_bmt())
-        if bmt1 := SelectFiles.leeFichero(self, carpeta, "bm1", titulo=_("Import a training")):
+        if bmt1 := SelectFiles.read_file(self, carpeta, "bm1", titulo=_("Import a training")):
             reg = Util.restore_pickle(bmt1)
             if hasattr(reg, "BMT_LISTA"):
                 reg.BMT_LISTA = Util.var2zip(reg.BMT_LISTA)
@@ -1071,7 +1067,6 @@ class WBMT(LCDialog.LCDialog):
             return not tmp_bp.is_canceled()
 
         for n in range(from_sq - 1, to_sq):
-
             fen = li_fen[n]
 
             tmp_bp.mensaje(mensaje + " %d/%d" % (n + 2 - from_sq, n_dh))

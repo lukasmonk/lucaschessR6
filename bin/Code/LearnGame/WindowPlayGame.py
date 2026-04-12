@@ -9,7 +9,6 @@ from Code.Translations import TrListas
 
 
 class DBPlayGame(UtilSQL.DictSQL):
-
     def __init__(self, file):
         UtilSQL.DictSQL.__init__(self, file)
         self.regKeys = self.keys(True, True)
@@ -90,7 +89,7 @@ class WPlayGameBase(LCDialog.LCDialog):
             label = TrListas.pgn_label(key)
             o_columns.nueva(key, label, 80, align_center=key != "EVENT")
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         # Tool bar
         self.tb = QTDialogs.LCTB(self)
@@ -214,7 +213,7 @@ class WPlay1(LCDialog.LCDialog):
             o_columns.nueva("POINTS", _("Score"), 80, align_center=True)
             o_columns.nueva("TIME", _("Time"), 80, align_center=True)
             self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-            self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+            self.grid.fix_min_width()
 
             # Tool bar
             self.tb = QTDialogs.LCTB(self)

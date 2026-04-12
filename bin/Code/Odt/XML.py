@@ -40,7 +40,7 @@ class Element:
     def to_str(self):
         content_root = self.name
         if self.params:
-            content_root += f" {' '.join([f'{key}=\"{value}\"' for key, value in self.params.items()])}"
+            content_root += f" {' '.join([f'{key}="{value}"' for key, value in self.params.items()])}"
         if len(self.sub_elements) == 0 and not self.value:
             txt = f"<{content_root}/>"
         else:

@@ -181,7 +181,7 @@ class ManagerSingularM(Manager.Manager):
         self.refresh()
 
     def current_pgn(self):
-        resp = f"[Event \"{_('Challenge 101')}\"]\n"
+        resp = f'[Event "{_("Challenge 101")}"]\n'
         resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
         resp += f"\n{self.game.pgn_base()}"

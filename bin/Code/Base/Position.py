@@ -19,7 +19,8 @@ from Code.Base.Constantes import (
     PHASE_BISHOP,
     PHASE_ROOK,
     PHASE_QUEEN,
-    NOTATION_LONGALGEBRAIC, NOTATION_ALGEBRAIC
+    NOTATION_LONGALGEBRAIC,
+    NOTATION_ALGEBRAIC,
 )
 from Code.Translations import TrListas
 
@@ -29,6 +30,7 @@ class Position:
     Represent a chess position including board pieces, side to move,
     castling rights, en passant square and move counters.
     """
+
     __slots__ = (
         "li_extras",
         "squares",
@@ -295,10 +297,7 @@ class Position:
         for piece in self.squares.values():
             if piece and remaining[piece] > 0:
                 remaining[piece] -= 1
-        return {
-            (piece.upper() if piece.islower() else piece.lower()): value
-            for piece, value in remaining.items()
-        }
+        return {(piece.upper() if piece.islower() else piece.lower()): value for piece, value in remaining.items()}
 
     def capturas_diferencia(self):
         """
@@ -572,7 +571,7 @@ class Position:
     def num_allpiezas_wb(self):
         n_white = n_black = 0
         for col in string.ascii_lowercase[:8]:
-            for row in '12345678':
+            for row in "12345678":
                 if piece := self.squares.get(f"{col}{row}"):
                     if piece.islower():
                         n_black += 1
@@ -755,6 +754,7 @@ class Position:
         """
         Return the mirrored position (swap colors and flip ranks).
         """
+
         def cp(a1):
             if a1.islower():
                 c, f = a1[0], a1[1]

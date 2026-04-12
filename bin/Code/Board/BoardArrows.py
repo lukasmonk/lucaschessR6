@@ -2,7 +2,8 @@ import copy
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from Code.Base.Constantes import INFINITE
+import Code
+from Code.Base.Constantes import INFINITE, HIGHLIGHT_STYLE_ARROW_CURVED
 from Code.Board import BoardBlocks
 
 
@@ -291,12 +292,13 @@ def paint_arrow(painter, bf, tf):
         return None
 
     is_knight_move = False
-    if bf.a1h8 and len(bf.a1h8) >= 4:
-        c1, r1 = ord(bf.a1h8[0]), ord(bf.a1h8[1])
-        c2, r2 = ord(bf.a1h8[2]), ord(bf.a1h8[3])
-        if 97 <= c1 <= 104 and 49 <= r1 <= 56 and 97 <= c2 <= 104 and 49 <= r2 <= 56:
-            if abs((c1 - c2) * (r1 - r2)) == 2:
-                is_knight_move = True
+    if Code.configuration.x_move_highlight_style == HIGHLIGHT_STYLE_ARROW_CURVED:
+        if bf.a1h8 and len(bf.a1h8) >= 4:
+            c1, r1 = ord(bf.a1h8[0]), ord(bf.a1h8[1])
+            c2, r2 = ord(bf.a1h8[2]), ord(bf.a1h8[3])
+            if 97 <= c1 <= 104 and 49 <= r1 <= 56 and 97 <= c2 <= 104 and 49 <= r2 <= 56:
+                if abs((c1 - c2) * (r1 - r2)) == 2:
+                    is_knight_move = True
 
     color = QtGui.QColor(bf.color)
     pen = QtGui.QPen()

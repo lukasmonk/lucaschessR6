@@ -296,7 +296,6 @@ class ManagerCompeticion(Manager.Manager):
         si_pensar = True
 
         if self.in_the_opening:
-
             ok, from_sq, to_sq, promotion = self.opening.run_engine(self.last_fen())
 
             if ok:

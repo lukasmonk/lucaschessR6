@@ -115,7 +115,6 @@ class WKibIndex(QtWidgets.QDialog):
         self.need_refresh_data = False
         mrm = self.engine_run.mrm
         if mrm.li_rm:
-
             cp = self.game.last_position
 
             self.liData = []

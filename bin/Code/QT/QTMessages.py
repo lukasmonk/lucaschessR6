@@ -44,6 +44,7 @@ class WaitingMessage(QtWidgets.QWidget):
         puntos=None,
         with_image=True,
         if_parent_none=False,
+        with_progressbar=False,
     ):
         # No se indica parent cuando le afecta el disable general, cuando se analiza posicion por ejemplo
         super(WaitingMessage, self).__init__(None if if_parent_none else parent)
@@ -82,9 +83,28 @@ class WaitingMessage(QtWidgets.QWidget):
         self.ms = 0  # for temporary messages
 
         self.mensaje = mensaje
+        ly_lb = Colocacion.V()
         self.lb = lb = Controles.LB(parent, resalta(mensaje)).set_font(Controles.FontType(puntos=puntos)).align_center()
         if fixed_size is not None:
             lb.set_wrap().relative_width(fixed_size - 60)
+        ly_lb.control(self.lb)
+
+        self.total_progressbar = 0
+        if with_progressbar:
+            self.progressbar = QtWidgets.QProgressBar(self)
+            self.progressbar.setStyleSheet("""
+                QProgressBar {
+                    border: none;
+                    background-color: #e0e0e0;
+                    border-radius: 2px;
+                }
+                
+                QProgressBar::chunk {
+                    background-color: #4caf50;
+                    border-radius: 2px;
+                }
+            """)
+            ly_lb.control(self.progressbar)
 
         if with_cancel:
             if not tit_cancel:
@@ -114,7 +134,7 @@ QPushButton:pressed {
         ly = Colocacion.G()
         if with_image:
             ly.control(lbi, 0, 0, 3, 1)
-        ly.controlc(lb, 1, 1)
+        ly.otroc(ly_lb, 1, 1)
         if with_cancel:
             ly.controlc(self.btCancelar, 2, 1)
 
@@ -183,7 +203,7 @@ QPushButton:pressed {
         if self.is_canceled():
             return False
         else:
-            self.label(f'{self.mensaje}\n{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}')
+            self.label(f"{self.mensaje}\n{_('Depth')}: {rm.depth} {_('Time')}: {ms / 1000:.01f}")
             return True
 
     def time(self, secs):
@@ -201,6 +221,21 @@ QPushButton:pressed {
         QtCore.QTimer.singleShot(100, test)
         QTUtils.refresh_gui()
 
+    def set_hide_progressbar(self):
+        if not self.is_canceled():
+            self.progressbar.hide()
+
+    def set_total_progressbar(self, total):
+        if total == 0:
+            self.progressbar.hide()
+        else:
+            self.progressbar.setRange(0, total)
+            self.progressbar.show()
+
+    def set_value_progressbar(self, value):
+        if not self.is_canceled():
+            self.progressbar.setValue(value)
+
     def __enter__(self):
         return self
 
@@ -214,8 +249,8 @@ def one_moment_please(owner, mensaje=None, physical_pos=None, with_cancel=False)
     return WaitingMessage(owner, mensaje, physical_pos=physical_pos, with_cancel=with_cancel)
 
 
-def working(owner, with_cancel=False):
-    return WaitingMessage(owner, _("Working..."), with_cancel=with_cancel)
+def working(owner, **args):
+    return WaitingMessage(owner, _("Working..."), **args)
 
 
 def analizando(owner, with_cancel=False):

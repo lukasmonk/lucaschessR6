@@ -237,7 +237,6 @@ def create_journeys(num_opponents: int) -> list:
                 journey[xpos] = (li_ch[w], li_ch[b])
 
     else:
-
         li_opponents: list = list(range(num_opponents))
         if num_opponents % 2:
             li_opponents.append(None)

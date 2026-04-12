@@ -12,6 +12,7 @@ from Code.Z import Util, XRun
 def init():
     if __debug__:
         from Code.Z import Debug
+
         sys.stderr = Debug.LogDebug("bug.log")
     else:
         sys.stderr = Util.Log("bug.log")

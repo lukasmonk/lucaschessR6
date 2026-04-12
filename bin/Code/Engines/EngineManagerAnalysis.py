@@ -5,6 +5,9 @@ from typing import Callable, Optional, List
 from PySide6 import QtCore
 
 from Code.Base import Game, Position
+
+if __debug__:
+    pass
 from Code.Engines import EngineManager, EngineResponse, EngineRun, Engines
 
 
@@ -14,7 +17,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         self.set_faster_mode()
 
     def _run_analysis_loop(
-        self, dispacher: Optional[Callable], run_engine_params: Optional[EngineRun.RunEngineParams] = None
+            self, dispatcher: Optional[Callable], run_engine_params: Optional[EngineRun.RunEngineParams] = None
     ):
         """Ejecuta el loop de análisis con manejo de señales."""
         loop = QtCore.QEventLoop()
@@ -35,8 +38,8 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
                 close()
                 return
 
-            if dispacher and self.engine_run and self.engine_run.mrm:
-                if not dispacher(rm=self.engine_run.mrm.best_rm_ordered(), ms=self.elapsed_time.elapsed()):
+            if dispatcher and self.engine_run and self.engine_run.mrm:
+                if not dispatcher(rm=self.engine_run.mrm.best_rm_ordered(), ms=self.elapsed_time.elapsed()):
                     self._is_canceled = True
                     self.engine_run.stop()
                     close()
@@ -76,14 +79,14 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
     def set_cache(self, fenm2, mrm):
         self.cache_analysis[fenm2] = mrm
 
-    def analyze_move(self, game, movement: int, dispacher: Optional[Callable]) -> tuple:
+    def analyze_move(self, game, movement: int, dispatcher: Optional[Callable]) -> tuple:
 
         if not self.check_engine():
             return None, -1
 
         move = game.move(movement)
 
-        # Cache""
+        # Cache
         fenm2 = ""
         if self.cache_analysis is not None:
             position = move.position_before if movement >= 0 else game.first_position
@@ -99,7 +102,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
         self.elapsed_time.start()
 
-        self._run_analysis_loop(dispacher)
+        self._run_analysis_loop(dispatcher)
 
         if self.engine_run is None or self.engine_run.mrm is None:
             return None, -1
@@ -118,7 +121,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
                 tmp_play_params.fixed_depth = mrm.depth - 1
             else:
                 tmp_play_params = self.run_engine_params
-            rm = self.analyze_post_move(game, movement, tmp_play_params, dispacher)
+            rm = self.analyze_post_move(game, movement, tmp_play_params, dispatcher)
             if self._is_canceled or rm is None:
                 return mrm, -1
             rm.change_side(mv_insert=movimiento)
@@ -132,11 +135,11 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             self.cache_analysis[fenm2] = self.mrm
         return self.mrm, pos
 
-    def analyze_post_move(self, game, movement: int, tmp_play_params: EngineRun.RunEngineParams, dispacher: Callable):
+    def analyze_post_move(self, game, movement: int, tmp_play_params: EngineRun.RunEngineParams, dispatcher: Callable):
         try:
             self.engine_run.set_multipv(1)
             self.engine_run.set_game_position(game, movement, False)
-            self._run_analysis_loop(dispacher, run_engine_params=tmp_play_params)
+            self._run_analysis_loop(dispatcher, run_engine_params=tmp_play_params)
 
             mrm = self.engine_run.mrm
 
@@ -157,25 +160,25 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         return True
 
     def analyze_tutor(
-        self, game, dispacher_bestmove: Optional[Callable], dispacher_changedepth: Optional[Callable]
+            self, game, dispatcher_bestmove: Optional[Callable], dispatcher_changedepth: Optional[Callable]
     ) -> bool:
         if not self.check_engine():
             return False
         try:
-            if dispacher_bestmove is not None:
-                self.connect_bestmove(dispacher_bestmove)
+            if dispatcher_bestmove is not None:
+                self.connect_bestmove(dispatcher_bestmove)
 
-            if dispacher_changedepth is not None:
-                self.connect_depthchanged(dispacher_changedepth)
+            if dispatcher_changedepth is not None:
+                self.connect_depthchanged(dispatcher_changedepth)
 
             if self.cache_analysis is not None:
                 fenm2 = game.last_position.fenm2()
                 if fenm2 in self.cache_analysis:
                     mrm: EngineResponse.MultiEngineResponse = self.cache_analysis[fenm2]
                     self.engine_run.set_mrm_cached(mrm)
-                    if dispacher_bestmove is not None:
+                    if dispatcher_bestmove is not None:
                         if mrm.li_rm:
-                            dispacher_bestmove(mrm.best_rm_ordered().movimiento())
+                            dispatcher_bestmove(mrm.best_rm_ordered().movimiento())
                             return True
 
             self.engine_run.set_game_position(game, None, False)
@@ -222,6 +225,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         if self.is_disabled or self._is_canceled or mrm_new is None:
             return None
 
+        mrm_new.ordena()
         rm = mrm_new.best_rm_ordered()
         rm.change_side(mv_insert=a1h8)
 
@@ -239,13 +243,13 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             return
 
         while (
-            self.engine_run.state != EngineRun.EngineState.THINKING
-            and self.engine_run.time_played() * 1000 < max_mstime
+                self.engine_run.state == EngineRun.EngineState.THINKING
+                and self.engine_run.time_played() * 1000 < max_mstime
         ):
             time.sleep(0.1)
         self.stop()
 
-    def analyze_last_position(self, game, dispacher: Optional[Callable]) -> EngineResponse.MultiEngineResponse | None:
+    def analyze_last_position(self, game, dispatcher: Optional[Callable]) -> EngineResponse.MultiEngineResponse | None:
 
         if not self.check_engine():
             return None
@@ -255,7 +259,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
         self.elapsed_time.start()
 
-        self._run_analysis_loop(dispacher)
+        self._run_analysis_loop(dispatcher)
 
         if self.engine_run is None or self.engine_run.mrm is None:
             return None
@@ -265,7 +269,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             self.mrm.ordena()
         return self.mrm
 
-    def analyze_fen(self, fen, dispacher: Optional[Callable]) -> EngineResponse.MultiEngineResponse | None:
+    def analyze_fen(self, fen, dispatcher: Optional[Callable] = None) -> EngineResponse.MultiEngineResponse | None:
 
         if not self.check_engine():
             return None
@@ -274,7 +278,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
         self.elapsed_time.start()
 
-        self._run_analysis_loop(dispacher)
+        self._run_analysis_loop(dispatcher)
 
         if self.engine_run is None or self.engine_run.mrm is None:
             return None
@@ -291,10 +295,53 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
                 return False
             return True
 
-        mrm: EngineResponse.MultiEngineResponse = self.analyze_last_position(game, check_mate)
+        mrm: EngineResponse.MultiEngineResponse | None = self.analyze_last_position(game, check_mate)
+        if mrm is None or not mrm.li_rm:
+            return None
         mate = mrm.best_rm_ordered().mate
 
         return [rm for rm in mrm.li_rm if rm.mate == mate]
 
-
-
+    # def seek_mates_stockfish(self, game: Game.Game, max_mate: int) -> dict | None:
+    #     if not self.check_engine():
+    #         return None
+    #
+    #     dic = collections.defaultdict(list)
+    #     depth_limit = max_mate * 15 // 10
+    #
+    #     for pos in range(len(game.li_moves) - 1, 0, -2):
+    #         move = game.li_moves[pos]
+    #         fen = move.position_before.fen()
+    #
+    #         loop = QtCore.QEventLoop()
+    #
+    #         def on_bestmove(bestmove, _loop=loop):
+    #             _loop.quit()
+    #
+    #         def on_depth_changed(_loop=loop):
+    #             mrm = self.engine_run.mrm
+    #             if mrm is not None and mrm.depth > depth_limit:
+    #                 self.engine_run.stop()
+    #
+    #         self.engine_run.bestmove_found.connect(on_bestmove)
+    #         self.engine_run.depth_changed.connect(on_depth_changed)
+    #
+    #         self.engine_run.run_mate_stockfish(fen, max_mate)
+    #         loop.exec()
+    #
+    #         self.engine_run.bestmove_found.disconnect(on_bestmove)
+    #         self.engine_run.depth_changed.disconnect(on_depth_changed)
+    #
+    #         mrm = self.engine_run.get_mrm()
+    #         if mrm is None:
+    #             continue
+    #         mrm.ordena()
+    #         li_rm = mrm.bestmoves()
+    #         if li_rm is None:
+    #             continue
+    #         for xrm in li_rm:
+    #             if 0 < xrm.mate <= max_mate:
+    #                 xrm.fen = fen
+    #                 dic[xrm.mate].append(xrm)
+    #
+    #     return dic

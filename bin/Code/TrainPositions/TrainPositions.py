@@ -53,7 +53,7 @@ class TrainPositions:
         form = FormLayout.FormLayout(self.wparent, titulo, Iconos.Entrenamiento(), minimum_width=200)
 
         form.separador()
-        label = f"{_("Select position")} (1..{n_fen})"
+        label = f"{_('Select position')} (1..{n_fen})"
         form.spinbox(label, 1, n_fen, 70, pos)
 
         form.separador()

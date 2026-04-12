@@ -1,4 +1,3 @@
-
 from PySide6 import QtCore, QtWidgets
 
 import Code
@@ -156,7 +155,7 @@ class WindowTutor(LCDialog.LCDialog):
     def run_toolbar(self, accion):
         x = accion.index("move")
         quien = accion[:x]
-        que = accion[x + 5:]
+        que = accion[x + 5 :]
         self.tutor.mueve(quien, que)
 
     def board_wheel_event(self, board, forward):

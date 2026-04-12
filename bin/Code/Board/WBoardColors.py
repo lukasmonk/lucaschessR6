@@ -114,7 +114,6 @@ class BotonImagen(Colocacion.H):
     def put_image(self):
         png64 = self.rut_actual()
         if png64:
-
             pm = QtGui.QPixmap()
             png = base64.b64decode(png64)
             pm.loadFromData(QtCore.QByteArray(png))
@@ -137,7 +136,7 @@ class BotonImagen(Colocacion.H):
         configuration = Code.configuration
         dic = configuration.read_variables("WindowColores")
         folder_prev = dic.get("PNGfolder", "")
-        resp = SelectFiles.leeFichero(self.parent, folder_prev, "png")
+        resp = SelectFiles.read_file(self.parent, folder_prev, "png")
         if resp:
             folder = os.path.dirname(resp)
             if folder_prev != folder:
@@ -469,9 +468,7 @@ class WBoardColors(LCDialog.LCDialog):
         l2mas1(ly_g, 1, lb_tipo_letra, self.cbTipoLetra, self.chbDefTipoLetra)
 
         # _cBold
-        self.chbBold = Controles.CHB(self, _("Bold"), self.config_board.bold()).capture_changes(
-            self.update_board_m
-        )
+        self.chbBold = Controles.CHB(self, _("Bold"), self.config_board.bold()).capture_changes(self.update_board_m)
         self.chbDefBold = by_default(self.config_board.siDefBold())
         l2mas1(ly_g, 2, None, self.chbBold, self.chbDefBold)
 
@@ -713,7 +710,7 @@ class WBoardColors(LCDialog.LCDialog):
         if self.current_theme.get("NOMBRE"):
             dir_base = os.path.join(dir_base, self.current_theme.get("NOMBRE"))
 
-        fich = SelectFiles.salvaFichero(self, _("Colors"), dir_base, "lktheme3", True)
+        fich = SelectFiles.save_file(self, _("Colors"), dir_base, "lktheme3", True)
         if fich:
             dr["DIRBASE"] = os.path.dirname(fich)
             self.configuration.write_variables("PCOLORES", dr)
@@ -1018,10 +1015,10 @@ def theme_icon(tema, tam):
 <svg
    xmlns:dc="https://purl.org/dc/elements/1.1/"
    xmlns:cc="https://creativecommons.org/ns#"
-   xmlns:rdf="https://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="https://www.w3.org/2000/svg"
-   xmlns="https://www.w3.org/2000/svg"
-   xmlns:xlink="https://www.w3.org/1999/xlink"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    version="1.1"
    width="388pt"
    height="388pt"
@@ -1474,7 +1471,7 @@ class WBrowseThemes(LCDialog.LCDialog):
             select_multiple=True,
             complete_row_select=True,
         )
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Close"), Iconos.MainMenu(), self.aceptar)
@@ -1591,7 +1588,7 @@ class WBrowseThemes(LCDialog.LCDialog):
 
         def setting(smenu, xkey, xlabel, xvalue):
             if isinstance(xvalue, str) and xvalue in "SN":
-                xlabel += f' ({_("Yes") if xvalue == "S" else _("No")})'
+                xlabel += f" ({_('Yes') if xvalue == 'S' else _('No')})"
             else:
                 xlabel += f" ({xvalue})"
             smenu.opcion(xkey, xlabel, rondo_op.otro())
@@ -1646,7 +1643,7 @@ class WBrowseThemes(LCDialog.LCDialog):
             dir_base = dr["DIRBASE"] if dr else ""
             if nli == 1:
                 dir_base = os.path.join(dir_base, self.li_themes[li[0]]["NOMBRE"])
-            fich = SelectFiles.salvaFichero(self, _("Colors"), dir_base, "lktheme3", True)
+            fich = SelectFiles.save_file(self, _("Colors"), dir_base, "lktheme3", True)
             if fich:
                 dr["DIRBASE"] = os.path.dirname(fich)
                 self.configuration.write_variables("PCOLORES", dr)
@@ -1683,7 +1680,7 @@ class WBrowseThemes(LCDialog.LCDialog):
         dr = self.configuration.read_variables("PCOLORES")
         dir_base = dr["DIRBASE"] if dr else ""
 
-        li_fich = SelectFiles.leeFicheros(self, dir_base, "lktheme3")
+        li_fich = SelectFiles.read_files(self, dir_base, "lktheme3")
         if li_fich:
             dr["DIRBASE"] = os.path.dirname(li_fich[0])
             self.configuration.write_variables("PCOLORES", dr)

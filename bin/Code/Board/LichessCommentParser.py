@@ -29,9 +29,9 @@ RE_SQ = r"[a-h][1-8]"
 RE_COLOR = r"[GRYB]"
 
 # %csl items like: Gd4, Re5, Bb7
-RE_CSL_ITEM = re.compile(fr"\b({RE_COLOR})({RE_SQ})\b", re.IGNORECASE)
+RE_CSL_ITEM = re.compile(rf"\b({RE_COLOR})({RE_SQ})\b", re.IGNORECASE)
 # %cal items like: Gd4e6, Rh1h8
-RE_CAL_ITEM = re.compile(fr"\b({RE_COLOR})({RE_SQ})({RE_SQ})\b", re.IGNORECASE)
+RE_CAL_ITEM = re.compile(rf"\b({RE_COLOR})({RE_SQ})({RE_SQ})\b", re.IGNORECASE)
 
 # Extract groups after a marker until next %marker or end of string
 RE_BLOCK = re.compile(r"%(?P<tag>[a-z]{3,4})\s*(?P<body>[^%]*)", re.IGNORECASE)

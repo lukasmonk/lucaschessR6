@@ -151,7 +151,7 @@ class ToolsMenuRun:
             path = Code.configuration.temporary_file("pgn")
             texto = texto.strip()
             if not texto.startswith("["):
-                texto = f"[Event \"{_('Paste PGN')}\"]\n\n {texto}"
+                texto = f'[Event "{_("Paste PGN")}"]\n\n {texto}'
             with open(path, "wt", encoding="utf-8", errors="ignore") as q:
                 q.write(texto)
             self.pgn_read(path)

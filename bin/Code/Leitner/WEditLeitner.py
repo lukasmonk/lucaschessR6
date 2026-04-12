@@ -62,7 +62,7 @@ class WEditLeitner(LCDialog.LCDialog):
             edicion=Delegados.LineaTexto(is_integer=True),
         )
         self.grid_files = Grid.Grid(self, o_col, complete_row_select=True, is_editable=True)
-        self.grid_files.setMinimumWidth(self.grid_files.width_columns_displayables() + 20)
+        self.grid_files.fix_min_width()
         lyh = Colocacion.H().control(tb_files).relleno().control(self.chb_random).relleno().control(self.lb_total)
         lyh.margen(0)
         ly = Colocacion.V().otro(lyh).control(self.grid_files).margen(0)
@@ -174,16 +174,20 @@ class WEditLeitner(LCDialog.LCDialog):
     def up_file(self):
         row = self.grid_files.recno()
         if row > 0:
-            self.leitner_work.source_files[row], self.leitner_work.source_files[row - 1] = \
-                self.leitner_work.source_files[row - 1], self.leitner_work.source_files[row]
+            self.leitner_work.source_files[row], self.leitner_work.source_files[row - 1] = (
+                self.leitner_work.source_files[row - 1],
+                self.leitner_work.source_files[row],
+            )
             self.grid_files.goto(row - 1, 0)
             self.grid_files.refresh()
 
     def down_file(self):
         row = self.grid_files.recno()
         if 0 <= row < len(self.leitner_work.source_files) - 1:
-            self.leitner_work.source_files[row], self.leitner_work.source_files[row + 1] = \
-                self.leitner_work.source_files[row + 1], self.leitner_work.source_files[row]
+            self.leitner_work.source_files[row], self.leitner_work.source_files[row + 1] = (
+                self.leitner_work.source_files[row + 1],
+                self.leitner_work.source_files[row],
+            )
             self.grid_files.goto(row + 1, 0)
             self.grid_files.refresh()
 

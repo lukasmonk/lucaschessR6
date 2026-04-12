@@ -45,7 +45,7 @@ class WNags(LCDialog.LCDialog):
         layout = Colocacion.V().control(tb).control(self.grid).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.width_columns_displayables() + 48, default_height=600)
+        self.restore_video(default_width=self.grid.width_and_vbar() + 28, default_height=600)
 
     def clear_nags(self):
         self.st_current_nags.clear()

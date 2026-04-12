@@ -23,7 +23,7 @@ def lee_1_linea_mfn(linea):
     for x in cabs.split("|"):
         sp = x.index(" ")
         k = x[:sp]
-        v = x[sp + 1:]
+        v = x[sp + 1 :]
         dic[k] = v
         game.set_tag(k, v)
     game.read_pv(pv)
@@ -415,7 +415,7 @@ class WPotenciaBase(LCDialog.LCDialog):
         o_columns.nueva("MIN_MIN", _("Observation time"), 100, align_center=True)
         o_columns.nueva("MIN_MAX", _("Total time"), 100, align_center=True)
         self.ghistorico = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
+        self.ghistorico.fix_min_width()
 
         # Tool bar
         li_acciones = (
@@ -770,7 +770,6 @@ class WPotencia(LCDialog.LCDialog):
             wm.deshabilita()
 
         with QTMessages.analizando(self):
-
             self.li_analysis = []
             cp = Position.Position()
             cp.read_fen(self.fen)

@@ -116,7 +116,7 @@ class WOptionsDatabase(QtWidgets.QDialog):
         self.path_import_pgn = None
         ly_import_pgn = None
         if self.with_import_pgn:
-            self.lb_import_pgn = Controles.LB2P(self, f'{_("Import")}/{_("PGN")}')
+            self.lb_import_pgn = Controles.LB2P(self, f"{_('Import')}/{_('PGN')}")
             self.pb_select_import_pgn = Controles.PB(self, "", self.select_pgn, False)
             self.pb_select_import_pgn.setSizePolicy(
                 QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
@@ -202,7 +202,7 @@ class WOptionsDatabase(QtWidgets.QDialog):
         dic_var = self.configuration.read_variables(key_var)
         carpeta = dic_var.get("CARPETAPGN", self.configuration.paths.folder_userdata())
 
-        fichero_pgn = SelectFiles.leeFichero(self, carpeta, "pgn", titulo=_("File to import"))
+        fichero_pgn = SelectFiles.read_file(self, carpeta, "pgn", titulo=_("File to import"))
         if not fichero_pgn:
             return
         dic_var["CARPETAPGN"] = os.path.dirname(fichero_pgn)
@@ -339,7 +339,7 @@ def new_database(owner, configuration, with_import_pgn=False, name=""):
 
 class WTags(LCDialog.LCDialog):
     def __init__(self, owner, dbgames: DBgames.DBgames):
-        LCDialog.LCDialog.__init__(self, owner, _("Tags"), Iconos.Tags(), "tagsedition")
+        LCDialog.LCDialog.__init__(self, owner, _("Tags"), Iconos.Tags(), "tagsedition3")
         self.dbgames = dbgames
         self.dic_cambios = None
 
@@ -361,7 +361,7 @@ class WTags(LCDialog.LCDialog):
             self.li_data.append(dic)
 
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("KEY", _("Key"), 80, align_center=True)
+        o_columns.nueva("KEY", _("Key"), 132, align_center=True)
         o_columns.nueva(
             "LABEL",
             _("PGN Label"),
@@ -373,6 +373,7 @@ class WTags(LCDialog.LCDialog):
         self.fill_column = _("Fill column with value")
         self.fill_pgn = _("Fill column with PGN")
         self.fill_opening = _("Fill column with opening")
+        self.fill_eco = _("Fill column with ECO")
         self.remove_column = _("Remove column")
         self.nothing = "-"
         self.li_actions = [
@@ -380,12 +381,13 @@ class WTags(LCDialog.LCDialog):
             self.fill_column,
             self.fill_pgn,
             self.fill_opening,
+            self.fill_eco,
             self.remove_column,
         ]
         o_columns.nueva(
             "ACTION",
             _("Action"),
-            80,
+            200,
             align_center=True,
             edicion=Delegados.ComboBox(self.li_actions),
         )
@@ -407,7 +409,7 @@ class WTags(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.gtags)
-        self.restore_video(default_width=self.gtags.width_columns_displayables() + 20, default_height=400)
+        self.restore_video(default_width=self.gtags.width_and_vbar() + 10, default_height=400)
 
         self.gtags.gotop()
 
@@ -450,6 +452,7 @@ class WTags(LCDialog.LCDialog):
             "REMOVE": [],
             "FILL_PGN": [],
             "FILL_OPENING": [],
+            "FILL_ECO": [],
         }
         for dic in self.li_data:
             if dic["NEW"]:
@@ -467,18 +470,30 @@ class WTags(LCDialog.LCDialog):
                 dic_cambios["FILL_PGN"].append(dic)
             elif dic["ACTION"] == self.fill_opening:
                 dic_cambios["FILL_OPENING"].append(dic)
+            elif dic["ACTION"] == self.fill_eco:
+                dic_cambios["FILL_ECO"].append(dic)
 
         self.dic_cambios = dic_cambios
+
         self.accept()
 
     def new(self):
+        newkey = QTMessages.read_simple(self, _("PGN Label"), _("Name"), "")
+        if not newkey:
+            return
+        for xpos, xdic in enumerate(self.li_data):
+            if xdic["KEY"] == newkey or xdic["PREV_LABEL"] == newkey:
+                QTMessages.message_error(self, _("This tag is repeated"))
+                self.gtags.goto(xpos, 0)
+                return
         dic = {
-            "KEY": "",
-            "PREV_LABEL": "",
-            "LABEL": "",
+            "KEY": newkey.upper(),
+            "PREV_LABEL": newkey.upper(),
+            "LABEL": newkey,
             "ACTION": "-",
             "VALUE": "",
             "NEW": True,
         }
         self.li_data.append(dic)
         self.gtags.refresh()
+        self.gtags.gobottom(1)

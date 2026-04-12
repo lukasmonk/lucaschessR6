@@ -34,7 +34,7 @@ def select_engine(wowner):
     # Pedimos el ejecutable
     folder_engines = Code.configuration.read_variables("FOLDER_ENGINES")
     extension = "exe" if Util.is_windows() else "*"
-    path_exe_engine = SelectFiles.leeFichero(wowner, folder_engines if folder_engines else ".", extension, _("Engine"))
+    path_exe_engine = SelectFiles.read_file(wowner, folder_engines if folder_engines else ".", extension, _("Engine"))
     if not path_exe_engine:
         return None
     folder_engines = Util.relative_path(os.path.dirname(path_exe_engine))
@@ -173,8 +173,7 @@ class WSelectEngineElo(LCDialog.LCDialog):
             is_column_header_movable=False,
             heigh_row=Code.configuration.x_pgn_rowheight,
         )
-        n = self.grid.width_columns_displayables()
-        self.grid.setMinimumWidth(n + 20)
+        self.grid.fix_min_width()
         self.register_grid(self.grid)
 
         self.grid.gotop()
@@ -387,8 +386,8 @@ class WEngineExtend(QtWidgets.QDialog):
             lb_book = Controles.LB(self, f"{_('Opening book')}: ")
             self.list_books = Books.ListBooks()
             li = [(x.name, x.path) for x in self.list_books.lista]
-            li.insert(0, (f'<{_("None")}>', "-"))
-            li.insert(0, (f'<{_("By default")}>', "*"))
+            li.insert(0, (f"<{_('None')}>", "-"))
+            li.insert(0, (f"<{_('By default')}>", "*"))
             self.cbBooks = Controles.CB(self, li, engine.book)
             bt_nuevo_book = Controles.PB(self, "", self.new_book, plano=False).set_icono(Iconos.Nuevo(), icon_size=16)
             # # Respuesta rival
@@ -441,7 +440,7 @@ class WEngineExtend(QtWidgets.QDialog):
         self.edAlias.setFocus()
 
     def new_book(self):
-        fbin = SelectFiles.leeFichero(self, self.list_books.path, "bin", titulo=_("Polyglot book"))
+        fbin = SelectFiles.read_file(self, self.list_books.path, "bin", titulo=_("Polyglot book"))
         if fbin:
             self.list_books.path = os.path.dirname(fbin)
             name = os.path.basename(fbin)[:-4]

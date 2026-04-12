@@ -38,8 +38,7 @@ class WTagsPGN(LCDialog.LCDialog):
         o_columns.nueva("VALOR", _("Value"), 400, edicion=Delegados.LineaTextoUTF8())
 
         self.grid = Grid.Grid(self, o_columns, is_editable=True)
-        n = self.grid.width_columns_displayables()
-        self.grid.setFixedWidth(n + 20)
+        self.grid.fix_min_width()
         self.register_grid(self.grid)
 
         # Layout

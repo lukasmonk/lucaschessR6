@@ -16,8 +16,11 @@ def init_app_style(app, configuration):
         configuration.graba()
         path = Code.path_resource("Styles", f"{style}.qss")
 
-    path_colors = Code.path_resource("Styles", f"{style}.colors")
-    Code.dic_colors = Util.ini_base2dic(path_colors)
+    path_default = Code.path_resource("Styles", "By default.colors")
+    Code.dic_colors = Util.ini_base2dic(path_default)
+    if style != "By default":
+        path_colors = Code.path_resource("Styles", f"{style}.colors")
+        Code.dic_colors.update(Util.ini_base2dic(path_colors))
     dic_personal = Util.ini_base2dic(configuration.paths.file_colors(), rfind_equal=True)
     Code.dic_colors.update(dic_personal)
     Code.dic_qcolors = qdic = {}

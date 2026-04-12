@@ -121,7 +121,7 @@ class WHorsesBase(LCDialog.LCDialog):
         o_columns.nueva("SECONDS", _("Second(s)"), 80, align_center=True)
         o_columns.nueva("HINTS", _("Hints"), 90, align_center=True)
         self.ghistorico = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
+        self.ghistorico.fix_min_width()
 
         # Tool bar
         li_acciones = (

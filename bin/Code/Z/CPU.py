@@ -45,23 +45,23 @@ class CPU(QtCore.QObject):
         return self.add_task(task, parent_id, is_exclusive)
 
     def move_piece(
-            self,
-            from_a1h8: str,
-            to_a1h8: str,
-            seconds: float = 1.0,
-            parent_id: int = 0,
-            is_exclusive: bool = False,
+        self,
+        from_a1h8: str,
+        to_a1h8: str,
+        seconds: float = 1.0,
+        parent_id: int = 0,
+        is_exclusive: bool = False,
     ) -> int:
         task = Tareas.TaskMovePiece(from_a1h8, to_a1h8, seconds)
         task.enlaza(self)
         return self.add_task(task, parent_id, is_exclusive)
 
     def remove_piece(
-            self,
-            a1h8: str,
-            parent_id: int = 0,
-            is_exclusive: bool = False,
-            piece_type: Optional[str] = None,
+        self,
+        a1h8: str,
+        parent_id: int = 0,
+        is_exclusive: bool = False,
+        piece_type: Optional[str] = None,
     ) -> int:
         task = Tareas.TareaBorraPieza(a1h8, piece_type)
         task.enlaza(self)

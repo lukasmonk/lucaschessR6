@@ -824,7 +824,7 @@ class Guion:
                         x
                         for x in dir(bloquedatos_reg)
                         if not x.startswith("_")
-                        and x not in ('copia', 'physical_pos', 'restore_dic', 'save_dic', 'tipoqt')
+                        and x not in ("copia", "physical_pos", "restore_dic", "save_dic", "tipoqt")
                     ]
                     for x in li_campos:
                         if x[0] != "_" and getattr(bloquedatos, x, None) != getattr(bloquedatos_reg, x):
@@ -835,12 +835,12 @@ class Guion:
                         break
             if not esta:
                 reg = {
-                    '_bloqueDatos': bloquedatos,
-                    '_marcado': True,
-                    '_name': None,
-                    '_orden': 0,
-                    '_registro': None,
-                    '_tp': tp,
+                    "_bloqueDatos": bloquedatos,
+                    "_marcado": True,
+                    "_name": None,
+                    "_orden": 0,
+                    "_registro": None,
+                    "_tp": tp,
                 }
                 self.restore_reg(reg)
 

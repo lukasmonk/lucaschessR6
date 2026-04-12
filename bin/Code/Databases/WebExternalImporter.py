@@ -38,7 +38,7 @@ class WebExternalImporter:
         if response.status_code == 404:
             QTMessages.message_error(self.owner, _("User does not exist"))
         else:
-            QTMessages.message_error(self.owner, f'{_("Error")}: {response.status_code}')
+            QTMessages.message_error(self.owner, f"{_('Error')}: {response.status_code}")
         return False
 
 
@@ -105,9 +105,9 @@ class ChessCom(WebExternalImporter):
 
     def import_games(self):
         headers = {
-            'User-Agent': f'my-profile-tool/1.2 (username: {self.username_import}; contact: youremail@example.com)',
-            'Accept-Encoding': 'gzip',
-            'Accept': 'application/json, text/plain, */*',
+            "User-Agent": f"my-profile-tool/1.2 (username: {self.username_import}; contact: youremail@example.com)",
+            "Accept-Encoding": "gzip",
+            "Accept": "application/json, text/plain, */*",
         }
 
         # Obtener la lista de archivos de partidas
@@ -115,7 +115,7 @@ class ChessCom(WebExternalImporter):
         response = requests.get(url, headers=headers)
         with QTMessages.one_moment_please(self.owner, self.message_import_initial, with_cancel=True) as omp:
             if response.status_code == 200:
-                archives = response.json().get('archives', [])
+                archives = response.json().get("archives", [])
 
                 sum_from = f"{self.from_date.year}{self.from_date.month:02d}"
                 sum_to = f"{self.to_date.year}{self.to_date.month:02d}"

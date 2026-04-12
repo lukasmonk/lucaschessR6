@@ -25,6 +25,7 @@ class TimeMode(Enum):
                      El más usado en torneos clásicos FIDE.
     HANDICAP       : Tiempos distintos para cada bando (ver HANDICAPS).
     """
+
     SUDDEN_DEATH = auto()
     FISCHER = auto()
     BRONSTEIN = auto()

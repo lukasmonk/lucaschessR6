@@ -79,8 +79,8 @@ class WReplayParams(LCDialog.LCDialog):
         self.slider_level.setMaximum(100)
         self.slider_level.setValue(self.dvar["TRANSPARENCY"])
 
-        self.lb_level = Controles.LB(widget, f'{self.slider_level.value()}%').set_width(30).align_center()
-        self.slider_level.valueChanged.connect(lambda v: self.lb_level.setText(f'{v}%'))
+        self.lb_level = Controles.LB(widget, f"{self.slider_level.value()}%").set_width(30).align_center()
+        self.slider_level.valueChanged.connect(lambda v: self.lb_level.setText(f"{v}%"))
 
         ly_level.control(self.slider_level).control(self.lb_level)
         layout.otro(ly_level)
@@ -96,7 +96,7 @@ class WReplayParams(LCDialog.LCDialog):
         def add_column(is_white, col):
 
             label = _("White") if is_white else _("Black")
-            pb_title = Controles.PB(widget, f'  {label}').set_font(font)
+            pb_title = Controles.PB(widget, f"  {label}").set_font(font)
             pb_title.set_icono(Iconos.Unchecked())
             pb_title.last_click = False
             grid.controlc(pb_title, 0, col, 1, 2)

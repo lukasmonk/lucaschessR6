@@ -162,6 +162,8 @@ class WRun(LCDialog.LCDialog):
             t1 = time.time() - t0
             if rm is not None:
                 mov = rm.movimiento()
+                #results = ",".join(f"{k}:{v}" for k, v in self.elem.dic_results.items())
+                #pr_int(f'{self.elem.fen}|{results}|{mov}|{self.sts.groups.lista[ngroup].name}')
                 if mov:
                     if self.with_board:
                         self.board.show_one_arrow_temp(rm.from_sq, rm.to_sq, False)
@@ -446,11 +448,11 @@ class WUnSTS(LCDialog.LCDialog):
             formula_general = STS.Formula()
 
             form = FormLayout.FormLayout(self, _("Formula to calculate elo"), Iconos.Elo(), with_default=False)
-            form.apart_np(f'{_("Elo")} = X * {_("Result")} + K')
+            form.apart_np(f"{_('Elo')} = X * {_('Result')} + K")
             form.separador()
             form.checkbox(
-                f'<center><b>{_("By default")}</b></center>'
-                + f'X={formula_general.x_default:.04f} K={formula_general.k_default:.04f}',
+                f"<center><b>{_('By default')}</b></center>"
+                + f"X={formula_general.x_default:.04f} K={formula_general.k_default:.04f}",
                 False,
             )
             form.separador()
@@ -468,7 +470,7 @@ class WUnSTS(LCDialog.LCDialog):
                 self.grid.refresh()
 
     def export(self):
-        resp = SelectFiles.salvaFichero(self, _("CSV file"), Code.configuration.save_folder(), "csv", True)
+        resp = SelectFiles.save_file(self, _("CSV file"), Code.configuration.save_folder(), "csv", True)
         if resp:
             self.sts.write_csv(resp)
 
@@ -783,11 +785,11 @@ class WSTS(LCDialog.LCDialog):
             formula = STS.Formula()
 
             form = FormLayout.FormLayout(self, _("Formula to calculate elo"), Iconos.Elo(), with_default=False)
-            form.apart_np(f'{_("Elo")} = X * {_("Result")} + K')
+            form.apart_np(f"{_('Elo')} = X * {_('Result')} + K")
             form.separador()
             form.checkbox(
-                f'<center><b>{_("Initial")}<b></center>'
-                + f'X={formula.x_default_base:.04f} K={formula.k_default_base:.04f}',
+                f"<center><b>{_('Initial')}<b></center>"
+                + f"X={formula.x_default_base:.04f} K={formula.k_default_base:.04f}",
                 False,
             )
             form.separador()

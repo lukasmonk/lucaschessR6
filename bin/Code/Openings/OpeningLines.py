@@ -248,8 +248,8 @@ class ListaOpenings:
         filenew = f"{base}-1.opk"
         n = 1
         while os.path.isfile(Util.opj(self.folder, filenew)):
-            filenew = "%s-%d.opk" % (base, n)
             n += 1
+            filenew = "%s-%d.opk" % (base, n)
         try:
             shutil.copy(self.filepath(pos), Util.opj(self.folder, filenew))
         except:
@@ -275,8 +275,8 @@ class ListaOpenings:
         self.save()
 
     def change_first_moves(self, num, new_pv, num_lines):
-        self.lista[num]['pv'] = new_pv
-        self.lista[num]['lines'] = num_lines
+        self.lista[num]["pv"] = new_pv
+        self.lista[num]["lines"] = num_lines
         self.save()
 
     def add_training_file(self, file):
@@ -876,8 +876,8 @@ class Opening:
             if xpv in self.cache:
                 del self.cache[xpv]
             del self.li_xpv[num]
-        self._conexion.commit()
         cursor.close()
+        self._conexion.commit()
 
     def remove_pv(self, pgn, a1h8):
         xpv = FasterCode.pv_xpv(a1h8)
@@ -997,7 +997,7 @@ class Opening:
             self._conexion.close()
             self._conexion = None
 
-    def import_db(self, owner, gamebase, path_db, max_depth, with_variations, with_comments):
+    def import_db(self, owner, gamebase, path_db, max_depth, in_opening, with_variations, with_comments):
         name = os.path.basename(path_db)
 
         db = DBgames.DBgames(path_db)
@@ -1020,7 +1020,7 @@ class Opening:
             if dl_tmp.is_canceled():
                 break
 
-            li_pv = game.all_pv("", with_variations)
+            li_pv = game.all_pv("", with_variations, in_opening)
             if not game.is_fen_initial():
                 continue
             for pv in li_pv:
@@ -1070,7 +1070,7 @@ class Opening:
                     self.setfenvalue(fenm2, dic_comments_game)
                 self.db_fenvalues.set_normal_mode()
 
-    def import_pgn(self, owner, gamebase, path_pgn, max_depth, with_variations, with_comments) -> bool:
+    def import_pgn(self, owner, gamebase, path_pgn, max_depth, in_opening, with_variations, with_comments) -> bool:
 
         return_value = True
 
@@ -1097,7 +1097,7 @@ class Opening:
                 return_value = False
                 break
 
-            li_pv = game.all_pv("", with_variations)
+            li_pv = game.all_pv("", with_variations, in_opening)
             if not game.is_fen_initial():
                 continue
             for pv in li_pv:

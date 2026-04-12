@@ -30,7 +30,7 @@ class MesaSonido(QtWidgets.QGraphicsView):
     txtActual: BoardElements.TiempoSC
     txtDuracion: BoardElements.TiempoSC
     linMain: BoardElements.CajaSC
-    
+
     def __init__(self, parent):
         QtWidgets.QGraphicsView.__init__(self)
 
@@ -356,7 +356,7 @@ class WEdicionSonido(LCDialog.LCDialog):
 
     def wav(self):
         carpeta = Util.restore_pickle(self.confich)
-        file = SelectFiles.leeFichero(self, carpeta, "wav")
+        file = SelectFiles.read_file(self, carpeta, "wav")
         if file:
             carpeta = os.path.dirname(file)
             Util.save_pickle(self.confich, carpeta)
@@ -368,7 +368,7 @@ class WEdicionSonido(LCDialog.LCDialog):
 
     def grabar(self):
         carpeta = Util.restore_pickle(self.confich)
-        file = SelectFiles.salvaFichero(self, _("Save wav"), carpeta, "wav", True)
+        file = SelectFiles.save_file(self, _("Save wav"), carpeta, "wav", True)
         if file:
             if not file.lower().endswith(".wav"):
                 file = f"{file}.wav"
@@ -456,7 +456,7 @@ class WSonidos(LCDialog.LCDialog):
         self.register_grid(self.grid)
 
         if not self.restore_video():
-            self.resize(self.grid.width_columns_displayables() + 30, 600)
+            self.resize(self.grid.width_and_vbar() + 10, 600)
 
     def closeEvent(self, event):
         self.save_video()
@@ -503,7 +503,6 @@ class WSonidos(LCDialog.LCDialog):
             else:
                 t = li[2]
                 if t is None:
-
                     wav = self.db[li[0]]
                     if wav is None:
                         t = 0

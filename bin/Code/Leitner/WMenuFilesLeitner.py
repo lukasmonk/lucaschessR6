@@ -18,9 +18,9 @@ class FNSanalyzer:
     def _check_file(file_path: Path) -> bool:
         """Verifica si el archivo es válido (concurrente)."""
         try:
-            with open(file_path, 'r', encoding='utf-8', errors="ignore") as f:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
-                    if line.count('|') > 1:
+                    if line.count("|") > 1:
                         return True
         except Exception:
             pass
@@ -78,7 +78,7 @@ class FNSanalyzer:
             return _F(txt)
 
         def name(nm):
-            if nm.endswith('.fns'):
+            if nm.endswith(".fns"):
                 nm = nm[:-4]
             if nm[-1] in "0123456789" and nm[-2] not in "0123456789":
                 num = nm[-1]

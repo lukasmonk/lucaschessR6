@@ -36,7 +36,7 @@ class WShortcuts(LCDialog.LCDialog):
         )
 
         self.grid = Grid.Grid(self, o_columnas, complete_row_select=True, is_editable=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
         f = Controles.FontType(puntos=10, peso=75)
         self.grid.set_font(f)
 

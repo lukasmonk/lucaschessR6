@@ -207,7 +207,6 @@ class WRunMate15(LCDialog.LCDialog):
         si_error = False
 
         for pos, (move, resp) in enumerate(self.mate15.resp.items()):
-
             wm = self.li_lb_wm[pos][1]
             mv_done = wm.movimiento()
             if self.use_pgn:
@@ -228,7 +227,7 @@ class WRunMate15(LCDialog.LCDialog):
             self.bt_check.show()
         else:
             tiempo = time.time() - self.time_base
-            self.lb_result.set_text(f"{_('Time')}: {tiempo:.1f}\"")
+            self.lb_result.set_text(f'{_("Time")}: {tiempo:.1f}"')
             self.lb_result.show()
             self.mate15.append_try(tiempo)
             self.db_mate15.save(self.mate15)

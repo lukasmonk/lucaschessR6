@@ -16,7 +16,7 @@ from Code.Base.Constantes import (
     MENU_PLAY_BOTH,
     POS_TUTOR_HORIZONTAL,
     NOTATION_ALGEBRAIC,
-    HIGHLIGHT_STYLE_ARROW
+    HIGHLIGHT_STYLE_ARROW,
 )
 from Code.Board import ConfBoards
 from Code.Config import ConfigEngines, ConfigPaths
@@ -32,11 +32,11 @@ def int_toolbutton(xint):
         (
             tbi
             for tbi in (
-            Qt.ToolButtonStyle.ToolButtonIconOnly,
-            Qt.ToolButtonStyle.ToolButtonTextOnly,
-            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
-        )
+                Qt.ToolButtonStyle.ToolButtonIconOnly,
+                Qt.ToolButtonStyle.ToolButtonTextOnly,
+                Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+                Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+            )
             if xint == tbi.value
         ),
         Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
@@ -45,10 +45,10 @@ def int_toolbutton(xint):
 
 def toolbutton_int(qt_tbi):
     if qt_tbi in (
-            Qt.ToolButtonStyle.ToolButtonIconOnly,
-            Qt.ToolButtonStyle.ToolButtonTextOnly,
-            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+        Qt.ToolButtonStyle.ToolButtonIconOnly,
+        Qt.ToolButtonStyle.ToolButtonTextOnly,
+        Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+        Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
     ):
         return qt_tbi.value
     return Qt.ToolButtonStyle.ToolButtonTextUnderIcon.value
@@ -107,6 +107,7 @@ class Configuration:
         self.x_save_tutor_variations = True
 
         self.x_mouse_shortcuts = False
+        self.x_show_square_shortcut = 50
         self.x_show_candidates = False
 
         self.x_captures_activate = True
@@ -592,8 +593,8 @@ class Configuration:
             self.dic_conf_boards_pk = db.as_dictionary()
             if "BASE" not in self.dic_conf_boards_pk:
                 with open(
-                        Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
-                        "rb",
+                    Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
+                    "rb",
                 ) as f:
                     var = pickle.loads(f.read())
                     alto = ScreenUtils.desktop_height()

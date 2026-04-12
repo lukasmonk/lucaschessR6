@@ -16,6 +16,7 @@ from Code.Base.Constantes import (
     KIB_POLYGLOT,
     KIB_STOCKFISH,
     KIB_THREATS,
+    MULTIPV_BYDEFAULT,
 )
 from Code.Books import Books
 from Code.Engines import Engines, Priorities
@@ -184,6 +185,9 @@ class Kibitzers:
         kib.key = name
         kib.name = name
         kib.tipo = tipo
+        if tipo == KIB_CANDIDATES:
+            kib.set_multipv_var(MULTIPV_BYDEFAULT)
+            kib.set_uci_option("MultiPV", kib.multiPV)
         kib.prioridad = prioridad
         kib.pointofview = pointofview
         kib.max_time = fixed_time

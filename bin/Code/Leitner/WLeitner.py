@@ -25,7 +25,7 @@ class WLeitner(LCDialog.LCDialog):
         o_columns.nueva("ERRORS", _("Errors"), 100, align_center=True)
 
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         # Toolbar
         self.tb = Controles.TBrutina(self)
@@ -144,7 +144,3 @@ class WLeitner(LCDialog.LCDialog):
 
     def closeEvent(self, arg__1, /):
         self.finalizar(False)
-
-
-
-

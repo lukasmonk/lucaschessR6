@@ -82,7 +82,7 @@ class ManagerTurnOnLights(Manager.Manager):
                 self.hints,
                 self.calculation_mode,
             )
-            r1 += f"<br><b>{_('Current')}: {txt} - {av_secs:0.2f}\""
+            r1 += f'<br><b>{_("Current")}: {txt} - {av_secs:0.2f}"'
         self.set_label1(r1)
         if next is not None:
             r2 = "<b>%d/%d</b>" % (self.num_line + next, self.num_lines)
@@ -203,7 +203,6 @@ class ManagerTurnOnLights(Manager.Manager):
         self.num_line += 1
         islast_line = self.num_line == self.num_lines
         if islast_line:
-
             # Previous
             ant_tm = self.block.av_seconds()
             ant_done = self.tol.done_level()
@@ -224,15 +223,15 @@ class ManagerTurnOnLights(Manager.Manager):
             txt_more_line = ""
             txt_more_global = ""
             if ant_tm is None or tm < ant_tm:
-                txt_more_time = f"<span style=\"color:red\">{_('New record')}</span>"
+                txt_more_time = f'<span style="color:red">{_("New record")}</span>'
                 done = self.tol.done_level()
                 if done and (not ant_done):
                     if not self.tol.islast_level():
                         txt_more_line = f"{_('Open the next level')}<hr>"
                 if cat_level != ant_cat_level:
-                    txt_more_cat = f"<span style=\"color:red\">{_('New')}</span>"
+                    txt_more_cat = f'<span style="color:red">{_("New")}</span>'
                 if cat_global != ant_cat_global:
-                    txt_more_global = f"<span style=\"color:red\">{_('New')}</span>"
+                    txt_more_global = f'<span style="color:red">{_("New")}</span>'
 
             cErrores = (
                 '<tr><td align=right> %s </td><td> %d (x%d"=%d")</td></tr>'
@@ -260,12 +259,12 @@ class ManagerTurnOnLights(Manager.Manager):
                 "<hr><center><big>"
                 + _("You have finished this block of positions")
                 + "<hr><table>"
-                + f"<tr><td align=right> {_('Time used')} </td><td> {self.total_time_used:0.2f}\"</td></tr>"
+                + f'<tr><td align=right> {_("Time used")} </td><td> {self.total_time_used:0.2f}"</td></tr>'
                 + cErrores
                 + cAyudas
-                + f"<tr><td align=right> {_('Time assigned')}: </td><td> {ta:0.2f}\" {txt_more_time}</td></tr>"
+                + f'<tr><td align=right> {_("Time assigned")}: </td><td> {ta:0.2f}" {txt_more_time}</td></tr>'
                 + "<tr><td align=right> %s: </td><td> %d</td></tr>" % (_("Total moves"), num_moves)
-                + f"<tr><td align=right> {_('Average time')}: </td><td> {tm:0.2f}\"</td></tr>"
+                + f'<tr><td align=right> {_("Average time")}: </td><td> {tm:0.2f}"</td></tr>'
                 + f"<tr><td align=right> {_('Block qualification')}: </td><td> {cat_block}</td></tr>"
                 + "<tr><td align=right> %s: </td><td> %s %s</td></tr>"
                 % (_("Level qualification"), cat_level, txt_more_cat)
@@ -353,8 +352,8 @@ class ManagerTurnOnLights(Manager.Manager):
         return False
 
     def current_pgn(self):
-        resp = f"[Event \"{_('Turn on the lights')}\"]\n"
-        resp += f"[Site \"{self.line.label.replace('<br>', ' ').strip()}\"]\n"
+        resp = f'[Event "{_("Turn on the lights")}"]\n'
+        resp += f'[Site "{self.line.label.replace("<br>", " ").strip()}"]\n'
         resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
         resp += f"\n{self.game.pgn_base()}"

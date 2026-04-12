@@ -49,7 +49,7 @@ def average_hash(img, hash_size=8):
 
     # Compute the hash based on each pixels value compared to the average.
     bits = "".join(map(lambda pixel: "1" if pixel > avg else "0", pixels))
-    hashformat = f"0{hash_size ** 2 // 4}x"
+    hashformat = f"0{hash_size**2 // 4}x"
     return int(bits, 2).__format__(hashformat)
 
 
@@ -517,7 +517,6 @@ class WPosicion(QtWidgets.QWidget):
     def scanner(self):
         screen = ScreenUtils.get_screen(self)
         with ScreenUtils.EscondeWindow(self.wparent):
-
             if self.chb_scanner_ask.valor() and not QTMessages.pregunta(
                 None,
                 _("Bring the window to scan to front"),

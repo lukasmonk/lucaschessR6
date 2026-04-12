@@ -4,7 +4,6 @@ from Code.Board import BoardBlocks
 
 
 class MarcoSC(BoardBlocks.BloqueEspSC):
-
     def __init__(self, escena, block_marco, routine_if_pressed=None):
 
         super(MarcoSC, self).__init__(escena, block_marco)
@@ -245,7 +244,7 @@ class MarcoSC(BoardBlocks.BloqueEspSC):
         grosor = int(bm.grosor * xk)
 
         self.rect = QtCore.QRectF(dx, dy, ancho, alto)
-        
+
         eff_grosor = max(1, grosor)
         offset = (eff_grosor - 1) // 2
         draw_rect = QtCore.QRectF(dx + offset, dy + offset, ancho - eff_grosor, alto - eff_grosor)

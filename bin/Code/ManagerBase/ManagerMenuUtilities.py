@@ -25,7 +25,6 @@ from Code.Themes import AssignThemes
 
 
 class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
-
     def launch(self, li_extra_options=None, with_tree=True):
         menu = QTDialogs.LCMenu(self.main_window)
 
@@ -52,7 +51,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         menu_fen = menu_save.submenu(_("FEN Format"), Iconos.Naranja())
         menu_fen.opcion("fenfile", tr_fichero, ico_fichero)
         menu_fen.separador()
-        menu_fen.opcion("fenclipboard", tr_portapapeles, ico_clip, shortcut=f'{key_ctrl}+C')
+        menu_fen.opcion("fenclipboard", tr_portapapeles, ico_clip, shortcut=f"{key_ctrl}+C")
 
         menu_save.separador()
 
@@ -121,7 +120,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
                 "play_instead_of_me",
                 _("Play instead of me"),
                 Iconos.JuegaPorMi(),
-                shortcut='Ctrl+1',
+                shortcut="Ctrl+1",
             )
 
         if self.manager.active_help_to_move():
@@ -131,16 +130,16 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
                     "help_to_move",
                     _("Help to move"),
                     Iconos.BotonAyuda(),
-                    shortcut='Ctrl+2',
+                    shortcut="Ctrl+2",
                 )
 
         # Arbol de movimientos
         if with_tree:
             menu.separador()
-            menu.opcion("arbol", _("Moves tree"), Iconos.Arbol(), shortcut='Alt+M')
+            menu.opcion("arbol", _("Moves tree"), Iconos.Arbol(), shortcut="Alt+M")
 
         menu.separador()
-        menu.opcion("play", _("Play current position"), Iconos.MoverJugar(), shortcut='Alt+X')
+        menu.opcion("play", _("Play current position"), Iconos.MoverJugar(), shortcut="Alt+X")
 
         # Hints
         menu.separador()
@@ -213,7 +212,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         elif resp.startswith("vol"):
             accion = resp[3:]
             if accion == "fichero":
-                resp = SelectFiles.salvaFichero(
+                resp = SelectFiles.save_file(
                     self.main_window,
                     _("File to save"),
                     self.configuration.save_folder(),
@@ -308,9 +307,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
                 themes,
                 time_ms,
                 clock_ms,
-            ) = resultado[
-                1
-            ][:8]
+            ) = resultado[1][:8]
             if is_all:
                 variations = ratings = comments = analysis = themes = time_ms = clock_ms = True
             self.game.remove_info_moves(variations, ratings, comments, analysis, themes, time_ms, clock_ms)
@@ -342,7 +339,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         extension = "lcsb"
         file = self.configuration.paths.folder_save_lcsb()
         while True:
-            file = SelectFiles.salvaFichero(self.main_window, _("File to save"), file, extension, False)
+            file = SelectFiles.save_file(self.main_window, _("File to save"), file, extension, False)
             if file:
                 file = str(file)
                 if os.path.isfile(file):
@@ -381,7 +378,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         dato = self.manager.listado("fen")
         if with_file:
             extension = "fns"
-            resp = SelectFiles.salvaFichero(
+            resp = SelectFiles.save_file(
                 self.main_window,
                 _("File to save"),
                 self.configuration.save_folder(),
@@ -480,7 +477,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
                 return
 
         self.main_window.pensando_tutor(True)
-        mrm = self.manager.manager_analyzer.analiza(fen)
+        mrm = self.manager.manager_analyzer.analyze_fen(fen)
         self.main_window.pensando_tutor(False)
         forcing_moves = ForcingMoves.ForcingMoves(self.board, mrm, self.main_window)
         forcing_moves.fm_show_checklist()

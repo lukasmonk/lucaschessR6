@@ -70,7 +70,7 @@ class GREngine:
 
     def play(self, fen):
         if self.manager:
-            mrm = self.manager.analiza(fen)
+            mrm = self.manager.analyze_fen(fen)
             return mrm.rm_best().movimiento()
         else:
             return FasterCode.run_fen(fen, 1, 0, 2)
@@ -309,8 +309,7 @@ class ManagerRoutesPlay(ManagerRoutes):
                     self.run_action(TB_REINIT)
                 else:
                     QTMessages.message_error(
-                        self.main_window,
-                        f"{_("Wrong move")}\n{_("Right move: %s") % Game.pv_san(fen, op_pv)}"
+                        self.main_window, f"{_('Wrong move')}\n{_('Right move: %s') % Game.pv_san(fen, op_pv)}"
                     )
                     self.continue_human()
                 return False
@@ -345,11 +344,11 @@ class ManagerRoutesPlay(ManagerRoutes):
         if siwin:
             if self.route.end_playing():
                 mensaje = (
-                        _("Congratulations, goal achieved")
-                        + "<br><br>"
-                        + _("Level %d") % self.route.level
-                        + ": "
-                        + _("Finished")
+                    _("Congratulations, goal achieved")
+                    + "<br><br>"
+                    + _("Level %d") % self.route.level
+                    + ": "
+                    + _("Finished")
                 )
                 QTMessages.message_result_win(self.main_window, mensaje)
             else:
@@ -608,7 +607,7 @@ class ManagerRoutesEndings(ManagerRoutes):
             self.start(self.route)
 
     def current_pgn(self):
-        resp = f"[Event \"{_('Transsiberian Railway')}\"]\n"
+        resp = f'[Event "{_("Transsiberian Railway")}"]\n'
         resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
         resp += f"\n{self.game.pgn_base()}"
@@ -793,7 +792,7 @@ class ManagerRoutesTactics(ManagerRoutes):
             self.set_label2(self.route.mens_tactic(True))
 
     def current_pgn(self):
-        resp = f"[Event \"{_('Transsiberian Railway')}\"]\n"
+        resp = f'[Event "{_("Transsiberian Railway")}"]\n'
         resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
         resp += f"\n{self.game.pgn_base()}"

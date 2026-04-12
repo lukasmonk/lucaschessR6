@@ -172,7 +172,7 @@ class Washing:
                     if (m.key, color) not in st:
                         engine = WEngine(m.key, m.name, m.elo, color)
                         li.append(engine)
-        li.sort(key=lambda x: f'{x.elo:4d}{"0" if x.color else "1"}')
+        li.sort(key=lambda x: f"{x.elo:4d}{'0' if x.color else '1'}")
         if li:
             eng = li[0]
             self.liEngines.append(eng)

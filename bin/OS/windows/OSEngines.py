@@ -67,7 +67,7 @@ def read_engines(folder_engines):
     cm.set_uci_option("Hash", "32")
     cm.set_min_fixed_depth(2)
 
-    mas("bikjump", "Aart J.C. Bik", "2.01 (64-bit)", "https://www.aartbik.com/", "bikjump.exe", 2026)
+    mas("bikjump", "Aart J.C. Bik", "3.0 (64-bit)", "https://www.aartbik.com/strategy.php", "bikjump.exe", 2190)
 
     cm = mas(
         "clarabit",

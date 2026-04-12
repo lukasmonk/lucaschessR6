@@ -7,7 +7,7 @@ from typing import Optional
 
 def calc_fixed_width(fixed_width: int) -> int:
     metricas = QtGui.QFontMetrics(QtWidgets.QApplication.font())
-    ancho_caracter = metricas.horizontalAdvance('M')
+    ancho_caracter = metricas.horizontalAdvance("M")
     return max(int(fixed_width * ancho_caracter / 12), fixed_width)
 
 
@@ -110,25 +110,25 @@ class ED(QtWidgets.QLineEdit):
         return self
 
     def set_font_type(
-            self,
-            name="",
-            puntos=8,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=8,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         f = FontType(name, puntos, peso, is_italic, is_underlined, is_striked, txt)
         self.setFont(f)
         return self
 
     def type_float(
-            self,
-            valor: float = 0.0,
-            from_sq: float = -36000.0,
-            to_sq: float = 36000.0,
-            decimales: int = None,
+        self,
+        valor: float = 0.0,
+        from_sq: float = -36000.0,
+        to_sq: float = 36000.0,
+        decimales: int = None,
     ):
         """
         Valida los caracteres suponiendo que es un tipo decimal con unas condiciones
@@ -171,7 +171,7 @@ class ED(QtWidgets.QLineEdit):
             txt = txt.replace(",", ".")
         while txt.count(".") > 1:
             x = txt.index(".")
-            txt = txt[:x] + txt[x + 1:]
+            txt = txt[:x] + txt[x + 1 :]
             self.set_text(txt)
         return round(float(txt), self.decimales) if txt else 0.0
 
@@ -243,6 +243,7 @@ class CB(QtWidgets.QComboBox):
     """
     ComboBox : entrada de una lista de options = etiqueta,key[,icono]
     """
+
     li_options: list
 
     def __init__(self, parent, li_options, init_value, extend_seek=False):
@@ -375,14 +376,14 @@ class LB(QtWidgets.QLabel):
         return self
 
     def set_font_type(
-            self,
-            name="",
-            puntos=None,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=None,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         f = FontType(name, puntos, peso, is_italic, is_underlined, is_striked, txt)
         self.setFont(f)
@@ -515,14 +516,14 @@ class PB(QtWidgets.QPushButton):
         return self
 
     def set_font_type(
-            self,
-            name="",
-            puntos=8,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=8,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         f = FontType(name, puntos, peso, is_italic, is_underlined, is_striked, txt)
         self.setFont(f)
@@ -601,14 +602,14 @@ class GB(QtWidgets.QGroupBox):
         return self
 
     def set_font_type(
-            self,
-            name="",
-            puntos=8,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=8,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         f = FontType(name, puntos, peso, is_italic, is_underlined, is_striked, txt)
         self.setFont(f)
@@ -705,14 +706,14 @@ class EM(QtWidgets.QTextEdit):
         return self
 
     def set_font_type(
-            self,
-            name="",
-            puntos=8,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=8,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         f = FontType(name, puntos, peso, is_italic, is_underlined, is_striked, txt)
         self.setFont(f)
@@ -768,6 +769,7 @@ class Menu(QtWidgets.QMenu):
             elif resp == "op2":
                 ................
     """
+
     is_left: bool
     is_right: bool
 
@@ -797,29 +799,29 @@ class Menu(QtWidgets.QMenu):
         return self
 
     def set_font_type(
-            self,
-            name="",
-            puntos=8,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=8,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         f = FontType(name, puntos, peso, is_italic, is_underlined, is_striked, txt)
         self.setFont(f)
         return self
 
     def opcion(
-            self,
-            key,
-            label,
-            icono=None,
-            is_disabled=False,
-            font_type=None,
-            is_checked=None,
-            tooltip: str = "",
-            shortcut: str = "",
+        self,
+        key,
+        label,
+        icono=None,
+        is_disabled=False,
+        font_type=None,
+        is_checked=None,
+        tooltip: str = "",
+        shortcut: str = "",
     ):
         if icono:
             accion = QtGui.QAction(icono, label, self)
@@ -893,14 +895,14 @@ class TB(QtWidgets.QToolBar):
     dic_toolbar: dict
 
     def __init__(
-            self,
-            parent,
-            li_acciones,
-            with_text=True,
-            icon_size=32,
-            rutina=None,
-            puntos=None,
-            background=None,
+        self,
+        parent,
+        li_acciones,
+        with_text=True,
+        icon_size=32,
+        rutina=None,
+        puntos=None,
+        background=None,
     ):
 
         QtWidgets.QToolBar.__init__(self, "BASIC", parent)
@@ -990,14 +992,14 @@ class TBrutina(QtWidgets.QToolBar):
     dic_toolbar: dict
 
     def __init__(
-            self,
-            parent,
-            li_acciones=None,
-            with_text=True,
-            icon_size=None,
-            puntos=None,
-            background=None,
-            style=None,
+        self,
+        parent,
+        li_acciones=None,
+        with_text=True,
+        icon_size=None,
+        puntos=None,
+        background=None,
+        style=None,
     ):
 
         QtWidgets.QToolBar.__init__(self, "BASIC", parent)
@@ -1111,15 +1113,15 @@ class TBrutina(QtWidgets.QToolBar):
 
 class FontType(QtGui.QFont):
     def __init__(
-            self,
-            name="",
-            puntos=0,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
-            point_size_delta=0,
+        self,
+        name="",
+        puntos=0,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
+        point_size_delta=0,
     ):
         QtGui.QFont.__init__(self)
         if txt is None:
@@ -1164,9 +1166,7 @@ class FontTypeNew(QtGui.QFont):
 
         resolved_family = family or base_font.family()
 
-        resolved_point_size = (
-            base_font.pointSize() if point_size == 0 else point_size
-        )
+        resolved_point_size = base_font.pointSize() if point_size == 0 else point_size
         resolved_point_size += point_size_delta
 
         if resolved_point_size <= 0:
@@ -1246,14 +1246,14 @@ class Tab(QtWidgets.QTabWidget):
         return self
 
     def set_font_type(
-            self,
-            name="",
-            puntos=8,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=8,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         f = FontType(name, puntos, peso, is_italic, is_underlined, is_striked, txt)
         self.setFont(f)

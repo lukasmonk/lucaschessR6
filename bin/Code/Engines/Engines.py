@@ -329,25 +329,25 @@ class Engine:
         return hash(self.key + self.key)
 
     def list_to_show(self, wowner):
-        li: list = [f'{_("Name")} = {self.name}', f'{_("Key")} = {self.key}']
+        li: list = [f"{_('Name')} = {self.name}", f"{_('Key')} = {self.key}"]
         if self.key != self.key:
-            li.append(f'{_("Alias")} = {self.key}')
-        li.append(f'{self.path_exe}')
+            li.append(f"{_('Alias')} = {self.key}")
+        li.append(f"{self.path_exe}")
         if dic_options := {uci.name: uci.valor for uci in self.li_uci_options() if uci.valor}:
             li_opt = []
             li_opt.extend(f"{name} = {valor}" for name, valor in dic_options.items())
             li.append((_("Options"), li_opt))
         if self.multiPV:
-            li.append(f'{_("Number of variations evaluated by the engine (MultiPV)")} = {self.multiPV}')
+            li.append(f"{_('Number of variations evaluated by the engine (MultiPV)')} = {self.multiPV}")
 
         if self.max_depth or self.max_time or self.nodes:
             li_limits = []
             if self.max_depth:
-                li_limits.append(f'{_("Fixed depth")} = {self.max_depth}')
+                li_limits.append(f"{_('Fixed depth')} = {self.max_depth}")
             if self.max_time:
-                li_limits.append(f'{_("Fixed time in seconds")} = {self.max_time:.01f}')
+                li_limits.append(f"{_('Fixed time in seconds')} = {self.max_time:.01f}")
             if self.nodes:
-                li_limits.append(f'{_("Fixed nodes")} = {self.nodes}')
+                li_limits.append(f"{_('Fixed nodes')} = {self.nodes}")
             li.append((_("Limits of engine thinking"), li_limits))
         menu = QTDialogs.LCMenuRondo(wowner)
         for opt in li:
@@ -454,7 +454,7 @@ class OpcionUCI:
         try:
             idx_default = li.index("default")
             if idx_default < len(li) - 1:
-                self.default = " ".join(li[idx_default + 1:])
+                self.default = " ".join(li[idx_default + 1 :])
                 if self.default == "<empty>":
                     self.default = ""
             else:
