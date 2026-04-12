@@ -583,7 +583,7 @@ class WPlayer(QtWidgets.QWidget):
                 for draw in dtemp:
                     draw["pgames"] = z(draw["games"] * 100.0 / tt)
                 dtemp.sort(
-                    key=lambda rx: f'{99999 - rx["games"]:5d}{rx["opening"]}',
+                    key=lambda rx: f"{99999 - rx['games']:5d}{rx['opening']}",
                     reverse=False,
                 )
                 if side == "white":

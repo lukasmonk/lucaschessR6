@@ -60,7 +60,7 @@ class Adjudicator:
         dispatcher_bestmove = self.bestmove_found if self.ms_time > 0 else None
         # Si el tiempo es cero = indeterminado, donde se mantiene el análisis
         self.manager_analyzer.analyze_tutor(
-            game, dispacher_bestmove=dispatcher_bestmove, dispacher_changedepth=self.changedepth
+            game, dispatcher_bestmove=dispatcher_bestmove, dispatcher_changedepth=self.changedepth
         )
 
     def analyze_end(self):
@@ -207,7 +207,7 @@ class Adjudicator:
         form.combobox(_("Engine"), Code.configuration.engines.list_name_alias_multipv10(), nom_engine)
         form.separador()
         form.editbox(
-            f'{_("Duration of engine analysis (secs)")}<br>{_("0.00=The same time used to move by you")}',
+            f"{_('Duration of engine analysis (secs)')}<br>{_('0.00=The same time used to move by you')}",
             ancho=60,
             decimales=2,
             tipo=float,

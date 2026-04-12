@@ -7,7 +7,7 @@ from Code.Odt import XML
 class Manifest(XML.XML):
     def __init__(self):
         XML.XML.__init__(self, "rdf:RDF")
-        self.add_param("xmlns:rdf", "https://www.w3.org/1999/02/22-rdf-syntax-ns#")
+        self.add_param("xmlns:rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
         element1 = XML.Element("rdf:Description")
         element1.add_param("rdf:about", "styles.xml")
         self.add_content(element1)
@@ -55,11 +55,11 @@ class Manifest(XML.XML):
 class Meta(XML.XML):
     def __init__(self):
         XML.XML.__init__(self, "office:document-meta")
-        self.add_param("xmlns:grddl", "https://www.w3.org/2003/g/data-view#")
+        self.add_param("xmlns:grddl", "http://www.w3.org/2003/g/data-view#")
         self.add_param("xmlns:meta", "urn:oasis:names:tc:opendocument:xmlns:meta:1.0")
         self.add_param("xmlns:office", "urn:oasis:names:tc:opendocument:xmlns:office:1.0")
         self.add_param("xmlns:ooo", "https://openoffice.org/2004/office")
-        self.add_param("xmlns:xlink", "https://www.w3.org/1999/xlink")
+        self.add_param("xmlns:xlink", "http://www.w3.org/1999/xlink")
         self.add_param("xmlns:dc", "https://purl.org/dc/elements/1.1/")
         self.add_param("office:version", "1.3")
         element1 = XML.Element("office:meta")

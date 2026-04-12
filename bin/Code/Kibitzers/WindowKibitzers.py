@@ -236,7 +236,11 @@ class WKibitzers(LCDialog.LCDialog):
         elif self.me_key.startswith("opcion"):
             opcion = kibitzer.li_uci_options_editable()[int(self.me_key[7:])]
             opcion.valor = valor
+            if opcion == "MultiPV":
+                kibitzer.set_multipv_var(opcion.valor)
+                valor = str(kibitzer.multiPV)
             kibitzer.set_uci_option(opcion.name, valor)
+
         self.kibitzers.save()
         self.goto(nk)
 
@@ -477,7 +481,8 @@ class WKibitzers(LCDialog.LCDialog):
             self.liKibActual.append((_("Fixed depth"), me.max_depth, "max_depth"))
             self.liKibActual.append((_("Fixed nodes"), me.nodes, "nodes"))
 
-            for num, opcion in enumerate(me.li_uci_options_editable()):
+            li_options = me.li_uci_options_editable()
+            for num, opcion in enumerate(li_options):
                 default = opcion.label_default()
                 label_default = f" ({default})" if default else ""
                 valor = str(opcion.valor)

@@ -15,7 +15,7 @@ class WEditPlayers(LCDialog.LCDialog):
         o_columns.nueva("NAME", _("Name"), 150, edicion=Delegados.LineaTextoUTF8())
         o_columns.nueva("ENGINE", _("Engine"), 200)
         self.grid = Grid.Grid(self, o_columns, is_editable=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Save"), Iconos.Aceptar(), self.save)

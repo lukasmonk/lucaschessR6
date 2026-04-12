@@ -70,7 +70,7 @@ class WEndingsGTB(LCDialog.LCDialog):
 
         self.tb_base = QTDialogs.LCTB(self, li_acciones)
 
-        self.komodo = None
+        self.maia1900 = None
 
         ly_bt, self.bt_movs = QTDialogs.ly_mini_buttons(
             self,
@@ -504,27 +504,14 @@ class WEndingsGTB(LCDialog.LCDialog):
             return True, go_next
         return False, None
 
-    def get_move_komodo(self):
-        if self.komodo is None:
+    def get_move_maia1900(self):
+        if self.maia1900 is None:
             run_engine_params = EngineRun.RunEngineParams()
-            run_engine_params.fixed_depth = 7
+            run_engine_params.fixed_nodes = 1
             run_engine_params.multipv = 1
-            engine = self.configuration.engines.search("komodo")
-            for name, value in (
-                ("Personality", "Human"),
-                ("Contempt", "80"),
-                ("White Contempt", "false"),
-                ("Personality", "EndGame"),
-                ("Selectivity", "130"),
-                ("Reduction", "-15"),
-                ("Dynamism", "140"),
-                ("Variety", "20"),
-                ("Skill", "25"),
-                ("Auto Skill", "false"),
-            ):
-                engine.set_uci_option(name, value)
-            self.komodo = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
-        return self.komodo.play_fen(self.game.last_position.fen())
+            engine = self.configuration.engines.search("maia-1900")
+            self.maia1900 = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
+        return self.maia1900.play_fen(self.game.last_position.fen())
 
     def continue_machine(self):
         ended, go_next = self.test_final()
@@ -537,7 +524,7 @@ class WEndingsGTB(LCDialog.LCDialog):
             return
         if len(lista) > 1:
             select = None
-            rm = self.get_move_komodo()
+            rm = self.get_move_maia1900()
             if rm:
                 a1h8 = rm.movimiento().lower()
                 for pos, mv in enumerate(lista):
@@ -773,7 +760,7 @@ class WEndingsGTB(LCDialog.LCDialog):
             self.board.activate_side(self.game.last_position.is_white)
 
     def import_fns(self):
-        path_fich = SelectFiles.leeFichero(self, "", "*")
+        path_fich = SelectFiles.read_file(self, "", "*")
         if path_fich:
             um = QTMessages.working(self)
             li_fens = []

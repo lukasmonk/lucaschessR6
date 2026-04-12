@@ -111,7 +111,7 @@ class SelectBanda(QtWidgets.QWidget):
         lb_f = Controles.LB(f"{_('CTRL')} F10\n{_('Changes')}")
         lb_f.setToolTip(_("Shift-Alt with right button to create/remove pieces"))
         # Activa la posibilidad de mover las pieces con el ratón
-        lb_f.fixed_height(36)
+        lb_f.relative_width(32*2+7)
         lb_f.align_center()
         self.lb_change_graphics = lb_f
         lb_f.mousePressEvent = self.mouse_press_event_graphics
@@ -316,7 +316,6 @@ class DragUna(Controles.LB):
     def mousePressEvent(self, event):
         eb = event.button()
         if self.id is None or eb == QtCore.Qt.MouseButton.RightButton:
-
             self.owner.edit(self)
 
         else:

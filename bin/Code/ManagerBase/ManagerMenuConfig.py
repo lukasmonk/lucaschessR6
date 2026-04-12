@@ -1,7 +1,9 @@
 import Code
 from Code.Base.Constantes import (
     GT_AGAINST_ENGINE,
-    NOTATION_ALGEBRAIC, NOTATION_LONGALGEBRAIC, NOTATION_DESCRIPTIVE,
+    NOTATION_ALGEBRAIC,
+    NOTATION_LONGALGEBRAIC,
+    NOTATION_DESCRIPTIVE,
 )
 from Code.Engines import WConfEngines, WExternalEngines
 from Code.ManagerBase import ManagerMenu
@@ -9,7 +11,6 @@ from Code.QT import FormLayout, Iconos, QTDialogs
 
 
 class ManagerMenuConfig(ManagerMenu.ManagerMenu):
-
     def launch(self, li_extra_options=None, with_sounds=False, with_blinfold=True):
         menu = QTDialogs.LCMenu(self.main_window)
 
@@ -43,11 +44,16 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
             return txt + ("  ✅" if self.configuration.x_notation_style == notation else "")
 
         menu_notation.opcion("notation_algebraic", ac(NOTATION_ALGEBRAIC, _("Algebraic")), Iconos.BoardNorm())
-        menu_notation.opcion("notation_longalgebraic", ac(NOTATION_LONGALGEBRAIC, _("Long algebraic")),
-                             Iconos.BoardLong())
+        menu_notation.opcion(
+            "notation_longalgebraic", ac(NOTATION_LONGALGEBRAIC, _("Long algebraic")), Iconos.BoardLong()
+        )
         menu_notation.opcion("notation_descriptive", ac(NOTATION_DESCRIPTIVE, _("Descriptive")), Iconos.BoardOld())
-        menu_notation.opcion("notation_with_figurines", _("PGN with figurines"), Iconos.Knight(),
-                             is_checked=self.configuration.x_pgn_withfigurines)
+        menu_notation.opcion(
+            "notation_with_figurines",
+            _("PGN with figurines"),
+            Iconos.Knight(),
+            is_checked=self.configuration.x_pgn_withfigurines,
+        )
 
         # Sonidos
         if with_sounds:
@@ -107,7 +113,6 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
 
         resp = menu.lanza()
         if resp:
-
             if li_extra_options:
                 for data in li_extra_options:
                     key = data[0]
@@ -165,7 +170,6 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
                     self.main_window.update_figurines()
                 self.configuration.graba()
                 self.manager.refresh_pgn()
-
 
         return None
 

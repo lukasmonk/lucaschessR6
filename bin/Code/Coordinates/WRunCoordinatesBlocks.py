@@ -129,7 +129,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
             mens = (
                 '<b><big><span style="color:green">%s</span><br><br>%s:<br><center>%s=%d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s=%d</center'
                 % (
-                    _('Congratulations, goal achieved'),
+                    _("Congratulations, goal achieved"),
                     _("Result"),
                     _("White"),
                     self.coordinates.min_score_white,

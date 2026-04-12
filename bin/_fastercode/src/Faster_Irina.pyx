@@ -86,6 +86,7 @@ cdef extern from "irina.h":
     void init_board()
     void fen_board(char *fen)
     char *board_fen(char *fen)
+    char *board_fenM2(char *fen)
     int movegen()
     int pgn2pv(char *pgn, char *pv)
     int make_nummove(int num)
@@ -283,23 +284,27 @@ class PGNreader:
 
     @staticmethod
     def _parse_label(
-        line: bytes,
-        values: Dict[bytes, bytes],
-        keys: Dict[bytes, bytes],
+        bytes line,
+        dict values,
+        dict keys,
     ) -> None:
-
         cdef Py_ssize_t n = len(line)
-        if n < 2:
-            return
-        content = line[1:n-1].strip()
-
-        try:
-            key, rest = content.split(b" ", 1)
-            value = rest.strip().strip(b'"')
-        except ValueError:
+        if n < 4:
             return
 
-        key_upper = key.upper()
+        # Skip '[' and ']', then find first space
+        cdef char* c_line = line
+        cdef bytearray content = bytearray(line[1:n-1].strip())
+        cdef bytes b_content = bytes(content)
+
+        cdef int space_pos = b_content.find(b" ")
+        if space_pos == -1:
+            return
+
+        cdef bytes key = b_content[:space_pos]
+        cdef bytes value = b_content[space_pos+1:].strip().strip(b'"')
+
+        cdef bytes key_upper = key.upper()
         values[key_upper] = value
         keys[key_upper] = key
 
@@ -322,42 +327,51 @@ def xpgn_pv(pgn: str) -> str:
         return pv.decode("utf-8")
 
 
-def pos_rc(pos: int) -> tuple:
-    return pos // 8, pos % 8
+cpdef inline tuple pos_rc(int pos):
+    return pos >> 3, pos & 7
 
+cpdef inline int rc_pos(int f, int c):
+    return (f << 3) | c
 
-def rc_pos(f: int, c: int) -> int:
-    return f * 8 + c
+cpdef inline str pos_a1(int pos):
+    cdef char a1[3]
+    a1[0] = <char>(97 + (pos & 7))
+    a1[1] = <char>(49 + (pos >> 3))
+    a1[2] = 0
+    return a1.decode("ascii")
 
+cpdef inline int a1_pos(str a1):
+    if len(a1) < 2: return -1
+    cdef int c = ord(a1[0]) - 97
+    cdef int f = ord(a1[1]) - 49
+    return (f << 3) | c
 
-def pos_a1(pos: int) -> str:
-    return chr(pos % 8 + 97) + chr(pos // 8 + 49)
-
-
-def a1_pos(a1: str) -> int:
-    cdef int f, c
-    f = ord(a1[1]) - 49
-    c = ord(a1[0]) - 97
-    return f * 8 + c
-
-
-def move_num(a1h8q: str) ->int:
-    num = a1_pos(a1h8q[:2]) + a1_pos(a1h8q[2:4])*64
-    if len(a1h8q)>4:
-        num += ({b"q":1, b"r":2, b"b":3, b"n":4}.get(a1h8q[4], 0))*64*64
+cpdef inline int move_num(str a1h8q):
+    cdef Py_ssize_t n = len(a1h8q)
+    cdef int num
+    cdef char p
+    if n < 4: return -1
+    num = a1_pos(a1h8q[:2]) | (a1_pos(a1h8q[2:4]) << 6)
+    if n > 4:
+        p = <char>ord(a1h8q[4])
+        if p == 113: # q
+            num |= 4096 # 1 << 12
+        elif p == 114: # r
+            num |= 8192 # 2 << 12
+        elif p == 98: # b
+            num |= 12288 # 3 << 12
+        elif p == 110: # n
+            num |= 16384 # 4 << 12
     return num
 
-
-def num_move(num: int) -> str:
-    a1 = pos_a1(num%64)
-    num //= 64
-    h8 = pos_a1(num%64)
-    num //= 64
-    if num:
-        q = {1:"q", 2:"r", 3:"b", 4:"n"}.get(num)
-    else:
-        q = ""
-    return a1 + h8 + q
+cpdef inline str num_move(int num):
+    cdef str move = pos_a1(num & 63) + pos_a1((num >> 6) & 63)
+    cdef int p = (num >> 12) & 7
+    if p == 1: move += "q"
+    elif p == 2: move += "r"
+    elif p == 3: move += "b"
+    elif p == 4: move += "n"
+    return move
 
 
 def li_k(npos: int) -> tuple:
@@ -544,8 +558,10 @@ def xpv_lipv(xpv: str):
                 li.append(base + move)
             is_white = not is_white
         else:
-            c = {50: "q", 51: "r", 52: "b", 53: "n"}.get(x, "")
-            li[len(li) - 1] += c
+            if x == 50: li[len(li) - 1] += "q"
+            elif x == 51: li[len(li) - 1] += "r"
+            elif x == 52: li[len(li) - 1] += "b"
+            elif x == 53: li[len(li) - 1] += "n"
     return li
 
 
@@ -595,18 +611,23 @@ def get_fen():
     x = fen.decode("utf-8")
     return x
 
+def get_fenm2():
+    cdef char fen[256]
+    board_fenM2(fen)
+    x = fen.decode("utf-8")
+    return x
+
 
 def get_moves():
     cdef char pv[32]
-    cdef int nmoves, x, nbase
-    nmoves = num_moves()
+    cdef int nmoves = num_moves()
+    cdef int nbase = num_base_move()
+    cdef int x
+    cdef list li = []
 
-    nbase = num_base_move()
-    li = []
     for x in range(nmoves):
-        get_move(x+nbase, pv)
-        r = pv
-        li.append(r.decode())
+        get_move(x + nbase, pv)
+        li.append(pv.decode("ascii"))
     return li
 
 
@@ -636,14 +657,16 @@ def get_pgn_b(bfrom_a1h8, bto_a1h8, bpromotion):
     return san.decode("utf-8")
 
 
-def xpv_pgn(xpv):
+def xpv_pgn(str xpv):
     cdef char san[32]
+    cdef int num = 1
+    cdef Py_ssize_t tam = 0
+    cdef int num_move
+    cdef bint is_white = True
+    cdef list li = []
+    cdef str pv
 
     set_init_fen()
-    is_white = True
-    num = 1
-    li = []
-    tam = 0
     for pv in xpv_lipv(xpv):
         if is_white:
             x = b"%d." % num
@@ -656,9 +679,8 @@ def xpv_pgn(xpv):
         if num_move == -1:
             break
         to_san(num_move, san)
-        x = san + b""
-        li.append(x)
-        tam += len(x)
+        li.append(san + b"")
+        tam += len(san)
         if tam >= 80:
             li.append(b"\n")
             tam = 0
@@ -668,14 +690,17 @@ def xpv_pgn(xpv):
         make_nummove(num_move)
     return (b"".join(li)).decode("utf-8")
 
-def lipv_pgn(fen, lipv):
+def lipv_pgn(str fen, list lipv):
     cdef char san[32]
+    cdef bint is_white = " w " in fen
+    cdef list li_fen = fen.split(" ")
+    cdef int num = int(li_fen[len(li_fen)-1])
+    cdef Py_ssize_t tam = 0
+    cdef int num_move
+    cdef list li = []
+    cdef str pv
+
     set_fen(fen)
-    is_white = " w " in fen
-    li_pv = fen.split(" ")
-    num = int(li_pv[len(li_pv) - 1])
-    li = []
-    tam = 0
     for pv in lipv:
         if is_white:
             x = b"%d." % num
@@ -688,9 +713,8 @@ def lipv_pgn(fen, lipv):
         if num_move == -1:
             break
         to_san(num_move, san)
-        x = san + b""
-        li.append(x)
-        tam += len(x)
+        li.append(san + b"")
+        tam += len(san)
         if tam >= 80:
             li.append(b"\n")
             tam = 0
@@ -705,24 +729,8 @@ def ischeck():
     return incheck()
 
 
-cdef class InfoMove:
-    cdef:
-        bytes _pv
-        bytes _san
-        bytes _from
-        bytes _to
-        bytes _promotion
-        bytes _piece
-        bytes _capt_piece
-
-        bint _castle_K
-        bint _castle_Q
-        bint _ep
-        bint _check
-        bint _mate
-        bint _capture
-
-    def __cinit__(self, int num):
+class InfoMove(object):
+    def __init__(self, num):
         cdef char pv[64]
         cdef char info[64]
         cdef char san[64]
@@ -731,79 +739,74 @@ cdef class InfoMove:
         get_move_ex(num, info)
         to_san(num, san)
 
-        # Convert once to bytes (safe copy)
+        # info = P a1 h8 q [K|Q|]
+
+        self._castle_K = info[6] == b"K"
+        self._castle_Q = info[6] == b"Q"
+        self._ep = info[7] == b"E"
         self._pv = pv
         self._san = san
+        self._capt_piece = info[8]
 
-        # info layout: P a1 h8 q [K|Q|] E
         self._piece = info[0:1]
         self._from = info[1:3]
         self._to = info[3:5]
         self._promotion = info[5:6].strip()
+        self._check = b"+" in san
+        self._mate = b"#" in san
+        self._capture = b"x" in san
 
-        self._castle_K = info[6] == ord('K')
-        self._castle_Q = info[6] == ord('Q')
-        self._ep = info[7] == ord('E')
-        self._capt_piece = info[8]
-
-        # SAN flags (bytes search once)
-        self._check = b'+' in self._san
-        self._mate = b'#' in self._san
-        self._capture = b'x' in self._san
-
-    cpdef str xfrom(self):
+    def xfrom(self):
         return self._from.decode("utf-8")
 
-    cpdef str xto(self):
+    def xto(self):
         return self._to.decode("utf-8")
 
-    cpdef str promotion(self):
-        if self._promotion:
-            return self._promotion.lower().decode("utf-8")
-        return ""
+    def promotion(self):
+        return self._promotion.lower().decode("utf-8")
 
-    cpdef str move(self):
+    def move(self):
         return (self._from + self._to + self._promotion.lower()).decode("utf-8")
 
-    cpdef bytes bmove(self):
+    def bmove(self):
         return self._from + self._to + self._promotion.lower()
 
-    cpdef bint check(self):
+    def check(self):
         return self._check
 
-    cpdef bint mate(self):
+    def mate(self):
         return self._mate
 
-    cpdef bint capture(self):
+    def capture(self):
         return self._capture
 
-    cpdef str piece(self):
+    def piece(self):
         return self._piece.decode("utf-8")
 
-    cpdef str piece_captured(self):
+    def piece_captured(self):
         return self._capt_piece.decode("utf-8")
 
-    cpdef bint iscastle_k(self):
+    def iscastle_k(self):
         return self._castle_K
 
-    cpdef bint iscastle_q(self):
+    def iscastle_q(self):
         return self._castle_Q
 
-    cpdef bint is_enpassant(self):
+    def is_enpassant(self):
         return self._ep
 
-    cpdef str san(self):
+    def san(self):
         return self._san.decode("utf-8")
 
 
 def get_exmoves():
-    nmoves = num_moves()
+    cdef int nmoves = num_moves()
+    cdef int nbase = num_base_move()
+    cdef int x
+    cdef list li = []
 
-    nbase = num_base_move()
-    li = []
     for x in range(nmoves):
-        mv = InfoMove(x + nbase)
-        li.append(mv)
+        li.append(InfoMove(x + nbase))
     return li
 
 
@@ -873,11 +876,14 @@ def get_exmoves_fen(fen):
     return get_exmoves()
 
 
-def get_captures_fen(fen):
+def get_captures_fen(str fen):
     set_fen(fen)
-    nmoves = num_moves()
-    nbase = num_base_move()
-    li = []
+    cdef int nmoves = num_moves()
+    cdef int nbase = num_base_move()
+    cdef int x
+    cdef list li = []
+    mv: InfoMove
+
     for x in range(nmoves):
         mv = InfoMove(x + nbase)
         if mv.capture():
@@ -980,16 +986,12 @@ def get_pgn_descriptive(is_white, from_sq, to_sq, promotion):
     # Ambos casos → cualificar el ala de la pieza que mueve (ej: NQ, NK, BR...)
 
     def get_prefix(conflicts):
-        """Desambiguación del prefijo en notación descriptiva.
-        Nivel 1: ala distinta (Q vs K) → usar ala.
-        Nivel 2: mismo ala, rango distinto → usar rango de origen.
-        Nivel 3: mismo ala y mismo rango → usar nombre corto de columna origen."""
         conflict_list = list(conflicts)
         if not conflict_list:
             return piece_type
 
         def wing_of(sq):
-            return "Q" if ord(sq[0]) - ord("a") < 4 else "K"
+            return "Q" if ord(sq[0]) - 97 < 4 else "K"
 
         def desc_rank_of(sq):
             return int(sq[1]) if is_white else 9 - int(sq[1])
@@ -1084,21 +1086,22 @@ def get_pgn_descriptive(is_white, from_sq, to_sq, promotion):
     return move_str
 
 
-def get_pgn_longalgebraic(from_sq, to_sq, promotion):
+def get_pgn_longalgebraic(str from_sq, str to_sq, str promotion):
     info = None
-    legal_moves = get_exmoves()
-    move = from_sq + to_sq + promotion
+    cdef list legal_moves = get_exmoves()
+    cdef str move = from_sq + to_sq + promotion
+    m: InfoMove
     for m in legal_moves:
         if m.move() == move:
             info = m
             break
 
-    if not info:
+    if info is None:
         return ""
 
-    ini = f"{info.piece().upper()}{from_sq}"
-    sep = "x" if m.capture() else "-"
-    end = to_sq
+    cdef str ini = f"{info.piece().upper()}{from_sq}"
+    cdef str sep = "x" if info.capture() else "-"
+    cdef str end = to_sq
     if promotion:
         end += f"={promotion.upper()}"
     if info.mate():

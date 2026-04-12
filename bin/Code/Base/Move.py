@@ -38,13 +38,13 @@ class Move:
     """
 
     def __init__(
-            self,
-            game,
-            position_before=None,
-            position=None,
-            from_sq=None,
-            to_sq=None,
-            promotion="",
+        self,
+        game,
+        position_before=None,
+        position=None,
+        from_sq=None,
+        to_sq=None,
+        promotion="",
     ):
         self.game = game
         self.analysis = None
@@ -103,12 +103,12 @@ class Move:
         (no variations, comments, NAGs, analysis, themes or time).
         """
         return not (
-                self.variations
-                or self.comment
-                or len(self.li_nags) > 0
-                or self.analysis
-                or len(self.li_themes) > 0
-                or self.time_ms
+            self.variations
+            or self.comment
+            or len(self.li_nags) > 0
+            or self.analysis
+            or len(self.li_themes) > 0
+            or self.time_ms
         )
 
     def get_themes(self) -> list:
@@ -690,9 +690,9 @@ class Variations:
             name = mrm.name
             if mrm.max_time:
                 t = f"{float(mrm.max_time) / 1000.0:.2f}".rstrip("0").rstrip(".")
-                info_suffix = f'{_("Second(s)")} {t}'
+                info_suffix = f"{_('Second(s)')} {t}"
             elif mrm.max_depth:
-                info_suffix = f'{_("Depth")} {mrm.max_depth}'
+                info_suffix = f"{_('Depth')} {mrm.max_depth}"
             else:
                 info_suffix = ""
             info_suffix = f" {name} {info_suffix}"

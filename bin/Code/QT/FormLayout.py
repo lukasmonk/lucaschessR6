@@ -56,14 +56,14 @@ separador = (None, None)
 
 class FormLayout:
     def __init__(
-            self,
-            parent,
-            title,
-            icon,
-            with_default=False,
-            minimum_width=None,
-            dispatch=None,
-            font_txt=None,
+        self,
+        parent,
+        title,
+        icon,
+        with_default=False,
+        minimum_width=None,
+        dispatch=None,
+        font_txt=None,
     ):
         self.parent = parent
         self.title = title
@@ -92,17 +92,17 @@ class FormLayout:
         self.eddefault(label, init_value)
 
     def editbox(
-            self,
-            label,
-            ancho=None,
-            rx=None,
-            tipo=None,
-            is_password=False,
-            alto=1,
-            decimales=1,
-            init_value=None,
-            negatives=False,
-            tooltip=None,
+        self,
+        label,
+        ancho=None,
+        rx=None,
+        tipo=None,
+        is_password=False,
+        alto=1,
+        decimales=1,
+        init_value=None,
+        negatives=False,
+        tooltip=None,
     ):
         self.li_gen.append(
             (
@@ -142,8 +142,17 @@ class FormLayout:
     def font(self, label, init_value):
         self.li_gen.append((FontCombobox(label), init_value))
 
-    def file(self, label, extension, si_save, init_value, is_relative=True, minimum_width=None, file_default="",
-             li_histo=None):
+    def file(
+        self,
+        label,
+        extension,
+        si_save,
+        init_value,
+        is_relative=True,
+        minimum_width=None,
+        file_default="",
+        li_histo=None,
+    ):
         self.li_gen.append(
             (
                 Fichero(
@@ -168,8 +177,8 @@ class FormLayout:
     def dial(self, label, minimo, maximo, init_value, siporc=True):
         self.li_gen.append((Dial(label, minimo, maximo, siporc), init_value))
 
-    def slider(self, label, minimo, maximo, init_value, siporc=True):
-        sld = XSlider(label, minimo, maximo, siporc)
+    def slider(self, label, minimo, maximo, init_value, siporc=True, interval=1, step=1):
+        sld = XSlider(label, minimo, maximo, siporc, interval, step)
         self.li_gen.append((sld, init_value))
 
     def apart(self, title):
@@ -259,16 +268,16 @@ class Colorbox:
 
 class Editbox:
     def __init__(
-            self,
-            label,
-            ancho=None,
-            rx=None,
-            tipo=None,
-            is_password=False,
-            alto=1,
-            decimales=1,
-            negatives=False,
-            tooltip=None,
+        self,
+        label,
+        ancho=None,
+        rx=None,
+        tipo=None,
+        is_password=False,
+        alto=1,
+        decimales=1,
+        negatives=False,
+        tooltip=None,
     ):
         self.tipo = EDITBOX
         self.label = f"{label}:"
@@ -297,10 +306,12 @@ class Dial:
 
 
 class XSlider:
-    def __init__(self, label, minimo, maximo, siporc):
+    def __init__(self, label, minimo, maximo, siporc, interval, step):
         self.tipo = SLIDER
         self.minimo = minimo
         self.maximo = maximo
+        self.interval = interval
+        self.step = step
         self.siporc = siporc
         self.label = label
         if ":" not in label:
@@ -316,14 +327,14 @@ class Carpeta:
 
 class Fichero:
     def __init__(
-            self,
-            label,
-            extension,
-            is_save,
-            is_relative=True,
-            minimum_width=None,
-            file_default="",
-            li_histo=None,
+        self,
+        label,
+        extension,
+        is_save,
+        is_relative=True,
+        minimum_width=None,
+        file_default="",
+        li_histo=None,
     ):
         self.tipo = FICHERO
         self.extension = extension
@@ -355,9 +366,9 @@ class BotonFichero(QtWidgets.QPushButton):
         titulo = _("File to save") if self.is_save else _("File to read")
         fbusca = self.file if self.file else self.file_default
         if self.is_save:
-            resp = SelectFiles.salvaFichero(self, titulo, fbusca, self.extension, True)
+            resp = SelectFiles.save_file(self, titulo, fbusca, self.extension, True)
         else:
-            resp = SelectFiles.leeFichero(self, fbusca, self.extension, titulo=titulo)
+            resp = SelectFiles.read_file(self, fbusca, self.extension, titulo=titulo)
         if resp:
             self.set_filepath(resp)
 
@@ -421,8 +432,8 @@ class LBotonFichero(QtWidgets.QHBoxLayout):
                     self.boton.set_filepath(resp)
                 elif menu.is_right:
                     if QTMessages.pregunta(
-                            self.parent,
-                            _("Do you want to remove file %s from the list?") % resp,
+                        self.parent,
+                        _("Do you want to remove file %s from the list?") % resp,
                     ):
                         del self.li_histo[self.li_histo.index(resp)]
 
@@ -629,14 +640,14 @@ class DialNum(Colocacion.H):
 
 
 class Slider(Colocacion.H):
-    def __init__(self, parent, config, dispatch):
+    def __init__(self, parent, config: XSlider, dispatch):
         Colocacion.H.__init__(self)
 
         self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, parent)
         self.slider.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         self.slider.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBothSides)
-        self.slider.setTickInterval(1)
-        self.slider.setSingleStep(1)
+        self.slider.setTickInterval(config.interval)
+        self.slider.setSingleStep(config.step)
         self.slider.setMinimum(config.minimo)
         self.slider.setMaximum(config.maximo)
 
@@ -686,7 +697,6 @@ class FormWidget(QtWidgets.QWidget):
 
     def setup(self, dispatch):
         for label, value in self.data:
-
             # Separador
             if label is None and value is None:
                 self.formlayout.addRow(QtWidgets.QLabel(" ", self), QtWidgets.QLabel(" ", self))
@@ -899,7 +909,7 @@ class FormWidget(QtWidgets.QWidget):
                     txt = txt.replace(",", ".")
                 while txt.count(".") > 1:
                     x = txt.index(".")
-                    txt = txt[:x] + txt[x + 1:]
+                    txt = txt[:x] + txt[x + 1 :]
                 try:
                     value = float(txt)
                 except ValueError:
@@ -948,15 +958,15 @@ class FormDialog(QtWidgets.QDialog):
     accion: str
 
     def __init__(
-            self,
-            data,
-            title="",
-            comment="",
-            icon=None,
-            parent=None,
-            if_default=True,
-            dispatch=None,
-            li_extra_options=None,
+        self,
+        data,
+        title="",
+        comment="",
+        icon=None,
+        parent=None,
+        if_default=True,
+        dispatch=None,
+        li_extra_options=None,
     ):
         super(FormDialog, self).__init__(parent, QtCore.Qt.WindowType.Dialog)
 
@@ -1018,16 +1028,16 @@ class FormDialog(QtWidgets.QDialog):
 
 
 def fedit(
-        data,
-        title="",
-        comment="",
-        icon=None,
-        parent=None,
-        if_default=False,
-        minimum_width=None,
-        dispatch=None,
-        font=None,
-        li_extra_options=None,
+    data,
+    title="",
+    comment="",
+    icon=None,
+    parent=None,
+    if_default=False,
+    minimum_width=None,
+    dispatch=None,
+    font=None,
+    li_extra_options=None,
 ):
     """
     Create form dialog and return result

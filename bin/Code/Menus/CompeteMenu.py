@@ -19,15 +19,15 @@ class CompeteMenu(BaseMenu.RootMenu):
 
         submenu_elo = self.new_submenu(_("Elo-Rating"), Iconos.Elo())
 
-        submenu_elo.new("lucaselo", f'{_("Lucas-Elo")} ({configuration.x_elo})', Iconos.Elo())
+        submenu_elo.new("lucaselo", f"{_('Lucas-Elo')} ({configuration.x_elo})", Iconos.Elo())
         submenu_elo.new(
             "micelo",
-            f'{_("Tourney-Elo")} ({configuration.x_michelo})',
+            f"{_('Tourney-Elo')} ({configuration.x_michelo})",
             Iconos.EloTimed(),
         )
         submenu_elo.new(
             "wicker",
-            f'{_("The Wicker Park Tourney")} ({configuration.x_wicker})',
+            f"{_('The Wicker Park Tourney')} ({configuration.x_wicker})",
             Iconos.Park(),
         )
 

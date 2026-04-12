@@ -11,7 +11,7 @@ def analysis_game(manager):
     game = manager.game
     main_window = manager.main_window
 
-    analysis_params = WindowAnalysisParam.analysis_parameters(main_window, True)
+    analysis_params = WindowAnalysisParam.analysis_parameters(main_window, True, False, 0, False)
 
     if analysis_params is None:
         return
@@ -49,7 +49,7 @@ def analysis_game(manager):
     ):
         if position is not None:
             pos, ntotal, njg = position
-            message = f'{_("Analyzing the move....")}: {pos + 1}/{ntotal}'
+            message = f"{_('Analyzing the move....')}: {pos + 1}/{ntotal}"
             run_analysis_game.dispatch_bp_message = message
             message = f'{run_analysis_game.dispatch_bp_message}<br><small>{_("Depth")}: 0  {_("Time")}: 0"'
             manager_main_window_base.change_message(message)
@@ -66,7 +66,7 @@ def analysis_game(manager):
             if ms is None:
                 ms = rm.time
             message = (
-                f'{run_analysis_game.dispatch_bp_message}<br>'
+                f"{run_analysis_game.dispatch_bp_message}<br>"
                 f'<small>{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}"'
             )
             manager_main_window_base.change_message(message)
@@ -114,7 +114,11 @@ def analysis_game(manager):
                 li_creados.append(analysis_params.bmtbrilliancies)
             else:
                 li_no_creados.append(analysis_params.bmtbrilliancies)
-
+        if analysis_params.mates_saved_name:
+            if run_analysis_game.si_mates:
+                li_creados.append(analysis_params.mates_saved_name)
+            else:
+                li_no_creados.append(analysis_params.mates_saved_name)
         if li_creados or li_no_creados:
             WDB_Trainings.message_creating_trainings(main_window, li_creados, li_no_creados)
 

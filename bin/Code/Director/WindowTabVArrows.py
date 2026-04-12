@@ -34,7 +34,7 @@ class WTVArrow(QtWidgets.QDialog):
             reg_flecha = TabVisual.PFlecha()
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Save"), Iconos.Aceptar(), self.grabar),
+        (tb.new(_("Save"), Iconos.Aceptar(), self.grabar),)
         tb.new(_("Cancel"), Iconos.Cancelar(), self.reject)
 
         # Board

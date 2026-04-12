@@ -110,7 +110,7 @@ class AllPieces:
         return QtGui.QIcon(pm)
 
     def pixmap(self, pieza, name, width):
-        fich = Code.path_resource("Pieces", name, f'{"w" if pieza.isupper() else "b"}{pieza.lower()}.svg')
+        fich = Code.path_resource("Pieces", name, f"{'w' if pieza.isupper() else 'b'}{pieza.lower()}.svg")
         pm = QtGui.QPixmap(width, width)
         pm.fill(QtCore.Qt.GlobalColor.transparent)
         render = QtSvg.QSvgRenderer(fich)

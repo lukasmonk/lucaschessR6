@@ -123,7 +123,7 @@ class WLearnBase(LCDialog.LCDialog):
             label = TrListas.pgn_label(key)
             crea_col(key, label, key != "EVENT")
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         li_acciones = (
             (_("Close"), Iconos.MainMenu(), self.finalize),
@@ -262,7 +262,7 @@ class WLearn1(LCDialog.LCDialog):
         o_columns.nueva("HINTS", _("Hints"), 80, align_center=True)
         o_columns.nueva("TIME", _("Time"), 80, align_center=True)
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         # Tool bar
         li_acciones = (
@@ -358,7 +358,7 @@ class WLearn1(LCDialog.LCDialog):
         form.separador()
         form.apart(_("Second board"))
         label = _("Movement displayed")
-        label = f'{label}<br><small>{_("Disable")}=0'
+        label = f"{label}<br><small>{_('Disable')}=0"
         form.spinbox(label, 0, len(self.game), 40, dic.get("LEVEL", 1))
         form.separador()
         form.apart(_("Side you play with"))
@@ -763,7 +763,7 @@ class WLearnPuente(LCDialog.LCDialog):
 
         texto = (
             f'<hr><center><span style="color: red; font-weight: bold; font-size: 18pt;">{_("Ended")}</center>'
-            f'<hr>{self.lbInfo.text()}'
+            f"<hr>{self.lbInfo.text()}"
         )
         self.lbInfo.set_text(texto)
 

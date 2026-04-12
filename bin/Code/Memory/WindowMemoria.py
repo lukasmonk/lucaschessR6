@@ -547,7 +547,7 @@ class WMemoryResults(LCDialog.LCDialog):
 
         self.setLayout(layout)
 
-        self.restore_video(default_width=grid.width_columns_displayables() + 24, default_height=720)
+        self.restore_video(default_width=grid.width_and_vbar(), default_height=720)
         grid.gotop()
         grid.setFocus()
 

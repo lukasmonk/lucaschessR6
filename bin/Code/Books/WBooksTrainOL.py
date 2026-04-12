@@ -108,7 +108,7 @@ class WBooksTrainOL(LCDialog.LCDialog):
         o_columns.nueva("CURRENT", _("Current"), 60, align_center=True)
         o_columns.nueva("START_FEN", _("Start position"), 100, align_center=True)
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         self.tb = QTDialogs.LCTB(self)
         self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
@@ -164,7 +164,7 @@ class WBooksTrainOL(LCDialog.LCDialog):
             return reg.start_fen
         if col == "CURRENT":
             dic = reg.current_training()
-            return f'{dic["POS"] + 1}/{len(reg.lines)}'
+            return f"{dic['POS'] + 1}/{len(reg.lines)}"
         return None
 
     def finalize(self):
@@ -518,7 +518,7 @@ class WBooksTrainOLHistory(LCDialog.LCDialog):
         o_columns.nueva("DATE_END", _("End date"), 120, align_center=True)
         o_columns.nueva("TIME_USED", _("Time used"), 120, align_center=True)
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         self.tb = QTDialogs.LCTB(self)
         self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
@@ -544,7 +544,7 @@ class WBooksTrainOLHistory(LCDialog.LCDialog):
         if col == "DATE_INIT":
             return Util.local_date_time(dic["DATE_INIT"])
         if col == "POS":
-            return f'{dic["POS"]:d}/{len(self.reg.lines):d}'
+            return f"{dic['POS']:d}/{len(self.reg.lines):d}"
         if col == "ERRORS":
             return str(dic["ERRORS"])
         if col == "HINTS":

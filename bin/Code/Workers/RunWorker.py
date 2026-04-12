@@ -20,7 +20,7 @@ class RunWorker:
     book_rr: str | None
     book_depth: int | None
     initial_fen: str | None
-    num_worker: int|None = None
+    num_worker: int | None = None
     icon: object
 
     def __init__(self):
@@ -41,7 +41,6 @@ class RunWorker:
 
 
 class ProcesadorBar:
-
     @staticmethod
     def analyzer_clone_new(mstime: int, depth: int, nodes: int, multipv: str | int):
         from Code.Engines import EngineManagerPlay, EngineRun, Engines

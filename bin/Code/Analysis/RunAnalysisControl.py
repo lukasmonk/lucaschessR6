@@ -258,7 +258,6 @@ class AnalysisMassiveWithWorkers:
                     with open(par1, "at", encoding="utf-8", errors="ignore") as f:
                         f.write(par2)
 
-
     def processing(self):
         QTUtils.refresh_gui()
         if self.window.is_canceled():
@@ -325,8 +324,8 @@ class AnalysisMassiveWithWorkers:
         self.window.exec()
 
         for bmt_lista, name in (
-                (self.bmt_blunders, self.alm.bmtblunders),
-                (self.bmt_brillancies, self.alm.bmtbrilliancies),
+            (self.bmt_blunders, self.alm.bmtblunders),
+            (self.bmt_brillancies, self.alm.bmtbrilliancies),
         ):
             if bmt_lista and len(bmt_lista) > 0:
                 bmt = BMT.BMT(Code.configuration.paths.file_bmt())
@@ -460,14 +459,10 @@ class WProgress(LCDialog.LCDialog):
         # pb_worker.setValue(0)
         pb_worker.setFont(Controles.FontTypeNew(extra_bold=True))
 
-        bt_pause_worker = Controles.PB(
-            worker_frame, "", lambda checked, w=worker: self.pause_worker(w), plano=True
-        )
+        bt_pause_worker = Controles.PB(worker_frame, "", lambda checked, w=worker: self.pause_worker(w), plano=True)
         bt_pause_worker.set_icono(Iconos.PauseColor())
 
-        bt_close_worker = Controles.PB(
-            worker_frame, "", lambda checked, w=worker: self.close_worker(w), plano=True
-        )
+        bt_close_worker = Controles.PB(worker_frame, "", lambda checked, w=worker: self.close_worker(w), plano=True)
         bt_close_worker.set_icono(Iconos.Borrar())
 
         worker_layout.addWidget(pb_worker, 1)
@@ -553,7 +548,7 @@ class WProgress(LCDialog.LCDialog):
             self.pb_moves.setValue(pos)
             str_estimate = self._estimator.estimated(pos)
             if str_estimate is not None:
-                self.lb_time.set_text(f'{_("Estimated time")}: {str_estimate}')
+                self.lb_time.set_text(f"{_('Estimated time')}: {str_estimate}")
             else:
                 self.lb_time.set_text("")
 

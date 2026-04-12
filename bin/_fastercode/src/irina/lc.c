@@ -39,7 +39,7 @@ int pgn2pv(char *pgn, char * pv)
             if(*c == 'O'){
                 piece = 'K';
                 from_AH = 'e';
-                to_AH = (strlen(pgn)==3) ? 'g':'c';
+                to_AH = (pgn[3] == '-') ? 'c':'g';
                 from_18 = (board.color) ? '8':'1';
                 to_18 = from_18;
                 break;
@@ -119,7 +119,7 @@ int pgn2pv(char *pgn, char * pv)
         return ERROR_MOVE;
     }
 
-    if ( !to_18 ) {
+    if ( !to_AH ) {
         to_18 = from_18;
         to_AH = from_AH;
         from_18 = 0;
@@ -146,7 +146,7 @@ int pgn2pv(char *pgn, char * pv)
             if( move.promotion && NAMEPZ[move.promotion] != promotion ) continue;
             if( promotion && !move.promotion ) continue;
             sprintf(pv, "%s%s", POS_AH[move.from], POS_AH[move.to]);
-            if( promotion ) sprintf(pv, "%s%c", pv, promotion);
+            if( promotion ) sprintf(pv + 4, "%c", promotion);
             return k;
         }
     }
@@ -205,7 +205,9 @@ int search_move( char *desde, char *hasta, char * promotion )
     for (i = from_moves; i < toMoves; i++) {
         move = board.moves[i];
         if ( move.from == from && move.to == to ) {
-            if( move.promotion && tolower(NAMEPZ[move.promotion]) != tolower(promotion[0]) ) continue;
+            unsigned char p1 = move.promotion ? tolower(NAMEPZ[move.promotion]) : 0;
+            unsigned char p2 = promotion[0] ? tolower(promotion[0]) : 0;
+            if (p1 != p2) continue;
             return i;
         }
     }
@@ -234,7 +236,7 @@ void get_move_ex( int num, char * info )
 
     if (move.capture) capture = NAMEPZ[move.capture];
     else capture = ' ';
-    sprintf(info, "%s%c%c%c%c", info, promotion, castle, en_passant, capture);
+    sprintf(info + strlen(info), "%c%c%c%c", promotion, castle, en_passant, capture);
 }
 
 char * to_san(int num, char *san_move)

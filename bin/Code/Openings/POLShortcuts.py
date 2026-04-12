@@ -120,7 +120,7 @@ class ShortCuts:
         form.edit(_("Name"), pgn)
         form.separador()
         if li_alt:
-            li_combo = [(f'{_("ALT")}+{key}', key) for key in li_alt]
+            li_combo = [(f"{_('ALT')}+{key}", key) for key in li_alt]
             form.combobox(_("ALT"), li_combo, li_alt[0])
             form.separador()
 

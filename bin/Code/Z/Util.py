@@ -34,6 +34,7 @@ class Log:
     def write(self, buf: str) -> None:
         if buf.startswith("Traceback"):
             import Code
+
             buf = f"{Code.VERSION}-{today()}\n{buf}"
         with self.logname.open("at", encoding="utf-8") as ferr:
             ferr.write(buf)
@@ -245,7 +246,7 @@ def ini_dic(file: Union[str, Path]) -> dict:
                     n = line.find("=")
                     if n:
                         key = line[:n].strip()
-                        value = line[n + 1:].strip()
+                        value = line[n + 1 :].strip()
                         dic[key] = value
     return dic
 
@@ -255,7 +256,7 @@ def today() -> datetime.datetime:
 
 
 def huella() -> str:
-    timestamp = int(time.time() * 1000).to_bytes(6, byteorder='big')
+    timestamp = int(time.time() * 1000).to_bytes(6, byteorder="big")
     random_part = uuid.uuid4().bytes[:10]
     combined = timestamp + random_part
     return base64.urlsafe_b64encode(combined).decode().rstrip("=")
@@ -391,7 +392,6 @@ def ini2dic(file):
     dic_base = collections.OrderedDict()
 
     if os.path.isfile(file):
-
         with open(file, "rt", encoding="utf-8", errors="ignore") as f:
             for linea in f:
                 linea = linea.strip()
@@ -404,7 +404,7 @@ def ini2dic(file):
                         n = linea.find("=")
                         if n > 0:
                             clave1 = linea[:n].strip()
-                            valor = linea[n + 1:].strip()
+                            valor = linea[n + 1 :].strip()
                             dic[clave1] = valor
 
     return dic_base
@@ -422,7 +422,6 @@ def ini_base2dic(file, rfind_equal=False):
     dic = {}
 
     if os.path.isfile(file):
-
         with open(file, "rt", encoding="utf-8", errors="ignore") as f:
             for linea in f:
                 linea = linea.strip()
@@ -432,7 +431,7 @@ def ini_base2dic(file, rfind_equal=False):
                     n = linea.rfind("=") if rfind_equal else linea.find("=")
                     if n:
                         key = linea[:n].strip()
-                        valor = linea[n + 1:].strip()
+                        valor = linea[n + 1 :].strip()
                         dic[key] = valor
 
     return dic
@@ -464,7 +463,6 @@ class ListaNumerosImpresion:
             txt = txt.replace("--", "-").replace(",,", ",").replace(" ", "")
 
             for bloque in txt.split(","):
-
                 if bloque.startswith("-"):
                     num = bloque[1:]
                     if num.isdigit():
@@ -679,7 +677,7 @@ class OpenCodec:
             if best_guess is not None:
                 encoding = best_guess.encoding
             else:
-                encoding = 'utf-8'
+                encoding = "utf-8"
         if modo is None:
             modo = "rt"
         self.f = open(path, modo, encoding=encoding, errors="ignore")
@@ -697,7 +695,7 @@ def bytes_encoding(btxt: bytes) -> str:
     if best_guess is not None:
         encoding = best_guess.encoding
     else:
-        encoding = 'utf-8'
+        encoding = "utf-8"
     return encoding
 
 
@@ -798,7 +796,7 @@ def div_list(xlist, max_group):
     xfrom = 0
     li_groups = []
     while xfrom < nlist:
-        li_groups.append(xlist[xfrom: xfrom + max_group])
+        li_groups.append(xlist[xfrom : xfrom + max_group])
         xfrom += max_group
     return li_groups
 
@@ -827,12 +825,12 @@ def fen_fen64(fen):
 
 
 def randomize():
-    random.seed(int.from_bytes(os.urandom(4), 'little'))
+    random.seed(int.from_bytes(os.urandom(4), "little"))
 
 
 def file_crc(ruta_archivo):
     crc = 0
-    with open(ruta_archivo, 'rb') as f:
+    with open(ruta_archivo, "rb") as f:
         while True:
             chunk = f.read(4096)
             if not chunk:

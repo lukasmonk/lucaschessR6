@@ -179,17 +179,17 @@ class TrainMenu(BaseMenu.RootMenu):
         submenu_turn_on_the_ligths = submenu_tactics.new_submenu(_("Turn on the lights"), Iconos.TOL())
 
         submenu_memory_mode = submenu_turn_on_the_ligths.new_submenu(_("Memory mode"), Iconos.TOL())
-        submenu_memory_mode.new("tol_uned_easy", f'{_("UNED chess school")} ({_("Initial")})', Iconos.Uned())
+        submenu_memory_mode.new("tol_uned_easy", f"{_('UNED chess school')} ({_('Initial')})", Iconos.Uned())
         submenu_memory_mode.new(
             "tol_uned",
-            f'{_("UNED chess school")} ({_("Complete")})',
+            f"{_('UNED chess school')} ({_('Complete')})",
             Iconos.Uned(),
             sep=False,
         )
-        submenu_memory_mode.new("tol_uwe_easy", f'{_("Uwe Auerswald")} ({_("Initial")})', Iconos.Uwe())
+        submenu_memory_mode.new("tol_uwe_easy", f"{_('Uwe Auerswald')} ({_('Initial')})", Iconos.Uwe())
         submenu_memory_mode.new(
             "tol_uwe",
-            f'{_("Uwe Auerswald")} ({_("Complete")})',
+            f"{_('Uwe Auerswald')} ({_('Complete')})",
             Iconos.Uned(),
             sep=False,
         )
@@ -197,19 +197,19 @@ class TrainMenu(BaseMenu.RootMenu):
         submenu_memory_mode = submenu_turn_on_the_ligths.new_submenu(_("Calculation mode"), Iconos.TOL())
         submenu_memory_mode.new(
             "tol_uned_easy_calc",
-            f'{_("UNED chess school")} ({_("Initial")})',
+            f"{_('UNED chess school')} ({_('Initial')})",
             Iconos.Uned(),
         )
         submenu_memory_mode.new(
             "tol_uned_calc",
-            f'{_("UNED chess school")} ({_("Complete")})',
+            f"{_('UNED chess school')} ({_('Complete')})",
             Iconos.Uned(),
             sep=False,
         )
-        submenu_memory_mode.new("tol_uwe_easy_calc", f'{_("Uwe Auerswald")} ({_("Initial")})', Iconos.Uwe())
+        submenu_memory_mode.new("tol_uwe_easy_calc", f"{_('Uwe Auerswald')} ({_('Initial')})", Iconos.Uwe())
         submenu_memory_mode.new(
             "tol_uwe_calc",
-            f'{_("Uwe Auerswald")} ({_("Complete")})',
+            f"{_('Uwe Auerswald')} ({_('Complete')})",
             Iconos.Uned(),
             sep=False,
         )
@@ -229,7 +229,7 @@ class TrainMenu(BaseMenu.RootMenu):
 
         def gen_folder(folder: str, submenu, icono):
             base_path = Path(folder)
-            archivos_fns = list(base_path.rglob('*.fns'))
+            archivos_fns = list(base_path.rglob("*.fns"))
             archivos_fns.sort()
             rutas_relativas = []
             for archivo_path in archivos_fns:

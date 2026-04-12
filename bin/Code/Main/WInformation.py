@@ -164,9 +164,9 @@ class Information(QtWidgets.QWidget):
                 img = "↓"
                 if mate is not None:
                     if cpws_lost:
-                        str_cpws_lost = f'{img} ⨠M'
+                        str_cpws_lost = f"{img} ⨠M"
                     else:
-                        str_cpws_lost = f'M↓{abs(mate)}'
+                        str_cpws_lost = f"M↓{abs(mate)}"
                 else:
                     str_cpws_lost = f"{img} {cpws_lost / 100.0:.02f} {_('pws')}"
                 str_cpws_lost += f" ({_('Depth')} {analysis_depth})"
@@ -191,8 +191,8 @@ class Information(QtWidgets.QWidget):
                     str_time = f'{time_scs:.03f}"'
                 else:
                     str_time = f'{time_scs:.02f}"'
-                if str_time.endswith(".0\""):
-                    str_time = f"{str_time[:-3]}\""
+                if str_time.endswith('.0"'):
+                    str_time = f'{str_time[:-3]}"'
                 return f" {str_time} "
 
             if self.move.time_ms:
@@ -329,7 +329,7 @@ class WVariations(QtWidgets.QWidget):
         bt_mas_engine = (
             Controles.PB(self, "", self.tb_mas_variation_r)
             .set_icono(Iconos.MasR(), 16)
-            .set_tooltip(f'{_("Add")}+{_("Play against an engine")}')
+            .set_tooltip(f"{_('Add')}+{_('Play against an engine')}")
         )
         bt_edit = (
             Controles.PB(self, "", self.tb_edit_variation)
@@ -342,7 +342,7 @@ class WVariations(QtWidgets.QWidget):
         bt_add_analysis = (
             Controles.PB(self, "", self.tb_add_analysis)
             .set_icono(Iconos.AddAnalysis(), 16)
-            .set_tooltip(f'{_("Add")}/{_("Result of analysis")}')
+            .set_tooltip(f"{_('Add')}/{_('Result of analysis')}")
         )
 
         self.em = ShowPGN.ShowPGN(self, puntos, self.with_figurines)
@@ -642,7 +642,7 @@ class WVariations(QtWidgets.QWidget):
         key_conf = "ANALYSISEXTRA"
         dic = Code.configuration.read_variables(key_conf)
         num_moves_extra = dic.get("NUM_MOVES", 0)
-        title_moves_extra = f'{_("Movements")} = {str(num_moves_extra) if num_moves_extra > 0 else _("All")}'
+        title_moves_extra = f"{_('Movements')} = {str(num_moves_extra) if num_moves_extra > 0 else _('All')}"
         menu.opcion("num_moves", title_moves_extra)
         exmove = menu.lanza()
         if exmove is None:
@@ -651,7 +651,7 @@ class WVariations(QtWidgets.QWidget):
             resp = QTMessages.read_simple(
                 self,
                 title_moves_extra,
-                f'{_("Movements")} (0={_("All")})',
+                f"{_('Movements')} (0={_('All')})",
                 str(num_moves_extra),
             )
             if resp and resp.isdigit():

@@ -133,7 +133,6 @@ class Polyglot:
         offset, entry = self.find_key(key)
         li = []
         if entry and entry.key == key:
-
             li.append(entry)
 
             self.f.seek(16 * (offset + 1), os.SEEK_SET)

@@ -282,7 +282,6 @@ class WSummary(QtWidgets.QWidget):
             return None
 
         if question or self.wb_database.is_temporary:
-
             li_gen: List[tuple[Any, Any]] = [
                 (None, None),
                 (None, _("Select the number of half-moves <br> for each game to be considered")),

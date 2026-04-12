@@ -120,14 +120,14 @@ def calc_formula(cual: str, cp, mrm) -> float:
     try:
         # Restringir el entorno de evaluación para seguridad
         allowed_names = {
-            'abs': abs,
-            'round': round,
-            'min': min,
-            'max': max,
-            'pow': pow,
-            'sqrt': __import__('math').sqrt if 'sqrt' in formula else None,
-            'log': __import__('math').log if 'log' in formula else None,
-            'exp': __import__('math').exp if 'exp' in formula else None,
+            "abs": abs,
+            "round": round,
+            "min": min,
+            "max": max,
+            "pow": pow,
+            "sqrt": __import__("math").sqrt if "sqrt" in formula else None,
+            "log": __import__("math").log if "log" in formula else None,
+            "exp": __import__("math").exp if "exp" in formula else None,
         }
 
         # Filtrar funciones None
@@ -466,7 +466,7 @@ def gen_indexes(game, elos, alm):
         ),
     ]
 
-    txt_indices_raw = f'{_("Result of analysis")}:'
+    txt_indices_raw = f"{_('Result of analysis')}:"
     w = _("W ||White")
     b = _("B ||Black")
     t = _("Total")

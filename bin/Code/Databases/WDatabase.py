@@ -218,9 +218,9 @@ class WBDatabase(LCDialog.LCDialog):
                 if paths:
                     if QTMessages.pregunta(
                         self,
-                        f'{_("Import")}:\n'
-                        f'{", ".join([os.path.basename(path) for path in paths])}'
-                        f'\n\n{_("Are you sure?")}',
+                        f"{_('Import')}:\n"
+                        f"{', '.join([os.path.basename(path) for path in paths])}"
+                        f"\n\n{_('Are you sure?')}",
                     ):
                         self.wgames.tw_importar_pgn(paths)
 

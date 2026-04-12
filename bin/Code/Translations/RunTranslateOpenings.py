@@ -88,7 +88,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         layout = Colocacion.V().otro(laytb).control(self.grid).otro(ly_seek).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.width_columns_displayables() + 28, default_height=640)
+        self.restore_video(default_width=self.grid.width_and_vbar() + 8, default_height=640)
         self.grid.setFocus()
 
         self.set_porcentage()
@@ -123,7 +123,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
             if label in self.dic_google:
                 google = self.dic_google[label]
             else:
-                google = GoogleTranslator(source='en', target=target).translate(label)
+                google = GoogleTranslator(source="en", target=target).translate(label)
             if google:
                 self.grid_setvalue(None, row, None, google)
                 self.grid.refresh()
@@ -414,7 +414,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         folder = Code.configuration.read_variables("PATH_PO_OPENINGS")
         if not folder or not os.path.isdir(folder):
             folder = Code.configuration.paths.folder_userdata()
-        path_po = SelectFiles.salvaFichero(self, "Save .po file", folder, "po")
+        path_po = SelectFiles.save_file(self, "Save .po file", folder, "po")
         if path_po:
             path_po = os.path.abspath(path_po)
             if not path_po.endswith(".po"):
@@ -440,7 +440,7 @@ class WTranslateOpenings(LCDialog.LCDialog):
         folder = Code.configuration.read_variables("PATH_PO_OPENINGS_IMPORT")
         if not folder or not os.path.isdir(folder):
             folder = Code.configuration.paths.folder_userdata()
-        path_po = SelectFiles.leeFichero(self, folder, "po", ".po file")
+        path_po = SelectFiles.read_file(self, folder, "po", ".po file")
         if path_po:
             path_po = os.path.abspath(path_po)
             if not path_po.endswith(".po"):

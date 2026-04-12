@@ -68,9 +68,8 @@ class Tutor:
             # Elegimos si la opcion del tutor es mejor que la del usuario
             # Ponemos un mensaje mientras piensa
             with QTMessages.WaitingMessage(self.main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
-
                 fen = self.move.position.fen()
-                mrm_usuario = self.manager_tutor.analiza(fen)
+                mrm_usuario = self.manager_tutor.analyze_fen(fen)
                 if len(mrm_usuario.li_rm) == 0:
                     self.rm_user = self.mrm_tutor.li_rm[0].copia()
                     self.rm_user.mate = 0
@@ -115,11 +114,11 @@ class Tutor:
         self.board_user.set_position(self.move.position)
 
         message = (
-                _("Your move")
-                + "<br><br>"
-                + self.game_user.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
-                + " "
-                + self.rm_user.texto()
+            _("Your move")
+            + "<br><br>"
+            + self.game_user.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
+            + " "
+            + self.rm_user.texto()
         )
 
         self.w.set_score_user(message)
@@ -129,7 +128,7 @@ class Tutor:
             pv_bloque = self.rm_rival.get_pv()
             n = pv_bloque.find(" ")
             if n > 0:
-                pv_bloque = pv_bloque[n + 1:].strip()
+                pv_bloque = pv_bloque[n + 1 :].strip()
             else:
                 pv_bloque = ""
 
@@ -144,11 +143,11 @@ class Tutor:
                     self.board_rival.set_position(self.game_rival.li_moves[0].position)
                     self.rival_has_moved(True)
                     message = (
-                            _("Opponent's prediction")
-                            + "<br><br>"
-                            + self.game_rival.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
-                            + " "
-                            + self.rm_rival.texto_rival()
+                        _("Opponent's prediction")
+                        + "<br><br>"
+                        + self.game_rival.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
+                        + " "
+                        + self.rm_rival.texto_rival()
                     )
                     self.w.set_score_rival(message)
 
@@ -216,11 +215,11 @@ class Tutor:
         self.game_tutor.read_pv(rm.get_pv())
 
         message = (
-                _("Tutor's suggestion")
-                + "<br><br>"
-                + self.game_tutor.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
-                + " "
-                + rm.texto()
+            _("Tutor's suggestion")
+            + "<br><br>"
+            + self.game_tutor.li_moves[0].pgn_html_base(Code.configuration.x_pgn_withfigurines)
+            + " "
+            + rm.texto()
         )
 
         self.w.set_score_tutor(message)
@@ -521,7 +520,7 @@ def launch_tutor(mrm_tutor, rm_usuario, tp=None):
     rm_tutor = mrm_tutor.best_rm_ordered()
     if tp == 0:  # ALWAYS
         return (rm_tutor.movimiento() != rm_usuario.movimiento()) and (
-                rm_tutor.centipawns_abs() > rm_usuario.centipawns_abs()
+            rm_tutor.centipawns_abs() > rm_usuario.centipawns_abs()
         )
     else:
         ev = Code.analysis_eval.evaluate(rm_tutor, rm_usuario)

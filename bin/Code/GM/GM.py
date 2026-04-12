@@ -64,13 +64,13 @@ class GMgame:
 
     def label(self, is_gm=True):
         if is_gm:
-            return f'{_("Opponent")}: <b>{self.oponent} ({self.date})</b>'
+            return f"{_('Opponent')}: <b>{self.oponent} ({self.date})</b>"
         else:
             return f"{self.oponent} ({self.date})"
 
     def basic_label(self, is_gm=True):
         if is_gm:
-            return f'{_("Opponent")}: {self.oponent} ({self.date})'
+            return f"{_('Opponent')}: {self.oponent} ({self.date})"
         else:
             return f"{self.oponent} ({self.date})"
 
@@ -159,16 +159,7 @@ class GM:
                     d_repeticiones[move] = [len(li), 1]
                     from_sq, to_sq, promotion = move[:2], move[2:4], move[4:]
                     ok, mens, move = Move.get_game_move(gmPartida, position_before, from_sq, to_sq, promotion)
-                    li.append(
-                        [
-                            from_sq,
-                            to_sq,
-                            promotion,
-                            gmPartida.basic_label(is_gm),
-                            move.pgn_translated(),
-                            1
-                        ]
-                    )
+                    li.append([from_sq, to_sq, promotion, gmPartida.basic_label(is_gm), move.pgn_translated(), 1])
                 else:
                     d_repeticiones[move][1] += 1
                     pos = d_repeticiones[move][0]
@@ -187,13 +178,13 @@ class GM:
         last_game = self.last_game
         opening = game.opening.tr_name if game.opening else last_game.opening
 
-        txt = f'{_("Opponent")} : <b>{last_game.oponent}</b><br>'
+        txt = f"{_('Opponent')} : <b>{last_game.oponent}</b><br>"
         event = last_game.event
         if event:
-            txt += f'{_("Event")} : <b>{event}</b><br>'
-        txt += f'{_("Date")} : <b>{last_game.date}</b><br>'
-        txt += f'{_("Opening")} : <b>{opening}</b><br>'
-        txt += f'{_("Result")} : <b>{last_game.result}</b><br>'
+            txt += f"{_('Event')} : <b>{event}</b><br>"
+        txt += f"{_('Date')} : <b>{last_game.date}</b><br>"
+        txt += f"{_('Opening')} : <b>{opening}</b><br>"
+        txt += f"{_('Result')} : <b>{last_game.result}</b><br>"
         txt += "<br>" * 2
         aciertos = 0
         for v in self.dicAciertos.values():
@@ -202,7 +193,7 @@ class GM:
         total = len(self.dicAciertos)
         if total:
             porc = int(aciertos * 100.0 / total)
-            txt += f'{_("Hints")} : <b>{porc:d}%%</b>'
+            txt += f"{_('Hints')} : <b>{porc:d}%%</b>"
         else:
             porc = 0
 
@@ -416,10 +407,10 @@ class FabGM:
 
         event = dic.get("Event", "-")
         oponente = f"{dic.get('White', '?')}-{dic.get('Black', '?')}"
-        date = dic.get('Date', '-').replace('?', '').strip('.')
-        eco = dic.get('Eco', '-')
-        result = dic.get('Result', '-')
-        color = 'W' if is_white else 'B'
+        date = dic.get("Date", "-").replace("?", "").strip(".")
+        eco = dic.get("Eco", "-")
+        result = dic.get("Result", "-")
+        color = "W" if is_white else "B"
 
         def nopipe(txt):
             return txt.replace("|", " ").strip() if "|" in txt else txt

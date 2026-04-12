@@ -97,7 +97,7 @@ class ManagerLeitner(Manager.Manager):
         self.play_next_move()
 
     def show_label_positions(self):
-        txt = f'{_("Puzzles pending in this session")}: {len(self.leitner.current_ids_session)}'
+        txt = f"{_('Puzzles pending in this session')}: {len(self.leitner.current_ids_session)}"
         html = f'<table border="1" align="center" cellpadding="5"><tr><td><h4>{txt}</h4></td></tr></table>'
         self.set_label2(html)
 
@@ -143,12 +143,12 @@ class ManagerLeitner(Manager.Manager):
         if new_box == self.leitner.win_box:
             txt = _("Position won!")
         else:
-            txt = f'{_("Position sent to box")}: {new_box}'
+            txt = f"{_('Position sent to box')}: {new_box}"
 
         if success:
-            txt = f'{_("Correct!")}<br>{txt}'
+            txt = f"{_('Correct!')}<br>{txt}"
         else:
-            txt = f'{_("There have been errors")}<br>{txt}'
+            txt = f"{_('There have been errors')}<br>{txt}"
         QTMessages.message(self.main_window, txt)
         self.with_error = False
 

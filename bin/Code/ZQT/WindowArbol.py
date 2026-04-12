@@ -847,7 +847,7 @@ class WindowArbol(LCDialog.LCDialog):
 
     def nuevoAnalisis(self, lm):
         fen = lm.gameBase.last_position.fen()
-        alm = WindowAnalysisParam.analysis_parameters(self, False, all_engines=True)
+        alm = WindowAnalysisParam.analysis_parameters(self, False, True)
         if alm is None:
             return
         if alm.engine == "default":
@@ -855,8 +855,9 @@ class WindowArbol(LCDialog.LCDialog):
         else:
             conf_motor = Code.configuration.engines.search(alm.engine)
             conf_motor.set_multipv_var(alm.multiPV)
-            xengine: EngineManagerAnalysis.EngineManagerAnalysis = (
-                self.procesador.create_manager_engine(conf_motor, alm.vtime, alm.depth, alm.nodes, has_multipv=True))
+            xengine: EngineManagerAnalysis.EngineManagerAnalysis = self.procesador.create_manager_engine(
+                conf_motor, alm.vtime, alm.depth, alm.nodes, has_multipv=True
+            )
 
         with QTMessages.analizando(self, True) as me:
 

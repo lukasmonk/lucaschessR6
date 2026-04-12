@@ -130,7 +130,7 @@ class WTranslate(LCDialog.LCDialog):
         layout = Colocacion.V().otro(laytb).control(self.grid).otro(ly_seek).margen(3)
         self.setLayout(layout)
 
-        self.restore_video(default_width=self.grid.width_columns_displayables() + 28, default_height=640)
+        self.restore_video(default_width=self.grid.width_and_vbar() + 8, default_height=640)
         self.grid.setFocus()
 
         self.set_porcentage()
@@ -619,7 +619,7 @@ class WTranslate(LCDialog.LCDialog):
         folder = self.configuration.read_variables("PATH_PO")
         if not folder or not os.path.isdir(folder):
             folder = self.configuration.paths.folder_translations()
-        path_po = SelectFiles.salvaFichero(self, "Save .po file", folder, "po")
+        path_po = SelectFiles.save_file(self, "Save .po file", folder, "po")
         if path_po:
             path_po = os.path.abspath(path_po)
             if not path_po.endswith(".po"):
@@ -643,7 +643,7 @@ class WTranslate(LCDialog.LCDialog):
         folder = self.configuration.read_variables("PATH_MO")
         if not folder or not os.path.isdir(folder):
             folder = self.configuration.paths.folder_translations()
-        path_mo = SelectFiles.leeFichero(self, folder, "mo", ".mo file downloaded from transifex")
+        path_mo = SelectFiles.read_file(self, folder, "mo", ".mo file downloaded from transifex")
         if path_mo:
             path_mo = os.path.abspath(path_mo)
             folder = os.path.dirname(path_mo)
@@ -655,8 +655,7 @@ class WTranslate(LCDialog.LCDialog):
                 if dic["NEW"]:
                     if QTMessages.pregunta(
                         self,
-                        "There are old translations that are different "
-                        "from the imported labels, shall we delete them?",
+                        "There are old translations that are different from the imported labels, shall we delete them?",
                     ):
                         for xkey, xdic in self.dic_translate.items():
                             if xdic["NEW"]:
@@ -705,7 +704,6 @@ class WTranslate(LCDialog.LCDialog):
             self.cerrar()
             return
         if li_received:
-
             for key, where in li_received:
                 if key not in self.dic_translate:
                     continue
@@ -754,7 +752,7 @@ class WTranslate(LCDialog.LCDialog):
             if label in self.dic_google:
                 google = self.dic_google[label]
             else:
-                google = GoogleTranslator(source='en', target=target).translate(label)
+                google = GoogleTranslator(source="en", target=target).translate(label)
             if google:
                 self.grid_setvalue(None, row, None, google)
                 self.grid.refresh()

@@ -62,7 +62,7 @@ class WDailyTestBase(LCDialog.LCDialog):
         o_columns.nueva("PRUEBAS", _("N. of tests"), 80, align_center=True)
         o_columns.nueva("FNS", _("File"), 150, align_center=True)
         self.ghistorico = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
-        self.ghistorico.setMinimumWidth(self.ghistorico.width_columns_displayables() + 20)
+        self.ghistorico.fix_min_width()
 
         # Tool bar
         li_acciones = (
@@ -216,10 +216,10 @@ class WDailyTestBase(LCDialog.LCDialog):
                         if "|" in linea:
                             linea = linea.split("|")[0]
                         if (
-                                linea[0].isalnum()
-                                and linea[-1].isdigit()
-                                and ((" w " in linea) or (" b " in linea))
-                                and linea.count("/") == 7
+                            linea[0].isalnum()
+                            and linea[-1].isdigit()
+                            and ((" w " in linea) or (" b " in linea))
+                            and linea.count("/") == 7
                         ):
                             li.append(linea)
             if len(li) >= self.pruebas:
@@ -291,12 +291,11 @@ class WDailyTest(LCDialog.LCDialog):
         with_col = (Code.configuration.x_pgn_width - 52 - 12) // 2
         o_columns = Columnas.ListaColumnas()
         self.delegado_pgn = Delegados.EtiquetaPGN(None, si_indicador_inicial=False)
-        o_columns.nueva("POS", _('N.'), 40, align_center=True)
-        o_columns.nueva("MOVEMENT", _('Movements'), with_col, align_center=True, edicion=self.delegado_pgn)
+        o_columns.nueva("POS", _("N."), 40, align_center=True)
+        o_columns.nueva("MOVEMENT", _("Movements"), with_col, align_center=True, edicion=self.delegado_pgn)
         o_columns.nueva("LOSS", "🔻", 60, align_center=True)
         self.wrm = Grid.Grid(self, o_columns, complete_row_select=True)
-        n_with = self.wrm.width_columns_displayables() + 20
-        self.wrm.setFixedWidth(n_with)
+        self.wrm.fix_width()
 
         # Tool bar
         self.tb = Controles.TBrutina(self)

@@ -12,17 +12,17 @@ class WJuicio(LCDialog.LCDialog):
     game: Game.Game
 
     def __init__(
-            self,
-            manager,
-            xengine,
-            name_op,
-            position,
-            mrm,
-            rm_obj,
-            rm_usu,
-            analysis,
-            is_competitive=None,
-            continue_tt=False,
+        self,
+        manager,
+        xengine,
+        name_op,
+        position,
+        mrm,
+        rm_obj,
+        rm_usu,
+        analysis,
+        is_competitive=None,
+        continue_tt=False,
     ):
         self.is_competitive = manager.is_competitive if is_competitive is None else is_competitive
         self.name_op = name_op
@@ -93,10 +93,10 @@ class WJuicio(LCDialog.LCDialog):
     def set_score(self):
         pts = self.point_difference()
         if pts > 0:
-            txt = _('Centipawns won %d') % pts
+            txt = _("Centipawns won %d") % pts
             color = "green"
         elif pts < 0:
-            txt = _('Lost centipawns %d') % -pts
+            txt = _("Lost centipawns %d") % -pts
             color = "red"
         else:
             txt = ""

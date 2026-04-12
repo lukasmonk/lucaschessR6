@@ -57,8 +57,8 @@ class Worker(QtWidgets.QWidget):
         self.run_worker = run_worker
         worker = _("Worker")
         if self.run_worker.num_worker:
-            worker = f'{worker} [#{run_worker.num_worker}]'
-        self.setWindowTitle(f'{run_worker.name} - {worker} ')
+            worker = f"{worker} [#{run_worker.num_worker}]"
+        self.setWindowTitle(f"{run_worker.name} - {worker} ")
         self.setWindowIcon(run_worker.icon)
 
         self.tb = QTDialogs.LCTB(self, icon_size=24)
@@ -430,7 +430,7 @@ class Worker(QtWidgets.QWidget):
 
     def set_clock_label(self, side, tm, tm2):
         if tm2 is not None:
-            tm += f"<br><FONT SIZE=\"-4\">{tm2}"
+            tm += f'<br><FONT SIZE="-4">{tm2}'
         self.lb_clock[side].set_text(tm)
 
     def set_clock_white(self, tm, tm2):
@@ -510,7 +510,7 @@ class Worker(QtWidgets.QWidget):
         )
 
         self.start_clock(is_white)
-        rm = engine_manager.play(game=self.game, dispacher=self.gui_dispatch)
+        rm = engine_manager.play(game=self.game, dispatcher=self.gui_dispatch)
         if self.state == ST_PAUSE:
             self.board.remove_movables()
             return True
@@ -594,7 +594,8 @@ class Worker(QtWidgets.QWidget):
                 info = f"{float(pts / 100.0):+0.2f}"
 
             nag, color_nag = mrm.set_nag_color(rm)
-            st_nags.add(nag)
+            if nag:
+                st_nags.add(nag)
 
         if move.in_the_opening:
             indicador_inicial = "R"
@@ -700,7 +701,6 @@ class Worker(QtWidgets.QWidget):
 
     def move_the_pieces(self, li_movs):
         if self.run_worker.slow_pieces:
-
             rapidez = self.configuration.pieces_speed_porc()
             cpu = self.cpu
             cpu.reset()
@@ -714,7 +714,7 @@ class Worker(QtWidgets.QWidget):
                         dc = ord(from_sq[0]) - ord(to_sq[0])
                         df = int(from_sq[1]) - int(to_sq[1])
                         # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
-                        dist = (dc ** 2 + df ** 2) ** 0.5
+                        dist = (dc**2 + df**2) ** 0.5
                         seconds = 4.0 * dist / (9.9 * rapidez)
                     cpu.move_piece(movim[1], movim[2], is_exclusive=False, seconds=seconds)
 

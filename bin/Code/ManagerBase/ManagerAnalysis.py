@@ -39,7 +39,7 @@ class ManagerAnalysis:
     #     self.manager.thinking(True)
     #     fen = self.game.last_position.fen()
     #     if not self.manager.is_finished():
-    #         self.manager.mrm_tutor = self.manager_tutor.analiza(fen)
+    #         self.manager.mrm_tutor = self.manager_tutor.analyze_fen(fen)
     #     else:
     #         self.manager.mrm_tutor = None
     #     self.manager.thinking(False)
@@ -119,14 +119,14 @@ class ManagerAnalysis:
                         return False
                     else:
                         self.main_window.base.change_message(
-                            f'{mens}<br><small>{_("Depth")}: {rm.depth} {_("Time")}: {ms / 1000:.01f}'
+                            f"{mens}<br><small>{_('Depth')}: {rm.depth} {_('Time')}: {ms / 1000:.01f}"
                         )
                     return True
 
-                dispacher = test_me
+                dispatcher = test_me
             else:
-                dispacher = None
-            mrm, pos = self.manager_analyzer.analyze_move(self.manager.game, pos_jg, dispacher=dispacher)
+                dispatcher = None
+            mrm, pos = self.manager_analyzer.analyze_move(self.manager.game, pos_jg, dispatcher=dispatcher)
             ok = pos >= 0
             if ok:
                 move.analysis = mrm, pos

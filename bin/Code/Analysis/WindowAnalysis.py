@@ -69,8 +69,7 @@ class OneAnalysis(QtWidgets.QWidget):
             ),
         )
         self.wrm = Grid.Grid(self, o_columns, with_lines=False)
-        n_with = self.wrm.width_columns_displayables() + 20
-        self.wrm.setFixedWidth(n_with)
+        self.wrm.fix_min_width()
         self.wrm.goto(self.tab_analysis.pos_selected, 0)
 
         # Layout
@@ -309,7 +308,7 @@ class WAnalisis(LCDialog.LCDialog):
 
         self.setStyleSheet("QStatusBar::item { border-style: outset; border: 1px solid LightSlateGray ;}")
 
-        list_more_actions = ((f'FEN:{_("Copy to clipboard")}', "MoverFEN", Iconos.Clipboard()),)
+        list_more_actions = ((f"FEN:{_('Copy to clipboard')}", "MoverFEN", Iconos.Clipboard()),)
         lytb, self.tb = QTDialogs.ly_mini_buttons(
             self,
             "",
@@ -445,7 +444,7 @@ class WAnalisis(LCDialog.LCDialog):
             self.timer = None
 
     def crear(self):
-        if alm := WindowAnalysisParam.analysis_parameters(self, False, all_engines=True):
+        if alm := WindowAnalysisParam.analysis_parameters(self, False, True):
             tab_analysis = self.tb_analysis.create_show(self, alm)
             self.create_analysis(tab_analysis)
 
@@ -475,7 +474,6 @@ class WAnalisis(LCDialog.LCDialog):
             tit_cancel=_("Stop thinking"),
             opacity=1.0,
         ) as wm:
-
             dispatcher = wm.dispatcher_analysis if si_cancelar else None
 
             mrm, pos = xanalyzer.analyze_move(game, len(game) - 1, dispatcher)

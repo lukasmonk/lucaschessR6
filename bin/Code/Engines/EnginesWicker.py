@@ -73,10 +73,10 @@ class WickerCtrl:
 
         if position.is_white:
             if count("pnbrq") == 0:
-                ok = count('QR') >= 1
+                ok = count("QR") >= 1
         else:
             if count("PNBRQ") == 0:
-                ok = count('qr') >= 1
+                ok = count("qr") >= 1
 
         if ok:
             engine_run = self.engine_run

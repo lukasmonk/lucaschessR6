@@ -17,7 +17,7 @@ from Code.QT import (
     LCDialog,
     QTDialogs,
     QTMessages,
-    SelectFiles
+    SelectFiles,
 )
 
 
@@ -152,7 +152,7 @@ class WExternalEngines(LCDialog.LCDialog):
         if resp is not None:
             folder_engine = os.path.dirname(self.engine.path_exe)
             if resp == "select_file":
-                path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                path_file = SelectFiles.read_or_create_file(self, folder_engine, "*", _("Select a file"))
                 if path_file:
                     folder_file = os.path.dirname(path_file)
                     if Util.same_path(folder_file, folder_engine):
@@ -161,7 +161,7 @@ class WExternalEngines(LCDialog.LCDialog):
                     return
                 value = path_file
             elif resp == "select_folder":
-                path_folder = SelectFiles.get_existing_directory(self, folder_engine,  _("Select a folder"))
+                path_folder = SelectFiles.get_existing_directory(self, folder_engine, _("Select a folder"))
                 if path_folder:
                     value = path_folder
                 else:
@@ -533,9 +533,7 @@ class WEngineFast(QtWidgets.QDialog):
         if alias.lower() in self.st_other_alias:
             QTMessages.message_error(
                 self,
-                _(
-                    "There is already another engine with the same alias, the alias must change in order to have both."
-                ),
+                _("There is already another engine with the same alias, the alias must change in order to have both."),
             )
             return
         self.external_engine.key = alias

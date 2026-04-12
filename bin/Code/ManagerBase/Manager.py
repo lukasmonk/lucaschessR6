@@ -53,13 +53,8 @@ from Code.ManagerBase import (
     ManagerNavigation,
 )
 from Code.Openings import Opening, OpeningsStd
-from Code.QT import (
-    Iconos,
-    QTDialogs,
-    QTMessages,
-    QTUtils,
-    ScreenUtils
-)
+from PySide6 import QtGui
+from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils, ScreenUtils
 from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
 from Code.ZQT import WindowArbolBook, WindowArbol
 from Code.Replay import WReplay
@@ -373,12 +368,19 @@ class Manager:
         if position.get_pz(a1h8):
             show_candidates()
 
-        if not self.configuration.x_mouse_shortcuts:
+        if not self.configuration.x_mouse_shortcuts:  # Es necesario origen y destino
+            previo_a1h8 = self.atajosRatonOrigen or self.atajosRatonDestino
+            if previo_a1h8 == a1h8:
+                self.atajosRatonOrigen = self.atajosRatonDestino = None
+                return
             if li_destinos:
                 self.atajosRatonOrigen = a1h8
-                self.atajosRatonDestino = None
-                self.board.show_selection(a1h8)
-                show_candidates()
+                if self.atajosRatonDestino and self.atajosRatonDestino in li_destinos:
+                    mueve()
+                else:
+                    self.atajosRatonDestino = None
+                    self.board.show_selection(a1h8)
+                    show_candidates()
                 return
             elif li_origenes:
                 self.atajosRatonDestino = a1h8
@@ -386,7 +388,6 @@ class Manager:
                     mueve()
                 else:
                     self.atajosRatonOrigen = None
-                    self.atajosRatonDestino = None
                     self.board.show_selection(a1h8)
                     show_candidates()
             return
@@ -422,12 +423,12 @@ class Manager:
             self.board.set_position(move.position_before)
             self.board.put_arrow_sc(move.from_sq, move.to_sq)
             QTUtils.refresh_gui()
-            time.sleep(0.6)
+            time.sleep(0.1)
 
             ant_show = self.configuration.x_show_effects
             ant_speed = self.configuration.x_pieces_speed
             self.configuration.x_show_effects = True
-            self.configuration.x_pieces_speed = 100
+            self.configuration.x_pieces_speed = 300
             self.move_the_pieces(move.list_piece_moves, True)
             self.configuration.x_show_effects = ant_show
             self.configuration.x_pieces_speed = ant_speed
@@ -456,7 +457,7 @@ class Manager:
                         dc = ord(from_sq[0]) - ord(to_sq[0])
                         df = int(from_sq[1]) - int(to_sq[1])
                         # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
-                        dist = (dc ** 2 + df ** 2) ** 0.5
+                        dist = (dc**2 + df**2) ** 0.5
                         seconds = 8.0 * dist / (9.9 * rapidez)
                     cpu.move_piece(movim[1], movim[2], seconds)
 
@@ -510,11 +511,11 @@ class Manager:
                 self.board.show_lichess_graphics(move.comment)
 
         if (
-                self.main_window.siCapturas
-                or self.main_window.siInformacionPGN
-                or self.kibitzers_manager.some_working()
-                or self.configuration.x_show_bestmove
-                or self.configuration.x_show_rating
+            self.main_window.siCapturas
+            or self.main_window.siInformacionPGN
+            or self.kibitzers_manager.some_working()
+            or self.configuration.x_show_bestmove
+            or self.configuration.x_show_rating
         ):
             if move and (self.configuration.x_show_bestmove or self.configuration.x_show_rating):
                 move_check = move
@@ -532,8 +533,9 @@ class Manager:
             opening = self.game.opening
             if opening:
                 nom_opening = opening.tr_name
-                if opening.eco:
-                    nom_opening += f" ({opening.eco})"
+                eco = self.game.eco()
+                if eco:
+                    nom_opening += f" ({eco})"
 
             self.check_captures()
 
@@ -551,11 +553,11 @@ class Manager:
                 else:
                     self.kibitzers_manager.stop()
         self.check_changed()
-        
+
         # Actualizar overlay de espacio controlado si estamos en modo replay
-        if hasattr(self, 'xpelicula') and self.xpelicula:
-            if hasattr(self.xpelicula, 'space_number') and self.xpelicula.space_number is not None:
-                if hasattr(self.xpelicula, '_update_space_control'):
+        if hasattr(self, "xpelicula") and self.xpelicula:
+            if hasattr(self.xpelicula, "space_number") and self.xpelicula.space_number is not None:
+                if hasattr(self.xpelicula, "_update_space_control"):
                     self.xpelicula._update_space_control()
 
     def check_captures(self):
@@ -673,7 +675,7 @@ class Manager:
 
     def set_dispatcher(self, messenger):
         self.messenger = messenger
-        atajos_raton = self.atajos_raton if self.configuration.x_mouse_shortcuts else None
+        atajos_raton = self.atajos_raton if self.configuration.x_mouse_shortcuts is not None else None
         self.board.set_dispatcher(self.player_has_moved_base, atajos_raton)
 
     def put_arrow_sc(self, from_sq, to_sq, lipvvar=None):
@@ -951,12 +953,12 @@ class Manager:
         pass
 
     def replay(self):
-        if not WReplay.param_replay(self.configuration, self.main_window, self.with_previous_next):
+        params = WReplay.ParamsReplay()
+        if not params.edit(self.main_window, self.with_previous_next):
             return
 
         if self.with_previous_next:
-            dic_var = WReplay.read_params()
-            if dic_var["REPLAY_CONTINUOUS"]:
+            if params.dic_data["REPLAY_CONTINUOUS"]:
                 getattr(self, "replay_continuous")()
                 return
 
@@ -1029,16 +1031,17 @@ class Manager:
                 num_moves, nj, row, is_white = self.current_move_number()
                 if nj < 0:
                     return
-                move = self.game.move(nj)
-                self.board.set_position(move.position)
+                # move = self.game.move(nj)
+                # self.board.set_position(move.position)
                 self.board.remove_arrows()
-                self.board.put_arrow_sc(move.from_sq, move.to_sq)
+                if self.board.arrow_sc:
+                    self.board.arrow_sc.show()
                 if Code.configuration.x_show_bestmove:
                     move = self.game.move(nj)
-                    mrm: EngineResponse.MultiEngineResponse
-                    mrm, pos = move.analysis
                     if not move.analysis:
                         return
+                    mrm: EngineResponse.MultiEngineResponse
+                    mrm, pos = move.analysis
                     rm0 = mrm.best_rm_ordered()
                     self.board.put_arrow_scvar([(rm0.from_sq, rm0.to_sq)])
 
@@ -1049,9 +1052,7 @@ class Manager:
                 cp = Position.Position()
                 cp.read_fen(fen)
                 is_white = " w " in fen
-                dic_movs_side = {
-                    is_white: cp.aura()
-                }
+                dic_movs_side = {is_white: cp.aura()}
 
                 fen = FasterCode.fen_other(fen)
                 cp.read_fen(fen)
@@ -1064,8 +1065,9 @@ class Manager:
                 self.li_marcos_tmp = []
                 reg_marco = BoardTypes.Marco()
                 side = "W" if number == 2 else "B"
-                dic_colors = {pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"])
-                              for pos in range(6)}
+                dic_colors = {
+                    pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"]) for pos in range(6)
+                }
 
                 for c in "abcdefgh":
                     for r in "12345678":
@@ -1075,6 +1077,70 @@ class Manager:
                             frec = 5
                         color = dic_colors[frec]
                         reg_marco.a1h8 = h8 + h8
+                        reg_marco.siMovible = True
+                        reg_marco.color = color
+                        reg_marco.colorinterior = color
+                        box = self.board.create_marco(reg_marco)
+                        box.setZValue(5)
+                        self.li_marcos_tmp.append(box)
+
+                self.board.escena.update()
+
+            else:
+                self.remove_label3()
+                for box in self.li_marcos_tmp:
+                    self.board.xremove_item(box)
+                self.li_marcos_tmp = []
+
+        elif number in [3, 6]:
+            if si_activar:
+                # Ambas: espacio controlado por blancas Y negras simultáneamente con mezcla ponderada
+                fen = self.board.fen_active()
+                cp = Position.Position()
+                cp.read_fen(fen)
+                is_white = " w " in fen
+                dic_movs_side = {is_white: cp.aura()}
+
+                fen2 = FasterCode.fen_other(fen)
+                cp.read_fen(fen2)
+                dic_movs_side[not is_white] = cp.aura()
+
+                dic_frec_w = collections.Counter(dic_movs_side[True])
+                dic_frec_b = collections.Counter(dic_movs_side[False])
+
+                dic_colors_w = {
+                    pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_W_{pos}"]) for pos in range(6)
+                }
+                dic_colors_b = {
+                    pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_B_{pos}"]) for pos in range(6)
+                }
+
+                self.li_marcos_tmp = []
+                reg_marco = BoardTypes.Marco()
+
+                for c in "abcdefgh":
+                    for r in "12345678":
+                        sq = f"{c}{r}"
+                        fw = min(dic_frec_w.get(sq, 0), 5)
+                        fb = min(dic_frec_b.get(sq, 0), 5)
+                        if fw and fb:
+                            # Mezcla ponderada de colores por peso relativo
+                            qc_w = QtGui.QColor(dic_colors_w[fw])
+                            qc_b = QtGui.QColor(dic_colors_b[fb])
+                            pt = fw + fb
+                            r_ch = (qc_w.red() * fw + qc_b.red() * fb) // pt
+                            g_ch = (qc_w.green() * fw + qc_b.green() * fb) // pt
+                            b_ch = (qc_w.blue() * fw + qc_b.blue() * fb) // pt
+                            a_ch = (qc_w.alpha() * fw + qc_b.alpha() * fb) // pt
+                            color = QtGui.QColor(r_ch, g_ch, b_ch, a_ch).rgba()
+                        elif fw:
+                            color = dic_colors_w[fw]
+                        elif fb:
+                            color = dic_colors_b[fb]
+                        else:
+                            color = dic_colors_b[0]  # transparente / neutro
+
+                        reg_marco.a1h8 = sq + sq
                         reg_marco.siMovible = True
                         reg_marco.color = color
                         reg_marco.colorinterior = color
@@ -1199,7 +1265,7 @@ class Manager:
 
     def can_be_analysed(self):
         return len(self.game) > 0 and not (
-                self.game_type in (GT_ELO, GT_MICELO, GT_WICKER) and self.is_competitive and self.state == ST_PLAYING
+            self.game_type in (GT_ELO, GT_MICELO, GT_WICKER) and self.is_competitive and self.state == ST_PLAYING
         )
 
     def check_help_to_move(self):
@@ -1214,7 +1280,7 @@ class Manager:
                 self.main_window.pensando_tutor(True)
                 self.thinking(True)
                 cp = self.current_position()
-                mrm_tutor = self.manager_tutor.analiza(cp.fen())
+                mrm_tutor = self.manager_tutor.analyze_fen(cp.fen())
                 self.thinking(False)
                 self.main_window.pensando_tutor(False)
                 rm = mrm_tutor.best_rm_ordered()
@@ -1345,7 +1411,7 @@ class Manager:
                         si_ceros = False
                         break
                 if si_ceros:
-                    mrm = self.manager_tutor.analiza(self.game.last_position.fen(), None, 7)
+                    mrm = self.manager_tutor.analyze_fen(self.game.last_position.fen(), None)
                     rm = mrm.best_rm_ordered()
                     if abs(rm.centipawns_abs()) < 15:
                         si_acepta = True
@@ -1464,15 +1530,15 @@ class Manager:
         gm.set_tag("Site", Code.lucas_chess)
         gm.set_tag("Event", _("Play current position"))
         for previous in (
-                "Event",
-                "Site",
-                "Date",
-                "Round",
-                "White",
-                "Black",
-                "Result",
-                "WhiteElo",
-                "BlackElo",
+            "Event",
+            "Site",
+            "Date",
+            "Round",
+            "White",
+            "Black",
+            "Result",
+            "WhiteElo",
+            "BlackElo",
         ):
             ori = self.game.get_tag(previous)
             if ori:

@@ -45,7 +45,7 @@ from Code.Base.Constantes import (
     PHASE_NODEFINED,
 )
 from Code.Nags.Nags import NAG_1, NAG_2, NAG_3, NAG_4, NAG_5, NAG_6
-from Code.Openings import Opening, OpeningsStd
+from Code.Openings import Opening, OpeningsStd, ECO
 from Code.Z import Util
 
 
@@ -54,6 +54,7 @@ class Game:
     Represent a single chess game, including initial position, moves,
     PGN tags, result and termination status.
     """
+
     li_moves = None
     opening = None
     rotuloTablasRepeticion = None
@@ -118,6 +119,9 @@ class Game:
             self.del_tag("ECO")
             self.first_position = Position.Position()
             self.first_position.set_pos_initial()
+
+    def eco(self):
+        return ECO.get_eco().assign(self.pv())
 
     def is_mate(self) -> bool:
         return self.termination == TERMINATION_MATE
@@ -243,10 +247,10 @@ class Game:
         for index, (tag, value) in enumerate(self.li_tags):
             if tag.upper() == "RESULT":
                 if value.strip() not in (
-                        RESULT_UNKNOWN,
-                        RESULT_WIN_BLACK,
-                        RESULT_WIN_WHITE,
-                        RESULT_DRAW,
+                    RESULT_UNKNOWN,
+                    RESULT_WIN_BLACK,
+                    RESULT_WIN_WHITE,
+                    RESULT_DRAW,
                 ):
                     value = RESULT_UNKNOWN
                 self.li_tags[index] = ["Result", value]
@@ -577,7 +581,7 @@ class Game:
             li.append(result)
         titulo = f"{white}-{black}"
         if li:
-            titulo += f' ({" - ".join(li)})'
+            titulo += f" ({' - '.join(li)})"
         return titulo
 
     def first_num_move(self) -> int:
@@ -690,17 +694,13 @@ class Game:
         if num_moves > 3:
             fenm2 = self.li_moves[num_moves - 1].fenm2()
             repeated_indexes = [num_moves - 1]
-            repeated_indexes.extend(
-                index for index in range(num_moves - 1) if self.li_moves[index].fenm2() == fenm2
-            )
+            repeated_indexes.extend(index for index in range(num_moves - 1) if self.li_moves[index].fenm2() == fenm2)
             if self.first_position.fenm2() == fenm2:
                 repeated_indexes.append(-1)
 
             if len(repeated_indexes) >= 3:
                 repeated_indexes.sort()
-                label = "".join(
-                    "%d," % (index / 2 + 1 if index != -1 else 0,) for index in repeated_indexes
-                )
+                label = "".join("%d," % (index / 2 + 1 if index != -1 else 0,) for index in repeated_indexes)
                 label = label.strip(",")
                 self.rotuloTablasRepeticion = label
                 return True
@@ -717,11 +717,11 @@ class Game:
         pv = []
         for mov in lipv:
             if (
-                    len(mov) >= 4
-                    and mov[0] in "abcdefgh"
-                    and mov[1] in "12345678"
-                    and mov[2] in "abcdefgh"
-                    and mov[3] in "12345678"
+                len(mov) >= 4
+                and mov[0] in "abcdefgh"
+                and mov[1] in "12345678"
+                and mov[2] in "abcdefgh"
+                and mov[3] in "12345678"
             ):
                 pv.append(mov)
             else:
@@ -825,7 +825,7 @@ class Game:
         pv = " ".join([move.movimiento() for move in self.li_moves[: num_move + 1]])
         return FasterCode.pv_xpv(pv)
 
-    def all_pv(self, pv_previo: str, with_variations) -> List[str]:
+    def all_pv(self, pv_previo: str, with_variations, in_opening: bool) -> List[str]:
         """
         Return a list with all principal variations (optionally including move variations).
         """
@@ -833,15 +833,18 @@ class Game:
         if pv_previo:
             pv_previo += " "
         for move in self.li_moves:
+            if in_opening:
+                if move.position_before.phase() != OPENING:
+                    break
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                        (with_variations == ALL)
-                        or (is_w and with_variations == ONLY_WHITE)
-                        or (not is_w and with_variations == ONLY_BLACK)
+                    (with_variations == ALL)
+                    or (is_w and with_variations == ONLY_WHITE)
+                    or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
-                        li_pvc.extend(variation.all_pv(pv_previo.strip(), with_variations))
+                        li_pvc.extend(variation.all_pv(pv_previo.strip(), with_variations, in_opening))
             pv_previo += f"{move.movimiento()} "
             li_pvc.append(pv_previo.strip())
         return li_pvc
@@ -855,9 +858,9 @@ class Game:
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                        (with_variations == ALL)
-                        or (is_w and with_variations == ONLY_WHITE)
-                        or (not is_w and with_variations == ONLY_BLACK)
+                    (with_variations == ALL)
+                    or (is_w and with_variations == ONLY_WHITE)
+                    or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
                         if dicv := variation.all_comments(with_variations):
@@ -1016,12 +1019,12 @@ class Game:
         beep = None
         player_lost = False
         if (self.result == RESULT_WIN_WHITE and player_side == WHITE) or (
-                self.result == RESULT_WIN_BLACK and player_side == BLACK
+            self.result == RESULT_WIN_BLACK and player_side == BLACK
         ):
             mensaje, beep = self._label_won(nom_other)
 
         elif (self.result == RESULT_WIN_WHITE and player_side == BLACK) or (
-                self.result == RESULT_WIN_BLACK and player_side == WHITE
+            self.result == RESULT_WIN_BLACK and player_side == WHITE
         ):
             player_lost = True
             mensaje, beep = self._label_lost(nom_other)
@@ -1109,14 +1112,14 @@ class Game:
                 move0.add_variation(variation)
 
     def remove_info_moves(
-            self,
-            variations=True,
-            ratings=True,
-            comments=True,
-            analysis=True,
-            themes=True,
-            time_ms=True,
-            clock_ms=True,
+        self,
+        variations=True,
+        ratings=True,
+        comments=True,
+        analysis=True,
+        themes=True,
+        time_ms=True,
+        clock_ms=True,
     ):
         if comments:
             self.first_comment = ""
@@ -1141,7 +1144,7 @@ class Game:
             self.li_moves = self.li_moves[:num_move]
             self.set_unknown()
         else:
-            self.li_moves = self.li_moves[num_move + 1:]
+            self.li_moves = self.li_moves[num_move + 1 :]
             if self.li_moves:
                 move: Move.Move = self.li_moves[0]
                 self.first_position = move.position_before.copia()
@@ -1462,7 +1465,7 @@ class PGNtoGame:
             return
 
         label: str = kv[:pos]
-        value: str = kv[pos + 1:].strip()
+        value: str = kv[pos + 1 :].strip()
         label_upper: str = label.upper()
 
         if label_upper == "FEN":

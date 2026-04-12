@@ -72,7 +72,7 @@ class ManagerTrainBooks(Manager.Manager):
         self.remove_hints(remove_back=False)
         self.put_pieces_bottom(is_white)
         self.set_label1(f"{_('Player')}: {self.book_player.name}")
-        self.set_label2(f'{_("Opponent")}: {self.book_rival.name}')
+        self.set_label2(f"{_('Opponent')}: {self.book_rival.name}")
         self.pgn_refresh(True)
         self.show_info_extra()
 

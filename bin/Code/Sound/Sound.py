@@ -255,7 +255,7 @@ class TallerSonido:
             raise ValueError("Solo se soporta width=2 (16-bit PCM)")
         out = bytearray()
         for i in range(0, len(data), width):
-            sample = int.from_bytes(data[i:i + 2], "little", signed=True)
+            sample = int.from_bytes(data[i : i + 2], "little", signed=True)
             out.append(self._linear2alaw_sample(sample))
         return bytes(out)
 

@@ -88,14 +88,14 @@ class CPU:
             orden = Orden()
             orden.key = dv["__CLAVE__"]
             orden.dv = dv
-            
+
             if orden.key == KIBRUN_GAME:
                 if self.ipc.has_more_data():
                     continue
                 time.sleep(0.1)
                 if self.ipc.has_more_data():
                     continue
-            
+
             return orden
 
     def reprocesa(self):

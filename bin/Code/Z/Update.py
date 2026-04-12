@@ -218,7 +218,7 @@ def update_manual(main_window) -> bool:
 
     folder = dic.get("FOLDER", config.folder_userdata())
 
-    path_zip = SelectFiles.leeFichero(main_window, folder, "zip")
+    path_zip = SelectFiles.read_file(main_window, folder, "zip")
     if not path_zip or not Util.exist_file(path_zip):
         return False
 

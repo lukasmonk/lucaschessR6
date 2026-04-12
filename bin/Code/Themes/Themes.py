@@ -84,7 +84,7 @@ class Themes:
         self.build()
 
         self.svg_data = """
-        <svg xmlns="https://www.w3.org/2000/svg" width="22" height="10">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="10">
           <text x="%d" y="9" font-family="Arial" font-size="9" fill="black">%s</text>
         </svg>
         """
@@ -104,7 +104,7 @@ class Themes:
                 abrev_candidata = (palabra[:3] if len(palabra) >= 3 else palabra + palabra[0] * (3 - len(palabra)))[:3]
             else:
                 # Tomar iniciales de las primeras 3 palabras (o todas si son menos)
-                abrev_candidata = ''.join(p[0] for p in palabras[:3])
+                abrev_candidata = "".join(p[0] for p in palabras[:3])
                 if len(abrev_candidata) < 3:
                     # Completar con letras de la última palabra
                     abrev_candidata += palabras[-1][1 : 3 - len(abrev_candidata)]
@@ -195,7 +195,7 @@ class Themes:
         letters = self.get_letters(theme)
         num = 1
         svg = self.svg_data % (num, letters)
-        svg_bytes = QByteArray(svg.encode('utf-8'))
+        svg_bytes = QByteArray(svg.encode("utf-8"))
 
         # Crear el renderer SVG
         renderer = QSvgRenderer(svg_bytes)

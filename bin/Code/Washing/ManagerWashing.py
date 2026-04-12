@@ -217,7 +217,7 @@ class ManagerWashingReplay(Manager.Manager):
                     )
                     pts_usu = rm_usu.centipawns_abs()
                     if pts_usu < pts_obj - 10:
-                        lic[-1] += f" <span style=\"color:red\"><b>{_('Bad move')}</b></span>"
+                        lic[-1] += f' <span style="color:red"><b>{_("Bad move")}</b></span>'
                         self.errores += 1
                         self.dbwashing.add_hint()
 

@@ -150,7 +150,7 @@ class ManagerGame(Manager.Manager):
 
     def reiniciar(self):
         if self.is_changed() and not QTMessages.pregunta(
-                self.main_window, _("You will loose all changes, are you sure?")
+            self.main_window, _("You will loose all changes, are you sure?")
         ):
             return
         p = Game.Game()

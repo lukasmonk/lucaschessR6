@@ -43,8 +43,9 @@ class WTranssiberian(LCDialog.LCDialog):
 
     def line(self, st_from, st_to, puntos, peso=50):
         return (
-            Controles.LB(self, _("From %s to %s") % (st_from, st_to)).align_center().
-            set_font_type(puntos=puntos, peso=peso)
+            Controles.LB(self, _("From %s to %s") % (st_from, st_to))
+            .align_center()
+            .set_font_type(puntos=puntos, peso=peso)
         )
 
     def km(self, km, puntos, peso=50):

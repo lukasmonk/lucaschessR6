@@ -87,7 +87,6 @@ class ManagerSolo(Manager.Manager):
         self.check_boards_setposition()
         self.put_pieces_bottom(dic.get("WHITEBOTTOM", True))
 
-        self.goto_end()
         self.state = ST_PLAYING
 
         if "SICAMBIORIVAL" in dic:
@@ -98,6 +97,7 @@ class ManagerSolo(Manager.Manager):
 
         self.valor_inicial = self.dame_valor_actual()
 
+        self.goto_end()
         self.play_next_move()
 
     def pon_rotulo(self):
@@ -300,7 +300,7 @@ class ManagerSolo(Manager.Manager):
         else:
             file = self.configuration.paths.folder_save_lcsb()
         while True:
-            resp = SelectFiles.salvaFichero(self.main_window, _("File to save"), file, extension, si_confirmar)
+            resp = SelectFiles.save_file(self.main_window, _("File to save"), file, extension, si_confirmar)
             if resp:
                 resp = str(resp)
                 if not resp.lower().endswith(f".{extension}"):
@@ -339,7 +339,7 @@ class ManagerSolo(Manager.Manager):
                 self.pon_toolbar()
         self.guardarHistorico(self.last_file)
 
-    def leeFichero(self, fich):
+    def read_file(self, fich):
         dic = Util.restore_pickle(fich)
         self.guardaDir(fich)
         dic["LAST_FILE"] = fich
@@ -385,7 +385,7 @@ class ManagerSolo(Manager.Manager):
         elif resp == "new":
             self.nuevo()
         elif resp.startswith("reopen_"):
-            return self.leeFichero(resp[7:])
+            return self.read_file(resp[7:])
         elif resp == "save":
             self.grabar()
         elif resp == "saveas":
@@ -399,9 +399,9 @@ class ManagerSolo(Manager.Manager):
         self.pon_toolbar()
 
     def restore_lcsb(self):
-        resp = SelectFiles.leeFichero(self.main_window, self.configuration.paths.folder_save_lcsb(), "lcsb")
+        resp = SelectFiles.read_file(self.main_window, self.configuration.paths.folder_save_lcsb(), "lcsb")
         if resp:
-            self.leeFichero(resp)
+            self.read_file(resp)
 
     def listaHistorico(self):
         dic = self.configuration.read_variables("FICH_MANAGERSOLO")

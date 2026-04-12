@@ -4,8 +4,8 @@
 REM ---------------------------------------------------------------------------------------------------------
 REM It is necessary to indicate the python version and path of python and mingw, changing the next 3 lines
 set PYTHON_VERSION=312
-set PYTHON_PATH=C:\Users\lucas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none
-set MINGW64_PATH=h:\mingw64\bin
+set PYTHON_PATH=c:\Users\lucas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none
+set MINGW64_PATH=H:\mingw64\bin
 REM ---------------------------------------------------------------------------------------------------------
 
 :: Check if Python exists at the specified path

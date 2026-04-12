@@ -312,8 +312,7 @@ class OpeningsCustom(LCDialog.LCDialog):
         # o_columns.nueva("ESTANDAR", _("Main"), 120, align_center=True)
 
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
-        n = self.grid.width_columns_displayables()
-        self.grid.setMinimumWidth(n + 20)
+        self.grid.fix_min_width()
         self.register_grid(self.grid)
         self.grid.gotop()
 

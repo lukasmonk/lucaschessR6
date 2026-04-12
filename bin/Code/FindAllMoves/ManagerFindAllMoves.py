@@ -238,13 +238,12 @@ class ManagerFindAllMoves(Manager.Manager):
             self.disable_all()
 
         if number is None:
-
             pos = self.pgn.first_no_solved() + 1
             pos_with_error = self.pgn.pos_with_error() + 1
             if pos_with_error <= pos:
                 pos = pos_with_error
 
-            mens = _('Movements must be indicated in the following order: King, Queen, Rook, Bishop, Knight and Pawn.')
+            mens = _("Movements must be indicated in the following order: King, Queen, Rook, Bishop, Knight and Pawn.")
             number = WCompetitionWithTutor.edit_training_position(
                 self.main_window,
                 _("Find all moves"),

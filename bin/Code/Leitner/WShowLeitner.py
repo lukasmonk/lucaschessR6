@@ -9,7 +9,7 @@ class WShowLeitner(LCDialog.LCDialog):
         self.leitner = leitner
         self.box_contents = leitner.box_contents()
 
-        titulo = f'{_("Leitner Training")} - {self.leitner.reference}'
+        titulo = f"{_('Leitner Training')} - {self.leitner.reference}"
         icon = Iconos.Leitner()
         LCDialog.LCDialog.__init__(self, owner, titulo, icon, "WShowLeitner")
 
@@ -97,10 +97,10 @@ class WShowLeitner(LCDialog.LCDialog):
 
         # Fechas
         ly_date = Colocacion.H().margen(0)
-        lb_init_date = Controles.LB(self, f'📅 {_("Start date")}: {self.leitner.init_date.strftime('%Y/%m/%d')} ')
+        lb_init_date = Controles.LB(self, f"📅 {_('Start date')}: {self.leitner.init_date.strftime('%Y/%m/%d')} ")
         lb_init_date.set_font(font)
         if self.leitner.end_date:
-            lb_end_date = Controles.LB(self, f'{_("End date")}: {self.leitner.end_date.strftime('%Y/%m/%d')} ')
+            lb_end_date = Controles.LB(self, f"{_('End date')}: {self.leitner.end_date.strftime('%Y/%m/%d')} ")
             lb_end_date.set_font(font)
             ly_date.control(lb_init_date).control(lb_end_date)
         else:
@@ -108,16 +108,17 @@ class WShowLeitner(LCDialog.LCDialog):
 
         # Session
         pending = len(self.leitner.current_ids_session)
-        lb_session = Controles.LB(self, f'🎲 {_("Current session")}: {self.leitner.current_num_session} - '
-                                        f'{_("Pending positions")}: {pending}')
+        lb_session = Controles.LB(
+            self, f"🎲 {_('Current session')}: {self.leitner.current_num_session} - {_('Pending positions')}: {pending}"
+        )
         lb_session.set_font(font)
 
         # Success/errors
         right, wrong = self.leitner.right_wrong()
         total = right + wrong
-        porc = right*100/total if total else 0.0
-        symbol = '📈' if porc >= 50 else '📉'
-        lb_result = Controles.LB(self, f'{_("Success")}: {right} - {_("Errors")}: {wrong}  ({symbol} {porc:0.02f}%)')
+        porc = right * 100 / total if total else 0.0
+        symbol = "📈" if porc >= 50 else "📉"
+        lb_result = Controles.LB(self, f"{_('Success')}: {right} - {_('Errors')}: {wrong}  ({symbol} {porc:0.02f}%)")
 
         ly_info = Colocacion.H().control(lb_session).relleno()
         ly_info.control(lb_result).relleno().otro(ly_date).margen(0)

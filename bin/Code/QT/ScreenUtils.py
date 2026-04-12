@@ -230,4 +230,3 @@ def get_width_text(widget, text):
 def get_height_text(widget, text):
     metrics = QtGui.QFontMetrics(widget.font())
     return metrics.boundingRect(text).height()
-

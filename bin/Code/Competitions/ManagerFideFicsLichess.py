@@ -195,7 +195,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         self.check_boards_setposition()
 
     def set_score(self):
-        self.set_label2(f"{_("Score")}: <b>{self.puntos:+d}</b>")
+        self.set_label2(f"{_('Score')}: <b>{self.puntos:+d}</b>")
 
     def pon_toolbar(self, stop_analysis=False):
         li_tool = [TB_RESIGN, TB_ADJOURN, TB_CONFIG, TB_UTILITIES, TB_ADJUDICATOR]

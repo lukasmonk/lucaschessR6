@@ -85,7 +85,7 @@ class WOpeningLines(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.width_columns_displayables() + 20, default_height=640)
+        self.restore_video(default_width=self.glista.width_and_vbar(), default_height=640)
 
         self.wtrain.setVisible(False)
         self.glista.gotop()
@@ -286,7 +286,7 @@ class WOpeningLines(LCDialog.LCDialog):
             # Comprobamos si hay que borrar lineas
             li_remove = dbop.lines_to_remove(new_pv)
             if len(li_remove) > 0:
-                message = f'{len(li_remove)} {_("Lines")}'
+                message = f"{len(li_remove)} {_('Lines')}"
                 if not QTMessages.pregunta(self, f"{_('Are you sure you want to remove %s?')} {message}"):
                     dbop.close()
                     return
@@ -442,8 +442,7 @@ class WStaticTraining(LCDialog.LCDialog):
         self.grid = Grid.Grid(self, o_columns, heigh_row=ancho, background="white")
         self.grid.setAlternatingRowColors(False)
         self.grid.font_type(puntos=10, peso=500)
-        n_ancho_pgn = self.grid.width_columns_displayables() + 20
-        self.grid.setMinimumWidth(n_ancho_pgn)
+        n_ancho_pgn = self.grid.fix_min_width()
 
         ly = Colocacion.V().control(lb).control(tb).control(self.grid)
         self.setLayout(ly)

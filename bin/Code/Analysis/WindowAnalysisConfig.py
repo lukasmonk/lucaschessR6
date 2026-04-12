@@ -33,7 +33,7 @@ class WConfAnalysis(LCDialog.LCDialog):
         o_columns.nueva("MAX", _("Maximum"), 80, align_center=True)
         o_columns.nueva("TYPE", _("Type"), 80, align_center=True)
         self.grid_keys = Grid.Grid(self, o_columns, xid="keys", complete_row_select=False, is_editable=True)
-        self.grid_keys.setFixedWidth(self.grid_keys.width_columns_displayables() + 20)
+        self.grid_keys.fix_min_width()
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Quit"), Iconos.FinPartida(), self.close)

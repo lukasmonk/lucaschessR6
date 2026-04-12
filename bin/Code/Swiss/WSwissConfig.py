@@ -25,7 +25,6 @@ from Code.Swiss import Swiss
 
 
 class WSwissConfig(LCDialog.LCDialog):
-
     def __init__(self, w_parent, swiss: Swiss.Swiss):
 
         titulo = swiss.name()
@@ -69,7 +68,7 @@ class WSwissConfig(LCDialog.LCDialog):
         )
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, is_editable=True)
         self.register_grid(self.grid)
-        self.grid.setMinimumWidth(self.grid.width_columns_displayables() + 20)
+        self.grid.fix_min_width()
 
         self.bt_engines_more = Controles.PB(self, f"++ {_('Engines')}", rutina=self.add_engines, plano=False).set_icono(
             Iconos.Engines()

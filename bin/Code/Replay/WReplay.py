@@ -1,11 +1,10 @@
 import collections
 import time
 
+import FasterCode
 from PySide6 import QtCore, QtGui
 
-import FasterCode
 import Code
-
 from Code.Base import Position
 from Code.Base.Constantes import (
     TB_CONTINUE_REPLAY,
@@ -16,8 +15,10 @@ from Code.Base.Constantes import (
     TB_REPEAT_REPLAY,
     TB_SETTINGS,
     TB_SLOW_REPLAY,
+    TB_SPACE,
 )
 from Code.Board import BoardTypes
+from Code.QT import QTDialogs, Iconos
 from Code.QT import QTUtils, ScreenUtils
 
 
@@ -59,21 +60,21 @@ class SpaceControlLayer:
         color2_val = self._dic_colors[False][min(peso2, 5)]
         c1 = QtGui.QColor(color1_val)
         c2 = QtGui.QColor(color2_val)
-        
+
         # Calculamos el peso total
         # if peso1 > peso2:
         #     peso1 *= 1.5
         # else:
         #     peso2 *= 1.5
         peso_total = peso1 + peso2
-        
+
         # Calculamos los nuevos canales ponderados
         # Usamos division entera // para obtener valores validos de 0-255
         r = (c1.red() * peso1 + c2.red() * peso2) // peso_total
         g = (c1.green() * peso1 + c2.green() * peso2) // peso_total
         b = (c1.blue() * peso1 + c2.blue() * peso2) // peso_total
         a = (c1.alpha() * peso1 + c2.alpha() * peso2) // peso_total
-        
+
         return QtGui.QColor(r, g, b, a).rgba()
 
     def update(self, fen, number):
@@ -216,6 +217,7 @@ class Replay:
             TB_REPEAT_REPLAY,
             TB_PGN_REPLAY,
             TB_SETTINGS,
+            TB_SPACE
         )
 
         self.antAcciones = self.main_window.get_toolbar()
@@ -363,7 +365,7 @@ class Replay:
                     dc = ord(from_sq[0]) - ord(to_sq[0])
                     df = int(from_sq[1]) - int(to_sq[1])
                     # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
-                    dist = (dc**2 + df**2) ** 0.5
+                    dist = (dc ** 2 + df ** 2) ** 0.5
                     rp = self.rapidez if self.rapidez > 1.0 else 1.0
                     secs = 4.0 * dist / (9.9 * rp)
                 cpu.move_piece(from_sq, to_sq, secs)
@@ -429,6 +431,21 @@ class Replay:
             if self.params.edit(self.main_window, False):
                 self.relee_params(self.params.dic_data)
                 self.show_information()
+        elif key == TB_SPACE:
+            self.space()
+
+    def space(self):
+        menu = QTDialogs.LCMenu(self.main_window)
+        menu.opcion("both", _("Both"), Iconos.SpaceBoth())
+        menu.opcion("white", _("White"), Iconos.SpaceWhite())
+        menu.opcion("black", _("Black"), Iconos.SpaceBlack())
+        resp = menu.lanza()
+        if resp == "both":
+            self._do_pressed_number(True, 3)
+        elif resp == "white":
+            self._do_pressed_number(True, 2)
+        elif resp == "black":
+            self._do_pressed_number(True, 7)
 
     def _do_pressed_number(self, si_activar, number):
         """Handler para teclas 2/7 en modo replay: toggle del overlay de espacio controlado."""

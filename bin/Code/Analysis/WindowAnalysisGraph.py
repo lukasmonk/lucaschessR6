@@ -172,7 +172,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
         self.setLayout(layout)
 
-        dic_def = {'_SIZE_': '1064,900', 'SP_all': [536, 354]}
+        dic_def = {"_SIZE_": "1064,900", "SP_all": [536, 354]}
         self.restore_video(default_dic=dic_def)
 
         grid_all.gotop()

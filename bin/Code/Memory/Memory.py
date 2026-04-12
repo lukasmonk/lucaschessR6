@@ -88,7 +88,6 @@ class Memoria:
 
     def get_list_fens(self, num_piezas):
         with QTMessages.one_moment_please(self.procesador.main_window):
-
             li = []
 
             li_fedu = Util.listfiles(Code.path_resource("Trainings", "Checkmates by Eduardo Sadier"), "*.fns")

@@ -45,7 +45,7 @@ class Translations:
 
                 def lmp(msg):
                     if "||" in msg:
-                        msg = msg[msg.index("||"):].strip()
+                        msg = msg[msg.index("||") :].strip()
                     return msg
 
                 dicn = {entry.msgid: lmp(entry.msgstr) for entry in pomofile}
@@ -62,8 +62,7 @@ class Translations:
                 path_mo = self.get_path_google_translate(self.lang)
                 self.update_dic(dic, path_mo, is_mo=True)
             if Code.configuration.x_translation_local:
-                path_po = Util.opj(Code.configuration.paths.folder_userdata(),
-                                   "Translations", f"{self.lang}.po")
+                path_po = Util.opj(Code.configuration.paths.folder_userdata(), "Translations", f"{self.lang}.po")
                 self.update_dic(dic, path_po, is_mo=False)
 
         self.sinonimos(dic)
@@ -78,8 +77,9 @@ class Translations:
                 path_mo = self.get_path_google_translate_openings(self.lang)
                 self.update_dic(dic, path_mo, is_mo=True)
             if Code.configuration.x_translation_local:
-                path_po = Util.opj(Code.configuration.paths.folder_userdata(),
-                                   "Translations", f"openings_{self.lang}.po")
+                path_po = Util.opj(
+                    Code.configuration.paths.folder_userdata(), "Translations", f"openings_{self.lang}.po"
+                )
                 self.update_dic(dic, path_po, is_mo=False)
 
         return dic

@@ -58,6 +58,7 @@ from Code.Base.Constantes import (  # TB_BOXROOMS_PGN,
     TB_UTILITIES,
     TB_VARIATIONS,
     TB_ADJUDICATOR,
+    TB_SPACE,
 )
 from Code.Board import Board
 from Code.Main import WAnalysisBar, WindowSolve
@@ -182,9 +183,9 @@ class WBase(QtWidgets.QWidget):
             self.dic_toolbar[key] = action
 
         action = self.dic_toolbar[TB_NEXT]
-        action.setToolTip(f'{_("Next")}: [+, {_("Page Down")}]')
+        action.setToolTip(f"{_('Next')}: [+, {_('Page Down')}]")
         action = self.dic_toolbar[TB_PREVIOUS]
-        action.setToolTip(f'{_("Previous")}: [-, {_("Page Up")}]')
+        action.setToolTip(f"{_('Previous')}: [-, {_('Page Up')}]")
 
     def translate_again_tb(self):
         dic_opciones = self.dic_opciones_tb()
@@ -248,6 +249,7 @@ class WBase(QtWidgets.QWidget):
             TB_TUTOR_STOP: (_("Stop"), Iconos.StopTraining()),
             TB_ADJUDICATOR_STOP: (_("Stop"), Iconos.StopTraining()),
             TB_ADJUDICATOR: (_("Adjudicator"), Iconos.Adjudicator()),
+            TB_SPACE: (_("Space"), Iconos.SpaceBoth()),
         }
 
     def launch_shortcuts(self):
@@ -355,7 +357,7 @@ class WBase(QtWidgets.QWidget):
             Controles.PB(self, self.captures_symbol(), self.captures_mouse_pressed).set_font_type(puntos=14)
         ).relative_width(10)
 
-        width_pgn = self.pgn.width_columns_displayables() + 18
+        width_pgn = self.pgn.width_and_vbar()
         n_ancho_capt = (width_pgn - self.bt_capt.width() - 2) // 2
         self.lb_capt_white.setFixedWidth(n_ancho_capt)
         self.lb_capt_black.setFixedWidth(n_ancho_capt)
@@ -562,8 +564,7 @@ class WBase(QtWidgets.QWidget):
             col_white.ancho = new_width
             col_black.ancho = new_width
             self.pgn.set_widths_columns()
-            n_ancho_pgn = self.pgn.width_columns_displayables() + 18
-            self.pgn.setMinimumWidth(n_ancho_pgn)
+            n_ancho_pgn = self.pgn.fix_min_width()
             self.manager.configuration.x_pgn_width = n_ancho_pgn
             self.manager.configuration.graba()
             n_ancho_labels = n_ancho_pgn // 2 - 1
@@ -878,12 +879,12 @@ class WBase(QtWidgets.QWidget):
 
     def set_clock_white(self, tm, tm2):
         if tm2 is not None:
-            tm += f"<br><FONT SIZE=\"-4\">{tm2}"
+            tm += f'<br><FONT SIZE="-4">{tm2}'
         self.lb_clock_white.set_text(tm)
 
     def set_clock_black(self, tm, tm2):
         if tm2 is not None:
-            tm += f"<br><FONT SIZE=\"-4\">{tm2}"
+            tm += f'<br><FONT SIZE="-4">{tm2}'
         self.lb_clock_black.set_text(tm)
 
     def hide_clock_white(self):

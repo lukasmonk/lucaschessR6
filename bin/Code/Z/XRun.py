@@ -17,10 +17,11 @@ def run_lucas(*args):
     li.extend(args)
 
     if Util.is_windows():
-        cmd_string = ' '.join(f'"{x}"' for x in li)
+        cmd_string = " ".join(f'"{x}"' for x in li)
         return subprocess.Popen(cmd_string, shell=True)
     else:
         return subprocess.Popen(li)
+
 
 # def run_lucas0(*args):
 #     li = []

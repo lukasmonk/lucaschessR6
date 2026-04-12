@@ -158,9 +158,9 @@ class WInfomove(QtWidgets.QWidget):
 
         movenum = p.first_num_move()
         li_pgn = []
-        style_number = f'color:{Code.dic_colors["PGN_NUMBER"]}'
-        style_select = f'color:{Code.dic_colors["PGN_SELECT"]};font-weight:bold;'
-        style_moves = f'color:{Code.dic_colors["PGN_MOVES"]}'
+        style_number = f"color:{Code.dic_colors['PGN_NUMBER']}"
+        style_select = f"color:{Code.dic_colors['PGN_SELECT']};font-weight:bold;"
+        style_moves = f"color:{Code.dic_colors['PGN_MOVES']}"
         if p.starts_with_black:
             li_pgn.append(f'<span style="{style_number}">{movenum}...</span>')
             movenum += 1

@@ -137,6 +137,8 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
             if li_nags:
                 li = []
                 st = set()
+                dolar = False
+                first_symbol = True
                 for x in li_nags:
                     x = str(x)
                     if x in st:
@@ -146,9 +148,15 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
                         x = int(x)
                         symbol = dic_symbol_nags(x)
                         if symbol:
-                            li.append(symbol)
+                            if first_symbol:
+                                pgn += symbol
+                                first_symbol = False
+                            else:
+                                li.append(symbol)
                         else:
-                            li.append(f'${x}')
+                            dolar = True
+                if dolar:
+                    li.append("$")
                 li_nags = li
         else:
             pgn, color, txt_analysis, indicador_inicial, li_nags = (

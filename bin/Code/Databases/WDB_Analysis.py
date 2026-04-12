@@ -135,12 +135,11 @@ class WDBAnalisis:
             return
 
     def new_analysis(self, pv):
-        alm = WindowAnalysisParam.analysis_parameters(self.wowner, False, all_engines=False)
+        alm = WindowAnalysisParam.analysis_parameters(self.wowner, False, False)
         if alm is None:
             return
 
         with QTMessages.analizando(self.wowner):
-
             if alm.engine == "default":
                 xengine = Code.procesador.analyzer_clone(alm.vtime, alm.depth, alm.multiPV)
             else:

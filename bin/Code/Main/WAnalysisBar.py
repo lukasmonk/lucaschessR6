@@ -11,7 +11,6 @@ from Code.QT import Colocacion, Controles, FormLayout, Iconos
 
 
 class AnalysisBar(QtWidgets.QWidget):
-
     def __init__(self, w_parent, board):
         QtWidgets.QWidget.__init__(self, w_parent)
 
@@ -126,7 +125,6 @@ class AnalysisBar(QtWidgets.QWidget):
             if self.engine_manager:
                 self.mrm = mrm
                 if mrm:
-
                     rm = mrm.rm_best()
 
                     cp = rm.centipawns_abs()

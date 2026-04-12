@@ -8,7 +8,6 @@ from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTMessag
 
 
 class BoardForcingMoves(Board2.BoardEstatico):
-
     def __init__(self, parent, config_board, with_menu_visual=True, with_director=True):
         self.enable_borraMovibles = True
         Board2.BoardEstatico.__init__(self, parent, config_board, with_menu_visual, with_director)
@@ -378,7 +377,6 @@ class WForcingMoves(LCDialog.LCDialog):
             num_moves_calculated = 0
 
         if self.level == 1:  # checks
-
             ok = num_moves_calculated == self.owner.checks  # len(moves)
             self.lb_result.set_text(_("There are %s check(s).") % self.owner.checks)
             if ok:

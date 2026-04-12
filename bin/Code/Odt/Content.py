@@ -11,7 +11,7 @@ class Content(XML.XML):
         self.add_param("xmlns:office", "urn:oasis:names:tc:opendocument:xmlns:office:1.0")
         self.add_param("xmlns:fo", "urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0")
         self.add_param("xmlns:ooo", "https://openoffice.org/2004/office")
-        self.add_param("xmlns:xlink", "https://www.w3.org/1999/xlink")
+        self.add_param("xmlns:xlink", "http://www.w3.org/1999/xlink")
         self.add_param("xmlns:dc", "https://purl.org/dc/elements/1.1/")
         self.add_param("xmlns:style", "urn:oasis:names:tc:opendocument:xmlns:style:1.0")
         self.add_param("xmlns:text", "urn:oasis:names:tc:opendocument:xmlns:text:1.0")
@@ -39,20 +39,20 @@ class Content(XML.XML):
             "xmlns:field",
             "urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0",
         )
-        self.add_param("xmlns:math", "https://www.w3.org/1998/Math/MathML")
+        self.add_param("xmlns:math", "http://www.w3.org/1998/Math/MathML")
         self.add_param("xmlns:form", "urn:oasis:names:tc:opendocument:xmlns:form:1.0")
         self.add_param("xmlns:script", "urn:oasis:names:tc:opendocument:xmlns:script:1.0")
-        self.add_param("xmlns:dom", "https://www.w3.org/2001/xml-events")
-        self.add_param("xmlns:xforms", "https://www.w3.org/2002/xforms")
-        self.add_param("xmlns:xsd", "https://www.w3.org/2001/XMLSchema")
-        self.add_param("xmlns:xsi", "https://www.w3.org/2001/XMLSchema-instance")
+        self.add_param("xmlns:dom", "http://www.w3.org/2001/xml-events")
+        self.add_param("xmlns:xforms", "http://www.w3.org/2002/xforms")
+        self.add_param("xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
+        self.add_param("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
         self.add_param(
             "xmlns:formx",
             "urn:openoffice:names:experimental:ooxml-odf-interop:xmlns:form:1.0",
         )
-        self.add_param("xmlns:xhtml", "https://www.w3.org/1999/xhtml")
-        self.add_param("xmlns:grddl", "https://www.w3.org/2003/g/data-view#")
-        self.add_param("xmlns:css3t", "https://www.w3.org/TR/css3-text/")
+        self.add_param("xmlns:xhtml", "http://www.w3.org/1999/xhtml")
+        self.add_param("xmlns:grddl", "http://www.w3.org/2003/g/data-view#")
+        self.add_param("xmlns:css3t", "http://www.w3.org/TR/css3-text/")
         self.add_param("xmlns:officeooo", "https://openoffice.org/2009/office")
         self.add_param("office:version", "1.3")
         element1 = XML.Element("office:scripts")

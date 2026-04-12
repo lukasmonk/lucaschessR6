@@ -27,9 +27,9 @@ estrellaSVG = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
    xmlns:dc="https://purl.org/dc/elements/1.1/"
    xmlns:cc="https://creativecommons.org/ns#"
-   xmlns:rdf="https://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="https://www.w3.org/2000/svg"
-   xmlns="https://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
    version="1.1"
    width="64"
    height="64"
@@ -289,7 +289,7 @@ class WTVSvgs(LCDialog.LCDialog):
             key = "SVG_GRAPHICS"
             dic = self.configuration.read_variables(key)
             folder = dic.get("FOLDER", self.configuration.paths.folder_userdata())
-            file = SelectFiles.leeFichero(self, folder, "svg", titulo=_("Image"))
+            file = SelectFiles.read_file(self, folder, "svg", titulo=_("Image"))
             if not file or not os.path.isfile(file):
                 return
             dic["FOLDER"] = os.path.dirname(file)

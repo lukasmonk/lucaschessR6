@@ -72,7 +72,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
         self.wicker_ctrl: EnginesWicker.WickerCtrl | None = EnginesWicker.check_is_wicker(engine, self.engine_run)
 
     def check_previous(
-        self, game: Optional[Game.Game] = None, fen: Optional[str] = None, dispacher: Optional[Callable] = None
+        self, game: Optional[Game.Game] = None, fen: Optional[str] = None, dispatcher: Optional[Callable] = None
     ):
         if not self.check_engine():
             return None
@@ -93,21 +93,21 @@ class EngineManagerPlay(EngineManager.EngineManager):
             else:
                 rm = None
             if rm:
-                if dispacher:
-                    dispacher(rm=rm)
+                if dispatcher:
+                    dispatcher(rm=rm)
                 resp = rm
             else:
                 self.playbook_active = self.playbook.active
         return resp
 
-    def play_game(self, game, dispacher: Optional[Callable] = None) -> Optional[EngineResponse.EngineResponse]:
-        return self.play(game=game, dispacher=dispacher)
+    def play_game(self, game, dispatcher: Optional[Callable] = None) -> Optional[EngineResponse.EngineResponse]:
+        return self.play(game=game, dispatcher=dispatcher)
 
-    def play_fen(self, fen: str, dispacher: Optional[Callable] = None) -> Optional[EngineResponse.EngineResponse]:
-        return self.play(fen=fen, dispacher=dispacher)
+    def play_fen(self, fen: str, dispatcher: Optional[Callable] = None) -> Optional[EngineResponse.EngineResponse]:
+        return self.play(fen=fen, dispatcher=dispatcher)
 
-    def play(self, game: Optional[Game.Game] = None, fen: Optional[str] = None, dispacher: Optional[Callable] = None):
-        rm = self.check_previous(game, fen, dispacher)
+    def play(self, game: Optional[Game.Game] = None, fen: Optional[str] = None, dispatcher: Optional[Callable] = None):
+        rm = self.check_previous(game, fen, dispatcher)
         if rm:
             return rm
 
@@ -149,8 +149,8 @@ class EngineManagerPlay(EngineManager.EngineManager):
                 close()
                 return
 
-            if dispacher and self.engine_run.mrm:
-                if not dispacher(rm=self.engine_run.mrm.best_rm_ordered()):
+            if dispatcher and self.engine_run.mrm:
+                if not dispatcher(rm=self.engine_run.mrm.best_rm_ordered()):
                     self._is_canceled = True
                     close()
 

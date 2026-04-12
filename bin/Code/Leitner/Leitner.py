@@ -91,7 +91,7 @@ class LeitnerReg:
             "last_session": self.last_session,
             "right": self.right,
             "wrong": self.wrong,
-            "date_win": self.date_win
+            "date_win": self.date_win,
         }
         return dic
 
@@ -129,7 +129,7 @@ class Leitner:
         self.init_date = None
         self.end_date = None
         # num_boxes + 1, box 0 = elementos a repartir
-        self.percentages = [100] + distribute_exponentially(self.num_boxes, 7, 1.)
+        self.percentages = [100] + distribute_exponentially(self.num_boxes, 7, 1.0)
 
     def new_session(self, num_try=1) -> bool:
         if self.is_the_end():
@@ -178,7 +178,7 @@ class Leitner:
 
         if num_try < self.max_retries:
             if len(self.current_ids_session) < self.min_elems_session:
-                return self.new_session(num_try+1)
+                return self.new_session(num_try + 1)
         else:
             # If the minimum is not reached, the winnings are used.
             if len(self.current_ids_session) < self.min_elems_session:
@@ -275,7 +275,7 @@ class Leitner:
         self.current_ids_session = dic.get("current_ids_session", [])
         self.init_date = dic.get("init_date", datetime.datetime.now())
         self.end_date = dic.get("end_date", None)
-        self.percentages = dic.get("percentages", [100] + distribute_exponentially(self.num_boxes, 7, 1.))
+        self.percentages = dic.get("percentages", [100] + distribute_exponentially(self.num_boxes, 7, 1.0))
         li_regs = dic.get("li_regs", [])
         self.dic_regs = {}
         for dic_reg in li_regs:
@@ -391,9 +391,9 @@ class FnsAnalyzer:
     def _check_file(file_path: Path) -> bool:
         """Verifica si el archivo es válido (concurrente)."""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
-                    if line.count('|') > 1:
+                    if line.count("|") > 1:
                         return True
         except Exception:
             pass

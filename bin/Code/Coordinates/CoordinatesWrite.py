@@ -48,7 +48,7 @@ class CoordinatesWrite:
         self.is_record = False
 
     def next(self, pieces):
-        chess_squares = {f"{file}{rank}" for file in 'abcdefgh' for rank in '12345678'}
+        chess_squares = {f"{file}{rank}" for file in "abcdefgh" for rank in "12345678"}
         resto = chess_squares - self.st_done
         return set(random.sample(sorted(resto), pieces))
 
@@ -78,16 +78,16 @@ class CoordinatesWrite:
 
     def str_done(self, pieces):
         if self.pending():
-            return f'{len(self.st_done) // pieces}/{64 // pieces}'
+            return f"{len(self.st_done) // pieces}/{64 // pieces}"
         else:
             return _("Ended")
 
     def str_done_info(self, pieces):
-        return f'{len(self.st_done) // pieces}/{64 // pieces}'
+        return f"{len(self.st_done) // pieces}/{64 // pieces}"
 
     def str_time(self, add_seconds=0):
         seconds = self.ms_time // 1000 + add_seconds
-        return f"{seconds:d}\""
+        return f'{seconds:d}"'
 
     def add_time(self, ms):
         self.ms_time += ms

@@ -8,7 +8,7 @@ from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTD
 class WCoordinatesWrite(LCDialog.LCDialog):
     def __init__(self, procesador):
         configuration = Code.configuration
-        title = f'{_("Coordinates")}: {_("Visualise and write")}'
+        title = f"{_('Coordinates')}: {_('Visualise and write')}"
         icon = Iconos.CoordinatesWrite()
         extconfig = "coordinateswrite_7"
         LCDialog.LCDialog.__init__(self, procesador.main_window, title, icon, extconfig)
@@ -52,7 +52,7 @@ class WCoordinatesWrite(LCDialog.LCDialog):
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.width_columns_displayables() + 30, default_height=540)
+        self.restore_video(default_width=self.glista.width_and_vbar() + 10, default_height=540)
 
         self.glista.gotop()
         self.glista.refresh()

@@ -66,7 +66,7 @@ class EditCols(LCDialog.LCDialog):
         layout = Colocacion.V().control(tb).control(self.grid).margen(3)
         self.setLayout(layout)
 
-        self.resize(self.grid.width_columns_displayables() + 48, 360)
+        self.resize(self.grid.width_and_vbar() + 28, 360)
         self.grid.goto(0, 1)
 
         self.restore_video()

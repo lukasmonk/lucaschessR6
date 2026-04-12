@@ -105,7 +105,7 @@ class WTournament(LCDialog.LCDialog):
         lb_book = Controles.LB(self, f"{_('Opening book')}: ")
         self.list_books = Books.ListBooks()
         li = [(x.name, x.path) for x in self.list_books.lista]
-        li.insert(0, (f'<{_("None")}>', "-"))
+        li.insert(0, (f"<{_('None')}>", "-"))
         self.cbBooks = Controles.CB(self, li, torneo.book())
         bt_nuevo_book = Controles.PB(self, "", self.new_book, plano=False).set_icono(Iconos.Nuevo(), icon_size=16)
         ly_book = Colocacion.H().control(self.cbBooks).control(bt_nuevo_book).relleno()
@@ -175,8 +175,9 @@ class WTournament(LCDialog.LCDialog):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("NUM", _("N."), 50, align_center=True)
         o_columns.nueva("ALIAS", _("Alias"), 209)
-        self.gridEnginesAlias = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True,
-                                          xid=GRID_ALIAS)
+        self.gridEnginesAlias = Grid.Grid(
+            self, o_columns, complete_row_select=True, select_multiple=True, xid=GRID_ALIAS
+        )
         self.register_grid(self.gridEnginesAlias)
 
         w = QtWidgets.QWidget()
@@ -416,7 +417,7 @@ class WTournament(LCDialog.LCDialog):
                 pass
 
     def new_book(self):
-        fbin = SelectFiles.leeFichero(self, self.list_books.path, "bin", titulo=_("Polyglot book"))
+        fbin = SelectFiles.read_file(self, self.list_books.path, "bin", titulo=_("Polyglot book"))
         if fbin:
             self.list_books.path = os.path.dirname(fbin)
             name = os.path.basename(fbin)[:-4]
@@ -559,7 +560,7 @@ class WTournament(LCDialog.LCDialog):
         self.li_data_current_engine.append((_("Maximum seconds to think"), me.time))
         pbook = me.book
         if pbook in ("-", None):
-            pbook = f'<{_("None")}>'
+            pbook = f"<{_('None')}>"
             mode = ""
         else:
             dic = {
@@ -569,7 +570,7 @@ class WTournament(LCDialog.LCDialog):
             }
             mode = dic.get(me.bookRR, dic[BOOK_BEST_MOVE])
             if pbook == "*":
-                pbook = f'{_("By default")} → {self.cbBooks.label()}'
+                pbook = f"{_('By default')} → {self.cbBooks.label()}"
                 if self.cbBooks.valor() == "-":
                     mode = ""
             else:
@@ -644,7 +645,7 @@ class WTournament(LCDialog.LCDialog):
 
     def eng_new(self):
         # Pedimos el ejecutable
-        exe_motor = SelectFiles.leeFichero(self, self.torneo.last_folder_engines(), "*", _("Engine"))
+        exe_motor = SelectFiles.read_file(self, self.torneo.last_folder_engines(), "*", _("Engine"))
         if not exe_motor:
             return
         self.torneo.last_folder_engines(os.path.dirname(exe_motor))

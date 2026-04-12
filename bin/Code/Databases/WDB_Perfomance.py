@@ -272,8 +272,8 @@ class Perfomance:
             return f"{w}/{d}/{ls}"
 
         return (
-            f'{calc(self.dic_results["W"] + self.dic_results["B"])} - '
-            f'{calc(self.dic_results["W"])} - {calc(self.dic_results["B"])}'
+            f"{calc(self.dic_results['W'] + self.dic_results['B'])} - "
+            f"{calc(self.dic_results['W'])} - {calc(self.dic_results['B'])}"
         )
 
     def int_results(self):
@@ -328,7 +328,6 @@ class Perfomance:
 
 
 class WPerfomance(QtWidgets.QWidget):
-
     def __init__(self, wb_database, wb_games, db_games):
         QtWidgets.QWidget.__init__(self)
 
@@ -361,7 +360,7 @@ class WPerfomance(QtWidgets.QWidget):
         self.tb.new(_("Export"), Iconos.Export8(), self.export)
         self.tb.new(_("Help"), Iconos.AyudaGR(), ayuda)
 
-        awb = f'{_("All")} - {_("White")} - {_("Black")}'
+        awb = f"{_('All')} - {_('White')} - {_('Black')}"
         perf = _("Perfomance")
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("__num__", _("N."), 50, align_center=True)
@@ -607,7 +606,7 @@ class WPerfomance(QtWidgets.QWidget):
 
     def export_csv(self):
         dic_csv = self.configuration.read_variables("CSV")
-        path_csv = SelectFiles.salvaFichero(
+        path_csv = SelectFiles.save_file(
             self,
             f"{_('Export')} - {_('To a CSV file')}",
             dic_csv.get("FOLDER", self.configuration.paths.folder_userdata()),
@@ -626,7 +625,7 @@ class WPerfomance(QtWidgets.QWidget):
                 continue
             li_cols.append(col)
 
-        with open(path_csv, mode='w', newline='') as file:
+        with open(path_csv, mode="w", newline="") as file:
             writer = csv.writer(file)
             li_data = []
             for col in li_cols:

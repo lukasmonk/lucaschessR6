@@ -778,7 +778,7 @@ class WLeague(LCDialog.LCDialog):
             li = xmatch.list_non_existent_engines(self.league)
             if li:
                 engine = li[0].thinker
-                QTMessages.message_error(self, f'{_("Engine not found")}:\n{engine.path_exe}')
+                QTMessages.message_error(self, f"{_('Engine not found')}:\n{engine.path_exe}")
             else:
                 self.season.current_journey = self.sb_journey.valor() - 1
                 self.season.save()
@@ -1008,7 +1008,7 @@ class WLeague(LCDialog.LCDialog):
                 li_engines_error.extend(xmatch.list_non_existent_engines(self.league))
         if li_engines_error:
             mens = "\n".join([opponent.thinker.path_exe for opponent in li_engines_error])
-            QTMessages.message_error(self, f'{_("Engine not found")}:\n{mens}')
+            QTMessages.message_error(self, f"{_('Engine not found')}:\n{mens}")
             return
         resp = QTDialogs.launch_workers(self)
 

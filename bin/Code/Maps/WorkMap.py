@@ -486,7 +486,6 @@ def ld_countries(mapa):
         ("zm", _("Zambia"), ["tz", "na", "ao", "cd", "mw", "bw", "zw", "mz"], 2234, []),
         ("zw", _("Zimbabwe"), ["zm", "bw", "za", "mz"], 2186, []),
     ):
-
         if filtro:
             if iso not in filtro:
                 continue
@@ -546,8 +545,7 @@ class DBWorkMap(SQLBase.DBBase):
     def releer(self):
         cursor = self.conexion.cursor()
         cursor.execute(
-            "SELECT ROWID, ACTIVE, DCREATION, DEND, DONE, TIPO, MODEL, INFO "
-            "FROM %s ORDER BY -DCREATION;" % self.tabla
+            "SELECT ROWID, ACTIVE, DCREATION, DEND, DONE, TIPO, MODEL, INFO FROM %s ORDER BY -DCREATION;" % self.tabla
         )
         lista = cursor.fetchall()
         cursor.close()
@@ -965,7 +963,6 @@ class WorkMap:
                 alm.donePV = ""
                 alm.mate = mate
         else:
-
             d = {"easy": (1, 2), "medium": (2, 5), "hard": (4, 7)}
             from_sq, to_sq = d[self.model]
             st = set()

@@ -98,7 +98,7 @@ class ManagerOpeningLinesPositions(ManagerOPL.ManagerOpeningLines):
         self.show_labels()
 
     def show_labels(self):
-        li = [f'{_("Errors")}: {self.errores}']
+        li = [f"{_('Errors')}: {self.errores}"]
         if self.with_help:
             li.append(_("Help activated"))
         self.set_label1("\n".join(li))

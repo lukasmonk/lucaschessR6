@@ -224,7 +224,7 @@ class WConfEngines(LCDialog.LCDialog):
         if resp is not None:
             folder_engine = os.path.dirname(self.engine.path_exe)
             if resp == "select_file":
-                path_file = SelectFiles.leeCreaFichero(self, folder_engine, "*", _("Select a file"))
+                path_file = SelectFiles.read_or_create_file(self, folder_engine, "*", _("Select a file"))
                 if path_file:
                     folder_file = os.path.dirname(path_file)
                     if Util.same_path(folder_file, folder_engine):
@@ -233,7 +233,7 @@ class WConfEngines(LCDialog.LCDialog):
                     return
                 value = path_file
             elif resp == "select_folder":
-                path_folder = SelectFiles.get_existing_directory(self, folder_engine,  _("Select a folder"))
+                path_folder = SelectFiles.get_existing_directory(self, folder_engine, _("Select a folder"))
                 if path_folder:
                     value = path_folder
                 else:
@@ -264,7 +264,9 @@ class WConfTutor(QtWidgets.QWidget):
         self.ed_depth = Controles.ED(self).type_integer(self.configuration.x_tutor_depth).relative_width(30)
 
         lb_multipv = Controles.LB2P(self, _("Number of variations evaluated by the engine (MultiPV)"))
-        self.ed_multipv = Controles.ED(self).type_integer_positive(self.configuration.x_tutor_multipv).relative_width(30)
+        self.ed_multipv = (
+            Controles.ED(self).type_integer_positive(self.configuration.x_tutor_multipv).relative_width(30)
+        )
         lb_maximum = Controles.LB(self, _("0 = Maximum"))
         ly_multi = Colocacion.H().control(self.ed_multipv).control(lb_maximum).relleno()
 
@@ -394,7 +396,9 @@ class WConfAnalyzer(QtWidgets.QWidget):
         self.ed_depth = Controles.ED(self).type_integer(self.configuration.x_analyzer_depth).relative_width(30)
 
         lb_multipv = Controles.LB2P(self, _("Number of variations evaluated by the engine (MultiPV)"))
-        self.ed_multipv = Controles.ED(self).type_integer_positive(self.configuration.x_analyzer_multipv).relative_width(30)
+        self.ed_multipv = (
+            Controles.ED(self).type_integer_positive(self.configuration.x_analyzer_multipv).relative_width(30)
+        )
         lb_maximum = Controles.LB(self, _("0 = Maximum"))
         ly_multi = Colocacion.H().control(self.ed_multipv).control(lb_maximum).relleno()
 

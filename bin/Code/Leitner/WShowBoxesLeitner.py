@@ -153,8 +153,9 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
                 else:
                     conector = "→"
                 lb_conector = Controles.LB(self, conector)
-                lb_conector.setStyleSheet(f"font-size: 24px; color: {self.colors[num_box]['principal']};"
-                                          " font-weight: bold;")
+                lb_conector.setStyleSheet(
+                    f"font-size: 24px; color: {self.colors[num_box]['principal']}; font-weight: bold;"
+                )
                 layout.control(lb_conector)
         layout.relleno()
 
@@ -168,9 +169,9 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
         card.setStyleSheet(
             f"""
             QFrame#cajaCard{num_box} {{
-                background-color: {self.colors[num_box]['fondo']};
+                background-color: {self.colors[num_box]["fondo"]};
                 border-radius: 16px;
-                border: 3px solid {self.colors[num_box]['borde']};
+                border: 3px solid {self.colors[num_box]["borde"]};
                 padding: 8px;
             }}
         """
@@ -192,7 +193,7 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
             lb_name = Controles.LB(self, text)
             lb_name.setStyleSheet(
                 f"""
-                color: {self.colors[num_box]['texto']}; 
+                color: {self.colors[num_box]["texto"]}; 
                 font-weight: bold; 
                 background: transparent;
             """
@@ -203,11 +204,11 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
         layout.otro(header)
 
         if num_box == 0:
-            symbol = '💼'
+            symbol = "💼"
         elif num_box == 5:
-            symbol = '👑'
+            symbol = "👑"
         else:
-            symbol = '💼'
+            symbol = "💼"
 
         svg_box = self.create_svg(num_box, num_elements)
         layout.relleno()
