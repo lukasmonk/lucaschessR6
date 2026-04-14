@@ -29,6 +29,12 @@ class WTranslateOpenings(LCDialog.LCDialog):
         titulo = "Openings translation"
         extparam = "translation_openings"
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
+        self.setWindowFlags(
+            QtCore.Qt.WindowType.Dialog
+            | QtCore.Qt.WindowType.WindowTitleHint
+            | QtCore.Qt.WindowType.WindowMinimizeButtonHint
+            | QtCore.Qt.WindowType.WindowCloseButtonHint
+        )
 
         self.language = owner.language
         self.tr_actual = owner.tr_actual

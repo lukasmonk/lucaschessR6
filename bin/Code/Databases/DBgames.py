@@ -1439,6 +1439,7 @@ class DBgames:
 
         self.li_row_ids = []
         self.rowidReader.setup(self.li_row_ids, condicion, self.order)
+        self.rowidReader.start()
 
 
 def get_random_game():

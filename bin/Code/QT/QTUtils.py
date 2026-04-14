@@ -1,5 +1,3 @@
-import os
-
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
@@ -92,5 +90,13 @@ def deferred_call(mstime: int, called):
 
 
 def close_app():
-    QtWidgets.QApplication.quit()
-    os._exit(0)
+    app: QtWidgets.QApplication = QtWidgets.QApplication.instance()
+    if app is not None:
+        app.closeAllWindows()
+        QtCore.QTimer.singleShot(100, app.quit)
+
+
+def delay(ms: int):
+    loop = QtCore.QEventLoop()
+    QtCore.QTimer.singleShot(ms, loop.quit)
+    loop.exec()

@@ -16,7 +16,7 @@ class ConfigPaths:
         if user:
             self.userdata_folder = Util.opj(self.userdata_folder, "users", str(user.number))
             if not os.path.isdir(self.userdata_folder):
-                Util.create_folder(self.userdata_folder)
+                Util.check_folders(self.userdata_folder)
 
         self.file = self._to_config("lk.pk2")
         self.is_first_time = not Util.exist_file(self.file)

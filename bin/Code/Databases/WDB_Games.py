@@ -741,7 +741,7 @@ class WGames(QtWidgets.QWidget):
         self.db_games.filter_positions(li_seq, [rowid for rowid, pos in li_games])
         self.grid.refresh()
         self.grid_cambiado_registro(None, 0, None)
-        txt = f'_("Games"): {self.db_games.reccount()} | {_("Filter")}: {fen}'
+        txt = f'{_("Games")}: {self.db_games.reccount()} | {_("Filter")}: {fen}'
         self.status.showMessage(txt, 0)
 
     def tw_remove_tb(self):
@@ -795,7 +795,7 @@ class WGames(QtWidgets.QWidget):
 
     def tw_import(self):
         menu = QTDialogs.LCMenu(self)
-        menu.opcion(self.tw_importar_pgn_unified, _("Import PGN"), Iconos.Import8())
+        menu.opcion(self.tw_importar_pgn_unified, _("PGN"), Iconos.PGN())
         menu.separador()
         menu.opcion(self.tw_importar_db, _("From other database"), Iconos.Databases())
         menu.separador()

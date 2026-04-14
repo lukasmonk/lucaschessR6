@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-04-12 12:54+0200\n"
+"POT-Creation-Date: 2026-04-13 14:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -374,7 +374,6 @@ msgstr ""
 #: .\Code\Shortcuts\WShortcuts.py:19
 #: .\Code\Swiss\WSwissConfig.py:216
 #: .\Code\Tournaments\WTournament.py:799
-#: .\Code\ZQT\WReplay.py:39
 msgid "Options"
 msgstr ""
 
@@ -1249,7 +1248,7 @@ msgstr ""
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:1797
 #: .\Code\PlayHuman\WPlayHuman.py:31
 #: .\Code\QT\Piezas.py:265
-#: .\Code\Replay\WReplay.py:440
+#: .\Code\Replay\WReplay.py:494
 #: .\Code\Replay\WReplayParams.py:98
 #: .\Code\Resistance\WindowResistance.py:41
 #: .\Code\Swiss\WSwiss.py:68
@@ -1341,7 +1340,7 @@ msgstr ""
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:1798
 #: .\Code\PlayHuman\WPlayHuman.py:34
 #: .\Code\QT\Piezas.py:266
-#: .\Code\Replay\WReplay.py:441
+#: .\Code\Replay\WReplay.py:495
 #: .\Code\Replay\WReplayParams.py:98
 #: .\Code\Resistance\WindowResistance.py:42
 #: .\Code\Swiss\WSwiss.py:69
@@ -1719,12 +1718,11 @@ msgstr ""
 #: .\Code\Board\WBoardColors.py:331
 #: .\Code\Board\WBoardColors.py:352
 #: .\Code\Board\WBoardColors.py:437
-#: .\Code\Config\WindowConfig.py:101
-#: .\Code\Config\WindowConfig.py:110
-#: .\Code\Config\WindowConfig.py:172
-#: .\Code\Config\WindowConfig.py:218
-#: .\Code\Config\WindowConfig.py:256
-#: .\Code\Config\WindowConfig.py:266
+#: .\Code\Config\WindowConfig.py:117
+#: .\Code\Config\WindowConfig.py:179
+#: .\Code\Config\WindowConfig.py:225
+#: .\Code\Config\WindowConfig.py:263
+#: .\Code\Config\WindowConfig.py:273
 #: .\Code\Databases\WDB_Games.py:1198
 #: .\Code\Databases\WDB_Trainings.py:37
 #: .\Code\Databases\WDB_Utils.py:398
@@ -2135,7 +2133,7 @@ msgstr ""
 #: .\Code\Analysis\WindowAnalysisParam.py:265
 #: .\Code\Analysis\WindowAnalysisParam.py:269
 #: .\Code\Board\Board.py:1024
-#: .\Code\Config\WindowConfig.py:166
+#: .\Code\Config\WindowConfig.py:173
 #: .\Code\Endings\WEndingsGTB.py:192
 #: .\Code\Kibitzers\WKibBooks.py:44
 #: .\Code\Kibitzers\WKibDatabases.py:85
@@ -2270,7 +2268,7 @@ msgid "Start from the end of the game"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:321
-#: .\Code\Config\WindowConfig.py:208
+#: .\Code\Config\WindowConfig.py:215
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:101
 msgid "Show graphics"
 msgstr ""
@@ -3046,7 +3044,7 @@ msgid "Open position in ChessTempo"
 msgstr ""
 
 #: .\Code\Board\Board.py:1030
-#: .\Code\ManagerBase\Manager.py:1531
+#: .\Code\ManagerBase\Manager.py:1554
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:142
 msgid "Play current position"
 msgstr ""
@@ -3149,7 +3147,7 @@ msgid "Knight"
 msgstr ""
 
 #: .\Code\Board\BoardArrows.py:114
-#: .\Code\Config\WindowConfig.py:126
+#: .\Code\Config\WindowConfig.py:133
 #: .\Code\Director\TabVisual.py:220
 #: .\Code\Director\WindowTabVArrows.py:24
 #: .\Code\Main\Tareas.py:251
@@ -3198,7 +3196,7 @@ msgstr ""
 
 #: .\Code\Board\BoardSections\BoardVisualMenu.py:59
 #: .\Code\Board\BoardSections\BoardVisualMenu.py:64
-#: .\Code\Config\WindowConfig.py:147
+#: .\Code\Config\WindowConfig.py:154
 #: .\Code\Openings\POLShortcuts.py:123
 #: .\Code\Openings\POLShortcuts.py:124
 #: .\Code\Shortcuts\WShortcuts.py:95
@@ -3398,14 +3396,14 @@ msgstr ""
 
 #: .\Code\Board\WBoardColors.py:461
 #: .\Code\Board\WBoardColors.py:1598
-#: .\Code\Config\WindowConfig.py:221
+#: .\Code\Config\WindowConfig.py:228
 msgid "Font"
 msgstr ""
 
 #: .\Code\Board\WBoardColors.py:471
 #: .\Code\Board\WBoardColors.py:1599
-#: .\Code\Config\WindowConfig.py:227
-#: .\Code\Config\WindowConfig.py:232
+#: .\Code\Config\WindowConfig.py:234
+#: .\Code\Config\WindowConfig.py:239
 msgid "Bold"
 msgstr ""
 
@@ -3613,9 +3611,9 @@ msgid "Discard"
 msgstr ""
 
 #: .\Code\Books\ManagerTrainBooks.py:74
-#: .\Code\Config\Configuration.py:340
-#: .\Code\Config\WindowConfig.py:474
-#: .\Code\Config\WindowConfig.py:478
+#: .\Code\Config\Configuration.py:341
+#: .\Code\Config\WindowConfig.py:481
+#: .\Code\Config\WindowConfig.py:485
 #: .\Code\Databases\WDB_Perfomance.py:367
 #: .\Code\Databases\WDB_Players.py:262
 #: .\Code\Databases\WDB_Players.py:396
@@ -4548,7 +4546,7 @@ msgstr ""
 
 #: .\Code\Competitions\ManagerElo.py:337
 #: .\Code\Competitions\ManagerElo.py:362
-#: .\Code\Config\WindowConfig.py:297
+#: .\Code\Config\WindowConfig.py:304
 #: .\Code\Engines\SelectEngines.py:41
 #: .\Code\Engines\SelectEngines.py:378
 #: .\Code\Engines\WEngines.py:308
@@ -4565,7 +4563,7 @@ msgid "Fics-player"
 msgstr ""
 
 #: .\Code\Competitions\ManagerFideFicsLichess.py:70
-#: .\Code\Config\WindowConfig.py:303
+#: .\Code\Config\WindowConfig.py:310
 #: .\Code\Menus\CompeteMenu.py:57
 #: .\Code\QT\QTDialogs.py:782
 msgid "Fics-Elo"
@@ -4580,7 +4578,7 @@ msgid "Fide-player"
 msgstr ""
 
 #: .\Code\Competitions\ManagerFideFicsLichess.py:80
-#: .\Code\Config\WindowConfig.py:305
+#: .\Code\Config\WindowConfig.py:312
 #: .\Code\Menus\CompeteMenu.py:60
 #: .\Code\QT\QTDialogs.py:834
 msgid "Fide-Elo"
@@ -4595,7 +4593,7 @@ msgid "Lichess-player"
 msgstr ""
 
 #: .\Code\Competitions\ManagerFideFicsLichess.py:90
-#: .\Code\Config\WindowConfig.py:307
+#: .\Code\Config\WindowConfig.py:314
 #: .\Code\Menus\CompeteMenu.py:63
 msgid "Lichess-Elo"
 msgstr ""
@@ -4611,7 +4609,7 @@ msgstr ""
 #: .\Code\Competitions\ManagerMicElo.py:257
 #: .\Code\Competitions\ManagerMicElo.py:365
 #: .\Code\Competitions\ManagerWicker.py:257
-#: .\Code\Config\WindowConfig.py:299
+#: .\Code\Config\WindowConfig.py:306
 #: .\Code\Menus\CompeteMenu.py:25
 msgid "Tourney-Elo"
 msgstr ""
@@ -4621,7 +4619,7 @@ msgid "New Tourney-Elo"
 msgstr ""
 
 #: .\Code\Competitions\ManagerWicker.py:365
-#: .\Code\Config\WindowConfig.py:301
+#: .\Code\Config\WindowConfig.py:308
 #: .\Code\Engines\SelectEngines.py:38
 #: .\Code\Engines\WEngines.py:328
 #: .\Code\Menus\CompeteMenu.py:30
@@ -4638,7 +4636,7 @@ msgid "General configuration"
 msgstr ""
 
 #: .\Code\Config\WindowConfig.py:34
-#: .\Code\Config\WindowConfig.py:474
+#: .\Code\Config\WindowConfig.py:481
 msgid "Player's name"
 msgstr ""
 
@@ -4688,7 +4686,7 @@ msgid "Check for updates at startup"
 msgstr ""
 
 #: .\Code\Config\WindowConfig.py:67
-#: .\Code\Config\WindowConfig.py:220
+#: .\Code\Config\WindowConfig.py:227
 #: .\Code\Menus\OptionsMenu.py:27
 msgid "General"
 msgstr ""
@@ -4748,49 +4746,9 @@ msgstr ""
 msgid "Sounds"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:94
-msgid "Visual effects"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:101
-msgid "Speed"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:110
-msgid "Margin of pieces in square"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:116
-msgid "Show shadow on pieces"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:119
-msgid "Show cursor when engine is thinking"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:120
-msgid "Show ratings (NAGs) on the board"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:122
-#: .\Code\ManagerBase\ManagerMenuVista.py:26
-msgid "Arrow with the best move when there is an analysis"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:127
-msgid "Arrow curved in the case of knight moves"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:128
-msgid "Square Outline"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:129
-msgid "Square Fill"
-msgstr ""
-
-#: .\Code\Config\WindowConfig.py:130
-#: .\Code\Config\WindowConfig.py:184
+#: .\Code\Config\WindowConfig.py:96
+#: .\Code\Config\WindowConfig.py:137
+#: .\Code\Config\WindowConfig.py:191
 #: .\Code\Director\WindowDirector.py:340
 #: .\Code\Engines\WEngines.py:389
 #: .\Code\GM\WindowGM.py:693
@@ -4802,289 +4760,379 @@ msgstr ""
 msgid "None"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:132
-msgid "Move Highlight Style"
+#: .\Code\Config\WindowConfig.py:97
+#: .\Code\Engines\WConfEngines.py:517
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:182
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:246
+msgid "Very fast"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:98
+#: .\Code\Engines\WConfEngines.py:517
+#: .\Code\LearnGame\WindowLearnGame.py:561
+#: .\Code\Main\WBase.py:230
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:181
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:245
+msgid "Fast"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:99
+#: .\Code\Engines\Priorities.py:32
+#: .\Code\Engines\WConfEngines.py:517
+#: .\Code\Menus\TrainMenu.py:69
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:180
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:244
+msgid "Normal"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:100
+#: .\Code\Engines\WConfEngines.py:517
+#: .\Code\LearnGame\WindowLearnGame.py:557
+#: .\Code\Main\WBase.py:225
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:179
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:247
+msgid "Slow"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:101
+#: .\Code\Engines\WConfEngines.py:517
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:178
+#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:248
+msgid "Very slow"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:104
+msgid "Speed at which pieces move"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:108
+msgid "Smooth"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:109
+msgid "Constant speed"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:113
+msgid "Move type"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:117
+msgid "Margin of pieces in square"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:123
+msgid "Show shadow on pieces"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:126
+msgid "Show cursor when engine is thinking"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:127
+msgid "Show ratings (NAGs) on the board"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:129
+#: .\Code\ManagerBase\ManagerMenuVista.py:26
+msgid "Arrow with the best move when there is an analysis"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:134
+msgid "Arrow curved in the case of knight moves"
 msgstr ""
 
 #: .\Code\Config\WindowConfig.py:135
-msgid "Show candidates"
+msgid "Square Outline"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:138
-msgid "Show configuration icon"
+#: .\Code\Config\WindowConfig.py:136
+msgid "Square Fill"
 msgstr ""
 
 #: .\Code\Config\WindowConfig.py:139
+msgid "Move Highlight Style"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:142
+msgid "Show candidates"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:145
+msgid "Show configuration icon"
+msgstr ""
+
+#: .\Code\Config\WindowConfig.py:146
 #: .\Code\Director\WindowTabVMarkers.py:78
 #: .\Code\Director\WindowTabVMarkers.py:79
 msgid "Top"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:139
+#: .\Code\Config\WindowConfig.py:146
 #: .\Code\Director\WindowTabVMarkers.py:80
 #: .\Code\Director\WindowTabVMarkers.py:81
 msgid "Bottom"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:140
+#: .\Code\Config\WindowConfig.py:147
 msgid "Configuration icon position"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:143
-#: .\Code\Config\WindowConfig.py:215
+#: .\Code\Config\WindowConfig.py:150
+#: .\Code\Config\WindowConfig.py:222
 msgid "Boards"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:147
+#: .\Code\Config\WindowConfig.py:154
 #: .\Code\Databases\WDB_Games.py:1217
 #: .\Code\Director\WindowTab.py:111
 msgid "CTRL"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:148
+#: .\Code\Config\WindowConfig.py:155
 msgid "Key for copying the FEN to clipboard"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:151
+#: .\Code\Config\WindowConfig.py:158
 msgid "Backward"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:151
+#: .\Code\Config\WindowConfig.py:158
 msgid "Forward"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:153
-#: .\Code\Config\WindowConfig.py:273
+#: .\Code\Config\WindowConfig.py:160
+#: .\Code\Config\WindowConfig.py:280
 msgid "Scroll direction with the mouse wheel"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:160
+#: .\Code\Config\WindowConfig.py:167
 msgid ""
 "Always promote to queen\n"
 "ALT key allows to change"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:167
+#: .\Code\Config\WindowConfig.py:174
 msgid "Fixed type: you must always indicate origin and destination"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:168
+#: .\Code\Config\WindowConfig.py:175
 msgid "Predictive type: program tries to guess your intention"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:170
+#: .\Code\Config\WindowConfig.py:177
 msgid "Mouse shortcuts"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:172
+#: .\Code\Config\WindowConfig.py:179
 msgid "Show square pressed"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:182
+#: .\Code\Config\WindowConfig.py:189
 msgid "developed by"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:185
+#: .\Code\Config\WindowConfig.py:192
 msgid "Certabo"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:186
+#: .\Code\Config\WindowConfig.py:193
 msgid "Chessnut"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:187
+#: .\Code\Config\WindowConfig.py:194
 msgid "Chessnut Evo"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:188
+#: .\Code\Config\WindowConfig.py:195
 msgid "Chessnut Move"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:189
+#: .\Code\Config\WindowConfig.py:196
 msgid "DGT (Alternative)"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:190
+#: .\Code\Config\WindowConfig.py:197
 msgid "DGT Pegasus"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:191
+#: .\Code\Config\WindowConfig.py:198
 msgid "HOS Sensory"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:192
+#: .\Code\Config\WindowConfig.py:199
 msgid "iChessOne"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:193
+#: .\Code\Config\WindowConfig.py:200
 msgid "Millennium"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:194
+#: .\Code\Config\WindowConfig.py:201
 msgid "Novag Citrine"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:195
+#: .\Code\Config\WindowConfig.py:202
 msgid "Novag UCB"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:196
+#: .\Code\Config\WindowConfig.py:203
 msgid "Saitek"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:197
+#: .\Code\Config\WindowConfig.py:204
 msgid "Square Off Pro"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:198
+#: .\Code\Config\WindowConfig.py:205
 msgid "Tabutronic"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:201
+#: .\Code\Config\WindowConfig.py:208
 msgid "DGT"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:202
+#: .\Code\Config\WindowConfig.py:209
 msgid "Digital board"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:206
+#: .\Code\Config\WindowConfig.py:213
 msgid "Show nothing"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:207
+#: .\Code\Config\WindowConfig.py:214
 msgid "Show icon"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:210
+#: .\Code\Config\WindowConfig.py:217
 msgid "When position has graphic information"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:213
+#: .\Code\Config\WindowConfig.py:220
 #: .\Code\ManagerBase\ManagerMenuConfig.py:83
 msgid "Live graphics with the right mouse button"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:222
-#: .\Code\Config\WindowConfig.py:226
-#: .\Code\Config\WindowConfig.py:231
-#: .\Code\Config\WindowConfig.py:251
-#: .\Code\Config\WindowConfig.py:261
+#: .\Code\Config\WindowConfig.py:229
+#: .\Code\Config\WindowConfig.py:233
+#: .\Code\Config\WindowConfig.py:238
+#: .\Code\Config\WindowConfig.py:258
+#: .\Code\Config\WindowConfig.py:268
 msgid "Font size"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:225
+#: .\Code\Config\WindowConfig.py:232
 msgid "Menus"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:230
+#: .\Code\Config\WindowConfig.py:237
 msgid "Toolbars"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:234
+#: .\Code\Config\WindowConfig.py:241
 msgid "Only display the icon"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:235
+#: .\Code\Config\WindowConfig.py:242
 msgid "Only display the text"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:237
+#: .\Code\Config\WindowConfig.py:244
 msgid "The text appears beside the icon"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:241
+#: .\Code\Config\WindowConfig.py:248
 msgid "The text appears under the icon"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:245
+#: .\Code\Config\WindowConfig.py:252
 msgid "Icons"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:246
+#: .\Code\Config\WindowConfig.py:253
 #: .\Code\Engines\WConfEngines.py:287
 #: .\Code\Engines\WConfEngines.py:288
 #: .\Code\Engines\WConfEngines.py:289
 msgid "Horizontal"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:246
+#: .\Code\Config\WindowConfig.py:253
 #: .\Code\Engines\WConfEngines.py:290
 msgid "Vertical"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:247
+#: .\Code\Config\WindowConfig.py:254
 msgid "Main Toolbar Orientation"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:250
+#: .\Code\Config\WindowConfig.py:257
 msgid "Message windows"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:253
-#: .\Code\Config\WindowConfig.py:293
+#: .\Code\Config\WindowConfig.py:260
+#: .\Code\Config\WindowConfig.py:300
 msgid "Appearance"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:258
+#: .\Code\Config\WindowConfig.py:265
 msgid "PGN table"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:259
+#: .\Code\Config\WindowConfig.py:266
 #: .\Code\QT\GridEditCols.py:46
 msgid "Width"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:260
+#: .\Code\Config\WindowConfig.py:267
 msgid "Height of each row"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:263
+#: .\Code\Config\WindowConfig.py:270
 msgid "PGN always in English"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:264
+#: .\Code\Config\WindowConfig.py:271
 #: .\Code\ManagerBase\ManagerMenuConfig.py:53
 msgid "PGN with figurines"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:266
+#: .\Code\Config\WindowConfig.py:273
 #: .\Code\ManagerBase\ManagerMenuConfig.py:46
 msgid "Algebraic"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:267
+#: .\Code\Config\WindowConfig.py:274
 #: .\Code\ManagerBase\ManagerMenuConfig.py:48
 msgid "Long algebraic"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:268
+#: .\Code\Config\WindowConfig.py:275
 #: .\Code\ManagerBase\ManagerMenuConfig.py:50
 msgid "Descriptive"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:270
+#: .\Code\Config\WindowConfig.py:277
 #: .\Code\ManagerBase\ManagerMenuConfig.py:41
 msgid "Notation Style"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:277
+#: .\Code\Config\WindowConfig.py:284
 msgid "Enable captured material window by default"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:280
+#: .\Code\Config\WindowConfig.py:287
 msgid "Enable information panel by default"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:281
+#: .\Code\Config\WindowConfig.py:288
 msgid "Enable analysis bar by default"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:284
+#: .\Code\Config\WindowConfig.py:291
 msgid "Font size of information labels"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:290
+#: .\Code\Config\WindowConfig.py:297
 #: .\Code\Databases\WDatabase.py:69
 #: .\Code\Databases\WindowDatabase.py:69
 #: .\Code\Leagues\EditPlayers.py:10
@@ -5095,26 +5143,26 @@ msgstr ""
 msgid "Players"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:309
+#: .\Code\Config\WindowConfig.py:316
 msgid "Change elos"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:371
-#: .\Code\Config\WindowConfig.py:382
+#: .\Code\Config\WindowConfig.py:378
+#: .\Code\Config\WindowConfig.py:389
 msgid "Are you sure %s is the correct driver ?"
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:372
-#: .\Code\Config\WindowConfig.py:383
+#: .\Code\Config\WindowConfig.py:379
+#: .\Code\Config\WindowConfig.py:390
 msgid "WARNING: selecting the wrong driver might cause damage to your board."
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:373
-#: .\Code\Config\WindowConfig.py:384
+#: .\Code\Config\WindowConfig.py:380
+#: .\Code\Config\WindowConfig.py:391
 msgid "Proceed at your own risk."
 msgstr ""
 
-#: .\Code\Config\WindowConfig.py:385
+#: .\Code\Config\WindowConfig.py:392
 msgid "Please read the driver's user manual at:"
 msgstr ""
 
@@ -6276,7 +6324,7 @@ msgid "Linear method"
 msgstr ""
 
 #: .\Code\Databases\WDB_Perfomance.py:586
-#: .\Code\ManagerBase\Manager.py:1388
+#: .\Code\ManagerBase\Manager.py:1411
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:422
 #: .\Code\ZQT\WindowSavePGN.py:600
 msgid "It is saved in the clipboard to paste it wherever you want."
@@ -6985,14 +7033,6 @@ msgstr ""
 msgid "Limits of engine thinking"
 msgstr ""
 
-#: .\Code\Engines\Priorities.py:32
-#: .\Code\Engines\WConfEngines.py:517
-#: .\Code\Menus\TrainMenu.py:69
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:180
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:244
-msgid "Normal"
-msgstr ""
-
 #: .\Code\Engines\SelectEngines.py:34
 #: .\Code\Engines\WExternalEngines.py:236
 msgid "Internal engines"
@@ -7134,36 +7174,8 @@ msgid "Engine Refresh Rate"
 msgstr ""
 
 #: .\Code\Engines\WConfEngines.py:517
-#: .\Code\LearnGame\WindowLearnGame.py:557
-#: .\Code\Main\WBase.py:225
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:179
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:247
-msgid "Slow"
-msgstr ""
-
-#: .\Code\Engines\WConfEngines.py:517
-#: .\Code\LearnGame\WindowLearnGame.py:561
-#: .\Code\Main\WBase.py:230
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:181
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:245
-msgid "Fast"
-msgstr ""
-
-#: .\Code\Engines\WConfEngines.py:517
 #: .\Code\PlayAgainstEngine\ManagerPlayAgainstEngine.py:459
 msgid "No limit"
-msgstr ""
-
-#: .\Code\Engines\WConfEngines.py:517
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:178
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:248
-msgid "Very slow"
-msgstr ""
-
-#: .\Code\Engines\WConfEngines.py:517
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:182
-#: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:246
-msgid "Very fast"
 msgstr ""
 
 #: .\Code\Engines\WConfEngines.py:545
@@ -7940,13 +7952,13 @@ msgid "Chess leagues"
 msgstr ""
 
 #: .\Code\Leagues\ManagerLeague.py:687
-#: .\Code\ManagerBase\Manager.py:1448
+#: .\Code\ManagerBase\Manager.py:1471
 #: .\Code\Swiss\ManagerSwiss.py:665
 msgid "%1 wants to resign, do you accept it?"
 msgstr ""
 
 #: .\Code\Leagues\ManagerLeague.py:707
-#: .\Code\ManagerBase\Manager.py:1469
+#: .\Code\ManagerBase\Manager.py:1492
 #: .\Code\Swiss\ManagerSwiss.py:685
 msgid "%1 proposes draw, do you accept it?"
 msgstr ""
@@ -8285,7 +8297,6 @@ msgstr ""
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:114
 #: .\Code\QT\QTDialogs.py:1112
 #: .\Code\Replay\WReplayParams.py:13
-#: .\Code\ZQT\WReplay.py:39
 msgid "Replay game"
 msgstr ""
 
@@ -8585,11 +8596,11 @@ msgstr ""
 msgid "You have not found the solution"
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1424
+#: .\Code\ManagerBase\Manager.py:1447
 msgid "Sorry, but the engine doesn't accept a draw right now."
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1485
+#: .\Code\ManagerBase\Manager.py:1508
 #: .\Code\Openings\ManagerOPLEngines.py:525
 #: .\Code\PlayAgainstEngine\ManagerPlayAgainstEngine.py:674
 #: .\Code\PlayHuman\ManagerPlayHuman.py:204
@@ -8602,11 +8613,11 @@ msgstr ""
 msgid "Consult a book"
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1553
+#: .\Code\ManagerBase\Manager.py:1576
 msgid "Press the continue button to start."
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1803
+#: .\Code\ManagerBase\Manager.py:1826
 msgid "This utility only works in the last position of the game and if it is not finished."
 msgstr ""
 
@@ -9700,7 +9711,6 @@ msgstr ""
 #: .\Code\Menus\OptionsMenu.py:29
 #: .\Code\Replay\WReplayParams.py:57
 #: .\Code\Sound\WindowSonido.py:420
-#: .\Code\ZQT\WReplay.py:57
 msgid "Custom sounds"
 msgstr ""
 
@@ -9728,11 +9738,11 @@ msgstr ""
 msgid "Reset to default"
 msgstr ""
 
-#: .\Code\Menus\OptionsMenu.py:80
+#: .\Code\Menus\OptionsMenu.py:82
 msgid "Be careful please"
 msgstr ""
 
-#: .\Code\Menus\OptionsMenu.py:80
+#: .\Code\Menus\OptionsMenu.py:82
 msgid "Change the folder where all data is saved"
 msgstr ""
 
@@ -12038,13 +12048,11 @@ msgstr ""
 #: .\Code\QT\QTDialogs.py:1115
 #: .\Code\QT\WGif.py:78
 #: .\Code\Replay\WReplayParams.py:45
-#: .\Code\ZQT\WReplay.py:45
 msgid "Number of seconds between moves"
 msgstr ""
 
 #: .\Code\QT\QTDialogs.py:1119
 #: .\Code\Replay\WReplayParams.py:54
-#: .\Code\ZQT\WReplay.py:54
 msgid "Beep after each move"
 msgstr ""
 
@@ -12303,7 +12311,7 @@ msgstr ""
 msgid "Infinite loop"
 msgstr ""
 
-#: .\Code\Replay\WReplay.py:439
+#: .\Code\Replay\WReplay.py:493
 #: .\Code\ZQT\WindowJuicio.py:155
 msgid "Both"
 msgstr ""
@@ -12313,22 +12321,18 @@ msgid "Transparency"
 msgstr ""
 
 #: .\Code\Replay\WReplayParams.py:48
-#: .\Code\ZQT\WReplay.py:48
 msgid "Start from first move"
 msgstr ""
 
 #: .\Code\Replay\WReplayParams.py:51
-#: .\Code\ZQT\WReplay.py:51
 msgid "Show PGN"
 msgstr ""
 
 #: .\Code\Replay\WReplayParams.py:60
-#: .\Code\ZQT\WReplay.py:60
 msgid "Seconds before first move"
 msgstr ""
 
 #: .\Code\Replay\WReplayParams.py:64
-#: .\Code\ZQT\WReplay.py:65
 msgid "Replay of the current and following games"
 msgstr ""
 

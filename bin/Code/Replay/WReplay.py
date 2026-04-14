@@ -182,16 +182,17 @@ class ParamsReplay:
 
 
 class Replay:
+
     seconds: float
     seconds_before: float
     if_beep: bool
     if_custom_sounds: bool
     with_pgn: bool
-    ghost_level: float
+    ghost_level: float  # （0-1）
     dic_ghost_pieces: dict
     board_create_piece: object
 
-    def __init__(self, manager, next_game=None):
+    def __init__(self, manager, next_game=None, space_number=None):
         self.params = ParamsReplay()
         dic_var = self.params.dic_data
         self.manager = manager
@@ -200,10 +201,10 @@ class Replay:
         self.starts_with_black = manager.game.starts_with_black
         self.board = manager.board
         self.space_layer = None
+        self.space_number = None
         self.relee_params(dic_var)
         self.rapidez = 1.0
         self.next_game = next_game
-        self.if_start = True
 
         self.previous_visible_capturas = self.main_window.siCapturas
         self.previous_visible_information = self.main_window.siInformacionPGN
@@ -232,6 +233,9 @@ class Replay:
         self.li_moves = self.manager.game.li_moves
         self.current_position = 0 if self.if_start else self.jugInicial
         self.initial_position = self.current_position
+        self._initial_waited = self.seconds_before <= 0.0
+        self._skip_id = 0
+        self._active_animations = []
 
         self.stopped = False
 
@@ -240,6 +244,9 @@ class Replay:
         self.board.do_pressed_number = self._do_pressed_number
 
         self.show_information()
+        
+        if space_number is not None:
+            self._do_pressed_number(True, space_number)
 
         if self.seconds_before > 0.0:
             if self.li_moves:
@@ -247,6 +254,7 @@ class Replay:
                 self.board.set_position(move.position_before)
                 if not self.sleep_refresh(self.seconds_before):
                     return
+                self._initial_waited = True
 
         self.show_current()
 
@@ -307,7 +315,7 @@ class Replay:
             QTUtils.refresh_gui()
             if self.stopped:
                 return False
-            time.sleep(0.01)
+            QTUtils.delay(10)
         return True
 
     def show_information(self):
@@ -334,19 +342,25 @@ class Replay:
         if self.current_position > self.initial_position:
             if not self.sleep_refresh(self.seconds / self.rapidez):
                 return
+        elif not self._initial_waited:
+            if not self.sleep_refresh(self.seconds_before):
+                return
+            self._initial_waited = True
         li_movs = [("b", move.to_sq), ("m", move.from_sq, move.to_sq)]
         if move.position.li_extras:
             li_movs.extend(move.position.li_extras)
         self.move_the_pieces(li_movs)
 
-        QtCore.QTimer.singleShot(10, self.skip)
+        self._skip_id += 1
+        skip_id = self._skip_id
+        QtCore.QTimer.singleShot(0, lambda skip_id=skip_id: self.skip(skip_id))
 
     def move_the_pieces(self, li_movs):
         if self.stopped:
             return
-        cpu = self.procesador.cpu
-        cpu.reset()
-        secs = None
+        self.procesador.cpu.stop()
+
+        rapidez_conf = Code.configuration.pieces_speed_porc()
 
         move = self.li_moves[self.current_position]
         num = self.current_position
@@ -357,33 +371,66 @@ class Replay:
         self.main_window.place_on_pgn_table(row, move.position_before.is_white)
         self.main_window.base.pgn_refresh()
 
-        # primero los movimientos
+        secs = None
+        animations = []
         for movim in li_movs:
             if movim[0] == "m":
                 from_sq, to_sq = movim[1], movim[2]
                 if secs is None:
                     dc = ord(from_sq[0]) - ord(to_sq[0])
                     df = int(from_sq[1]) - int(to_sq[1])
-                    # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
                     dist = (dc ** 2 + df ** 2) ** 0.5
                     rp = self.rapidez if self.rapidez > 1.0 else 1.0
-                    secs = 4.0 * dist / (9.9 * rp)
-                cpu.move_piece(from_sq, to_sq, secs)
-        # return
-        if secs is None:
-            secs = 1.0
+                    secs = max(0.25, 4.0 * dist / (9.9 * rp * rapidez_conf))
+                pieza_sc = self.board.get_piece_at(from_sq)
+                if pieza_sc is None:
+                    continue
+                start_pos = pieza_sc.pos()
+                end_x = self.board.columna2punto(ord(to_sq[0]) - 96)
+                end_y = self.board.fila2punto(int(to_sq[1]))
+                animation = QtCore.QVariantAnimation(self.main_window)
+                animation.setDuration(int(secs * 1000))
+                animation.setStartValue(start_pos)
+                animation.setEndValue(QtCore.QPointF(end_x, end_y))
+                animation.setEasingCurve(Code.configuration.pieces_move_qtype())
+                animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
+                animations.append(animation)
 
-        # segundo los borrados
+        if secs is None:
+            secs = 0.5
+
+        if animations:
+            loop = QtCore.QEventLoop()
+            remaining = len(animations)
+
+            def on_finished():
+                nonlocal remaining
+                remaining -= 1
+                if remaining <= 0:
+                    loop.quit()
+
+            self._active_animations = animations
+            for animation in animations:
+                animation.finished.connect(on_finished)
+                animation.start()
+
+            loop.exec()
+            self._active_animations = []
+
+        if self.stopped:
+            return
+
         for movim in li_movs:
             if movim[0] == "b":
-                cpu.remove_piece_in_seconds(movim[1], secs)
+                self.board.remove_piece(movim[1])
 
-        # tercero los cambios
+        if self.stopped:
+            return
+
         for movim in li_movs:
             if movim[0] == "c":
-                cpu.change_piece(movim[1], movim[2], is_exclusive=True)
+                self.board.change_piece(movim[1], movim[2])
 
-        cpu.run_linear()
         if self.stopped:
             return
 
@@ -393,15 +440,20 @@ class Replay:
         if wait_seconds == 0.0 and self.if_beep:
             Code.runSound.play_beep()
 
+        if self.stopped:
+            return
         self.manager.put_arrow_sc(move.from_sq, move.to_sq)
 
         self.board.set_position(move.position)
 
-        # Actualiza overlay de espacio controlado si está activo (sin temblor)
         if self.space_number is not None:
             self._update_space_control()
+        if self.stopped:
+            return
 
         self.manager.put_view()
+        if self.stopped:
+            return
         if wait_seconds:
             self.sleep_refresh(wait_seconds / 1000 + 0.2)
 
@@ -428,9 +480,11 @@ class Replay:
 
         elif key == TB_SETTINGS:
             self.pausa()
+            space_number = self.space_number
             if self.params.edit(self.main_window, False):
                 self.relee_params(self.params.dic_data)
                 self.show_information()
+            self.space_number = space_number
         elif key == TB_SPACE:
             self.space()
 
@@ -477,7 +531,7 @@ class Replay:
         if self.space_layer is not None:
             self.space_layer.remove()
             self.space_layer = None
-        self.space_number = None
+            self.space_number = None
         self.board.do_pressed_number = self._prev_do_pressed_number
 
         if self.ghost_level > 0.0:
@@ -488,6 +542,12 @@ class Replay:
         self.main_window.pon_toolbar(self.antAcciones)
         self.manager.set_routine_default(None)
         self.manager.xpelicula = None
+        for animation in self._active_animations:
+            try:
+                animation.stop()
+            except Exception:
+                pass
+        self._active_animations = []
         if self.previous_visible_capturas:
             self.main_window.siCapturas = True
         if not self.with_pgn:
@@ -512,13 +572,16 @@ class Replay:
         self.show_current()
 
     def repetir(self):
-        self.current_position = 0 if self.if_start else self.jugInicial
-        self.show_pause(True, False)
-        if self.stopped:
-            self.stopped = False
-            self.show_current()
+        if not self.li_moves:
+            return
+        self._skip_id += 1
+        space_number = self.space_number
+        self.finalize()
+        self.manager.xpelicula = Replay(self.manager, next_game=self.next_game, space_number=space_number)
 
-    def skip(self):
+    def skip(self, skip_id=None):
+        if skip_id is not None and skip_id != self._skip_id:
+            return
         if self.stopped:
             return
         self.current_position += 1

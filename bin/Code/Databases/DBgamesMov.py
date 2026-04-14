@@ -135,6 +135,7 @@ class DBgamesMov:
         sql = "SELECT DATA FROM POSITIONS WHERE FEN64=?;"
         cursor = conexion.execute(sql, (fen64,))
         row = cursor.fetchone()
+        cursor.close()
         conexion.close()
         if row is None:
             if fen64 in self.dic_fen64_sequences:
@@ -149,7 +150,8 @@ class DBgamesMov:
         li = data[1:].split("|")
         if self.dic_fen64_sequences.get(fen64):
             li.extend(self.dic_fen64_sequences.get(fen64))
-        return li, []
+        st = set(li)
+        return list(st), []
 
     def create(self):
         conexion = self.conexion()

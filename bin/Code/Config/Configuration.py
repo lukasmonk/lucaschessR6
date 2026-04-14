@@ -2,7 +2,7 @@ import os.path
 import pickle
 from datetime import date
 
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 from PySide6.QtCore import Qt
 
 import Code
@@ -104,6 +104,7 @@ class Configuration:
 
         self.x_show_effects = False
         self.x_pieces_speed = 100
+        self.x_pieces_move = "InOutQuad"
         self.x_save_tutor_variations = True
 
         self.x_mouse_shortcuts = False
@@ -357,6 +358,18 @@ class Configuration:
     def pieces_speed_porc(self):
         sp = min(self.x_pieces_speed, 300)
         return sp / 100.0
+
+    def pieces_move_qtype(self):
+        qtype = QtCore.QEasingCurve.Type.InOutQuad
+        if self.x_pieces_move == "InOutQuad":
+            qtype = QtCore.QEasingCurve.Type.InOutQuad
+        # elif self.x_pieces_move == "InOutSine":
+        #     qtype = QtCore.QEasingCurve.Type.InOutSine
+        # elif self.x_pieces_move == "InOutCubic":
+        #     qtype = QtCore.QEasingCurve.Type.InOutCubic
+        elif self.x_pieces_move == "Linear":
+            qtype = QtCore.QEasingCurve.Type.Linear
+        return qtype
 
     def set_player(self, value):
         self.x_player = value
@@ -695,3 +708,15 @@ class Configuration:
 
     def wheel_pgn(self, forward):
         return forward if self.x_wheel_pgn != GO_FORWARD else not forward
+
+    def needs_reinit(self, dic_previo: dict) -> bool:
+        dic_current = self.read_dic_x()
+        st_needs_reinit = {"x_style", "x_digital_board", "x_font_family", "x_margin_pieces", "x_opacity_tool_board",
+                           "x_position_tool_board", "x_shadows_board", "x_style_icons", "x_style_mode"
+                           }
+        for x, value in dic_previo.items():
+            if dic_current[x] != value:
+                if x in st_needs_reinit:
+                    return True
+        return False
+

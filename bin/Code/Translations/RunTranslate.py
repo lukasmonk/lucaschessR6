@@ -45,6 +45,13 @@ class WTranslate(LCDialog.LCDialog):
         extparam = "translation"
         LCDialog.LCDialog.__init__(self, None, titulo, icono, extparam)
 
+        self.setWindowFlags(
+            QtCore.Qt.WindowType.Dialog
+            | QtCore.Qt.WindowType.WindowTitleHint
+            | QtCore.Qt.WindowType.WindowMinimizeButtonHint
+            | QtCore.Qt.WindowType.WindowCloseButtonHint
+        )
+
         self.configuration = Code.configuration
 
         self.automatic_reorder = self.get_param(self.AUTOMATIC_REORDER, True)
