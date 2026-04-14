@@ -337,7 +337,8 @@ def menu_select_language(owner):
 
     menu = QTDialogs.LCMenuRondo(owner)
     menu.set_font_type(Code.font_mono, puntos=10, peso=700)
-    menu.opcion(lng_default, name_default)
+    icon = Iconos.AceptarPeque() if lng_current == lng_default else None
+    menu.opcion(lng_default, name_default, icon)
     menu.separador()
 
     for k, name, porc, author, others in li:

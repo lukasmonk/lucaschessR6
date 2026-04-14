@@ -56,9 +56,11 @@ class OptionsMenu(BaseMenu.RootMenu):
             self.reiniciar()
 
     def cambiaconfiguration(self):
+        dic_previo = Code.configuration.read_dic_x()
         if WindowConfig.options(self.wparent, Code.configuration):
             Code.configuration.graba()
-            self.reiniciar()
+            if Code.configuration.needs_reinit(dic_previo):
+                self.reiniciar()
 
     def edit_board_colors(self):
         w = WBoardColors.WBoardColors(self.procesador.board)

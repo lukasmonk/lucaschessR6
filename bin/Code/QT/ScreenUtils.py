@@ -208,9 +208,11 @@ class MaintainGeometry:
 def shrink(widget: QtWidgets.QWidget):
     # if widget.layout():
     #     widget.layout().invalidate()
-    widget.layout().activate()  # fuerza recálculo del layout
-    widget.adjustSize()
+    def sh():
+        widget.layout().activate()  # fuerza recálculo del layout
+        widget.adjustSize()
     # widget.resize(widget.minimumSizeHint())
+    QTUtils.deferred_call(0, sh)
 
 
 class EstadoWindow:

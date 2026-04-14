@@ -2,6 +2,8 @@ import collections
 import random
 import time
 
+from PySide6 import QtCore
+
 import FasterCode
 
 import Code
@@ -445,36 +447,57 @@ class Manager:
                 return
 
             rapidez = self.configuration.pieces_speed_porc()
-            cpu = self.procesador.cpu
-            cpu.reset()
-            seconds = None
+            animations = []
+            secs = None
 
             # primero los movimientos
             for movim in li_moves:
                 if movim[0] == "m":
-                    if seconds is None:
-                        from_sq, to_sq = movim[1], movim[2]
+                    from_sq, to_sq = movim[1], movim[2]
+                    if secs is None:
                         dc = ord(from_sq[0]) - ord(to_sq[0])
                         df = int(from_sq[1]) - int(to_sq[1])
                         # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
                         dist = (dc**2 + df**2) ** 0.5
-                        seconds = 8.0 * dist / (9.9 * rapidez)
-                    cpu.move_piece(movim[1], movim[2], seconds)
+                        secs = max(0.25, 4.0 * dist / (9.9 * rapidez))
+                    pieza_sc = self.board.get_piece_at(from_sq)
+                    if pieza_sc:
+                        start_pos = pieza_sc.pos()
+                        end_x = self.board.columna2punto(ord(to_sq[0]) - 96)
+                        end_y = self.board.fila2punto(int(to_sq[1]))
+                        animation = QtCore.QVariantAnimation(self.main_window)
+                        animation.setDuration(int(secs * 1000))
+                        animation.setStartValue(start_pos)
+                        animation.setEndValue(QtCore.QPointF(end_x, end_y))
+                        animation.setEasingCurve(Code.configuration.pieces_move_qtype())
+                        animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
+                        animations.append(animation)
 
-            if seconds is None:
-                seconds = 1.0
+            if animations:
+                loop = QtCore.QEventLoop()
+                remaining = len(animations)
+
+                def on_finished():
+                    nonlocal remaining
+                    remaining -= 1
+                    if remaining <= 0:
+                        loop.quit()
+
+                for animation in animations:
+                    animation.finished.connect(on_finished)
+                    animation.start()
+
+                loop.exec()
 
             # segundo los borrados
             for movim in li_moves:
                 if movim[0] == "b":
-                    cpu.remove_piece_in_seconds(movim[1], seconds)
+                    self.board.remove_piece(movim[1])
 
             # tercero los cambios
             for movim in li_moves:
                 if movim[0] == "c":
-                    cpu.change_piece(movim[1], movim[2], is_exclusive=True)
-
-            cpu.run_linear()
+                    self.board.change_piece(movim[1], movim[2])
 
         else:
             for movim in li_moves:

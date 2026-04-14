@@ -144,7 +144,6 @@ class WImportPGN(LCDialog.LCDialog):
         self.gb_remove = gb = QtWidgets.QGroupBox("3. " + _("Remove elements"))
         gb.setCheckable(True)
         gb.setChecked(False)
-        # Code.configuration.set_property(gb, "1")
         gb.toggled.connect(self._on_remove_toggled)
 
         ly = Colocacion.V().margen(10)
@@ -193,6 +192,7 @@ class WImportPGN(LCDialog.LCDialog):
 
     def _on_remove_toggled(self, checked):
         """Maneja el toggle del groupbox de removal."""
+        self.chb_all.setVisible(checked)
         for chb in self.li_chbs:
             chb.setVisible(checked)
         self.ed_other.setVisible(checked)

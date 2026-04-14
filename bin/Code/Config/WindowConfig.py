@@ -91,19 +91,26 @@ def options(parent, configuration):
 
     # Boards #########################################################################################################
     form.separador()
-    form.checkbox(_("Visual effects"), configuration.x_show_effects)
 
-    drap = {1: 100, 2: 125, 3: 150, 4: 175, 5: 200, 6: 225, 7: 250, 8: 275, 9: 300}
-    drap_v = {}
-    for x in drap:
-        drap_v[drap[x]] = x
-    form.slider(
-        f"{_('Speed')}:<br><small>{_('By default')}=1",
-        1,
-        len(drap),
-        drap_v.get(configuration.x_pieces_speed, 100),
-        siporc=False,
+    li_combo_speed = (
+        (_("None"), 0),
+        (_("Very fast"), 300),
+        (_("Fast"), 200),
+        (_("Normal"), 100),
+        (_("Slow"), 50),
+        (_("Very slow"), 10),
     )
+    value = configuration.x_pieces_speed if configuration.x_show_effects else 0
+    form.combobox(_("Speed at which pieces move"), li_combo_speed, value)
+
+    str_move = configuration.x_pieces_move
+    li_combo_type = (
+        (_("Smooth"), "InOutQuad"),
+        (_("Constant speed"), "Linear"),
+        # (_("Soft curve"), "InOutCubic"),
+        # (_("Natural wave"), "InOutSine")
+    )
+    form.combobox(_("Move type"), li_combo_type, str_move)
     form.separador()
 
     form.slider(
@@ -333,8 +340,8 @@ def options(parent, configuration):
 
         # Board 1 ###################################################################################################
         (
-            configuration.x_show_effects,
-            rapidezMovPiezas,
+            configuration.x_pieces_speed,
+            configuration.x_pieces_move,
             configuration.x_margin_pieces,
             configuration.x_shadows_board,
             configuration.x_cursor_thinking,
@@ -346,7 +353,7 @@ def options(parent, configuration):
             configuration.x_position_tool_board,
         ) = li_b1
         configuration.x_opacity_tool_board = 10 if toolIcon else 1
-        configuration.x_pieces_speed = drap[rapidezMovPiezas]
+        configuration.x_show_effects = configuration.x_pieces_speed > 0
 
         # Board 2 ###################################################################################################
 
@@ -365,26 +372,26 @@ def options(parent, configuration):
             if dboard:
                 if dboard == "DGT":
                     if not QTMessages.pregunta(
-                        parent,
-                        "%s<br><br>%s %s"
-                        % (
-                            _("Are you sure %s is the correct driver ?") % dboard,
-                            _("WARNING: selecting the wrong driver might cause damage to your board."),
-                            _("Proceed at your own risk."),
-                        ),
+                            parent,
+                            "%s<br><br>%s %s"
+                            % (
+                                    _("Are you sure %s is the correct driver ?") % dboard,
+                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
+                                    _("Proceed at your own risk."),
+                            ),
                     ):
                         dboard = ""
                 else:
                     if not QTMessages.pregunta(
-                        parent,
-                        "%s<br><br>%s %s<br><br>%s<br>%s"
-                        % (
-                            _("Are you sure %s is the correct driver ?") % dboard,
-                            _("WARNING: selecting the wrong driver might cause damage to your board."),
-                            _("Proceed at your own risk."),
-                            _("Please read the driver's user manual at:"),
-                            '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
-                        ),
+                            parent,
+                            "%s<br><br>%s %s<br><br>%s<br>%s"
+                            % (
+                                    _("Are you sure %s is the correct driver ?") % dboard,
+                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
+                                    _("Proceed at your own risk."),
+                                    _("Please read the driver's user manual at:"),
+                                    '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
+                            ),
                     ):
                         dboard = ""
             configuration.x_digital_board = dboard

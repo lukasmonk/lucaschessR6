@@ -3,14 +3,16 @@ import collections
 import FasterCode
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
+from Code.Base.Constantes import FENM2_INITIAL
 from Code.Translations import TrListas
+from Code.Z import Util
 
 # ---------------------------------------------------------------------------
 # Piece-letter set used by tr_pgn (pre-computed at module level)
 # ---------------------------------------------------------------------------
 _PIECE_LETTERS = frozenset("KQRBNPkqrbnp")
+fen_fenm2 = FasterCode.fen_fenm2
 
 
 class Opening:
@@ -84,8 +86,6 @@ class ListaOpeningsStd:
         dic_fenm2_op_all: collections.defaultdict = collections.defaultdict(set)
         st_fenm2_test: set = set()
 
-        INITIAL_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -"
-
         with open(path, "rt", encoding="utf-8") as fh:
             for linea in fh:
                 fields = linea.rstrip("\n").split("|")
@@ -108,7 +108,7 @@ class ListaOpeningsStd:
                 li_pv = a1h8.split(" ")
                 li_fenm2 = lfenm2.split(",")
                 for x, _ in enumerate(li_pv):
-                    fm2_x = INITIAL_FEN if x == 0 else li_fenm2[x - 1]
+                    fm2_x = FENM2_INITIAL if x == 0 else li_fenm2[x - 1]
                     dic_fenm2_op_all[fm2_x].add(op)
                     st_fenm2_test.add(fm2_x)
 
@@ -122,14 +122,15 @@ class ListaOpeningsStd:
 
         with open(path, "rt", encoding="utf-8") as fh:
             for linea in fh:
-                fields = linea.rstrip("\n").split("|")
+                fields = linea.strip().split("|")
                 _name, a1h8, _pgn, _eco, _basic, _fenm2, _hijos, _parent, lfenm2 = fields
 
-                li_fen = lfenm2.split(",")
-                li_moves = a1h8.split(" ")
+                li_fen = [FENM2_INITIAL]
+                li_fen.extend(lfenm2.split(","))
 
+                li_moves = a1h8.split(" ")
                 for pos, move in enumerate(li_moves):
-                    pv = " ".join(li_moves[: pos + 1])
+                    pv = " ".join(li_moves[: pos])
                     fen64 = Util.fen_fen64(li_fen[pos])
                     if pv not in dd[fen64]:
                         dd[fen64].append(pv)
@@ -207,26 +208,28 @@ class ListaOpeningsStd:
     # ------------------------------------------------------------------
     # Possible-openings query
     # ------------------------------------------------------------------
-
     def list_possible_openings(self, game) -> list:
         """Return openings reachable from *game*'s current position, sorted."""
         fm2 = game.last_position.fenm2()
-        if fm2 not in self.dic_fenm2_op_all:
+
+        if not (all_openings := self.dic_fenm2_op_all.get(fm2)):
             return []
 
-        op_select = self.dic_fenm2_op.get(fm2)
-        li_openings = [op for op in self.dic_fenm2_op_all[fm2] if op != op_select]
+        selected = self.dic_fenm2_op.get(fm2)
+        candidates = sorted(
+            (op for op in all_openings if op != selected),
+            key=lambda op: op.a1h8,
+        )
 
-        # Remove openings whose a1h8 is a prefix of another (keep the longer ones)
-        li_openings.sort(key=lambda xop: xop.a1h8)
+        # Drop openings whose a1h8 is a prefix of a subsequent one (keep the longer)
         deduped = []
-        last_a1h8 = ""
-        for op in li_openings:
-            if not op.a1h8.startswith(last_a1h8):
+        last_a1h8 = None
+        for op in candidates:
+            if last_a1h8 is None or not op.a1h8.startswith(last_a1h8):
                 last_a1h8 = op.a1h8
                 deduped.append(op)
 
-        deduped.sort(key=lambda xop: ("A" if xop.is_basic else "B") + xop.tr_name.upper())
+        deduped.sort(key=lambda op: ("A" if op.is_basic else "B") + op.tr_name.upper())
         return deduped
 
     # ------------------------------------------------------------------
