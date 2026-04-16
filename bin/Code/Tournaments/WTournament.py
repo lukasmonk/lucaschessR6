@@ -558,6 +558,7 @@ class WTournament(LCDialog.LCDialog):
         self.li_data_current_engine.append(("ELO", me.elo))
         self.li_data_current_engine.append((_("Max depth"), me.depth))
         self.li_data_current_engine.append((_("Maximum seconds to think"), me.time))
+        self.li_data_current_engine.append((_("Fixed nodes"), me.nodes))
         pbook = me.book
         if pbook in ("-", None):
             pbook = f"<{_('None')}>"

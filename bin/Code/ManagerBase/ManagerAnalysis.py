@@ -160,7 +160,7 @@ class ManagerAnalysis:
 
     def show_analysis(self):
         with QTMessages.one_moment_please(self.main_window):
-            self.manager.game.assign_isbook_phases()
+            self.manager.game.assign_phases()
             elos = self.manager.game.calc_elos()
             alm = Histogram.gen_histograms(self.manager.game)
             (

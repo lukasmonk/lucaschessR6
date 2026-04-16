@@ -556,6 +556,8 @@ class Move:
 
     @property
     def phase(self):
+        if self._phase == PHASE_NODEFINED:
+            self._phase = self.position_before.phase()
         return self._phase
 
     def __eq__(self, other: "Move") -> bool:

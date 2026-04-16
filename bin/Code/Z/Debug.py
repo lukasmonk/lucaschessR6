@@ -9,7 +9,7 @@ import inspect
 from Code.Z import Util
 
 DEBUG_ENGINES = False
-DEBUG_ENGINES_SEND = False
+DEBUG_ENGINES_SEND = True
 COLORS = {
     "red": "\033[91m",
     "green": "\033[92m",

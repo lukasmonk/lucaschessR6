@@ -102,7 +102,8 @@ class WInfomove(QtWidgets.QWidget):
         self.with_figurines = configuration.x_pgn_withfigurines
 
         self.lb_opening = Controles.LB(self).align_center().relative_width(self.board.ancho).set_wrap()
-        self.lb_opening.set_font_type(puntos=10, peso=200)
+        font = Controles.FontTypeNew(point_size_delta=-1, bold=True)
+        self.lb_opening.set_font(font)
         ly_o = Colocacion.H().relleno().control(self.lb_opening).relleno()
 
         lya = Colocacion.H().relleno().control(scroll).relleno()

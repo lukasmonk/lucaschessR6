@@ -242,6 +242,7 @@ def _form_mates(analysis_params):
     return [
         SEPARADOR,
         (f"{_('Save all mates detected with the name')}:", mates_saved_name),
+        (None, f"📚️ {_('Train')}/{_('Tactics')}/{_('Training positions')}/{_('Personal Training')}"),
         SEPARADOR,
         (f"{_('Keep settings')}:", analysis_params.mates_keep_settings)
     ]
@@ -477,8 +478,8 @@ def analysis_parameters(parent, extended_mode, all_engines, multiple_selected, i
             (li_var, _("Variations"), ""),
             (li_blunders, _("Wrong moves"), ""),
             (li_brilliancies, _("Brilliancies"), ""),
-            (li_themes, _("Tactical themes"), ""),
             (li_mates, _X(_("Mate in %1"), "?"), ""),
+            (li_themes, _("Tactical themes"), ""),
         ]
     else:
         lista = li_engine
@@ -502,7 +503,7 @@ def analysis_parameters(parent, extended_mode, all_engines, multiple_selected, i
         accion, li_resp = resultado
 
         if extended_mode:
-            li_gen, li_engine, li_var, li_blunders, li_brilliancies, li_themes, li_mates = li_resp
+            li_gen, li_engine, li_var, li_blunders, li_brilliancies, li_mates, li_themes = li_resp
             _apply_general_params(analysis_params, li_gen)
             _apply_variation_params(analysis_params, li_var)
             _apply_blunders_params(analysis_params, li_blunders)
@@ -534,8 +535,8 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
         (li_var, _("Variations"), ""),
         (li_blunders, _("Wrong moves"), ""),
         (li_brilliancies, _("Brilliancies"), ""),
-        (li_themes, _("Tactical themes"), ""),
         (li_mates, _X(_("Mate in %1"), "?"), ""),
+        (li_themes, _("Tactical themes"), ""),
     ]
 
     li_extra_options = [(_("Configuration"), Iconos.ConfAnalysis(), _create_analysis_config_option())]
@@ -553,15 +554,15 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
     if resultado:
         accion, li_resp = resultado
 
-        li_gen, li_engine, li_var, li_blunders, li_brilliancies, li_themes, li_mates = li_resp
+        li_gen, li_engine, li_var, li_blunders, li_brilliancies, li_mates, li_themes = li_resp
 
         _apply_general_params(analysis_params, li_gen, multiple_selected)
         _apply_engine_params(analysis_params, li_engine)
         _apply_variation_params(analysis_params, li_var)
         _apply_blunders_params(analysis_params, li_blunders)
         _apply_brilliancies_params(analysis_params, li_brilliancies)
-        _apply_themes_params(analysis_params, li_themes)
         _apply_mates_params(analysis_params, li_mates)
+        _apply_themes_params(analysis_params, li_themes)
 
         _save_analysis_params(analysis_params)
 

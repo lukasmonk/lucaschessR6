@@ -15,10 +15,6 @@ from Code.Base.Constantes import (
     OPENING,
     MIDDLEGAME,
     ENDGAME,
-    PHASE_KNIGHT,
-    PHASE_BISHOP,
-    PHASE_ROOK,
-    PHASE_QUEEN,
     NOTATION_LONGALGEBRAIC,
     NOTATION_ALGEBRAIC,
 )
@@ -780,30 +776,44 @@ class Position:
     def phase(self):
         """
         Estimate the game phase (opening, middlegame, endgame) from remaining pieces.
+        24 - 20  Opening      Most minor and major pieces are still on the board.
+        19 - 10  Middlegame   Several exchanges have occurred.
+        9 - 1    Endgame      Few pieces remain; kings become active.
+        0        Pure ending  Only pawns and kings (or insufficient material).
         """
-        dic_pieces = self.dic_pieces()
 
-        def calc_piece(pz_lower: str):
-            return dic_pieces.get(pz_lower, 0) + dic_pieces.get(pz_lower.upper(), 0)
+        piece_values = {'N': 1, 'B': 1, 'R': 2, 'Q': 4, 'n': 1, 'b': 1, 'r': 2, 'q': 4}
+        squares = self.squares
 
-        phase_value = (
-            calc_piece("n") * PHASE_KNIGHT
-            + calc_piece("b") * PHASE_BISHOP
-            + calc_piece("r") * PHASE_ROOK
-            + calc_piece("q") * PHASE_QUEEN
-        )
+        npm = sum(piece_values.get(piece, 0) for piece in squares.values())
 
-        # 24 - 20  Opening      Most minor and major pieces are still on the board.
-        # 19 - 10  Middlegame   Several exchanges have occurred.
-        # 9 - 1    Endgame      Few pieces remain; kings become active.
-        # 0        Pure ending  Only pawns and kings (or insufficient material).
-
-        if phase_value > 20:
-            return OPENING
-        elif phase_value > 10:
-            return MIDDLEGAME
-        else:
+        if npm < 10:
             return ENDGAME
+
+        white_developed = 0
+        for sq in ['b1', 'c1', 'f1', 'g1']:
+            if squares.get(sq, "x") not in "NB":
+                white_developed += 1
+
+        black_developed = 0
+        for sq in ['b8', 'c8', 'f8', 'g8']:
+            if squares.get(sq, "x") not in "nb":
+                black_developed += 1
+        if white_developed >= 3 and black_developed >= 3:
+            return MIDDLEGAME
+
+        # ¿Están las torres conectadas? (No hay piezas entre ellas en la fila 1 u 8)
+        white_rooks_connected = "K" not in self.castles and "Q" not in self.castles and white_developed == 4
+        if white_rooks_connected:
+            return MIDDLEGAME
+        black_rooks_connected = "k" not in self.castles and "q" not in self.castles and black_developed == 4
+        if black_rooks_connected:
+            return MIDDLEGAME
+
+        if npm >= 20:
+            return OPENING
+
+        return MIDDLEGAME
 
 
 def distancia(from_sq, to_sq):

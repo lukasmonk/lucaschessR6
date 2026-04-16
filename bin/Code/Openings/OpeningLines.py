@@ -1,14 +1,17 @@
 import collections
+import contextlib
 import datetime
+import gc
 import os
 import random
 import shutil
 import sqlite3
+import time
+from pathlib import Path
 
 import FasterCode
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import ALL_VARIATIONS, WHITE
 from Code.Databases import DBgames, DBgamesST
@@ -16,6 +19,7 @@ from Code.Engines import EnginesBunch
 from Code.Openings import OpeningsStd
 from Code.QT import QTMessages
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class ItemTree:
@@ -121,7 +125,7 @@ class ItemTree:
 
 
 class ListaOpenings:
-    def __init__(self):
+    def __init__(self, with_test_dates):
         self.folder = Code.configuration.paths.folder_openings()
         if not self.folder or not os.path.isdir(self.folder):
             self.folder = Code.configuration.paths.folder_base_openings()
@@ -133,7 +137,8 @@ class ListaOpenings:
             self.lista = self.read()  # file, lines, title, pv
             self.save()
         else:
-            self.testdates()
+            if with_test_dates:
+                self.testdates()
 
     def testdates(self):
         index_date = Util.datefile(self.file)
@@ -145,9 +150,8 @@ class ListaOpenings:
                 self.reiniciar()
                 break
             if file_date > index_date:
-                op = Opening(pathfile)
-                self.lista[pos]["lines"] = len(op)
-                op.close()
+                with opening_context(pathfile) as op:
+                    self.lista[pos]["lines"] = len(op)
                 self.save()
 
     def reiniciar(self):
@@ -163,7 +167,24 @@ class ListaOpenings:
     def __delitem__(self, item):
         dicline = self.lista[item]
         del self.lista[item]
-        os.remove(Util.opj(self.folder, dicline["file"]))
+        filepath = Util.opj(self.folder, dicline["file"])
+        
+        # Retry logic to handle file locks in Windows
+        max_retries = 5
+        retry_delay = 0.1  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                gc.collect()  # Force garbage collection before attempting to remove
+                os.remove(filepath)
+                break  # Success, exit the loop
+            except PermissionError:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)  # Wait before retrying
+                else:
+                    # All retries exhausted, re-raise the exception
+                    raise
+        
         self.save()
 
     def arriba(self, item):
@@ -193,17 +214,16 @@ class ListaOpenings:
         for entry in Util.listdir(self.folder):
             file = entry.name
             if file.endswith(".opk"):
-                op = Opening(entry.path)
-                dicline = {
-                    "file": file,
-                    "pv": op.basePV,
-                    "title": op.title,
-                    "lines": len(op),
-                    "withtrainings": op.with_trainings(),
-                    "withtrainings_engines": op.with_trainings_engines(),
-                }
-                li.append(dicline)
-                op.close()
+                with opening_context(entry.path) as op:
+                    dicline = {
+                        "file": file,
+                        "pv": op.basePV,
+                        "title": op.title,
+                        "lines": len(op),
+                        "withtrainings": op.with_trainings(),
+                        "withtrainings_engines": op.with_trainings_engines(),
+                    }
+                    li.append(dicline)
         return li
 
     def save(self):
@@ -233,10 +253,9 @@ class ListaOpenings:
             "withtrainings": False,
         }
         self.lista.append(dicline)
-        op = Opening(self.filepath(len(self.lista) - 1))
-        op.setbasepv(basepv)
-        op.settitle(title)
-        op.close()
+        with opening_context(self.filepath(len(self.lista) - 1)) as op:
+            op.setbasepv(basepv)
+            op.settitle(title)
         self.save()
 
     def copy(self, pos):
@@ -258,15 +277,13 @@ class ListaOpenings:
         dicline["file"] = filenew
         dicline["title"] = dicline["title"] + " -%d" % (n - 1 if n > 1 else 1)
         self.lista.append(dicline)
-        op = Opening(self.filepath(len(self.lista) - 1))
-        op.settitle(dicline["title"])
-        op.close()
+        with opening_context(self.filepath(len(self.lista) - 1)) as op:
+            op.settitle(dicline["title"])
         self.save()
 
     def change_title(self, num, title):
-        op = Opening(self.filepath(num))
-        op.settitle(title)
-        op.close()
+        with opening_context(self.filepath(num)) as op:
+            op.settitle(title)
         self.lista[num]["title"] = title
         self.save()
 
@@ -292,6 +309,31 @@ class ListaOpenings:
                 dicline["withtrainings_engines"] = True
                 self.save()
                 return
+
+    @staticmethod
+    def name_initial():
+        return f"** {_('Initial')} **"
+
+    def all_openings(self) -> dict:
+        root_path = Path(Code.configuration.paths.folder_base_openings())
+
+        resultado = {}
+
+        # Si encontramos al menos un archivo .opk, añadimos la lista
+        archivos_opk = list(root_path.glob("*.opk"))
+        if archivos_opk:
+            resultado[self.name_initial()] = archivos_opk
+
+        for item in root_path.iterdir():
+            if item.is_dir():  # Solo nos interesan las carpetas
+                # Buscar archivos .opk dentro de esta carpeta
+                archivos_opk = list(item.glob("*.opk"))
+
+                # Si encontramos al menos un archivo .opk, añadimos la lista
+                if archivos_opk:
+                    resultado[item.stem] = archivos_opk
+
+        return resultado
 
 
 class Opening:
@@ -406,7 +448,7 @@ class Opening:
         self.board = board
 
     def get_others(self, game):
-        li_op = ListaOpenings()
+        li_op = ListaOpenings(False)
         fich = os.path.basename(self.path_file)
         pvbase = game.pv()
         li_op = [
@@ -415,6 +457,19 @@ class Opening:
             if dic["file"] != fich and (pvbase.startswith(dic["pv"]) or dic["pv"].startswith(pvbase))
         ]
         return li_op
+
+    def get_other_folders(self):
+        lop = ListaOpenings(False)
+        dic_all_folders = lop.all_openings()
+        path = Path(self.path_file)
+        name_parent = path.parent.stem
+        if name_parent in dic_all_folders:  # para el caso de que se trabaje en root
+            del dic_all_folders[name_parent]
+        else:
+            name_parent = lop.name_initial()
+            if name_parent in dic_all_folders:
+                del dic_all_folders[name_parent]
+        return dic_all_folders
 
     def getfenvalue(self, fenm2):
         resp = self.db_fenvalues[fenm2]
@@ -620,7 +675,7 @@ class Opening:
         self.setconfig("TRAINING", reg)
         self.setconfig("ULT_PACK", 100)  # Se le obliga al VACUUM
 
-        lo = ListaOpenings()
+        lo = ListaOpenings(False)
         lo.add_training_file(os.path.basename(self.path_file))
 
     def create_training_engines(self, reg):
@@ -631,7 +686,7 @@ class Opening:
         self.setconfig("ENG_LEVEL", 0)
         self.setconfig("ENG_ENGINE", 0)
 
-        lo = ListaOpenings()
+        lo = ListaOpenings(False)
         lo.add_training_engines_file(os.path.basename(self.path_file))
         self.reinit_cache_engines()
 
@@ -1200,10 +1255,9 @@ class Opening:
         return return_value
 
     def import_other_comments(self, path_opk):
-        otra = Opening(path_opk)
-        self.db_fenvalues.copy_from(otra.db_fenvalues)
+        with opening_context(path_opk) as otra:
+            self.db_fenvalues.copy_from(otra.db_fenvalues)
         self.pack_database()
-        otra.close()
 
     def save_games(self, label, li_games, min_movements=0, with_history=True):
         if with_history:
@@ -1298,7 +1352,7 @@ class Opening:
                 tt_max = 0
                 limax = []
                 for alm in li_children:
-                    tt = alm.W + alm.B + alm.O + alm.D
+                    tt = alm.W + alm.B + alm.OTHER + alm.D
                     if tt > tt_max:
                         tt_max = tt
                         limax = [alm]
@@ -1326,22 +1380,21 @@ class Opening:
     def import_other(self, path_fichero, game):
         xpvbase = FasterCode.pv_xpv(game.pv())
         tambase = len(xpvbase)
-        otra = Opening(path_fichero)
-        lista = []
-        for n, xpv in enumerate(otra.li_xpv):
-            if xpv.startswith(xpvbase) and len(xpv) > tambase:
-                if xpv not in self.li_xpv:
-                    lista.append(xpv)
-        self.save_lixpv(f"{_('Other opening lines')},{otra.title}", lista)
-        self.db_fenvalues.copy_from(otra.db_fenvalues)
-        for tabla in ("FEN", "Flechas", "Marcos", "SVGs", "Markers"):
-            dbr: UtilSQL.DictSQL = UtilSQL.DictSQL(self.path_file, tabla=tabla)
-            dbv: UtilSQL.DictSQL = UtilSQL.DictSQL(otra.path_file, tabla=tabla)
-            dbr.copy_from(dbv)
-            dbr.close()
-            dbv.close()
+        with opening_context(path_fichero) as otra:
+            lista = []
+            for n, xpv in enumerate(otra.li_xpv):
+                if xpv.startswith(xpvbase) and len(xpv) > tambase:
+                    if xpv not in self.li_xpv:
+                        lista.append(xpv)
+            self.save_lixpv(f"{_('Other opening lines')},{otra.title}", lista)
+            self.db_fenvalues.copy_from(otra.db_fenvalues)
+            for tabla in ("FEN", "Flechas", "Marcos", "SVGs", "Markers"):
+                dbr: UtilSQL.DictSQL = UtilSQL.DictSQL(self.path_file, tabla=tabla)
+                dbv: UtilSQL.DictSQL = UtilSQL.DictSQL(otra.path_file, tabla=tabla)
+                dbr.copy_from(dbv)
+                dbr.close()
+                dbv.close()
         self.pack_database()
-        otra.close()
 
     def export_to_pgn(self, ws, result, with_seventags):
         li_tags = [
@@ -1551,7 +1604,7 @@ class Opening:
                     s0.add(fenm2)
                     dir_prev[fenm2].add(" ".join(lipv[: pos + 1]))
                     if pos < len(lipv) - 1:
-                        dir_post[fenm2].add(" ".join(lipv[pos + 1 :]))
+                        dir_post[fenm2].add(" ".join(lipv[pos + 1:]))
             st_pv = set()
             for fenm2, li_pv_prev in dir_prev.items():
                 for pv_prev in li_pv_prev:
@@ -1712,3 +1765,17 @@ class Opening:
                 return True, False, pos + pos_begin
 
         return True, False, pos_begin
+
+
+@contextlib.contextmanager
+def opening_context(path_file):
+    """Context manager for Opening objects to ensure proper resource cleanup."""
+    op = None
+    try:
+        op = Opening(path_file)
+        yield op
+    finally:
+        if op is not None:
+            op.close()
+            del op
+            gc.collect()  # Force garbage collection to release file handles

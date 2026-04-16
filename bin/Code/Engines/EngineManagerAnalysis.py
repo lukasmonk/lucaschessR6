@@ -41,7 +41,8 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             if dispatcher and self.engine_run and self.engine_run.mrm:
                 if not dispatcher(rm=self.engine_run.mrm.best_rm_ordered(), ms=self.elapsed_time.elapsed()):
                     self._is_canceled = True
-                    self.engine_run.stop()
+                    if self.engine_run:
+                        self.engine_run.stop()
                     close()
                     return
 

@@ -193,6 +193,7 @@ class ListaOpeningsStd:
             if fm2 in st:
                 if fm2 in dic:
                     game.opening = dic[fm2]
+                    game.pending_opening = False
                 last_move_opening = nj
                 without = 0  # reset streak on any recognised fen
             else:

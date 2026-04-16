@@ -6,13 +6,14 @@ from Code.Board import Board
 from Code.Nags import Nags
 from Code.Openings import OpeningsStd
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTMessages, ScreenUtils
+from Code.Base.Constantes import OPENING,MIDDLEGAME, ENDGAME
 
 
 class WAnalisisGraph(LCDialog.LCDialog):
     def __init__(self, wowner, manager, alm, show_analysis):
         titulo = _("Result of analysis")
         icono = Iconos.Estadisticas()
-        extparam = "estadisticasv2"
+        extparam = "estadisticasv3"
         LCDialog.LCDialog.__init__(self, wowner, titulo, icono, extparam)
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
@@ -29,6 +30,8 @@ class WAnalisisGraph(LCDialog.LCDialog):
         self.show_analysis = show_analysis
         self.colorWhite = ScreenUtils.qt_color_rgb(231, 244, 254)
 
+        self.dic_phases = {OPENING: "📖", MIDDLEGAME: "⚡", ENDGAME: "🎯"}
+
         self.with_time = False
         for move in alm.lijg:
             if move.time_ms:
@@ -37,6 +40,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
         def xcol():
             o_columns = Columnas.ListaColumnas()
+            o_columns.nueva("PHASE", "", 26)
             o_columns.nueva("NUM", _("N."), 50, align_center=True)
             o_columns.nueva(
                 "MOVE",
@@ -89,11 +93,6 @@ class WAnalisisGraph(LCDialog.LCDialog):
         ly = Colocacion.V().control(self.em_moves)
         w_moves = QtWidgets.QWidget()
         w_moves.setLayout(ly)
-
-        # self.em_moves_old = Controles.EM(self, alm.indexesHTMLold).read_only().set_font(font)
-        # ly = Colocacion.V().control(self.em_moves_old)
-        # w_moves_old = QtWidgets.QWidget()
-        # w_moves_old.setLayout(ly)
 
         self.tab_grid = tab_grid = Controles.Tab()
         tab_grid.new_tab(grid_all, _("All moves"))
@@ -198,13 +197,6 @@ class WAnalisisGraph(LCDialog.LCDialog):
     def show_changed(self):
         self.tab_changed(self.tab_grid.currentIndex())
 
-    # def boardSizeChanged(self):
-    #     th = self.board.height()
-    #     self.tab_grid.setFixedHeight(th)
-    #     self.emIndexes.setFixedHeight(th - 72)
-    #     self.adjustSize()
-    #     self.show_changed()
-
     def tab_changed(self, ntab):
         QtWidgets.QApplication.processEvents()
         tab_vis = 0 if ntab >= 3 else ntab
@@ -277,6 +269,8 @@ class WAnalisisGraph(LCDialog.LCDialog):
         return None
 
     def grid_alineacion(self, grid, row, obj_column):
+        if obj_column.key == "PHASE":
+            return None
         if grid.id == "A":
             move = self.alm.lijg[row]
             return "i" if move.xsiW else "d"
@@ -290,7 +284,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
         move = self.dicLiJG[grid.id][row]
 
         if column == "NUM":
-            return f" {move.xnum} "
+            return f"{move.xnum}"
 
         elif column in ("MOVE", "BEST"):
             return self._grid_dato_moves_best(obj_column, column, move)
@@ -307,6 +301,9 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
         elif column == "ELO":
             return "%3d" % move.elo if move.elo else ""
+
+        elif column == "PHASE":
+            return self.dic_phases.get(move.phase, "")
 
         return None
 

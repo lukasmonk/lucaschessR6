@@ -67,7 +67,13 @@ class TournamentWork:
     def get_engines(self, tgame: Tournament.GameTournament):
         with self.tournament() as torneo:
             engine_white = torneo.search_hengine(tgame.hwhite)
+            engine_white.max_depth = engine_white.depth
+            engine_white.max_time = engine_white.time
+            engine_white.max_nodes = engine_white.nodes
             engine_black = torneo.search_hengine(tgame.hblack)
+            engine_black.max_depth = engine_black.depth
+            engine_black.max_time = engine_black.time
+            engine_black.max_nodes = engine_black.nodes
             return engine_white, engine_black
 
     def get_dic_queues(self):
