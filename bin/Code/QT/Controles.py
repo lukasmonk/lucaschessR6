@@ -626,7 +626,10 @@ class GB(QtWidgets.QGroupBox):
         return self
 
     def set_text(self, text):
-        self.setTitle(text)
+        try:
+            self.setTitle(text)
+        except RuntimeError:
+            pass
         return self
 
 

@@ -36,6 +36,7 @@ elif n_args >= 2:
 
     elif arg == "-translate":
         from Code.Translations import RunTranslate
+
         RunTranslate.run_wtranslation(sys.argv[2])
 
     elif arg == "-tournament":

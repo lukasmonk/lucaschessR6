@@ -411,7 +411,7 @@ class TabTree(QtWidgets.QWidget):
         filename = Util.valid_filename(name)
         if filename.endswith(".opk"):
             filename = filename[:-4]
-        list_openings = OpeningLines.ListaOpenings()
+        list_openings = OpeningLines.ListaOpenings(False)
         path_opening = Util.opj(list_openings.folder, f"{filename}.opk")
         if os.path.isfile(path_opening):
             QTMessages.message_error(self, f"{_('This file already exists')}\n{f'{filename}.opk'}")

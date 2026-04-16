@@ -182,17 +182,16 @@ class ParamsReplay:
 
 
 class Replay:
+    def __init__(self, manager, next_game=None, space_number=None, rapidez=None):
+        self.seconds: float = 0
+        self.seconds_before: float = 0.01
+        self.if_beep: bool = False
+        self.if_custom_sounds: bool = False
+        self.with_pgn: bool = False
+        self.ghost_level: float = 0  # （0-1）
+        self.dic_ghost_pieces: dict = {}
+        self.board_create_piece: object = None
 
-    seconds: float
-    seconds_before: float
-    if_beep: bool
-    if_custom_sounds: bool
-    with_pgn: bool
-    ghost_level: float  # （0-1）
-    dic_ghost_pieces: dict
-    board_create_piece: object
-
-    def __init__(self, manager, next_game=None, space_number=None):
         self.params = ParamsReplay()
         dic_var = self.params.dic_data
         self.manager = manager
@@ -203,8 +202,9 @@ class Replay:
         self.space_layer = None
         self.space_number = None
         self.relee_params(dic_var)
-        self.rapidez = 1.0
+        self.rapidez = 1.0 if rapidez is None else rapidez
         self.next_game = next_game
+        self.if_start = True
 
         self.previous_visible_capturas = self.main_window.siCapturas
         self.previous_visible_information = self.main_window.siInformacionPGN
@@ -244,7 +244,9 @@ class Replay:
         self.board.do_pressed_number = self._do_pressed_number
 
         self.show_information()
-        
+        move = self.li_moves[self.current_position]
+        self.board.set_position(move.position_before)
+
         if space_number is not None:
             self._do_pressed_number(True, space_number)
 
@@ -353,7 +355,7 @@ class Replay:
 
         self._skip_id += 1
         skip_id = self._skip_id
-        QtCore.QTimer.singleShot(0, lambda skip_id=skip_id: self.skip(skip_id))
+        QtCore.QTimer.singleShot(0, lambda xskip_id=skip_id: self.skip(xskip_id))
 
     def move_the_pieces(self, li_movs):
         if self.stopped:
@@ -361,6 +363,8 @@ class Replay:
         self.procesador.cpu.stop()
 
         rapidez_conf = Code.configuration.pieces_speed_porc()
+        if not rapidez_conf:
+            rapidez_conf = 1
 
         move = self.li_moves[self.current_position]
         num = self.current_position
@@ -395,9 +399,6 @@ class Replay:
                 animation.setEasingCurve(Code.configuration.pieces_move_qtype())
                 animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
                 animations.append(animation)
-
-        if secs is None:
-            secs = 0.5
 
         if animations:
             loop = QtCore.QEventLoop()
@@ -565,6 +566,9 @@ class Replay:
         self.show_pause(False, True)
 
     def seguir(self):
+        if self.current_position >= self.num_moves:
+            self.repetir()
+            return
         num_moves, self.current_position, filaInicial, is_white = self.manager.current_move()
         self.current_position += 1
         self.stopped = False
@@ -577,7 +581,8 @@ class Replay:
         self._skip_id += 1
         space_number = self.space_number
         self.finalize()
-        self.manager.xpelicula = Replay(self.manager, next_game=self.next_game, space_number=space_number)
+        self.manager.xpelicula = Replay(self.manager, next_game=self.next_game,
+                                        space_number=space_number, rapidez=self.rapidez)
 
     def skip(self, skip_id=None):
         if skip_id is not None and skip_id != self._skip_id:
@@ -603,6 +608,6 @@ class Replay:
                             return
                     self.show_current()
                     return
-            self.finalize()
+            self.pausa()
         else:
             self.show_current()

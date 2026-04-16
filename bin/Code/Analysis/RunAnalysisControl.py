@@ -406,7 +406,7 @@ class WProgress(LCDialog.LCDialog):
         self.restore_video(default_width=550, default_height=220)
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.xreceive)
-        self.timer.start(200)
+        self.timer.start(100)
 
         self.restore_video()
         self.working = False
@@ -548,7 +548,7 @@ class WProgress(LCDialog.LCDialog):
             self.pb_moves.setValue(pos)
             str_estimate = self._estimator.estimated(pos)
             if str_estimate is not None:
-                self.lb_time.set_text(f"{_('Estimated time')}: {str_estimate}")
+                self.lb_time.set_text(f"{_('Pending time')}: {str_estimate}")
             else:
                 self.lb_time.set_text("")
 

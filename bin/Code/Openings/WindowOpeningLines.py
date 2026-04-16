@@ -27,7 +27,7 @@ class WOpeningLines(LCDialog.LCDialog):
         self.procesador = procesador
         self.configuration = Code.configuration
         self.resultado: Optional[Dict[str, Any]] = None
-        self.listaOpenings = OpeningLines.ListaOpenings()
+        self.listaOpenings = OpeningLines.ListaOpenings(True)
         self.glista: Optional[Grid.Grid] = None
         self.tbtrain: Optional[Controles.TBrutina] = None
         self.wtrain: Optional[QtWidgets.QWidget] = None
@@ -177,7 +177,7 @@ class WOpeningLines(LCDialog.LCDialog):
             path = Util.relative_path(path)
             self.configuration.paths.set_folder_openings(path)
             self.configuration.graba()
-            self.listaOpenings = OpeningLines.ListaOpenings()
+            self.listaOpenings = OpeningLines.ListaOpenings(True)
             self.glista.refresh()
             self.glista.gotop()
             if len(self.listaOpenings) == 0:

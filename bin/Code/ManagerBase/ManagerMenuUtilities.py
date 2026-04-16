@@ -460,7 +460,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
         resp = db.insert(pc)
         db.close()
         if resp:
-            QTMessages.message_bold(self.main_window, f"{_('Saved')}: {db.path_file}")
+            QTMessages.message_bold(self.main_window, f"{_('Saved')}: {Util.get_name_without_ext(db.path_file)}")
         else:
             QTMessages.message_error(self.main_window, _("This game already exists."))
 

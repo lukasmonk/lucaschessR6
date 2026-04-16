@@ -42,10 +42,9 @@ from Code.Base.Constantes import (
     OPENING,
     MIDDLEGAME,
     ENDGAME,
-    PHASE_NODEFINED,
 )
 from Code.Nags.Nags import NAG_1, NAG_2, NAG_3, NAG_4, NAG_5, NAG_6
-from Code.Openings import Opening, OpeningsStd, ECO
+from Code.Openings import OpeningsStd, ECO
 from Code.Z import Util
 
 
@@ -247,10 +246,10 @@ class Game:
         for index, (tag, value) in enumerate(self.li_tags):
             if tag.upper() == "RESULT":
                 if value.strip() not in (
-                    RESULT_UNKNOWN,
-                    RESULT_WIN_BLACK,
-                    RESULT_WIN_WHITE,
-                    RESULT_DRAW,
+                        RESULT_UNKNOWN,
+                        RESULT_WIN_BLACK,
+                        RESULT_WIN_WHITE,
+                        RESULT_DRAW,
                 ):
                     value = RESULT_UNKNOWN
                 self.li_tags[index] = ["Result", value]
@@ -717,11 +716,11 @@ class Game:
         pv = []
         for mov in lipv:
             if (
-                len(mov) >= 4
-                and mov[0] in "abcdefgh"
-                and mov[1] in "12345678"
-                and mov[2] in "abcdefgh"
-                and mov[3] in "12345678"
+                    len(mov) >= 4
+                    and mov[0] in "abcdefgh"
+                    and mov[1] in "12345678"
+                    and mov[2] in "abcdefgh"
+                    and mov[3] in "12345678"
             ):
                 pv.append(mov)
             else:
@@ -839,9 +838,9 @@ class Game:
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                    (with_variations == ALL)
-                    or (is_w and with_variations == ONLY_WHITE)
-                    or (not is_w and with_variations == ONLY_BLACK)
+                        (with_variations == ALL)
+                        or (is_w and with_variations == ONLY_WHITE)
+                        or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
                         li_pvc.extend(variation.all_pv(pv_previo.strip(), with_variations, in_opening))
@@ -858,9 +857,9 @@ class Game:
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                    (with_variations == ALL)
-                    or (is_w and with_variations == ONLY_WHITE)
-                    or (not is_w and with_variations == ONLY_BLACK)
+                        (with_variations == ALL)
+                        or (is_w and with_variations == ONLY_WHITE)
+                        or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
                         if dicv := variation.all_comments(with_variations):
@@ -877,7 +876,6 @@ class Game:
             self._extracted_from_all_comments_(dic)
         return dic
 
-    # TODO Rename this here and in `all_comments`
     def _extracted_from_all_comments_(self, comment_map):
         """
         Merge the game first_comment into the comments dictionary for the first move.
@@ -1019,12 +1017,12 @@ class Game:
         beep = None
         player_lost = False
         if (self.result == RESULT_WIN_WHITE and player_side == WHITE) or (
-            self.result == RESULT_WIN_BLACK and player_side == BLACK
+                self.result == RESULT_WIN_BLACK and player_side == BLACK
         ):
             mensaje, beep = self._label_won(nom_other)
 
         elif (self.result == RESULT_WIN_WHITE and player_side == BLACK) or (
-            self.result == RESULT_WIN_BLACK and player_side == WHITE
+                self.result == RESULT_WIN_BLACK and player_side == WHITE
         ):
             player_lost = True
             mensaje, beep = self._label_lost(nom_other)
@@ -1112,14 +1110,14 @@ class Game:
                 move0.add_variation(variation)
 
     def remove_info_moves(
-        self,
-        variations=True,
-        ratings=True,
-        comments=True,
-        analysis=True,
-        themes=True,
-        time_ms=True,
-        clock_ms=True,
+            self,
+            variations=True,
+            ratings=True,
+            comments=True,
+            analysis=True,
+            themes=True,
+            time_ms=True,
+            clock_ms=True,
     ):
         if comments:
             self.first_comment = ""
@@ -1144,7 +1142,7 @@ class Game:
             self.li_moves = self.li_moves[:num_move]
             self.set_unknown()
         else:
-            self.li_moves = self.li_moves[num_move + 1 :]
+            self.li_moves = self.li_moves[num_move + 1:]
             if self.li_moves:
                 move: Move.Move = self.li_moves[0]
                 self.first_position = move.position_before.copia()
@@ -1220,38 +1218,49 @@ class Game:
     def has_themes(self) -> bool:
         return any(move.li_themes for move in self.li_moves)
 
-    def assign_isbook_phases(self) -> None:
-        ap = Opening.OpeningPol(999)
-        max_misses = 4
-        misses = 0
-
-        # 1. Detect opening-book moves
+    def assign_phases(self):
+        last_phase = 0
         for move in self.li_moves:
-            move.is_book = False
-            if ap.check_human(move.position_before.fen(), move.from_sq, move.to_sq):
-                move.is_book = True
-                misses = 0
+            phase = move.phase
+            if phase < last_phase:
+                move.set_phase(last_phase)
             else:
-                misses += 1
-                if misses >= max_misses:
-                    break
+                last_phase = phase
 
-        # 2. Assign phases
-        last_phase = PHASE_NODEFINED
-
-        for idx, move in enumerate(self.li_moves):
-            if move.is_book:
-                if last_phase > OPENING:
-                    for prev in self.li_moves[:idx]:
-                        prev.set_phase(OPENING)
-
-                move.set_phase(OPENING)
-                last_phase = OPENING
-                continue
-            last_phase = max(MIDDLEGAME, last_phase)
-            phase = move.position_before.phase()
-            last_phase = max(last_phase, phase)
-            move.set_phase(last_phase)
+    # def assign_isbook_phases(self) -> None:
+    #     for move in self.li_moves:
+    #         move.apply_phase()
+    #     ap = Opening.OpeningPol(999)
+    #     max_misses = 4
+    #     misses = 0
+    #
+    #     # 1. Detect opening-book moves
+    #     for move in self.li_moves:
+    #         move.is_book = False
+    #         if ap.check_human(move.position_before.fen(), move.from_sq, move.to_sq):
+    #             move.is_book = True
+    #             misses = 0
+    #         else:
+    #             misses += 1
+    #             if misses >= max_misses:
+    #                 break
+    #
+    #     # 2. Assign phases
+    #     last_phase = PHASE_NODEFINED
+    #
+    #     for idx, move in enumerate(self.li_moves):
+    #         if move.is_book:
+    #             if last_phase > OPENING:
+    #                 for prev in self.li_moves[:idx]:
+    #                     prev.set_phase(OPENING)
+    #
+    #             move.set_phase(OPENING)
+    #             last_phase = OPENING
+    #             continue
+    #         last_phase = max(MIDDLEGAME, last_phase)
+    #         phase = move.position_before.phase()
+    #         last_phase = max(last_phase, phase)
+    #         move.set_phase(last_phase)
 
     def calc_elo_color(self, is_white):
         nummoves = {OPENING: 0, MIDDLEGAME: 0, ENDGAME: 0}
@@ -1465,7 +1474,7 @@ class PGNtoGame:
             return
 
         label: str = kv[:pos]
-        value: str = kv[pos + 1 :].strip()
+        value: str = kv[pos + 1:].strip()
         label_upper: str = label.upper()
 
         if label_upper == "FEN":

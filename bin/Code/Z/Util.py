@@ -246,7 +246,7 @@ def ini_dic(file: Union[str, Path]) -> dict:
                     n = line.find("=")
                     if n:
                         key = line[:n].strip()
-                        value = line[n + 1 :].strip()
+                        value = line[n + 1:].strip()
                         dic[key] = value
     return dic
 
@@ -404,7 +404,7 @@ def ini2dic(file):
                         n = linea.find("=")
                         if n > 0:
                             clave1 = linea[:n].strip()
-                            valor = linea[n + 1 :].strip()
+                            valor = linea[n + 1:].strip()
                             dic[clave1] = valor
 
     return dic_base
@@ -431,7 +431,7 @@ def ini_base2dic(file, rfind_equal=False):
                     n = linea.rfind("=") if rfind_equal else linea.find("=")
                     if n:
                         key = linea[:n].strip()
-                        valor = linea[n + 1 :].strip()
+                        valor = linea[n + 1:].strip()
                         dic[key] = valor
 
     return dic
@@ -796,7 +796,7 @@ def div_list(xlist, max_group):
     xfrom = 0
     li_groups = []
     while xfrom < nlist:
-        li_groups.append(xlist[xfrom : xfrom + max_group])
+        li_groups.append(xlist[xfrom: xfrom + max_group])
         xfrom += max_group
     return li_groups
 
@@ -953,3 +953,8 @@ class SmoothedEstimator:
         hours, rem = divmod(int(seconds), 3600)
         minutes, secs = divmod(rem, 60)
         return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+
+def get_name_without_ext(ruta: Union[str, Path]) -> str:
+    """Devuelve el nombre del archivo sin la extensión."""
+    return Path(ruta).stem
