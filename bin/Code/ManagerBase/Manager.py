@@ -1607,8 +1607,11 @@ class Manager:
                 move_idx = int(vh)
                 game_len = len(self.game)
 
+                # Fix: before the first move (move_idx < 0), always a variation
+                if move_idx < 0:
+                    is_variation = True
                 # Es variación si el índice es menor al antepenúltimo movimiento
-                if move_idx < game_len - 2:
+                elif move_idx < game_len - 2:
                     is_variation = True
                 # O si es el penúltimo, pero el usuario hizo click en el número del movimiento
                 elif move_idx < game_len - 1:
