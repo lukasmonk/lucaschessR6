@@ -698,6 +698,11 @@ class Procesador:
         tmr = ToolsMenuRun.ToolsMenuRun(tm)
         tmr.pgn_read(pgn)
 
+    def select_1_pgn(self, wparent=None):
+        tm = ToolsMenu.ToolsMenu(self)
+        tmr = ToolsMenuRun.ToolsMenuRun(tm)
+        return tmr.select_1_pgn(wparent)
+
     def strenght101(self):
         tm = CompeteMenu.CompeteMenu(self)
         tm.strenght101()
