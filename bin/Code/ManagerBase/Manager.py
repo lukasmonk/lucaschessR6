@@ -1576,20 +1576,6 @@ class Manager:
         mensaje = _("Press the continue button to start.")
         self.mensaje(mensaje, delayed=nomodal)
 
-    # def player_has_moved_base(self, from_sq, to_sq, promotion=""):
-    #     if self.board.variation_history is not None:
-    #         vh = self.board.variation_history
-    #         ok_variation = vh.count("|") > 0
-    #         if not ok_variation:
-    #             if int(vh) < len(self.game) - 1:
-    #                 ok_variation = int(vh) < len(self.game) - 2
-    #                 if not ok_variation and int(vh) < len(self.game) - 1:
-    #                     row, column = self.main_window.pgn_pos_actual()
-    #                     ok_variation = column.key == "NUMBER"
-    #         if ok_variation:
-    #             return self.mueve_variation(from_sq, to_sq, promotion="")
-    #     return self.messenger(from_sq, to_sq, promotion)
-
     def player_has_moved_base(self, from_sq, to_sq, promotion=""):
         vh = self.board.variation_history
 
@@ -1608,9 +1594,11 @@ class Manager:
                 game_len = len(self.game)
 
                 # Es variación si el índice es menor al antepenúltimo movimiento
-                if move_idx < game_len - 2:
+                if move_idx < 0:
                     is_variation = True
                 # O si es el penúltimo, pero el usuario hizo click en el número del movimiento
+                elif move_idx < game_len - 2:
+                    is_variation = True
                 elif move_idx < game_len - 1:
                     __, column = self.main_window.pgn_pos_actual()
                     if self.game.last_position.is_white:

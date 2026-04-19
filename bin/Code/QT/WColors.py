@@ -87,6 +87,7 @@ class WColors(LCDialog.LCDialog):
             "Foreground when disable": _("Foreground when disable"),
             "Background when disable": _("Background when disable"),
             "Analysis Bar": _("Analysis Bar"),
+            "Filling": _("Filling"),
         }
 
         o_columns = Columnas.ListaColumnas()
@@ -206,7 +207,7 @@ class WColors(LCDialog.LCDialog):
                     return _F(x)
                 if x in self.translation:
                     return self.translation[x]
-                for c in "|+ ":
+                for c in "|+, ":
                     if x.count(c) == 1:
                         uno, dos = x.split(c)
                         return f"{trans(uno)} - {trans(dos)}"

@@ -949,7 +949,7 @@ class DBgames:
                         dl_tmp.refresh_gui()
                         continue
 
-                    d_cab = {decode(k).replace(" ", ""): decode(v) for k, v in bdCab.items()}
+                    d_cab = {decode(k).replace(" ", ""): decode(v).strip() for k, v in bdCab.items()}
                     d_cablwr = {decode(k).replace(" ", ""): decode(v) for k, v in bdCablwr.items()}
                     dcabs.update(d_cablwr)
 

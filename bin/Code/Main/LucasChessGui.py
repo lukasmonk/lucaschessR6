@@ -33,6 +33,7 @@ class GlobalFilter(QtCore.QObject):
 def run_gui(procesador):
     main_config = Configuration.Configuration("")
     main_config.lee()
+
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
 
     app = QtWidgets.QApplication([])

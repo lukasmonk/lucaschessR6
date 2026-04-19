@@ -2,6 +2,7 @@ import contextlib
 import os
 import time
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from enum import Enum, auto
 from typing import List, Optional
@@ -121,6 +122,8 @@ class EngineRun(QtCore.QObject):
         self.last_time_depth_emit: int = 0
         self.time_interval_depth_emit: int = 500
         self.timerstop: Optional[QtCore.QTimer] = None
+
+        self.control_ponder: None | Ponder = None
 
         if __debug__:
             if Debug.DEBUG_ENGINES or Debug.DEBUG_ENGINES_SEND:
@@ -290,8 +293,9 @@ class EngineRun(QtCore.QObject):
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
             except Exception:
-                self._log_exception(f"Error al finalizar proceso hijo {child.pid}: {traceback.format_exc()}",
-                                    color="yellow")
+                self._log_exception(
+                    f"Error al finalizar proceso hijo {child.pid}: {traceback.format_exc()}", color="yellow"
+                )
 
         # Esperar a que los hijos terminen
         gone, alive = psutil.wait_procs(children, timeout=timeout)
@@ -304,8 +308,9 @@ class EngineRun(QtCore.QObject):
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
             except Exception:
-                self._log_exception(f"Error al matar proceso hijo {child.pid}: {traceback.format_exc()}",
-                                    color="yellow")
+                self._log_exception(
+                    f"Error al matar proceso hijo {child.pid}: {traceback.format_exc()}", color="yellow"
+                )
 
         # Ahora cerrar el proceso padre si se solicita
         if including_parent:
@@ -350,6 +355,9 @@ class EngineRun(QtCore.QObject):
             if running:
                 try:
                     self.process.write(f"{command}\n".encode("utf-8"))
+
+                    if self.control_ponder:
+                        self.control_ponder.check_command(command)
                 except (RuntimeError, OSError) as e:
                     self._log_exception(f"write failed [{self.config.name}] '{command}': {e}")
                     return False
@@ -475,6 +483,9 @@ class EngineRun(QtCore.QObject):
                                     self.bestmove_found.emit(self.bestmove)
                                 except Exception:
                                     self._log_exception("bestmove_found emit failed")
+
+                            if self.control_ponder and self.bestmove:
+                                self.control_ponder.received_bestmove(line)
                 except Exception:
                     self._log_exception("Unhandled error processing engine line")
                     continue
@@ -555,7 +566,8 @@ class EngineRun(QtCore.QObject):
     def stop(self):
         try:
             self._timerstop_off()
-            if self.state not in (EngineState.OFF, EngineState.OK):
+            is_pondering = self.control_ponder and self.control_ponder.ponder
+            if self.state not in (EngineState.OFF, EngineState.OK) or is_pondering:
                 self._send_command("stop")
         except Exception:
             self._log_exception("Error in stop()")
@@ -572,6 +584,9 @@ class EngineRun(QtCore.QObject):
     def _set_option(self, option, value):
         if value:
             self._send_command(f"setoption name {option} value {value}")
+            if option == "Ponder" and value == "true":
+                self.control_ponder = Ponder(self, self._send_command,
+                                             self._start_polling if self.mode_timer_poll else None)
         else:
             self._send_command(f"setoption name {option}")
 
@@ -741,14 +756,23 @@ class EngineRun(QtCore.QObject):
             else:
                 self.is_white = not move.is_white()
                 order += f" moves {game.pv_hasta(movement)}"
+        order = f"position {order}"
 
-        self._send_command(f"position {order}")
+        if self.control_ponder:
+            self.control_ponder.send_command(order)
+        else:
+            self._send_command(order)
 
     def set_fen_position(self, fen: str):
         self.stop()
         self.isready()
-        self._send_command(f"position fen {fen}")
         self.is_white = fen.split()[1] == "w"
+        order = f"position fen {fen}"
+
+        if self.control_ponder:
+            self.control_ponder.send_command(order)
+        else:
+            self._send_command(order)
 
     def play(self, run_engine_params: RunEngineParams):
 
@@ -763,7 +787,13 @@ class EngineRun(QtCore.QObject):
                 # ACTIVAMOS POLLING
                 self._start_polling()
 
-            self._send_command(f"go {args}")
+            xorder = f"go {args}"
+
+            if self.control_ponder:
+                self.control_ponder.send_command(xorder)
+            else:
+                self._send_command(xorder)
+
             if run_engine_params.fixed_ms or run_engine_params.fixed_depth:
                 if self.mrm:
                     self.mrm.set_time_depth(run_engine_params.fixed_ms, run_engine_params.fixed_depth)
@@ -815,3 +845,106 @@ class EngineRun(QtCore.QObject):
             self._start_polling()
 
         self._send_command("eval")
+
+
+class Ponder:
+    def __init__(self, engine_run: EngineRun, send_command_engine: Callable, start_polling: Callable | None):
+        self.engine_run: EngineRun = engine_run
+        self._send_command_engine: Callable = send_command_engine
+        self._start_polling: Callable | None = start_polling  # si es none es porque el mode no es polling
+        self.last_position_sent = ""
+        self.last_go_sent = ""
+        self.last_time = 0
+        self.ponder: str = ""
+        self.post_ponderhit: bool = False  # True después de enviar ponderhit, el próximo go debe descartarse
+        self.lock = False  # para que no se mezclen los chequeos de las ordenes con las de la clase
+
+    def reset(self):
+        self.last_position_sent = ""
+        self.last_go_sent = ""
+        self.last_time = 0.0
+        self.ponder: str = ""
+        self.post_ponderhit: bool = False
+        self.lock = False  # para que no se mezclen los chequeos de las ordenes con las de la clase
+
+    def check_command(self, command):
+        if self.lock:
+            return
+        elif command.startswith("position"):
+            self.last_position_sent = command
+        elif command.startswith("go"):
+            self.last_go_sent = command
+            self.last_time = time.time()
+        elif command.startswith('stop'):
+            self.reset()
+
+    def send_command(self, command):
+        if not self.ponder:
+            self._send_command_engine(command)
+            return
+
+        if command.startswith("go"):  # no se lanza el go tras ponderhit
+            if self.post_ponderhit:
+                # Motor ya está pensando tras ponderhit, no enviar go
+                return
+            self.reset()
+            self._send_command_engine(command)
+            return
+
+        li = command.split()
+        if li and li[-1] == self.ponder:
+            self.send_command_lock("ponderhit")
+            self.post_ponderhit = True  # El motor continuará pensando, no enviar próximo go
+            if self._start_polling:
+                self._start_polling()
+        else:
+            self.reset()
+            self.send_command_lock("stop")
+            self._send_command_engine(command)
+
+    def send_command_lock(self, command):
+        self.lock = True
+        try:
+            self._send_command_engine(command)
+        finally:
+            self.lock = False
+
+    def received_bestmove(self, line):
+        # Reset post_ponderhit cuando se recibe bestmove (motor terminó de pensar)
+        self.post_ponderhit = False
+
+        li = line.split()
+        if len(li) >= 4 and li[2] == "ponder":
+            self.ponder = li[3]
+            if "fen" in self.last_position_sent and "moves" not in self.last_position_sent:
+                command = f'{self.last_position_sent} moves'
+            else:
+                command = self.last_position_sent
+            command_position = f'{command.strip()} {li[1]} {li[3]}'
+
+            li_go = self.last_go_sent.split()
+            if "wtime" in self.last_go_sent:
+                try:
+                    mstime_used = int((time.time() - self.last_time) * 1000)
+                    is_white = self.engine_run.is_white
+                    token_time = "wtime" if is_white else "btime"
+                    if token_time in li_go:
+                        idx = li_go.index(token_time) + 1
+                        if idx < len(li_go):
+                            ms = int(li_go[idx]) - mstime_used
+                            if ms <= 0:
+                                ms = 1
+                            li_go[idx] = str(ms)
+                except Exception:
+                    pass
+
+            li_go.insert(1, "ponder")
+            command_go = " ".join(li_go)
+
+            self.send_command_lock(command_position)
+            # Actualizar last_position_sent con la nueva posición enviada
+            self.last_position_sent = command_position
+            self.send_command_lock(command_go)
+
+            if self._start_polling:
+                self._start_polling()
