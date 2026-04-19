@@ -184,7 +184,6 @@ class ListaOpeningsStd:
         game.pending_opening = True
 
         without = 0
-        last_move_opening = -1
         st = self.st_fenm2_test
         dic = self.dic_fenm2_op
 
@@ -193,18 +192,13 @@ class ListaOpeningsStd:
             if fm2 in st:
                 if fm2 in dic:
                     game.opening = dic[fm2]
-                    game.pending_opening = False
-                last_move_opening = nj
+                    game.pending_opening = True
                 without = 0  # reset streak on any recognised fen
             else:
                 without += 1
                 if without == 10:
                     game.pending_opening = False
                     break
-
-        if last_move_opening >= 0:
-            for np in range(last_move_opening + 1):
-                game.move(np).in_the_opening = True
 
     # ------------------------------------------------------------------
     # Possible-openings query
