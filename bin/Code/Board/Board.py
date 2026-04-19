@@ -1733,6 +1733,12 @@ class Board(QtWidgets.QGraphicsView):
             return self.li_pieces[npieza][1]
         return None
 
+    def get_name_piece_at(self, pos_a1):
+        npieza = self.get_num_piece_at(pos_a1)
+        if npieza >= 0:
+            return self.li_pieces[npieza][0]
+        return None
+
     def move_piece(self, from_a1h8, to_a1h8):
         npieza = self.get_num_piece_at(from_a1h8)
         if npieza >= 0:

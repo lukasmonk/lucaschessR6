@@ -321,6 +321,7 @@ class Grid(QtWidgets.QTableView):
         self.setModel(self.cg)
         self.setShowGrid(with_lines)
         self.setWordWrap(False)
+
         self.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
 
         if background is not None:

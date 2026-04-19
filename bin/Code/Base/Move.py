@@ -566,10 +566,11 @@ class Move:
 
 def get_game_move(game, position_before, from_sq, to_sq, promotion):
     position = position_before.copia()
+    promotion = promotion.lower() if promotion else ""
 
     ok, mens_error = position.play(from_sq, to_sq, promotion)
     if ok:
-        move = Move(game, position_before, position, from_sq, to_sq, promotion.lower())
+        move = Move(game, position_before, position, from_sq, to_sq, promotion)
 
         return True, None, move
     else:

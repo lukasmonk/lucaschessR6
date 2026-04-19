@@ -45,10 +45,10 @@ def int_toolbutton(xint):
 
 def toolbutton_int(qt_tbi):
     if qt_tbi in (
-        Qt.ToolButtonStyle.ToolButtonIconOnly,
-        Qt.ToolButtonStyle.ToolButtonTextOnly,
-        Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-        Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
     ):
         return qt_tbi.value
     return Qt.ToolButtonStyle.ToolButtonTextUnderIcon.value
@@ -432,7 +432,7 @@ class Configuration:
 
     @staticmethod
     def estilos():
-        return [(x, x) for x in QtWidgets.QStyleFactory.keys()]
+        return [(x, x) for x in QtWidgets.QStyleFactory.keys() if x != "windows11"]
 
     def read_dic_x(self) -> dict:
         return {x: getattr(self, x) for x in dir(self) if x.startswith("x_")}
@@ -606,8 +606,8 @@ class Configuration:
             self.dic_conf_boards_pk = db.as_dictionary()
             if "BASE" not in self.dic_conf_boards_pk:
                 with open(
-                    Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
-                    "rb",
+                        Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
+                        "rb",
                 ) as f:
                     var = pickle.loads(f.read())
                     alto = ScreenUtils.desktop_height()
@@ -719,4 +719,3 @@ class Configuration:
                 if x in st_needs_reinit:
                     return True
         return False
-

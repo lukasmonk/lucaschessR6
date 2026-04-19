@@ -8,26 +8,31 @@ from Code.QT import Controles
 
 
 def init_app_style(app, configuration):
-    app.setStyle(QtWidgets.QStyleFactory.create(configuration.x_style))
-    style = configuration.x_style_mode
-    path = Code.path_resource("Styles", f"{style}.qss")
-    if not os.path.isfile(path):
-        style = configuration.x_style_mode = "By default"
-        configuration.graba()
-        path = Code.path_resource("Styles", f"{style}.qss")
+    # - Style
+    style = configuration.x_style
+    if style == "windows11":
+        style = "fusion"
+    app.setStyle(QtWidgets.QStyleFactory.create(style))
 
-    path_default = Code.path_resource("Styles", "By default.colors")
-    Code.dic_colors = Util.ini_base2dic(path_default)
-    if style != "By default":
-        path_colors = Code.path_resource("Styles", f"{style}.colors")
-        Code.dic_colors.update(Util.ini_base2dic(path_colors))
+    # - Style Mode
+    style_mode = configuration.x_style_mode
+    path_qss = Code.path_resource("Styles", f"{style_mode}.qss")
+    if not os.path.isfile(path_qss):
+        style_mode = configuration.x_style_mode = "By default"
+        configuration.graba()
+        path_qss = Code.path_resource("Styles", f"{style_mode}.qss")
+
+    # - Colors
+    path_colors = Code.path_resource("Styles", f"{style_mode}.colors")
+    Code.dic_colors = Util.ini_base2dic(path_colors)
     dic_personal = Util.ini_base2dic(configuration.paths.file_colors(), rfind_equal=True)
     Code.dic_colors.update(dic_personal)
     Code.dic_qcolors = qdic = {}
     for key, color in Code.dic_colors.items():
         qdic[key] = QtGui.QColor(color)
 
-    with open(path) as f:
+    # - QSS
+    with open(path_qss) as f:
         current = None
         li_lines = []
         for line in f:
@@ -57,10 +62,7 @@ color: %s;
             Code.dic_colors["BACKGROUND"],
             Code.dic_colors["FOREGROUND"],
         )
-        # if configuration.x_style_mode != "By default":
-        app.setStyleSheet(default + style_sheet)
-        # else:
-        #     configuration.style_sheet_default = style_sheet
+    app.setStyleSheet(default + style_sheet)
 
     qpalette = QtWidgets.QApplication.style().standardPalette()
     qpalette.setColor(QtGui.QPalette.ColorRole.Link, Code.dic_qcolors["LINKS"])
