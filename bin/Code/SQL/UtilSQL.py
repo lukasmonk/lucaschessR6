@@ -151,7 +151,10 @@ class DictSQL(object):
                 if self.li_breplaces_pickle:
                     for btxt_wrong, btxt_correct in self.li_breplaces_pickle:
                         dato = dato.replace(btxt_wrong, btxt_correct)
-                    dic[key] = pickle.loads(dato)
+                    try:
+                        dic[key] = pickle.loads(dato)
+                    except AttributeError:
+                        pass
         cursor.close()
         return dic
 

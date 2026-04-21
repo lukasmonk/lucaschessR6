@@ -152,7 +152,7 @@ class ListaOpeningsStd:
         lista = Util.restore_pickle(fichero_pers, [])
         for reg in lista:
             op = Opening(reg["NOMBRE"])
-            op.eco = reg["ECO"]
+            op.eco = reg["ECO"] if reg["ECO"] else "A00"
             op.a1h8 = reg["A1H8"]
             op.pgn = reg["PGN"]
             op.is_basic = reg["ESTANDAR"]
@@ -187,18 +187,30 @@ class ListaOpeningsStd:
         st = self.st_fenm2_test
         dic = self.dic_fenm2_op
 
+        last_opening = None
+
         for nj, move in enumerate(game.li_moves):
             fm2 = move.position.fenm2()
             if fm2 in st:
                 if fm2 in dic:
-                    game.opening = dic[fm2]
-                    game.pending_opening = True
+                    opening = dic[fm2]
+                    if last_opening:
+                        eco_last = last_opening.eco
+                        eco = opening.eco
+                        if not eco:
+                            continue
+                        if eco[0] == eco_last[0]:
+                            if eco < eco_last:
+                                continue
+                    last_opening = opening
                 without = 0  # reset streak on any recognised fen
             else:
                 without += 1
                 if without == 10:
                     game.pending_opening = False
                     break
+
+        game.opening = last_opening
 
     # ------------------------------------------------------------------
     # Possible-openings query

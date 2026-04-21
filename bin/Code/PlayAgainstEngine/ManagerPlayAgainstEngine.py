@@ -44,6 +44,8 @@ from Code.Base.Constantes import (
     TERMINATION_WIN_ON_TIME,
     WHITE,
     MULTIPV_MAXIMIZE,
+    TIMEMODE_FISCHER, TIMEMODE_BRONSTEIN, TIMEMODE_DELAY_SIMPLE,
+    TIMEMODE_SUDDEN_DEATH, TIMEMODE_HOURGLASS, TIMEMODE_MOVES_IN_TIME
 )
 from Code.Books import Books, WBooks
 from Code.Engines import EngineManagerPlay, EngineResponse, Engines, SelectEngines
@@ -55,7 +57,6 @@ from Code.Translations import TrListas
 from Code.Tutor import Tutor
 from Code.Voyager import Voyager
 from Code.Z import Adjournments, Util
-from Code.Z import TimeControl
 
 
 class ToolbarState(Enum):
@@ -256,7 +257,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if not self.timed:
             return
 
-        self.time_mode = dic_var.get("TIME_MODE", TimeControl.TimeMode.FISCHER)
+        self.time_mode = dic_var.get("TIME_MODE", TIMEMODE_FISCHER)
 
         # ── Common fields
         base_minutes = dic_var.get("MINUTES", 10.0)
@@ -275,22 +276,22 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         def _configure(tc, is_player: bool):
             extra = self.secs_extra if is_player else 0
 
-            if self.time_mode == TimeControl.TimeMode.SUDDEN_DEATH:
+            if self.time_mode == TIMEMODE_SUDDEN_DEATH:
                 tc.config_clock(self.max_seconds + extra, 0, zeitnot, 0)
 
-            elif self.time_mode == TimeControl.TimeMode.FISCHER:
+            elif self.time_mode == TIMEMODE_FISCHER:
                 tc.config_fischer(self.max_seconds + extra, self.seconds_per_move, zeitnot)
 
-            elif self.time_mode == TimeControl.TimeMode.BRONSTEIN:
+            elif self.time_mode == TIMEMODE_BRONSTEIN:
                 tc.config_bronstein(self.max_seconds + extra, self.seconds_per_move, zeitnot)
 
-            elif self.time_mode == TimeControl.TimeMode.DELAY_SIMPLE:
+            elif self.time_mode == TIMEMODE_DELAY_SIMPLE:
                 tc.config_delay(self.max_seconds + extra, self.seconds_per_move, zeitnot)
 
-            elif self.time_mode == TimeControl.TimeMode.HOURGLASS:
+            elif self.time_mode == TIMEMODE_HOURGLASS:
                 tc.config_hourglass(self.max_seconds + extra)
 
-            elif self.time_mode == TimeControl.TimeMode.MOVES_IN_TIME:
+            elif self.time_mode == TIMEMODE_MOVES_IN_TIME:
                 phases = []
                 for key in ("PHASE1", "PHASE2", "PHASE3"):
                     val = dic_var.get(key)
@@ -315,7 +316,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         _configure(self.tc_rival, is_player=False)
 
         # ── Hourglass: wire the two clocks together
-        if self.time_mode == TimeControl.TimeMode.HOURGLASS:
+        if self.time_mode == TIMEMODE_HOURGLASS:
             self.tc_player.set_opponent(self.tc_rival)
             self.tc_rival.set_opponent(self.tc_player)
 
@@ -412,26 +413,26 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         #   Simple Delay : "300d5"    (d = delay, used by SCID/ChessBase)
         #   Hourglass    : "300h"     (h = hourglass)
         #   Moves/Time   : "40/5400:20/1800:900+30"  (FIDE standard multi-phase)
-        mode = getattr(self, "time_mode", TimeControl.TimeMode.FISCHER)
+        mode = getattr(self, "time_mode", TIMEMODE_FISCHER)
         base = int(self.max_seconds)
 
-        if mode == TimeControl.TimeMode.SUDDEN_DEATH:
+        if mode == TIMEMODE_SUDDEN_DEATH:
             time_control = f"{base}"
 
-        elif mode == TimeControl.TimeMode.FISCHER:
+        elif mode == TIMEMODE_FISCHER:
             inc = int(self.seconds_per_move)
             time_control = f"{base}+{inc}" if inc else f"{base}"
 
-        elif mode == TimeControl.TimeMode.BRONSTEIN:
+        elif mode == TIMEMODE_BRONSTEIN:
             time_control = f"{base}b{int(self.seconds_per_move)}"
 
-        elif mode == TimeControl.TimeMode.DELAY_SIMPLE:
+        elif mode == TIMEMODE_DELAY_SIMPLE:
             time_control = f"{base}d{int(self.seconds_per_move)}"
 
-        elif mode == TimeControl.TimeMode.HOURGLASS:
+        elif mode == TIMEMODE_HOURGLASS:
             time_control = f"{base}h"
 
-        elif mode == TimeControl.TimeMode.MOVES_IN_TIME:
+        elif mode == TIMEMODE_MOVES_IN_TIME:
             parts = []
             for key in ("PHASE1", "PHASE2", "PHASE3"):
                 val = dic_var.get(key)
@@ -600,8 +601,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if tc.time_is_consumed():
                 t = time.time()
                 if is_player and QTMessages.pregunta(
-                    self.main_window,
-                    f"{_X(_('%1 has won on time.'), self.rival_name)}\n\n{_('Add time and keep playing?')}",
+                        self.main_window,
+                        f"{_X(_('%1 has won on time.'), self.rival_name)}\n\n{_('Add time and keep playing?')}",
                 ):
                     min_x = WPlayAgainstEngine.get_extra_minutes(self.main_window)
                     if min_x:
@@ -906,6 +907,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.analyze_terminate()
             self.state = ST_ENDGAME
             self.manager_tutor.close()
+            self.manager_rival.close()
 
         if len(self.game) > 0:
             if not QTMessages.pregunta(self.main_window, _("End game?")):
@@ -1253,7 +1255,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 return resp
 
     def select_book_move_base(
-        self, book: Books.Book, book_select: int
+            self, book: Books.Book, book_select: int
     ) -> Tuple[bool, Optional[int], Optional[int], Optional[str]]:
         fen = self.last_fen()
 
@@ -1643,7 +1645,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.thinking(True)
         self.pon_toolbar(ToolbarState.ENGINE_PLAYING)
 
-        mode = getattr(self, "time_mode", TimeControl.TimeMode.FISCHER)
+        mode = getattr(self, "time_mode", TIMEMODE_FISCHER)
 
         if self.timed:
             # ── Time available for the engine call
@@ -1651,19 +1653,19 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             seconds_black = self.tc_black.pending_time
             tc_engine = self.tc_white if self.is_engine_side_white else self.tc_black
 
-            if mode == TimeControl.TimeMode.HOURGLASS:
+            if mode == TIMEMODE_HOURGLASS:
                 # Hourglass: time pools keep changing; pass current values
                 seconds_move = 0
 
-            elif mode == TimeControl.TimeMode.BRONSTEIN:
+            elif mode == TIMEMODE_BRONSTEIN:
                 # Bronstein: increment is the max delay per move, not additive
                 seconds_move = tc_engine.seconds_per_move
 
-            elif mode == TimeControl.TimeMode.DELAY_SIMPLE:
+            elif mode == TIMEMODE_DELAY_SIMPLE:
                 # Delay: engine gets the full delay each move
                 seconds_move = tc_engine.seconds_per_move
 
-            elif mode == TimeControl.TimeMode.MOVES_IN_TIME:
+            elif mode == TIMEMODE_MOVES_IN_TIME:
                 # Moves-in-time: pass current pending time; increment from
                 # current phase bonus (stored as seconds_per_move after a phase ends)
                 seconds_move = tc_engine.seconds_per_move
@@ -1689,7 +1691,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 seconds_white = seconds_black = 600
             self.manager_rival.humanize(self.humanize, self.game, seconds_white, seconds_black, seconds_move)
 
-        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game, dispatcher=self.dispatch_rival)
+        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game,
+                                                                          dispatcher=self.dispatch_rival)
         if rm_rival is not None:
             self.rival_has_moved(rm_rival)
 
@@ -1768,7 +1771,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.premove = None
 
     def pww_centipawns_lost(
-        self, mrm: EngineResponse.MultiEngineResponse, rm_user: EngineResponse.EngineResponse
+            self, mrm: EngineResponse.MultiEngineResponse, rm_user: EngineResponse.EngineResponse
     ) -> int:
         if len(self.game.li_moves) == 0:
             best = mrm.best_rm_ordered()

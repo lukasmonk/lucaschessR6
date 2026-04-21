@@ -1,38 +1,28 @@
 import time
-from enum import Enum, auto
 
-from Code.Base.Constantes import INFINITE
+from Code.Base.Constantes import INFINITE, TIMEMODE_FISCHER, TIMEMODE_BRONSTEIN, TIMEMODE_DELAY_SIMPLE, \
+    TIMEMODE_SUDDEN_DEATH, TIMEMODE_HOURGLASS, TIMEMODE_MOVES_IN_TIME
+from Code.Z import Util
 
 
-class TimeMode(Enum):
-    """
-    Modos estándar de control de tiempo en ajedrez.
-
-    SUDDEN_DEATH   : Tiempo fijo, sin incremento. Se acaba → pierde.
-                     Ej: 5min, 10min, 30min
-    FISCHER        : Tiempo base + incremento por jugada (ya implementado como seconds_per_move).
-                     Ej: 5min + 3s/mov  (el más común en online)
-    BRONSTEIN      : El incremento solo se devuelve si no se usó todo el tiempo del turno.
-                     A diferencia de Fischer, el reloj nunca supera el tiempo inicial del turno.
-                     Ej: 5min + 3s Bronstein
-    DELAY_SIMPLE   : Cuenta atrás se retrasa N segundos antes de empezar a correr.
-                     Usado en torneos OTB (over the board) americanos.
-                     Ej: 30min + 5s delay
-    HOURGLASS      : El tiempo que gasta un jugador se añade al reloj del rival.
-                     Ej: ambos con 5min, se transfiere segundo a segundo.
-    MOVES_IN_TIME  : N movimientos en X tiempo, luego se añade tiempo extra (time bonus).
-                     Ej: 40 movimientos en 90min, luego +30min para el resto.
-                     El más usado en torneos clásicos FIDE.
-    HANDICAP       : Tiempos distintos para cada bando (ver HANDICAPS).
-    """
-
-    SUDDEN_DEATH = auto()
-    FISCHER = auto()
-    BRONSTEIN = auto()
-    DELAY_SIMPLE = auto()
-    HOURGLASS = auto()
-    MOVES_IN_TIME = auto()
-    HANDICAP = auto()
+# Modos estándar de control de tiempo en ajedrez.
+# 
+# SUDDEN_DEATH   : Tiempo fijo, sin incremento. Se acaba → pierde.
+#                  Ej: 5min, 10min, 30min
+# FISCHER        : Tiempo base + incremento por jugada (ya implementado como seconds_per_move).
+#                  Ej: 5min + 3s/mov  (el más común en online)
+# BRONSTEIN      : El incremento solo se devuelve si no se usó todo el tiempo del turno.
+#                  A diferencia de Fischer, el reloj nunca supera el tiempo inicial del turno.
+#                  Ej: 5min + 3s Bronstein
+# DELAY_SIMPLE   : Cuenta atrás se retrasa N segundos antes de empezar a correr.
+#                  Usado en torneos OTB (over the board) americanos.
+#                  Ej: 30min + 5s delay
+# HOURGLASS      : El tiempo que gasta un jugador se añade al reloj del rival.
+#                  Ej: ambos con 5min, se transfiere segundo a segundo.
+# MOVES_IN_TIME  : N movimientos en X tiempo, luego se añade tiempo extra (time bonus).
+#                  Ej: 40 movimientos en 90min, luego +30min para el resto.
+#                  El más usado en torneos clásicos FIDE.
+# HANDICAP       : Tiempos distintos para cada bando (ver HANDICAPS).
 
 
 class TimeControl:
@@ -57,7 +47,7 @@ class TimeControl:
         self.is_displayed = True
 
         # -- Modo de tiempo
-        self.time_mode = TimeMode.SUDDEN_DEATH
+        self.time_mode = TIMEMODE_SUDDEN_DEATH
 
         # -- Bronstein: guarda el tiempo al inicio del turno
         self._bronstein_turn_start = 0.0
@@ -89,7 +79,7 @@ class TimeControl:
         self.seconds_per_move = seconds_per_move if seconds_per_move else 0
         self.zeitnot_marker = zeinot_marker if zeinot_marker else 0
         self.show_clock = total_time > 0.0
-        self.time_mode = TimeMode.FISCHER if seconds_per_move else TimeMode.SUDDEN_DEATH
+        self.time_mode = TIMEMODE_FISCHER if seconds_per_move else TIMEMODE_SUDDEN_DEATH
 
     def config_fischer(self, base_secs, increment_secs, zeitnot=0):
         """
@@ -97,7 +87,7 @@ class TimeControl:
         El incremento se suma AL PARAR el reloj, antes de pasarlo al rival.
         Ej: config_fischer(300, 3)  →  5min + 3s/mov
         """
-        self.time_mode = TimeMode.FISCHER
+        self.time_mode = TIMEMODE_FISCHER
         self.pending_time = self.total_time = float(base_secs)
         self.seconds_per_move = float(increment_secs)
         self.zeitnot_marker = zeitnot
@@ -110,7 +100,7 @@ class TimeControl:
         El reloj nunca sube por encima del tiempo al inicio del turno.
         Ej: config_bronstein(300, 5)  →  5min + 5s Bronstein
         """
-        self.time_mode = TimeMode.BRONSTEIN
+        self.time_mode = TIMEMODE_BRONSTEIN
         self.pending_time = self.total_time = float(base_secs)
         self.seconds_per_move = float(delay_secs)
         self.zeitnot_marker = zeitnot
@@ -124,7 +114,7 @@ class TimeControl:
         NO se acumula: simplemente no descuenta.
         Ej: config_delay(1800, 5)  →  30min + 5s delay
         """
-        self.time_mode = TimeMode.DELAY_SIMPLE
+        self.time_mode = TIMEMODE_DELAY_SIMPLE
         self.pending_time = self.total_time = float(base_secs)
         self.seconds_per_move = float(delay_secs)
         self._delay_remaining = float(delay_secs)
@@ -137,7 +127,7 @@ class TimeControl:
         Requiere llamar a set_opponent() con el TimeControl del rival.
         Ej: config_hourglass(300)  →  5min cada uno
         """
-        self.time_mode = TimeMode.HOURGLASS
+        self.time_mode = TIMEMODE_HOURGLASS
         self.pending_time = self.total_time = float(base_secs)
         self.seconds_per_move = 0
         self.show_clock = True
@@ -155,7 +145,7 @@ class TimeControl:
           config_moves_in_time([(0, 900, 10)])
           → 15min + 10s/mov (fase única)
         """
-        self.time_mode = TimeMode.MOVES_IN_TIME
+        self.time_mode = TIMEMODE_MOVES_IN_TIME
         self.moves_in_time_phases = phases
         self._current_phase = 0
         self._moves_in_phase = 0
@@ -194,7 +184,7 @@ class TimeControl:
 
     def phase_label(self):
         """Etiqueta de fase para moves_in_time."""
-        if self.time_mode == TimeMode.MOVES_IN_TIME and self.moves_in_time_phases:
+        if self.time_mode == TIMEMODE_MOVES_IN_TIME and self.moves_in_time_phases:
             num_moves, __, __ = self.moves_in_time_phases[self._current_phase]
             if num_moves:
                 remaining = num_moves - self._moves_in_phase
@@ -206,7 +196,7 @@ class TimeControl:
     def get_seconds(self):
         if self.time_init:
             elapsed = time.time() - self.time_init
-            if self.time_mode == TimeMode.DELAY_SIMPLE:
+            if self.time_mode == TIMEMODE_DELAY_SIMPLE:
                 elapsed = max(0.0, elapsed - self._delay_remaining)
             tp = self.pending_time - elapsed
         else:
@@ -220,7 +210,7 @@ class TimeControl:
         if self.time_init:
             tp2 = time.time() - self.time_init
             elapsed = tp2
-            if self.time_mode == TimeMode.DELAY_SIMPLE:
+            if self.time_mode == TIMEMODE_DELAY_SIMPLE:
                 elapsed = max(0.0, elapsed - self._delay_remaining)
             tp = self.pending_time - elapsed
         else:
@@ -244,11 +234,11 @@ class TimeControl:
         self.time_paused = 0.0
 
         # Bronstein: guarda tiempo al inicio del turno
-        if self.time_mode == TimeMode.BRONSTEIN:
+        if self.time_mode == TIMEMODE_BRONSTEIN:
             self._bronstein_turn_start = self.pending_time
 
         # Delay: reinicia el delay al inicio de cada turno
-        if self.time_mode == TimeMode.DELAY_SIMPLE:
+        if self.time_mode == TIMEMODE_DELAY_SIMPLE:
             self._delay_remaining = self.seconds_per_move
             self._delay_active = True
 
@@ -262,24 +252,24 @@ class TimeControl:
             self.time_init = None
             self.time_previous = 0
 
-            if self.time_mode == TimeMode.FISCHER:
+            if self.time_mode == TIMEMODE_FISCHER:
                 self.pending_time -= t_used - self.seconds_per_move
 
-            elif self.time_mode == TimeMode.BRONSTEIN:
+            elif self.time_mode == TIMEMODE_BRONSTEIN:
                 # Solo se recupera el tiempo si el turno duró menos que el delay
                 recovered = min(t_used, self.seconds_per_move)
                 self.pending_time = self._bronstein_turn_start - t_used + recovered
 
-            elif self.time_mode == TimeMode.DELAY_SIMPLE:
+            elif self.time_mode == TIMEMODE_DELAY_SIMPLE:
                 effective = max(0.0, t_used - self.seconds_per_move)
                 self.pending_time -= effective
 
-            elif self.time_mode == TimeMode.HOURGLASS:
+            elif self.time_mode == TIMEMODE_HOURGLASS:
                 self.pending_time -= t_used
                 if self._opponent_clock:
                     self._opponent_clock.pending_time += t_used
 
-            elif self.time_mode == TimeMode.MOVES_IN_TIME:
+            elif self.time_mode == TIMEMODE_MOVES_IN_TIME:
                 self.pending_time -= t_used - self.seconds_per_move
                 self._advance_moves_in_time_phase()
 
@@ -341,7 +331,7 @@ class TimeControl:
             eti = self.text(tp)
             eti2 = self.text(tp2)
             if eti:
-                if self.time_mode == TimeMode.MOVES_IN_TIME:
+                if self.time_mode == TIMEMODE_MOVES_IN_TIME:
                     eti2 += self.phase_label()
 
                 self.set_clock_side(eti, eti2)
@@ -359,7 +349,7 @@ class TimeControl:
     def time_is_consumed(self):
         if self.time_init:
             elapsed = time.time() - self.time_init
-            if self.time_mode == TimeMode.DELAY_SIMPLE:
+            if self.time_mode == TIMEMODE_DELAY_SIMPLE:
                 elapsed = max(0.0, elapsed - self._delay_remaining)
             return (self.pending_time - elapsed) <= 0.0
         return self.pending_time <= 0.0
@@ -388,25 +378,8 @@ class TimeControl:
 
     # -- Serialización ---------------------------------------------------------
 
-    def save(self):
-        return (
-            self.total_time,
-            self.pending_time,
-            self.zeitnot_marker,
-            self.time_paused,
-            self.time_mode,
-            self._current_phase,
-            self._moves_in_phase,
-        )
+    def save(self) -> dict:
+        return Util.save_obj_dict(self)
 
-    def restore(self, tvar):
-        (
-            self.total_time,
-            self.pending_time,
-            self.zeitnot_marker,
-            self.time_paused,
-            self.time_mode,
-            self._current_phase,
-            self._moves_in_phase,
-        ) = tvar
-        self.time_init = None
+    def restore(self, dic: dict) -> None:
+        Util.restore_obj_dict(self, dic)

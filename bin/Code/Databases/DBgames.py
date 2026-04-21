@@ -10,7 +10,7 @@ import Code
 from Code.Base import Game
 from Code.Base.Constantes import FEN_INITIAL, STANDARD_TAGS, TACTICTHEMES
 from Code.Databases import DBgamesST
-from Code.Openings import OpeningsStd, ECO
+from Code.Openings import OpeningsStd
 from Code.SQL import UtilSQL, RowidReader
 from Code.Z import Util
 
@@ -825,12 +825,12 @@ class DBgames:
         um.set_hide_progressbar()
         self.conexion.commit()
 
-    def fill_eco(self, field, um):
+    def fill_eco_opening(self, field, um):
         sql = "SELECT ROWID, XPV FROM Games"
         if self.filter:
             sql += f" WHERE {self.filter}"
         cursor = self.conexion.execute(sql)
-        eco_std = ECO.get_eco()
+        op_std = OpeningsStd.ap
         li = cursor.fetchall()
         um.set_total_progressbar(len(li))
         for pos, (rowid, xpv) in enumerate(li, 1):
@@ -839,8 +839,9 @@ class DBgames:
             um.set_value_progressbar(pos)
             if xpv.startswith("|"):
                 continue
-            pv = xpv_pv(xpv)
-            eco = eco_std.assign(pv)
+            eco = op_std.xpv_eco(xpv)
+            if not eco:
+                eco = "A00"
             sql = f"UPDATE Games SET {field}=? WHERE ROWID=?"
             self.conexion.execute(sql, [eco, rowid])
         um.set_hide_progressbar()
