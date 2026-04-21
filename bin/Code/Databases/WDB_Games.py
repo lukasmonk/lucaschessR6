@@ -1127,13 +1127,22 @@ class WGames(QtWidgets.QWidget):
                         break
 
                     # 5 ECO
-                    li_fill_eco = []
-                    for dic in dic_cambios["FILL_ECO"]:
-                        li_fill_eco.append(dic["KEY"])
-                    if li_fill_eco:
-                        for key in li_fill_eco:
-                            um.label(f"{key}: {w.fill_eco}")
-                            self.db_games.fill_eco(key, um)
+                    # li_fill_eco = []
+                    # for dic in dic_cambios["FILL_ECO"]:
+                    #     li_fill_eco.append(dic["KEY"])
+                    # if li_fill_eco:
+                    #     for key in li_fill_eco:
+                    #         um.label(f"{key}: {w.fill_eco}")
+                    #         self.db_games.fill_eco(key, um)
+
+                    # 6 ECO-OPENING
+                    li_fill_eco_opening = []
+                    for dic in dic_cambios["FILL_ECO_OPENING"]:
+                        li_fill_eco_opening.append(dic["KEY"])
+                    if li_fill_eco_opening:
+                        for key in li_fill_eco_opening:
+                            um.label(f"{key}: {w.fill_eco_opening}")
+                            self.db_games.fill_eco_opening(key, um)
 
                     if um.is_canceled():
                         break

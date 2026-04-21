@@ -248,7 +248,7 @@ class WConfExternals(QtWidgets.QWidget):
 
         self.grid = None
 
-        self.grid = Grid.Grid(self, o_columns, complete_row_select=True)
+        self.grid = Grid.GridDragDrop(self, o_columns, complete_row_select=True)
         self.owner.register_grid(self.grid)
 
         layout = Colocacion.V().control(tb).control(self.grid).margen(0)
@@ -396,15 +396,18 @@ class WConfExternals(QtWidgets.QWidget):
     def grid_doble_click(self, _grid, _row, _obj_column):
         QtCore.QTimer.singleShot(0, self.modificar)
 
+    def _update_move(self, target):
+        self.grid.goto(target, 0)
+        self.grid.refresh()
+        self.set_changed()
+
     def arriba(self):
         row = self.grid.recno()
         if row > 0:
             li = self.lista_motores
             a, b = li[row], li[row - 1]
             li[row], li[row - 1] = b, a
-            self.grid.goto(row - 1, 0)
-            self.grid.refresh()
-            self.set_changed()
+            self._update_move(row - 1)
 
     def abajo(self):
         row = self.grid.recno()
@@ -412,9 +415,30 @@ class WConfExternals(QtWidgets.QWidget):
         if row < len(li) - 1:
             a, b = li[row], li[row + 1]
             li[row], li[row + 1] = b, a
-            self.grid.goto(row + 1, 0)
-            self.grid.refresh()
-            self.set_changed()
+            self._update_move(row + 1)
+
+    def grid_mover_filas(self, _grid, li_rows, target_row):
+        lic = self.lista_motores
+
+        # 1. Obtener los objetos/datos que se van a mover
+        items_a_mover = [lic[i] for i in li_rows]
+
+        # 2. Borrar las filas originales (en orden inverso para no alterar los índices)
+        for i in sorted(li_rows, reverse=True):
+            del lic[i]
+
+        # 3. Ajustar el índice de destino si se han borrado elementos antes de él
+        borrados_antes = sum(1 for i in li_rows if i < target_row)
+        target_row -= borrados_antes
+
+        # 4. Insertar los elementos en la nueva posición
+        for item in reversed(items_a_mover):
+            lic.insert(target_row, item)
+
+        self._update_move(target_row)
+
+        return True
+
 
     def borrar(self):
         row = self.grid.recno()

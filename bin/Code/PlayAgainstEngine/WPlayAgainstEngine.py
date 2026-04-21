@@ -22,6 +22,8 @@ from Code.Base.Constantes import (
     ENG_WICKER,
     FEN_INITIAL,
     SELECTED_BY_PLAYER,
+    TIMEMODE_FISCHER, TIMEMODE_BRONSTEIN, TIMEMODE_DELAY_SIMPLE,
+    TIMEMODE_SUDDEN_DEATH, TIMEMODE_HOURGLASS, TIMEMODE_MOVES_IN_TIME
 )
 from Code.Books import Books, WBooks
 from Code.Engines import SelectEngines, WConfEngines, WExternalEngines, Engines
@@ -42,7 +44,6 @@ from Code.QT import (
     SelectFiles,
 )
 from Code.Voyager import Voyager
-from Code.Z import TimeControl
 from Code.Z import Util
 
 
@@ -336,16 +337,16 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         # -- Mode selector
         li_modes = [
-            (_("Sudden Death"), TimeControl.TimeMode.SUDDEN_DEATH),
-            (_("Fischer"), TimeControl.TimeMode.FISCHER),
-            (_("Bronstein"), TimeControl.TimeMode.BRONSTEIN),
-            (_("Simple Delay"), TimeControl.TimeMode.DELAY_SIMPLE),
-            (_("Hourglass"), TimeControl.TimeMode.HOURGLASS),
-            (_("Moves in Time"), TimeControl.TimeMode.MOVES_IN_TIME),
+            (_("Sudden Death"), TIMEMODE_SUDDEN_DEATH),
+            (_("Fischer"), TIMEMODE_FISCHER),
+            (_("Bronstein"), TIMEMODE_BRONSTEIN),
+            (_("Simple Delay"), TIMEMODE_DELAY_SIMPLE),
+            (_("Hourglass"), TIMEMODE_HOURGLASS),
+            (_("Moves in Time"), TIMEMODE_MOVES_IN_TIME),
         ]
         lb_mode = Controles.LB2P(self, _("Mode")).set_font(font)
         self.cb_time_mode = (
-            Controles.CB(self, li_modes, TimeControl.TimeMode.FISCHER)
+            Controles.CB(self, li_modes, TIMEMODE_FISCHER)
             .set_font(font)
             .capture_changes(self._on_time_mode_changed)
         )
@@ -535,22 +536,22 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         # Increment label changes per mode
         labels = {
-            TimeControl.TimeMode.SUDDEN_DEATH: None,
-            TimeControl.TimeMode.FISCHER: _("Seconds added per move"),
-            TimeControl.TimeMode.BRONSTEIN: f"{_('Delay')} ({_('seconds')})",
-            TimeControl.TimeMode.DELAY_SIMPLE: f"{_('Delay')} ({_('seconds')})",
-            TimeControl.TimeMode.HOURGLASS: None,
-            TimeControl.TimeMode.MOVES_IN_TIME: None,
+            TIMEMODE_SUDDEN_DEATH: None,
+            TIMEMODE_FISCHER: _("Seconds added per move"),
+            TIMEMODE_BRONSTEIN: f"{_('Delay')} ({_('seconds')})",
+            TIMEMODE_DELAY_SIMPLE: f"{_('Delay')} ({_('seconds')})",
+            TIMEMODE_HOURGLASS: None,
+            TIMEMODE_MOVES_IN_TIME: None,
         }
         show_increment = mode in (
-            TimeControl.TimeMode.FISCHER,
-            TimeControl.TimeMode.BRONSTEIN,
-            TimeControl.TimeMode.DELAY_SIMPLE,
+            TIMEMODE_FISCHER,
+            TIMEMODE_BRONSTEIN,
+            TIMEMODE_DELAY_SIMPLE,
         )
-        show_phases = mode == TimeControl.TimeMode.MOVES_IN_TIME
-        show_basetime = mode != TimeControl.TimeMode.MOVES_IN_TIME
-        show_advantage = mode != TimeControl.TimeMode.MOVES_IN_TIME
-        show_disable_time = mode not in (TimeControl.TimeMode.HOURGLASS, TimeControl.TimeMode.MOVES_IN_TIME)
+        show_phases = mode == TIMEMODE_MOVES_IN_TIME
+        show_basetime = mode != TIMEMODE_MOVES_IN_TIME
+        show_advantage = mode != TIMEMODE_MOVES_IN_TIME
+        show_disable_time = mode not in (TIMEMODE_HOURGLASS, TIMEMODE_MOVES_IN_TIME)
 
         # Update increment label text
         if show_increment and labels.get(mode):
@@ -570,7 +571,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                 w.set_value(False)
 
         # Hourglass tooltip
-        if mode == TimeControl.TimeMode.HOURGLASS:
+        if mode == TIMEMODE_HOURGLASS:
             self.ed_minutos.setToolTip(_("Time for each player. Time used is transferred to the opponent."))
         else:
             self.ed_minutos.setToolTip("")
@@ -931,12 +932,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         def time_depth(show):
             for obj in (
-                self.lb_depth,
-                self.ed_rdepth,
-                self.bt_cancel_rdepth,
-                self.lb_rtime,
-                self.ed_rtime,
-                self.bt_cancel_rtime,
+                    self.lb_depth,
+                    self.ed_rdepth,
+                    self.bt_cancel_rdepth,
+                    self.lb_rtime,
+                    self.ed_rtime,
+                    self.bt_cancel_rtime,
             ):
                 obj.setVisible(show)
             if not show:
@@ -1094,10 +1095,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def test_unlimited(self):
         visible = (
-            self.ed_rdepth.text_to_integer() == 0
-            and self.ed_rtime.text_to_float() == 0
-            and self.ed_nodes.text_to_integer() == 0
-            and not self.gb_time.isChecked()
+                self.ed_rdepth.text_to_integer() == 0
+                and self.ed_rtime.text_to_float() == 0
+                and self.ed_nodes.text_to_integer() == 0
+                and not self.gb_time.isChecked()
         )
         self.lb_unlimited.setVisible(visible)
         self.cb_unlimited.setVisible(visible)
@@ -1139,26 +1140,26 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         chess18 = menu.submenu(tr_chess("18"), rondo_main.otro())
         for pos, uno in enumerate(
-            (
-                "rbbqknnr",
-                "rqbbknnr",
-                "rbbnkqnr",
-                "rnbbkqnr",
-                "rbbnknqr",
-                "rnbbknqr",
-                "rqbnkbnr",
-                "rnbnkbqr",
-                "rnnbkqbr",
-                "rbnnkqbr",
-                "rqnbknbr",
-                "rnqbknbr",
-                "rbqnknbr",
-                "rbnqknbr",
-                "rnnqkbbr",
-                "rnqnkbbr",
-                "rqnnkbbr",
-            ),
-            1,
+                (
+                        "rbbqknnr",
+                        "rqbbknnr",
+                        "rbbnkqnr",
+                        "rnbbkqnr",
+                        "rbbnknqr",
+                        "rnbbknqr",
+                        "rqbnkbnr",
+                        "rnbnkbqr",
+                        "rnnbkqbr",
+                        "rbnnkqbr",
+                        "rqnbknbr",
+                        "rnqbknbr",
+                        "rbqnknbr",
+                        "rbnqknbr",
+                        "rnnqkbbr",
+                        "rnqnkbbr",
+                        "rqnnkbbr",
+                ),
+                1,
         ):
             fen = f"{uno}/pppppppp/8/8/8/8/PPPPPPPP/{uno.upper()} w KQkq - 0 1"
             chess18.opcion(fen, f"{pos}. {uno}", rondo.otro())
@@ -1378,11 +1379,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             elif menu.is_right:
                 pos, opening_block = resp
                 if QTMessages.pregunta(
-                    self,
-                    _X(
-                        _("Do you want to delete the opening %1 from the list of favourite openings?"),
-                        opening_block.tr_name,
-                    ),
+                        self,
+                        _X(
+                            _("Do you want to delete the opening %1 from the list of favourite openings?"),
+                            opening_block.tr_name,
+                        ),
                 ):
                     del self.li_preferred_openings[pos]
 
@@ -1512,7 +1513,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         # Tiempo
         dic["WITHTIME"] = self.gb_time.isChecked()
-        dic["TIME_MODE"] = self.cb_time_mode.valor()
+        dic["TIME_MODE"] = int(self.cb_time_mode.valor())
         if dic["WITHTIME"]:
             mode = dic["TIME_MODE"]
             dic["MINUTES"] = self.ed_minutos.text_to_float()
@@ -1521,7 +1522,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             dic["DISABLEUSERTIME"] = self.chb_disable_usertime.valor()
             dic["ZEITNOT"] = self.edZeitnot.value()
 
-            if mode == TimeControl.TimeMode.MOVES_IN_TIME:
+            if mode == TIMEMODE_MOVES_IN_TIME:
                 dic["PHASE1"] = (
                     self.sb_ph1_moves.value(),
                     self.ed_ph1_mins.text_to_float(),
@@ -1619,7 +1620,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         with_time = dic.get("WITHTIME", False)
         self.gb_time.setChecked(with_time)
 
-        mode = dic.get("TIME_MODE", TimeControl.TimeMode.FISCHER)
+        mode = dic.get("TIME_MODE", TIMEMODE_FISCHER)
         self.cb_time_mode.set_value(mode)
 
         if with_time:

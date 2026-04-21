@@ -220,17 +220,24 @@ def restore_list_vars_values(obj: Any, li_vars_values: List[Tuple[str, Any]]) ->
             setattr(obj, name, value)
 
 
-def save_obj_pickle(obj: Any, li_exclude: Optional[List[str]] = None) -> bytes:
+def save_obj_dict(obj: Any, li_exclude: Optional[List[str]] = None) -> dict:
     li_vars_values = list_vars_values(obj, li_exclude)
-    dic = {var: value for var, value in li_vars_values}
-    return pickle.dumps(dic, protocol=4)
+    return {var: value for var, value in li_vars_values}
+
+
+def restore_obj_dict(obj: Any, dic: dict) -> None:
+    for k, v in dic.items():
+        if hasattr(obj, k):
+            setattr(obj, k, v)
+
+
+def save_obj_pickle(obj: Any, li_exclude: Optional[List[str]] = None) -> bytes:
+    return pickle.dumps(save_obj_dict(obj, li_exclude), protocol=4)
 
 
 def restore_obj_pickle(obj: Any, js_txt: bytes) -> None:
     dic = pickle.loads(js_txt)
-    for k, v in dic.items():
-        if hasattr(obj, k):
-            setattr(obj, k, v)
+    restore_obj_dict(obj, dic)
 
 
 def ini_dic(file: Union[str, Path]) -> dict:

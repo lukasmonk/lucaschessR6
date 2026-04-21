@@ -17,10 +17,10 @@ class WTagsPGN(LCDialog.LCDialog):
 
         LCDialog.LCDialog.__init__(self, wowner, titulo, icono, extparam)
         self.procesador = Code.procesador
-        self.creaLista(li_pgn)
+        self.crea_lista(li_pgn)
 
         # Toolbar
-        liAccionesWork = (
+        li_acciones_work = (
             (_("Accept"), Iconos.Aceptar(), self.aceptar),
             None,
             (_("Cancel"), Iconos.Cancelar(), self.cancelar),
@@ -30,24 +30,24 @@ class WTagsPGN(LCDialog.LCDialog):
             (_("Down"), Iconos.Abajo(), self.abajo),
             None,
         )
-        tbWork = QTDialogs.LCTB(self, liAccionesWork, icon_size=24)
+        tb_work = QTDialogs.LCTB(self, li_acciones_work, icon_size=24)
 
         # Lista
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("ETIQUETA", _("Label"), 150, edicion=Delegados.LineaTextoUTF8())
         o_columns.nueva("VALOR", _("Value"), 400, edicion=Delegados.LineaTextoUTF8())
 
-        self.grid = Grid.Grid(self, o_columns, is_editable=True)
+        self.grid = Grid.GridDragDrop(self, o_columns, is_editable=True)
         self.grid.fix_min_width()
         self.register_grid(self.grid)
 
         # Layout
-        layout = Colocacion.V().control(tbWork).control(self.grid).margen(3)
+        layout = Colocacion.V().control(tb_work).control(self.grid).margen(3)
         self.setLayout(layout)
 
         self.restore_video()
 
-    def creaLista(self, li_pgn):
+    def crea_lista(self, li_pgn):
         st = {eti for eti, val in li_pgn}
 
         li = [[k, v] for k, v in li_pgn]
@@ -69,10 +69,10 @@ class WTagsPGN(LCDialog.LCDialog):
         self.save_video()
         self.reject()
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         return len(self.li_pgn)
 
-    def grid_setvalue(self, grid, row, obj_column, valor):
+    def grid_setvalue(self, _grid, row, obj_column, valor):
         col = 0 if obj_column.key == "ETIQUETA" else 1
         if row < len(self.li_pgn):
             valor = valor.strip()
@@ -97,7 +97,7 @@ class WTagsPGN(LCDialog.LCDialog):
                         if cp.is_initial():
                             self.li_pgn[row][1] = ""
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         if obj_column.key == "ETIQUETA":
             lb = self.li_pgn[row][0]
             ctra = lb.upper()
@@ -112,12 +112,17 @@ class WTagsPGN(LCDialog.LCDialog):
             return key
         if row < len(self.li_pgn):
             return self.li_pgn[row][1]
+        return None
 
     def grid_remove(self):
         row = self.grid.recno()
         if row < len(self.li_pgn):
             self.li_pgn[row][1] = ""
             self.grid.refresh()
+
+    def _update_move(self, target):
+        self.grid.goto(target, 0)
+        self.grid.refresh()
 
     def arriba(self):
         recno = self.grid.recno()
@@ -126,16 +131,35 @@ class WTagsPGN(LCDialog.LCDialog):
                 self.li_pgn[recno - 1],
                 self.li_pgn[recno],
             )
-            self.grid.goto(recno - 1, 0)
-            self.grid.refresh()
+            self._update_move(recno - 1)
 
     def abajo(self):
-        n0 = self.grid.recno()
-        if n0 < len(self.li_pgn) - 1:
-            n1 = n0 + 1
-            self.li_pgn[n0], self.li_pgn[n1] = self.li_pgn[n1], self.li_pgn[n0]
-            self.grid.goto(n1, 0)
-            self.grid.refresh()
+        recno = self.grid.recno()
+        if recno < len(self.li_pgn) - 1:
+            n1 = recno + 1
+            self.li_pgn[recno], self.li_pgn[n1] = self.li_pgn[n1], self.li_pgn[recno]
+            self._update_move(recno + 1)
+
+    def grid_mover_filas(self, grid, li_rows, target_row):
+
+        # 1. Obtener los objetos/datos que se van a mover
+        items_a_mover = [self.li_pgn[i] for i in li_rows]
+
+        # 2. Borrar las filas originales (en orden inverso para no alterar los índices)
+        for i in sorted(li_rows, reverse=True):
+            del self.li_pgn[i]
+
+        # 3. Ajustar el índice de destino si se han borrado elementos antes de él
+        borrados_antes = sum(1 for i in li_rows if i < target_row)
+        target_row -= borrados_antes
+
+        # 4. Insertar los elementos en la nueva posición
+        for item in reversed(items_a_mover):
+            self.li_pgn.insert(target_row, item)
+
+        self._update_move(target_row)
+
+        return True
 
 
 def edit_tags_pgn(wowner, li_pgn, is_fen_possible):
@@ -182,7 +206,7 @@ def menu_pgn_labels(wowner, game, is_fen_possible) -> bool:
             if not is_opening:
                 ape = _("Opening")
                 nom = opening.tr_name
-                label = nom if ape.upper() in nom.upper() else (f"{ape} : {nom}")
+                label = nom if ape.upper() in nom.upper() else f"{ape} : {nom}"
 
                 if not is_eco:
                     label += f" ({opening.eco})"

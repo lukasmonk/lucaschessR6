@@ -44,7 +44,7 @@ from Code.Base.Constantes import (
     ENDGAME,
 )
 from Code.Nags.Nags import NAG_1, NAG_2, NAG_3, NAG_4, NAG_5, NAG_6
-from Code.Openings import OpeningsStd, ECO
+from Code.Openings import OpeningsStd
 from Code.Z import Util
 
 
@@ -120,7 +120,9 @@ class Game:
             self.first_position.set_pos_initial()
 
     def eco(self):
-        return ECO.get_eco().assign(self.pv())
+        if not self.opening:
+            self.assign_opening()
+        return self.opening.eco
 
     def is_mate(self) -> bool:
         return self.termination == TERMINATION_MATE

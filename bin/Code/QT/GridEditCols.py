@@ -59,7 +59,7 @@ class EditCols(LCDialog.LCDialog):
         )
         o_columns.nueva("CTEXTO", _("Foreground"), 80, align_center=True)
         o_columns.nueva("CFONDO", _("Background"), 80, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, is_editable=True)
+        self.grid = Grid.GridDragDrop(self, o_columns, is_editable=True)
 
         self.register_grid(self.grid)
 
@@ -70,27 +70,6 @@ class EditCols(LCDialog.LCDialog):
         self.grid.goto(0, 1)
 
         self.restore_video()
-
-    def tw_up(self):
-        pos = self.grid.recno()
-        if pos > 0:
-            lic = self.o_columns.li_columns
-            lic[pos], lic[pos - 1] = lic[pos - 1], lic[pos]
-            for n, col in enumerate(lic):
-                col.position = n
-
-            self.grid.goto(pos - 1, 1)
-            self.grid.refresh()
-
-    def tw_down(self):
-        pos = self.grid.recno()
-        lic = self.o_columns.li_columns
-        if pos < len(lic) - 1:
-            lic[pos], lic[pos + 1] = lic[pos + 1], lic[pos]
-            self.grid.goto(pos + 1, 1)
-            self.grid.refresh()
-            for n, col in enumerate(lic):
-                col.position = n
 
     def configurations(self):
         dic_conf = self.configuration.read_variables(self.work)
@@ -128,10 +107,10 @@ class EditCols(LCDialog.LCDialog):
                 if name:
                     if name in dic_conf:
                         if not QTMessages.pregunta(
-                            self,
-                            f"{name}<br>{_('This name already exists, what do you want to do?')}",
-                            label_yes=_("Overwrite"),
-                            label_no=_("Cancel"),
+                                self,
+                                f"{name}<br>{_('This name already exists, what do you want to do?')}",
+                                label_yes=_("Overwrite"),
+                                label_no=_("Cancel"),
                         ):
                             return
                     dic_current = self.o_columns.save_dic(self.grid_owner)
@@ -254,3 +233,49 @@ class EditCols(LCDialog.LCDialog):
             else:
                 col.rgb_background = -1
             col.set_qt()
+
+    def _update_move(self, target):
+        lic = self.o_columns.li_columns
+        for n, col in enumerate(lic):
+            col.position = n
+
+        self.grid.goto(target, 1)
+        self.grid.refresh()
+
+    def tw_up(self):
+        pos = self.grid.recno()
+        if pos > 0:
+            lic = self.o_columns.li_columns
+            lic[pos], lic[pos - 1] = lic[pos - 1], lic[pos]
+
+            self._update_move(pos - 1)
+
+    def tw_down(self):
+        pos = self.grid.recno()
+        lic = self.o_columns.li_columns
+        if pos < len(lic) - 1:
+            lic[pos], lic[pos + 1] = lic[pos + 1], lic[pos]
+
+            self._update_move(pos + 1)
+
+    def grid_mover_filas(self, grid, li_rows, target_row):
+        lic = self.o_columns.li_columns
+
+        # 1. Obtener los objetos/datos que se van a mover
+        items_a_mover = [lic[i] for i in li_rows]
+
+        # 2. Borrar las filas originales (en orden inverso para no alterar los índices)
+        for i in sorted(li_rows, reverse=True):
+            del lic[i]
+
+        # 3. Ajustar el índice de destino si se han borrado elementos antes de él
+        borrados_antes = sum(1 for i in li_rows if i < target_row)
+        target_row -= borrados_antes
+
+        # 4. Insertar los elementos en la nueva posición
+        for item in reversed(items_a_mover):
+            lic.insert(target_row, item)
+
+        self._update_move(target_row)
+
+        return True

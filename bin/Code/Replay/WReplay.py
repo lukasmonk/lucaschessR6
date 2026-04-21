@@ -340,7 +340,6 @@ class Replay:
             return
 
         move = self.li_moves[self.current_position]
-        # self.board.set_position(move.position_before)
         if self.current_position > self.initial_position:
             if not self.sleep_refresh(self.seconds / self.rapidez):
                 return

@@ -373,7 +373,8 @@ class WTags(LCDialog.LCDialog):
         self.fill_column = _("Fill column with value")
         self.fill_pgn = _("Fill column with PGN")
         self.fill_opening = _("Fill column with opening")
-        self.fill_eco = _("Fill column with ECO")
+        # self.fill_eco = _("Fill column with ECO")
+        self.fill_eco_opening = _("Fill column with ECO")
         self.remove_column = _("Remove column")
         self.nothing = "-"
         self.li_actions = [
@@ -381,7 +382,8 @@ class WTags(LCDialog.LCDialog):
             self.fill_column,
             self.fill_pgn,
             self.fill_opening,
-            self.fill_eco,
+            # self.fill_eco,
+            self.fill_eco_opening,
             self.remove_column,
         ]
         o_columns.nueva(
@@ -452,7 +454,8 @@ class WTags(LCDialog.LCDialog):
             "REMOVE": [],
             "FILL_PGN": [],
             "FILL_OPENING": [],
-            "FILL_ECO": [],
+            # "FILL_ECO": [],
+            "FILL_ECO_OPENING": [],
         }
         for dic in self.li_data:
             if dic["NEW"]:
@@ -470,8 +473,10 @@ class WTags(LCDialog.LCDialog):
                 dic_cambios["FILL_PGN"].append(dic)
             elif dic["ACTION"] == self.fill_opening:
                 dic_cambios["FILL_OPENING"].append(dic)
-            elif dic["ACTION"] == self.fill_eco:
-                dic_cambios["FILL_ECO"].append(dic)
+            # elif dic["ACTION"] == self.fill_eco:
+            #     dic_cambios["FILL_ECO"].append(dic)
+            elif dic["ACTION"] == self.fill_eco_opening:
+                dic_cambios["FILL_ECO_OPENING"].append(dic)
 
         self.dic_cambios = dic_cambios
 
