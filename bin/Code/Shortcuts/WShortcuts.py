@@ -35,7 +35,7 @@ class WShortcuts(LCDialog.LCDialog):
             is_editable=True,
         )
 
-        self.grid = Grid.Grid(self, o_columnas, complete_row_select=True, is_editable=True)
+        self.grid = Grid.GridDragDrop(self, o_columnas, complete_row_select=True, is_editable=True)
         self.grid.fix_min_width()
         f = Controles.FontType(puntos=10, peso=75)
         self.grid.set_font(f)
@@ -127,16 +127,42 @@ class WShortcuts(LCDialog.LCDialog):
             self.shortcuts.remove(row)
             self.save()
 
+    def _update_move(self, target):
+        self.grid.goto(target, 0)
+        self.save()
+
     def go_up(self):
         row = self.grid.recno()
         if row >= 1:
-            self.shortcuts.go_up(row)
-            self.grid.goto(row - 1, 0)
-            self.save()
+            li_shortcuts = self.shortcuts.li_shortcuts
+            li_shortcuts[row], li_shortcuts[row - 1] = li_shortcuts[row - 1], li_shortcuts[row]
+            self._update_move(row - 1)
 
     def go_down(self):
         row = self.grid.recno()
         if row < len(self.shortcuts.li_shortcuts) - 1:
-            self.shortcuts.go_down(row)
-            self.grid.goto(row + 1, 0)
-            self.save()
+            li_shortcuts = self.shortcuts.li_shortcuts
+            li_shortcuts[row], li_shortcuts[row + 1] = li_shortcuts[row + 1], li_shortcuts[row]
+            self._update_move(row + 1)
+
+    def grid_mover_filas(self, _grid, li_rows, target_row):
+        lic = self.shortcuts.li_shortcuts
+
+        # 1. Obtener los objetos/datos que se van a mover
+        items_a_mover = [lic[i] for i in li_rows]
+
+        # 2. Borrar las filas originales (en orden inverso para no alterar los índices)
+        for i in sorted(li_rows, reverse=True):
+            del lic[i]
+
+        # 3. Ajustar el índice de destino si se han borrado elementos antes de él
+        borrados_antes = sum(1 for i in li_rows if i < target_row)
+        target_row -= borrados_antes
+
+        # 4. Insertar los elementos en la nueva posición
+        for item in reversed(items_a_mover):
+            lic.insert(target_row, item)
+
+        self._update_move(target_row)
+
+        return True

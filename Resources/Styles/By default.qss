@@ -98,42 +98,30 @@ QLabel[type="cpws_lost"]
 }
 QLabel[type="white"]
 {
-    color: #2c3e50;
-    background-color: #ecf0f1;
-    padding: 5px 10px 5px 10px;
-    border: 1px solid #bdc3c7;
-    border-radius: 3px;
-    font-weight: 600;
+    color: #000000;
+    background-color: #fafafa;
+    padding: 4px 4px 4px 4px;
+    border: 1px solid gray;
 }
-
 QLabel[type="black"]
 {
-    color: #ecf0f1;
-    background-color: #34495e;
-    padding: 5px 10px 5px 10px;
-    border: 1px solid #2c3e50;
-    border-radius: 3px;
-    font-weight: 600;
+    background-color: #000000;
+    color: #fafafa;
+    padding: 4px 4px 4px 4px;
+    border: 1px solid #000000;
 }
-
 QLabel[type="time_ms"]
 {
-    color: #27ae60;
-    background-color: #d5f4e6;
-    padding: 5px 10px 5px 10px;
-    border: 1px solid #27ae60;
-    border-radius: 3px;
-    font-weight: 600;
+    color: #000000;
+    background-color: #f0f7f2;
+    border: 1px solid #076c9f;
 }
 
 QLabel[type="clock"]
 {
-    color: #2980b9;
-    background-color: #d6eaf8;
-    padding: 5px 10px 5px 10px;
-    border: 1px solid #2980b9;
-    border-radius: 3px;
-    font-weight: 600;
+    color: #076c9f;
+    background-color: #fefefe;
+    border: 1px solid #076c9f;
 }
 
 QLabel[type="tutor-tutor"]
@@ -347,4 +335,3 @@ QProgressBar::chunk {
     );
     border-radius: 5px;
 }
-

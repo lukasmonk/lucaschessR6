@@ -162,8 +162,8 @@ class WRun(LCDialog.LCDialog):
             t1 = time.time() - t0
             if rm is not None:
                 mov = rm.movimiento()
-                #results = ",".join(f"{k}:{v}" for k, v in self.elem.dic_results.items())
-                #pr_int(f'{self.elem.fen}|{results}|{mov}|{self.sts.groups.lista[ngroup].name}')
+                # results = ",".join(f"{k}:{v}" for k, v in self.elem.dic_results.items())
+                # pr_int(f'{self.elem.fen}|{results}|{mov}|{self.sts.groups.lista[ngroup].name}')
                 if mov:
                     if self.with_board:
                         self.board.show_one_arrow_temp(rm.from_sq, rm.to_sq, False)
@@ -419,7 +419,7 @@ class WUnSTS(LCDialog.LCDialog):
         for x in range(len(osts.groups)):
             group = osts.groups.group(x)
             o_columns.nueva("T%d" % x, group.name, 140, align_center=True)
-        self.grid = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.grid = Grid.GridDragDrop(self, o_columns, complete_row_select=True, select_multiple=True)
         self.register_grid(self.grid)
 
         # Layout
@@ -485,6 +485,28 @@ class WUnSTS(LCDialog.LCDialog):
         if self.sts.down(row):
             self.grid.goto(row + 1, 0)
             self.grid.refresh()
+
+    def grid_mover_filas(self, _grid, li_rows, target_row):
+        lic = self.sts.works.lista
+
+        # 1. Obtener los objetos/datos que se van a mover
+        items_a_mover = [lic[i] for i in li_rows]
+
+        # 2. Borrar las filas originales (en orden inverso para no alterar los índices)
+        for i in sorted(li_rows, reverse=True):
+            del lic[i]
+
+        # 3. Ajustar el índice de destino si se han borrado elementos antes de él
+        borrados_antes = sum(1 for i in li_rows if i < target_row)
+        target_row -= borrados_antes
+
+        # 4. Insertar los elementos en la nueva posición
+        for item in reversed(items_a_mover):
+            lic.insert(target_row, item)
+
+        self.sts.save()
+        self.grid.goto(target_row, 0)
+        self.grid.refresh()
 
     def wk_run(self):
         row = self.grid.recno()

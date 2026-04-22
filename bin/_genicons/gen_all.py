@@ -1,43 +1,6 @@
 import os
 import shutil
 import sys
-
-from PIL import Image, ImageEnhance, ImageOps
-
-# Importamos las herramientas necesarias de Pillow
-
-# --- CONFIGURACIÓN DE AJUSTES VISUALES ---
-# Ajustados para igualar el tono dorado/cálido de ImageMagick
-
-# Valores para 'haz_sepia'
-SEPIA_BRIGHTNESS = 0.95  # Un ligero oscurecimiento (IM -10 brillo)
-SEPIA_CONTRAST = 1.05  # Un pelín de contraste extra para definición
-SEPIA_SATURATION = 1.4  # ¡CLAVE! Alta saturación para que el dorado vibre
-
-# Valores para 'haz_darked' (simulando IM -brightness-contrast -10)
-DARK_BRIGHTNESS = 0.90
-DARK_CONTRAST = 0.95
-
-# --- LISTAS DE ARCHIVOS ---
-COPY_SEPIA = {"Milleniumt.png", "dgt.png", "dgtB.png", "Certabo.png", "Novag.png", "Chessnut.png", "SquareOff.png",
-              "Saitek.png", "peon64r.png", "m1.png", "m2.png"}
-
-GREEN_SEPIA = {"icons8_downloads_folder_32px.png", "icons8_checked_checkbox_32px.png", "icons8_close_window_32px_1.png",
-               "icons8_home_32px.png", "icons8_filing_cabinet_32px.png", "icons8_file_explorer_32px.png",
-               "icons8_add_folder_32px.png", "icons8_delete_folder_32px.png", "icons8_sync_32px.png",
-               "icons8_tick_box_32px.png", "icons8_automatic_32px_1.png", "satellites-26.png", "diploma2-32.png",
-               "icons8_trophy_32px.png", "icons8_services_30px.png", "icons8_gear_30px.png", "lock-32.png",
-               "BSicon_MBAHN.png", "trekking-32.png", "washing_machine-32.png", "icons8_leaderboard_32px.png",
-               "add_property-32.png"
-               }
-
-
-# --- FUNCIONES DE PROCESAMIENTO DE IMAGEN (PILLOW) ---
-
-
-import os
-import shutil
-import sys
 # Importamos las herramientas necesarias de Pillow, incluyendo ImageFilter para el enfoque
 from PIL import Image, ImageEnhance, ImageOps, ImageFilter
 
@@ -62,11 +25,13 @@ GREEN_SEPIA = {"icons8_downloads_folder_32px.png", "icons8_checked_checkbox_32px
                "icons8_tick_box_32px.png", "icons8_automatic_32px_1.png", "satellites-26.png", "diploma2-32.png",
                "icons8_trophy_32px.png", "icons8_services_30px.png", "icons8_gear_30px.png", "lock-32.png",
                "BSicon_MBAHN.png", "trekking-32.png", "washing_machine-32.png", "icons8_leaderboard_32px.png",
-               "add_property-32.png"
+               "add_property-32.png", "icons8-maquinaria-32.png"
                }
-GREEN_SEPIA = {}
+
+WHITE_SEPIA = {"lichess.png"}
 
 # --- FUNCIONES DE PROCESAMIENTO DE IMAGEN (PILLOW) ---
+
 
 def haz_sepia(origen):
     """
@@ -112,6 +77,28 @@ def haz_green_pil(origen):
     solid_color_img = Image.new("RGB", img.size, (196, 148, 133))
     img_final = Image.merge("RGBA", (*solid_color_img.split(), a))
     img_final.save("sepia.png")
+
+
+def haz_white_pil(origen, is_sepia):
+    # 1. Abrir la imagen y asegurar que esté en modo RGBA (Red, Green, Blue, Alpha)
+    img = Image.open(origen).convert("RGBA")
+
+    # 2. Separar los canales
+    # r, g, b son los colores; a es la transparencia
+    r, g, b, a = img.split()
+
+    # 3. Invertir solo los canales de color
+    rgb_img = Image.merge("RGB", (r, g, b))
+    inverted_rgb = ImageOps.invert(rgb_img)
+
+    # 4. Volver a separar los canales invertidos
+    r_inv, g_inv, b_inv = inverted_rgb.split()
+
+    # 5. Combinar los canales invertidos con el canal alfa ORIGINAL
+    img_dark = Image.merge("RGBA", (r_inv, g_inv, b_inv, a))
+
+    # Guardar el resultado
+    img_dark.save("sepia.png" if is_sepia else "dark.png")
 
 
 def haz_darked(origen):
@@ -160,6 +147,8 @@ def funcion_sepia(qbin, qdic, dic, desde, nom_funcion, nom_dir, nom_fichero):
         shutil.copy(c_fich, "sepia.png")
     elif nom_fichero in GREEN_SEPIA:
         haz_green_pil(c_fich)
+    elif nom_fichero in WHITE_SEPIA:
+        haz_white_pil(c_fich, True)
     else:
         haz_sepia(c_fich)
 
@@ -181,7 +170,15 @@ def funcion_sepia(qbin, qdic, dic, desde, nom_funcion, nom_dir, nom_fichero):
 
 def funcion_dark(qbin, qdic, dic, desde, nom_funcion, nom_dir, nom_fichero):
     c_fich = "%s/%s" % (nom_dir, nom_fichero)
-    haz_darked(c_fich)
+    if nom_fichero in COPY_SEPIA:
+        shutil.copy(c_fich, "dark.png")
+    elif nom_fichero in GREEN_SEPIA:
+        haz_white_pil(c_fich, False)
+    elif nom_fichero in WHITE_SEPIA:
+        haz_white_pil(c_fich, False)
+    else:
+        haz_darked(c_fich)
+
     tt = (nom_dir.lower(), nom_fichero.lower())
     if tt in dic:
         de, a = dic[tt]

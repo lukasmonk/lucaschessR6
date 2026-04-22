@@ -259,20 +259,6 @@ class Kibitzers:
         del self.lista[num]
         self.save()
 
-    def up(self, num):
-        if num > 0:
-            self.lista[num], self.lista[num - 1] = self.lista[num - 1], self.lista[num]
-            self.save()
-            return num - 1
-        return None
-
-    def down(self, num):
-        if num < (len(self.lista) - 1):
-            self.lista[num], self.lista[num + 1] = self.lista[num + 1], self.lista[num]
-            self.save()
-            return num + 1
-        return None
-
     def clone(self, num):
         kib = self.lista[num].clone_list(self.lista)
         self.lista.append(kib)

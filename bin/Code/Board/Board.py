@@ -237,6 +237,8 @@ class Board(QtWidgets.QGraphicsView):
 
         self._pieces_are_active = False
 
+        self.setStyleSheet("""QGraphicsView {border: none; background: transparent;}""")
+
     @property
     def pieces_are_active(self):  # getter
         return self._pieces_are_active

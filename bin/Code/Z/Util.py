@@ -66,6 +66,28 @@ def remove_folder_files(folder: Union[str, Path]) -> bool:
     return not folder_path.is_dir()
 
 
+def remove_folder_if_no_subfolders(folder: Union[str, Path]) -> bool:
+    folder_path = Path(folder)
+    try:
+        if not folder_path.exists():
+            return False
+
+        # Verificar si tiene alguna subcarpeta
+        has_subfolders = any(item.is_dir() for item in folder_path.iterdir())
+
+        if not has_subfolders:
+            # Eliminar todos los archivos dentro
+            for item in folder_path.iterdir():
+                if item.is_file():
+                    item.unlink()
+            # Eliminar la carpeta vacía
+            folder_path.rmdir()
+            return True
+
+        return False
+    except Exception:
+        return False
+
 def is_linux() -> bool:
     return sys.platform.startswith("linux")
 
@@ -80,6 +102,21 @@ def create_folder(folder: Union[str, Path]) -> bool:
         folder_path.mkdir()
         if is_linux():
             folder_path.chmod(
+                stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
+            )
+        return True
+    except Exception:
+        return False
+
+
+def rename_folder(old_folder: Union[str, Path], new_name: Union[str, Path]) -> bool:
+    old_path = Path(old_folder)
+    new_path = old_path.parent / Path(new_name)
+
+    try:
+        old_path.rename(new_path)
+        if is_linux():
+            new_path.chmod(
                 stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
             )
         return True

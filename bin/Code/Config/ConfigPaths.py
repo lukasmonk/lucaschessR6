@@ -329,11 +329,14 @@ class ConfigPaths:
 
     def folder_openings(self):
         dic = self.configuration.read_variables("OPENING_LINES")
-        folder = dic.get("FOLDER", self.folder_base_openings())
-        return folder if os.path.isdir(folder) else self.folder_base_openings
+        folder_rel = dic.get("FOLDER", "")
+        if folder_rel:
+            folder = os.path.join(self.folder_base_openings(), folder_rel)
+        else:
+            folder = self.folder_base_openings()
+        return folder if os.path.isdir(folder) else self.folder_base_openings()
 
     def set_folder_openings(self, new_folder):
-        new_folder = Util.relative_path(os.path.realpath(new_folder))
         dic = self.configuration.read_variables("OPENING_LINES")
         dic["FOLDER"] = new_folder
         self.configuration.write_variables("OPENING_LINES", dic)

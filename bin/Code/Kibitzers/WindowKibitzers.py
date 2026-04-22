@@ -78,7 +78,8 @@ class WKibitzers(LCDialog.LCDialog):
             edicion=Delegados.PmIconosBMT(self, dict_icons=self.tipos.dict_delegado()),
         )
         o_columns.nueva("NOMBRE", _("Kibitzer"), 209)
-        self.grid_kibitzers = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True, xid="kib")
+        self.grid_kibitzers = Grid.GridDragDrop(self, o_columns, complete_row_select=True, select_multiple=True,
+                                                xid="kib")
         self.grid_kibitzers.setAlternatingRowColors(False)
 
         p = self.grid_kibitzers.palette()
@@ -399,15 +400,45 @@ class WKibitzers(LCDialog.LCDialog):
     def krecno(self):
         return self.grid_kibitzers.recno()
 
+    def _update_move(self, target_row):
+        self.kibitzers.save()
+        self.goto(target_row)
+
     def up(self):
-        num = self.kibitzers.up(self.krecno())
-        if num is not None:
-            self.goto(num)
+        num = self.krecno()
+        if num > 0:
+            lista = self.kibitzers.lista
+            lista[num], lista[num - 1] = lista[num - 1], lista[num]
+            self._update_move(num - 1)
 
     def down(self):
-        num = self.kibitzers.down(self.krecno())
-        if num is not None:
-            self.goto(num)
+        num = self.krecno()
+        lista = self.kibitzers.lista
+        if num < (len(lista) - 1):
+            lista[num], lista[num + 1] = lista[num + 1], lista[num]
+            self._update_move(num + 1)
+
+    def grid_mover_filas(self, _grid, li_rows, target_row):
+        lic = self.kibitzers.lista
+
+        # 1. Obtener los objetos/datos que se van a mover
+        items_a_mover = [lic[i] for i in li_rows]
+
+        # 2. Borrar las filas originales (en orden inverso para no alterar los índices)
+        for i in sorted(li_rows, reverse=True):
+            del lic[i]
+
+        # 3. Ajustar el índice de destino si se han borrado elementos antes de él
+        borrados_antes = sum(1 for i in li_rows if i < target_row)
+        target_row -= borrados_antes
+
+        # 4. Insertar los elementos en la nueva posición
+        for item in reversed(items_a_mover):
+            lic.insert(target_row, item)
+
+        self._update_move(target_row)
+
+        return True
 
     def grid_num_datos(self, grid):
         gid = grid.id

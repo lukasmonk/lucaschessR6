@@ -4,7 +4,6 @@ from typing import Optional, Dict, List, Any
 
 from PySide6.QtCore import Qt
 
-from Code.Z import Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GT_OPENING_LINES,
@@ -23,6 +22,7 @@ from Code.Base.Constantes import (
 from Code.Engines import EngineResponse
 from Code.Openings import ManagerOPL, OpeningLines
 from Code.QT import Iconos, QTMessages
+from Code.Z import Util
 
 
 class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
@@ -52,6 +52,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
     tm: int = 0
     rm_rival: Optional[EngineResponse.EngineResponse] = None
     error: str
+    jump_auto: bool
 
     def start(self, file_path):
         self.board.save_visual_state()
@@ -59,6 +60,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
         self.file_path = file_path
         dbop = OpeningLines.Opening(file_path)
         self.repeat_moves = dbop.getconfig("REPEAT_MOVES", True)
+        self.jump_auto = dbop.getconfig("JUMP_AUTO", False)
         self.board.dbvisual_set_file(dbop.path_file)
         self.reinicio(dbop)
 
@@ -173,9 +175,11 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
 
         without_error = self.errores == 0 and self.used_hints == 0
         is_finished = self.num_linea + 1 >= len(self.liGames) and without_error and is_complete
+        jump_to_the_next = self.jump_auto and is_complete and without_error
         if is_complete:
             mensaje = "\n".join(li)
-            self.message_on_pgn(mensaje)
+            if not jump_to_the_next:
+                self.message_on_pgn(mensaje)
         dictry = {
             "DATE": Util.today(),
             "TIME": tm,
@@ -216,6 +220,9 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
 
         self.dbop.set_training(self.training)
 
+        if jump_to_the_next:
+            self.run_action(TB_NEXT)
+
     def show_help(self):
         pv = self.li_pv[len(self.game)]
         self.board.show_arrow_mov(pv[:2], pv[2:4], "mt", opacity=0.80)
@@ -232,30 +239,34 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
             self.reiniciar()
 
         elif key == TB_CONFIG:
+            li_extra_options = []
             sep = (None, None, None, None)
+
+            title = _("Disable") if self.jump_auto else _("Enable")
+            li_extra_options.append(("jump", f'{title}: {_("Jump to the next after solving")}', Iconos.Jump()))
+            li_extra_options.append(sep)
+
             ico_all, ico_dif = Iconos.AceptarPeque(), None
             if not self.repeat_moves:
                 ico_all, ico_dif = ico_dif, ico_all
-            li_extra_options = (
-                (None, _("Movements to repeat"), Iconos.Repeat()),
-                sep,
-                ("repeat_all", _("All movements"), ico_all),
-                sep,
-                (
-                    "repeat_different",
-                    _("Those different from the previous line"),
-                    ico_dif,
-                ),
-            )
+            li_extra_options.append((None, _("Movements to repeat"), Iconos.Repeat()))
+            li_extra_options.append(sep)
+            li_extra_options.append(("repeat_all", _("All movements"), ico_all))
+            li_extra_options.append(sep)
+            li_extra_options.append(("repeat_different", _("Those different from the previous line"), ico_dif))
 
             resp = self.configurar(li_extra_options=li_extra_options, with_sounds=True)
-            if resp and resp.startswith("repeat"):
-                if resp == "repeat_all":
-                    self.repeat_moves = True
-                elif resp == "repeat_different":
-                    self.repeat_moves = False
-                self.dbop.setconfig("REPEAT_MOVES", self.repeat_moves)
-                self.reiniciar()
+            if resp:
+                if resp.startswith("repeat"):
+                    if resp == "repeat_all":
+                        self.repeat_moves = True
+                    elif resp == "repeat_different":
+                        self.repeat_moves = False
+                    self.dbop.setconfig("REPEAT_MOVES", self.repeat_moves)
+                    self.reiniciar()
+                elif resp == "jump":
+                    self.jump_auto = not self.jump_auto
+                    self.dbop.setconfig("JUMP_AUTO", self.jump_auto)
 
         elif key == TB_UTILITIES:
             self.utilities()

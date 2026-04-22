@@ -122,7 +122,7 @@ class Game:
     def eco(self):
         if not self.opening:
             self.assign_opening()
-        return self.opening.eco
+        return self.opening.eco if self.opening else ""
 
     def is_mate(self) -> bool:
         return self.termination == TERMINATION_MATE

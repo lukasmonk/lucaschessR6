@@ -187,28 +187,6 @@ class ListaOpenings:
         
         self.save()
 
-    def arriba(self, item):
-        if item > 0:
-            self.lista[item], self.lista[item - 1] = (
-                self.lista[item - 1],
-                self.lista[item],
-            )
-            self.save()
-            return True
-        else:
-            return False
-
-    def abajo(self, item):
-        if item < (len(self.lista) - 1):
-            self.lista[item], self.lista[item + 1] = (
-                self.lista[item + 1],
-                self.lista[item],
-            )
-            self.save()
-            return True
-        else:
-            return False
-
     def read(self):
         li = []
         for entry in Util.listdir(self.folder):

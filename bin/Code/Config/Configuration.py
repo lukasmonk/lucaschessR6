@@ -32,11 +32,11 @@ def int_toolbutton(xint):
         (
             tbi
             for tbi in (
-                Qt.ToolButtonStyle.ToolButtonIconOnly,
-                Qt.ToolButtonStyle.ToolButtonTextOnly,
-                Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-                Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
-            )
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+        )
             if xint == tbi.value
         ),
         Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
@@ -630,7 +630,7 @@ class Configuration:
                     var["x_anchoPieza"] = ancho_pieza
                     db["BASE"] = self.dic_conf_boards_pk["BASE"] = var
             # Para cambiar el tema por defecto por el actual
-            # with open("../resources/IntFiles/basepk(((1,2,3))).board", "wb") as f:
+            # with open("../resources/IntFiles/basepk1.board", "wb") as f:
             #       f.write(pickle.dumps(db["BASE"], protocol=4))
 
     def size_base(self):
@@ -711,9 +711,11 @@ class Configuration:
 
     def needs_reinit(self, dic_previo: dict) -> bool:
         dic_current = self.read_dic_x()
-        st_needs_reinit = {"x_style", "x_digital_board", "x_font_family", "x_margin_pieces", "x_opacity_tool_board",
-                           "x_position_tool_board", "x_shadows_board", "x_style_icons", "x_style_mode"
-                           }
+        st_needs_reinit = {
+            "x_style", "x_digital_board", "x_font_family", "x_margin_pieces", "x_opacity_tool_board",
+            "x_position_tool_board", "x_shadows_board", "x_style_icons", "x_style_mode",
+            "x_tb_orientation_horizontal"
+        }
         for x, value in dic_previo.items():
             if dic_current[x] != value:
                 if x in st_needs_reinit:

@@ -1,10 +1,10 @@
 import time
 
 from Code.Base import Game
-from Code.Base.Constantes import GT_TACTICS, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, ON_TOOLBAR
+from Code.Base.Constantes import GT_TACTICS, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, ON_TOOLBAR, TB_CONFIG
 from Code.Leitner import Leitner
 from Code.ManagerBase import Manager
-from Code.QT import QTMessages
+from Code.QT import QTMessages, QTDialogs, Iconos
 from Code.Z import FNSLine
 
 
@@ -20,12 +20,27 @@ class ManagerLeitner(Manager.Manager):
     requested_help: bool
     with_error: bool
     ini_clock: float
+    jump_auto: bool
+    key_config: str = "LEITNER_MANAGER"
+
+    def config_leitner(self):
+        menu = QTDialogs.LCMenu(self.main_window)
+        title = _("Disable") if self.jump_auto else _("Enable")
+        menu.opcion("jump", f'{title}: {_("Jump to the next after solving")}', Iconos.Jump())
+        if menu.lanza():
+            self.jump_auto = not self.jump_auto
+            dic = self.configuration.read_variables(self.key_config)
+            dic["JUMP_AUTO"] = self.jump_auto
+            self.configuration.write_variables(self.key_config, dic)
 
     def start(self, leitner_db, pos_db):
         self.leitner = leitner_db.get_leitner(pos_db)
         self.leitner_db = leitner_db
         self.pos_db = pos_db
         self.with_error = False
+
+        dic = self.configuration.read_variables(self.key_config)
+        self.jump_auto = dic.get("JUMP_AUTO", False)
 
         self.is_tutor_enabled = False
         self.is_competitive = False
@@ -85,7 +100,7 @@ class ManagerLeitner(Manager.Manager):
 
         self.set_label1(f"{self.leitner.reference} - {self.label_puzzle}")
         self.show_info_extra()
-        self.set_toolbar([TB_CLOSE, TB_ADVICE])
+        self.set_toolbar([TB_CLOSE, TB_ADVICE, TB_CONFIG])
 
         self.show_label_positions()
         self.state = ST_PLAYING
@@ -140,6 +155,8 @@ class ManagerLeitner(Manager.Manager):
         self.leitner.current_ids_session.remove(reg_id)
         self.leitner_db.set_leitner(self.pos_db, self.leitner)
 
+        jump_tothe_next = self.jump_auto
+
         if new_box == self.leitner.win_box:
             txt = _("Position won!")
         else:
@@ -148,8 +165,11 @@ class ManagerLeitner(Manager.Manager):
         if success:
             txt = f"{_('Correct!')}<br>{txt}"
         else:
+            jump_tothe_next = False
             txt = f"{_('There have been errors')}<br>{txt}"
-        QTMessages.message(self.main_window, txt)
+
+        if not jump_tothe_next:
+            QTMessages.message(self.main_window, txt)
         self.with_error = False
 
         self.reiniciar_puzzle()
@@ -174,6 +194,9 @@ class ManagerLeitner(Manager.Manager):
             if self.with_error:
                 self.board.show_one_arrow_temp(move_obj.from_sq, move_obj.to_sq, True)
             self.with_error = True
+
+        elif key == TB_CONFIG:
+            self.config_leitner()
 
         else:
             self.routine_default(key)
