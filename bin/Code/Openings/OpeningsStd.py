@@ -152,7 +152,7 @@ class ListaOpeningsStd:
         lista = Util.restore_pickle(fichero_pers, [])
         for reg in lista:
             op = Opening(reg["NOMBRE"])
-            op.eco = reg["ECO"] if reg["ECO"] else "A00"
+            op.eco = reg["ECO"]
             op.a1h8 = reg["A1H8"]
             op.pgn = reg["PGN"]
             op.is_basic = reg["ESTANDAR"]
@@ -197,8 +197,6 @@ class ListaOpeningsStd:
                     if last_opening:
                         eco_last = last_opening.eco
                         eco = opening.eco
-                        if not eco:
-                            continue
                         if eco[0] == eco_last[0]:
                             if eco < eco_last:
                                 continue

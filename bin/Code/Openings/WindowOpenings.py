@@ -393,7 +393,7 @@ class OpeningsCustom(LCDialog.LCDialog):
         name = li_resp[0].strip()
         if not name:
             return
-        eco = li_resp[1].strip().upper()
+        eco = li_resp[1].upper()
 
         self.procesador.procesador = self.procesador  # ya que edit_variation espera un manager
 
@@ -408,7 +408,6 @@ class OpeningsCustom(LCDialog.LCDialog):
 
         if resp:
             game = resp
-            eco = eco or game.eco()
 
             reg = {"NOMBRE": name, "ECO": eco, "PGN": game.pgn_base_raw(), "A1H8": game.pv(), "ESTANDAR": is_basic}
 

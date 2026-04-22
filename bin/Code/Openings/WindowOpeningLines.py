@@ -2,10 +2,9 @@ import os
 import shutil
 from typing import Optional, Dict, Any
 
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Openings import OpeningLines, OpeningsStd, WindowOpenings
 from Code.QT import (
@@ -13,13 +12,59 @@ from Code.QT import (
     Columnas,
     Controles,
     Delegados,
-    FormLayout,
     Grid,
     Iconos,
     LCDialog,
     QTDialogs,
     QTMessages,
 )
+from Code.Z import Util
+
+
+class TreeOpeningFolders(QtWidgets.QTreeWidget):
+    """QTreeWidget personalizado para aceptar drag & drop de opening lines"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent_window = parent
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+
+    def dragEnterEvent(self, event):
+        """Aceptar drag si contiene datos de grid"""
+        if event.mimeData().hasFormat("application/x-grid-row"):
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        """Mostrar dónde se soltaría"""
+        if event.mimeData().hasFormat("application/x-grid-row"):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        """Manejar drop de opening lines"""
+        if not event.mimeData().hasFormat("application/x-grid-row"):
+            return
+
+        # Obtener el item donde se soltó
+        item = self.itemAt(event.pos())
+        if not item:
+            return
+
+        # Obtener los números de fila arrastrados
+        try:
+            encoded_data = event.mimeData().data("application/x-grid-row")
+            li_rows = [int(x) for x in encoded_data.data().decode().split(",")]
+        except (ValueError, AttributeError):
+            return
+
+        # Obtener la carpeta destino
+        target_rel_path = item.data(0, QtCore.Qt.ItemDataRole.UserRole)
+        if target_rel_path is None:
+            return
+
+        # Llamar a la ventana para manejar el drop
+        if hasattr(self.parent_window, "handle_tree_drop"):
+            self.parent_window.handle_tree_drop(li_rows, target_rel_path)
 
 
 class WOpeningLines(LCDialog.LCDialog):
@@ -35,17 +80,84 @@ class WOpeningLines(LCDialog.LCDialog):
         LCDialog.LCDialog.__init__(
             self,
             procesador.main_window,
-            self.get_titulo(),
+            _('Opening lines'),
             Iconos.OpeningLines(),
             "openingLines",
         )
 
-        o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("TITLE", _("Name"), 240)
-        o_columns.nueva("BASEPV", _("First moves"), 280)
-        o_columns.nueva("NUMLINES", _("Lines"), 80, align_center=True)
-        o_columns.nueva("FILE", _("File"), 200)
-        self.glista = Grid.Grid(self, o_columns, complete_row_select=True, select_multiple=True)
+        self.tree_folders = TreeOpeningFolders(self)
+        self.tree_folders.setHeaderLabel(_("Opening lines"))
+        self.populate_tree()
+        self.tree_folders.itemClicked.connect(self.on_folder_selected)
+        self.tree_folders.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree_folders.customContextMenuRequested.connect(self.tree_context_menu)
+        self.tree_folders.setToolTip(_("Use the right-click button to open the maintenance options"))
+        # Configurar tree para aceptar drops (drag & drop desde grid)
+        self.tree_folders.setAcceptDrops(True)
+        self.tree_folders.setDropIndicatorShown(True)
+        self.tree_folders.setStyleSheet("""/* Contenedor principal: Un gris medio-claro que da sensación de profundidad */
+QTreeView {
+    background-color: #e2e2e2;
+    color: #2c2c2c;
+    border: 1px solid #bcbcbc;
+    outline: none;
+    alternate-background-color: #dadada; /* Para un efecto de cebra muy sutil */
+}
+
+/* Estilo de cada item */
+QTreeView::item {
+    padding: 8px 5px;
+    border-bottom: 1px solid #d4d4d4;
+}
+
+/* Estado: Mouse encima (Hover) */
+QTreeView::item:hover {
+    background-color: #d6d6d6;
+    color: #000000;
+}
+
+/* Estado: Seleccionado (Azul acero profundo o Gris Carbón) */
+QTreeView::item:selected {
+    background-color: #b0c4de; /* Azul acero claro, muy elegante */
+    color: #000000;
+    border-left: 4px solid #4682b4; /* Acento en azul más fuerte */
+}
+
+/* Estado: Seleccionado pero la ventana no tiene el foco */
+QTreeView::item:selected:!active {
+    background-color: #cfcfcf;
+    color: #444444;
+    border-left: 4px solid #999999;
+}
+
+/* Cabeceras de columnas: Un tono más fuerte para "enmarcar" */
+QHeaderView::section {
+    background-color: #cccccc;
+    color: #333333;
+    padding: 6px;
+    border: none;
+    border-right: 1px solid #b0b0b0;
+    border-bottom: 2px solid #b0b0b0;
+    font-weight: bold;
+}
+
+/* Scrollbar personalizado para encajar con el tono gris */
+QScrollBar:vertical {
+    background: #e2e2e2;
+    width: 12px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: #afafaf;
+    min-height: 25px;
+    border-radius: 6px;
+    border: 2px solid #e2e2e2; /* Crea un efecto de margen interno */
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #909090;
+}""")
 
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
@@ -59,7 +171,6 @@ class WOpeningLines(LCDialog.LCDialog):
         tb.new(_("Down"), Iconos.Abajo(), self.abajo)
         tb.new(_("Remove"), Iconos.Borrar(), self.grid_remove)
         tb.new(_("Update"), Iconos.Reiniciar(), self.reiniciar)
-        tb.new(_("Folder"), Iconos.File(), self.change_folder)
 
         tb.setSizePolicy(sp)
 
@@ -80,19 +191,91 @@ class WOpeningLines(LCDialog.LCDialog):
         wtb.setFixedHeight(66)
         wtb.setLayout(lytb)
 
-        ly = Colocacion.V().control(wtb).control(self.glista).margen(4)
+        o_columns = Columnas.ListaColumnas()
+        o_columns.nueva("TITLE", _("Name"), 240)
+        o_columns.nueva("BASEPV", _("First moves"), 280)
+        o_columns.nueva("NUMLINES", _("Lines"), 80, align_center=True)
+        o_columns.nueva("FILE", _("File"), 200)
+        self.glista = Grid.GridDragDrop(self, o_columns, complete_row_select=True, select_multiple=True)
+
+        ly = Colocacion.V().control(wtb).control(self.glista).margen(0)
+        wright = QtWidgets.QWidget()
+        wright.setLayout(ly)
+
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
+        splitter.addWidget(self.tree_folders)
+        splitter.addWidget(wright)
+        splitter.setSizes([200, self.glista.width_and_vbar()])
+        self.register_splitter(splitter, "all")
+
+        ly = Colocacion.V().control(splitter)
 
         self.setLayout(ly)
 
         self.register_grid(self.glista)
-        self.restore_video(default_width=self.glista.width_and_vbar(), default_height=640)
+        self.restore_video(default_width=self.glista.width_and_vbar() + 200, default_height=640)
 
         self.wtrain.setVisible(False)
         self.glista.gotop()
         self.glista.setFocus()
 
-    def get_titulo(self):
-        return f"{_('Opening lines')} [{Code.relative_root(self.listaOpenings.folder)}]"
+    def populate_tree(self):
+        self.tree_folders.clear()
+        base = self.configuration.paths.folder_base_openings()
+        rondo = QTDialogs.rondo_folders()
+        root_item = QtWidgets.QTreeWidgetItem([_("Home")])
+        root_item.setIcon(0, Iconos.Home())
+        root_item.setData(0, QtCore.Qt.ItemDataRole.UserRole, "")
+        self.tree_folders.addTopLevelItem(root_item)
+        self.add_folders_recursive(root_item, base, "", rondo)
+        self.tree_folders.expandAll()
+        current_abs = self.configuration.paths.folder_openings()
+        if current_abs.startswith(base):
+            current_rel = os.path.relpath(current_abs, base)
+        else:
+            current_rel = ""
+        item = self.find_item(self.tree_folders.invisibleRootItem(), current_rel)
+        if item:
+            self.tree_folders.setCurrentItem(item)
+
+    def add_folders_recursive(self, parent_item, path, rel_path, rondo):
+        try:
+            li_folders = os.listdir(path)
+            li_folders.sort(key=lambda x: x.lower())
+            for item in li_folders:
+                full_path = os.path.join(path, item)
+                if os.path.isdir(full_path):
+                    rel_item = os.path.join(rel_path, item) if rel_path else item
+                    child_item = QtWidgets.QTreeWidgetItem([item])
+                    child_item.setIcon(0, rondo.otro())
+                    child_item.setData(0, QtCore.Qt.ItemDataRole.UserRole, rel_item)
+                    parent_item.addChild(child_item)
+                    self.add_folders_recursive(child_item, full_path, rel_item, rondo)
+        except:
+            pass
+
+    def find_item(self, parent, rel_path):
+        for i in range(parent.childCount()):
+            child = parent.child(i)
+            if child.data(0, QtCore.Qt.ItemDataRole.UserRole) == rel_path:
+                return child
+            found = self.find_item(child, rel_path)
+            if found:
+                return found
+        return None
+
+    def on_folder_selected(self, item):
+        rel_path = item.data(0, QtCore.Qt.ItemDataRole.UserRole)
+        if rel_path is not None:
+            self.configuration.paths.set_folder_openings(rel_path)
+            self.configuration.graba()
+            self.listaOpenings = OpeningLines.ListaOpenings(True)
+            if len(self.listaOpenings) == 0:
+                self.wtrain.setVisible(False)
+            self.glista.gotop()
+            self.glista.refresh()
+            if len(self.listaOpenings) > 0:
+                self.grid_cambiado_registro(None, 0, None)
 
     def tr_(self, tipo):
         recno = self.glista.recno()
@@ -120,81 +303,46 @@ class WOpeningLines(LCDialog.LCDialog):
         if len(self.listaOpenings) == 0:
             self.wtrain.setVisible(False)
 
-    def change_folder(self):
-        nof = _("New opening folder")
-        base = self.configuration.paths.folder_base_openings()
-        li = [x for x in os.listdir(base) if os.path.isdir(Util.opj(base, x))]
-        menu = QTDialogs.LCMenu(self)
-        rondo = QTDialogs.rondo_folders()
-        for x in li:
-            menu.opcion(x, x, rondo.otro())
-        menu.separador()
-        menu.opcion("", _("Home folder"), Iconos.Home())
-        menu.separador()
-        submenu = menu.submenu(_("Maintenance"), Iconos.Configurar())
-        submenu.opcion(":n", nof, Iconos.Nuevo())
-        submenu.separador()
-        submenu.opcion(":m", _("Direct maintenance"), Iconos.Carpeta())
-
-        resp = menu.lanza()
-        if resp is not None:
-            if resp == ":m":
-                Util.startfile(base)
-                return
-
-            elif resp == ":n":
-                name = ""
-                error = ""
-                while True:
-                    li_gen = [FormLayout.separador, (f"{nof}:", name)]
-                    if error:
-                        li_gen.append(FormLayout.separador)
-                        li_gen.append((None, error))
-
-                    resultado = FormLayout.fedit(
-                        li_gen,
-                        title=nof,
-                        parent=self,
-                        icon=Iconos.OpeningLines(),
-                        minimum_width=460,
-                    )
-                    if resultado:
-                        accion, li_resp = resultado
-                        name = li_resp[0].strip()
-                        if name:
-                            path = Util.opj(base, name)
-                            if not Util.create_folder(path):
-                                error = _("Unable to create the folder")
-                                continue
-                            if not os.path.isdir(path):
-                                continue
-                            break
-                    else:
-                        return
-            else:
-                path = Util.opj(base, resp)
-
-            path = Util.relative_path(path)
-            self.configuration.paths.set_folder_openings(path)
-            self.configuration.graba()
-            self.listaOpenings = OpeningLines.ListaOpenings(True)
-            self.glista.refresh()
-            self.glista.gotop()
-            if len(self.listaOpenings) == 0:
-                self.wtrain.setVisible(False)
-            self.setWindowTitle(self.get_titulo())
+    def _update_move(self, target):
+        self.listaOpenings.save()
+        self.glista.goto(target, 0)
+        self.glista.refresh()
 
     def arriba(self):
         row = self.glista.recno()
-        if self.listaOpenings.arriba(row):
-            self.glista.goto(row - 1, 0)
-            self.glista.refresh()
+        if row > 0:
+            lista = self.listaOpenings.lista
+            lista[row], lista[row - 1] = lista[row - 1], lista[row]
+            self._update_move(row - 1)
 
     def abajo(self):
         row = self.glista.recno()
-        if self.listaOpenings.abajo(row):
-            self.glista.goto(row + 1, 0)
-            self.glista.refresh()
+        lista = self.listaOpenings.lista
+        if row < (len(lista) - 1):
+            lista[row], lista[row + 1] = lista[row + 1], lista[row]
+            self._update_move(row + 1)
+
+    def grid_mover_filas(self, _grid, li_rows, target_row):
+        lic = self.listaOpenings.lista
+
+        # 1. Obtener los objetos/datos que se van a mover
+        items_a_mover = [lic[i] for i in li_rows]
+
+        # 2. Borrar las filas originales (en orden inverso para no alterar los índices)
+        for i in sorted(li_rows, reverse=True):
+            del lic[i]
+
+        # 3. Ajustar el índice de destino si se han borrado elementos antes de él
+        borrados_antes = sum(1 for i in li_rows if i < target_row)
+        target_row -= borrados_antes
+
+        # 4. Insertar los elementos en la nueva posición
+        for item in reversed(items_a_mover):
+            lic.insert(target_row, item)
+
+        self._update_move(target_row)
+
+        return True
 
     def modificar(self):
         recno = self.glista.recno()
@@ -305,7 +453,7 @@ class WOpeningLines(LCDialog.LCDialog):
             self.listaOpenings.reiniciar()
             self.glista.refresh()
             return None
-        name_file = current_file[:-4]
+        name_file = current_file[:-4] if new_name is None else new_name
         new_name = QTMessages.read_simple(self, _("File"), _("Name"), name_file, width=360)
         if not new_name:
             return None
@@ -381,7 +529,8 @@ class WOpeningLines(LCDialog.LCDialog):
             self.tbtrain.set_action_visible(self.tr_positions, ok_ssp)
             self.tbtrain.set_action_visible(self.tr_engines, ok_eng)
         else:
-            self.wtrain.setVisible(False)
+            if self.wtrain:
+                self.wtrain.setVisible(False)
 
     def grid_right_button(self, _grid, row, obj_column, _modif):
         if row < 0:
@@ -393,6 +542,217 @@ class WOpeningLines(LCDialog.LCDialog):
             self.change_file(row)
         elif col == "BASEPV":
             self.change_firstmoves(row)
+
+    def tree_new(self):
+        nof = _("New opening folder")
+        base = self.configuration.paths.folder_base_openings()
+        name = ""
+        error = ""
+        while True:
+            name = QTMessages.read_simple(self, nof, _("Name"), name, mas_info=error, width=260)
+            if not name:
+                return
+            path = Util.opj(base, name.strip())
+            if not Util.create_folder(path):
+                error = _("Unable to create the folder")
+                continue
+            self.configuration.paths.set_folder_openings(name)
+            self.populate_tree()
+            return
+
+    def tree_edit(self):
+        base = self.configuration.paths.folder_base_openings()
+        current_abs = self.configuration.paths.folder_openings()
+        name = os.path.relpath(current_abs, base)
+        error = ""
+        while True:
+            name = QTMessages.read_simple(self, base, _("Name"), name, mas_info=error, width=260)
+            if not name:
+                return
+            path = Util.opj(base, name.strip())
+            if not Util.rename_folder(current_abs, path):
+                error = _("Unable to create the folder")
+                continue
+            self.configuration.paths.set_folder_openings(name)
+            self.populate_tree()
+            return
+
+    def tree_delete(self):
+        base = self.configuration.paths.folder_base_openings()
+        current_abs = self.configuration.paths.folder_openings()
+        if Util.same_path(base, current_abs):
+            return
+        if self.grid_num_datos(None) > 0:
+            return
+
+        if not Util.remove_folder_if_no_subfolders(current_abs):
+            QTMessages.message_error(self, _("Unable to delete the folder"))
+            return
+
+        self.configuration.paths.set_folder_openings("")
+        self.populate_tree()
+
+    def tree_context_menu(self, pos):
+        item = self.tree_folders.itemAt(pos)
+        if not item:
+            return
+        self.on_folder_selected(item)
+        data = item.data(0, QtCore.Qt.ItemDataRole.UserRole)
+        is_folder = bool(data)
+        has_childrens = self.grid_num_datos(None) > 0
+
+        menu = QTDialogs.LCMenu(self)
+
+        if is_folder:
+            menu.opcion("rename", _("Rename"), Iconos.EditVariation())
+            menu.separador()
+            if not has_childrens:
+                menu.opcion("delete", _("Delete"), Iconos.Borrar())
+                menu.separador()
+        menu.opcion("update", _("Update"), Iconos.Reiniciar())
+        menu.separador()
+        menu.opcion("direct", _("Direct maintenance"), Iconos.Configurar())
+        menu.separador()
+        menu.opcion("new", _("New opening folder"), Iconos.NewBoxRoom())
+        resp = menu.lanza()
+        if resp is None:
+            return
+        if resp == "rename":
+            self.tree_edit()
+        elif resp == "delete":
+            self.tree_delete()
+        elif resp == "new":
+            self.tree_new()
+        elif resp == "update":
+            self.reiniciar()
+        elif resp == "direct":
+            current_abs = self.configuration.paths.folder_openings()
+            Util.startfile(current_abs)
+
+    def handle_tree_drop(self, li_rows, target_rel_path):
+        """Manejar drop de opening lines al tree de carpetas
+        
+        Args:
+            li_rows: Lista de índices de filas seleccionadas en el grid
+            target_rel_path: Ruta relativa de la carpeta destino
+        """
+        if not li_rows or target_rel_path is None:
+            return
+
+        # Obtener información de los openings a copiar/mover
+        items_to_move = [self.listaOpenings[i] for i in li_rows if i < len(self.listaOpenings)]
+        if not items_to_move:
+            return
+
+        base_path = self.configuration.paths.folder_base_openings()
+        target_abs_path = Util.opj(base_path, target_rel_path) if target_rel_path else base_path
+        source_path = self.listaOpenings.folder
+        if Util.same_path(target_abs_path, source_path):
+            return
+
+        # Mostrar menú para elegir copiar o mover
+        menu = QTDialogs.LCMenu(self)
+        menu.opcion("copy", _("Copy") + " -> " + target_rel_path, Iconos.Copiar())
+        menu.separador()
+        menu.opcion("move", _("Move") + " -> " + target_rel_path, Iconos.Mover())
+        resp = menu.lanza()
+
+        if not resp:
+            return
+
+        # Ejecutar la acción
+        if resp == "copy":
+            self._copy_to_folder(items_to_move, target_rel_path, li_rows)
+        elif resp == "move":
+            self._move_to_folder(items_to_move, target_rel_path, li_rows)
+
+    def _copy_to_folder(self, items, target_rel_path, li_rows):
+        """Copiar opening lines a otra carpeta"""
+        try:
+            base_path = self.configuration.paths.folder_base_openings()
+            target_abs_path = Util.opj(base_path, target_rel_path) if target_rel_path else base_path
+            source_path = self.listaOpenings.folder
+
+            # Copiar cada archivo .opk
+            for item in items:
+                source_file = Util.opj(source_path, item["file"])
+                if os.path.isfile(source_file):
+                    # Generar nombre único en destino si es necesario
+                    target_file = Util.opj(target_abs_path, item["file"])
+                    if os.path.isfile(target_file):
+                        # Generar nombre único
+                        base_name = item["file"][:-4]  # Sin .opk
+                        counter = 1
+                        while os.path.isfile(Util.opj(target_abs_path, f"{base_name}-{counter}.opk")):
+                            counter += 1
+                        target_file = Util.opj(target_abs_path, f"{base_name}-{counter}.opk")
+
+                    shutil.copy2(source_file, target_file)
+
+            # Refrescar listas en origen y destino
+            self.listaOpenings.reiniciar()
+            self.glista.refresh()
+            self.glista.gotop()
+
+            # Refrescar la lista del destino
+            self.configuration.paths.set_folder_openings(target_rel_path)
+            dest_lista = OpeningLines.ListaOpenings(True)
+            dest_lista.reiniciar()
+
+            # Volver a la carpeta original
+            self.configuration.paths.set_folder_openings(
+                os.path.relpath(self.listaOpenings.folder, base_path) if self.listaOpenings.folder.startswith(
+                    base_path) else ""
+            )
+            self.listaOpenings = OpeningLines.ListaOpenings(True)
+            self.glista.refresh()
+
+        except Exception as e:
+            QTMessages.message_error(self, f"{_('Error copying opening lines')}\n{str(e)}")
+
+    def _move_to_folder(self, items, target_rel_path, li_rows):
+        """Mover opening lines a otra carpeta"""
+        try:
+            base_path = self.configuration.paths.folder_base_openings()
+            target_abs_path = Util.opj(base_path, target_rel_path) if target_rel_path else base_path
+            source_path = self.listaOpenings.folder
+
+            # Mover cada archivo .opk
+            for item in items:
+                source_file = Util.opj(source_path, item["file"])
+                if os.path.isfile(source_file):
+                    target_file = Util.opj(target_abs_path, item["file"])
+                    if os.path.isfile(target_file):
+                        # Generar nombre único en destino si es necesario
+                        base_name = item["file"][:-4]  # Sin .opk
+                        counter = 1
+                        while os.path.isfile(Util.opj(target_abs_path, f"{base_name}-{counter}.opk")):
+                            counter += 1
+                        target_file = Util.opj(target_abs_path, f"{base_name}-{counter}.opk")
+
+                    shutil.move(source_file, target_file)
+
+            # Refrescar listas en origen y destino
+            self.listaOpenings.reiniciar()
+            self.glista.refresh()
+            self.glista.gotop()
+
+            # Refrescar la lista del destino
+            self.configuration.paths.set_folder_openings(target_rel_path)
+            dest_lista = OpeningLines.ListaOpenings(True)
+            dest_lista.reiniciar()
+
+            # Volver a la carpeta original
+            self.configuration.paths.set_folder_openings(
+                os.path.relpath(self.listaOpenings.folder, base_path) if self.listaOpenings.folder.startswith(
+                    base_path) else ""
+            )
+            self.listaOpenings = OpeningLines.ListaOpenings(True)
+            self.glista.refresh()
+
+            QTMessages.message_information(self, _("Opening lines moved successfully"))
+        except Exception as e:
+            QTMessages.message_error(self, f"{_('Error moving opening lines')}\n{str(e)}")
 
     def closeEvent(self, event):  # Cierre con X
         self.save_video()

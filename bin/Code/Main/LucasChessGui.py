@@ -34,9 +34,14 @@ def run_gui(procesador):
     main_config = Configuration.Configuration("")
     main_config.lee()
 
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
 
     app = QtWidgets.QApplication([])
+    QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    app.setEffectEnabled(QtCore.Qt.UIEffect.UI_FadeMenu, True)  # Agregar
+
     filtro = GlobalFilter()
     app.installEventFilter(filtro)  #
 
