@@ -463,8 +463,10 @@ class Manager:
                     pieza_sc = self.board.get_piece_at(from_sq)
                     if pieza_sc:
                         start_pos = pieza_sc.pos()
-                        end_x = self.board.columna2punto(ord(to_sq[0]) - 96)
-                        end_y = self.board.fila2punto(int(to_sq[1]))
+                        column = ord(to_sq[0]) - 96
+                        row = int(to_sq[1])
+                        end_x = self.board.columna2punto(column)
+                        end_y = self.board.fila2punto(row)
                         animation = QtCore.QVariantAnimation(self.main_window)
                         animation.setDuration(int(secs * 1000))
                         animation.setStartValue(start_pos)
@@ -489,24 +491,13 @@ class Manager:
 
                 loop.exec()
 
-            # segundo los borrados
-            for movim in li_moves:
-                if movim[0] == "b":
-                    self.board.remove_piece(movim[1])
-
-            # tercero los cambios
-            for movim in li_moves:
-                if movim[0] == "c":
-                    self.board.change_piece(movim[1], movim[2])
-
-        else:
-            for movim in li_moves:
-                if movim[0] == "b":
-                    self.board.remove_piece(movim[1])
-                elif movim[0] == "m":
-                    self.board.move_piece(movim[1], movim[2])
-                elif movim[0] == "c":
-                    self.board.change_piece(movim[1], movim[2])
+        for movim in li_moves:
+            if movim[0] == "b":
+                self.board.remove_piece(movim[1])
+            elif movim[0] == "m":
+                self.board.move_piece(movim[1], movim[2])
+            elif movim[0] == "c":
+                self.board.change_piece(movim[1], movim[2])
         # Aprovechamos que esta operacion se hace en cada move
         self.reset_shortcuts_mouse()
         self.board.variation_history = None
