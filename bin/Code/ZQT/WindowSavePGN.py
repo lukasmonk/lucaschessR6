@@ -53,9 +53,7 @@ class WBaseSave(QtWidgets.QWidget):
 
         # Codec
         lb_codec = Controles.LB(self, f"{_('Encoding')}: ")
-        li_codecs = [k for k in set(v for k, v in encodings.aliases.aliases.items())]
-        li_codecs.sort()
-        li_codecs = [(k, k) for k in li_codecs]
+        li_codecs = [(k, k) for k in sorted(set(encodings.aliases.aliases.values()))]
         li_codecs.insert(0, (_("Same as file"), "file"))
         li_codecs.insert(0, (f"{_('By default')}: {_('UTF-8')}", "default"))
         self.cb_codecs = Controles.CB(self, li_codecs, self.codec)
@@ -239,9 +237,7 @@ class WSave(LCDialog.LCDialog):
 
         # Codec
         lb_codec = Controles.LB(self, f"{_('Encoding')}: ")
-        li_codecs = [k for k in set(v for k, v in encodings.aliases.aliases.items())]
-        li_codecs.sort()
-        li_codecs = [(k, k) for k in li_codecs]
+        li_codecs = [(k, k) for k in sorted(set(encodings.aliases.aliases.values()))]
         li_codecs.insert(0, (_("Same as file"), "file"))
         li_codecs.insert(0, (f"{_('By default')}: {_('UTF-8')}", "default"))
         self.cb_codecs = Controles.CB(self, li_codecs, self.codec)
@@ -576,7 +572,7 @@ class WSave(LCDialog.LCDialog):
             self.history_list.insert(0, self.file)
             QTMessages.temporary_message(self.parent(), _("Saved"), 0.8)
             self.finalize()
-        except:
+        except Exception:
             QTMessages.message_error(self, _("Unable to save"))
 
     def portapapeles(self):
@@ -747,7 +743,7 @@ class FileSavePGN:
         try:
             self._file_handle = open(self.file, modo, encoding=self.codec, errors="ignore")
             return True
-        except FileNotFoundError:
+        except OSError:
             return False
 
     def write(self, pgn):

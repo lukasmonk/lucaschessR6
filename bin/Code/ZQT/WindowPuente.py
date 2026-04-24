@@ -1,4 +1,3 @@
-import atexit
 import datetime
 import random
 import time
@@ -34,8 +33,6 @@ class PuenteHistorico:
         self.calcula_media()
 
         self.orden = "FECHA", "DESC"
-
-        atexit.register(self.close)
 
     def close(self):
         if self.dbf:
@@ -195,7 +192,7 @@ class WEdMove(QtWidgets.QWidget):
 
         to_sq = self.destino.texto()
         if len(to_sq) != 2:
-            from_sq = ""
+            to_sq = ""
 
         return from_sq, to_sq, self.promocion.strip()
 

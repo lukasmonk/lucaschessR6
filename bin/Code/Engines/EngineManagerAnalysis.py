@@ -81,7 +81,6 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         self.cache_analysis[fenm2] = mrm
 
     def analyze_move(self, game, movement: int, dispatcher: Optional[Callable]) -> tuple:
-
         if not self.check_engine():
             return None, -1
 

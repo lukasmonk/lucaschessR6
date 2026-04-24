@@ -35,7 +35,7 @@ class ShowPGN(QtWidgets.QScrollArea):
         QtWidgets.QScrollArea.__init__(self, parent)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setWidgetResizable(True)
-        self.setFrameStyle(QtWidgets.QFrame.NoFrame)
+        self.setFrameStyle(QtWidgets.QFrame.Shape.NoFrame)
 
         self.max_variations = 256
         self.with_figurines = with_figurines
@@ -176,6 +176,7 @@ class ShowPGN(QtWidgets.QScrollArea):
         lb = self.li_variations[num_pgn]
         lb.set_text(pgn)
         lb.show()
+        return None
 
     def tecla_pulsada(self, key):
         pass

@@ -91,14 +91,13 @@ class WOpeningLines(LCDialog.LCDialog):
         self.tree_folders.itemClicked.connect(self.on_folder_selected)
         self.tree_folders.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree_folders.customContextMenuRequested.connect(self.tree_context_menu)
-        self.tree_folders.setToolTip(_("Use the right-click button to open the maintenance options"))
-        # Configurar tree para aceptar drops (drag & drop desde grid)
+        self.tree_folders.setToolTip(_("More options with right-click"))
         self.tree_folders.setAcceptDrops(True)
         self.tree_folders.setDropIndicatorShown(True)
         self.tree_folders.setStyleSheet("""/* Contenedor principal: Un gris medio-claro que da sensación de profundidad */
 QTreeView {
-    background-color: #e2e2e2;
-    color: #2c2c2c;
+    background-color: %s;
+    color: %s;
     border: 1px solid #bcbcbc;
     outline: none;
     alternate-background-color: #dadada; /* Para un efecto de cebra muy sutil */
@@ -157,7 +156,7 @@ QScrollBar::handle:vertical {
 
 QScrollBar::handle:vertical:hover {
     background: #909090;
-}""")
+}""" % (Code.dic_colors["BACKGROUND"], Code.dic_colors["FOREGROUND"]))
 
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
@@ -188,7 +187,7 @@ QScrollBar::handle:vertical:hover {
 
         lytb = Colocacion.H().control(tb).control(self.wtrain).margen(0)
         wtb = QtWidgets.QWidget()
-        wtb.setFixedHeight(66)
+        wtb.setFixedHeight(76)
         wtb.setLayout(lytb)
 
         o_columns = Columnas.ListaColumnas()
@@ -223,7 +222,7 @@ QScrollBar::handle:vertical:hover {
         self.tree_folders.clear()
         base = self.configuration.paths.folder_base_openings()
         rondo = QTDialogs.rondo_folders()
-        root_item = QtWidgets.QTreeWidgetItem([_("Home")])
+        root_item = QtWidgets.QTreeWidgetItem([_("Initial")])
         root_item.setIcon(0, Iconos.Home())
         root_item.setData(0, QtCore.Qt.ItemDataRole.UserRole, "")
         self.tree_folders.addTopLevelItem(root_item)
@@ -607,7 +606,7 @@ QScrollBar::handle:vertical:hover {
             menu.opcion("rename", _("Rename"), Iconos.EditVariation())
             menu.separador()
             if not has_childrens:
-                menu.opcion("delete", _("Delete"), Iconos.Borrar())
+                menu.opcion("delete", _("Remove"), Iconos.Borrar())
                 menu.separador()
         menu.opcion("update", _("Update"), Iconos.Reiniciar())
         menu.separador()

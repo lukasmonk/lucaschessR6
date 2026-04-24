@@ -16,6 +16,8 @@ from Code.Base.Constantes import (
     TB_SETTINGS,
     TB_SLOW_REPLAY,
     TB_SPACE,
+    ZVALUE_PIECE,
+    ZVALUE_PIECE_MOVING
 )
 from Code.Board import BoardTypes
 from Code.QT import QTDialogs, Iconos
@@ -61,11 +63,6 @@ class SpaceControlLayer:
         c1 = QtGui.QColor(color1_val)
         c2 = QtGui.QColor(color2_val)
 
-        # Calculamos el peso total
-        # if peso1 > peso2:
-        #     peso1 *= 1.5
-        # else:
-        #     peso2 *= 1.5
         peso_total = peso1 + peso2
 
         # Calculamos los nuevos canales ponderados
@@ -295,7 +292,7 @@ class Replay:
                 self.board_create_piece = self.board.create_piece
                 self.board.create_piece = self.create_piece
         else:
-            if hasattr(self, "board_create_piece"):
+            if self.board_create_piece is not None:
                 self.board.create_piece = self.board_create_piece
 
         for pz, pz_sc, x in self.board.li_pieces:
@@ -388,6 +385,7 @@ class Replay:
                 pieza_sc = self.board.get_piece_at(from_sq)
                 if pieza_sc is None:
                     continue
+                pieza_sc.setZValue(ZVALUE_PIECE_MOVING)
                 start_pos = pieza_sc.pos()
                 end_x = self.board.columna2punto(ord(to_sq[0]) - 96)
                 end_y = self.board.fila2punto(int(to_sq[1]))
@@ -397,6 +395,11 @@ class Replay:
                 animation.setEndValue(QtCore.QPointF(end_x, end_y))
                 animation.setEasingCurve(Code.configuration.pieces_move_qtype())
                 animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
+
+                def restore_z(p=pieza_sc):
+                    p.setZValue(ZVALUE_PIECE)
+
+                animation.finished.connect(restore_z)
                 animations.append(animation)
 
         if animations:

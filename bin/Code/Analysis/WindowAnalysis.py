@@ -444,7 +444,7 @@ class WAnalisis(LCDialog.LCDialog):
             self.timer = None
 
     def crear(self):
-        if alm := WindowAnalysisParam.analysis_parameters(self, False, True):
+        if alm := WindowAnalysisParam.analysis_parameters(self, False, True, False, False):
             tab_analysis = self.tb_analysis.create_show(self, alm)
             self.create_analysis(tab_analysis)
 
