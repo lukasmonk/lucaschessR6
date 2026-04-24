@@ -2,9 +2,9 @@ import collections
 import random
 import time
 
-from PySide6 import QtCore
-
 import FasterCode
+from PySide6 import QtCore
+from PySide6 import QtGui
 
 import Code
 from Code.Base import Game, Move, Position
@@ -43,6 +43,8 @@ from Code.Base.Constantes import (
     TB_UTILITIES,
     TERMINATION_DRAW_AGREEMENT,
     WHITE,
+    ZVALUE_PIECE,
+    ZVALUE_PIECE_MOVING,
 )
 from Code.Board import BoardTypes
 from Code.Databases import DBgames
@@ -55,11 +57,10 @@ from Code.ManagerBase import (
     ManagerNavigation,
 )
 from Code.Openings import Opening, OpeningsStd
-from PySide6 import QtGui
 from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils, ScreenUtils
+from Code.Replay import WReplay
 from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
 from Code.ZQT import WindowArbolBook, WindowArbol
-from Code.Replay import WReplay
 
 
 class Manager:
@@ -442,6 +443,7 @@ class Manager:
 
     def move_the_pieces(self, li_moves, is_rival=False):
         self.main_window.end_think_analysis_bar()
+
         if is_rival and self.configuration.x_show_effects:
             if self.procesador.manager is None:
                 return
@@ -450,29 +452,39 @@ class Manager:
             animations = []
             secs = None
 
-            # primero los movimientos
             for movim in li_moves:
                 if movim[0] == "m":
                     from_sq, to_sq = movim[1], movim[2]
                     if secs is None:
                         dc = ord(from_sq[0]) - ord(to_sq[0])
                         df = int(from_sq[1]) - int(to_sq[1])
-                        # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
-                        dist = (dc**2 + df**2) ** 0.5
+                        dist = (dc ** 2 + df ** 2) ** 0.5
                         secs = max(0.25, 4.0 * dist / (9.9 * rapidez))
+
                     pieza_sc = self.board.get_piece_at(from_sq)
                     if pieza_sc:
+                        pieza_sc.setZValue(ZVALUE_PIECE_MOVING)
+
                         start_pos = pieza_sc.pos()
                         column = ord(to_sq[0]) - 96
                         row = int(to_sq[1])
                         end_x = self.board.columna2punto(column)
                         end_y = self.board.fila2punto(row)
+
                         animation = QtCore.QVariantAnimation(self.main_window)
                         animation.setDuration(int(secs * 1000))
                         animation.setStartValue(start_pos)
                         animation.setEndValue(QtCore.QPointF(end_x, end_y))
                         animation.setEasingCurve(Code.configuration.pieces_move_qtype())
+
+                        # Conectar el cambio de valor
                         animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
+
+                        def restore_z(p=pieza_sc):
+                            p.setZValue(ZVALUE_PIECE)
+
+                        animation.finished.connect(restore_z)
+
                         animations.append(animation)
 
             if animations:
@@ -498,7 +510,7 @@ class Manager:
                 self.board.move_piece(movim[1], movim[2])
             elif movim[0] == "c":
                 self.board.change_piece(movim[1], movim[2])
-        # Aprovechamos que esta operacion se hace en cada move
+
         self.reset_shortcuts_mouse()
         self.board.variation_history = None
 
@@ -525,11 +537,11 @@ class Manager:
                 self.board.show_lichess_graphics(move.comment)
 
         if (
-            self.main_window.siCapturas
-            or self.main_window.siInformacionPGN
-            or self.kibitzers_manager.some_working()
-            or self.configuration.x_show_bestmove
-            or self.configuration.x_show_rating
+                self.main_window.siCapturas
+                or self.main_window.siInformacionPGN
+                or self.kibitzers_manager.some_working()
+                or self.configuration.x_show_bestmove
+                or self.configuration.x_show_rating
         ):
             if move and (self.configuration.x_show_bestmove or self.configuration.x_show_rating):
                 move_check = move
@@ -1279,7 +1291,7 @@ class Manager:
 
     def can_be_analysed(self):
         return len(self.game) > 0 and not (
-            self.game_type in (GT_ELO, GT_MICELO, GT_WICKER) and self.is_competitive and self.state == ST_PLAYING
+                self.game_type in (GT_ELO, GT_MICELO, GT_WICKER) and self.is_competitive and self.state == ST_PLAYING
         )
 
     def check_help_to_move(self):
@@ -1544,15 +1556,15 @@ class Manager:
         gm.set_tag("Site", Code.lucas_chess)
         gm.set_tag("Event", _("Play current position"))
         for previous in (
-            "Event",
-            "Site",
-            "Date",
-            "Round",
-            "White",
-            "Black",
-            "Result",
-            "WhiteElo",
-            "BlackElo",
+                "Event",
+                "Site",
+                "Date",
+                "Round",
+                "White",
+                "Black",
+                "Result",
+                "WhiteElo",
+                "BlackElo",
         ):
             ori = self.game.get_tag(previous)
             if ori:

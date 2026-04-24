@@ -135,7 +135,7 @@ class WDBAnalisis:
             return
 
     def new_analysis(self, pv):
-        alm = WindowAnalysisParam.analysis_parameters(self.wowner, False, False)
+        alm = WindowAnalysisParam.analysis_parameters(self.wowner, False, False, False, False)
         if alm is None:
             return
 

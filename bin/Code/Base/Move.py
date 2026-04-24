@@ -565,6 +565,12 @@ class Move:
     def __eq__(self, other: "Move") -> bool:
         return self.position_before == other.position_before and self.movimiento() == other.movimiento()
 
+    def get_num_in_game(self) -> int:
+        for pos, mv in enumerate(self.game.li_moves):
+            if mv == self:
+                return pos
+        return -1
+
 
 def get_game_move(game, position_before, from_sq, to_sq, promotion):
     position = position_before.copia()

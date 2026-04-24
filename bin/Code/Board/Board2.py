@@ -99,7 +99,8 @@ class BoardEstatico(Board.Board):
         f = chr(48 + yc)
         c = chr(96 + xc)
 
-        self.main_window.pulsada_celda(c + f)
+        if hasattr(self.main_window, "pulsada_celda"):
+            self.main_window.pulsada_celda(c + f)
 
         Board.Board.mousePressEvent(self, event)
 

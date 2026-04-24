@@ -328,7 +328,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
         item = self.currentItem()
         if not item:
             return
-        mov = self.dicItemMoves[str(item)]
+        mov = self.dicItemMoves[item]
         lm = mov.list_moves_parent
 
         if col == 0:
@@ -357,7 +357,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
 
                 self.ponIconoValoracion(item, mov.valoracion)
                 mov.item = item
-                self.dicItemMoves[str(item)] = mov
+                self.dicItemMoves[item] = mov
 
             x = 0
             for t in range(3):
@@ -376,7 +376,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
                 self.owner.splitter.setSizes(sz)
 
     def edited(self, item, col):
-        mov = self.dicItemMoves.get(str(item), None)
+        mov = self.dicItemMoves.get(item, None)
         if mov is None:
             return
 
@@ -533,7 +533,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
         self.setFocus()
 
     def seleccionado(self, item, itemA):
-        self.owner.muestra(self.dicItemMoves[str(item)])
+        self.owner.muestra(self.dicItemMoves[item])
         self.setFocus()
 
     def keyPressEvent(self, event):
@@ -543,12 +543,12 @@ class TreeMoves(QtWidgets.QTreeWidget):
             self.mas()
         elif k in (QtCore.Qt.Key.Key_Delete, QtCore.Qt.Key.Key_Backspace):
             self.menos()
-        elif 48 <= k <= 54:
+        elif QtCore.Qt.Key.Key_0 <= k <= QtCore.Qt.Key.Key_6:
             item = self.currentItem()
             if item:
                 cl, titulo, icono = self.dicValoracion[chr(k)]
                 self.ponIconoValoracion(item, cl)
-                mov = self.dicItemMoves[str(item)]
+                mov = self.dicItemMoves[item]
                 mov.valoracion = cl
 
         return resp
@@ -556,7 +556,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
     def mas(self, mov=None):
         if mov is None:
             item = self.currentItem()
-            mov = self.dicItemMoves[str(item)]
+            mov = self.dicItemMoves[item]
         else:
             item = mov.item
         if mov.listaMovesHijos is None:
@@ -567,7 +567,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
     def menos(self, mov=None):
         if mov is None:
             item = self.currentItem()
-            mov = self.dicItemMoves[str(item)]
+            mov = self.dicItemMoves[item]
 
         lm = mov.list_moves_parent
         n_visibles, n_ocultos = lm.numVisiblesOcultos()
@@ -583,7 +583,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
     def currentMov(self):
         item = self.currentItem()
         if item:
-            mov = self.dicItemMoves[str(item)]
+            mov = self.dicItemMoves[item]
         else:
             mov = None
         return mov
@@ -847,7 +847,7 @@ class WindowArbol(LCDialog.LCDialog):
 
     def nuevoAnalisis(self, lm):
         fen = lm.gameBase.last_position.fen()
-        alm = WindowAnalysisParam.analysis_parameters(self, False, True)
+        alm = WindowAnalysisParam.analysis_parameters(self, False, True, False, False)
         if alm is None:
             return
         if alm.engine == "default":

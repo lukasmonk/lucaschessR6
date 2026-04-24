@@ -29,6 +29,7 @@ class BloqueSC(QtWidgets.QGraphicsItem):
 
         self.setZValue(physical_pos.orden)
 
+
     def boundingRect(self):
         return self.rect
 

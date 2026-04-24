@@ -243,7 +243,7 @@ class CreateAnalysis:
             xengine = None
             busca = alm.engine[1:] if alm.engine.startswith("*") else alm.engine
             for tab_analysis in self.li_tabs_analysis:
-                if tab_analysis.xengine.key == busca:
+                if tab_analysis.xengine.engine.key == busca:
                     xengine = tab_analysis.xengine
                     xengine.set_multipv_var(alm.multiPV)
                     break
@@ -253,8 +253,10 @@ class CreateAnalysis:
                 xengine = self.procesador.create_manager_engine(conf_engine, alm.vtime, alm.depth, has_multipv=True)
 
         with QTMessages.WaitingMessage(main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
-            mrm, pos = xengine.analysis_move(self.move, alm.vtime, alm.depth)
-            xengine.finalize()
+            game = self.move.game
+            pos = self.move.get_num_in_game()
+            mrm, pos = xengine.analyze_move(game, pos, None)
+            xengine.close()
 
         tab_analysis = ControlAnalysis(self, mrm, pos, self.li_tabs_analysis[-1].number + 1, xengine)
         self.li_tabs_analysis.append(tab_analysis)
