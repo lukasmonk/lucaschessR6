@@ -544,7 +544,7 @@ class WUnSTS(LCDialog.LCDialog):
                 return None
             work = self.sts.create_work(me)
         else:
-            work.workTime = 0.0
+            work.work_time = 0.0
 
         w = WWork(self, self.sts, work)
         if w.exec():
@@ -566,7 +566,7 @@ class WUnSTS(LCDialog.LCDialog):
             work.info = engine.id_info
 
         else:
-            work.workTime = 0.0
+            work.work_time = 0.0
 
         w = WWork(self, self.sts, work)
         if w.exec():

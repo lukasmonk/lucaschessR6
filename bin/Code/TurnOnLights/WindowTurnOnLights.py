@@ -203,9 +203,8 @@ class WTurnOnLights(LCDialog.LCDialog):
             te += errores
             ta += hints
 
-        if litimes:
-            menu.separador()
-            menu.opcion(None, "%16s %6.02f" % (_("Average"), tt / (nmoves * len(litimes))))
+            if nmoves > 0 and litimes:
+                menu.opcion(None, "%16s %6.02f" % (_("Average"), tt / (nmoves * len(litimes))))
             menu.separador()
         plant = "%16s %15.02f  %s"
         if block.reinits:

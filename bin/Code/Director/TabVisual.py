@@ -150,12 +150,10 @@ class GTItem(GTarea):
             self._name = name
         if self._name:
             return self._name
-        if self._name:
-            return self._name
-        if self._item_sc and self._item_sc.block_data and getattr(self._item_sc.block_data, "name"):
+        if self._item_sc and self._item_sc.block_data and getattr(self._item_sc.block_data, "name", None):
             if self._item_sc.block_data.name:
                 return self._item_sc.block_data.name
-        return self._bloqueDatos.name
+        return getattr(self._bloqueDatos, "name", "")
 
     def coordina(self):
         if self.xitemSCOwner:
@@ -700,19 +698,22 @@ class Guion:
         len_li = len(self.liGTareas)
         if len_li > 1:
             ult_tarea = self.liGTareas[-1]
-            if hasattr(ult_tarea, "_item_sc"):
+            if hasattr(ult_tarea, "_item_sc") and ult_tarea.item_sc():
                 ult_bd = ult_tarea.block_data()
                 ult_tp, ult_xid = ult_bd.tpid
                 ult_a1h8 = ult_bd.a1h8
                 for pos in range(len_li - 1):
                     tarea = self.liGTareas[pos]
                     if hasattr(tarea, "_item_sc"):
-                        bd = tarea.item_sc().block_data
-                        t_tp, t_xid = bd.tpid
-                        t_a1h8 = bd.a1h8
-                        t_h8a1 = t_a1h8[2:] + t_a1h8[:2]
-                        if ult_tp == t_tp and ult_xid == t_xid and ult_a1h8 in (t_a1h8, t_h8a1):
-                            return [pos, len_li - 1]
+                        item = tarea.item_sc()
+                        if item:
+                            bd = item.block_data
+                            if hasattr(bd, "tpid") and hasattr(bd, "a1h8"):
+                                t_tp, t_xid = bd.tpid
+                                t_a1h8 = bd.a1h8
+                                t_h8a1 = t_a1h8[2:] + t_a1h8[:2]
+                                if ult_tp == t_tp and ult_xid == t_xid and ult_a1h8 in (t_a1h8, t_h8a1):
+                                    return [pos, len_li - 1]
         return False
 
     def arriba(self, task):

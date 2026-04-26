@@ -1581,7 +1581,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             return True
 
         self.enable_toolbar()
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def play_rival(self):
@@ -1605,7 +1605,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             if self.timed:
                 self.tc_rival.restore(move.cacheTime)
                 self.show_clocks()
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
             return
 
         # OPENING MANDATORY---------------------------------------------------------------------------------------------
@@ -1694,7 +1694,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game,
                                                                           dispatcher=self.dispatch_rival)
         if rm_rival is not None:
-            self.rival_has_moved(rm_rival)
+            QtCore.QTimer.singleShot(0, lambda: self.rival_has_moved(rm_rival))
 
     def dispatch_rival(self, rm: EngineResponse.EngineResponse):
         if self.thoughtOp > -1 or self.nArrows > 0:
@@ -1748,7 +1748,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 if self.timed:
                     move.cacheTime = self.tc_rival.save()
                 self.cache[fen_ultimo] = move
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
             return True
 
         else:

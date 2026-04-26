@@ -67,7 +67,7 @@ class WBDatabase(LCDialog.LCDialog):
             self.tab.dispatch_change(self.tab_changed)
             # if not si_select:
             self.tab.new_tab(self.wplayer, _("Players"))
-            self.tab.new_tab(self.wperfomance, _("Perfomance Rating"))
+            self.tab.new_tab(self.wperfomance, _("Performance Rating"))
         self.tab.set_font_type(puntos=Code.configuration.x_tb_fontpoints)
 
         if self.owner and not self.is_temporary:

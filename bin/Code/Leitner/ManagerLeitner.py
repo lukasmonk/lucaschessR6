@@ -1,5 +1,6 @@
 import time
 
+from PySide6 import QtCore
 from Code.Base import Game
 from Code.Base.Constantes import GT_TACTICS, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, ON_TOOLBAR, TB_CONFIG
 from Code.Leitner import Leitner
@@ -125,7 +126,7 @@ class ManagerLeitner(Manager.Manager):
         is_main, is_var = move_obj.check_a1h8(move.movimiento())
         if is_main:
             self.add_move(True)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
             return True
         elif is_var:
             mens = _("You have selected a correct move, but this line uses another one.")
@@ -172,7 +173,7 @@ class ManagerLeitner(Manager.Manager):
             QTMessages.message(self.main_window, txt)
         self.with_error = False
 
-        self.reiniciar_puzzle()
+        QtCore.QTimer.singleShot(0, self.reiniciar_puzzle)
 
     def finalizar(self):
         if self.with_error:
@@ -229,7 +230,7 @@ class ManagerLeitner(Manager.Manager):
 
     def play_rival(self):
         self.add_move(False)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def play_human(self):
         self.human_is_playing = True

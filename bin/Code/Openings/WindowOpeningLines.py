@@ -651,9 +651,10 @@ QScrollBar::handle:vertical:hover {
 
         # Mostrar menú para elegir copiar o mover
         menu = QTDialogs.LCMenu(self)
-        menu.opcion("copy", _("Copy") + " -> " + target_rel_path, Iconos.Copiar())
+        target = target_rel_path or _("Initial")
+        menu.opcion("copy", _("Copy") + " -> " + target, Iconos.Copiar())
         menu.separador()
-        menu.opcion("move", _("Move") + " -> " + target_rel_path, Iconos.Mover())
+        menu.opcion("move", _("Move || to move") + " -> " + target, Iconos.Mover())
         resp = menu.lanza()
 
         if not resp:

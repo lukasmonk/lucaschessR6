@@ -1,5 +1,6 @@
 from typing import Any
 
+from PySide6 import QtCore
 from Code.Base import Move, Position
 from Code.Base.Constantes import (
     GT_WORLD_MAPS,
@@ -177,7 +178,7 @@ class ManagerMateMap(Manager.Manager):
 
         if self.rival_has_moved(from_sq, to_sq, promotion):
             self.is_rival_thinking = False
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
         else:
             self.is_rival_thinking = False
 
@@ -189,7 +190,7 @@ class ManagerMateMap(Manager.Manager):
         self.move_the_pieces(move.list_piece_moves)
         self.add_move(move, True)
         self.error = ""
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def add_move(self, move, is_player_move):

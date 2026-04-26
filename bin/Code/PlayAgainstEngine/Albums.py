@@ -231,7 +231,7 @@ class Albums:
             if cuantos:
                 li = []
                 for cromo in self.liGeneralCromos:
-                    if cromo.nivel == nivel:
+                    if cromo.num_level == nivel:
                         li.append(cromo)
                 for pos, cromo in enumerate(random.sample(li, cuantos)):
                     cromo.pos = pos

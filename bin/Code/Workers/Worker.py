@@ -231,16 +231,15 @@ class Worker(QtWidgets.QWidget):
         return engine_manager
 
     def looking_for_work(self):
-        try:
-            self.xmatch = self.run_worker.get_other_match()
-        except sqlite3.IntegrityError:
-            self.xmatch = None
-        if self.xmatch is None:
-            self.finalize()
-            return
-        self.procesa_match()
-        if not self.is_closed:
-            self.looking_for_work()
+        while not self.is_closed:
+            try:
+                self.xmatch = self.run_worker.get_other_match()
+            except sqlite3.IntegrityError:
+                self.xmatch = None
+            if self.xmatch is None:
+                self.finalize()
+                break
+            self.procesa_match()
 
     def procesa_match(self):
         self.pon_estado(ST_PLAYING)
@@ -393,7 +392,6 @@ class Worker(QtWidgets.QWidget):
         if resp is not None:
             self.game.set_termination(TERMINATION_ADJUDICATION, resp)
             self.save_game_done()
-            self.looking_for_work()
 
     def set_clock(self):
         if self.is_closed or self.game_finished():
@@ -724,7 +722,7 @@ class Worker(QtWidgets.QWidget):
             # segundo los borrados
             for movim in li_movs:
                 if movim[0] == "b":
-                    cpu.wait(seconds * 0.80 / rapidez)
+                    cpu.wait(seconds * 0.80)
                     cpu.remove_piece(movim[1])
 
             # tercero los cambios

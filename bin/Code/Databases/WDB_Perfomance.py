@@ -113,7 +113,7 @@ li_fide = [
 ]
 
 
-class Perfomance:
+class Performance:
     def __init__(self):
         self.dic_elo_player = {"W": [], "B": []}
         self.dic_elo_opponents = {"W": [], "B": []}
@@ -361,7 +361,7 @@ class WPerfomance(QtWidgets.QWidget):
         self.tb.new(_("Help"), Iconos.AyudaGR(), ayuda)
 
         awb = f"{_('All')} - {_('White')} - {_('Black')}"
-        perf = _("Perfomance")
+        perf = _("Performance")
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("__num__", _("N."), 50, align_center=True)
         o_columns.nueva("player", _("Player"), 190, align_center=True)
@@ -426,13 +426,13 @@ class WPerfomance(QtWidgets.QWidget):
                     continue
 
                 if white not in dic_players:
-                    dic_players[white] = Perfomance()
-                perfomance = dic_players[white]
-                perfomance.add_game(True, white_elo, black_elo, result_w)
+                    dic_players[white] = Performance()
+                performance = dic_players[white]
+                performance.add_game(True, white_elo, black_elo, result_w)
                 if black not in dic_players:
-                    dic_players[black] = Perfomance()
-                perfomance = dic_players[black]
-                perfomance.add_game(False, black_elo, white_elo, result_b)
+                    dic_players[black] = Performance()
+                performance = dic_players[black]
+                performance.add_game(False, black_elo, white_elo, result_b)
 
             if omp.is_canceled():
                 return
@@ -502,23 +502,23 @@ class WPerfomance(QtWidgets.QWidget):
         if col == "__num__":
             return str(row + 1)
 
-        perfomance: Perfomance = self.dic_players[self.li_players[row]]
+        performance: Performance = self.dic_players[self.li_players[row]]
         if col == "elo":
-            return str(perfomance.avg_elo_player())
+            return str(performance.avg_elo_player())
         if col == "WB":
-            return perfomance.str_according_method(self.tipo, None)
+            return performance.str_according_method(self.tipo, None)
         if col == "W":
-            return perfomance.str_according_method(self.tipo, True)
+            return performance.str_according_method(self.tipo, True)
         if col == "B":
-            return perfomance.str_according_method(self.tipo, False)
+            return performance.str_according_method(self.tipo, False)
         if col == "scorep":
-            return perfomance.str_scorep()
+            return performance.str_scorep()
         if col == "score":
-            return perfomance.str_score()
+            return performance.str_score()
         if col == "opponent":
-            return perfomance.str_opponents()
+            return performance.str_opponents()
         if col == "results":
-            return perfomance.str_results()
+            return performance.str_results()
         return None
 
     def grid_doubleclick_header(self, _grid, obj_column):
@@ -527,25 +527,25 @@ class WPerfomance(QtWidgets.QWidget):
             return
 
         def element(player):
-            perfomance: Perfomance = self.dic_players[player]
+            performance: Performance = self.dic_players[player]
             if col == "WB":
-                return perfomance.int_according_method(self.tipo, None) * 10000 + perfomance.int_opponents(None)
+                return performance.int_according_method(self.tipo, None) * 10000 + performance.int_opponents(None)
             if col == "W":
-                return perfomance.int_according_method(self.tipo, True) * 10000 + perfomance.int_opponents(True)
+                return performance.int_according_method(self.tipo, True) * 10000 + performance.int_opponents(True)
             if col == "B":
-                return perfomance.int_according_method(self.tipo, False) * 10000 + perfomance.int_opponents(False)
+                return performance.int_according_method(self.tipo, False) * 10000 + performance.int_opponents(False)
             if col == "score":
-                return perfomance.int_score()
+                return performance.int_score()
             if col == "scorep":
-                return perfomance.int_scorep()
+                return performance.int_scorep()
             if col == "opponent":
-                return perfomance.int_opponents(None)
+                return performance.int_opponents(None)
             if col == "results":
-                return perfomance.int_results()
+                return performance.int_results()
             if col == "player":
                 return player.upper()
             if col == "elo":
-                return perfomance.avg_elo_player()
+                return performance.avg_elo_player()
             return None
 
         reset = False

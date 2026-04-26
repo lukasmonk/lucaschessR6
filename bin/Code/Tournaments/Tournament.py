@@ -296,6 +296,8 @@ class Tournament:
         self.db_engines[me.huella] = me
 
     def engine(self, pos):
+        if pos < 0 or pos >= len(self.db_engines):
+            return None
         huella = list(self.db_engines.keys())[pos]
         return self.db_engines[huella]
 

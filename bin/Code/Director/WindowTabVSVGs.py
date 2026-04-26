@@ -353,7 +353,7 @@ class WTVSvgs(LCDialog.LCDialog):
             reg_svg.name = name
             reg_svg.id = Util.huella()
             reg_svg.ordenVista = self.liPSVGs[-1].ordenVista + 1
-            self.db_svgs[reg_svg.id] = reg_svg
+            self.db_svgs[reg_svg.id] = reg_svg.save_dic()
             self.liPSVGs.append(reg_svg)
             self.grid.refresh()
             self.grid.setFocus()

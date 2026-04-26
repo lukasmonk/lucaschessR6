@@ -105,11 +105,11 @@ class WWashing(LCDialog.LCDialog):
 
             html = html % (
                 _("Hints"),
-                "%d (%0.02f)" % (hints, hints * 1.0 / n_engines),
+                "%d (%0.02f)" % (hints, hints * 1.0 / n_engines) if n_engines else "0 (0.00)",
                 _("Repetitions"),
-                "%d (%0.02f)" % (games, games * 1.0 / n_engines),
+                "%d (%0.02f)" % (games, games * 1.0 / n_engines) if n_engines else "0 (0.00)",
                 _("Time"),
-                f"{Util.secs2str(times)} ({Util.secs2str(int(times / n_engines))})",
+                f"{Util.secs2str(times)} ({Util.secs2str(int(times / n_engines))})" if n_engines else "00:00 (00:00)",
             )
 
         else:

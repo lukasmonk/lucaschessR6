@@ -49,41 +49,31 @@ class CountCapture:
         self.tries = dic["tries"]
 
     def success(self):
-        ntries = 0
-        for pos, depth, success, time in self.tries:
-            if pos < self.current_posmove:
-                ntries += 1
+        ntries = sum(1 for pos, depth, ok, tiempo in self.tries if pos < self.current_posmove)
         return (self.current_posmove - 1) / ntries if ntries > 0 else 0.0
 
     def label_success(self) -> str:
         ntries = len(self.tries)
         if ntries == 0:
             return ""
-        nok = 0
-        for posmove, depth, ok, tiempo in self.tries:
-            if ok:
-                nok += 1
+        nok = sum(1 for pos, depth, ok, tiempo in self.tries if ok)
         porc = min(nok * 100.0 / ntries, 100.0)
         return f"{porc:.01f}%"
 
+    def _total_time(self) -> float:
+        return sum(tiempo for posmove, depth, ok, tiempo in self.tries)
+
     def label_time(self) -> str:
-        tm = 0.0
-        for posmove, depth, ok, tiempo in self.tries:
-            tm += tiempo
+        tm = self._total_time()
         total = self.current_posmove + self.current_depth
         media = tm / total if total else 0.0
         return f'{media:.01f}"/{tm:.01f}"'
 
     def label_time_used(self) -> str:
-        tm = 0.0
-        for posmove, depth, ok, tiempo in self.tries:
-            tm += tiempo
-        return f'{tm:.01f}"'
+        return f'{self._total_time():.01f}"'
 
     def label_time_avg(self) -> str:
-        tm = 0.0
-        for posmove, depth, ok, tiempo in self.tries:
-            tm += tiempo
+        tm = self._total_time()
         total = self.current_posmove + self.current_depth
         media = tm / total if total else 0.0
         return f'{media:.01f}"'

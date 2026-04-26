@@ -491,7 +491,7 @@ class IPC(object):
         if si_crear:
             Util.remove_file(path_file)
 
-        self._conexion = sqlite3.connect(path_file)
+        self._conexion = sqlite3.connect(path_file, check_same_thread=False)
         self.path_file = path_file
 
         if si_crear:

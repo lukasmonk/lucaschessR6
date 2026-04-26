@@ -162,38 +162,29 @@ class ManagerTurnOnLights(Manager.Manager):
             return
 
         self.state = ST_PLAYING
-
         self.human_is_playing = False
         self.put_view()
 
-        is_white = self.game.last_position.is_white
+        while self.num_move < self.line.total_moves():
+            is_white = self.game.last_position.is_white
+            self.set_side_indicator(is_white)
+            self.refresh()
 
-        self.set_side_indicator(is_white)
-        self.refresh()
-
-        siRival = is_white == self.is_engine_side_white
-
-        self.num_move += 1
-        if self.num_move >= self.line.total_moves():
-            self.end_line()
-            return
-
-        if siRival:
-            pv = self.line.get_move(self.num_move)
-            from_sq, to_sq, promotion = pv[:2], pv[2:4], pv[4:]
-            self.rival_has_moved(from_sq, to_sq, promotion)
-            self.play_next_move()
-
-        else:
-            self.human_is_playing = True
-            self.base_time = time.time()
-            if not (
-                self.calculation_mode and self.ini_time is None
-            ):  # Se inicia salvo que sea el principio de la linea
-                self.ini_time = self.base_time
-            self.activate_side(is_white)
-            if self.calculation_mode:
-                self.board.set_dispatch_move(self.dispatchMove)
+            if is_white == self.is_engine_side_white:
+                pv = self.line.get_move(self.num_move)
+                from_sq, to_sq, promotion = pv[:2], pv[2:4], pv[4:]
+                self.rival_has_moved(from_sq, to_sq, promotion)
+                self.num_move += 1
+            else:
+                self.human_is_playing = True
+                self.base_time = time.time()
+                if not (self.calculation_mode and self.ini_time is None):
+                    self.ini_time = self.base_time
+                self.activate_side(is_white)
+                if self.calculation_mode:
+                    self.board.set_dispatch_move(self.dispatchMove)
+                return
+        self.end_line()
 
     def dispatchMove(self):
         if self.ini_time is None:
@@ -211,7 +202,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
             num_moves = self.block.num_moves()
             ta = self.total_time_used + self.errores * self.penaltyError + self.hints * self.penaltyHelp
-            tm = ta / num_moves
+            tm = ta / num_moves if num_moves > 0 else 0.0
             self.block.new_result(tm, self.total_time_used, self.errores, self.hints)
             TurnOnLights.write_tol(self.tol)
             cat_block, ico = TurnOnLights.qualification(tm, self.calculation_mode)
@@ -354,7 +345,7 @@ class ManagerTurnOnLights(Manager.Manager):
     def current_pgn(self):
         resp = f'[Event "{_("Turn on the lights")}"]\n'
         resp += f'[Site "{self.line.label.replace("<br>", " ").strip()}"]\n'
-        resp += f'[FEN "{self.game.first_position.fen()}"\n'
+        resp += f'[FEN "{self.game.first_position.fen()}"]\n'
 
         resp += f"\n{self.game.pgn_base()}"
 

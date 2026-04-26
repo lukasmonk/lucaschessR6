@@ -424,7 +424,7 @@ class Tactic:
             t -= self.puzzles
             n = 0
             while t:
-                lif[0][n] += 1
+                lif[n][0] += 1
                 t -= 1
                 n += 1
                 if n == len(lif):

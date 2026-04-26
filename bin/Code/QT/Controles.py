@@ -1011,6 +1011,7 @@ class TBrutina(QtWidgets.QToolBar):
             self.setToolButtonStyle(style)
             if style != QtCore.Qt.ToolButtonStyle.ToolButtonTextUnderIcon and icon_size is None:
                 icon_size = 16
+            # Other = QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon
         elif with_text:
             self.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         else:

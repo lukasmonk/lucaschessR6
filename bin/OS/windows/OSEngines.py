@@ -93,7 +93,7 @@ def read_engines(folder_engines):
     )
     cm.set_uci_option("Hash", "32")
 
-    mas("ct800", "Rasmus Althoff", "1.46", "https://www.ct800.net/", "CT800_V1.46_x32.exe", 2600, nodes_compatible=True)
+    mas("ct800", "Rasmus Althoff", "1.46", "https://www.ct800.net/", "CT800_V1.46_x64.exe", 2720, nodes_compatible=True)
 
     cm = mas("gaia", "Jean-Francois Romang, David Rabel", "3.5", "https://gaiachess.free.fr", "gaia32.exe", 2378)
     cm.name = "Gaïa 3.5"
@@ -237,9 +237,9 @@ def read_engines(folder_engines):
     cm = mas(
         "texel",
         "Peter Österlund",
-        "1.08 32bit",
+        "1.08 64bit",
         "https://github.com/peterosterlund2/texel",
-        "texel32old.exe",
+        "texel64old.exe",
         3100,
         nodes_compatible=True,
     )

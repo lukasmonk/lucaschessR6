@@ -137,7 +137,7 @@ class ListaMoves:
             cp.read_fen(fen)
             self.gameBase = Game.Game(cp)
         else:
-            self.nivel = self.moveOwner.list_moves_parent.nivel + 1
+            self.nivel = self.moveOwner.list_moves_parent.num_level + 1
             self.gameBase = self.moveOwner.game.copia()
 
         self.fenm2 = self.gameBase.last_position.fenm2()

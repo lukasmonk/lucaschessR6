@@ -113,6 +113,8 @@ class TabEngine(QtWidgets.QWidget):
                 self.grid_analysis.refresh()
 
     def start(self):
+        if self.position is None:
+            return
         self.current_mrm = None
         self.current_posicion = None
         self.sb_multipv.setDisabled(True)
@@ -325,7 +327,7 @@ class TabBook(QtWidgets.QWidget):
         alm_base = self.li_moves[row]
         if row != len(self.li_moves) - 1:
             alm_base1 = self.li_moves[row + 1]
-            if alm_base.nivel < alm_base1.nivel:
+            if alm_base.num_level < alm_base1.num_level:
                 if self.borra_subnivel(row + 1):
                     self.grid_moves.refresh()
                 return
@@ -350,7 +352,7 @@ class TabBook(QtWidgets.QWidget):
 
             slevel = set()
             for alm in self.li_moves:
-                slevel.add(alm.nivel)
+                slevel.add(alm.num_level)
             if len(slevel) > 1:
                 menu.opcion("level", _("Add all of current level"), Iconos.Arbol())
                 menu.separador()
@@ -365,18 +367,18 @@ class TabBook(QtWidgets.QWidget):
             lst_rows = list(range(row))
         elif resp == "level":
             lst_rows = [row]
-            lv = self.li_moves[row].nivel
+            lv = self.li_moves[row].num_level
             for r in range(row - 1, -1, -1):
                 alm = self.li_moves[r]
-                if alm.nivel == lv:
+                if alm.num_level == lv:
                     lst_rows.append(r)
-                elif alm.nivel < lv:
+                elif alm.num_level < lv:
                     break
             for r in range(row + 1, len(self.li_moves)):
                 alm = self.li_moves[r]
-                if alm.nivel == lv:
+                if alm.num_level == lv:
                     lst_rows.append(r)
-                elif alm.nivel < lv:
+                elif alm.num_level < lv:
                     break
         else:
             lst_rows = [row]
@@ -384,12 +386,12 @@ class TabBook(QtWidgets.QWidget):
         refresh = False
         for row in lst_rows:
             pv = self.li_moves[row].pv
-            lv = self.li_moves[row].nivel
+            lv = self.li_moves[row].num_level
             for r in range(row - 1, -1, -1):
                 alm = self.li_moves[r]
-                if alm.nivel < lv:
+                if alm.num_level < lv:
                     pv = f"{alm.pv} {pv}"
-                    lv = alm.nivel
+                    lv = alm.num_level
             pv = f"{self.pv} {pv}"
             if self.dbop.append_pv(pv.strip()):
                 refresh = True
@@ -404,18 +406,18 @@ class TabBook(QtWidgets.QWidget):
 
     def borra_subnivel(self, row):
         alm = self.li_moves[row]
-        nv = alm.nivel
+        nv = alm.num_level
         if nv == 0:
             return False
         li = []
         for x in range(row, 0, -1):
             alm1 = self.li_moves[x]
-            if alm1.nivel < nv:
+            if alm1.num_level < nv:
                 break
             li.append(x)
         for x in range(row + 1, len(self.li_moves)):
             alm1 = self.li_moves[x]
-            if alm1.nivel < nv:
+            if alm1.num_level < nv:
                 break
             li.append(x)
         li.sort(reverse=True)
@@ -432,7 +434,7 @@ class TabBook(QtWidgets.QWidget):
         if FasterCode.move_pv(alm_base.from_sq, alm_base.to_sq, alm_base.promotion):
             fen = FasterCode.get_fen()
             for alm in self.book.alm_list_moves(fen):
-                nv = alm.nivel = alm_base.nivel + 1
+                nv = alm.num_level = alm_base.nivel + 1
                 alm.dato = [""] * 20
                 alm.dato[nv] = alm.pgn
                 alm.dato[nv + 1] = alm.porc
@@ -445,7 +447,7 @@ class TabBook(QtWidgets.QWidget):
             fen = self.position.fen()
             self.li_moves = self.book.alm_list_moves(fen)
             for alm in self.li_moves:
-                alm.nivel = 0
+                alm.num_level = 0
                 alm.dato = [""] * 20
                 alm.dato[0] = alm.pgn
                 alm.dato[1] = alm.porc

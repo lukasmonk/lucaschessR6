@@ -1,3 +1,4 @@
+from PySide6 import QtCore
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_RESISTANCE,
@@ -210,7 +211,7 @@ class ManagerResistance(Manager.Manager):
                     if (self.rival_points > self.puntos) or (self.maxerror and lostmovepoints > self.maxerror):
                         if self.verify():
                             return
-                self.play_next_move()
+                QtCore.QTimer.singleShot(0, self.play_next_move)
 
         else:
             self.human_is_playing = True
@@ -305,7 +306,7 @@ class ManagerResistance(Manager.Manager):
 
         self.add_move(move, True)
         self.movimientos += 1
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def add_move(self, move, is_player_move):

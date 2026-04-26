@@ -7,83 +7,37 @@ import Code
 from Code.Base import Position
 from Code.Base.Constantes import BLACK, WHITE
 from Code.Board import Board2
-from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
+from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTMessages, \
+    ScreenUtils
+from Code.Memory import Memory
 
 
-class WDatos(QtWidgets.QDialog):
-    nivel: int
-
-    def __init__(self, w_parent, txtcategoria, max_level):
-        super(WDatos, self).__init__(w_parent)
-
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
-
-        self.setWindowTitle(_("Check your memory on a chessboard"))
-        self.setWindowIcon(Iconos.Memoria())
-        self.setWindowFlags(
-            QtCore.Qt.WindowType.WindowCloseButtonHint
-            | QtCore.Qt.WindowType.Dialog
-            | QtCore.Qt.WindowType.WindowTitleHint
-        )
-
-        tb = QTDialogs.tb_accept_cancel(self)
-
-        f = Controles.FontType(puntos=12, peso=75)
-
-        self.ed, lb = QTMessages.spinbox_lb(
-            self,
-            max_level,
-            1,
-            max_level,
-            etiqueta=f"{txtcategoria} {_('Level')}",
-            max_width=40,
-        )
-        lb.set_font(f)
-
-        ly = Colocacion.H().control(lb).control(self.ed).margen(20)
-
-        layout = Colocacion.V().control(tb).otro(ly).margen(3)
-
-        self.setLayout(layout)
-
-    def aceptar(self):
-        self.nivel = self.ed.value()
-        self.accept()
-
-
-def param_memory(parent, txt_categoria, max_level):
-    if max_level == 1:
-        return 1
-
-    # Datos
-    w = WDatos(parent, txt_categoria, max_level)
-    if w.exec():
-        return w.nivel
-    else:
-        return None
-
-
-class WMemoria(LCDialog.LCDialog):
+class WMemoryWork(LCDialog.LCDialog):
     fen_user: str
     fen_aim: str
     vtime: float
     initial_time: float
     squares: dict
-    nivel: int
+    num_level: int
 
-    def __init__(self, procesador, txtcategoria, nivel, seconds, lista_fen, record):
+    def __init__(self, wowner, memory: Memory.Memory, li_fens, num_cat, num_level):
 
         titulo = _("Check your memory on a chessboard")
         icono = Iconos.Memoria()
-        extparam = "memoria"
-        LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, icono, extparam)
+        extparam = "memoriaA"
+        LCDialog.LCDialog.__init__(self, wowner, titulo, icono, extparam)
 
-        f = Controles.FontType(puntos=10, peso=75)
+        f = Controles.FontTypeNew(bold=True)
+
+        self.memory: Memory.Memory = memory
 
         self.configuration = Code.configuration
-        self.nivel = nivel
-        self.seconds = seconds
-        self.record = record
+        self.num_level = num_level
+        self.num_category = num_cat
+        self.categoria = self.memory.name_categoria(num_cat)
+        self.num_pieces = num_level + 3
+        self.seconds = (6 - num_cat) * self.num_pieces
+        self.record = self.memory.dic_data[num_cat][num_level]
         self.repetitions = 0
         self.pending_time = 0
         self.cumulative_time = 0
@@ -91,7 +45,7 @@ class WMemoria(LCDialog.LCDialog):
         # Board
         config_board = self.configuration.config_board("MEMORIA", 48)
 
-        self.listaFen = lista_fen
+        self.listaFen = li_fens
 
         self.position = Position.Position()
 
@@ -119,19 +73,20 @@ class WMemoria(LCDialog.LCDialog):
         self.gbAyuda = Controles.GB(self, _("Help"), ly)
 
         # Rotulos informacion
-        lb_categoria = Controles.LB(self, txtcategoria)
+        lb_categoria = Controles.LB(self, self.categoria)
         lb_categoria.setStyleSheet("border:1px solid lightgray;")
-        lb_nivel = Controles.LB(self, _X(_("Level %1/%2"), str(nivel + 1), "25"))
+        lb_nivel = Controles.LB(self, _X(_("Level %1/%2"), str(self.num_level + 1), "25"))
 
-        lb_record = Controles.LB(self, _X(_("Record %1 seconds"), f"{record:0.02f}") if record else "")
-        lb_record.setVisible(record)
+        lb_record = Controles.LB(self, _X(_("Record %1 seconds"), f"{self.record:0.02f}") if self.record else "")
+        lb_record.setVisible(bool(self.record))
 
-        f_rot16 = Controles.FontType(puntos=16, peso=75)
-        f_rot14 = Controles.FontType(puntos=14)
+        f_rot16 = Controles.FontTypeNew(point_size_delta=+7, bold=True)
+        f_rot14 = Controles.FontType(point_size_delta=+5)
         for lb in (lb_nivel, lb_categoria, lb_record):
             lb.set_font(f_rot16 if lb == lb_categoria else f_rot14)
             lb.align_center()
-            lb.relative_width(460)
+            lb.set_wrap()
+            # lb.relative_width(460)
 
         ly_rot_basicos = Colocacion.V().control(lb_categoria).control(lb_nivel).control(lb_record).margen(0)
 
@@ -142,7 +97,7 @@ class WMemoria(LCDialog.LCDialog):
                 _X(
                     _("You have %1 seconds to remember the position of %2 pieces"),
                     str(self.seconds),
-                    str(self.nivel + 3),
+                    str(self.num_level + 3),
                 ),
             )
             .set_wrap()
@@ -207,7 +162,7 @@ class WMemoria(LCDialog.LCDialog):
         self.timer = None
 
         for lb in (lb_ayuda, self.rotuloDispone1, self.rotuloDispone):
-            lb.relative_width(420)
+            lb.minimum_width(300)
 
         self.activate_extras(False)
 
@@ -350,13 +305,13 @@ class WMemoria(LCDialog.LCDialog):
         if new:
             self.pending_time = self.seconds
         else:
-            self.pending_time = max(int(self.seconds // (self.repetitions + 1)), self.nivel + 3)
+            self.pending_time = max(int(self.seconds // (self.repetitions + 1)), self.num_level + 3)
 
         self.rotuloDispone.set_text(
             _X(
                 _("You have %1 seconds to remember the position of %2 pieces"),
                 str(self.pending_time),
-                str(self.nivel + 3),
+                str(self.num_level + 3),
             )
         )
         self.rotuloDispone1.set_text(_("when you know you can press the Continue button"))
@@ -385,7 +340,7 @@ class WMemoria(LCDialog.LCDialog):
         self.rotuloDispone1.set_text(
             _X(
                 _("When you've loaded the %1 pieces you can click the Check button"),
-                str(self.nivel + 3),
+                str(self.num_level + 3),
             )
         )
         self.rotuloDispone.setVisible(False)
@@ -425,6 +380,7 @@ class WMemoria(LCDialog.LCDialog):
             if self.cumulative_time < self.record or self.record == 0:
                 mens += f"<br>{_('New record!')}"
             QTMessages.message_bold(self, mens)
+            self.memory.save_category(self.num_category, self.num_level, self.cumulative_time)
             self.accept()
             return
 
@@ -449,13 +405,6 @@ class WMemoria(LCDialog.LCDialog):
 
         self.pon_toolbar(li)
 
-    # def quita_repetir(self):
-    #     li = [self.target, self.wrong]
-    #     if len(self.listaFen):
-    #         li.append(self.new_try)
-    #
-    #     self.pon_toolbar(li)
-
     def target(self):
         self.ini_time_target = time.time()
         self.position.read_fen(self.fen_aim)
@@ -477,7 +426,7 @@ class WMemoria(LCDialog.LCDialog):
             _X(
                 _("You have %1 seconds to remember the position of %2 pieces"),
                 str(self.seconds),
-                str(self.nivel + 3),
+                str(self.num_level + 3),
             )
         )
         self.rotuloDispone.show()
@@ -493,7 +442,7 @@ class WMemoria(LCDialog.LCDialog):
             _X(
                 _("You have %1 seconds to remember the position of %2 pieces"),
                 str(self.pending_time),
-                str(self.nivel + 3),
+                str(self.num_level + 3),
             )
         )
         if self.pending_time == 0:
@@ -515,41 +464,38 @@ class WMemoria(LCDialog.LCDialog):
             self.timer = None
 
 
-def lanza_memoria(procesador, txtcategoria, nivel, seconds, lista_fen, record):
-    w = WMemoria(procesador, txtcategoria, nivel, seconds, lista_fen, record)
-    if w.exec():
-        return w.cumulative_time
-    else:
-        return None
+class WMemoryMain(LCDialog.LCDialog):
+    def __init__(self, w_parent):
+        title = f'{_("Check your memory on a chessboard")}'
+        super(WMemoryMain, self).__init__(w_parent, title, Iconos.Memoria(), "memory_resultsF")
 
+        self.memory = Memory.Memory()
 
-class WMemoryResults(LCDialog.LCDialog):
-    def __init__(self, w_parent, memory):
-        super(WMemoryResults, self).__init__(w_parent, _("Results"), Iconos.Estadisticas2(), "memory_results7")
-
-        self.memory = memory
+        delegate_cell = Delegados.MemoryResultCell()
 
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("level", _("Level"), 60, align_center=True)
+        o_columns.nueva("cat", _("Category"), 190, align_center=True)
 
-        for num_cat in range(6):
-            cat = memory.categorias.number(num_cat)
-            o_columns.nueva(f"cat_{num_cat}", cat.name(), 140, align_center=True)
-            o_columns.nueva(f"inc_{num_cat}", "∆", 60, align_center=True)
-        grid = Grid.Grid(self, o_columns, complete_row_select=True, heigh_row=24)
-        grid.alternate_colors()
-        self.register_grid(grid)
+        for num_lv in range(25):
+            o_columns.nueva(
+                f"lv_{num_lv}", str(num_lv + 1), 72, align_center=True, edicion=delegate_cell, is_editable=False
+            )
+        self.grid = Grid.Grid(self, o_columns, heigh_row=40, is_column_header_movable=False)
+        self.grid.alternate_colors()
+        self.register_grid(self.grid)
 
         tb = Controles.TBrutina(self)
         tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
 
-        layout = Colocacion.V().control(tb).control(grid).margen(3)
+        lb_help = Controles.LB(self, _("Double-click + to train or numbers to upgrade").replace("+", "➕")).align_center()
+
+        layout = Colocacion.V().control(tb).control(self.grid).control(lb_help).margen(3)
 
         self.setLayout(layout)
 
-        self.restore_video(default_width=grid.width_and_vbar(), default_height=720)
-        grid.gotop()
-        grid.setFocus()
+        self.restore_video(default_width=840, default_height=390)
+        self.grid.gotop()
+        self.grid.setFocus()
 
     def closeEvent(self, event):
         self.save_video()
@@ -560,18 +506,60 @@ class WMemoryResults(LCDialog.LCDialog):
 
     @staticmethod
     def grid_num_datos(_grid):
-        return 25
+        return 6  # una fila por categoría
+
+    def is_selectable(self, ncat, nlevel):
+        # si tiene informacion
+        dic_data = self.memory.dic_data
+        if dic_data[ncat][nlevel] != 0:
+            return True
+        # si el anterior tiene datos
+        if nlevel == 0 or dic_data[ncat][nlevel - 1] != 0:
+            if ncat == 0 or dic_data[ncat - 1][nlevel] != 0:
+                return True
+        return False
 
     def grid_dato(self, _grid, row, obj_column):
         key = obj_column.key
-        level = row
-        if key == "level":
-            return str(level + 1)
-        xcat = int(key[4:])
+        xcat = row  # fila = índice de categoría
+        if key == "cat":
+            cat = self.memory.categorias.number(xcat)
+            return cat.name()
+        # columnas lv_N: devuelven tupla (valor_total, delta_por_pieza)
+        xlv = int(key[3:])  # índice de nivel 0-24
         li_data = self.memory.dic_data[xcat]
-        record = li_data[row]
+        record = li_data[xlv]
         if record == 0:
-            return ""
-        if key.startswith("inc"):
-            record = record / (level + 3)
-        return f"{record:0.02f}"
+            if self.is_selectable(xcat, xlv):
+                return "➕", ""
+            else:
+                return "", ""
+        main_value = f"{record:0.02f}\""
+        delta = f"{record / (xlv + 3):0.02f}"
+        return main_value, delta
+
+    @staticmethod
+    def grid_bold(_grid, row, obj_column):
+        return obj_column.key == "cat"
+
+    @staticmethod
+    def grid_color_fondo(_grid, row, _obj_column):
+        if _obj_column.key == "cat":
+            dic_colors = Code.dic_colors
+            return ScreenUtils.qt_color(dic_colors[f"SQUARED_CONTROLLED_B_{row}"])
+        return None
+
+    def grid_doble_click(self, _grid, row, obj_column):
+        key = obj_column.key
+        if key != "cat":
+            xcat = row  # fila = índice de categoría
+            xlv = int(key[3:])  # índice de nivel 0-24
+            if self.is_selectable(xcat, xlv):
+                self.launch(xcat, xlv)
+
+    def launch(self, num_cat, num_level):
+        with QTMessages.working(self):
+            li_fens = self.memory.get_list_fens(num_level + 3)
+        w = WMemoryWork(self, self.memory, li_fens, num_cat, num_level)
+        if w.exec():
+            self.grid.refresh()

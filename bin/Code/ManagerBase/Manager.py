@@ -756,7 +756,7 @@ class Manager:
             self.runSound.play_beep()
 
     def beep_zeitnot(self):
-        self.runSound.play_zeinot()
+        self.runSound.play_zeitnot()
 
     def beep_error(self):
         if self.configuration.x_sound_error:

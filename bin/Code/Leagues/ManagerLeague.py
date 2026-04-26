@@ -1,5 +1,7 @@
 import random
 
+from PySide6 import QtCore
+
 import Code
 from Code.Z import Adjournments, Util
 from Code.Base import Move
@@ -74,7 +76,7 @@ class ManagerLeague(Manager.Manager):
         self.manager_rival.check_engine()
         self.start_message(nomodal=Code.eboard and Util.is_linux())  # nomodal: problema con eboard
 
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def base_inicio(self, league: Leagues.League, xmatch: Leagues.Match, division: int):
 
@@ -409,7 +411,7 @@ class ManagerLeague(Manager.Manager):
         self.board.set_position(self.game.last_position)
         self.pon_toolbar()
         self.main_window.show_pgn()
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def final_x(self):
         if self.state != ST_ENDGAME:
@@ -467,7 +469,7 @@ class ManagerLeague(Manager.Manager):
         si_rival = is_white == self.is_engine_side_white
 
         if si_rival:
-            self.play_rival()
+            QtCore.QTimer.singleShot(0, self.play_rival)
 
         else:
             self.play_human(is_white)
@@ -524,7 +526,7 @@ class ManagerLeague(Manager.Manager):
         if self.book:
             move_found, rm = self.select_book_move(self.book, self.book_rr, self.book_depth)
             if move_found:
-                self.rival_has_moved(rm)
+                QtCore.QTimer.singleShot(0, lambda: self.rival_has_moved(rm))
                 return
             else:
                 self.book = None
@@ -570,7 +572,7 @@ class ManagerLeague(Manager.Manager):
             self.add_move(move)
             self.move_the_pieces(move.list_piece_moves, True)
             self.beep_extended(False)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
             return True
 
         else:
@@ -607,7 +609,7 @@ class ManagerLeague(Manager.Manager):
         self.move_the_pieces(move.list_piece_moves, False)
         self.beep_extended(True)
 
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def add_move(self, move):

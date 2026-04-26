@@ -25,15 +25,20 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         timer.setInterval(self.ms_refresh)
         self._is_canceled = False
 
+        def check_engine_terminated():
+            self._is_canceled = True
+            check_state(None)
+
         def check_state(bestmove):
             def close():
                 with contextlib.suppress(RuntimeError, TypeError):
                     if self.engine_run is not None:
                         self.engine_run.bestmove_found.disconnect(check_state)
+                        self.engine_run.engine_terminated.disconnect(check_engine_terminated)
                 timer.stop()
                 loop.quit()
 
-            if self.is_disabled:
+            if self.is_disabled or self._is_canceled:
                 self.stop()
                 close()
                 return
@@ -54,6 +59,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
 
         try:
             self.engine_run.bestmove_found.connect(check_state)
+            self.engine_run.engine_terminated.connect(check_engine_terminated)
             self.engine_run.play(self.run_engine_params if run_engine_params is None else run_engine_params)
             timer.timeout.connect(lambda: check_state(None))
             timer.start()
@@ -66,6 +72,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             if self.engine_run is not None:
                 try:
                     self.engine_run.bestmove_found.disconnect(check_state)
+                    self.engine_run.engine_terminated.disconnect(check_engine_terminated)
                 except:
                     pass
             timer.stop()

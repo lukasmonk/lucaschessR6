@@ -48,7 +48,7 @@ class DBendings:
                 d = {}
                 for mt, fen in lista:
                     cp.read_fen(fen)
-                    d[fen] = {"MATE": mt, "XFEN": cp.label(), "ORIGIN": "example"}
+                    d[cp.fenm2()] = {"MATE": mt, "XFEN": cp.label(), "ORIGIN": "example"}
                 self.db_data[key] = d
         self.current_dicfen = self.db_data.get(key, {})
         self.current_key = key
@@ -192,10 +192,18 @@ class DBendings:
         del self.current_dicfen[fen]
         if len(self.current_dicfen) == 0:
             del self.db_data[self.current_key]
-            self.read_key(self.keylist()[0], self.current_order)
+            lik = self.keylist()
+            if lik:
+                self.read_key(lik[0], self.current_order)
+                return True, lik[0]
+            else:
+                self.current_listfen = []
+                self.current_key = None
+                return True, None
         else:
             self.db_data[self.current_key] = self.current_dicfen
             del self.current_listfen[pos]
+            return False, self.current_key
 
     def remove_results(self, only_current_key):
         self.db_data.set_faster_mode()

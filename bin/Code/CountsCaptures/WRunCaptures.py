@@ -165,32 +165,18 @@ class WRunCaptures(LCDialog.LCDialog):
 
     def test_celdas(self):
         if len(self.liwm_captures[self.visible_captures - 1].movimiento()) == 4:
-            complete = True
-            for num, wm in enumerate(self.liwm_captures):
-                if num >= self.visible_captures:
-                    break
-                if len(wm.movimiento()) != 4:
-                    complete = False
-                    break
+            complete = all(len(wm.movimiento()) == 4 for wm in self.liwm_captures[:self.visible_captures])
             if complete:
                 self.visible_captures += 2
-                for num, wm in enumerate(self.liwm_captures):
-                    if num < self.visible_captures:
-                        if not wm.isVisible():
-                            wm.setVisible(True)
+                for wm in self.liwm_captures[:self.visible_captures]:
+                    if not wm.isVisible():
+                        wm.setVisible(True)
         if len(self.liwm_threats[self.visible_threats - 1].movimiento()) == 4:
-            complete = True
-            for num, wm in enumerate(self.liwm_threats):
-                if num >= self.visible_threats:
-                    break
-                if len(wm.movimiento()) != 4:
-                    complete = False
-                    break
+            complete = all(len(wm.movimiento()) == 4 for wm in self.liwm_threats[:self.visible_threats])
             if complete:
                 self.visible_threats += 2
-                for num, wm in enumerate(self.liwm_threats):
-                    if num < self.visible_threats:
-                        wm.show()
+                for wm in self.liwm_threats[:self.visible_threats]:
+                    wm.show()
 
     def set_last_square(self, wmcelda):
         self.last_square = wmcelda
@@ -280,7 +266,7 @@ class WRunCaptures(LCDialog.LCDialog):
                         wm.error()
                         resp = False
             if resp:
-                resp = (len(st_busca) == len(st_sel)) or st_sel == 16
+                resp = (len(st_busca) == len(st_sel)) or len(st_sel) == 16
             return resp
 
         ok_captures = test(self.liwm_captures, True)

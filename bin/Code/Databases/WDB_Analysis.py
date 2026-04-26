@@ -145,7 +145,8 @@ class WDBAnalisis:
             else:
                 conf_motor = Code.configuration.engines.search(alm.engine)
                 conf_motor.set_multipv_var(alm.multiPV)
-                xengine = Code.procesador.create_manager_engine(conf_motor, alm.vtime, alm.depth, has_multipv=True)
+                xengine = Code.procesador.create_manager_engine(conf_motor, alm.vtime, alm.depth, alm.nodes,
+                                                                has_multipv=True)
 
             game = Game.Game()
             game.read_pv(pv)

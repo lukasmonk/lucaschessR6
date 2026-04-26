@@ -16,7 +16,7 @@ from Code.FindAllMoves import ManagerFindAllMoves
 from Code.GM import ManagerGM, WindowGM
 from Code.Leitner import WLeitner
 from Code.Mate15 import WMate15
-from Code.Memory import Memory
+from Code.Memory import WindowMemoria
 from Code.QT import Iconos, QTMessages
 from Code.Resistance import ManagerResistance, Resistance, WindowResistance
 from Code.Tactics import ManagerTactics, Tactics, WindowTactics
@@ -128,13 +128,10 @@ class TrainMenuRun:
         elif resp == "coordinates_write":
             self.coordinates_write()
 
-        elif resp.startswith("memory"):
-            mem = Memory.Memoria(self.procesador)
-            if resp == "memory_results":
-                mem.show_results()
-            else:
-                cat = int(resp[7:])
-                mem.lanza(cat)
+        elif resp == "memory":
+            w = WindowMemoria.WMemoryMain(self.procesador.main_window)
+            w.exec()
+
         elif resp == "leitner":
             w = WLeitner.WLeitner(self.procesador.main_window)
             if bool(w.exec()):

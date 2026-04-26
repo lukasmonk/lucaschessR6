@@ -583,8 +583,19 @@ class Replay:
         self._skip_id += 1
         space_number = self.space_number
         self.finalize()
-        self.manager.xpelicula = Replay(self.manager, next_game=self.next_game,
-                                        space_number=space_number, rapidez=self.rapidez)
+        QtCore.QTimer.singleShot(
+            0,
+            lambda: setattr(
+                self.manager,
+                "xpelicula",
+                Replay(
+                    self.manager,
+                    next_game=self.next_game,
+                    space_number=space_number,
+                    rapidez=self.rapidez,
+                ),
+            ),
+        )
 
     def skip(self, skip_id=None):
         if skip_id is not None and skip_id != self._skip_id:

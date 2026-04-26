@@ -110,6 +110,7 @@ class EngineRun(QtCore.QObject):
     depth_changed = QtCore.Signal()
     bestmove_found = QtCore.Signal(str)
     eval_stockfish_found = QtCore.Signal(str)
+    engine_terminated = QtCore.Signal()
 
     # Atributos de instancia — se inicializan en __init__
 
@@ -506,6 +507,11 @@ class EngineRun(QtCore.QObject):
                     self._wait_loop.quit()
                 except Exception:
                     self._log_exception("wait_loop quit failed")
+            if self.emit:
+                try:
+                    self.engine_terminated.emit()
+                except Exception:
+                    self._log_exception("engine_terminated emit failed")
             if __debug__:
                 status_msg = (
                     "normalmente" if exit_status == QtCore.QProcess.ExitStatus.NormalExit else "inesperadamente"

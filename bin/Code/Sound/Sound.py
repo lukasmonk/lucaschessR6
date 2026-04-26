@@ -134,7 +134,7 @@ class RunSound:
             return secs
         return 0.0
 
-    def play_zeinot(self):
+    def play_zeitnot(self):
         self.play_key("ZEITNOT")
 
     def play_error(self):

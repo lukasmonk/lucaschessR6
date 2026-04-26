@@ -577,8 +577,11 @@ def _run_uci_command(path_exe) -> str | None:
         if process.state() == QtCore.QProcess.ProcessState.NotRunning:
             break
 
-    process.kill()
-    process.waitForFinished(200)
+    if process.state() != QtCore.QProcess.ProcessState.NotRunning:
+        process.write(b"quit\n")
+        if not process.waitForFinished(200):
+            process.kill()
+            process.waitForFinished(200)
     return buffer if ok else None
 
 

@@ -116,7 +116,7 @@ class ControlFindAllMoves:
 
     def remove_all(self) -> None:
         Util.remove_file(self.fichPuntos)
-        self.li_puntos = [[0, 0]] * len(self.db)
+        self.li_puntos = [[0, 0] for __ in range(len(self.db))]
 
     def average_time(self) -> float:
         num = 0
@@ -373,7 +373,7 @@ class ManagerFindAllMoves(Manager.Manager):
         mensaje, si_record = self.pgn.message_result(self.number, vtime, self.errors)
         self.pon_rotulotm()
 
-        if self.number == 59 and si_record and self.errors == 0:
+        if self.number == self.pgn.num_rows() - 1 and si_record and self.errors == 0:
             mens = f'<b><span style="color:green">{_("Congratulations, goal achieved")}</span></b>'
             QTMessages.message(self.main_window, mens)
         else:

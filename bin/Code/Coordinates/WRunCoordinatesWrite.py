@@ -225,7 +225,7 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
             self.db_coordinates.refresh()
             if len(self.db_coordinates) > 1:
                 if self.coord.is_record:
-                    mens += f"<h2>{_('New record!')}<h2>"
+                    mens += f"<h2>{_('New record!')}</h2>"
             QTMessages.message_bold(self, mens)
             self.finalize()
             return

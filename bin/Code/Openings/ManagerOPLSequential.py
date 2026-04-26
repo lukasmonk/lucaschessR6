@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 
+from PySide6 import QtCore
 from PySide6.QtCore import Qt
 
 from Code.Base import Game, Move
@@ -335,7 +336,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
             self.rm_rival.promotion = pv[4:]
 
             self.rival_has_moved(self.rm_rival)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
 
         else:
             self.activate_side(is_white)
@@ -384,7 +385,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
         self.move_the_pieces(move.list_piece_moves)
 
         self.add_move(move, True)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def rival_has_moved(self, engine_response):

@@ -277,9 +277,17 @@ class WEndingsGTB(LCDialog.LCDialog):
         row = self.grid.recno()
         if row >= 0:
             if QTMessages.pregunta(self, _("Do you want to delete this position?")):
-                self.db.remove(row)
-                self.grid.refresh()
-                self.grid_cambiado_registro(None, row, None)
+                key_changed, new_key = self.db.remove(row)
+                if key_changed:
+                    if new_key:
+                        self.set_key(new_key)
+                    else:
+                        self.grid.refresh()
+                        self.game = Game.Game()
+                        self.board.set_position(self.game.first_position)
+                else:
+                    self.grid.refresh()
+                    self.grid_cambiado_registro(None, self.grid.recno(), None)
 
     def configurar(self):
         dic_vars = self.configuration.read_variables("endingsGTB")

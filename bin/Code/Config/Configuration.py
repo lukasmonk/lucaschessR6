@@ -284,7 +284,7 @@ class Configuration:
     def save_folder(self):
         return self.get_folder_default(self.x_save_folder)
 
-    def set_save_folder(self, folder):
+    def set_save_folder(self, folder: str) -> None:
         self.x_save_folder = folder
         self.graba()
 
@@ -712,9 +712,16 @@ class Configuration:
     def needs_reinit(self, dic_previo: dict) -> bool:
         dic_current = self.read_dic_x()
         st_needs_reinit = {
-            "x_style", "x_digital_board", "x_font_family", "x_margin_pieces", "x_opacity_tool_board",
-            "x_position_tool_board", "x_shadows_board", "x_style_icons", "x_style_mode",
-            "x_tb_orientation_horizontal"
+            "x_style",
+            "x_digital_board",
+            "x_font_family",
+            "x_margin_pieces",
+            "x_opacity_tool_board",
+            "x_position_tool_board",
+            "x_shadows_board",
+            "x_style_icons",
+            "x_style_mode",
+            "x_tb_orientation_horizontal",
         }
         for x, value in dic_previo.items():
             if dic_current[x] != value:
