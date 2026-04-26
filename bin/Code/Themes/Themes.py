@@ -99,7 +99,9 @@ class Themes:
             palabras = concepto.replace("'", "").split()
 
             # Generar candidato inicial
-            if len(palabras) == 1:
+            if not palabras:
+                abrev_candidata = "???"
+            elif len(palabras) == 1:
                 palabra = palabras[0]
                 abrev_candidata = (palabra[:3] if len(palabra) >= 3 else palabra + palabra[0] * (3 - len(palabra)))[:3]
             else:

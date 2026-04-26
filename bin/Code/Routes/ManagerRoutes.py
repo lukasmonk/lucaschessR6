@@ -1,6 +1,7 @@
 import random
 import time
 from typing import Optional, Any
+from PySide6 import QtCore
 
 import FasterCode
 
@@ -292,7 +293,7 @@ class ManagerRoutesPlay(ManagerRoutes):
         self.thinking(False)
         self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move_sel = self.check_human_move(from_sq, to_sq, promotion)
@@ -505,7 +506,7 @@ class ManagerRoutesEndings(ManagerRoutes):
                 fen = self.game.last_position.fen()
                 pv = self.t4.best_move(fen)
             self.rival_has_moved(pv[:2], pv[2:4], pv[4:])
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
         else:
             self.ini_time()
             self.human_is_playing = True
@@ -715,7 +716,7 @@ class ManagerRoutesTactics(ManagerRoutes):
         if is_rival:
             move = self.target_move()
             self.rival_has_moved(move.from_sq, move.to_sq, move.promotion)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
         else:
             self.ini_time()
             self.human_is_playing = True
@@ -785,7 +786,7 @@ class ManagerRoutesTactics(ManagerRoutes):
         self.human_is_playing = False
         self.state = ST_ENDGAME
         if self.route.go_fast:
-            self.run_action(TB_NEXT)
+            QtCore.QTimer.singleShot(0, lambda: self.run_action(TB_NEXT))
         else:
             li_options = [TB_CLOSE, TB_UTILITIES, TB_NEXT]
             self.set_toolbar(li_options)

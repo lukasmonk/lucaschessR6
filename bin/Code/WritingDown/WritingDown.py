@@ -11,6 +11,7 @@ class WritingDown(LCDialog.LCDialog):
         self.db = UtilSQL.DictSQL(self.configuration.paths.file_writing_down())
         self.lista = self.db.keys(True, True)
         self.resultado = None
+        self._cache_games = {}
 
         LCDialog.LCDialog.__init__(
             self,
@@ -81,19 +82,22 @@ class WritingDown(LCDialog.LCDialog):
                 recno = self.glista.recno()
                 self.glista.refresh()
                 self.lista = self.db.keys(True, True)
+                self._cache_games = {}
                 if recno >= len(self.lista):
                     self.glista.gobottom()
 
     def grid_num_datos(self, grid):
         return len(self.lista)
 
-    def game(self, reg) -> Game.Game:
-        if isinstance(reg["PC"], Game.Game):
-            game = reg["PC"]
-        else:
-            game = Game.Game()
-            game.restore(reg["PC"])
-        return game
+    def game(self, row, reg) -> Game.Game:
+        if row not in self._cache_games:
+            if isinstance(reg["PC"], Game.Game):
+                game = reg["PC"]
+            else:
+                game = Game.Game()
+                game.restore(reg["PC"])
+            self._cache_games[row] = game
+        return self._cache_games[row]
 
     def grid_dato(self, grid, row, obj_column):
         col = obj_column.key
@@ -103,9 +107,9 @@ class WritingDown(LCDialog.LCDialog):
         if col == "DATE":
             return self.lista[row]
         elif col == "GAME":
-            return self.game(reg).titulo("DATE", "EVENT", "WHITE", "BLACK", "RESULT")
+            return self.game(row, reg).titulo("DATE", "EVENT", "WHITE", "BLACK", "RESULT")
         elif col == "MOVES":
-            total = reg.get("TOTAL_MOVES", len(self.game(reg)))
+            total = reg.get("TOTAL_MOVES", len(self.game(row, reg)))
             moves = reg["MOVES"]
             if total == moves:
                 return str(total)

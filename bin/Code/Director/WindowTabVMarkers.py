@@ -310,7 +310,7 @@ class WTVMarkers(LCDialog.LCDialog):
             reg_marker.name = name
             reg_marker.id = Util.huella()
             reg_marker.ordenVista = self.liPMarkers[-1].ordenVista + 1
-            self.db_markers[reg_marker.id] = reg_marker
+            self.db_markers[reg_marker.id] = reg_marker.save_dic()
             self.liPMarkers.append(reg_marker)
             self.grid.refresh()
             self.grid.setFocus()

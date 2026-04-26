@@ -1,10 +1,12 @@
 from enum import Enum, auto
+from functools import partial
 from typing import Optional, Callable
 
+from PySide6 import QtCore
+
 import Code
-from Code.Base import Game, Move, Position
+from Code.Base import Game, Move
 from Code.Engines import EngineManagerAnalysis, EngineResponse, Engines
-from Code.Openings import OpeningsStd
 from Code.QT import FormLayout, Iconos
 from Code.QT import QTMessages
 
@@ -34,14 +36,14 @@ class Adjudicator:
 
         self.nom_engine, self.multipv, self.ms_time, self.show_all = self.get_adjudicator_options()
 
-        self.manager_analyzer = self.open_manager_analyzer()
+        self.manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None = self.open_manager_analyzer()
 
-        self.move_played = None
-        self.mrm = None
-        self.game = None
+        self.move_played: Optional[Move.Move] = None
+        self.mrm: Optional[EngineResponse.MultiEngineResponse] = None
+        self.game: Optional[Game.Game] = None
         self.book_active: bool = True
         self.state: AdjudicatorState = AdjudicatorState.active
-        self._message_same_book_moves = True
+        self._message_same_book_moves: bool = True
 
     def disable_message_same_book_moves(self):
         self._message_same_book_moves = False
@@ -106,7 +108,7 @@ class Adjudicator:
                 self.ensure_moves()
                 user_move = self.user_move
                 self.user_move = None
-                self._rut_player_move(user_move)
+                QtCore.QTimer.singleShot(0, partial(self._rut_player_move, user_move))
             return
 
         # Si está cerrando, ya podemos cerrar bien
@@ -120,7 +122,7 @@ class Adjudicator:
 
         if self.book_active:
             if self.check_both_are_bookmoves():
-                self._rut_player_move(user_move, book_moves=True)
+                QtCore.QTimer.singleShot(0, partial(self._rut_player_move, user_move, book_moves=True))
                 return
 
         if self.is_analysing():
@@ -129,25 +131,16 @@ class Adjudicator:
                 return
             else:
                 self.ensure_moves()
-                self._rut_player_move(user_move)
+                QtCore.QTimer.singleShot(0, partial(self._rut_player_move, user_move))
                 return
         else:
             self.manager_analyzer.connect_bestmove(None)  # que no haya interferencias
             self.ensure_moves()
-            self._rut_player_move(user_move)
+            QtCore.QTimer.singleShot(0, partial(self._rut_player_move, user_move))
 
     def check_both_are_bookmoves(self) -> bool:
-        fen = self.obj_move.position_before.fen()
-
-        def check_move(from_sq: str, to_sq: str) -> bool:
-            p = Position.Position()
-            p.read_fen(fen)
-            p.play(from_sq, to_sq)
-            fenm2 = p.fenm2()
-            return OpeningsStd.ap.is_book_fenm2(fenm2)
-
-        si_book_obj: bool = check_move(self.obj_move.from_sq, self.obj_move.to_sq)
-        si_book_usu: bool = check_move(self.user_move.from_sq, self.user_move.to_sq)
+        si_book_obj: bool = self.obj_move.in_the_opening
+        si_book_usu: bool = self.user_move.in_the_opening
         if si_book_usu and si_book_obj:
             same = self.obj_move.from_sq == self.user_move.from_sq and self.obj_move.to_sq == self.user_move.to_sq
             self.owner.thinking(False)

@@ -21,6 +21,8 @@ class WLine:
 
     def read_line(self, line):
         li = line.strip().split("|")
+        if len(li) < 3:
+            return None
         self.fen, self.label, pgn_moves = li[0], li[1], li[2]
 
         self.pgn = f'[FEN "{self.fen}"]\n\n{pgn_moves}'
@@ -245,12 +247,13 @@ class Washing:
     def create_tactics_uned(self, db):
         folder = Code.path_resource("Trainings", "Tactics by UNED chess school")
         li = []
-        for fns in os.listdir(folder):
-            if fns.endswith(".fns"):
-                fns = Util.opj(folder, fns)
-                with open(fns) as f:
-                    for linea in f:
-                        li.append(linea)
+        if os.path.exists(folder):
+            for fns in os.listdir(folder):
+                if fns.endswith(".fns"):
+                    fns = Util.opj(folder, fns)
+                    with open(fns) as f:
+                        for linea in f:
+                            li.append(linea)
         random.shuffle(li)
         self.li_tactics = li
         db["TACTICS"] = self.li_tactics

@@ -228,31 +228,6 @@ class Tutor:
         self.max_tutor = len(self.game_tutor)
         self.moving_tutor(True)
 
-    def mueve1(self, quien, que):
-        if quien not in ("user", "tutor", "opening", "rival"):
-            return
-
-        funcion = getattr(self, f"moving_{quien}")
-
-        if que == "forward":
-            funcion(n_saltar=1)
-        elif que == "back":
-            funcion(n_saltar=-1)
-        elif que == "to_beginning":
-            funcion(is_base=True)
-        elif que == "to_end":
-            funcion(is_end=True)
-        elif que == "Libre":
-            self.analiza(quien)
-        elif que == "Tiempo":
-            try:
-                tb = getattr(self.w, f"tb{quien}")
-                pos_max = getattr(self, f"max_{quien}")
-
-                self.move_timed(funcion, tb, pos_max)
-
-            except AttributeError:
-                pass
 
     def mueve(self, quien: str, que: str) -> None:
         valid_quien = {"user", "tutor", "opening", "rival"}
@@ -426,9 +401,9 @@ class Tutor:
 
     def ponBoardsGUI(self, board_tutor, board_user, board_rival, board_openings):
         self.board_tutor = board_tutor
-        self.board_tutor.do_pressed_number = self.exepressed_numberTutor
+        self.board_tutor.do_pressed_number = self.pressed_numberTutor
         self.board_user = board_user
-        self.board_user.do_pressed_number = self.exepressed_numberUsuario
+        self.board_user.do_pressed_number = self.pressed_numberUsuario
         self.board_rival = board_rival
         self.board_openings = board_openings
 
@@ -459,7 +434,7 @@ class Tutor:
 
         Analysis.AnalisisVariations(self.w, self.manager_tutor, move, self.is_white, pts)
 
-    def exepressed_numberTutor(self, activate, number):
+    def pressed_numberTutor(self, activate, number):
         if number in [1, 8]:
             if activate:
                 # Que move esta en el board
@@ -486,7 +461,7 @@ class Tutor:
                 if self.board_tutor.arrow_sc:
                     self.board_tutor.arrow_sc.show()
 
-    def exepressed_numberUsuario(self, activate, number):
+    def pressed_numberUsuario(self, activate, number):
         if number in [1, 8]:
             if activate:
                 # Que move esta en el board

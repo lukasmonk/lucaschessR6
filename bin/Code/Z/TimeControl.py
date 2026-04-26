@@ -73,11 +73,11 @@ class TimeControl:
         """Necesario solo para el modo Hourglass."""
         self._opponent_clock = opponent_clock
 
-    def config_clock(self, total_time, seconds_per_move, zeinot_marker, secs_extra):
+    def config_clock(self, total_time, seconds_per_move, zeitnot_marker, secs_extra):
         """Configuración base (compatibilidad con código existente)."""
         self.pending_time = self.total_time = total_time + secs_extra
         self.seconds_per_move = seconds_per_move if seconds_per_move else 0
-        self.zeitnot_marker = zeinot_marker if zeinot_marker else 0
+        self.zeitnot_marker = zeitnot_marker if zeitnot_marker else 0
         self.show_clock = total_time > 0.0
         self.time_mode = TIMEMODE_FISCHER if seconds_per_move else TIMEMODE_SUDDEN_DEATH
 
@@ -369,7 +369,7 @@ class TimeControl:
 
     # -- Extras ----------------------------------------------------------------
 
-    def set_zeinot(self, segs):
+    def set_zeitnot(self, segs):
         self.zeitnot_marker = segs
 
     def add_extra_seconds(self, secs):

@@ -2,6 +2,7 @@ import random
 import time
 from typing import Optional
 
+from PySide6 import QtCore
 from PySide6.QtCore import Qt
 
 from Code.Base import Game, Move
@@ -205,7 +206,7 @@ class ManagerOpeningEngines(Manager.Manager):
             if is_rival:
                 self.disable_all()
                 if self.play_rival():
-                    self.play_next_move()
+                    QtCore.QTimer.singleShot(0, self.play_next_move)
             else:
                 self.activate_side(is_white)
                 self.human_is_playing = True
@@ -286,7 +287,7 @@ class ManagerOpeningEngines(Manager.Manager):
         self.move_the_pieces(move.list_piece_moves)
 
         self.add_move(move, True)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def add_move(self, move, is_player_move):

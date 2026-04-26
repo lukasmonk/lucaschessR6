@@ -37,15 +37,12 @@ class ControlAnalysis:
     def time_engine(self):
         return self.mrm.name.strip()
 
-    def time_label(self):
+    def time_label(self) -> str:
         if self.mrm.max_time:
-            t = f"{float(self.mrm.max_time) / 1000.0:0.2f}"
-            t = t.rstrip("0")
-            if t[-1] == ".":
-                t = t[:-1]
+            t = f"{float(self.mrm.max_time) / 1000.0:0.2f}".rstrip("0").rstrip(".")
             return f"{_('Second(s)')}: {t}"
         elif self.mrm.max_depth:
-            return "%s: %d" % (_("Depth"), self.mrm.max_depth)
+            return f"{_('Depth')}: {self.mrm.max_depth}"
         else:
             return ""
 
@@ -65,7 +62,7 @@ class ControlAnalysis:
             )
             if name:
                 if txt := rm.abbrev_text_base():
-                    name += f"({txt})"
+                    name = f"{name}({txt})"
                 li.append((rm, name, rm.centipawns_abs()))
 
         return li
@@ -103,7 +100,7 @@ class ControlAnalysis:
             salta = 0
         for n, move in enumerate(self.game.li_moves):
             if n % 2 == salta:
-                li_pgn.append('<span style="%s">%d.</span>' % (style_number, num_mov))
+                li_pgn.append(f'<span style="{style_number}">{num_mov}.</span>')
                 num_mov += 1
 
             xp = move.pgn_html(self.with_figurines)
@@ -250,7 +247,8 @@ class CreateAnalysis:
             if xengine is None:
                 conf_engine = self.configuration.engines.search(alm.engine)
                 conf_engine.set_multipv_var(alm.multiPV)
-                xengine = self.procesador.create_manager_engine(conf_engine, alm.vtime, alm.depth, has_multipv=True)
+                xengine = self.procesador.create_manager_engine(conf_engine, alm.vtime, alm.depth, alm.nodes,
+                                                                has_multipv=True)
 
         with QTMessages.WaitingMessage(main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
             game = self.move.game

@@ -1,6 +1,7 @@
 import random
 import time
 from typing import Callable, Any
+from PySide6 import QtCore
 
 import Code
 from Code.Z import Adjournments, Util
@@ -248,7 +249,7 @@ class ManagerGM(Manager.Manager):
 
             if not si_buscar:
                 self.rival_has_moved(move)
-                self.play_next_move()
+                QtCore.QTimer.singleShot(0, self.play_next_move)
                 return None
 
         return li_alternativas
@@ -299,7 +300,7 @@ class ManagerGM(Manager.Manager):
             move = li_alternativas[0]
 
         self.rival_has_moved(move)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def play_human(self, is_white):
         self.human_is_playing = True
@@ -413,7 +414,7 @@ class ManagerGM(Manager.Manager):
 
         gm_move.set_time_ms(int((self.time_s_end - self.ini_time_s) * 1000))
         self.add_move(True, gm_move, same_move=same_move)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def rival_has_moved(self, move):

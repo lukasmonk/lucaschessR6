@@ -109,7 +109,6 @@ class ManagerWritingDown(Manager.Manager):
 
     def run_action(self, key: str):
         if key == TB_REINIT:
-            self.game_objetivo = self.game
             self.game = Game.Game(first_position=self.game_objetivo.first_position)
             self.start(self.game_objetivo, self.si_blancas_abajo)
 

@@ -364,15 +364,16 @@ class WProgress(LCDialog.LCDialog):
         self.pb_moves.setValue(0)
         self.pb_moves.setStyleSheet("""
             QProgressBar {
-                border: 1px solid #aaa;
-                border-radius: 4px;
+                border: 1px solid #d0d0d0;
+                border-radius: 6px;
                 text-align: center;
-                height: 24px;
+                height: 28px;
+                background-color: #f5f5f5;
                 font-weight: bold;
             }
             QProgressBar::chunk {
-                background-color: #2196F3;
-                border-radius: 3px;
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #42a5f5, stop:1 #2196F3);
+                border-radius: 5px;
             }
         """)
 
@@ -419,26 +420,29 @@ class WProgress(LCDialog.LCDialog):
         self.frame_workers.setStyleSheet("""
             QGroupBox {
                 font-weight: bold;
-                border: 1px solid #888;
-                border-radius: 4px;
-                margin-top: 8px;
-                padding-top: 8px;
+                border: 1px solid #ced4da;
+                border-radius: 8px;
+                margin-top: 12px;
+                padding-top: 12px;
+                background-color: #ffffff;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 subcontrol-position: top left;
-                padding: 0 5px;
-                color: #333;
+                padding: 0 8px;
+                color: #495057;
+                background-color: #ffffff;
             }
             QProgressBar {
-                border: 1px solid #aaa;
-                border-radius: 3px;
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
                 text-align: center;
-                height: 18px;
+                height: 20px;
+                background-color: #f8f9fa;
             }
             QProgressBar::chunk {
-                background-color: #4CAF50;
-                border-radius: 2px;
+                background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #66bb6a, stop:1 #4CAF50);
+                border-radius: 3px;
             }
         """)
 

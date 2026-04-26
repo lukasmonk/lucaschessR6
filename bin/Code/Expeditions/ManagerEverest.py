@@ -1,5 +1,7 @@
 import time
 
+from PySide6 import QtCore
+
 from Code.Adjudicator import Adjudicator
 from Code.Base import Move, Game
 from Code.Base.Constantes import (
@@ -216,7 +218,7 @@ class ManagerEverest(Manager.Manager):
 
         if is_rival:
             self.add_move(False)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
 
         else:
             self.human_is_playing = True
@@ -300,7 +302,7 @@ class ManagerEverest(Manager.Manager):
         )
 
         self.add_move(True, comment, analysis, same_move=same_move)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def add_move(self, is_player_move, comment=None, analysis=None, same_move=False):

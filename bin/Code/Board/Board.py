@@ -1027,7 +1027,7 @@ class Board(QtWidgets.QGraphicsView):
         ctrl("Y", f"{_('Blindfold chess')}: {_('Configuration')}", nkey=Qt.Key.Key_Y)
         close_group()
 
-        alt("L", _("Open position in lichess"), nkey=Qt.Key.Key_L)
+        alt("L", _("Open position in LiChess"), nkey=Qt.Key.Key_L)
         alt("T", _("Open position in ChessTempo"), nkey=Qt.Key.Key_T)
         alt("X", _("Play current position"), nkey=Qt.Key.Key_X)
         close_group()

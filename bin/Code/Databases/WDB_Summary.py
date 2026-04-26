@@ -252,7 +252,7 @@ class WSummary(QtWidgets.QWidget):
 
     def redo_current(self):
         recno = self.grid.recno()
-        if recno >= 0:
+        if recno >= 0 and self.isnt_row_with_totals(recno):
             dic: dict = self.liMoves[recno]
             if "pv" in dic:
                 pv = dic["pv"]
@@ -264,7 +264,7 @@ class WSummary(QtWidgets.QWidget):
 
     def siguiente(self):
         recno = self.grid.recno()
-        if recno >= 0:
+        if recno >= 0 and self.isnt_row_with_totals(recno):
             dic: dict = self.liMoves[recno]
             if "pv" in dic:
                 pv = dic["pv"]

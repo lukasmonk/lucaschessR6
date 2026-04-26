@@ -5,7 +5,6 @@ import glob
 import hashlib
 import os
 import pickle
-import queue
 import random
 import shutil
 import stat
@@ -969,7 +968,7 @@ class SmoothedEstimator:
     def __init__(self, total):
         self.total = total
         self.start_time = time.time()
-        self.q_est = queue.Queue(maxsize=100)
+        self.q_est = collections.deque(maxlen=100)
 
     def estimated(self, current_pos):
         if current_pos <= 0:
@@ -979,14 +978,11 @@ class SmoothedEstimator:
         dif_time = time.time() - self.start_time
         cur_est = dif_time / current_pos  # Dividir por current_pos en lugar de current_pos+1
 
-        # Manejar la cola correctamente
-        if self.q_est.full():
-            self.q_est.get()  # Eliminar el elemento más antiguo
-        self.q_est.put(cur_est)
+        # Manejar el histórico
+        self.q_est.append(cur_est)
 
-        # Calcular el promedio de la cola
-        items = list(self.q_est.queue)
-        media = sum(items) / len(items) if items else cur_est
+        # Calcular el promedio
+        media = sum(self.q_est) / len(self.q_est)
 
         return self.format_seconds(media * remaining_units)
 

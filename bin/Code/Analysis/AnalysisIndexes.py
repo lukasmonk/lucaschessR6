@@ -1,3 +1,4 @@
+import math
 from typing import Any, Dict, Tuple
 
 import FasterCode
@@ -104,39 +105,33 @@ def calc_formula(cual: str, cp, mrm) -> float:
     is_white = cp.is_white
     context = _compute_context_variables(cp, mrm, is_white)
 
-    # Reemplazo de variables en dos pasos: enteras y flotantes
+    # Reemplazo de variables en la fórmula
     for key, value in context.items():
         if key in formula:
-            if isinstance(value, int):
-                formula = formula.replace(key, f"{value}.0")
-            else:
-                formula = formula.replace(key, f"{value:.10f}")
+            formula = formula.replace(key, f"{float(value):.10f}")
 
-    # Soporte recursivo para xcompl
+    # Soporte para xcompl (recursivo)
     if "xcompl" in formula:
         compl_value = calc_formula("complexity", cp, mrm)
         formula = formula.replace("xcompl", f"{compl_value:.10f}")
 
     try:
-        # Restringir el entorno de evaluación para seguridad
+        # Entorno restringido para eval por seguridad
         allowed_names = {
             "abs": abs,
             "round": round,
             "min": min,
             "max": max,
             "pow": pow,
-            "sqrt": __import__("math").sqrt if "sqrt" in formula else None,
-            "log": __import__("math").log if "log" in formula else None,
-            "exp": __import__("math").exp if "exp" in formula else None,
+            "sqrt": math.sqrt,
+            "log": math.log,
+            "exp": math.exp,
         }
-
-        # Filtrar funciones None
-        allowed_names = {k: v for k, v in allowed_names.items() if v is not None}
 
         # Evaluar con entorno restringido
         result = eval(formula, {"__builtins__": {}}, allowed_names)
         return float(result)
-    except (SyntaxError, NameError, TypeError, ZeroDivisionError, ValueError):
+    except Exception:
         return 0.0
 
 

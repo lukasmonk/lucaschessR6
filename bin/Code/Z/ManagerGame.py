@@ -520,7 +520,7 @@ class ManagerGame(Manager.Manager):
 
             n_ajustar_fuerza = dic["ADJUST"]
             self.manager_rival = self.procesador.create_manager_engine(
-                rival, r_t, r_p, n_ajustar_fuerza != ADJUST_BETTER
+                rival, r_t, r_p, 0, n_ajustar_fuerza != ADJUST_BETTER
             )
             self.manager_rival.nAjustarFuerza = n_ajustar_fuerza
 

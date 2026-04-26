@@ -540,9 +540,14 @@ class WTournament(LCDialog.LCDialog):
 
     def grid_cambiado_registro(self, grid, row, _obj_column):
         if grid.id == GRID_ALIAS:
+            if row < 0:
+                self.li_data_current_engine = []
+                self.gridEnginesValores.refresh()
+                return
             me = self.torneo.engine(row)
-            self.act_engine(me)
-            self.gridEnginesValores.refresh()
+            if me:
+                self.act_engine(me)
+                self.gridEnginesValores.refresh()
 
     def act_engine(self, me):
         self.li_data_current_engine = []

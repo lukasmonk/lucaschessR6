@@ -7,8 +7,6 @@ from Code.Base.Constantes import (
     TACTICS_BASIC,
     TACTICS_PERSONAL,
 )
-from Code.CompetitionWithTutor import CompetitionWithTutor
-from Code.Memory import Memory
 from Code.Menus import BaseMenu, TrainMenuRun
 from Code.QT import Iconos, QTDialogs
 from Code.Tactics import Tactics
@@ -92,20 +90,21 @@ class TrainMenu(BaseMenu.RootMenu):
 
         submenu_basic.new("anotar", _("Writing down moves of a game"), Iconos.Write())
 
-    def memory(self, submenu_basic):
-        submenu_memory = submenu_basic.new_submenu(_("Check your memory on a chessboard"), Iconos.Memoria())
-        mem = Memory.Memoria(self.procesador)
-        categorias = CompetitionWithTutor.Categorias()
-        for x in range(6):
-            cat = categorias.number(x)
-            txt = cat.name()
-
-            nm = mem.nivel(x)
-            if nm >= 0:
-                txt += f" {TrListas.level(nm + 1)}"
-
-            submenu_memory.new(f"memory_{x}", txt, cat.icono(), enabled=mem.is_active(x), sep=False)
-        submenu_memory.new("memory_results", _("Results"), Iconos.Estadisticas2())
+    @staticmethod
+    def memory(submenu_basic):
+        submenu_basic.new("memory", _("Check your memory on a chessboard"), Iconos.Memoria())
+        # mem = Memory.Memoria(self.procesador)
+        # categorias = CompetitionWithTutor.Categorias()
+        # for x in range(6):
+        #     cat = categorias.number(x)
+        #     txt = cat.name()
+        #
+        #     nm = mem.nivel(x)
+        #     if nm >= 0:
+        #         txt += f" {TrListas.level(nm + 1)}"
+        #
+        #     submenu_memory.new(f"memory_{x}", txt, cat.icono(), enabled=mem.is_active(x), sep=False)
+        # submenu_memory.new("memory_results", _("Results"), Iconos.Estadisticas2())
 
     @staticmethod
     def find_all_moves(submenu_basic):

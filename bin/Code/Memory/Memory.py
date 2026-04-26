@@ -1,14 +1,11 @@
 import Code
-from Code.Z import Util
 from Code.CompetitionWithTutor import CompetitionWithTutor
-from Code.Memory import WindowMemoria
-from Code.QT import QTMessages
+from Code.Z import Util
 
 
-class Memoria:
-    def __init__(self, procesador):
+class Memory:
+    def __init__(self):
 
-        self.procesador = procesador
         self.file = Code.configuration.paths.file_train_memory()
 
         self.dic_data = Util.restore_pickle(self.file)
@@ -18,98 +15,36 @@ class Memoria:
                 self.dic_data[x] = [0] * 25
 
         self.categorias = CompetitionWithTutor.Categorias()
-        self.main_window = procesador.main_window
 
-    def nivel(self, numcategoria):
-        li = self.dic_data[numcategoria]
-        for n, t in enumerate(li):
-            if t == 0:
-                return n - 1
-        return 24
+    def name_categoria(self, num_categoria):
+        return self.categorias.lista[num_categoria].name()
 
-    def maxnivel(self, numcategoria):
-        nm = self.nivel(numcategoria) + 1
-        if nm > 24:
-            nm = 24
-        if numcategoria:
-            nma = self.nivel(numcategoria - 1)
-            nm = min(nm, nma)
-        return nm
+    def save_category(self, num_cat, num_level, seconds):
+        previous = self.dic_data[num_cat][num_level]
+        if previous == 0 or previous >= seconds:
+            self.dic_data[num_cat][num_level] = seconds
+            Util.save_pickle(self.file, self.dic_data)
 
-    def record(self, numcategoria, nivel):
-        li = self.dic_data[numcategoria]
-        return li[nivel]
+    @staticmethod
+    def get_list_fens(num_piezas):
+        li = []
 
-    def is_active(self, numcategoria):
-        if numcategoria == 0:
-            return True
-        return self.nivel(numcategoria - 1) > 0
-
-    def lanza(self, numcategoria):
-
-        # pedimos el nivel
-        while True:
-            cat = self.categorias.number(numcategoria)
-            maxnivel = self.maxnivel(numcategoria)
-            nivel_mas1 = WindowMemoria.param_memory(self.procesador.main_window, cat.name(), maxnivel + 1)
-            if nivel_mas1 is None:
-                break
-            nivel = nivel_mas1 - 1
-            if nivel < 0:
-                break
-            else:
-                if self.launch_level(numcategoria, nivel):
-                    if nivel == 24 and numcategoria < 5:
-                        numcategoria += 1
-                else:
-                    break
-
-    def launch_level(self, numcategoria, nivel):
-
-        pieces = nivel + 3
-        seconds = (6 - numcategoria) * pieces
-
-        li_fen = self.get_list_fens(pieces)
-        if not li_fen:
-            return False
-
-        cat = self.categorias.number(numcategoria)
-
-        record = self.record(numcategoria, nivel)
-        vtime = WindowMemoria.lanza_memoria(self.procesador, cat.name(), nivel, seconds, li_fen, record)
-        if vtime:
-            if record == 0 or vtime < record:
-                li = self.dic_data[numcategoria]
-                li[nivel] = vtime
-                Util.save_pickle(self.file, self.dic_data)
-
-            return True
-        return False
-
-    def get_list_fens(self, num_piezas):
-        with QTMessages.one_moment_please(self.procesador.main_window):
-            li = []
-
-            li_fedu = Util.listfiles(Code.path_resource("Trainings", "Checkmates by Eduardo Sadier"), "*.fns")
-            if num_piezas < 10:
-                pos = 0 if "derived" in li_fedu[0] else 1
-            else:
-                pos = 1 if "derived" in li_fedu[0] else 0
-            with open(li_fedu[pos], "rt", encoding="utf-8") as f:
-                for fen in f:
-                    if fen:
-                        pz = 0
-                        fen = fen.split("|")[0]
-                        for c in fen:
-                            if c == " ":
-                                break
-                            if c in "prnbqkPRNBQK":
-                                pz += 1
-                        if pz == num_piezas:
-                            li.append(fen)
+        li_fedu = Util.listfiles(Code.path_resource("Trainings", "Checkmates by Eduardo Sadier"), "*.fns")
+        if num_piezas < 10:
+            pos = 0 if "derived" in li_fedu[0] else 1
+        else:
+            pos = 1 if "derived" in li_fedu[0] else 0
+        with open(li_fedu[pos], "rt", encoding="utf-8") as f:
+            for fen in f:
+                if fen:
+                    pz = 0
+                    fen = fen.split("|")[0]
+                    for c in fen:
+                        if c == " ":
+                            break
+                        if c in "prnbqkPRNBQK":
+                            pz += 1
+                    if pz == num_piezas:
+                        li.append(fen)
 
         return li
-
-    def show_results(self):
-        w = WindowMemoria.WMemoryResults(self.procesador.main_window, self)
-        w.exec()

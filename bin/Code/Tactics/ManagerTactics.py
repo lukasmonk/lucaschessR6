@@ -1,5 +1,6 @@
 import time
 
+from PySide6 import QtCore
 from PySide6.QtCore import Qt
 
 from Code.Base.Constantes import (
@@ -115,7 +116,7 @@ class ManagerTactics(Manager.Manager):
             self.wsolve.set_game(self.game_obj, self.advanced_return)
 
         else:
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def advanced_return(self, solved):
         self.tactic.mas_segundos(time.time() - self.ini_clock)
@@ -230,7 +231,7 @@ class ManagerTactics(Manager.Manager):
         if self.tactic.work_game_finished():
             self.end_game()
         else:
-            self.start(self.tactic)
+            QtCore.QTimer.singleShot(0, lambda: self.start(self.tactic))
 
     def end_game(self):
         self.board.show_coordinates(True)
@@ -283,7 +284,7 @@ class ManagerTactics(Manager.Manager):
             move = self.game_obj.move(self.pos_obj).clone(self.game)
             self.move_the_pieces(move.list_piece_moves, True)
             self.add_move(move, False)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
 
         else:
             self.human_is_playing = True
@@ -300,7 +301,7 @@ class ManagerTactics(Manager.Manager):
             return False
 
         if self.with_automatic_jump and not self.tactic.w_error:
-            self.ent_siguiente()
+            QtCore.QTimer.singleShot(0, self.ent_siguiente)
         else:
             QTMessages.temporary_message(self.main_window, _("Line completed"), 0.7)
             self.set_label1(self.tactic.w_label)

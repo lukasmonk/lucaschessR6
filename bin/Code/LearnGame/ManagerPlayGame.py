@@ -1,4 +1,5 @@
 import time
+from PySide6 import QtCore
 
 import FasterCode
 
@@ -196,7 +197,7 @@ class ManagerPlayGame(Manager.Manager):
         self.adjudicator.analyze_end()
         self.show_info_extra()
 
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def valid_mrm(self, pv_usu, pv_obj, mrm_actual):
         move = self.game_obj.move(self.pos_move_obj)
@@ -246,7 +247,7 @@ class ManagerPlayGame(Manager.Manager):
             self.adjudicator.analyze_begin(self.game)
         else:
             self.add_move(False)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def check_book(self, fen, from_sq, to_sq):
         if self.book.check_human(fen, from_sq, to_sq):
@@ -334,7 +335,7 @@ class ManagerPlayGame(Manager.Manager):
         )
 
         self.add_move(True, comment, analysis, same_move=same_move)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def add_move(self, is_player_move, comment=None, analysis=None, same_move=False):

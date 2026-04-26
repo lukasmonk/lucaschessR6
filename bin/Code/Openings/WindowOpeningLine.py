@@ -1426,10 +1426,7 @@ class WLines(LCDialog.LCDialog):
             dic = self.dbop.dict_repeat_fen(si_white)
             mensaje = f"{_('Move')}  %d/{len(dic)!s}"
             if ms:
-                xmanager = self.procesador.create_manager_engine(
-                    self.configuration.engines.engine_tutor(), ms, 0, has_multipv=False
-                )
-                xmanager.set_multipv(10)
+                xmanager = self.procesador.create_manager_analyzer(ms, 0, 0, 10)
             else:
                 xmanager = None
 
@@ -1498,7 +1495,7 @@ class WLines(LCDialog.LCDialog):
             tmp_bp.cerrar()
 
             if xmanager:
-                xmanager.finalize()
+                xmanager.close()
 
             if ok:
                 with QTMessages.working(self):

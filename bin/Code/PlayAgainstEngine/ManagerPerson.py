@@ -3,14 +3,12 @@ from typing import Any, Dict
 import Code
 from Code.Base.Constantes import (
     GT_AGAINST_CHILD_ENGINE,
-)
-from Code.Base.Constantes import (
     ST_PLAYING,
+    TIMEMODE_FISCHER
 )
 from Code.Openings import Opening
 from Code.PlayAgainstEngine import ManagerPlayAgainstEngine
 from Code.QT import QTDialogs
-from Code.Z import TimeControl
 
 
 class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
@@ -72,7 +70,7 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
             bl, ng = ng, bl
 
         if self.timed:
-            self.time_mode = TimeControl.TimeMode.FISCHER
+            self.time_mode = TIMEMODE_FISCHER
             tp_bl, tp_ng = self.tc_white.label(), self.tc_black.label()
             self.dic_times_prev_move = {}
 

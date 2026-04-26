@@ -347,7 +347,7 @@ class ManagerVariations(Manager.Manager):
 
         n_ajustar_fuerza = dic["ADJUST"]
         self.manager_rival = self.procesador.create_manager_engine(
-            rival, r_timems, r_depth, n_ajustar_fuerza != ADJUST_BETTER
+            rival, r_timems, r_depth, r_nodes, n_ajustar_fuerza != ADJUST_BETTER
         )
         if r_nodes:
             self.manager_rival.set_nodes(r_nodes)

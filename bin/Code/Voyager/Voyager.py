@@ -698,7 +698,7 @@ class WPosicion(QtWidgets.QWidget):
                         QTMessages.message_error(self, _("This scanner already exists."))
                         continue
                     try:
-                        with open(fich, "w") as f:
+                        with open(fich, "w", encoding="utf-8") as f:
                             f.write("")
                         self.scanner_reread(name)
                         return
@@ -758,7 +758,12 @@ class WPosicion(QtWidgets.QWidget):
         if Util.filesize(fich):
             with open(fich) as f:
                 for linea in f:
-                    self.li_scan_pch.append(ast.literal_eval(linea.strip()))
+                    linea = linea.strip()
+                    if linea:
+                        try:
+                            self.li_scan_pch.append(ast.literal_eval(linea))
+                        except (ValueError, SyntaxError):
+                            continue
         self.n_scan_last_save = len(self.li_scan_pch)
         self.n_scan_last_added = self.n_scan_last_save
 

@@ -768,9 +768,9 @@ class DBgames:
         li_tags = [["Date", f"{hoy.year:d}.{hoy.month:02d}.{hoy.day:02d}"]]
         return Game.Game(li_tags=li_tags)
 
-    def save_game_recno(self, recno, game):
+    def save_game_recno(self, recno, game, with_commit=True):
         game.refresh_tacticthemes(TACTICTHEMES.upper() in self.st_fields)
-        return self.insert(game) if recno is None else self.modify(recno, game)
+        return self.insert(game, with_commit=with_commit) if recno is None else self.modify(recno, game, with_commit=with_commit)
 
     def fill(self, li_field_value):
         lset = ",".join(f"{field}=?" for field, value in li_field_value)
@@ -1235,7 +1235,7 @@ class DBgames:
         if with_commit:
             self.conexion.commit()
 
-    def modify(self, recno, game_modificada: Game.Game):
+    def modify(self, recno, game_modificada: Game.Game, with_commit=True):
         resp = Util.Record()
         resp.ok = True
         resp.changed = False
@@ -1249,11 +1249,10 @@ class DBgames:
             resp.mens_error = mens_error
             return resp
 
-        game_antiguo = self.read_game_recno(recno)
-        #
-        # # La game antigua y la nueva son iguales ? no se hace nada.
-        # if game_antigua == game_modificada:  # game.__eq__
-        #     return resp
+        # Optimization: Only read old game if stats are enabled
+        game_antiguo = None
+        if self.with_db_stat:
+            game_antiguo = self.read_game_recno(recno)
 
         # Test si hay nuevos tags
         for tag, valor in game_modificada.li_tags:
@@ -1281,14 +1280,15 @@ class DBgames:
         sql = f"UPDATE Games SET {set_clause} WHERE ROWID = ?"
         try:
             self.conexion.execute(sql, li_data + [rowid])
-            self.conexion.commit()
+            if with_commit:
+                self.conexion.commit()
         except sqlite3.Error as e:
             resp.ok = False
             resp.mens_error = str(e)
             return resp
 
         # Summary
-        if self.with_db_stat:
+        if self.with_db_stat and game_antiguo:
             if game_antiguo.get_tag("FEN") is None:
                 pv = game_antiguo.pv()
                 if pv:
@@ -1298,6 +1298,8 @@ class DBgames:
                 if pv:
                     self.db_stat.append(pv, game_modificada.resultado(), r=+1)
             resp.summary_changed = True
+            if with_commit:
+                self.db_stat.commit()
 
         if rowid in self.cache:
             del self.cache[rowid]

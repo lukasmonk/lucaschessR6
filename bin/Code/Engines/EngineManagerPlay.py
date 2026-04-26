@@ -133,18 +133,23 @@ class EngineManagerPlay(EngineManager.EngineManager):
         self.seconds_humanize = 0  # must be restarted each time
         self._is_canceled = False
 
+        def check_engine_terminated():
+            self._is_canceled = True
+            check_state(None)
+
         def check_state(bestmove):
             def close():
                 if self.engine_run is not None:
                     try:
                         self.engine_run.bestmove_found.disconnect(check_state)
+                        self.engine_run.engine_terminated.disconnect(check_engine_terminated)
                     except (RuntimeError, TypeError):
                         pass
                 if state.with_timer and timer is not None:
                     timer.stop()
                 loop.quit()
 
-            if self.engine_run is None:
+            if self.engine_run is None or self._is_canceled:
                 self._is_canceled = True
                 close()
                 return
@@ -168,6 +173,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
         timer = None
         try:
             self.engine_run.bestmove_found.connect(check_state)
+            self.engine_run.engine_terminated.connect(check_engine_terminated)
             if game is not None:
                 self.engine_run.set_game_position(game, None, False)
             else:
@@ -189,6 +195,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
             try:
                 if self.engine_run is not None:
                     self.engine_run.bestmove_found.disconnect(check_state)
+                    self.engine_run.engine_terminated.disconnect(check_engine_terminated)
             except (RuntimeError, TypeError):
                 pass
             if timer is not None:

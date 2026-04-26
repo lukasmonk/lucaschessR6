@@ -66,6 +66,8 @@ class TOL_Block:
             distancia += d
         base_dist = Position.distancia("a1", "a4")
 
+        if nummoves == 0:
+            return 0.0
         return (distancia / nummoves) / base_dist
 
     def add_line(self, line):
@@ -112,6 +114,8 @@ class TOL_Block:
         for x in range(current_line + 1):
             nmoves += self.lines[x].num_moves
         current_secs += errores * self.penaltyError(think_mode) + hints * self.penaltyHelp(think_mode)
+        if nmoves == 0:
+            return 0, qualification(0, think_mode)[0]
         av_secs = current_secs / nmoves
         return av_secs, qualification(av_secs, think_mode)[0]
 

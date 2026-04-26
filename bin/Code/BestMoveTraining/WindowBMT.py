@@ -482,7 +482,7 @@ class WBMT(LCDialog.LCDialog):
         # Analizamos todos, creamos las games, y lo salvamos
         conf_motor = self.configuration.engines.search(name_engine)
         conf_motor.multiPV = 16
-        xmanager = self.procesador.create_manager_engine(conf_motor, vtime, None, True)
+        xmanager = self.procesador.create_manager_engine(conf_motor, vtime, None, 0, True)
 
         tam_lista = len(bmt_lista.li_bmt_uno)
 

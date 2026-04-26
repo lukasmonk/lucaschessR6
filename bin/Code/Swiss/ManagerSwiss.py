@@ -1,4 +1,5 @@
 import random
+from PySide6 import QtCore
 
 import Code
 from Code.Z import Adjournments, Util
@@ -65,7 +66,7 @@ class ManagerSwiss(Manager.Manager):
         self.manager_rival.check_engine()
         self.start_message(nomodal=Code.eboard and Util.is_linux())  # nomodal: problema con eboard
 
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def base_inicio(self, swiss: Swiss.Swiss, xmatch: Swiss.Match):
 
@@ -371,7 +372,7 @@ class ManagerSwiss(Manager.Manager):
         self.manager_rival.check_engine()
         self.start_message()
         self.pgn_refresh(not self.is_engine_side_white)
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def xpause(self):
         self.state = ST_PAUSE
@@ -386,7 +387,7 @@ class ManagerSwiss(Manager.Manager):
         self.board.set_position(self.game.last_position)
         self.pon_toolbar()
         self.main_window.show_pgn()
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def final_x(self):
         if self.state != ST_ENDGAME:
@@ -500,7 +501,7 @@ class ManagerSwiss(Manager.Manager):
         if self.book:
             move_found, rm = self.select_book_move(self.book, self.book_rr, self.book_depth)
             if move_found:
-                self.rival_has_moved(rm)
+                QtCore.QTimer.singleShot(0, lambda: self.rival_has_moved(rm))
                 return
             else:
                 self.book = None
@@ -547,7 +548,7 @@ class ManagerSwiss(Manager.Manager):
             self.add_move(move, False)
             self.move_the_pieces(move.list_piece_moves, True)
             self.beep_extended(False)
-            self.play_next_move()
+            QtCore.QTimer.singleShot(0, self.play_next_move)
             return True
 
         else:
@@ -585,7 +586,7 @@ class ManagerSwiss(Manager.Manager):
         self.beep_extended(True)
 
         self.error = ""
-        self.play_next_move()
+        QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
 
     def add_move(self, move, is_player_move):

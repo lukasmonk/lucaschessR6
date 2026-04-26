@@ -109,7 +109,10 @@ class T4:
         return dtm
 
     def wdl(self, fen):
-        board = chess.Board(fen)
+        try:
+            board = chess.Board(fen)
+        except:
+            return None
         if len(board.piece_map()) > 5:
             return None
         try:
@@ -143,8 +146,8 @@ class T4:
             FasterCode.set_fen(fen)
             FasterCode.move_pv(from_sq, to_sq, promotion)
             xfen = FasterCode.get_fen()
-            board = chess.Board(xfen)
             try:
+                board = chess.Board(xfen)
                 dtm = -self.tb.probe_dtm(board)
                 if dtm == 0:
                     if board.is_checkmate():
@@ -178,8 +181,8 @@ class T4:
             FasterCode.set_fen(fen)
             FasterCode.move_pv(from_sq, to_sq, promotion)
             xfen = FasterCode.get_fen()
-            board = chess.Board(xfen)
             try:
+                board = chess.Board(xfen)
                 dtm = -self.tb.probe_dtm(board)
                 if dtm == 0:
                     if board.is_checkmate():

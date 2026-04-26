@@ -385,8 +385,6 @@ class Position:
         if Code.configuration.x_notation_style == NOTATION_LONGALGEBRAIC:
             return FasterCode.get_pgn_longalgebraic(from_sq, to_sq, promotion)
 
-        # (f'assert check("{self.fen()}", "{from_sq}", "{to_sq}", "{promotion or ""}") == "{resp}"')
-        # return resp
         return FasterCode.get_pgn_descriptive(self.is_white, from_sq, to_sq, promotion)
 
     def get_fenm2(self):

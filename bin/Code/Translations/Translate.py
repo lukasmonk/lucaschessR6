@@ -45,7 +45,7 @@ class Translations:
 
                 def lmp(msg):
                     if "||" in msg:
-                        msg = msg[msg.index("||") :].strip()
+                        msg = msg[msg.index("||")+2:].strip()
                     return msg
 
                 dicn = {entry.msgid: lmp(entry.msgstr) for entry in pomofile}

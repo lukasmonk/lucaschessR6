@@ -138,9 +138,9 @@ class WControl(LCDialog.LCDialog):
         li_gen: list[tuple] = [(None, None)]
 
         # # Site
-        f = open(self.path_bloque)
-        li_data: List = [x.split("|") for x in f.read().split("\n")]
-        f.close()
+        with open(self.path_bloque) as f:
+            li_data: List = [x.split("|") for x in f.read().split("\n")]
+
         li_sites = []
         site_pre_num = -1
         for n, uno in enumerate(li_data):
@@ -261,7 +261,7 @@ class WPlay(LCDialog.LCDialog):
         self.intervalo_por_pieza = dicdatos["INTERVALPIECE"]
         self.esatacada = dicdatos["ISATTACKED"]
         self.esatacante = dicdatos["ISATTACKING"]
-        self.position = dicdatos["POSITION"]
+        self.with_position = dicdatos["POSITION"]
         self.color = dicdatos["COLOR"]
         self.errors = dicdatos["ERRORS"]
         self.time = dicdatos["TIME"]
@@ -298,7 +298,7 @@ class WPlay(LCDialog.LCDialog):
         self.posIsAttacking = None
 
         lista = [_("Piece")]
-        if self.position:
+        if self.with_position:
             lista.append(_("Position"))
         if self.color:
             lista.append(_("Square color"))
@@ -344,7 +344,7 @@ class WPlay(LCDialog.LCDialog):
             ly.control(cb, row, col_pos)
             un_bloque.append(cb)
 
-            if self.position:
+            if self.with_position:
                 ec = Controles.ED(self, "").caracteres(2).controlrx("(|[a-h][1-8])").relative_width(24).align_center()
                 col_pos += 1
                 ly.controlc(ec, row, col_pos)
@@ -463,7 +463,7 @@ class WPlay(LCDialog.LCDialog):
                 pz = "K" if x == 0 else ("k" if x == 1 else "P")
                 bloque[1].set_value(pz)
                 pos = 1
-                if self.position:
+                if self.with_position:
                     pos += 1
                     bloque[pos].set_text("")
                 if self.color:
@@ -524,7 +524,7 @@ class WPlay(LCDialog.LCDialog):
             color = None
             atacada = None
             atacante = None
-            if self.position:
+            if self.with_position:
                 pos += 1
                 position = bloque[pos].texto()
             if self.color:
@@ -543,7 +543,7 @@ class WPlay(LCDialog.LCDialog):
                     continue
                 if rsol.pieza != pieza:
                     continue
-                if self.position:
+                if self.with_position:
                     if rsol.position != position:
                         continue
                 if self.color:
