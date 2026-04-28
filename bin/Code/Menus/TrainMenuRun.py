@@ -211,7 +211,7 @@ class TrainMenuRun:
 
     def resistance(self, tipo):
         resistance = Resistance.Resistance(self.procesador, tipo)
-        resp = WindowResistance.windowResistance(self.parent, resistance)
+        resp = WindowResistance.window_resistance(self.parent, resistance)
         if resp is not None:
             num_engine, key = resp
             self.procesador.manager = ManagerResistance.ManagerResistance(self.procesador)
@@ -234,7 +234,7 @@ class TrainMenuRun:
             li_tam_blocks = (6, 12, 20, 30, 60)
         elif name.startswith("uwe_easy"):
             title = f"{_('Uwe Auerswald')} ({_('Initial')})"
-            TurnOnLights.compruebaUweEasy(Code.configuration, name)
+            TurnOnLights.comprueba_uwe_easy(Code.configuration, name)
             folder = Code.configuration.temporary_folder()
             icono = Iconos.Uwe()
             li_tam_blocks = (4, 6, 9, 12, 18, 36)

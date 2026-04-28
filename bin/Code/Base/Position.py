@@ -828,3 +828,4 @@ def legal_fenm2(fen):
     p = Position()
     p.read_fen(fen)
     return p.fenm2()
+

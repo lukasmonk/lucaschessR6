@@ -103,7 +103,7 @@ class WSelectEngineElo(LCDialog.LCDialog):
 
         self.tb = QTDialogs.LCTB(self, li_acciones)
 
-        self.list_engines = self.manager.list_engines(elo)
+        self.list_engines = self.manager.list_engines_elo(elo)
         self.liMotoresActivos = self.list_engines
 
         li_filtro = (

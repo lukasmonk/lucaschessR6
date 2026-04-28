@@ -7,28 +7,27 @@ from Code.Base.Constantes import ExitProgram
 from Code.Config import Configuration, Usuarios
 from Code.Main import InitApp
 from Code.QT import Colocacion, Controles, GarbageCollector, Iconos
-from Code.Shortcuts import Shortcuts
 from Code.Translations import WSelectLanguage
 from Code.Z import XRun
 
 
-class GlobalFilter(QtCore.QObject):
-    def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.Type.KeyPress:
-            m = event.modifiers().value
-            if (m & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0:
-                if event.key() == QtCore.Qt.Key.Key_0:
-                    self.launch_other_instance()
-                    return True  # True = evento consumido, no se propaga
-        return super().eventFilter(obj, event)
-
-    @staticmethod
-    def launch_other_instance():
-        shortcuts = Shortcuts.Shortcuts(Code.procesador)
-        resp = shortcuts.menu_base(False)
-        if resp is not None:
-            XRun.run_lucas(f"{resp.key}.shortcut")
-
+# class GlobalFilter(QtCore.QObject):
+#     def eventFilter(self, obj, event):
+#         if event.type() == QtCore.QEvent.Type.KeyPress:
+#             m = event.modifiers().value
+#             if (m & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0:
+#                 if event.key() == QtCore.Qt.Key.Key_0:
+#                     self.launch_other_instance()
+#                     return True  # True = evento consumido, no se propaga
+#         return super().eventFilter(obj, event)
+#
+#     @staticmethod
+#     def launch_other_instance():
+#         shortcuts = Shortcuts.Shortcuts(Code.procesador)
+#         resp = shortcuts.menu_base(False)
+#         if resp is not None:
+#             XRun.run_lucas(f"{resp.key}.shortcut")
+#
 
 def run_gui(procesador):
     main_config = Configuration.Configuration("")
@@ -42,8 +41,8 @@ def run_gui(procesador):
     app = QtWidgets.QApplication([])
     app.setEffectEnabled(QtCore.Qt.UIEffect.UI_FadeMenu, True)  # Agregar
 
-    filtro = GlobalFilter()
-    app.installEventFilter(filtro)  #
+    # filtro = GlobalFilter()
+    # app.installEventFilter(filtro)  #
 
     first_run = main_config.paths.is_first_time
     main_config.lee()  # Necesaria la doble lectura, para que _ permanezca como builting tras QApplication

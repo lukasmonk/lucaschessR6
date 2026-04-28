@@ -1,3 +1,4 @@
+
 from PySide6 import QtCore
 from Code.Base import Move
 from Code.Base.Constantes import (
@@ -136,7 +137,7 @@ class ManagerResistance(Manager.Manager):
         elif str_side == TB_CLOSE:
             self.procesador.close_engines()
             self.procesador.start()
-            tm = TrainMenu.TrainMenu(self)
+            tm = TrainMenu.TrainMenu(self.procesador)
             tm.run_exec(f"resistance{self.resistance.tipo}")
 
         elif str_side == TB_REINIT:
@@ -200,9 +201,12 @@ class ManagerResistance(Manager.Manager):
             puntos_rival_previo = self.rival_points
 
             self.rm_rival = self.manager_rival.play(self.game)
+            self.thinking(False)
+            if self.manager_rival.is_closed:
+                return
+
             self.rival_points = self.rm_rival.centipawns_abs()
             self.put_current_label()
-            self.thinking(False)
 
             if self.rival_has_moved(self.rm_rival):
                 self.movements_rival += 1
@@ -294,6 +298,7 @@ class ManagerResistance(Manager.Manager):
             self.set_toolbar(li_options)
         else:
             self.run_action(TB_CLOSE)
+            # QtCore.QTimer.singleShot(0, partial(self.run_action, TB_CLOSE))
 
         return True
 

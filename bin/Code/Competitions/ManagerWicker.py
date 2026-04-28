@@ -101,7 +101,7 @@ class ManagerWicker(Manager.Manager):
             result = -1
         return Util.fide_elo(elo_jugador, elo_rival, result)
 
-    def list_engines(self, elo):
+    def list_engines_elo(self, elo):
         self.li_t = (
             (0, 50, 3),
             (20, 53, 5),
@@ -475,7 +475,7 @@ class ManagerWicker(Manager.Manager):
             self.game.set_termination(TERMINATION_RESIGN, RS_WIN_PLAYER)
             self.show_result()
 
-    def player_has_moved(self, from_sq, to_sq, promotion=""):
+    def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             return False

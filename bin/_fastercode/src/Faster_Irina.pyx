@@ -726,7 +726,7 @@ class InfoMove(object):
         self._castle_K = info[6] == b"K"
         self._castle_Q = info[6] == b"Q"
         self._ep = info[7] == b"E"
-        self._capt_piece = info[8]
+        self._capt_piece = chr(info[8])
         self._pv = pv
         self._san = san
 
@@ -767,7 +767,7 @@ class InfoMove(object):
         return self._piece.decode("utf-8")
 
     def piece_captured(self):
-        return self._capt_piece.decode("utf-8")
+        return self._capt_piece
 
 
     def iscastle_k(self):
