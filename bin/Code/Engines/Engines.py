@@ -1,5 +1,6 @@
 import os
 import os.path
+import sqlite3
 from typing import List, Tuple
 
 from PySide6 import QtCore
@@ -262,7 +263,11 @@ class Engine:
             else:
                 lines = get_uci_options(self.path_exe)
                 if lines:
-                    dbuci[key] = "\n".join(lines)
+                    try:
+                        dbuci[key] = "\n".join(lines)
+                    except sqlite3.IntegrityError:
+                        pass
+
                 else:
                     lines = []  # Ensure lines is always an iterable
 
@@ -454,7 +459,7 @@ class OpcionUCI:
         try:
             idx_default = li.index("default")
             if idx_default < len(li) - 1:
-                self.default = " ".join(li[idx_default + 1 :])
+                self.default = " ".join(li[idx_default + 1:])
                 if self.default == "<empty>":
                     self.default = ""
             else:

@@ -478,7 +478,7 @@ class WMemoryMain(LCDialog.LCDialog):
         delegate_cell = Delegados.MemoryResultCell()
 
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("cat", _("Category"), 190, align_center=True)
+        o_columns.nueva("cat", _("Categories"), 190, align_center=True)
 
         for num_lv in range(25):
             o_columns.nueva(
