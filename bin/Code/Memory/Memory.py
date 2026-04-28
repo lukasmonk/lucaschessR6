@@ -29,22 +29,18 @@ class Memory:
     def get_list_fens(num_piezas):
         li = []
 
-        li_fedu = Util.listfiles(Code.path_resource("Trainings", "Checkmates by Eduardo Sadier"), "*.fns")
-        if num_piezas < 10:
-            pos = 0 if "derived" in li_fedu[0] else 1
-        else:
-            pos = 1 if "derived" in li_fedu[0] else 0
-        with open(li_fedu[pos], "rt", encoding="utf-8") as f:
-            for fen in f:
-                if fen:
-                    pz = 0
-                    fen = fen.split("|")[0]
-                    for c in fen:
-                        if c == " ":
-                            break
-                        if c in "prnbqkPRNBQK":
-                            pz += 1
-                    if pz == num_piezas:
-                        li.append(fen)
+        for path_file in Util.listfiles(Code.path_resource("Trainings", "Checkmates in GM games"), "*.fns"):
+            with open(path_file, "rt", encoding="utf-8") as f:
+                for fen in f:
+                    if fen:
+                        pz = 0
+                        fen = fen.split("|")[0]
+                        for c in fen:
+                            if c == " ":
+                                break
+                            if c in "prnbqkPRNBQK":
+                                pz += 1
+                        if pz == num_piezas:
+                            li.append(fen)
 
-        return li
+        return list(set(li))

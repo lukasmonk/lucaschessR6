@@ -133,13 +133,13 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         data = index.model().data(index, QtCore.Qt.ItemDataRole.DisplayRole)
         if isinstance(data, tuple):
-            pgn, color, txt_analysis, indicador_inicial, li_nags = data
-            if li_nags:
+            pgn, color, txt_analysis, indicador_inicial, st_nags = data
+            if st_nags:
                 li = []
                 st = set()
                 dolar = 0
                 # first_symbol = True
-                for x in li_nags:
+                for x in st_nags:
                     x = str(x)
                     if x in st:
                         continue
@@ -153,9 +153,9 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
                             dolar += 1
                 if dolar:
                     li.append("$" if dolar == 1 else "$*")
-                li_nags = li
+                st_nags = li
         else:
-            pgn, color, txt_analysis, indicador_inicial, li_nags = (
+            pgn, color, txt_analysis, indicador_inicial, st_nags = (
                 data,
                 None,
                 None,
@@ -184,10 +184,10 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
                 pgn = pgn[:-2]
                 salto_fin_pz = -6
 
-        if li_nags:
+        if st_nags:
             if post_pz is None:
                 post_pz = ""
-            post_pz += f" {' '.join(li_nags)}"
+            post_pz += f" {' '.join(st_nags)}"
 
         rect = option.rect
         w_total = rect.width()

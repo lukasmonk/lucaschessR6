@@ -211,6 +211,8 @@ class Eboard:
                     path_dll = Util.opj(path_eboards, "gon-TAB64.dll")
                 elif self.name == "iChessOne":
                     path_dll = Util.opj(path_eboards, "gon-ICO64.dll")
+                elif self.name == "Cynus":
+                    path_dll = Util.opj(path_eboards, "gon-CYN64.dll")
                 elif self.name == "Chessnut Evo":
                     path_dll = Util.opj(path_eboards, "gon-EVO64.dll")
                 elif self.name == "HOS Sensory":
@@ -431,6 +433,8 @@ class Eboard:
             return Iconos.Chessnut()
         elif board == "HOS Sensory":
             return Iconos.HOS()
+        elif board == "Cynus":
+            return Iconos.Manya()
         elif board == "iChessOne":
             return Iconos.IChessOne()
         elif board == "Millennium":

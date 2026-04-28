@@ -167,8 +167,6 @@ class MotorElo:
         self.depthOpen = (elo / 100 - 8) if elo < 2100 else 100
         self.depthOpen = max(self.depthOpen, 2)
         self.key = alias
-        if self.depth:
-            self.key += " %d" % self.depth
         self.points_win = self.points_lose = self.points_draw = 0
 
     def label(self):
@@ -220,10 +218,10 @@ class ManagerElo(Manager.Manager):
             result = -1
         return Util.fide_elo(elo_player, elo_rival, result)
 
-    def list_engines(self, elo):
+    def list_engines_elo(self, elo):
         self.valores()
         li = []
-        total_emgines = len(self.list_engines)
+        total_engines = len(self.list_engines)
         for num, mt in enumerate(self.list_engines):
             mt_elo = mt.elo
             mt.siOut = False
@@ -240,7 +238,7 @@ class ManagerElo(Manager.Manager):
                 mt.points_draw = rot(RS_DRAW)
                 mt.points_lose = rot(RS_WIN_OPPONENT)
 
-                mt.number = total_emgines - num
+                mt.number = total_engines - num
 
                 li.append(mt)
 

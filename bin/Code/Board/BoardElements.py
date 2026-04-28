@@ -209,7 +209,7 @@ class PiezaSC(BloqueSC):
         self.limH = ancho - self.limL
         self.dragable = False
 
-        self.dispatchMove = None
+        self.dispatch_move = None
 
         self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
 
@@ -252,8 +252,8 @@ class PiezaSC(BloqueSC):
             self.setZValue(ZVALUE_PIECE_MOVING)
             self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
             QtWidgets.QGraphicsItem.mousePressEvent(self, event)
-            if self.dispatchMove:
-                self.dispatchMove()
+            if self.dispatch_move:
+                self.dispatch_move()
         else:
             event.ignore()
 
@@ -272,7 +272,7 @@ class PiezaSC(BloqueSC):
             QtWidgets.QGraphicsItem.mouseMoveEvent(self, event)
 
     def set_dispatch_move(self, rutina):
-        self.dispatchMove = rutina
+        self.dispatch_move = rutina
 
     def mouseReleaseEvent(self, event):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)

@@ -19,7 +19,7 @@ QUALIFICATIONS = (
 
 
 def qualification(seconds, think_mode):
-    txt, ico, secs, secsThink = QUALIFICATIONS[-1]
+    txt, ico, secs, secs_think = QUALIFICATIONS[-1]
     if seconds is not None:
         for xtxt, xico, xsecs, xsecsThink in QUALIFICATIONS[:-1]:
             if think_mode:
@@ -33,7 +33,7 @@ def qualification(seconds, think_mode):
     return _F(txt), ico
 
 
-class TOL_Block:
+class TolBlock:
     def __init__(self):
         self.lines = []
         self.times = []
@@ -45,19 +45,19 @@ class TOL_Block:
         self.reinits = []
         return True
 
-    def penaltyError(self, think_mode):
+    def penalty_error(self, think_mode):
         if think_mode:
             return 8.0 + len(self.times) * 2.0
         else:
             return 5.0
 
-    def penaltyHelp(self, think_mode):
+    def penalty_help(self, think_mode):
         if think_mode:
             return 10.0 + len(self.times) * 5.0
         else:
             return 10.0
 
-    def factorDistancia(self):
+    def factor_distancia(self):
         nummoves = 0
         distancia = 0.0
         for line in self.lines:
@@ -66,8 +66,6 @@ class TOL_Block:
             distancia += d
         base_dist = Position.distancia("a1", "a4")
 
-        if nummoves == 0:
-            return 0.0
         return (distancia / nummoves) / base_dist
 
     def add_line(self, line):
@@ -113,14 +111,12 @@ class TOL_Block:
         nmoves = 0
         for x in range(current_line + 1):
             nmoves += self.lines[x].num_moves
-        current_secs += errores * self.penaltyError(think_mode) + hints * self.penaltyHelp(think_mode)
-        if nmoves == 0:
-            return 0, qualification(0, think_mode)[0]
+        current_secs += errores * self.penalty_error(think_mode) + hints * self.penalty_help(think_mode)
         av_secs = current_secs / nmoves
         return av_secs, qualification(av_secs, think_mode)[0]
 
 
-class TOL_Line:
+class TolLine:
     def __init__(self):
         self.fen = None
         self.label = None
@@ -154,7 +150,7 @@ class TOL_Line:
         return dt, len(self.limoves)
 
 
-class TOL_level:
+class TolLevel:
     def __init__(self, lines_per_block, num_level):
         self.themes_blocks = []
         self.lines_per_block = lines_per_block
@@ -172,7 +168,7 @@ class TOL_level:
         while li:
             li1 = random.sample(li, self.lines_per_block)
             li = [x for x in li if x not in li1]
-            tol_block = TOL_Block()
+            tol_block = TolBlock()
             for i in li1:
                 tol_block.add_line(theme.lines[i])
             theme_blocks.append(tol_block)
@@ -201,17 +197,17 @@ class TOL_level:
         return self.themes_blocks[num_theme][num_block]
 
 
-class TOL_Theme:
-    def __init__(self, folder, nameFNS, num_pos):
-        self.name = nameFNS[:-4]
+class TolTheme:
+    def __init__(self, folder, name_fns, num_pos):
+        self.name = name_fns[:-4]
         self.lines = []
-        path = Util.opj(folder, nameFNS)
+        path = Util.opj(folder, name_fns)
         with open(path, "rt", encoding="utf-8", errors="ignore") as f:
             li = [linea.strip() for linea in f if linea.strip()]
             if len(li) != num_pos:
                 li = random.sample(li, num_pos)
             for linea in li:
-                tol_line = TOL_Line().read_line_fich(linea)
+                tol_line = TolLine().read_line_fich(linea)
                 self.lines.append(tol_line)
 
 
@@ -227,6 +223,7 @@ class TurnOnLights:
         self.num_pos = li_tam_blocks[-1]
         self.go_fast = False
         self.calculation_mode = name.endswith("_calc")
+        self.last_date = None
 
     def is_calculation_mode(self):
         return self.calculation_mode
@@ -247,16 +244,16 @@ class TurnOnLights:
             self.go_fast = tolr.go_fast
 
     def new(self):
-        liFich = os.listdir(self.folder)
-        liFich.sort()
+        li_fich = os.listdir(self.folder)
+        li_fich.sort()
 
-        for fich in liFich:
+        for fich in li_fich:
             if fich.lower().endswith(".fns"):
-                theme = TOL_Theme(self.folder, fich, self.num_pos)
+                theme = TolTheme(self.folder, fich, self.num_pos)
                 self.themes.append(theme)
 
         for num_level, lines_per_block in enumerate(self.li_tam_blocks):
-            level = TOL_level(lines_per_block, num_level)
+            level = TolLevel(lines_per_block, num_level)
             for theme in self.themes:
                 level.set_theme_blocks(theme)
             self.levels.append(level)
@@ -335,7 +332,8 @@ class TurnOnLightsOneLine(TurnOnLights):
         TurnOnLights.__init__(self, self.name, title, folder, self.li_tam_blocks)
         self.recupera()
 
-    def hoy(self):
+    @staticmethod
+    def hoy():
         return datetime.date.today()
 
     def is_calculation_mode(self):
@@ -376,15 +374,16 @@ class TurnOnLightsOneLine(TurnOnLights):
             self.last_date = tolr.last_date
             if self.auto_day and (self.hoy() > self.last_date):
                 return self.new()
+        return None
 
     def new(self):
         folder = os.path.dirname(self.fns)
         fich = os.path.basename(self.fns)
-        theme = TOL_Theme(folder, fich, self.num_pos)
+        theme = TolTheme(folder, fich, self.num_pos)
         self.themes = [theme]
         self.levels = []
         for num_level, lines_per_block in enumerate(self.li_tam_blocks):
-            level = TOL_level(lines_per_block, num_level)
+            level = TolLevel(lines_per_block, num_level)
             level.set_theme_blocks(theme)
             self.levels.append(level)
         self.last_date = self.hoy()
@@ -415,25 +414,25 @@ def read_oneline_tol():
     return tol
 
 
-def numColorMinimum(tol):
+def num_color_minimum(tol):
     num = tol.levels[tol.work_level].num_level + 1
     if num >= 3:
         num = 3
     return num, tol.work_level == tol.num_levels - 1
 
 
-def compruebaUweEasy(configuration, name):
+def comprueba_uwe_easy(configuration, name):
     file = Util.opj(configuration.paths.folder_results(), f"{name}.tol")
     if Util.exist_file(file):
         return
-    folderDest = configuration.temporary_folder()
+    folder_dest = configuration.temporary_folder()
     configuration.clean_tmp_folder()
-    folderOri = Code.path_resource("Trainings", "Tactics by Uwe Auerswald")
-    for fich in os.listdir(folderOri):
+    folder_ori = Code.path_resource("Trainings", "Tactics by Uwe Auerswald")
+    for fich in os.listdir(folder_ori):
         if fich.endswith(".fns"):
             with (
-                open(Util.opj(folderOri, fich)) as f,
-                open(Util.opj(folderDest, fich), "w") as q,
+                open(Util.opj(folder_ori, fich)) as f,
+                open(Util.opj(folder_dest, fich), "w") as q,
             ):
                 for linea in f:
                     if linea.count("*") < 3:

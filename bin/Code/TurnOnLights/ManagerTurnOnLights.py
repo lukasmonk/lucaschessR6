@@ -18,6 +18,30 @@ from Code.TurnOnLights import TurnOnLights
 
 
 class ManagerTurnOnLights(Manager.Manager):
+    reiniciando: bool
+    num_theme: int
+    num_block: int
+    calculation_mode: bool
+    lb_previous: str | None
+    num_line: int
+    num_lines: int
+    num_moves: int
+    ini_time: float | None
+    tol: TurnOnLights.TurnOnLights
+    block: TurnOnLights.TolBlock
+    penalty_error: float
+    penalty_help: float
+    av_seconds: float | None
+    total_time_used: float
+    errores: int
+    line: TurnOnLights.TolLine
+    num_move: int
+    base_time: float
+    error: str
+    dicFENayudas: dict
+    penaltyError: float
+    penaltyHelp: float
+
     def start(self, num_theme, num_block, tol):
 
         if hasattr(self, "reiniciando"):
@@ -32,8 +56,8 @@ class ManagerTurnOnLights(Manager.Manager):
         self.block.shuffle()
 
         self.calculation_mode = self.tol.is_calculation_mode()
-        self.penaltyError = self.block.penaltyError(self.calculation_mode)
-        self.penaltyHelp = self.block.penaltyHelp(self.calculation_mode)
+        self.penaltyError = self.block.penalty_error(self.calculation_mode)
+        self.penaltyHelp = self.block.penalty_help(self.calculation_mode)
         # self.factorDistancia = self.block.factorDistancia() # No se usa es menor que 1.0
 
         self.av_seconds = self.block.av_seconds()
@@ -68,7 +92,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
         self.next_line_run()
 
-    def pon_rotulos(self, next):
+    def pon_rotulos(self, xnext):
         r1 = _("Calculation mode") if self.calculation_mode else _("Memory mode")
         r1 += f"<br>{self.line.label}"
 
@@ -84,8 +108,8 @@ class ManagerTurnOnLights(Manager.Manager):
             )
             r1 += f'<br><b>{_("Current")}: {txt} - {av_secs:0.2f}"'
         self.set_label1(r1)
-        if next is not None:
-            r2 = "<b>%d/%d</b>" % (self.num_line + next, self.num_lines)
+        if xnext is not None:
+            r2 = "<b>%d/%d</b>" % (self.num_line + xnext, self.num_lines)
         else:
             r2 = None
         self.set_label2(r2)
@@ -162,31 +186,40 @@ class ManagerTurnOnLights(Manager.Manager):
             return
 
         self.state = ST_PLAYING
+
         self.human_is_playing = False
         self.put_view()
 
-        while self.num_move < self.line.total_moves():
-            is_white = self.game.last_position.is_white
-            self.set_side_indicator(is_white)
-            self.refresh()
+        is_white = self.game.last_position.is_white
 
-            if is_white == self.is_engine_side_white:
-                pv = self.line.get_move(self.num_move)
-                from_sq, to_sq, promotion = pv[:2], pv[2:4], pv[4:]
-                self.rival_has_moved(from_sq, to_sq, promotion)
-                self.num_move += 1
-            else:
-                self.human_is_playing = True
-                self.base_time = time.time()
-                if not (self.calculation_mode and self.ini_time is None):
-                    self.ini_time = self.base_time
-                self.activate_side(is_white)
-                if self.calculation_mode:
-                    self.board.set_dispatch_move(self.dispatchMove)
-                return
-        self.end_line()
+        self.set_side_indicator(is_white)
+        self.refresh()
 
-    def dispatchMove(self):
+        si_rival = is_white == self.is_engine_side_white
+
+        self.num_move += 1
+        if self.num_move >= self.line.total_moves():
+            self.end_line()
+            return
+
+        if si_rival:
+            pv = self.line.get_move(self.num_move)
+            from_sq, to_sq, promotion = pv[:2], pv[2:4], pv[4:]
+            self.rival_has_moved(from_sq, to_sq, promotion)
+            self.play_next_move()
+
+        else:
+            self.human_is_playing = True
+            self.base_time = time.time()
+            if not (
+                self.calculation_mode and self.ini_time is None
+            ):  # Se inicia salvo que sea el principio de la linea
+                self.ini_time = self.base_time
+            self.activate_side(is_white)
+            if self.calculation_mode:
+                self.board.set_dispatch_move(self.dispatch_move)
+
+    def dispatch_move(self):
         if self.ini_time is None:
             self.ini_time = time.time()
 
@@ -202,7 +235,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
             num_moves = self.block.num_moves()
             ta = self.total_time_used + self.errores * self.penaltyError + self.hints * self.penaltyHelp
-            tm = ta / num_moves if num_moves > 0 else 0.0
+            tm = ta / num_moves
             self.block.new_result(tm, self.total_time_used, self.errores, self.hints)
             TurnOnLights.write_tol(self.tol)
             cat_block, ico = TurnOnLights.qualification(tm, self.calculation_mode)
@@ -224,7 +257,7 @@ class ManagerTurnOnLights(Manager.Manager):
                 if cat_global != ant_cat_global:
                     txt_more_global = f'<span style="color:red">{_("New")}</span>'
 
-            cErrores = (
+            c_errores = (
                 '<tr><td align=right> %s </td><td> %d (x%d"=%d")</td></tr>'
                 % (
                     _("Errors"),
@@ -235,7 +268,7 @@ class ManagerTurnOnLights(Manager.Manager):
                 if self.errores
                 else ""
             )
-            cAyudas = (
+            c_ayudas = (
                 '<tr><td align=right> %s </td><td> %d (x%d"=%d")</td></tr>'
                 % (
                     _("Hints"),
@@ -251,8 +284,8 @@ class ManagerTurnOnLights(Manager.Manager):
                 + _("You have finished this block of positions")
                 + "<hr><table>"
                 + f'<tr><td align=right> {_("Time used")} </td><td> {self.total_time_used:0.2f}"</td></tr>'
-                + cErrores
-                + cAyudas
+                + c_errores
+                + c_ayudas
                 + f'<tr><td align=right> {_("Time assigned")}: </td><td> {ta:0.2f}" {txt_more_time}</td></tr>'
                 + "<tr><td align=right> %s: </td><td> %d</td></tr>" % (_("Total moves"), num_moves)
                 + f'<tr><td align=right> {_("Average time")}: </td><td> {tm:0.2f}"</td></tr>'
@@ -345,7 +378,7 @@ class ManagerTurnOnLights(Manager.Manager):
     def current_pgn(self):
         resp = f'[Event "{_("Turn on the lights")}"]\n'
         resp += f'[Site "{self.line.label.replace("<br>", " ").strip()}"]\n'
-        resp += f'[FEN "{self.game.first_position.fen()}"]\n'
+        resp += f'[FEN "{self.game.first_position.fen()}"\n'
 
         resp += f"\n{self.game.pgn_base()}"
 

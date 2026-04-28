@@ -101,7 +101,7 @@ class ManagerMicElo(Manager.Manager):
             result = -1
         return Util.fide_elo(elo_jugador, elo_rival, result)
 
-    def list_engines(self, elo):
+    def list_engines_elo(self, elo):
         self.li_t = (
             (0, 50, 3),
             (20, 53, 5),

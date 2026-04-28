@@ -278,7 +278,11 @@ class WMemoryWork(LCDialog.LCDialog):
 
         # Elegimos el fen de la lista
         if new:
-            n_pos = random.randint(0, len(self.listaFen) - 1)
+            nfens = len(self.listaFen)
+            if nfens == 0:
+                self.accept()
+                return
+            n_pos = random.randint(1, nfens) - 1
             self.fen_aim = self.listaFen[n_pos]
             del self.listaFen[n_pos]
             self.repetitions = 0
@@ -487,7 +491,8 @@ class WMemoryMain(LCDialog.LCDialog):
         tb = Controles.TBrutina(self)
         tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
 
-        lb_help = Controles.LB(self, _("Double-click + to train or numbers to upgrade").replace("+", "➕")).align_center()
+        mens = _("Double-click on the + signs to train, or on the times to improve").replace("+", "➕")
+        lb_help = Controles.LB(self, mens).align_center()
 
         layout = Colocacion.V().control(tb).control(self.grid).control(lb_help).margen(3)
 
@@ -539,7 +544,7 @@ class WMemoryMain(LCDialog.LCDialog):
         return main_value, delta
 
     @staticmethod
-    def grid_bold(_grid, row, obj_column):
+    def grid_bold(_grid, _row, obj_column):
         return obj_column.key == "cat"
 
     @staticmethod

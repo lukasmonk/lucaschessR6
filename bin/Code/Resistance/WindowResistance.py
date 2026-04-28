@@ -138,9 +138,10 @@ class WResistance(LCDialog.LCDialog):
             self.set_textAyuda()
             self.grid.refresh()
             return li_resp[0]
+        return None
 
 
-def windowResistance(window, resistance):
+def window_resistance(window, resistance):
     w = WResistance(window, resistance)
     if w.exec():
         return w.resultado
