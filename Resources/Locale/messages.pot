@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-04-28 10:52+0200\n"
+"POT-Creation-Date: 2026-04-28 15:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -360,7 +360,7 @@ msgstr ""
 #: .\Code\Adjudicator\Adjudicator.py:197
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:199
 #: .\Code\CountsCaptures\WCountsCaptures.py:50
-#: .\Code\Engines\Engines.py:339
+#: .\Code\Engines\Engines.py:344
 #: .\Code\Expeditions\ManagerEverest.py:94
 #: .\Code\Kibitzers\WKibEngine.py:79
 #: .\Code\Kibitzers\WKibLine.py:107
@@ -404,7 +404,7 @@ msgstr ""
 
 #: .\Code\Adjudicator\Adjudicator.py:211
 #: .\Code\Analysis\WindowAnalysisParam.py:275
-#: .\Code\Engines\Engines.py:341
+#: .\Code\Engines\Engines.py:346
 #: .\Code\Engines\WConfEngines.py:266
 #: .\Code\Engines\WConfEngines.py:398
 #: .\Code\GM\WindowGM.py:133
@@ -482,7 +482,7 @@ msgstr ""
 #: .\Code\Director\WindowTabVMarkers.py:157
 #: .\Code\Director\WindowTabVSVGs.py:98
 #: .\Code\Director\WindowTabVSVGs.py:180
-#: .\Code\Engines\Engines.py:332
+#: .\Code\Engines\Engines.py:337
 #: .\Code\Engines\SelectEngines.py:579
 #: .\Code\Engines\WEngines.py:155
 #: .\Code\Engines\WEngines.py:365
@@ -1727,7 +1727,7 @@ msgstr ""
 #: .\Code\Databases\WDB_Games.py:1207
 #: .\Code\Databases\WDB_Trainings.py:37
 #: .\Code\Databases\WDB_Utils.py:397
-#: .\Code\Engines\Engines.py:598
+#: .\Code\Engines\Engines.py:603
 #: .\Code\Engines\WConfEngines.py:60
 #: .\Code\Engines\WConfEngines.py:222
 #: .\Code\Engines\WEngines.py:390
@@ -1761,7 +1761,7 @@ msgid "Minimum"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisConfig.py:33
-#: .\Code\Engines\Engines.py:598
+#: .\Code\Engines\Engines.py:603
 msgid "Maximum"
 msgstr ""
 
@@ -2225,7 +2225,7 @@ msgid "If time and nodes are given, the nodes is attempted and the time becomes 
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:270
-#: .\Code\Engines\Engines.py:350
+#: .\Code\Engines\Engines.py:355
 #: .\Code\Engines\WEngines.py:383
 #: .\Code\Kibitzers\WindowKibitzers.py:513
 #: .\Code\Kibitzers\WindowKibitzers.py:578
@@ -5812,7 +5812,7 @@ msgid "Tags"
 msgstr ""
 
 #: .\Code\Databases\WDB_GUtils.py:364
-#: .\Code\Engines\Engines.py:332
+#: .\Code\Engines\Engines.py:337
 #: .\Code\QT\GridEditCols.py:42
 #: .\Code\Shortcuts\WShortcuts.py:27
 msgid "Key"
@@ -6362,7 +6362,7 @@ msgid "Rebuild"
 msgstr ""
 
 #: .\Code\Databases\WDB_Players.py:391
-#: .\Code\Engines\Engines.py:334
+#: .\Code\Engines\Engines.py:339
 #: .\Code\Engines\WEngines.py:362
 #: .\Code\Engines\WExternalEngines.py:243
 #: .\Code\Engines\WExternalEngines.py:518
@@ -6971,7 +6971,7 @@ msgstr ""
 msgid "Advance"
 msgstr ""
 
-#: .\Code\Engines\Engines.py:346
+#: .\Code\Engines\Engines.py:351
 #: .\Code\Kibitzers\WindowKibitzers.py:347
 #: .\Code\Kibitzers\WindowKibitzers.py:512
 #: .\Code\Kibitzers\WindowKibitzers.py:577
@@ -6979,7 +6979,7 @@ msgstr ""
 msgid "Fixed depth"
 msgstr ""
 
-#: .\Code\Engines\Engines.py:348
+#: .\Code\Engines\Engines.py:353
 #: .\Code\Kibitzers\WindowKibitzers.py:344
 #: .\Code\Kibitzers\WindowKibitzers.py:511
 #: .\Code\Kibitzers\WindowKibitzers.py:576
@@ -6988,7 +6988,7 @@ msgstr ""
 msgid "Fixed time in seconds"
 msgstr ""
 
-#: .\Code\Engines\Engines.py:351
+#: .\Code\Engines\Engines.py:356
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:203
 msgid "Limits of engine thinking"
 msgstr ""
@@ -9633,7 +9633,8 @@ msgid "The position is incorrect."
 msgstr ""
 
 #: .\Code\Memory\WindowMemoria.py:481
-msgid "Category"
+#: .\Code\Translations\TrListas.py:146
+msgid "Categories"
 msgstr ""
 
 #: .\Code\Memory\WindowMemoria.py:494
@@ -13463,10 +13464,6 @@ msgstr ""
 
 #: .\Code\Translations\TrListas.py:145
 msgid "Mate in two with specific pieces"
-msgstr ""
-
-#: .\Code\Translations\TrListas.py:146
-msgid "Categories"
 msgstr ""
 
 #: .\Code\Translations\TrListas.py:147
