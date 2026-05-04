@@ -1,11 +1,11 @@
 import Code
 from Code.Base.Constantes import GT_FICS, GT_FIDE, GT_LICHESS
-from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
+from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker, ManagerMaia
 from Code.CompetitionWithTutor import ManagerCompeticion, WCompetitionWithTutor
 from Code.Engines import WEngines
 from Code.Main import Presentacion
 from Code.Menus import BaseMenu
-from Code.QT import Iconos, QTDialogs
+from Code.QT import Iconos, QTDialogs, QTMessages
 from Code.SingularMoves import ManagerSingularM, WindowSingularM
 
 
@@ -62,6 +62,13 @@ class CompeteMenu(BaseMenu.RootMenu):
         lichess = configuration.x_lichess
         haz_submenu_ffl("lichesselo", _("Lichess-Elo"), Iconos.Lichess(), lichess, 8, 26)
 
+        maia_state = ManagerMaia.MaiaState()
+        if maia_state.is_finished():
+            mens = _("Finished")
+        else:
+            mens = f"{maia_state.current_elo()}"
+        submenu_elo.new("maialadder", f'{_("Maia Ladder")} ({mens})', Iconos.MaiaLadder())
+
         submenu_singular_moves = self.new_submenu(_("Singular moves"), Iconos.Singular())
         submenu_singular_moves.new("strenght101", _("Calculate your strength"), Iconos.Strength())
         submenu_singular_moves.new("challenge101", _("Challenge 101"), Iconos.Wheel())
@@ -89,6 +96,17 @@ class CompeteMenu(BaseMenu.RootMenu):
 
     def challenge101(self):
         Presentacion.ManagerChallenge101(self.procesador)
+
+    def maialadder(self):
+        maia_state = ManagerMaia.MaiaState()
+        if maia_state.is_finished():
+            QTMessages.message_bold(self.wparent,f'{_("Finished")}'
+                                                 f'\n\n→ {_("Options")}/'
+                                                 f'{_("General configuration")}/'
+                                                 f'{_("Change elos")}\n')
+            return
+        manager = ManagerMaia.ManagerMaia(self.procesador)
+        manager.start()
 
     def lucaselo(self):
         manager = ManagerElo.ManagerElo(self.procesador)

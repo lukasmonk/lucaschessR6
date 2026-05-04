@@ -413,7 +413,7 @@ class WManualSave(LCDialog.LCDialog):
         conf_engine = self.configuration.engines.search(key)
 
         multipv = self.sb_multipv.valor()
-        self.engine_manager = self.procesador.create_manager_analysis(conf_engine, 0, 0, 0, multipv)
+        self.engine_manager = self.procesador.create_manager_analyzer_var(conf_engine, 0, 0, 0, multipv)
 
     def ext_engines(self):
         if self.analyzing:

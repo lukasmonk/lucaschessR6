@@ -1,6 +1,8 @@
 import collections
 import time
 
+from typing import Callable, Optional
+
 import FasterCode
 from PySide6 import QtCore, QtGui
 
@@ -16,8 +18,6 @@ from Code.Base.Constantes import (
     TB_SETTINGS,
     TB_SLOW_REPLAY,
     TB_SPACE,
-    ZVALUE_PIECE,
-    ZVALUE_PIECE_MOVING
 )
 from Code.Board import BoardTypes
 from Code.QT import QTDialogs, Iconos
@@ -187,7 +187,7 @@ class Replay:
         self.with_pgn: bool = False
         self.ghost_level: float = 0  # （0-1）
         self.dic_ghost_pieces: dict = {}
-        self.board_create_piece: object = None
+        self.board_create_piece: Optional[Callable] = None
 
         self.params = ParamsReplay()
         dic_var = self.params.dic_data
@@ -239,10 +239,12 @@ class Replay:
         # Space control overlay (teclas 2/7): creado una sola vez, colores actualizados
         self._prev_do_pressed_number = self.board.do_pressed_number
         self.board.do_pressed_number = self._do_pressed_number
+        self.board.hide_selection()
 
         self.show_information()
         move = self.li_moves[self.current_position]
         self.board.set_position(move.position_before)
+        self.board.set_dispatch_changed_position(self._update_space_control)
 
         if space_number is not None:
             self._do_pressed_number(True, space_number)
@@ -358,10 +360,6 @@ class Replay:
             return
         self.procesador.cpu.stop()
 
-        rapidez_conf = Code.configuration.pieces_speed_porc()
-        if not rapidez_conf:
-            rapidez_conf = 1
-
         move = self.li_moves[self.current_position]
         num = self.current_position
         if self.starts_with_black:
@@ -371,54 +369,7 @@ class Replay:
         self.main_window.place_on_pgn_table(row, move.position_before.is_white)
         self.main_window.base.pgn_refresh()
 
-        secs = None
-        animations = []
-        for movim in li_movs:
-            if movim[0] == "m":
-                from_sq, to_sq = movim[1], movim[2]
-                if secs is None:
-                    dc = ord(from_sq[0]) - ord(to_sq[0])
-                    df = int(from_sq[1]) - int(to_sq[1])
-                    dist = (dc ** 2 + df ** 2) ** 0.5
-                    rp = self.rapidez if self.rapidez > 1.0 else 1.0
-                    secs = max(0.25, 4.0 * dist / (9.9 * rp * rapidez_conf))
-                pieza_sc = self.board.get_piece_at(from_sq)
-                if pieza_sc is None:
-                    continue
-                pieza_sc.setZValue(ZVALUE_PIECE_MOVING)
-                start_pos = pieza_sc.pos()
-                end_x = self.board.columna2punto(ord(to_sq[0]) - 96)
-                end_y = self.board.fila2punto(int(to_sq[1]))
-                animation = QtCore.QVariantAnimation(self.main_window)
-                animation.setDuration(int(secs * 1000))
-                animation.setStartValue(start_pos)
-                animation.setEndValue(QtCore.QPointF(end_x, end_y))
-                animation.setEasingCurve(Code.configuration.pieces_move_qtype())
-                animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
-
-                def restore_z(p=pieza_sc):
-                    p.setZValue(ZVALUE_PIECE)
-
-                animation.finished.connect(restore_z)
-                animations.append(animation)
-
-        if animations:
-            loop = QtCore.QEventLoop()
-            remaining = len(animations)
-
-            def on_finished():
-                nonlocal remaining
-                remaining -= 1
-                if remaining <= 0:
-                    loop.quit()
-
-            self._active_animations = animations
-            for animation in animations:
-                animation.finished.connect(on_finished)
-                animation.start()
-
-            loop.exec()
-            self._active_animations = []
+        self.board.animate_move(li_movs, rapidez=self.rapidez, active_animations_out=self._active_animations)
 
         if self.stopped:
             return
@@ -449,8 +400,6 @@ class Replay:
 
         self.board.set_position(move.position)
 
-        if self.space_number is not None:
-            self._update_space_control()
         if self.stopped:
             return
 
@@ -459,6 +408,7 @@ class Replay:
             return
         if wait_seconds:
             self.sleep_refresh(wait_seconds / 1000 + 0.2)
+
 
     def show_pause(self, si_pausa, si_continue):
         self.main_window.show_option_toolbar(TB_PAUSE_REPLAY, si_pausa)
@@ -493,9 +443,9 @@ class Replay:
 
     def space(self):
         menu = QTDialogs.LCMenu(self.main_window)
-        menu.opcion("both", _("Both"), Iconos.SpaceBoth())
-        menu.opcion("white", _("White"), Iconos.SpaceWhite())
         menu.opcion("black", _("Black"), Iconos.SpaceBlack())
+        menu.opcion("white", _("White"), Iconos.SpaceWhite())
+        menu.opcion("both", _("Both"), Iconos.SpaceBoth())
         resp = menu.lanza()
         if resp == "both":
             self._do_pressed_number(True, 3)
@@ -536,6 +486,7 @@ class Replay:
             self.space_layer = None
             self.space_number = None
         self.board.do_pressed_number = self._prev_do_pressed_number
+        self.board.set_dispatch_changed_position(None)
 
         if self.ghost_level > 0.0:
             for pz, pz_sc, x in self.board.li_pieces:

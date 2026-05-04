@@ -161,6 +161,6 @@ class WDBAnalisis:
 
             mrm.rotulo = rotulo
 
-            xengine.finalize()
+            xengine.close()
 
         self.db_analysis().new(pv, mrm)

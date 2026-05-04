@@ -37,7 +37,7 @@ class AdjudicatorGM(Adjudicator.Adjudicator):
 
     def open_manager_analyzer(self):
         engine = Code.configuration.engines.search(self.name_engine, defecto="stockfish")
-        return Code.procesador.create_manager_analysis(engine, self.ms_time, self.depth, 0, self.multipv)
+        return Code.procesador.create_manager_analyzer_var(engine, self.ms_time, self.depth, 0, self.multipv)
 
 
 class ManagerGM(Manager.Manager):

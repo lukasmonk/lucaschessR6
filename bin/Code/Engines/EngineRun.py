@@ -112,8 +112,6 @@ class EngineRun(QtCore.QObject):
     eval_stockfish_found = QtCore.Signal(str)
     engine_terminated = QtCore.Signal()
 
-    # Atributos de instancia — se inicializan en __init__
-
     def __init__(self, config: StartEngineParams):
         super().__init__()
 
@@ -123,6 +121,8 @@ class EngineRun(QtCore.QObject):
         self.last_time_depth_emit: int = 0
         self.time_interval_depth_emit: int = 500
         self.timerstop: Optional[QtCore.QTimer] = None
+
+        self.log = None
 
         self.control_ponder: None | Ponder = None
 
@@ -152,9 +152,24 @@ class EngineRun(QtCore.QObject):
         self.process.finished.connect(self._engine_terminated)
 
         self.state = EngineState.OFF
-        self.process.setWorkingDirectory(os.path.dirname(self.config.path_exe))
+
+        path_exe = os.path.abspath(self.config.path_exe)
+
+        self.process.setWorkingDirectory(os.path.dirname(path_exe))
         args = self.config.args or []
-        self.process.start(self.config.path_exe, arguments=args)
+
+        if Util.is_linux():
+            if os.path.isfile(path_exe) and not os.access(path_exe, os.X_OK):
+                import stat
+                try:
+                    current_mode = os.stat(path_exe).st_mode
+                    os.chmod(path_exe, current_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                    if __debug__:
+                        Debug.prln(f"{path_exe} Permission execution added", color="yellow")
+                except Exception:
+                    self._log_exception(f"Could not add execution permission to {path_exe}")
+
+        self.process.start(path_exe, arguments=args)
 
         if not self.process.waitForStarted(10000):
             self.state = EngineState.INVALID_ENGINE
@@ -591,8 +606,9 @@ class EngineRun(QtCore.QObject):
         if value:
             self._send_command(f"setoption name {option} value {value}")
             if option == "Ponder" and value == "true":
-                self.control_ponder = Ponder(self, self._send_command,
-                                             self._start_polling if self.mode_timer_poll else None)
+                self.control_ponder = Ponder(
+                    self, self._send_command, self._start_polling if self.mode_timer_poll else None
+                )
         else:
             self._send_command(f"setoption name {option}")
 

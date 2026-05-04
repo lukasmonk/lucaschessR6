@@ -3,7 +3,6 @@ import random
 import time
 
 import FasterCode
-from PySide6 import QtCore
 from PySide6 import QtGui
 
 import Code
@@ -43,8 +42,6 @@ from Code.Base.Constantes import (
     TB_UTILITIES,
     TERMINATION_DRAW_AGREEMENT,
     WHITE,
-    ZVALUE_PIECE,
-    ZVALUE_PIECE_MOVING,
 )
 from Code.Board import BoardTypes
 from Code.Databases import DBgames
@@ -447,61 +444,7 @@ class Manager:
         if is_rival and self.configuration.x_show_effects:
             if self.procesador.manager is None:
                 return
-
-            rapidez = self.configuration.pieces_speed_porc()
-            animations = []
-            secs = None
-
-            for movim in li_moves:
-                if movim[0] == "m":
-                    from_sq, to_sq = movim[1], movim[2]
-                    if secs is None:
-                        dc = ord(from_sq[0]) - ord(to_sq[0])
-                        df = int(from_sq[1]) - int(to_sq[1])
-                        dist = (dc ** 2 + df ** 2) ** 0.5
-                        secs = max(0.25, 4.0 * dist / (9.9 * rapidez))
-
-                    pieza_sc = self.board.get_piece_at(from_sq)
-                    if pieza_sc:
-                        pieza_sc.setZValue(ZVALUE_PIECE_MOVING)
-
-                        start_pos = pieza_sc.pos()
-                        column = ord(to_sq[0]) - 96
-                        row = int(to_sq[1])
-                        end_x = self.board.columna2punto(column)
-                        end_y = self.board.fila2punto(row)
-
-                        animation = QtCore.QVariantAnimation(self.main_window)
-                        animation.setDuration(int(secs * 1000))
-                        animation.setStartValue(start_pos)
-                        animation.setEndValue(QtCore.QPointF(end_x, end_y))
-                        animation.setEasingCurve(Code.configuration.pieces_move_qtype())
-
-                        # Conectar el cambio de valor
-                        animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
-
-                        def restore_z(p=pieza_sc):
-                            p.setZValue(ZVALUE_PIECE)
-
-                        animation.finished.connect(restore_z)
-
-                        animations.append(animation)
-
-            if animations:
-                loop = QtCore.QEventLoop()
-                remaining = len(animations)
-
-                def on_finished():
-                    nonlocal remaining
-                    remaining -= 1
-                    if remaining <= 0:
-                        loop.quit()
-
-                for animation in animations:
-                    animation.finished.connect(on_finished)
-                    animation.start()
-
-                loop.exec()
+            self.board.animate_move(li_moves)
 
         for movim in li_moves:
             if movim[0] == "b":
@@ -579,12 +522,6 @@ class Manager:
                 else:
                     self.kibitzers_manager.stop()
         self.check_changed()
-
-        # Actualizar overlay de espacio controlado si estamos en modo replay
-        if hasattr(self, "xpelicula") and self.xpelicula:
-            if hasattr(self.xpelicula, "space_number") and self.xpelicula.space_number is not None:
-                if hasattr(self.xpelicula, "_update_space_control"):
-                    self.xpelicula._update_space_control()
 
     def check_captures(self):
         if self.main_window.siCapturas and self.board.last_position is not None:

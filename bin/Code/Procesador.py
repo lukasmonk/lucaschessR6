@@ -73,7 +73,8 @@ from Code.Menus import (
     TrainMenu,
 )
 from Code.Openings import OpeningsStd
-from Code.PlayAgainstEngine import ManagerAlbum, ManagerPerson, ManagerPlayAgainstEngine, WPlayAgainstEngine
+from Code.PlayAgainstEngine import ManagerPerson, ManagerPlayAgainstEngine, WPlayAgainstEngine
+from Code.Albums import ManagerAlbum
 from Code.PlayHuman import ManagerPlayHuman
 from Code.QT import Iconos, Piezas, QTDialogs
 from Code.Routes import ManagerRoutes, Routes, WindowRoutes
@@ -356,7 +357,7 @@ class Procesador:
         return self.get_manager_analyzer()
 
     @staticmethod
-    def create_manager_analysis(
+    def create_manager_analyzer_var(
         engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
     ):
         assert type(mstime) is int and mstime >= 0

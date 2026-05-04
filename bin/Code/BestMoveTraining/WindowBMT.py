@@ -1049,7 +1049,7 @@ class WBMT(LCDialog.LCDialog):
 
         # Analizamos todos, creamos las games, y lo salvamos
         engine = self.configuration.engines.search(name_engine)
-        manager_engine: EngineManagerAnalysis.EngineManagerAnalysis = self.procesador.create_manager_analysis(
+        manager_engine: EngineManagerAnalysis.EngineManagerAnalysis = self.procesador.create_manager_analyzer_var(
             engine, mstime, 0, 0, 16
         )
 

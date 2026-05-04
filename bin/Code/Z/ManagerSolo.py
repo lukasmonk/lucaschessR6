@@ -529,7 +529,7 @@ class ManagerSolo(Manager.Manager):
             self.set_label1("")
             if self.play_against_engine:
                 if self.manager_rival:
-                    self.manager_rival.finalize()
+                    self.manager_rival.close()
                     self.manager_rival = None
                 self.play_against_engine = False
             else:

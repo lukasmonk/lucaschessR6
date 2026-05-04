@@ -18,12 +18,15 @@ class EtiOpening:
 
 
 class OpeningPol:
-    def __init__(self, max_nivel, elo=None):
-        if elo:
-            si_ptz = elo < 1700
+    def __init__(self, max_nivel, elo=None, file=None):
+        if file is None:
+            if elo:
+                si_ptz = elo < 1700
+            else:
+                si_ptz = 1 <= max_nivel <= 2
+            self.file = Code.tbookPTZ if si_ptz else Code.tbook
         else:
-            si_ptz = 1 <= max_nivel <= 2
-        self.file = Code.tbookPTZ if si_ptz else Code.tbook
+            self.file = file
         self.book = Polyglot.Polyglot()
         self.activate = True
         self.max_level = max_nivel * 2

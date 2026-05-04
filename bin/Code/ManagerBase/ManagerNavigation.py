@@ -1,3 +1,4 @@
+import Code
 from Code.Base import Move
 from Code.Base.Constantes import (
     GO_BACK,
@@ -79,7 +80,8 @@ class ManagerNavigation:
 
         key = column.key
         if key == "NUMBER":
-            return self.mueve_number(tipo)
+            self.mueve_number(tipo)
+            return None
         else:
             is_white = key != "BLACK"
 
@@ -125,7 +127,9 @@ class ManagerNavigation:
             is_white = False
 
         self.main_window.place_on_pgn_table(row, is_white)
-        self.pgn_move(row, is_white)
+
+        animate_forward = tipo in (GO_FORWARD, GO_FORWARD2)
+        self.pgn_move(row, is_white, animate_forward=animate_forward)
 
         return None
 
@@ -136,7 +140,19 @@ class ManagerNavigation:
         self.manager.put_view()
         self.manager.board.set_last_position(self.manager.game.first_position)
 
-    def pgn_move(self, row, is_white):
+    def pgn_move(self, row, is_white, animate_forward=False):
+        if animate_forward and Code.configuration.x_show_effects:
+            key = "WHITE" if is_white else "BLACK"
+            result = self.get_movement(row, key)
+            if result:
+                move, _, _, _, _ = result
+                # Colocar piezas en la posición anterior al movimiento y animar
+                self.manager.board.set_position(move.position_before)
+                li_moves = [("b", move.to_sq), ("m", move.from_sq, move.to_sq)]
+                if move.position.li_extras:
+                    li_moves.extend(move.position.li_extras)
+                # rapidez=2.4: velocidad más rápida para navegación (vs 1.0 del rival)
+                self.manager.board.animate_move(li_moves, rapidez=2.4)
         self.manager.pgn.goto_row_iswhite(row, is_white)
         self.manager.put_view()
 

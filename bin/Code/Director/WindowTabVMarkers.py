@@ -79,6 +79,7 @@ class WTVMarker(QtWidgets.QDialog):
             (f"{_('Top')}-{_('Right')}", 1),
             (f"{_('Bottom')}-{_('Left')}", 2),
             (f"{_('Bottom')}-{_('Right')}", 3),
+            (_("Centered"), 4),
         )
         config = FormLayout.Combobox(_("Position in the square"), li)
         li_gen.append((config, reg_marker.poscelda))

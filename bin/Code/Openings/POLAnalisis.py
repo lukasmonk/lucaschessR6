@@ -189,7 +189,7 @@ class TabEngine(QtWidgets.QWidget):
         engine = self.configuration.engines.search(key)
 
         multipv = self.sb_multipv.valor()
-        self.engine_manager = self.procesador.create_manager_analysis(engine, 0, 0, 0, multipv)
+        self.engine_manager = self.procesador.create_manager_analyzer_var(engine, 0, 0, 0, multipv)
 
     def grid_num_datos(self, _grid):
         return len(self.li_analysis)

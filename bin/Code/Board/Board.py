@@ -23,6 +23,7 @@ from Code.Base.Constantes import (
     TB_TAKEBACK,
     VERY_GOOD_MOVE,
     ZVALUE_PIECE,
+    ZVALUE_PIECE_MOVING,
     HIGHLIGHT_STYLE_ARROW,
     HIGHLIGHT_STYLE_ARROW_CURVED,
 )
@@ -238,6 +239,11 @@ class Board(QtWidgets.QGraphicsView):
         self._pieces_are_active = False
 
         self.setStyleSheet("""QGraphicsView {border: none; background: transparent;}""")
+
+        self.dispatch_changed_position = None
+
+    def set_dispatch_changed_position(self, routine):
+        self.dispatch_changed_position = routine
 
     @property
     def pieces_are_active(self):  # getter
@@ -1482,19 +1488,21 @@ class Board(QtWidgets.QGraphicsView):
             return
         self.check_leds()
 
-        dic_pos_cuadro = {"C": 0, "P+": 1, "Px": 1, "P#": 1, "R+": 2, "R#": 2, "Rx": 3}
+        dic_pos_cuadro = {"C": 4, "P+": 0, "Px": 1, "P#": 2, "R+": 1, "R#": 2, "Rx": 3}
         self.remove_pendings()
         self.pendingRelease = []
         for a1, tp in li_c:
-            reg_svg = BoardTypes.SVG()
-            reg_svg.a1h8 = a1 + a1
-            reg_svg.xml = self.dicXML[tp]
-            reg_svg.siMovible = False
-            reg_svg.posCuadro = dic_pos_cuadro[tp]
-            reg_svg.width_square = self.width_square
-            svg = BoardSVGs.SVGCandidate(self.escena, reg_svg, False)
-            self.pendingRelease.append(svg)
+            reg_marker = BoardTypes.Marker()
+            reg_marker.a1h8 = a1 + a1
+            reg_marker.opacity = 0.8
+            reg_marker.xml = self.dicXML[tp]
+            reg_marker.siMovible = False
+            reg_marker.poscelda = dic_pos_cuadro[tp]
+            marker = self.create_marker(reg_marker)
+            marker.setZValue(120)
+            self.pendingRelease.append(marker)
         self.escena.update()
+
 
     def mouseDoubleClickEvent(self, event):
         if item := self.itemAt(event.pos()):
@@ -1597,6 +1605,8 @@ class Board(QtWidgets.QGraphicsView):
                         self.launch_guion()
                 elif self.show_graphic_icon:
                     self.scriptSC_menu.hide()
+        if self.dispatch_changed_position is not None:
+            self.dispatch_changed_position()
 
     def set_raw_last_position(self, position):
         if position != self.last_position:
@@ -1637,6 +1647,86 @@ class Board(QtWidgets.QGraphicsView):
             x = self.columna2punto(column)
             y = self.fila2punto(row)
             pieza_sc.setPos(x, y)
+
+    def animate_move(self, li_moves, rapidez=1.0, active_animations_out=None):
+        """Anima el desplazamiento visual de piezas mediante QVariantAnimation.
+
+        :param li_moves: lista de tuplas ("m", from_sq, to_sq) | ("b", sq) | ("c", sq, nueva).
+                         Solo las entradas "m" se animan; "b" y "c" son ignoradas aquí.
+        :param rapidez: factor de velocidad (mayor = más rápido).
+                        1.0 = velocidad del rival, 3.0 = velocidad rápida para navegación.
+                        Se combina con la preferencia global pieces_speed_porc().
+        :param active_animations_out: si se pasa una lista, las animaciones iniciadas se
+                                      añaden a ella para que el caller pueda detenerlas
+                                      externamente (usada por Replay).
+        :return: True si se inició al menos una animación, False en caso contrario.
+        """
+        rapidez_conf = Code.configuration.pieces_speed_porc()
+        if not rapidez_conf:
+            rapidez_conf = 1.0
+        rp = max(rapidez, 0.01)
+
+        secs = None
+        animations = []
+
+        for movim in li_moves:
+            if movim[0] == "m":
+                from_sq, to_sq = movim[1], movim[2]
+                if secs is None:
+                    dc = ord(from_sq[0]) - ord(to_sq[0])
+                    df = int(from_sq[1]) - int(to_sq[1])
+                    dist = (dc ** 2 + df ** 2) ** 0.5
+                    secs = max(0.25, 4.0 * dist / (9.9 * rp * rapidez_conf))
+
+                pieza_sc = self.get_piece_at(from_sq)
+                if pieza_sc is None:
+                    continue
+                pieza_sc.setZValue(ZVALUE_PIECE_MOVING)
+
+                start_pos = pieza_sc.pos()
+                end_x = self.columna2punto(ord(to_sq[0]) - 96)
+                end_y = self.fila2punto(int(to_sq[1]))
+
+                animation = QtCore.QVariantAnimation(self.main_window)
+                animation.setDuration(int(secs * 1000))
+                animation.setStartValue(start_pos)
+                animation.setEndValue(QtCore.QPointF(end_x, end_y))
+                animation.setEasingCurve(Code.configuration.pieces_move_qtype())
+                animation.valueChanged.connect(lambda value, p=pieza_sc: p.setPos(value))
+
+                def restore_z(p=pieza_sc):
+                    p.setZValue(ZVALUE_PIECE)
+
+                animation.finished.connect(restore_z)
+                animations.append(animation)
+
+        if animations:
+            loop = QtCore.QEventLoop()
+            remaining = len(animations)
+
+            def on_finished():
+                nonlocal remaining
+                remaining -= 1
+                if remaining <= 0:
+                    loop.quit()
+
+            if active_animations_out is not None:
+                active_animations_out.extend(animations)
+
+            for animation in animations:
+                animation.finished.connect(on_finished)
+                animation.start()
+
+            loop.exec()
+
+            if active_animations_out is not None:
+                for a in animations:
+                    try:
+                        active_animations_out.remove(a)
+                    except ValueError:
+                        pass
+
+        return bool(animations)
 
     def set_base_position(self, position, variation_history=None):
         self.variation_history = variation_history

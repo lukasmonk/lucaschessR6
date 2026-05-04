@@ -13,7 +13,7 @@ from Code.Base.Constantes import (
     TB_UTILITIES,
 )
 from Code.ManagerBase import Manager
-from Code.PlayAgainstEngine import Albums
+from Code.Albums import Albums
 from Code.QT import QTMessages
 from Code.Z import Adjournments
 

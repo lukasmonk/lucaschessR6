@@ -50,7 +50,7 @@ class Adjudicator:
 
     def open_manager_analyzer(self):
         engine = Code.configuration.engines.search(self.nom_engine, defecto="stockfish")
-        return Code.procesador.create_manager_analysis(engine, self.ms_time, 0, 0, self.multipv)
+        return Code.procesador.create_manager_analyzer_var(engine, self.ms_time, 0, 0, self.multipv)
 
     def analyze_begin(self, game: Game.Game):
         self.game = game

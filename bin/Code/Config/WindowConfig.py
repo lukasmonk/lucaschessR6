@@ -19,7 +19,7 @@ from Code.Base.Constantes import (
 )
 from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
 from Code.Z import Util
-
+from Code.Competitions import ManagerMaia
 
 def options(parent, configuration):
     form = FormLayout.FormLayout(parent, _("General configuration"), Iconos.Opciones(), minimum_width=640)
@@ -97,8 +97,8 @@ def options(parent, configuration):
         (_("Very fast"), 300),
         (_("Fast"), 200),
         (_("Normal"), 100),
-        (_("Slow"), 50),
-        (_("Very slow"), 10),
+        (_("Slow"), 75),
+        (_("Very slow"), 50),
     )
     value = configuration.x_pieces_speed if configuration.x_show_effects else 0
     form.combobox(_("Speed at which pieces move"), li_combo_speed, value)
@@ -314,6 +314,13 @@ def options(parent, configuration):
     form.spinbox(_("Fide-Elo"), 0, 3200, sb_width_100, configuration.x_fide)
     form.separador()
     form.spinbox(_("Lichess-Elo"), 0, 3200, sb_width_100, configuration.x_lichess)
+    form.separador()
+
+    maia_state = ManagerMaia.MaiaState()
+    li = []
+    for x in (1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2200):
+        li.append((str(x), x))
+    form.combobox(_("Maia Ladder"), li, maia_state.current_elo())
 
     form.add_tab(_("Change elos"))
 
@@ -472,7 +479,11 @@ def options(parent, configuration):
             configuration.x_fics,
             configuration.x_fide,
             configuration.x_lichess,
+            new_maia_elo
         ) = li_nc
+
+        if new_maia_elo != maia_state.current_elo():
+            maia_state.set_current_elo(new_maia_elo)
 
         return True
     else:
