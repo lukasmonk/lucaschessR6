@@ -2658,12 +2658,6 @@ def pmBridge():
 def Bridge():
     return iget("Bridge")
 
-def pmMaia():
-    return iget("pmMaia")
-
-def Maia():
-    return iget("Maia")
-
 def pmBinBook():
     return iget("pmBinBook")
 
@@ -3437,3 +3431,9 @@ def pmSpaceBlack():
 
 def SpaceBlack():
     return iget("SpaceBlack")
+
+def pmMaiaLadder():
+    return iget("pmMaiaLadder")
+
+def MaiaLadder():
+    return iget("MaiaLadder")

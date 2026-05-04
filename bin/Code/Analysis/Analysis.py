@@ -4,7 +4,7 @@ import Code
 from Code.Analysis import AnalysisIndexes, WindowAnalysis
 from Code.Base import Game, Move
 from Code.Base.Constantes import TOP_RIGHT
-from Code.Engines import EngineResponse, EngineManagerAnalysis
+from Code.Engines import EngineResponse, EngineManagerAnalysis, Engines
 from Code.QT import QTMessages
 
 
@@ -217,7 +217,7 @@ class CreateAnalysis:
         move: Move.Move = self.move
         if move.analysis is None:
             with QTMessages.WaitingMessage(
-                main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT, with_cancel=True
+                    main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT, with_cancel=True
             ) as me:
                 game = move.game
                 mrm, pos = xengine.analyze_move(game, game.move_pos(move), me.dispatcher_analysis)
@@ -245,10 +245,10 @@ class CreateAnalysis:
                     xengine.set_multipv_var(alm.multiPV)
                     break
             if xengine is None:
-                conf_engine = self.configuration.engines.search(alm.engine)
+                conf_engine: Engines.Engine = self.configuration.engines.search(alm.engine)
                 conf_engine.set_multipv_var(alm.multiPV)
-                xengine = self.procesador.create_manager_engine(conf_engine, alm.vtime, alm.depth, alm.nodes,
-                                                                has_multipv=True)
+                xengine = self.procesador.create_manager_analyzer_var(conf_engine, alm.vtime, alm.depth, alm.nodes,
+                                                                      conf_engine.multiPV)
 
         with QTMessages.WaitingMessage(main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
             game = self.move.game
@@ -262,13 +262,13 @@ class CreateAnalysis:
 
 
 def show_analysis(
-    manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis,
-    move: Move.Move,
-    is_white: bool,
-    pos_move: int,
-    main_window=None,
-    must_save: bool = True,
-    subanalysis: bool = False,
+        manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis,
+        move: Move.Move,
+        is_white: bool,
+        pos_move: int,
+        main_window=None,
+        must_save: bool = True,
+        subanalysis: bool = False,
 ):
     main_window = Code.procesador.main_window if main_window is None else main_window
 
@@ -292,4 +292,4 @@ def show_analysis(
                 busca = False
             xengine = uno.xengine
             if not manager_analyzer or xengine.engine.key != manager_analyzer.engine.key:
-                xengine.finalize()
+                xengine.close()

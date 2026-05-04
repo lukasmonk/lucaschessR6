@@ -337,7 +337,7 @@ class WLines(LCDialog.LCDialog):
 
             engine = self.configuration.engines.search(clave_motor).clone()
             engine.set_multipv_var(multi_pv)
-            xmanager = self.procesador.create_manager_analysis(engine, ms, depth, 0, engine.multiPV, priority=priority)
+            xmanager = self.procesador.create_manager_analyzer_var(engine, ms, depth, 0, engine.multiPV, priority=priority)
 
         mensaje = f"{_('Move')}  %d/{len(stfen)!s}"
         tmp_bp = QTMessages.ProgressBarSimple(self, _("Mass analysis"), "", len(stfen))

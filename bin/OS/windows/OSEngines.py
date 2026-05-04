@@ -158,11 +158,6 @@ def read_engines(folder_engines):
     cm.set_min_fixed_depth(2)
 
     cm = mas(
-        "godel", "Juan Manuel Vazquez", "7.0", "https://sites.google.com/site/godelchessengine", "Godel32.exe", 2950
-    )
-    cm.name = "Gödel 7.0"
-
-    cm = mas(
         "rhetoric",
         "Alberto Sanjuan",
         "1.4.3",
@@ -173,7 +168,7 @@ def read_engines(folder_engines):
     )
     cm.set_multipv(1, 4)
 
-    cm = mas("cheng", "Martin Sedlák", "4.40", "https://www.vlasak.biz/cheng", "cheng4.exe", 2750)
+    cm = mas("cheng", "Martin Sedlák", "4.41", "https://www.vlasak.biz/cheng", "cheng4_x64.exe", 2750)
     cm.set_multipv(10, 256)
 
     cm = mas(

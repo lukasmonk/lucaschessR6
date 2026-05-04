@@ -89,7 +89,7 @@ class ManagerVariations(Manager.Manager):
                 self.active_engine()
             else:
                 if self.manager_rival:
-                    self.manager_rival.finalize()
+                    self.manager_rival.close()
                     self.manager_rival = None
                 self.play_against_engine = False
 
@@ -277,12 +277,12 @@ class ManagerVariations(Manager.Manager):
         if resp:
             self.set_label1("")
             if resp == "engine_disable":
-                self.manager_rival.finalize()
+                self.manager_rival.close()
                 self.manager_rival = None
                 self.play_against_engine = False
             elif resp in ("engine_enable", "engine_change"):
                 if self.play_against_engine:
-                    self.manager_rival.finalize()
+                    self.manager_rival.close()
                     self.manager_rival = None
                     self.play_against_engine = False
                 self.change_rival()

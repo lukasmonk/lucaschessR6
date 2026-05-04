@@ -1,4 +1,4 @@
-Cheng 4.40
+Cheng 4.41
 ------------
 by Martin Sedlak
 opening book line by Graham Banks
@@ -11,7 +11,7 @@ logos by Radovan Kramar, Graham Banks, Jim Ablett and Silvian Rucsandescu
 greetings to all CC friends (list would be too long)
 
 supports FRC, UCI/xboard mode (but no ini!)
-strength (4.40): +12 elo(tm)
+strength (4.41): +10 elo
 
 note for Linux/BSD/OSX users: may need to run chmod u+x on the binary first
 
@@ -86,5 +86,17 @@ fixes in 0.36a:
 - note that the mac version is for Intel only - don't have Apple silicon
 - bench 5742691
 - special thanks to David Safranek (sx.rosada.cz) who runs a Cheng bot at Lichess
+
+4.41:
+- fix read out of bounds (recognizer arrays)
+- switch back from NMR to NMP+verification
+- add singular extension
+- remove delta pruning in qsearch
+- fix countermove probing
+- remove dubious queen extension
+- tweak aspiration windows
+- remove opening book so that it can't be abused in engine-engine matches
+- increase max threads to 512 (because why not)
+- native Apple M1 arm64 binary (cheng4_osx_arm64)
 
 have fun

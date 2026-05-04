@@ -242,6 +242,9 @@ class MarkerSC(BoardBlocks.BloqueEspSC):
             elif poscelda == 3:
                 dy += ac - ancho
                 dx += ac - ancho
+            elif poscelda == 4:
+                dx += (ac - ancho) / 2
+                dy += (ac - ancho) / 2
 
             if psize != 100:
                 anchon = ancho * psize / 100

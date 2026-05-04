@@ -3,14 +3,12 @@ import random
 import Code
 from Code.Menus import BaseMenu
 from Code.PlayAgainstEngine import (
-    Albums,
-    ManagerAlbum,
     ManagerPerson,
     ManagerPlayAgainstEngine,
-    WindowAlbumes,
     WPlayAgainstEngine,
     ConfigurationsPAE,
 )
+from Code.Albums import ManagerAlbum, Albums, WindowAlbumes
 from Code.PlayHuman import ManagerPlayHuman, WPlayHuman
 from Code.QT import Iconos, QTDialogs
 

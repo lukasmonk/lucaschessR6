@@ -598,7 +598,7 @@ class WPotencia(LCDialog.LCDialog):
         if name_engine.startswith("*"):
             name_engine = name_engine[1:]
         engine = self.configuration.engines.search_tutor(name_engine)
-        self.manager_analysis = self.procesador.create_manager_analysis(engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE)
+        self.manager_analysis = self.procesador.create_manager_analyzer_var(engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE)
 
         # Board
         config_board = self.configuration.config_board("POTENCIA", 48)
