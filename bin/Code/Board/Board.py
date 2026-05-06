@@ -37,6 +37,7 @@ from Code.Board import (
     BoardSVGs,
     BoardTypes,
     LichessCommentParser,
+    SpaceControlLayer,
 )
 from Code.Board.BoardSections import BoardVisualMenu, BoardEboardController, BoardBlindfold
 from Code.Databases import DBgames
@@ -199,6 +200,9 @@ class Board(QtWidgets.QGraphicsView):
         self.current_graphlive = None
         self.dic_graphlive = None
 
+        self.space_number = None
+        self.space_layer = None
+
         self.rutinaDropsPGN = None
 
         self.config_board = config_board
@@ -354,7 +358,7 @@ class Board(QtWidgets.QGraphicsView):
                         1.8,
                     )
 
-            elif is_alt and key == Qt.Key.Key_F:
+            elif (is_alt or is_ctrl) and key == Qt.Key.Key_F:
                 self.try_to_rotate_the_board(None)
 
             elif key == Qt.Key.Key_I:
@@ -1605,6 +1609,8 @@ class Board(QtWidgets.QGraphicsView):
                         self.launch_guion()
                 elif self.show_graphic_icon:
                     self.scriptSC_menu.hide()
+        self.update_space_control()
+
         if self.dispatch_changed_position is not None:
             self.dispatch_changed_position()
 
@@ -2235,8 +2241,30 @@ class Board(QtWidgets.QGraphicsView):
             # si es derecho lo dejamos para el menu visual, y el izquierdo solo muestra capturas,
             # si se quieren ver movimientos, que active show candidates
             return
+        number = int(number)
         if self.do_pressed_number:
-            self.do_pressed_number(activate, int(number))
+            self.do_pressed_number(activate, number)
+
+        if number in [2, 3, 6, 7]:
+            if not activate:
+                return
+            if self.space_number == number:
+                self.deactivate_space_control()
+            else:
+                self.space_number = number
+                self.update_space_control()
+
+    def update_space_control(self):
+        if self.space_number is None or self.last_position is None:
+            return
+        if self.space_layer is None:
+            self.space_layer = SpaceControlLayer.SpaceControlLayer(self)
+        self.space_layer.update(self.last_position.fen(), self.space_number)
+
+    def deactivate_space_control(self):
+        self.space_number = None
+        if self.space_layer:
+            self.space_layer.hide()
 
     def pressed_letter(self, is_left, activate, letter):
         if not is_left:
@@ -2447,6 +2475,9 @@ class Board(QtWidgets.QGraphicsView):
 
         if hasattr(self.main_window, "capturas"):
             self.main_window.capturas.ponLayout(self.is_white_bottom)
+
+        if self.space_layer:
+            self.space_layer.reposition()
 
     def register_movable(self, bloque_sc):
         self.id_last_movable += 1

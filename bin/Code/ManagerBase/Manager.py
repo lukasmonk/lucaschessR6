@@ -1,12 +1,10 @@
-import collections
 import random
 import time
 
 import FasterCode
-from PySide6 import QtGui
 
 import Code
-from Code.Base import Game, Move, Position
+from Code.Base import Game, Move
 from Code.Base.Constantes import (
     BLACK,
     COL_BLACK,
@@ -43,7 +41,6 @@ from Code.Base.Constantes import (
     TERMINATION_DRAW_AGREEMENT,
     WHITE,
 )
-from Code.Board import BoardTypes
 from Code.Databases import DBgames
 from Code.Engines import EngineResponse, EngineManagerAnalysis
 from Code.ManagerBase import (
@@ -54,7 +51,7 @@ from Code.ManagerBase import (
     ManagerNavigation,
 )
 from Code.Openings import Opening, OpeningsStd
-from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils, ScreenUtils
+from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils
 from Code.Replay import WReplay
 from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
 from Code.ZQT import WindowArbolBook, WindowArbol
@@ -145,8 +142,11 @@ class Manager:
         self.closed = False
 
         self.kibitzers_manager = self.procesador.kibitzers_manager
+        self.board.set_dispatch_changed_position(self._update_on_position_change)
 
         self.with_eboard = len(self.configuration.x_digital_board) > 0
+
+        self.capture_number = None
 
         self.with_previous_next = False
 
@@ -157,7 +157,6 @@ class Manager:
 
         self.key_crash = None
 
-        self.li_marcos_tmp = []
         self.next_test_resign = 999
 
         self.manager_menu_config = ManagerMenuConfig.ManagerMenuConfig(self)
@@ -217,6 +216,8 @@ class Manager:
         if self.must_be_autosaved:
             self.autosave_now()
         self.crash_adjourn_end()
+        self.board.deactivate_space_control()
+        self.capture_number = None
 
     def crash_adjourn_end(self):
         if self.key_crash:
@@ -974,150 +975,39 @@ class Manager:
 
     def do_pressed_number(self, si_activar, number):
         if number in [1, 8]:
-            if si_activar:
-                # Que move esta en el board
-                fen = self.board.fen_active()  # fen_active()
-                is_white = " w " in fen
-                if number == 1:
-                    si_mb = is_white
-                else:
-                    si_mb = not is_white
-                self.board.remove_arrows()
-                if self.board.arrow_sc:
-                    self.board.arrow_sc.hide()
-                li = FasterCode.get_captures(fen, si_mb)
-                for m in li:
-                    d = m.xfrom()
-                    h = m.xto()
-                    self.board.show_arrow_mov(d, h, "c")
-            else:
-                num_moves, nj, row, is_white = self.current_move_number()
-                if nj < 0:
-                    return
-                # move = self.game.move(nj)
-                # self.board.set_position(move.position)
+            if not si_activar:
+                return  # Solo reaccionar al press (no al release) para toggle
+
+            if self.capture_number == number:
+                # Mismo número: apagar
+                self.capture_number = None
                 self.board.remove_arrows()
                 if self.board.arrow_sc:
                     self.board.arrow_sc.show()
-                if Code.configuration.x_show_bestmove:
-                    move = self.game.move(nj)
-                    if not move.analysis:
-                        return
-                    mrm: EngineResponse.MultiEngineResponse
-                    mrm, pos = move.analysis
-                    rm0 = mrm.best_rm_ordered()
-                    self.board.put_arrow_scvar([(rm0.from_sq, rm0.to_sq)])
-
-        elif number in [2, 7]:
-            if si_activar:
-                # Que move esta en el board
-                fen = self.board.fen_active()  # fen_active()
-                cp = Position.Position()
-                cp.read_fen(fen)
-                is_white = " w " in fen
-                dic_movs_side = {is_white: cp.aura()}
-
-                fen = FasterCode.fen_other(fen)
-                cp.read_fen(fen)
-                dic_movs_side[not is_white] = cp.aura()
-
-                li_movs = dic_movs_side[number == 2]
-
-                dic_frec = collections.Counter(li_movs)
-
-                self.li_marcos_tmp = []
-                reg_marco = BoardTypes.Marco()
-                side = "W" if number == 2 else "B"
-                dic_colors = {
-                    pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"]) for pos in range(6)
-                }
-
-                for c in "abcdefgh":
-                    for r in "12345678":
-                        h8 = f"{c}{r}"
-                        frec = dic_frec.get(h8, 0)
-                        if frec > 5:
-                            frec = 5
-                        color = dic_colors[frec]
-                        reg_marco.a1h8 = h8 + h8
-                        reg_marco.siMovible = True
-                        reg_marco.color = color
-                        reg_marco.colorinterior = color
-                        box = self.board.create_marco(reg_marco)
-                        box.setZValue(5)
-                        self.li_marcos_tmp.append(box)
-
-                self.board.escena.update()
-
             else:
-                self.remove_label3()
-                for box in self.li_marcos_tmp:
-                    self.board.xremove_item(box)
-                self.li_marcos_tmp = []
+                # Nuevo número: encender/cambiar
+                self.board.deactivate_space_control()
+                self.capture_number = number
+                self._update_captures()
 
-        elif number in [3, 6]:
-            if si_activar:
-                # Ambas: espacio controlado por blancas Y negras simultáneamente con mezcla ponderada
-                fen = self.board.fen_active()
-                cp = Position.Position()
-                cp.read_fen(fen)
-                is_white = " w " in fen
-                dic_movs_side = {is_white: cp.aura()}
+        elif number in [2, 7, 3, 6]:
+            pass  # Now handled by the board itself
 
-                fen2 = FasterCode.fen_other(fen)
-                cp.read_fen(fen2)
-                dic_movs_side[not is_white] = cp.aura()
+    def _update_on_position_change(self):
+        self._update_captures()
 
-                dic_frec_w = collections.Counter(dic_movs_side[True])
-                dic_frec_b = collections.Counter(dic_movs_side[False])
-
-                dic_colors_w = {
-                    pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_W_{pos}"]) for pos in range(6)
-                }
-                dic_colors_b = {
-                    pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_B_{pos}"]) for pos in range(6)
-                }
-
-                self.li_marcos_tmp = []
-                reg_marco = BoardTypes.Marco()
-
-                for c in "abcdefgh":
-                    for r in "12345678":
-                        sq = f"{c}{r}"
-                        fw = min(dic_frec_w.get(sq, 0), 5)
-                        fb = min(dic_frec_b.get(sq, 0), 5)
-                        if fw and fb:
-                            # Mezcla ponderada de colores por peso relativo
-                            qc_w = QtGui.QColor(dic_colors_w[fw])
-                            qc_b = QtGui.QColor(dic_colors_b[fb])
-                            pt = fw + fb
-                            r_ch = (qc_w.red() * fw + qc_b.red() * fb) // pt
-                            g_ch = (qc_w.green() * fw + qc_b.green() * fb) // pt
-                            b_ch = (qc_w.blue() * fw + qc_b.blue() * fb) // pt
-                            a_ch = (qc_w.alpha() * fw + qc_b.alpha() * fb) // pt
-                            color = QtGui.QColor(r_ch, g_ch, b_ch, a_ch).rgba()
-                        elif fw:
-                            color = dic_colors_w[fw]
-                        elif fb:
-                            color = dic_colors_b[fb]
-                        else:
-                            color = dic_colors_b[0]  # transparente / neutro
-
-                        reg_marco.a1h8 = sq + sq
-                        reg_marco.siMovible = True
-                        reg_marco.color = color
-                        reg_marco.colorinterior = color
-                        box = self.board.create_marco(reg_marco)
-                        box.setZValue(5)
-                        self.li_marcos_tmp.append(box)
-
-                self.board.escena.update()
-
-            else:
-                self.remove_label3()
-                for box in self.li_marcos_tmp:
-                    self.board.xremove_item(box)
-                self.li_marcos_tmp = []
+    def _update_captures(self):
+        if self.capture_number is None:
+            return
+        fen = self.board.fen_active()
+        is_white = " w " in fen
+        si_mb = is_white if self.capture_number == 1 else not is_white
+        self.board.remove_arrows()
+        if self.board.arrow_sc:
+            self.board.arrow_sc.hide()
+        li = FasterCode.get_captures(fen, si_mb)
+        for m in li:
+            self.board.show_arrow_mov(m.xfrom(), m.xto(), "c")
 
     def do_pressed_letter(self, si_activar, letra):
         num_moves, nj, row, is_white = self.current_move_number()

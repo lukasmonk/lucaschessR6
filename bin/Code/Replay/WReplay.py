@@ -1,13 +1,9 @@
-import collections
 import time
-
 from typing import Callable, Optional
 
-import FasterCode
-from PySide6 import QtCore, QtGui
+from PySide6 import QtCore
 
 import Code
-from Code.Base import Position
 from Code.Base.Constantes import (
     TB_CONTINUE_REPLAY,
     TB_END_REPLAY,
@@ -17,124 +13,8 @@ from Code.Base.Constantes import (
     TB_REPEAT_REPLAY,
     TB_SETTINGS,
     TB_SLOW_REPLAY,
-    TB_SPACE,
 )
-from Code.Board import BoardTypes
-from Code.QT import QTDialogs, Iconos
-from Code.QT import QTUtils, ScreenUtils
-
-
-class SpaceControlLayer:
-    """Crea 64 MarcoSC persistentes para visualizar el espacio controlado.
-    Solo actualiza colores en cada posición (sin crear/destruir items Qt)
-    para evitar el temblor que produce recrearlos en cada movimiento."""
-
-    def __init__(self, board):
-        self.board = board
-        self.marcos = {}  # sq -> MarcoSC
-        self._dic_colors = {}
-        for side in "WB":
-            self._dic_colors[side == "W"] = {
-                pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"]) for pos in range(6)
-            }
-        self._create_marcos()
-
-    def _create_marcos(self):
-        reg_marco = BoardTypes.Marco()
-        reg_marco.siMovible = False
-        color0 = self._dic_colors[0]
-        for c in "abcdefgh":
-            for r in "12345678":
-                sq = f"{c}{r}"
-                reg_marco.a1h8 = sq + sq
-                reg_marco.color = color0
-                reg_marco.grosor = 1
-                reg_marco.redEsquina = 0
-                reg_marco.colorinterior = color0
-                box = self.board.create_marco(reg_marco)
-                box.setZValue(5)
-                box.setVisible(True)
-                self.marcos[sq] = box
-
-    def mezclar_con_pesos(self, peso1, peso2):
-        # Convertimos las entradas a objetos QColor de PySide6
-        color1_val = self._dic_colors[True][min(peso1, 5)]
-        color2_val = self._dic_colors[False][min(peso2, 5)]
-        c1 = QtGui.QColor(color1_val)
-        c2 = QtGui.QColor(color2_val)
-
-        peso_total = peso1 + peso2
-
-        # Calculamos los nuevos canales ponderados
-        # Usamos division entera // para obtener valores validos de 0-255
-        r = (c1.red() * peso1 + c2.red() * peso2) // peso_total
-        g = (c1.green() * peso1 + c2.green() * peso2) // peso_total
-        b = (c1.blue() * peso1 + c2.blue() * peso2) // peso_total
-        a = (c1.alpha() * peso1 + c2.alpha() * peso2) // peso_total
-
-        return QtGui.QColor(r, g, b, a).rgba()
-
-    def update(self, fen, number):
-        """Recalcula frecuencias y actualiza colores (sin crear/destruir items).
-        number=2,3 -> casillas controladas por blancas, 7,6 -> por negras."""
-        cp = Position.Position()
-        cp.read_fen(fen)
-        is_white = " w " in fen
-        dic_movs_side = {is_white: cp.aura()}
-
-        fen2 = FasterCode.fen_other(fen)
-        cp.read_fen(fen2)
-        dic_movs_side[not is_white] = cp.aura()
-
-        if number in (2, 7):
-            li_movs = dic_movs_side[number == 2]
-            dic_frec = collections.Counter(li_movs)
-
-            for sq, box in self.marcos.items():
-                frec = min(dic_frec.get(sq, 0), 5)
-                color = self._dic_colors[number == 2][frec]
-                box.block_data.color = color
-                box.block_data.colorinterior = color
-
-                box.setVisible(True)
-                box.update()
-
-        elif number in (3, 6):
-            dic_frec_w = collections.Counter(dic_movs_side[True])
-            dic_frec_b = collections.Counter(dic_movs_side[False])
-
-            for sq, box in self.marcos.items():
-                fw = dic_frec_w.get(sq, 0)
-                fb = dic_frec_b.get(sq, 0)
-                fw = min(fw, 5)
-                fb = min(fb, 5)
-                if fw and fb:
-                    color = self.mezclar_con_pesos(fw, fb)
-                else:
-                    if fw:
-                        color = self._dic_colors[True][fw]
-                    elif fb:
-                        color = self._dic_colors[False][fb]
-                    else:
-                        color = self._dic_colors[False][0]
-
-                box.block_data.color = color
-                box.block_data.colorinterior = color
-                box.setVisible(True)
-                box.update()
-
-        self.board.escena.update()
-
-    def hide(self):
-        for box in self.marcos.values():
-            box.setVisible(False)
-        self.board.escena.update()
-
-    def remove(self):
-        for box in self.marcos.values():
-            self.board.xremove_item(box)
-        self.marcos = {}
-        self.board.escena.update()
+from Code.QT import QTUtils
 
 
 class ParamsReplay:
@@ -179,7 +59,7 @@ class ParamsReplay:
 
 
 class Replay:
-    def __init__(self, manager, next_game=None, space_number=None, rapidez=None):
+    def __init__(self, manager, next_game=None, rapidez=None):
         self.seconds: float = 0
         self.seconds_before: float = 0.01
         self.if_beep: bool = False
@@ -196,8 +76,6 @@ class Replay:
         self.main_window = manager.main_window
         self.starts_with_black = manager.game.starts_with_black
         self.board = manager.board
-        self.space_layer = None
-        self.space_number = None
         self.relee_params(dic_var)
         self.rapidez = 1.0 if rapidez is None else rapidez
         self.next_game = next_game
@@ -215,7 +93,6 @@ class Replay:
             TB_REPEAT_REPLAY,
             TB_PGN_REPLAY,
             TB_SETTINGS,
-            TB_SPACE
         )
 
         self.antAcciones = self.main_window.get_toolbar()
@@ -236,18 +113,11 @@ class Replay:
 
         self.stopped = False
 
-        # Space control overlay (teclas 2/7): creado una sola vez, colores actualizados
-        self._prev_do_pressed_number = self.board.do_pressed_number
-        self.board.do_pressed_number = self._do_pressed_number
         self.board.hide_selection()
 
         self.show_information()
         move = self.li_moves[self.current_position]
         self.board.set_position(move.position_before)
-        self.board.set_dispatch_changed_position(self._update_space_control)
-
-        if space_number is not None:
-            self._do_pressed_number(True, space_number)
 
         if self.seconds_before > 0.0:
             if self.li_moves:
@@ -267,8 +137,6 @@ class Replay:
         self.if_custom_sounds = dic_var["CUSTOM_SOUNDS"]
         self.with_pgn = dic_var["PGN"]
 
-        self.space_number = None
-
         self.ghost_level = dic_var.get("TRANSPARENCY", 0) / 100.0
         self.dic_ghost_pieces = {
             "P": dic_var.get("P_WHITE", False),
@@ -285,8 +153,6 @@ class Replay:
             "k": dic_var.get("K_BLACK", False),
         }
         self.update_ghost()
-        if self.space_number:
-            self._update_space_control()
 
     def update_ghost(self):
         if self.ghost_level > 0.0:
@@ -409,7 +275,6 @@ class Replay:
         if wait_seconds:
             self.sleep_refresh(wait_seconds / 1000 + 0.2)
 
-
     def show_pause(self, si_pausa, si_continue):
         self.main_window.show_option_toolbar(TB_PAUSE_REPLAY, si_pausa)
         self.main_window.show_option_toolbar(TB_CONTINUE_REPLAY, si_continue)
@@ -433,61 +298,11 @@ class Replay:
 
         elif key == TB_SETTINGS:
             self.pausa()
-            space_number = self.space_number
             if self.params.edit(self.main_window, False):
                 self.relee_params(self.params.dic_data)
                 self.show_information()
-            self.space_number = space_number
-        elif key == TB_SPACE:
-            self.space()
-
-    def space(self):
-        menu = QTDialogs.LCMenu(self.main_window)
-        menu.opcion("black", _("Black"), Iconos.SpaceBlack())
-        menu.opcion("white", _("White"), Iconos.SpaceWhite())
-        menu.opcion("both", _("Both"), Iconos.SpaceBoth())
-        resp = menu.lanza()
-        if resp == "both":
-            self._do_pressed_number(True, 3)
-        elif resp == "white":
-            self._do_pressed_number(True, 2)
-        elif resp == "black":
-            self._do_pressed_number(True, 7)
-
-    def _do_pressed_number(self, si_activar, number):
-        """Handler para teclas 2/7 en modo replay: toggle del overlay de espacio controlado."""
-        if number not in (2, 7, 3, 6):
-            return
-        if not si_activar:
-            return  # Solo reaccionar al press (no al release)
-        if self.space_number == number:
-            # Mismo número: apagar
-            self.space_number = None
-            if self.space_layer:
-                self.space_layer.hide()
-        else:
-            # Nuevo número: encender/cambiar
-            self.space_number = number
-            self._update_space_control()
-
-    def _update_space_control(self):
-        """Crea el overlay si no existe y actualiza los colores con la posición actual."""
-        if self.space_number is None:
-            return
-        fen = self.board.fen_active()
-        if self.space_layer is None:
-            self.space_layer = SpaceControlLayer(self.board)
-        self.space_layer.update(fen, self.space_number)
 
     def finalize(self):
-        # Limpiar overlay de espacio controlado
-        if self.space_layer is not None:
-            self.space_layer.remove()
-            self.space_layer = None
-            self.space_number = None
-        self.board.do_pressed_number = self._prev_do_pressed_number
-        self.board.set_dispatch_changed_position(None)
-
         if self.ghost_level > 0.0:
             for pz, pz_sc, x in self.board.li_pieces:
                 pz_sc.setOpacity(1.0)
@@ -532,7 +347,6 @@ class Replay:
         if not self.li_moves:
             return
         self._skip_id += 1
-        space_number = self.space_number
         self.finalize()
         QtCore.QTimer.singleShot(
             0,
@@ -542,7 +356,6 @@ class Replay:
                 Replay(
                     self.manager,
                     next_game=self.next_game,
-                    space_number=space_number,
                     rapidez=self.rapidez,
                 ),
             ),

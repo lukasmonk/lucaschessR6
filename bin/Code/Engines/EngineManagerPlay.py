@@ -264,12 +264,12 @@ class EngineManagerPlay(EngineManager.EngineManager):
             min(movetime_seconds * factor_humanize, 45), porc * random.randint(1000, 3000) / 100000
         )
 
-    def play_nomodal(self, game: Optional[Game.Game]) -> bool:
-        if not self.check_engine():
-            return False
-        self.engine_run.set_game_position(game, None, False)
-        self.engine_run.play(self.run_engine_params)
-        return True
+    # def play_nomodal(self, game: Optional[Game.Game]) -> bool:
+    #     if not self.check_engine():
+    #         return False
+    #     self.engine_run.set_game_position(game, None, False)
+    #     self.engine_run.play(self.run_engine_params)
+    #     return True
 
     def set_book(self, path: str, resp_type, max_tries: int, max_depth):
         self.playbook = PlayBook(path, resp_type, max_tries, max_depth)

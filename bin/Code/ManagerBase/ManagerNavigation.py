@@ -22,6 +22,8 @@ class ManagerNavigation:
 
         col = 0
 
+        animate_forward = False
+
         starts_with_black = game.starts_with_black
         lj = len(game)
         if starts_with_black:
@@ -48,6 +50,7 @@ class ManagerNavigation:
                 self.manager.put_view()
                 return
             col = 1
+            animate_forward = True
         elif tipo == GO_FORWARD2:
             row += 1
         elif tipo == GO_START:
@@ -59,16 +62,17 @@ class ManagerNavigation:
         if row > ult_fila:
             return
 
-        move: Move.Move = self.manager.game.move(row * 2 + col)
-        self.manager.set_position(move.position_before)
-        self.main_window.base.pgn.goto(row, col)
-        self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados
-        self.manager.put_view()
+        if not animate_forward:
+            move: Move.Move = self.manager.game.move(row * 2 + col)
+            self.manager.set_position(move.position_before)
+            self.main_window.base.pgn.goto(row, col)
+            self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados
+            self.manager.put_view()
         if row > 0 or col > 0:
             move: Move.Move = self.manager.game.move(row * 2 + col - 1)
             self.manager.board.put_arrow_sc(move.from_sq, move.to_sq)
             self.main_window.place_on_pgn_table(row, col)
-            self.pgn_move(row, move.is_white())
+            self.pgn_move(row, move.is_white(), animate_forward=animate_forward)
 
     def move_according_key(self, tipo):
         game = self.manager.game
@@ -151,8 +155,8 @@ class ManagerNavigation:
                 li_moves = [("b", move.to_sq), ("m", move.from_sq, move.to_sq)]
                 if move.position.li_extras:
                     li_moves.extend(move.position.li_extras)
-                # rapidez=2.4: velocidad más rápida para navegación (vs 1.0 del rival)
-                self.manager.board.animate_move(li_moves, rapidez=2.4)
+                # rapidez=3.0: velocidad más rápida para navegación (vs 1.0 del rival)
+                self.manager.board.animate_move(li_moves, rapidez=3.0)
         self.manager.pgn.goto_row_iswhite(row, is_white)
         self.manager.put_view()
 

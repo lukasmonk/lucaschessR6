@@ -123,6 +123,8 @@ class EngineRun(QtCore.QObject):
         self.timerstop: Optional[QtCore.QTimer] = None
 
         self.log = None
+        if config.path_log:
+            self._log_open(config.path_log)
 
         self.control_ponder: None | Ponder = None
 
@@ -190,10 +192,6 @@ class EngineRun(QtCore.QObject):
                 self._log_exception("Set priority failed")
 
         self.mrm: Optional[EngineResponse.MultiEngineResponse] = None
-
-        self.log = None
-        if self.config.path_log:
-            self._log_open(self.config.path_log)
 
         self.li_uci: List[str] = []
         self.li_cache: List[str] = []

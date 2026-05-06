@@ -201,8 +201,6 @@ class ManagerLeague(Manager.Manager):
         else:
             self.main_window.base.change_player_labels(bl, ng)
 
-        self.main_window.set_notify(self.mueve_rival_base)
-
         self.game.add_tag_timestart()
 
         self.check_boards_setposition()
@@ -540,12 +538,11 @@ class ManagerLeague(Manager.Manager):
             seconds_black = seconds_white = 10 * 60
             seconds_move = 0
         self.manager_rival.run_engine_params.update_var_time(seconds_white, seconds_black, seconds_move)
-        self.manager_rival.play_game(self.game, self.main_window.notify)
+        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game)
+        if rm_rival is not None:
+            QtCore.QTimer.singleShot(0, lambda: self.rival_has_moved(rm_rival))
 
-    def mueve_rival_base(self):
-        self.rival_has_moved(self.main_window.dato_notify)
-
-    def rival_has_moved(self, rm_rival):
+    def rival_has_moved(self, rm_rival: EngineResponse.EngineResponse) -> bool:
         self.rival_is_thinking = False
         time_s = self.stop_clock(False)
         self.thinking(False)

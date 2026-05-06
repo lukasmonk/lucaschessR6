@@ -168,7 +168,7 @@ def read_engines(folder_engines):
     )
     cm.set_multipv(1, 4)
 
-    cm = mas("cheng", "Martin Sedlák", "4.41", "https://www.vlasak.biz/cheng", "cheng4_x64.exe", 2750)
+    cm = mas("cheng", "Martin Sedlák", "4.41", "https://www.vlasak.biz/cheng", "cheng4_x64.exe", 3030)
     cm.set_multipv(10, 256)
 
     cm = mas(

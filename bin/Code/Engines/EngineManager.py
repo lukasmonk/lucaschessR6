@@ -26,7 +26,7 @@ class EngineManager:
         self._is_canceled = False
         self.elapsed_time = QtCore.QElapsedTimer()
 
-        self.fichero_log: Optional[str] = None
+        self.path_log: Optional[str] = None
 
         self.mrm: Optional[EngineResponse.MultiEngineResponse] = None
         self.bestmove: Optional[str] = None
@@ -142,6 +142,8 @@ class EngineManager:
         config_enginerun.priority = self.priority
         if self.engine.emulate_movetime:
             config_enginerun.emulate_movetime = True
+        if Code.list_engine_managers.with_logs:
+            config_enginerun.path_log = self.set_path_log()
 
         self.engine_run = EngineRun.EngineRun(config_enginerun)
         if self.engine_run.state == EngineRun.EngineState.INVALID_ENGINE:
@@ -195,27 +197,33 @@ class EngineManager:
 
         if Code.list_engine_managers:
             Code.list_engine_managers.cleanup_closed()
-
-    def log_open(self):
-        if self.fichero_log:
-            return
+            
+    def set_path_log(self):
         carpeta = Util.opj(Code.configuration.paths.folder_userdata(), "EngineLogs")
         if not os.path.isdir(carpeta):
             Util.create_folder(carpeta)
         plantlog = f"{Util.opj(carpeta, self.engine.name)}_%05d"
         pos = 1
-        nomlog = plantlog % pos
+        path_log = plantlog % pos
 
-        while os.path.isfile(nomlog):
+        while os.path.isfile(path_log):
             pos += 1
-            nomlog = plantlog % pos
-        self.fichero_log = nomlog
+            path_log = plantlog % pos
+
+        self.path_log = path_log
+            
+        return path_log
+
+    def log_open(self):
+        if self.path_log:
+            return
+        self.set_path_log()
 
         if self.engine_run:
-            self.engine_run.log_open(nomlog)
+            self.engine_run.log_open(self.path_log)
 
     def log_close(self):
-        self.fichero_log = None
+        self.path_log = None
         if self.engine_run:
             self.engine_run.log_close()
 

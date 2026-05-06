@@ -66,8 +66,8 @@ class WorkTranslate(object):
         self.conexion.commit()
 
     def read_from_wtranslate(self):
-        sql = "SELECT ROWID, KEY, VALUE FROM TR_LC WHERE ROWID >= %d" % self.last_rowid
-        cursor = self.conexion.execute(sql)
+        sql = "SELECT ROWID, KEY, VALUE FROM TR_LC WHERE ROWID >= ?"
+        cursor = self.conexion.execute(sql, (self.last_rowid, ))
         li_all = cursor.fetchall()
         if not li_all:
             return False
@@ -86,8 +86,8 @@ class WorkTranslate(object):
     def read_from_lucas(self):
         if not self.conexion:
             return None
-        sql = "SELECT ROWID, KEY, VALUE FROM LC_TR WHERE ROWID >= %d" % self.last_rowid
-        cursor = self.conexion.execute(sql)
+        sql = "SELECT ROWID, KEY, VALUE FROM LC_TR WHERE ROWID >= ?"
+        cursor = self.conexion.execute(sql, (self.last_rowid, ))
         li_all = cursor.fetchall()
         if not li_all:
             return None
