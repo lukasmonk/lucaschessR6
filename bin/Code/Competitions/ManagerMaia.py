@@ -128,9 +128,9 @@ class MaiaState:
         return f"Maia-{self.current}"
 
     def stats(self):
-        st = {True: "🟢", False: "🔴"}
+        st = {1: "🟢", -1: "🔴", 0: "⚪"}
         sp = "&nbsp;"
-        return f'{st[self.white > 0]} {_("White")} {sp * 5} {st[self.black > 0]} {_("Black")}'
+        return f'{st.get(self.white, "⚪")} {_("White")} {sp * 5} {st.get(self.black, "⚪")} {_("Black")}'
 
     def current_elo(self):
         if self.current <= 1900:
@@ -225,7 +225,7 @@ class ManagerMaia(Manager.Manager):
 
         self.check_boards_setposition()
 
-        self.game.set_tag("Event", _("Maia ladder"))
+        self.game.set_tag("Event", _("Maia Ladder"))
 
         player = self.configuration.nom_player()
         other = self.maia_engine.name
@@ -354,6 +354,8 @@ class ManagerMaia(Manager.Manager):
             mensaje += "\n\n" + _("You move down to the previous level.")
         elif ladder_resp == MaiaState.WINNER:
             mensaje += "\n\n" + _("AMAZING! You have completed the Maia Ladder!")
+
+        self.set_label2("")
 
         self.mensaje(mensaje)
         self.set_end_game()

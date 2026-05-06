@@ -140,13 +140,13 @@ class DBgames:
         sql_select = ",".join(['Games_old."%s"' % f.replace('"', "") for f in lifields])
 
         for sql in (
-            "PRAGMA foreign_keys=off;",
-            "BEGIN TRANSACTION;",
-            "ALTER TABLE Games RENAME TO Games_old;",
-            f"CREATE TABLE Games ({sql_create});",
-            f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
-            "DROP TABLE Games_old;",
-            "CREATE INDEX XPV_INDEX ON Games (XPV);",
+                "PRAGMA foreign_keys=off;",
+                "BEGIN TRANSACTION;",
+                "ALTER TABLE Games RENAME TO Games_old;",
+                f"CREATE TABLE Games ({sql_create});",
+                f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
+                "DROP TABLE Games_old;",
+                "CREATE INDEX XPV_INDEX ON Games (XPV);",
         ):
             try:
                 self.conexion.execute(sql)
@@ -170,13 +170,13 @@ class DBgames:
             cursor = self.conexion.execute("pragma table_info(Games)")
             if not cursor.fetchall():
                 for sql in (
-                    "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
-                    "CREATE INDEX XPV_INDEX ON Games (XPV);",
-                    "PRAGMA journal_mode = WAL;",
-                    "PRAGMA synchronous = NORMAL;",
-                    "PRAGMA temp_store = MEMORY;",
-                    "PRAGMA cache_size = -32000;",
-                    "PRAGMA mmap_size = 268435456;",
+                        "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
+                        "CREATE INDEX XPV_INDEX ON Games (XPV);",
+                        "PRAGMA journal_mode = WAL;",
+                        "PRAGMA synchronous = NORMAL;",
+                        "PRAGMA temp_store = MEMORY;",
+                        "PRAGMA cache_size = -32000;",
+                        "PRAGMA mmap_size = 268435456;",
                 ):
                     self.conexion.execute(sql)
                 self.conexion.commit()
@@ -502,7 +502,7 @@ class DBgames:
 
     def read_complete_recno(self, recno):
         rowid = self.li_row_ids[recno]
-        cursor = self.conexion.execute("SELECT %s FROM Games WHERE rowid =%d" % (self.select, rowid))
+        cursor = self.conexion.execute(f"SELECT {self.select} FROM Games WHERE rowid = ?", (rowid,))
         return cursor.fetchone()
 
     def count_data(self, filtro):
@@ -718,7 +718,7 @@ class DBgames:
         fen, pv = self.read_xpv(raw["XPV"])
         if xpgn:
             if xpgn.startswith(BODY_SAVE):
-                pgn_read = xpgn[len(BODY_SAVE) :].strip()
+                pgn_read = xpgn[len(BODY_SAVE):].strip()
                 if fen:
                     pgn_read = b'[FEN "%s"]\n' % fen.encode() + pgn_read
                 ok, game = Game.pgn_game(pgn_read)
@@ -770,7 +770,8 @@ class DBgames:
 
     def save_game_recno(self, recno, game, with_commit=True):
         game.refresh_tacticthemes(TACTICTHEMES.upper() in self.st_fields)
-        return self.insert(game, with_commit=with_commit) if recno is None else self.modify(recno, game, with_commit=with_commit)
+        return self.insert(game, with_commit=with_commit) if recno is None else self.modify(recno, game,
+                                                                                            with_commit=with_commit)
 
     def fill(self, li_field_value):
         lset = ",".join(f"{field}=?" for field, value in li_field_value)
@@ -932,11 +933,11 @@ class DBgames:
                     if n == next_n:
                         if time.time() - t1 > 0.5:
                             if not dl_tmp.actualiza(
-                                erroneos + duplicados + importados,
-                                erroneos,
-                                duplicados,
-                                importados,
-                                btell * 100.0 / bsize,
+                                    erroneos + duplicados + importados,
+                                    erroneos,
+                                    duplicados,
+                                    importados,
+                                    btell * 100.0 / bsize,
                             ):
                                 break
                             t1 = time.time()
@@ -1033,7 +1034,7 @@ class DBgames:
                             if rem_comvar_run:
                                 body = rem_comvar_run(body)
                                 is_raw = body is None or not (
-                                    b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
+                                        b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
                                 )
                             if not is_raw:
                                 data = memoryview(BODY_SAVE + body)
@@ -1117,11 +1118,11 @@ class DBgames:
             if btell == next_n:
                 if time.time() - t1 > 0.9:
                     if not dl_tmp.actualiza(
-                        erroneos + duplicados + importados,
-                        erroneos,
-                        duplicados,
-                        importados,
-                        btell * 100.0 / bsize,
+                            erroneos + duplicados + importados,
+                            erroneos,
+                            duplicados,
+                            importados,
+                            btell * 100.0 / bsize,
                     ):
                         break
                     t1 = time.time()

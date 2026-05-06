@@ -181,8 +181,6 @@ class ManagerSwiss(Manager.Manager):
         else:
             self.main_window.base.change_player_labels(bl, ng)
 
-        self.main_window.set_notify(self.mueve_rival_base)
-
         self.game.add_tag_timestart()
 
         self.check_boards_setposition()
@@ -514,14 +512,12 @@ class ManagerSwiss(Manager.Manager):
         else:
             seconds_black = seconds_white = 10 * 60
             seconds_move = 0
-        run_engine_params = self.manager_rival.run_engine_params
-        run_engine_params.update_var_time(seconds_white, seconds_black, seconds_move)
-        self.manager_rival.play_game(self.game, self.rival_has_moved)
+        self.manager_rival.run_engine_params.update_var_time(seconds_white, seconds_black, seconds_move)
+        rm_rival: EngineResponse.EngineResponse = self.manager_rival.play(game=self.game)
+        if rm_rival is not None:
+            QtCore.QTimer.singleShot(0, lambda: self.rival_has_moved(rm_rival))
 
-    def mueve_rival_base(self):
-        self.rival_has_moved(self.main_window.dato_notify)
-
-    def rival_has_moved(self, rm=None):
+    def rival_has_moved(self, rm_rival: EngineResponse.EngineResponse) -> bool:
         self.rival_is_thinking = False
         time_s = self.stop_clock(False)
         self.thinking(False)
@@ -529,19 +525,19 @@ class ManagerSwiss(Manager.Manager):
         if self.state in (ST_ENDGAME, ST_PAUSE):
             return self.state == ST_ENDGAME
 
-        self.lirm_engine.append(rm)
+        self.lirm_engine.append(rm_rival)
         if not self.check_draw_resign():
             self.show_result()
             return True
 
-        ok, self.error, move = Move.get_game_move(
+        ok, __, move = Move.get_game_move(
             self.game,
             self.game.last_position,
-            rm.from_sq,
-            rm.to_sq,
-            rm.promotion,
+            rm_rival.from_sq,
+            rm_rival.to_sq,
+            rm_rival.promotion,
         )
-        self.rm_rival = rm
+        self.rm_rival = rm_rival
         if ok:
             move.set_time_ms(int(time_s * 1000))
             move.set_clock_ms(self.tc_rival.pending_time * 1000)

@@ -58,7 +58,6 @@ from Code.Base.Constantes import (  # TB_BOXROOMS_PGN,
     TB_UTILITIES,
     TB_VARIATIONS,
     TB_ADJUDICATOR,
-    TB_SPACE,
 )
 from Code.Board import Board
 from Code.Main import WAnalysisBar, WindowSolve
@@ -249,7 +248,6 @@ class WBase(QtWidgets.QWidget):
             TB_TUTOR_STOP: (_("Stop"), Iconos.StopTraining()),
             TB_ADJUDICATOR_STOP: (_("Stop"), Iconos.StopTraining()),
             TB_ADJUDICATOR: (_("Adjudicator"), Iconos.Adjudicator()),
-            TB_SPACE: (_("Space"), Iconos.SpaceBoth()),
         }
 
     def launch_shortcuts(self):
