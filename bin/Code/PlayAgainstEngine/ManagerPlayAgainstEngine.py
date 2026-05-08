@@ -1720,9 +1720,15 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if self.state in (ST_ENDGAME, ST_PAUSE):
             return self.state == ST_ENDGAME
         with_cache = True
-        if self.nAjustarFuerza == ADJUST_SELECTED_BY_PLAYER:
-            rm_rival = self.adjust_player(self.manager_rival.get_current_mrm())
-            with_cache = False
+
+        if self.nAjustarFuerza:
+            mrm = self.manager_rival.get_current_mrm()
+            if self.nAjustarFuerza == ADJUST_SELECTED_BY_PLAYER:
+                rm_rival = self.adjust_player(mrm)
+                with_cache = False
+            else:
+                mrm.game = self.game
+                rm_rival = mrm.best_adjusted_move(self.nAjustarFuerza)
 
         self.lirm_engine.append(rm_rival)
         if not self.evaluate_rival_rm():
@@ -1911,9 +1917,9 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         if dic:
             dr = dic["RIVAL"]
-            rival = dr["CM"]
-            if hasattr(rival, "icono"):
-                delattr(rival, "icono")
+            engine_rival = dr["CM"]
+            if hasattr(engine_rival, "icono"):
+                delattr(engine_rival, "icono")
             for k, v in dic.items():
                 self.reinicio[k] = v
 
@@ -1932,15 +1938,16 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
             dr["RESIGN"] = self.resign_limit
             self.manager_rival.close()
+            if self.nAjustarFuerza != ADJUST_BETTER:
+                engine_rival.set_multipv_var(MULTIPV_MAXIMIZE)
             self.manager_rival = self.procesador.create_manager_engine(
-                rival, r_timems, r_depth, r_nodes, self.nAjustarFuerza != ADJUST_BETTER
+                engine_rival, r_timems, r_depth, r_nodes, self.nAjustarFuerza != ADJUST_BETTER
             )
 
             self.manager_rival.is_white = not is_white
 
-            rival = self.manager_rival.engine.name
             player = self.configuration.x_player
-            lb_white, lb_black = player, rival
+            lb_white, lb_black = player, self.manager_rival.engine.name
             if not is_white:
                 lb_white, lb_black = lb_black, lb_white
             self.main_window.change_player_labels(lb_white, lb_black)

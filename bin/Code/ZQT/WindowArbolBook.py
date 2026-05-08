@@ -19,8 +19,8 @@ class UnMove:
         while len(li) < 3:
             li.append("0")
         self.pgn, self.porcentaje, self.absoluto = li[:3]
-        self.porcentaje += "  " * list_moves_parent.num_level
-        self.absoluto += "  " * list_moves_parent.num_level
+        self.porcentaje += "  " * list_moves_parent.level
+        self.absoluto += "  " * list_moves_parent.level
 
         pv = self.from_sq + self.to_sq + self.promotion
 
@@ -98,12 +98,12 @@ class ListaMoves:
     def __init__(self, move_owner, book, fen):
 
         if not move_owner:
-            self.nivel = 0
+            self.level = 0
             cp = Position.Position()
             cp.read_fen(fen)
             self.gameBase = Game.Game(cp)
         else:
-            self.nivel = move_owner.list_moves_parent.num_level + 1
+            self.level = move_owner.list_moves_parent.level + 1
             self.gameBase = move_owner.game.copia()
 
         self.book = book
@@ -398,7 +398,7 @@ class WindowArbolBook(LCDialog.LCDialog):
             if mov:
                 li = []
                 while True:
-                    nv = mov.list_moves_parent.num_level
+                    nv = mov.list_moves_parent.level
                     li.append((mov.from_sq, mov.to_sq, mov.promotion))
                     if nv == 0:
                         break

@@ -33,6 +33,8 @@ from Code.ZQT import WindowPgnTags
 class ManagerSolo(Manager.Manager):
     reinicio = None
     valor_inicial = None
+    play_against_engine: bool
+    dicRival: dict
 
     def start(self, dic=None):
         self.game_type = GT_ALONE
@@ -684,7 +686,7 @@ class ManagerSolo(Manager.Manager):
             rival = dr["CM"]
             if hasattr(rival, "icono"):
                 delattr(rival, "icono")  # problem with configuration.write_variables and saving qt variables
-            r_t = dr["ENGINE_TIME"] * 100  # Se guarda en decimas -> milesimas
+            r_t = int(dr["ENGINE_TIME"] * 100)  # Se guarda en decimas -> milesimas
             r_p = dr["ENGINE_DEPTH"]
             if r_t <= 0:
                 r_t = 0
@@ -695,9 +697,7 @@ class ManagerSolo(Manager.Manager):
 
             nodes = dr.get("ENGINE_NODES", 0)
 
-            self.manager_rival = self.procesador.create_manager_engine(rival, r_t, r_p, 0, 0)
-            if nodes:
-                self.manager_rival.set_nodes(nodes)
+            self.manager_rival = self.procesador.create_manager_engine(rival, r_t, r_p, nodes)
 
             dic["ROTULO1"] = f"{_('Opponent')}: <b>{self.manager_rival.engine.name}"
             self.set_label1(dic["ROTULO1"])

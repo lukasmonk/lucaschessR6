@@ -4,7 +4,6 @@ from PySide6 import QtCore
 from Code.Analysis import Analysis
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
-    ADJUST_BETTER,
     GT_GAME,
     ST_ENDGAME,
     ST_PLAYING,
@@ -22,11 +21,10 @@ from Code.Base.Constantes import (
 )
 from Code.Engines import EngineResponse
 from Code.ManagerBase import Manager
-from Code.PlayAgainstEngine import WPlayAgainstEngine
 from Code.QT import Iconos, QTMessages, QTUtils
+from Code.Replay import WReplay
 from Code.Voyager import Voyager
 from Code.ZQT import WindowPgnTags
-from Code.Replay import WReplay
 
 
 class ManagerGame(Manager.Manager):
@@ -150,7 +148,7 @@ class ManagerGame(Manager.Manager):
 
     def reiniciar(self):
         if self.is_changed() and not QTMessages.pregunta(
-            self.main_window, _("You will loose all changes, are you sure?")
+                self.main_window, _("You will loose all changes, are you sure?")
         ):
             return
         p = Game.Game()
@@ -484,50 +482,6 @@ class ManagerGame(Manager.Manager):
                 )
                 return
             self.replace_game(game)
-
-    def play_rival(self):
-        if not self.is_finished():
-            self.thinking(True)
-            rm = self.manager_rival.play_game(self.game, adjusted=self.manager_rival.nAjustarFuerza)
-            self.thinking(False)
-            if rm.from_sq:
-                self.player_has_moved_dispatcher(rm.from_sq, rm.to_sq, rm.promotion)
-
-    def change_rival(self):
-        if self.dic_rival:
-            dic_base = self.dic_rival
-        else:
-            dic_base = self.configuration.read_variables("ENG_MANAGERSOLO")
-
-        dic = self.dic_rival = WPlayAgainstEngine.change_rival(
-            self.main_window, self.configuration, dic_base, is_create_own_game=True
-        )
-
-        if dic:
-            for k, v in dic.items():
-                self.reinicio[k] = v
-
-            dr = dic["RIVAL"]
-            rival = dr["CM"]
-            r_t = dr["TIME"] * 100  # Se guarda en decimas -> milesimas
-            r_p = dr["DEPTH"]
-            if r_t <= 0:
-                r_t = None
-            if r_p <= 0:
-                r_p = None
-            if r_t is None and r_p is None and not dic.get("SITIEMPO", False):
-                r_t = 1000
-
-            n_ajustar_fuerza = dic["ADJUST"]
-            self.manager_rival = self.procesador.create_manager_engine(
-                rival, r_t, r_p, 0, n_ajustar_fuerza != ADJUST_BETTER
-            )
-            self.manager_rival.nAjustarFuerza = n_ajustar_fuerza
-
-            dic["ROTULO1"] = f"{_('Opponent')}: <b>{self.manager_rival.engine.name}"
-            self.set_label1(dic["ROTULO1"])
-            self.play_against_engine = True
-            self.configuration.write_variables("ENG_MANAGERSOLO", dic)
 
     def takeback(self):
         if len(self.game) and self.in_end_of_line():
