@@ -2,7 +2,7 @@ import time
 
 from PySide6 import QtCore
 from Code.Base import Game
-from Code.Base.Constantes import GT_TACTICS, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, ON_TOOLBAR, TB_CONFIG
+from Code.Base.Constantes import GT_TACTICS, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, ON_TOOLBAR, TB_CONFIG, TB_NEXT
 from Code.Leitner import Leitner
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages, QTDialogs, Iconos
@@ -169,11 +169,12 @@ class ManagerLeitner(Manager.Manager):
             jump_tothe_next = False
             txt = f"{_('There have been errors')}<br>{txt}"
 
-        if not jump_tothe_next:
-            QTMessages.message(self.main_window, txt)
+        QTMessages.message(self.main_window, txt)
         self.with_error = False
-
-        QtCore.QTimer.singleShot(0, self.reiniciar_puzzle)
+        if jump_tothe_next:
+            QtCore.QTimer.singleShot(0, self.reiniciar_puzzle)
+        else:
+            self.set_toolbar([TB_CLOSE, TB_CONFIG, TB_NEXT])
 
     def finalizar(self):
         if self.with_error:
@@ -198,6 +199,9 @@ class ManagerLeitner(Manager.Manager):
 
         elif key == TB_CONFIG:
             self.config_leitner()
+
+        elif key == TB_NEXT:
+            self.reiniciar_puzzle()
 
         else:
             self.routine_default(key)

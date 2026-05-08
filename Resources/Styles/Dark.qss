@@ -396,3 +396,32 @@ QComboBox QAbstractItemView
     selection-color: #ffffff;
     outline: 0;
 }
+
+/* TREEVIEW ---------------------------------------------------------------------------------*/
+QTreeWidget {
+        background-color: #2b2b2b;           /* Fondo general */
+        alternate-background-color: #232323; /* Filas alternas */
+        selection-background-color: #3a6ea5; /* Fondo de selección */
+        selection-color: #ffffff;             /* Texto seleccionado */
+        border: 1px solid #3c3c3c;
+        outline: 0;
+        color: #e0e0e0;                      /* Color de texto por defecto */
+}
+
+QTreeWidget::item {
+    padding: 4px;
+}
+
+QTreeWidget::item:hover {
+    background-color: #2e445e;           /* Color al pasar el ratón */
+}
+
+QHeaderView::section {
+    background-color: #34383c;
+    color: #e0e0e0;
+    padding: 6px;
+    border: none;
+    border-right: 1px solid #3c3c3c;
+    border-bottom: 1px solid #3c3c3c;
+    font-weight: bold;
+}

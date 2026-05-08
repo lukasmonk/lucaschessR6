@@ -209,7 +209,7 @@ class ManagerMicElo(Manager.Manager):
         self.black_elo = eloplayer if not is_white else eloengine
 
         self.manager_rival = self.procesador.create_manager_engine(
-            self.engine_rival, 0, 0, 0, has_multipv=self.engine_rival.multiPV > 0
+            self.engine_rival, 0, 0, 0, has_multipv=self.engine_rival.multiPV > 1
         )
         self.manager_rival.check_engine()
 

@@ -4,7 +4,6 @@ import Code.PlayAgainstEngine.WPlayAgainstEngine as WindowEntMaq
 from Code import Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
-    ADJUST_BETTER,
     GO_START,
     GT_VARIATIONS,
     ST_ENDGAME,
@@ -290,7 +289,7 @@ class ManagerVariations(Manager.Manager):
     def play_rival(self):
         if not self.is_finished():
             self.thinking(True)
-            rm = self.manager_rival.play_game(self.game, adjusted=self.manager_rival.nAjustarFuerza)
+            rm = self.manager_rival.play_game(self.game)
             if rm.from_sq:
                 ok, self.error, move = Move.get_game_move(
                     self.game,
@@ -311,19 +310,18 @@ class ManagerVariations(Manager.Manager):
             self.change_rival()
 
     def change_rival(self):
-
         if self.dicRival:
             dic_base = self.dicRival
         else:
             dic_base = self.configuration.read_variables("ENG_VARIANTES")
         dic_base["ISWHITE"] = self.is_human_side_white
 
-        dic = self.dicRival = WindowEntMaq.change_rival(
+        self.dicRival = WindowEntMaq.change_rival(
             self.main_window, self.configuration, dic_base, is_create_own_game=True
         )
 
-        if dic:
-            self.set_rival(dic)
+        if self.dicRival:
+            self.set_rival(self.dicRival)
             return True
         return False
 
@@ -333,25 +331,18 @@ class ManagerVariations(Manager.Manager):
         if not Util.exist_file(rival.path_exe):
             self.change_rival()
             return
-        r_timems = dr.get("ENGINE_TIME", 0) * 100  # Se guarda en decimas -> milesimas
-        r_depth = dr.get("ENGINE_DEPTH", 0)
-        r_nodes = dr.get("ENGINE_NODES", 0)
+        r_timems = int(dr.get("ENGINE_TIME", 0) * 100)  # Se guarda en decimas -> milesimas
+        r_depth = int(dr.get("ENGINE_DEPTH", 0))
+        r_nodes = int(dr.get("ENGINE_NODES", 0))
         if r_timems <= 0:
-            r_timems = None
+            r_timems = 0
         if r_depth <= 0:
-            r_depth = None
+            r_depth = 0
         if r_nodes <= 0:
-            r_nodes = None
-        if r_timems is None and r_depth is None and r_nodes is None and not dic.get("SITIEMPO", False):
+            r_nodes = 0
+        if r_timems == 0 and r_depth == 0 and r_nodes == 0 and not dic.get("SITIEMPO", False):
             r_timems = 1000
-
-        n_ajustar_fuerza = dic["ADJUST"]
-        self.manager_rival = self.procesador.create_manager_engine(
-            rival, r_timems, r_depth, r_nodes, n_ajustar_fuerza != ADJUST_BETTER
-        )
-        if r_nodes:
-            self.manager_rival.set_nodes(r_nodes)
-        self.manager_rival.nAjustarFuerza = n_ajustar_fuerza
+        self.manager_rival = self.procesador.create_manager_engine(rival, r_timems, r_depth, r_nodes)
 
         self.is_human_side_white = dic["ISWHITE"]
         self.is_engine_side_white = not self.is_human_side_white

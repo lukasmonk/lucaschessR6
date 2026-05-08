@@ -20,7 +20,7 @@ from Code.Base.Constantes import (
 from Code.Board import Board
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
-from Code.Engines import EngineManagerAnalysis
+from Code.Engines import EngineManagerAnalysis, Engines, EngineRun
 
 
 class UnMove:
@@ -132,12 +132,12 @@ class ListaMoves:
         self.dbCache = db_cache
 
         if not move_owner:
-            self.nivel = 0
+            self.level = 0
             cp = Position.Position()
             cp.read_fen(fen)
             self.gameBase = Game.Game(cp)
         else:
-            self.nivel = self.moveOwner.list_moves_parent.num_level + 1
+            self.level = self.moveOwner.list_moves_parent.level + 1
             self.gameBase = self.moveOwner.game.copia()
 
         self.fenm2 = self.gameBase.last_position.fenm2()
@@ -182,7 +182,7 @@ class ListaMoves:
             resp = rm.abbrev_text() if siExten else rm.abbrev_text_base()
         else:
             resp = "?"
-        if self.nivel % 2:
+        if self.level % 2:
             resp += " "
         return resp
 
@@ -828,7 +828,7 @@ class WindowArbol(LCDialog.LCDialog):
                 return
 
             elif resp == -999999:
-                self.nuevoAnalisis(lm)
+                self.new_analysis(lm)
                 return
 
             elif resp == -999998:
@@ -843,36 +843,37 @@ class WindowArbol(LCDialog.LCDialog):
                 return
 
         else:
-            self.nuevoAnalisis(lm)
+            self.new_analysis(lm)
 
-    def nuevoAnalisis(self, lm):
+    def new_analysis(self, lm):
         fen = lm.gameBase.last_position.fen()
-        alm = WindowAnalysisParam.analysis_parameters(self, False, True, False, False)
-        if alm is None:
+        ap = WindowAnalysisParam.analysis_parameters(self, False, True, False, False)
+        if ap is None:
             return
-        if alm.engine == "default":
-            xengine = self.procesador.analyzer_clone(alm.vtime, alm.depth, alm.nodes, alm.multiPV)
+        if ap.engine == "default":
+            engine: Engines.Engine = Code.configuration.engines.engine_analyzer()
         else:
-            conf_motor = Code.configuration.engines.search(alm.engine)
-            conf_motor.set_multipv_var(alm.multiPV)
-            xengine: EngineManagerAnalysis.EngineManagerAnalysis = self.procesador.create_manager_engine(
-                conf_motor, alm.vtime, alm.depth, alm.nodes, has_multipv=True
-            )
+            engine: Engines.Engine = Code.configuration.engines.search(ap.engine, "stockfish")
+
+        run_engine_params = EngineRun.RunEngineParams()
+        run_engine_params.update(engine, ap.vtime, ap.depth, ap.nodes, ap.multiPV)
+        engine_manager = EngineManagerAnalysis.EngineManagerAnalysis(engine, run_engine_params)
+        engine_manager.set_priority(ap.priority)
 
         with QTMessages.analizando(self, True) as me:
 
             def test_me(rm, ms):
                 if me.is_canceled():
-                    xengine.stop()
+                    engine_manager.stop()
                 return True
 
-            mrm = xengine.analyze_fen(fen, test_me)
-            xengine.close()
+            mrm = engine_manager.analyze_fen(fen, test_me)
+            engine_manager.close()
             canceled = me.is_canceled()
 
         if not canceled:
-            mrm.vtime = alm.vtime / 1000.0
-            mrm.depth = alm.depth
+            mrm.vtime = ap.vtime / 1000.0
+            mrm.depth = ap.depth
 
             tipo = f"{_('Depth')}={mrm.depth}" if mrm.depth else f'{mrm.vtime:.0f}"'
             mrm.label = f"{mrm.name} {tipo}"

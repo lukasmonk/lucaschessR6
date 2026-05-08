@@ -479,7 +479,7 @@ class WBMT(LCDialog.LCDialog):
         dic = {"ENGINE": engine, "TIME": vtime}
         Util.save_pickle(file, dic)
 
-        # Analizamos todos, creamos las games, y lo salvamos
+        # Analizamos todos, creamos las partidas, y lo salvamos
         conf_motor = self.configuration.engines.search(name_engine)
         conf_motor.multiPV = 16
         xmanager = self.procesador.create_manager_engine(conf_motor, vtime, None, 0, True)
