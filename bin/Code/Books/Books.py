@@ -131,6 +131,7 @@ class Book:
         self.tipo = tipo
         self.name = name
         self.path = Util.norm_path(path)
+        self.path = Util.bug_path(self.path)
         self.pordefecto = pordefecto
         self.orden = 100  # futuro ?
         self.extras = extras  # futuro ?

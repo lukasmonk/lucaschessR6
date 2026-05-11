@@ -32,8 +32,8 @@ def read_engines(folder_engines):
     # mas("alouette", "Roland Chastain", "0.1.7", "https://codeberg.org/rchastain/alouette", "alouette32.exe", 800)
 
     # mas("acqua", "Giovanni Di Maria", "2.0", "https://www.elektrosoft.it/scacchi/acqua/acqua.asp", "acqua.exe", 844)
-    mas("foxcub", "Lucas Monge", "1.1", "", "FoxCub.exe", 1000)
-    mas("fox", "Lucas Monge", "1.4", "", "Fox.exe", 1500)
+    mas("eguzkilore", "Lucas Monge", "1.0", "", "Eguzkilore.exe", 1000)
+    mas("eguzki", "Lucas Monge", "1.4", "", "Eguzki.exe", 1500)
 
     mas(
         "tarrasch",
@@ -477,7 +477,7 @@ def dic_engines_fixed_elo(folder_engines):
         ("rybka", 1200, 2400),
         ("ufim", 700, 2000),
         ("texel", 700, 2500),
-        ("fox", 1000, 2700),
+        ("eguzki", 1000, 2700),
         ("patricia", 500, 3000),
     )
 

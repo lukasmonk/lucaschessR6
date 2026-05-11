@@ -951,6 +951,8 @@ class Board(QtWidgets.QGraphicsView):
                 self.text = txt
                 self.key = key
                 self.nkey = nkey
+                if not (is_alt or is_ctrl or is_shift) and nkey is None:
+                    self.text += f" ({key})"
 
             def get_shortcut(self):
                 li_alt = []

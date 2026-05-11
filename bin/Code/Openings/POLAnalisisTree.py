@@ -56,7 +56,7 @@ class LabelTreeDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawLine(x, ny, rect.width() + x, ny)
         painter.restore()
 
-        if option.state & QtWidgets.QStyle.State_Selected:
+        if option.state & QtWidgets.QStyle.StateFlag.State_Selected:
             painter.fillRect(rect, Code.dic_qcolors["PGN_SELBACKGROUND"])
             color = Code.dic_colors["PGN_SELFOREGROUND"]
         else:
@@ -130,6 +130,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
     def __init__(self, owner):
         QtWidgets.QTreeWidget.__init__(self, owner)
         self.owner = owner
+        Code.configuration.set_property(self, "102")
 
     def mousePressEvent(self, event):
         QtWidgets.QTreeWidget.mousePressEvent(self, event)
@@ -269,7 +270,7 @@ class TabTree(QtWidgets.QWidget):
     def set_data(self, data, pv):
         pass
 
-    def menu_context(self, position):
+    def menu_context(self, _position):
         item = self.tree.currentItem()
         if not item:
             return

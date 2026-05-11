@@ -138,6 +138,8 @@ class TreeMoves(QtWidgets.QTreeWidget):
         self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.menu_context)
 
+        Code.configuration.set_property(self, "102")
+
         self.setHeaderLabels((_("Moves"), "", _("Games"), "", ""))
         self.setColumnHidden(3, True)
 

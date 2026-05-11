@@ -30,6 +30,7 @@ class Engine:
         self.parent_external = None
         self.url = url
         self.path_exe = Util.relative_path(path_exe) if path_exe else ""
+        self.path_exe = Util.bug_path(self.path_exe)
         self.elo = 0
         self.id_info = ""
         self.max_depth = 0
@@ -100,6 +101,7 @@ class Engine:
             try:
                 if conf_parent := Code.configuration.engines.dic_engines().get(self.parent_external):
                     self.path_exe = conf_parent.path_exe
+                    self.path_exe = Util.bug_path(self.path_exe)
             except AttributeError:
                 pass
         previous = os.path.abspath(os.curdir)
@@ -235,6 +237,7 @@ class Engine:
         self._name = value
 
     def ejecutable(self):
+        self.path_exe = Util.bug_path(self.path_exe)
         return self.path_exe
 
     def remove_uci_options(self):

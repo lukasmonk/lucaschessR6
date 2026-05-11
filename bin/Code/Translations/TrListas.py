@@ -169,6 +169,8 @@ def dic_training():
         "Rook + Bishop": f"{_('Rook')} + {_('Bishop')}",
         "Rook + Knight": f"{_('Rook')} + {_('Knight')}",
         "Knight + Bishop": f"{_('Knight')} + {_('Bishop')}",
+        "Checkmates and Puzzles by Bill Harvey": _("Checkmates and Puzzles by Bill Harvey"),
+        "Puzzle Rush": _("Puzzle Rush"),
     }
 
     for n in range(1, 10):

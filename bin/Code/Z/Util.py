@@ -87,6 +87,7 @@ def remove_folder_if_no_subfolders(folder: Union[str, Path]) -> bool:
     except Exception:
         return False
 
+
 def is_linux() -> bool:
     return sys.platform.startswith("linux")
 
@@ -998,3 +999,20 @@ class SmoothedEstimator:
 def get_name_without_ext(ruta: Union[str, Path]) -> str:
     """Devuelve el nombre del archivo sin la extensión."""
     return Path(ruta).stem
+
+
+def bug_path(path):
+    if not path:
+        return path
+    path_str = str(path)
+    if exist_file(path_str):
+        return path
+    if "OS\\windows" in path_str:
+        path_str = path_str.replace("OS\\windows", "OS\\win32")
+    if "FoxCub" in path_str:
+        path_str = path_str.replace("FoxCub", "eguzkilore").replace("foxcub", "eguzkilore")
+    elif "Fox" in path_str:
+        path_str = path_str.replace("Fox", "eguzki").replace("fox", "eguzki")
+    if not exist_file(path_str):
+        return path
+    return Path(path_str) if isinstance(path, Path) else path_str
