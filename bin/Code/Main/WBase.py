@@ -494,7 +494,7 @@ class WBase(QtWidgets.QWidget):
         return self.tb.li_acciones
 
     def is_enabled_option_toolbar(self, kopcion):
-        return kopcion in self.dic_toolbar and self.dic_toolbar[kopcion].isEnabled()
+        return kopcion in self.tb.li_acciones and self.dic_toolbar[kopcion].isEnabled()
 
     def enable_option_toolbar(self, kopcion, activate):
         if kopcion in self.dic_toolbar:

@@ -46,9 +46,10 @@ class ManagerLeitner(Manager.Manager):
         self.is_tutor_enabled = False
         self.is_competitive = False
 
-        self.reiniciar_puzzle()
+        if self.check_current():
+            self.reiniciar_puzzle()
 
-    def reiniciar_puzzle(self):
+    def check_current(self) -> bool:
         if len(self.leitner.current_ids_session) == 0:
             self.leitner.check_session()
 
@@ -59,9 +60,12 @@ class ManagerLeitner(Manager.Manager):
             QTMessages.message(self.main_window, message)
 
             self.leitner_db.set_leitner(self.pos_db, self.leitner)
+            self.with_error = False
             self.finalizar()
-            return
+            return False
+        return True
 
+    def reiniciar_puzzle(self):
         reg_id = self.leitner.current_ids_session[0]
         self.reg = self.leitner.dic_regs[reg_id]
 
@@ -122,6 +126,7 @@ class ManagerLeitner(Manager.Manager):
         if not move:
             return False
 
+        self.reset_shortcuts_mouse()
         move_obj = self.game_obj.move(self.pos_obj)
         is_main, is_var = move_obj.check_a1h8(move.movimiento())
         if is_main:
@@ -156,7 +161,7 @@ class ManagerLeitner(Manager.Manager):
         self.leitner.current_ids_session.remove(reg_id)
         self.leitner_db.set_leitner(self.pos_db, self.leitner)
 
-        jump_tothe_next = self.jump_auto
+        jump_to_next = self.jump_auto
 
         if new_box == self.leitner.win_box:
             txt = _("Position won!")
@@ -166,12 +171,15 @@ class ManagerLeitner(Manager.Manager):
         if success:
             txt = f"{_('Correct!')}<br>{txt}"
         else:
-            jump_tothe_next = False
+            jump_to_next = False
             txt = f"{_('There have been errors')}<br>{txt}"
 
+        self.show_label_positions()
         QTMessages.message(self.main_window, txt)
+        if not self.check_current():
+            return
         self.with_error = False
-        if jump_tothe_next:
+        if jump_to_next:
             QtCore.QTimer.singleShot(0, self.reiniciar_puzzle)
         else:
             self.set_toolbar([TB_CLOSE, TB_CONFIG, TB_NEXT])
@@ -254,3 +262,12 @@ class ManagerLeitner(Manager.Manager):
         self.main_window.base.pgn.refresh()
         self.main_window.base.pgn.gobottom(1 if move.is_white() else 2)
         self.board.put_arrow_sc(move.from_sq, move.to_sq)
+
+    def control_teclado(self, nkey: int) -> None:
+        if nkey in (QtCore.Qt.Key.Key_Plus, QtCore.Qt.Key.Key_PageDown):
+            self.run_action(TB_NEXT)
+
+    def list_help_keyboard(self, add_key) -> None:
+        if self.main_window.is_enabled_option_toolbar(TB_NEXT):
+            add_key(f"+/{_('Page Down')}", _("Next"))
+

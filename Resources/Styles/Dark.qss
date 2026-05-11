@@ -398,30 +398,31 @@ QComboBox QAbstractItemView
 }
 
 /* TREEVIEW ---------------------------------------------------------------------------------*/
-QTreeWidget {
-        background-color: #2b2b2b;           /* Fondo general */
-        alternate-background-color: #232323; /* Filas alternas */
-        selection-background-color: #3a6ea5; /* Fondo de selección */
-        selection-color: #ffffff;             /* Texto seleccionado */
-        border: 1px solid #3c3c3c;
+QTreeWidget[type="102"] {
+        background-color: #fafafa;           /* Fondo ligeramente grisáceo, no blanco puro */
+        alternate-background-color: #f2f2f2; /* Filas alternas suaves */
+        selection-background-color: #cce0f5; /* Selección azul muy suave */
+        selection-color: #1a1a1a;            /* Texto oscuro para contraste */
+        border: 1px solid #d6d6d6;           /* Borde ligeramente más suave que light */
         outline: 0;
-        color: #e0e0e0;                      /* Color de texto por defecto */
+        color: #2c2c2c;                      /* Texto ligeramente más suave que negro puro */
 }
 
-QTreeWidget::item {
+QTreeWidget[type="102"]::item {
     padding: 4px;
 }
 
-QTreeWidget::item:hover {
-    background-color: #2e445e;           /* Color al pasar el ratón */
+QTreeWidget[type="102"]::item:hover {
+    background-color: #e6f0fa;           /* Hover azul muy tenue */
 }
 
-QHeaderView::section {
-    background-color: #34383c;
-    color: #e0e0e0;
+QHeaderView[type="102"]::section {
+    background-color: #e8e8e8;           /* Cabecera ligeramente más clara */
+    color: #3a3a3a;
     padding: 6px;
     border: none;
-    border-right: 1px solid #3c3c3c;
-    border-bottom: 1px solid #3c3c3c;
+    border-right: 1px solid #d6d6d6;
+    border-bottom: 1px solid #d6d6d6;
     font-weight: bold;
 }
+

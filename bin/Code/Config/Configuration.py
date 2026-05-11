@@ -302,7 +302,7 @@ class Configuration:
                         self._dic_books[entry.name] = entry.path
 
             add_folder(Code.path_resource("Openings"))
-            for engine in ("foxcub", "fox", "maia", "irina", "rodentii"):
+            for engine in ("eguzkilore", "eguzki", "maia", "irina", "rodentii"):
                 add_folder(Util.opj(Code.folder_engines, engine))
         return self._dic_books
 

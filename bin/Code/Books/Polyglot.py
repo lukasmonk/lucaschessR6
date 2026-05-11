@@ -124,6 +124,7 @@ class Polyglot:
                 first = middle
 
     def lista(self, path, fen):
+
         with open(path, "rb") as self.f:
             return self.xlista(fen)
 

@@ -1,6 +1,7 @@
 from typing import Any
 
 from PySide6 import QtCore
+
 from Code.Base import Move, Position
 from Code.Base.Constantes import (
     GT_WORLD_MAPS,

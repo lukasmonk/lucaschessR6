@@ -20,8 +20,6 @@ class WShowLeitner(LCDialog.LCDialog):
 
         # Layout principal
         layout = Colocacion.V()
-        # layout.setContentsMargins(10, 10, 10, 10)
-        # layout.setSpacing(10)
         layout.control(wheader)
         layout.control(wboxes)
         layout.control(winfo)
@@ -42,13 +40,11 @@ class WShowLeitner(LCDialog.LCDialog):
 
         font = Controles.FontTypeNew(point_size_delta=4, extra_bold=True)
         tb = Controles.TBrutina(self, style=QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon, icon_size=32)
-        if self.leitner.is_the_end():
-            tb.new(_("Close"), Iconos.Close(), self.cancel)
-        else:
+        tb.new(_("Close"), Iconos.MainMenu(), self.cancel)
+        if not self.leitner.is_the_end():
             tb.new(_("Train"), Iconos.Entrenar(), self.train)
-            tb.new(_("Cancel"), Iconos.Cancelar(), self.cancel)
         tb.setFont(font)
-        lytb = Colocacion.H().relleno().control(tb).relleno()
+        lytb = Colocacion.H().control(tb).relleno()
         ly.otro(lytb)
 
         line = QtWidgets.QFrame()

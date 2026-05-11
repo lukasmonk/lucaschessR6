@@ -299,6 +299,8 @@ class TreeMoves(QtWidgets.QTreeWidget):
         self.listaMoves = owner.listaMoves
         self.procesador = procesador
 
+        Code.configuration.set_property(self, "102")
+
         self.setHeaderLabels((_("Moves"), _("Score"), _("Comments"), "T"))
         self.setColumnHidden(3, True)
 

@@ -5,7 +5,7 @@ from typing import Optional
 
 from Code.Z import Util
 
-VERSION = "R 6.0.0.26"
+VERSION = "R 6.0.0.27"
 BASE_VERSION = "C"
 
 Util.randomize()
@@ -16,7 +16,7 @@ if current_dir:
 
 lucas_chess: Optional[str] = None  # asignado en Translate
 
-platform = "windows" if sys.platform == "win32" else "linux"
+platform = "win32" if sys.platform == "win32" else "linux"
 
 folder_os = Util.opj(current_dir, "OS", platform)
 sys.path.insert(0, folder_os)

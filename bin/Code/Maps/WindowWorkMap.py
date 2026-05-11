@@ -10,7 +10,6 @@ from Code.QT import (
     Colocacion,
     Columnas,
     Controles,
-    Delegados,
     FormLayout,
     Grid,
     Iconos,
@@ -35,15 +34,7 @@ class WMap(LCDialog.LCDialog):
 
         o_columns = Columnas.ListaColumnas()
 
-        dic_iconos = {"1": Iconos.pmPuntoRojo(), "5": Iconos.pmApproval()}
-
-        o_columns.nueva(
-            "TYPE",
-            "",
-            24,
-            edicion=Delegados.PmIconosBMT(dict_icons=dic_iconos),
-            align_center=True,
-        )
+        o_columns.nueva("TYPE", "", 24, align_center=True)
         o_columns.nueva("SELECT", _("Select a country"), 140)
 
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, xid="W")
@@ -217,9 +208,9 @@ class WMap(LCDialog.LCDialog):
         tipo = self.workmap.get_tipo()
         txt = f'<b><span style="color:#C156F8">{_("Active")}: {current}</span>' if current else ""
         txt += (
-            f'<br><span style="color:brown">{_("Type")}: {tipo}</span></b>'
-            + '<br><span style="color:teal">%s: %d/%d</span></b>' % (_("Done"), hechos, total)
-            + f'<br><span style="color:blue">{_("Result")}: {info if info else ""}</span></b>'
+                f'<br><span style="color:brown">{_("Type")}: {tipo}</span></b>'
+                + '<br><span style="color:teal">%s: %d/%d</span></b>' % (_("Done"), hechos, total)
+                + f'<br><span style="color:blue">{_("Result")}: {info if info else ""}</span></b>'
         )
         self.lbInfo.set_text(txt)
 
@@ -239,6 +230,12 @@ class WMap(LCDialog.LCDialog):
         else:
             self.data_select()
             self.tab.activate(0)
+
+    def grid_cambiado_registro(self, grid, row, _obj_column):
+        if grid == self.grid:
+            if 0 <= row < self.grid_num_datos(grid):
+                iso = self.workmap.listaGrid[row].iso
+                self.workmap.reset_widget(focused_iso=iso)
 
     def play(self):
         row = self.grid.recno()
