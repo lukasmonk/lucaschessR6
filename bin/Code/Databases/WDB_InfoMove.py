@@ -74,9 +74,6 @@ class WInfomove(QtWidgets.QWidget):
 
         self.lbPGN = LBKey(self).relative_width(self.board.ancho).set_wrap()
         self.lbPGN.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
-        # self.lbPGN.setTextInteractionFlags(
-        #     Qt.TextInteractionFlag.LinksAccessibleByMouse | Qt.TextInteractionFlag.LinksAccessibleByKeyboard
-        # )
         self.lbPGN.wowner = self
         self.lbPGN.set_font_type(puntos=configuration.x_pgn_fontpoints)
         Code.configuration.set_property(self.lbPGN, "pgn")

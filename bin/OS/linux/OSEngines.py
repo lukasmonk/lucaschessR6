@@ -201,9 +201,8 @@ def read_engines(folder_engines):
         3392,
     )
 
-    mas("foxcub", "Lucas Monge", "1.1", "", "FoxCub", 1000)
-
-    mas("fox", "Lucas Monge", "1.4", "", "Fox", 1500)
+    mas("eguzkilore", "Lucas Monge", "1.0", "", "eguzkilore", 1000)
+    mas("eguzki", "Lucas Monge", "1.0", "", "eguzki", 1500)
 
     mas(
         "fractal",

@@ -310,6 +310,7 @@ def _form_general_options(analysis_params, multiple_selected, is_massive):
     for book in list_books.lista:
         if analysis_params.book_name == book.name:
             defecto = book
+        book.polyglot()
         li.append((book.name, book))
     config = FormLayout.Combobox(_("Do not scan the opening moves based on book"), li)
     li_gen.append((config, defecto))

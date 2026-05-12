@@ -32,8 +32,8 @@ def read_engines(folder_engines):
     # mas("alouette", "Roland Chastain", "0.1.7", "https://codeberg.org/rchastain/alouette", "alouette32.exe", 800)
 
     # mas("acqua", "Giovanni Di Maria", "2.0", "https://www.elektrosoft.it/scacchi/acqua/acqua.asp", "acqua.exe", 844)
-    mas("eguzkilore", "Lucas Monge", "1.0", "", "Eguzkilore.exe", 1000)
-    mas("eguzki", "Lucas Monge", "1.4", "", "Eguzki.exe", 1500)
+    mas("eguzkilore", "Lucas Monge", "1.0", "", "eguzkilore.exe", 1000)
+    mas("eguzki", "Lucas Monge", "1.0", "", "eguzki.exe", 1500)
 
     mas(
         "tarrasch",

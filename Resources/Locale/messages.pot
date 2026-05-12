@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-05-11 13:22+0200\n"
+"POT-Creation-Date: 2026-05-12 17:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -282,8 +282,8 @@ msgstr ""
 #: .\Code\About\AboutBase.py:642
 #: .\Code\Adjudicator\Adjudicator.py:200
 #: .\Code\Analysis\WindowAnalysisParam.py:259
-#: .\Code\Analysis\WindowAnalysisParam.py:477
-#: .\Code\Analysis\WindowAnalysisParam.py:534
+#: .\Code\Analysis\WindowAnalysisParam.py:478
+#: .\Code\Analysis\WindowAnalysisParam.py:535
 #: .\Code\BestMoveTraining\WindowBMT.py:458
 #: .\Code\BestMoveTraining\WindowBMT.py:1012
 #: .\Code\CompetitionWithTutor\WCompetitionWithTutor.py:175
@@ -360,7 +360,7 @@ msgstr ""
 #: .\Code\Adjudicator\Adjudicator.py:197
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:199
 #: .\Code\CountsCaptures\WCountsCaptures.py:50
-#: .\Code\Engines\Engines.py:344
+#: .\Code\Engines\Engines.py:347
 #: .\Code\Expeditions\ManagerEverest.py:94
 #: .\Code\Kibitzers\WKibEngine.py:79
 #: .\Code\Kibitzers\WKibLine.py:107
@@ -405,7 +405,7 @@ msgstr ""
 
 #: .\Code\Adjudicator\Adjudicator.py:211
 #: .\Code\Analysis\WindowAnalysisParam.py:275
-#: .\Code\Engines\Engines.py:346
+#: .\Code\Engines\Engines.py:349
 #: .\Code\Engines\WConfEngines.py:266
 #: .\Code\Engines\WConfEngines.py:398
 #: .\Code\GM\WindowGM.py:133
@@ -877,7 +877,7 @@ msgstr ""
 #: .\Code\Analysis\AI.py:62
 #: .\Code\GM\WindowGM.py:234
 #: .\Code\Maps\WindowWorkMap.py:133
-#: .\Code\Maps\WorkMap.py:512
+#: .\Code\Maps\WorkMap.py:24
 #: .\Code\Menus\TrainMenu.py:153
 msgid "Basic"
 msgstr ""
@@ -938,7 +938,7 @@ msgstr ""
 #: .\Code\Director\WindowTabVMarkers.py:158
 #: .\Code\Director\WindowTabVSVGs.py:98
 #: .\Code\Director\WindowTabVSVGs.py:180
-#: .\Code\Engines\Engines.py:337
+#: .\Code\Engines\Engines.py:340
 #: .\Code\Engines\SelectEngines.py:579
 #: .\Code\Engines\WEngines.py:155
 #: .\Code\Engines\WEngines.py:365
@@ -1294,7 +1294,7 @@ msgstr ""
 #: .\Code\Analysis\WindowAnalysis.py:520
 #: .\Code\BestMoveTraining\WindowBMT.py:489
 #: .\Code\BestMoveTraining\WindowBMT.py:1056
-#: .\Code\Databases\WDB_InfoMove.py:234
+#: .\Code\Databases\WDB_InfoMove.py:231
 #: .\Code\Main\WInformation.py:429
 #: .\Code\Main\WInformation.py:664
 #: .\Code\ManagerBase\ManagerAnalysis.py:51
@@ -1475,7 +1475,7 @@ msgstr ""
 
 #: .\Code\Analysis\AnalysisIndexes.py:284
 #: .\Code\Analysis\AnalysisIndexesShow.py:161
-#: .\Code\Engines\EngineResponse.py:849
+#: .\Code\Engines\EngineResponse.py:860
 #: .\Code\PlayAgainstEngine\Personalities.py:220
 msgid "Middlegame"
 msgstr ""
@@ -1486,7 +1486,7 @@ msgstr ""
 
 #: .\Code\Analysis\AnalysisIndexes.py:286
 #: .\Code\Analysis\AnalysisIndexesShow.py:162
-#: .\Code\Engines\EngineResponse.py:849
+#: .\Code\Engines\EngineResponse.py:860
 #: .\Code\PlayAgainstEngine\Personalities.py:221
 msgid "Endgame"
 msgstr ""
@@ -2017,7 +2017,7 @@ msgstr ""
 
 #: .\Code\Analysis\WindowAnalysis.py:251
 #: .\Code\Analysis\WindowAnalysisGraph.py:98
-#: .\Code\Books\Polyglot.py:289
+#: .\Code\Books\Polyglot.py:290
 msgid "All moves"
 msgstr ""
 
@@ -2089,7 +2089,7 @@ msgstr ""
 #: .\Code\Databases\WDB_Games.py:1207
 #: .\Code\Databases\WDB_Trainings.py:37
 #: .\Code\Databases\WDB_Utils.py:397
-#: .\Code\Engines\Engines.py:603
+#: .\Code\Engines\Engines.py:606
 #: .\Code\Engines\WConfEngines.py:60
 #: .\Code\Engines\WConfEngines.py:222
 #: .\Code\Engines\WEngines.py:390
@@ -2123,7 +2123,7 @@ msgid "Minimum"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisConfig.py:33
-#: .\Code\Engines\Engines.py:603
+#: .\Code\Engines\Engines.py:606
 msgid "Maximum"
 msgstr ""
 
@@ -2280,7 +2280,7 @@ msgstr ""
 msgid "Show pawns lost"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisGraph.py:216
+#: .\Code\Analysis\WindowAnalysisGraph.py:215
 #: .\Code\Board\Board.py:357
 #: .\Code\Board\WBoardColors.py:728
 #: .\Code\Board\WBoardColors.py:1657
@@ -2558,7 +2558,6 @@ msgstr ""
 #: .\Code\Leagues\WLeagueConfig.py:119
 #: .\Code\LearnGame\WindowLearnGame.py:361
 #: .\Code\LearnGame\WindowLearnGame.py:538
-#: .\Code\Leitner\ManagerLeitner.py:29
 #: .\Code\Main\WBase.py:245
 #: .\Code\Main\WBase.py:468
 #: .\Code\Main\WBase.py:512
@@ -2588,7 +2587,7 @@ msgid "If time and nodes are given, the nodes is attempted and the time becomes 
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:270
-#: .\Code\Engines\Engines.py:355
+#: .\Code\Engines\Engines.py:358
 #: .\Code\Engines\WEngines.py:383
 #: .\Code\Kibitzers\WindowKibitzers.py:513
 #: .\Code\Kibitzers\WindowKibitzers.py:578
@@ -2661,34 +2660,34 @@ msgstr ""
 msgid "Moves"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:314
+#: .\Code\Analysis\WindowAnalysisParam.py:315
 msgid "Do not scan the opening moves based on book"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:317
+#: .\Code\Analysis\WindowAnalysisParam.py:318
 msgid "Do not scan standard opening moves"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:319
+#: .\Code\Analysis\WindowAnalysisParam.py:320
 msgid "Add accuracy tags to the game"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:320
+#: .\Code\Analysis\WindowAnalysisParam.py:321
 #: .\Code\Openings\WindowOpeningLine.py:291
 msgid "Redo any existing prior analysis (if they exist)"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:321
+#: .\Code\Analysis\WindowAnalysisParam.py:322
 msgid "Start from the end of the game"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:322
+#: .\Code\Analysis\WindowAnalysisParam.py:323
 #: .\Code\Config\WindowConfig.py:217
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:101
 msgid "Show graphics"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:326
+#: .\Code\Analysis\WindowAnalysisParam.py:327
 #: .\Code\Databases\WDB_ExportPGN.py:88
 #: .\Code\Databases\WDB_Games.py:1243
 #: .\Code\Databases\WDB_Games.py:1256
@@ -2700,17 +2699,17 @@ msgstr ""
 msgid "Only selected games"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:331
+#: .\Code\Analysis\WindowAnalysisParam.py:332
 msgid "Number of parallel processes"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:476
-#: .\Code\Analysis\WindowAnalysisParam.py:533
+#: .\Code\Analysis\WindowAnalysisParam.py:477
+#: .\Code\Analysis\WindowAnalysisParam.py:534
 msgid "General options"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:478
-#: .\Code\Analysis\WindowAnalysisParam.py:535
+#: .\Code\Analysis\WindowAnalysisParam.py:479
+#: .\Code\Analysis\WindowAnalysisParam.py:536
 #: .\Code\Analysis\WindowAnalysisVariations.py:19
 #: .\Code\Databases\WDB_ImportPGN.py:99
 #: .\Code\Databases\WDB_RemComVariations.py:18
@@ -2720,18 +2719,18 @@ msgstr ""
 msgid "Variations"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:479
-#: .\Code\Analysis\WindowAnalysisParam.py:536
-msgid "Wrong moves"
-msgstr ""
-
 #: .\Code\Analysis\WindowAnalysisParam.py:480
 #: .\Code\Analysis\WindowAnalysisParam.py:537
-msgid "Brilliancies"
+msgid "Wrong moves"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:481
 #: .\Code\Analysis\WindowAnalysisParam.py:538
+msgid "Brilliancies"
+msgstr ""
+
+#: .\Code\Analysis\WindowAnalysisParam.py:482
+#: .\Code\Analysis\WindowAnalysisParam.py:539
 #: .\Code\Endings\ManagerMate.py:378
 #: .\Code\Endings\ManagerMate.py:489
 #: .\Code\Mate15\WMate15.py:11
@@ -2742,14 +2741,14 @@ msgstr ""
 msgid "Mate in %1"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:482
-#: .\Code\Analysis\WindowAnalysisParam.py:539
+#: .\Code\Analysis\WindowAnalysisParam.py:483
+#: .\Code\Analysis\WindowAnalysisParam.py:540
 #: .\Code\Translations\TrListas.py:39
 msgid "Tactical themes"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:489
-#: .\Code\Analysis\WindowAnalysisParam.py:542
+#: .\Code\Analysis\WindowAnalysisParam.py:490
+#: .\Code\Analysis\WindowAnalysisParam.py:543
 #: .\Code\Board\Board.py:1039
 #: .\Code\Director\TabVisual.py:433
 #: .\Code\Endings\WEndingsGTB.py:295
@@ -2770,11 +2769,11 @@ msgstr ""
 msgid "Configuration"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:494
+#: .\Code\Analysis\WindowAnalysisParam.py:495
 msgid "Analysis Configuration"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:546
+#: .\Code\Analysis\WindowAnalysisParam.py:547
 #: .\Code\Databases\WDB_Games.py:1222
 #: .\Code\Openings\WindowOpeningLine.py:196
 #: .\Code\Openings\WindowOpeningLine.py:242
@@ -2783,7 +2782,7 @@ msgstr ""
 msgid "Mass analysis"
 msgstr ""
 
-#: .\Code\Analysis\WindowAnalysisParam.py:578
+#: .\Code\Analysis\WindowAnalysisParam.py:579
 msgid "No file was specified where to save results"
 msgstr ""
 
@@ -2889,10 +2888,10 @@ msgstr ""
 
 #: .\Code\Base\Game.py:1054
 #: .\Code\Endings\WEndingsGTB.py:114
-#: .\Code\Engines\EngineResponse.py:790
-#: .\Code\Engines\EngineResponse.py:885
-#: .\Code\Engines\EngineResponse.py:996
-#: .\Code\Maps\WorkMap.py:510
+#: .\Code\Engines\EngineResponse.py:801
+#: .\Code\Engines\EngineResponse.py:896
+#: .\Code\Engines\EngineResponse.py:1007
+#: .\Code\Maps\WorkMap.py:22
 #: .\Code\Openings\ManagerOPLEngines.py:477
 #: .\Code\PlayAgainstEngine\ManagerPlayAgainstEngine.py:1506
 msgid "Mate"
@@ -3044,7 +3043,7 @@ msgid "Positions"
 msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMT.py:190
-#: .\Code\Maps\WorkMap.py:852
+#: .\Code\Maps\WorkMap.py:364
 #: .\Code\Menus\CompeteMenu.py:67
 #: .\Code\Menus\CompeteMenu.py:103
 #: .\Code\Routes\ManagerRoutes.py:352
@@ -3297,7 +3296,7 @@ msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:202
 #: .\Code\Databases\WDB_Summary.py:78
-#: .\Code\Leitner\ManagerLeitner.py:272
+#: .\Code\Leitner\ManagerLeitner.py:281
 #: .\Code\Main\WBase.py:185
 #: .\Code\Main\WBase.py:216
 #: .\Code\Tactics\Tactics.py:741
@@ -3432,7 +3431,6 @@ msgstr ""
 #: .\Code\Kibitzers\WKibLine.py:105
 #: .\Code\Kibitzers\WKibStockfishEval.py:29
 #: .\Code\LearnGame\WindowLearnGame.py:538
-#: .\Code\Leitner\ManagerLeitner.py:29
 #: .\Code\Main\WBase.py:154
 #: .\Code\Main\WBase.py:468
 #: .\Code\Main\WBase.py:512
@@ -3649,7 +3647,7 @@ msgstr ""
 
 #: .\Code\Board\BoardSections\BoardVisualMenu.py:185
 #: .\Code\Maps\WindowWorkMap.py:136
-#: .\Code\Maps\WorkMap.py:514
+#: .\Code\Maps\WorkMap.py:26
 msgid "Medium"
 msgstr ""
 
@@ -4026,7 +4024,7 @@ msgid "Discard"
 msgstr ""
 
 #: .\Code\Books\ManagerTrainBooks.py:74
-#: .\Code\Config\Configuration.py:341
+#: .\Code\Config\Configuration.py:344
 #: .\Code\Config\WindowConfig.py:494
 #: .\Code\Config\WindowConfig.py:498
 #: .\Code\Databases\WDB_Perfomance.py:367
@@ -4147,8 +4145,8 @@ msgstr ""
 #: .\Code\CountsCaptures\WRunCounts.py:199
 #: .\Code\Expeditions\ManagerEverest.py:344
 #: .\Code\FindAllMoves\ManagerFindAllMoves.py:377
-#: .\Code\Leitner\ManagerLeitner.py:57
-#: .\Code\Maps\WorkMap.py:852
+#: .\Code\Leitner\ManagerLeitner.py:61
+#: .\Code\Maps\WorkMap.py:364
 #: .\Code\Openings\ManagerOPLEngines.py:415
 #: .\Code\Openings\ManagerOPLPositions.py:146
 #: .\Code\Openings\ManagerOPLSequential.py:218
@@ -4165,7 +4163,7 @@ msgid "Next time you will start from the first position"
 msgstr ""
 
 #: .\Code\Books\ManagerTrainBooksOL.py:239
-#: .\Code\Leitner\ManagerLeitner.py:137
+#: .\Code\Leitner\ManagerLeitner.py:142
 #: .\Code\Openings\ManagerOPLSequential.py:360
 #: .\Code\Openings\ManagerOPLStatic.py:316
 #: .\Code\TrainPositions\ManagerTrainPositions.py:610
@@ -4186,20 +4184,20 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: .\Code\Books\Polyglot.py:285
+#: .\Code\Books\Polyglot.py:286
 msgid "First best move"
 msgstr ""
 
-#: .\Code\Books\Polyglot.py:286
+#: .\Code\Books\Polyglot.py:287
 #: .\Code\Openings\WindowOpeningLine.py:794
 msgid "All best moves"
 msgstr ""
 
-#: .\Code\Books\Polyglot.py:287
+#: .\Code\Books\Polyglot.py:288
 msgid "Two first moves"
 msgstr ""
 
-#: .\Code\Books\Polyglot.py:288
+#: .\Code\Books\Polyglot.py:289
 msgid "Three first moves"
 msgstr ""
 
@@ -6170,7 +6168,7 @@ msgid "Tags"
 msgstr ""
 
 #: .\Code\Databases\WDB_GUtils.py:364
-#: .\Code\Engines\Engines.py:337
+#: .\Code\Engines\Engines.py:340
 #: .\Code\QT\GridEditCols.py:42
 #: .\Code\Shortcuts\WShortcuts.py:27
 msgid "Key"
@@ -6720,7 +6718,7 @@ msgid "Rebuild"
 msgstr ""
 
 #: .\Code\Databases\WDB_Players.py:391
-#: .\Code\Engines\Engines.py:339
+#: .\Code\Engines\Engines.py:342
 #: .\Code\Engines\WEngines.py:362
 #: .\Code\Engines\WExternalEngines.py:243
 #: .\Code\Engines\WExternalEngines.py:518
@@ -7293,47 +7291,47 @@ msgstr ""
 msgid "pawns"
 msgstr ""
 
-#: .\Code\Engines\EngineResponse.py:811
+#: .\Code\Engines\EngineResponse.py:822
 #: .\Code\Themes\WDB_Theme_Analysis.py:31
 msgid "Centipawns lost"
 msgstr ""
 
-#: .\Code\Engines\EngineResponse.py:896
+#: .\Code\Engines\EngineResponse.py:907
 #: .\Code\PlayAgainstEngine\Personalities.py:146
 msgid "To move a pawn"
 msgstr ""
 
-#: .\Code\Engines\EngineResponse.py:911
+#: .\Code\Engines\EngineResponse.py:922
 #: .\Code\PlayAgainstEngine\Personalities.py:147
 msgid "Advance piece"
 msgstr ""
 
-#: .\Code\Engines\EngineResponse.py:917
-#: .\Code\Engines\EngineResponse.py:951
+#: .\Code\Engines\EngineResponse.py:928
+#: .\Code\Engines\EngineResponse.py:962
 #: .\Code\PlayAgainstEngine\Personalities.py:148
 #: .\Code\PlayAgainstEngine\Personalities.py:165
 msgid "Make check"
 msgstr ""
 
-#: .\Code\Engines\EngineResponse.py:923
-#: .\Code\Engines\EngineResponse.py:961
+#: .\Code\Engines\EngineResponse.py:934
+#: .\Code\Engines\EngineResponse.py:972
 #: .\Code\PlayAgainstEngine\Personalities.py:149
 #: .\Code\PlayAgainstEngine\Personalities.py:166
 #: .\Code\Sound\Sound.py:182
 msgid "Capture"
 msgstr ""
 
-#: .\Code\Engines\EngineResponse.py:929
+#: .\Code\Engines\EngineResponse.py:940
 #: .\Code\PlayAgainstEngine\Personalities.py:163
 msgid "Keep the two bishops"
 msgstr ""
 
-#: .\Code\Engines\EngineResponse.py:943
+#: .\Code\Engines\EngineResponse.py:954
 #: .\Code\PlayAgainstEngine\Personalities.py:164
 msgid "Advance"
 msgstr ""
 
-#: .\Code\Engines\Engines.py:351
+#: .\Code\Engines\Engines.py:354
 #: .\Code\Kibitzers\WindowKibitzers.py:347
 #: .\Code\Kibitzers\WindowKibitzers.py:512
 #: .\Code\Kibitzers\WindowKibitzers.py:577
@@ -7341,7 +7339,7 @@ msgstr ""
 msgid "Fixed depth"
 msgstr ""
 
-#: .\Code\Engines\Engines.py:353
+#: .\Code\Engines\Engines.py:356
 #: .\Code\Kibitzers\WindowKibitzers.py:344
 #: .\Code\Kibitzers\WindowKibitzers.py:511
 #: .\Code\Kibitzers\WindowKibitzers.py:576
@@ -7350,7 +7348,7 @@ msgstr ""
 msgid "Fixed time in seconds"
 msgstr ""
 
-#: .\Code\Engines\Engines.py:356
+#: .\Code\Engines\Engines.py:359
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:203
 msgid "Limits of engine thinking"
 msgstr ""
@@ -7841,7 +7839,7 @@ msgid "Find it."
 msgstr ""
 
 #: .\Code\ForcingMoves\WForcingMoves.py:35
-#: .\Code\Leitner\ManagerLeitner.py:172
+#: .\Code\Leitner\ManagerLeitner.py:177
 msgid "Correct!"
 msgstr ""
 
@@ -8015,7 +8013,7 @@ msgid "Centipawns accumulated"
 msgstr ""
 
 #: .\Code\GM\ManagerGM.py:460
-#: .\Code\Maps\ManagerMateMap.py:229
+#: .\Code\Maps\ManagerMateMap.py:230
 #: .\Code\Resistance\ManagerResistance.py:257
 msgid "Game ended"
 msgstr ""
@@ -8632,7 +8630,7 @@ msgstr ""
 msgid "Play against a game"
 msgstr ""
 
-#: .\Code\Leitner\ManagerLeitner.py:30
+#: .\Code\Leitner\ManagerLeitner.py:32
 #: .\Code\Openings\ManagerOPLSequential.py:247
 #: .\Code\Routes\WindowRoutes.py:242
 #: .\Code\Tactics\ManagerTactics.py:180
@@ -8640,27 +8638,27 @@ msgstr ""
 msgid "Jump to the next after solving"
 msgstr ""
 
-#: .\Code\Leitner\ManagerLeitner.py:59
+#: .\Code\Leitner\ManagerLeitner.py:63
 msgid "Session finished"
 msgstr ""
 
-#: .\Code\Leitner\ManagerLeitner.py:120
+#: .\Code\Leitner\ManagerLeitner.py:125
 msgid "Puzzles pending in this session"
 msgstr ""
 
-#: .\Code\Leitner\ManagerLeitner.py:167
+#: .\Code\Leitner\ManagerLeitner.py:172
 msgid "Position won!"
 msgstr ""
 
-#: .\Code\Leitner\ManagerLeitner.py:169
+#: .\Code\Leitner\ManagerLeitner.py:174
 msgid "Position sent to box"
 msgstr ""
 
-#: .\Code\Leitner\ManagerLeitner.py:175
+#: .\Code\Leitner\ManagerLeitner.py:180
 msgid "There have been errors"
 msgstr ""
 
-#: .\Code\Leitner\ManagerLeitner.py:272
+#: .\Code\Leitner\ManagerLeitner.py:281
 #: .\Code\Main\WBase.py:185
 #: .\Code\Tactics\ManagerTactics.py:228
 #: .\Code\TrainPositions\ManagerTrainPositions.py:482
@@ -9068,7 +9066,763 @@ msgstr ""
 msgid "Analysis Bar"
 msgstr ""
 
-#: .\Code\Maps\ManagerMateMap.py:231
+#: .\Code\Maps\Countries.py:99
+msgid "Andorra"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:100
+msgid "United Arab Emirates"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:101
+msgid "Afghanistan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:102
+msgid "Albania"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:103
+msgid "Armenia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:104
+msgid "Angola"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:105
+msgid "Argentina"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:108
+msgid "Austria"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:115
+msgid "Australia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:120
+msgid "Azerbaijan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:121
+msgid "Bosnia and Herzegovina"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:122
+msgid "Bangladesh"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:123
+msgid "Belgium"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:124
+msgid "Burkina Faso"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:125
+msgid "Bulgaria"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:126
+msgid "Bahrain"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:127
+msgid "Burundi"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:128
+msgid "Benin"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:129
+msgid "Brunei Darussalam"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:130
+msgid "Bolivia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:133
+msgid "Brazil"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:138
+msgid "Bahamas"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:139
+msgid "Bhutan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:140
+msgid "Botswana"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:141
+msgid "Belarus"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:142
+msgid "Belize"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:143
+msgid "Canada"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:146
+msgid "Congo, the Democratic Republic of the"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:153
+msgid "Central African Republic"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:158
+msgid "Congo"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:159
+msgid "Switzerland"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:160
+msgid "Ivory Coast"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:161
+msgid "Chile"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:162
+msgid "Cameroon"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:165
+msgid "China"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:187
+msgid "Colombia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:188
+msgid "Costa Rica"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:189
+msgid "Cuba"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:190
+msgid "Cabo Verde"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:191
+msgid "Cyprus"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:192
+msgid "Czech Republic"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:195
+msgid "Germany"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:200
+msgid "Djibouti"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:201
+msgid "Denmark"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:202
+msgid "Dominica"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:203
+msgid "Dominican Republic"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:204
+msgid "Algeria"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:205
+msgid "Ecuador"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:206
+msgid "Estonia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:207
+msgid "Egypt"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:208
+msgid "Western Sahara"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:209
+msgid "Eritrea"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:210
+msgid "Spain"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:211
+msgid "Ethiopia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:212
+msgid "Finland"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:213
+msgid "Fiji"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:214
+msgid "Micronesia, Federated States of"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:217
+msgid "France"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:222
+msgid "Gabon"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:225
+msgid "United Kingdom"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:257
+msgid "Georgia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:258
+msgid "French Guiana"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:259
+msgid "Ghana"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:260
+msgid "Gambia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:261
+msgid "Guinea"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:262
+msgid "Equatorial Guinea"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:263
+msgid "Greece"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:264
+msgid "Guatemala"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:265
+msgid "Guinea-Bissau"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:266
+msgid "Guyana"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:267
+msgid "Honduras"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:268
+msgid "Croatia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:269
+msgid "Haiti"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:270
+msgid "Hungary"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:271
+msgid "Indonesia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:272
+msgid "Ireland"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:273
+msgid "Israel"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:274
+msgid "India"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:275
+msgid "Iraq"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:278
+msgid "Iran, Islamic Republic of"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:283
+msgid "Iceland"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:284
+msgid "Italy"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:285
+msgid "Jamaica"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:286
+msgid "Jordan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:287
+msgid "Japan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:288
+msgid "Kenya"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:289
+msgid "Kyrgyzstan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:290
+msgid "Cambodia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:291
+msgid "Kiribati"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:292
+msgid "Comoros"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:295
+msgid "Korea, Democratic People's Republic of"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:300
+msgid "Korea, Republic of"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:301
+msgid "Kuwait"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:302
+msgid "Kazakhstan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:305
+msgid "Lao People's Democratic Republic"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:310
+msgid "Lebanon"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:311
+msgid "Liechtenstein"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:312
+msgid "Sri Lanka"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:313
+msgid "Liberia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:314
+msgid "Lesotho"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:315
+msgid "Lithuania"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:316
+msgid "Luxembourg"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:317
+msgid "Latvia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:318
+msgid "Libya"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:319
+msgid "Morocco"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:320
+msgid "Monaco"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:321
+msgid "Moldova, Republic of"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:322
+msgid "Montenegro"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:323
+msgid "Madagascar"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:324
+msgid "Marshall Islands"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:325
+msgid "Macedonia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:326
+msgid "Mali"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:327
+msgid "Myanmar"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:328
+msgid "Mongolia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:329
+msgid "Mauritania"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:330
+msgid "Malta"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:331
+msgid "Mauritius"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:332
+msgid "Maldives"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:333
+msgid "Malawi"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:334
+msgid "Mexico"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:335
+msgid "Malaysia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:338
+msgid "Mozambique"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:343
+msgid "Namibia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:344
+msgid "Niger"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:345
+msgid "Nigeria"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:346
+msgid "Nicaragua"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:347
+msgid "Netherlands"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:348
+msgid "Norway"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:349
+msgid "Nepal"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:350
+msgid "Nauru"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:351
+msgid "New Zealand"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:352
+msgid "Oman"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:353
+msgid "Panama"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:354
+msgid "Peru"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:355
+msgid "Papua New Guinea"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:356
+msgid "Philippines"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:357
+msgid "Pakistan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:358
+msgid "Poland"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:359
+msgid "Palestine, State of"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:360
+msgid "Portugal"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:361
+msgid "Palau"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:362
+msgid "Paraguay"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:363
+msgid "Qatar"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:364
+msgid "Romania"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:367
+msgid "Serbia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:374
+msgid "Russian Federation"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:395
+msgid "Rwanda"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:398
+msgid "Saudi Arabia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:403
+msgid "Seychelles"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:404
+msgid "Sudan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:405
+msgid "Sweden"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:406
+msgid "Singapore"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:407
+msgid "Slovenia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:408
+msgid "Slovakia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:409
+msgid "Sierra Leone"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:410
+msgid "San Marino"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:411
+msgid "Senegal"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:412
+msgid "Somalia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:413
+msgid "Suriname"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:414
+msgid "South Sudan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:415
+msgid "Sao Tome and Principe"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:416
+msgid "El Salvador"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:419
+msgid "Syrian Arab Republic"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:424
+msgid "Swaziland"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:425
+msgid "Chad"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:426
+msgid "Togo"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:427
+msgid "Thailand"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:428
+msgid "Tajikistan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:429
+msgid "Timor-Leste"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:430
+msgid "Turkmenistan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:431
+msgid "Tunisia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:432
+msgid "Tonga"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:435
+msgid "Turkey"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:440
+msgid "Trinidad and Tobago"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:443
+msgid "Tanzania, United Republic of"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:450
+msgid "Ukraine"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:455
+msgid "Uganda"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:458
+msgid "United States"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:463
+msgid "Uruguay"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:464
+msgid "Uzbekistan"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:465
+msgid "Holy See (Vatican City State)"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:466
+msgid "Venezuela"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:467
+msgid "Viet Nam"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:468
+msgid "Vanuatu"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:469
+msgid "Samoa"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:470
+msgid "Yemen"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:471
+msgid "South Africa"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:472
+msgid "Zambia"
+msgstr ""
+
+#: .\Code\Maps\Countries.py:473
+msgid "Zimbabwe"
+msgstr ""
+
+#: .\Code\Maps\ManagerMateMap.py:232
 msgid "Congratulations you have won %s."
 msgstr ""
 
@@ -9106,12 +9860,12 @@ msgid "Checkmates in GM games"
 msgstr ""
 
 #: .\Code\Maps\WindowWorkMap.py:135
-#: .\Code\Maps\WorkMap.py:513
+#: .\Code\Maps\WorkMap.py:25
 msgid "Easy"
 msgstr ""
 
 #: .\Code\Maps\WindowWorkMap.py:137
-#: .\Code\Maps\WorkMap.py:515
+#: .\Code\Maps\WorkMap.py:27
 msgid "Hard"
 msgstr ""
 
@@ -9132,763 +9886,7 @@ msgstr ""
 msgid "this work"
 msgstr ""
 
-#: .\Code\Maps\WorkMap.py:111
-msgid "Andorra"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:112
-msgid "United Arab Emirates"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:113
-msgid "Afghanistan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:114
-msgid "Albania"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:115
-msgid "Armenia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:116
-msgid "Angola"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:117
-msgid "Argentina"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:120
-msgid "Austria"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:127
-msgid "Australia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:132
-msgid "Azerbaijan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:133
-msgid "Bosnia and Herzegovina"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:134
-msgid "Bangladesh"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:135
-msgid "Belgium"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:136
-msgid "Burkina Faso"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:137
-msgid "Bulgaria"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:138
-msgid "Bahrain"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:139
-msgid "Burundi"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:140
-msgid "Benin"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:141
-msgid "Brunei Darussalam"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:142
-msgid "Bolivia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:145
-msgid "Brazil"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:150
-msgid "Bahamas"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:151
-msgid "Bhutan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:152
-msgid "Botswana"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:153
-msgid "Belarus"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:154
-msgid "Belize"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:155
-msgid "Canada"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:158
-msgid "Congo, the Democratic Republic of the"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:165
-msgid "Central African Republic"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:170
-msgid "Congo"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:171
-msgid "Switzerland"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:172
-msgid "Ivory Coast"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:173
-msgid "Chile"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:174
-msgid "Cameroon"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:177
-msgid "China"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:199
-msgid "Colombia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:200
-msgid "Costa Rica"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:201
-msgid "Cuba"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:202
-msgid "Cabo Verde"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:203
-msgid "Cyprus"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:204
-msgid "Czech Republic"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:207
-msgid "Germany"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:212
-msgid "Djibouti"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:213
-msgid "Denmark"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:214
-msgid "Dominica"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:215
-msgid "Dominican Republic"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:216
-msgid "Algeria"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:217
-msgid "Ecuador"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:218
-msgid "Estonia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:219
-msgid "Egypt"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:220
-msgid "Western Sahara"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:221
-msgid "Eritrea"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:222
-msgid "Spain"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:223
-msgid "Ethiopia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:224
-msgid "Finland"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:225
-msgid "Fiji"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:226
-msgid "Micronesia, Federated States of"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:229
-msgid "France"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:234
-msgid "Gabon"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:237
-msgid "United Kingdom"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:269
-msgid "Georgia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:270
-msgid "French Guiana"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:271
-msgid "Ghana"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:272
-msgid "Gambia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:273
-msgid "Guinea"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:274
-msgid "Equatorial Guinea"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:275
-msgid "Greece"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:276
-msgid "Guatemala"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:277
-msgid "Guinea-Bissau"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:278
-msgid "Guyana"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:279
-msgid "Honduras"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:280
-msgid "Croatia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:281
-msgid "Haiti"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:282
-msgid "Hungary"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:283
-msgid "Indonesia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:284
-msgid "Ireland"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:285
-msgid "Israel"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:286
-msgid "India"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:287
-msgid "Iraq"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:290
-msgid "Iran, Islamic Republic of"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:295
-msgid "Iceland"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:296
-msgid "Italy"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:297
-msgid "Jamaica"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:298
-msgid "Jordan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:299
-msgid "Japan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:300
-msgid "Kenya"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:301
-msgid "Kyrgyzstan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:302
-msgid "Cambodia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:303
-msgid "Kiribati"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:304
-msgid "Comoros"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:307
-msgid "Korea, Democratic People's Republic of"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:312
-msgid "Korea, Republic of"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:313
-msgid "Kuwait"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:314
-msgid "Kazakhstan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:317
-msgid "Lao People's Democratic Republic"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:322
-msgid "Lebanon"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:323
-msgid "Liechtenstein"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:324
-msgid "Sri Lanka"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:325
-msgid "Liberia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:326
-msgid "Lesotho"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:327
-msgid "Lithuania"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:328
-msgid "Luxembourg"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:329
-msgid "Latvia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:330
-msgid "Libya"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:331
-msgid "Morocco"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:332
-msgid "Monaco"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:333
-msgid "Moldova, Republic of"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:334
-msgid "Montenegro"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:335
-msgid "Madagascar"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:336
-msgid "Marshall Islands"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:337
-msgid "Macedonia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:338
-msgid "Mali"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:339
-msgid "Myanmar"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:340
-msgid "Mongolia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:341
-msgid "Mauritania"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:342
-msgid "Malta"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:343
-msgid "Mauritius"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:344
-msgid "Maldives"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:345
-msgid "Malawi"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:346
-msgid "Mexico"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:347
-msgid "Malaysia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:350
-msgid "Mozambique"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:355
-msgid "Namibia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:356
-msgid "Niger"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:357
-msgid "Nigeria"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:358
-msgid "Nicaragua"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:359
-msgid "Netherlands"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:360
-msgid "Norway"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:361
-msgid "Nepal"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:362
-msgid "Nauru"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:363
-msgid "New Zealand"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:364
-msgid "Oman"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:365
-msgid "Panama"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:366
-msgid "Peru"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:367
-msgid "Papua New Guinea"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:368
-msgid "Philippines"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:369
-msgid "Pakistan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:370
-msgid "Poland"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:371
-msgid "Palestine, State of"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:372
-msgid "Portugal"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:373
-msgid "Palau"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:374
-msgid "Paraguay"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:375
-msgid "Qatar"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:376
-msgid "Romania"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:379
-msgid "Serbia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:386
-msgid "Russian Federation"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:407
-msgid "Rwanda"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:410
-msgid "Saudi Arabia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:415
-msgid "Seychelles"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:416
-msgid "Sudan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:417
-msgid "Sweden"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:418
-msgid "Singapore"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:419
-msgid "Slovenia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:420
-msgid "Slovakia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:421
-msgid "Sierra Leone"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:422
-msgid "San Marino"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:423
-msgid "Senegal"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:424
-msgid "Somalia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:425
-msgid "Suriname"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:426
-msgid "South Sudan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:427
-msgid "Sao Tome and Principe"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:428
-msgid "El Salvador"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:431
-msgid "Syrian Arab Republic"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:436
-msgid "Swaziland"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:437
-msgid "Chad"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:438
-msgid "Togo"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:439
-msgid "Thailand"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:440
-msgid "Tajikistan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:441
-msgid "Timor-Leste"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:442
-msgid "Turkmenistan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:443
-msgid "Tunisia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:444
-msgid "Tonga"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:447
-msgid "Turkey"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:452
-msgid "Trinidad and Tobago"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:455
-msgid "Tanzania, United Republic of"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:462
-msgid "Ukraine"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:467
-msgid "Uganda"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:470
-msgid "United States"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:475
-msgid "Uruguay"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:476
-msgid "Uzbekistan"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:477
-msgid "Holy See (Vatican City State)"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:478
-msgid "Venezuela"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:479
-msgid "Viet Nam"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:480
-msgid "Vanuatu"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:481
-msgid "Samoa"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:482
-msgid "Yemen"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:483
-msgid "South Africa"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:484
-msgid "Zambia"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:485
-msgid "Zimbabwe"
-msgstr ""
-
-#: .\Code\Maps\WorkMap.py:511
+#: .\Code\Maps\WorkMap.py:23
 msgid "STS"
 msgstr ""
 

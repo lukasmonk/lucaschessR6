@@ -215,6 +215,8 @@ class Configuration:
         self.x_eval_mistake = 7.5
         self.x_eval_inaccuracy = 3.3
 
+        self.x_eval_goodmove_tolerance = 0
+
         self.x_eval_very_good_depth = 8
         self.x_eval_good_depth = 5
         self.x_eval_speculative_depth = 3
@@ -326,12 +328,13 @@ class Configuration:
             "inaccuracy": (1.0, 99.0, "dec"),
             "very_good_depth": (1, 128, "int"),
             "good_depth": (1, 128, "int"),
+            "goodmove_tolerance": (0, 25, "%"),
             "speculative_depth": (1, 128, "int"),
             "max_elo": (2000, 4000, "int"),
             "min_elo": (0, 2000, "int"),
-            "elo_blunder_factor": (1, 99, "dec"),
-            "elo_mistake_factor": (1, 99, "dec"),
-            "elo_inaccuracy_factor": (1, 99, "dec"),
+            "elo_blunder_factor": (1, 99.0, "dec"),
+            "elo_mistake_factor": (1, 99.0, "dec"),
+            "elo_inaccuracy_factor": (1, 99.0, "dec"),
         }
 
     def boxrooms(self):

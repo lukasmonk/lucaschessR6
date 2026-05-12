@@ -119,32 +119,32 @@ QGroupBox[type="selop"]::title
 /* QPUSHBUTTON ---------------------------------------------------------------------------*/
 QPushButton
 {
-	background-color: #2c3e50;
-	color: #bababa;
-	border-style: solid;
-	border-width: 2px;
-	border-radius: 4px;
-	border-color: #808080;
-	padding: 4px;
+    background-color: #2c3e50;
+    color: #bababa;
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 4px;
+    border-color: #808080;
+    padding: 4px;
 }
 QPushButton::flat
 {
-	background-color: transparent;
-	border: none;
-	color: #bababa;
-	padding: 0px;
+    background-color: transparent;
+    border: none;
+    color: #bababa;
+    padding: 0px;
 
 }
 QPushButton::disabled
 {
-	background-color: #404040;
-	color: #656565;
-	border-color: #051a39;
+    background-color: #404040;
+    color: #656565;
+    border-color: #051a39;
 
 }
 QPushButton::pressed
 {
-	background-color: #808080;
+    background-color: #808080;
 }
 
 /* LABEL ---------------------------------------------------------------------------------*/
@@ -238,19 +238,19 @@ QLabel[type="tutor-player"]
 /* TREE ----------------------------------------------------------------------------------*/
 QTreeView
 {
-	show-decoration-selected: 1;
-	alternate-background-color: #3a3a3a;
-	selection-color: #bababa;
-	background-color: #2d2d2d;
-	border: 1px solid #808080;
-	padding-top : 5px;
-	color: #bababa;
+    show-decoration-selected: 1;
+    alternate-background-color: #3a3a3a;
+    selection-color: #bababa;
+    background-color: #2d2d2d;
+    border: 1px solid #808080;
+    padding-top : 5px;
+    color: #bababa;
 }
 
 QTreeView::item:selected
 {
-	color:#bababa;
-	background-color: #2c3e50;
+    color:#bababa;
+    background-color: #2c3e50;
 }
 
 /* MENU ----------------------------------------------------------------------------------*/
@@ -333,7 +333,7 @@ QCheckBox
 
 QCheckBox:disabled
 {
-	color: #ddddde;
+    color: #ddddde;
 }
 
 QCheckBox::indicator:checked
@@ -348,8 +348,8 @@ QCheckBox::indicator:unchecked
 
 QCheckBox:disabled
 {
-	color: #808086;
-	padding: 2px;
+    color: #808086;
+    padding: 2px;
 }
 
 /* TOOLTIP -------------------------------------------------------------------------------*/
@@ -374,9 +374,9 @@ QComboBox
 }
 QComboBox::disabled
 {
-	background-color: #404040;
-	color: #656565;
-	border-color: #051a39;
+    background-color: #404040;
+    color: #656565;
+    border-color: #051a39;
 }
 QComboBox:hover
 {
@@ -385,7 +385,7 @@ QComboBox:hover
 QComboBox:on
 {
     background-color: #979796;
-	color: #000000;
+    color: #000000;
 }
 QComboBox QAbstractItemView
 {
@@ -399,13 +399,13 @@ QComboBox QAbstractItemView
 
 /* TREEVIEW ---------------------------------------------------------------------------------*/
 QTreeWidget[type="102"] {
-        background-color: #fafafa;           /* Fondo ligeramente grisáceo, no blanco puro */
-        alternate-background-color: #f2f2f2; /* Filas alternas suaves */
-        selection-background-color: #cce0f5; /* Selección azul muy suave */
-        selection-color: #1a1a1a;            /* Texto oscuro para contraste */
-        border: 1px solid #d6d6d6;           /* Borde ligeramente más suave que light */
+        background-color: #fafafa;
+        alternate-background-color: #f2f2f2;
+        selection-background-color: #cce0f5;
+        selection-color: #1a1a1a;
+        border: 1px solid #d6d6d6;
         outline: 0;
-        color: #2c2c2c;                      /* Texto ligeramente más suave que negro puro */
+        color: #2c2c2c;
 }
 
 QTreeWidget[type="102"]::item {
@@ -413,11 +413,11 @@ QTreeWidget[type="102"]::item {
 }
 
 QTreeWidget[type="102"]::item:hover {
-    background-color: #e6f0fa;           /* Hover azul muy tenue */
+    background-color: #e6f0fa;
 }
 
 QHeaderView[type="102"]::section {
-    background-color: #e8e8e8;           /* Cabecera ligeramente más clara */
+    background-color: #e8e8e8;
     color: #3a3a3a;
     padding: 6px;
     border: none;
@@ -425,4 +425,3 @@ QHeaderView[type="102"]::section {
     border-bottom: 1px solid #d6d6d6;
     font-weight: bold;
 }
-

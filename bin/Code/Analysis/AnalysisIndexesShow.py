@@ -202,12 +202,10 @@ class ShowHtml:
 
           table.stats {{
             width: 100%;
-            border-collapse: separate;
+            border-collapse: collapse;
             border-spacing: 0;
             border: 1px solid #e0e0e0;
-            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             background-color: #fff;
           }}
 

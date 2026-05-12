@@ -284,7 +284,7 @@ class Move:
             return self.pgn_translated()
         parts = []
         for c in self.base_pgn():
-            if c in "NBRQK":
+            if c in "NBRQKP":
                 c = dicHTMLFigs[c if is_white else c.lower()]
             parts.append(c)
         return "".join(parts)
