@@ -494,6 +494,15 @@ class Histogram(QtWidgets.QGraphicsView):
         self.owner.grid_tecla_control(self.grid, k, False, False, False)
 
 
+def calculate_accuracy(best_score, played_score):
+    cp_loss = abs(best_score - played_score)
+
+    k = 0.0044
+    accuracy = math.exp(-k * cp_loss) * 100
+
+    return round(accuracy, 2)
+
+
 def gen_histograms(game: Game.Game):
     def initial_position() -> int:
         if game.is_fen_initial():
@@ -524,7 +533,8 @@ def gen_histograms(game: Game.Game):
         pts0 = mrm.li_rm[0].centipawns_abs()
 
         move.lostp_abs = lostp_abs = pts0 - pts
-        porc = LOST_POINTS_THRESHOLD - lostp_abs if lostp_abs < LOST_POINTS_THRESHOLD else 0
+        # porc = LOST_POINTS_THRESHOLD - lostp_abs if lostp_abs < LOST_POINTS_THRESHOLD else 0
+        porc = calculate_accuracy(pts0, pts)
         move.porcentaje = porc
 
         porc_t += porc

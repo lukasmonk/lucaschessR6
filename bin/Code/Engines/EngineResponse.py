@@ -762,12 +762,23 @@ class MultiEngineResponse:
             return li
         n = len(self.li_rm)
         rm0 = self.li_rm[0]
+        cp0 = rm0.centipawns_abs()
+        if Code.configuration.x_eval_goodmove_tolerance and rm0.mate == 0:
+            tolerance = abs(cp0*Code.configuration.x_eval_goodmove_tolerance/100.0)
+        else:
+            tolerance = 0
         li.append(rm0)
         if n > 1:
             for n in range(1, n):
                 rm = self.li_rm[n]
-                if rm0.centipawns_abs() == rm.centipawns_abs():
+                cp = rm.centipawns_abs()
+                if cp0 == cp:
                     li.append(rm)
+                elif tolerance:
+                    if abs(cp0-cp) < tolerance:
+                        li.append(rm)
+                    else:
+                        break
                 else:
                     break
         return li
@@ -1249,14 +1260,16 @@ class MultiEngineResponse:
     def set_nag_color(self, rm):
         mj_pts = self.li_rm[0].centipawns_abs()
         rm_pts = rm.centipawns_abs()
-        nb = mj_pts - rm_pts
-        if nb > 5:
-            ev = Code.analysis_eval.evaluate(self.li_rm[0], rm)
-            return ev, ev
-
         libest = self.bestmoves()
         if rm not in libest:
+            nb = mj_pts - rm_pts
+            if nb > 5:
+                ev = Code.analysis_eval.evaluate(self.li_rm[0], rm)
+                return ev, ev
             return NO_RATING, NO_RATING
+
+        if mj_pts != rm_pts:
+            return NO_RATING, GOOD_MOVE
 
         # Si la mayoría son buenos movimientos
         if len(libest) * 1.0 / len(self.li_rm) >= 0.8:

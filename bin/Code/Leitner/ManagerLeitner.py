@@ -23,11 +23,13 @@ class ManagerLeitner(Manager.Manager):
     ini_clock: float
     jump_auto: bool
     key_config: str = "LEITNER_MANAGER"
+    session_finished: bool
 
     def config_leitner(self):
         menu = QTDialogs.LCMenu(self.main_window)
-        title = _("Disable") if self.jump_auto else _("Enable")
-        menu.opcion("jump", f'{title}: {_("Jump to the next after solving")}', Iconos.Jump())
+        icon = Iconos.Checked() if self.jump_auto else Iconos.Unchecked()
+        # title = _("Disable") if self.jump_auto else _("Enable")
+        menu.opcion("jump", _("Jump to the next after solving"), icon)
         if menu.lanza():
             self.jump_auto = not self.jump_auto
             dic = self.configuration.read_variables(self.key_config)
@@ -39,6 +41,7 @@ class ManagerLeitner(Manager.Manager):
         self.leitner_db = leitner_db
         self.pos_db = pos_db
         self.with_error = False
+        self.session_finished = False
 
         dic = self.configuration.read_variables(self.key_config)
         self.jump_auto = dic.get("JUMP_AUTO", False)
@@ -51,6 +54,7 @@ class ManagerLeitner(Manager.Manager):
 
     def check_current(self) -> bool:
         if len(self.leitner.current_ids_session) == 0:
+            self.session_finished = True
             self.leitner.check_session()
 
             if self.leitner.is_the_end():
@@ -61,8 +65,9 @@ class ManagerLeitner(Manager.Manager):
 
             self.leitner_db.set_leitner(self.pos_db, self.leitner)
             self.with_error = False
-            self.finalizar()
-            return False
+            if self.jump_auto:
+                self.finalizar()
+                return False
         return True
 
     def reiniciar_puzzle(self):
@@ -182,7 +187,10 @@ class ManagerLeitner(Manager.Manager):
         if jump_to_next:
             QtCore.QTimer.singleShot(0, self.reiniciar_puzzle)
         else:
-            self.set_toolbar([TB_CLOSE, TB_CONFIG, TB_NEXT])
+            li = [TB_CLOSE, TB_CONFIG]
+            if not self.session_finished:
+                li.append(TB_NEXT)
+            self.set_toolbar(li)
 
     def finalizar(self):
         if self.with_error:
@@ -209,7 +217,8 @@ class ManagerLeitner(Manager.Manager):
             self.config_leitner()
 
         elif key == TB_NEXT:
-            self.reiniciar_puzzle()
+            if not self.session_finished:
+                self.reiniciar_puzzle()
 
         else:
             self.routine_default(key)

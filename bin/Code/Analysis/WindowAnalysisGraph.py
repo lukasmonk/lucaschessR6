@@ -205,7 +205,6 @@ class WAnalisisGraph(LCDialog.LCDialog):
         for n in range(6):
             self.htotal[n].setVisible(False)
         self.htotal[tab_vis].setVisible(True)
-        # self.adjustSize()
         self.tabActive = ntab
 
     def grid_cambiado_registro(self, grid, row, column):
@@ -213,7 +212,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
     def save_indexes(self):
         self.manager.game.set_first_comment(self.alm.indexesRAW, False)
-        QTMessages.temporary_message(self, _("Saved"), 1.8)
+        QTMessages.temporary_message(self, _("Saved"), 0.8)
 
     def grid_left_button(self, grid, row, _column):
         self.board.remove_arrows()
