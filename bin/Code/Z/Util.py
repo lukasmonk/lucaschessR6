@@ -3,6 +3,7 @@ import collections
 import datetime
 import glob
 import hashlib
+import math
 import os
 import pickle
 import random
@@ -999,6 +1000,30 @@ class SmoothedEstimator:
 def get_name_without_ext(ruta: Union[str, Path]) -> str:
     """Devuelve el nombre del archivo sin la extensión."""
     return Path(ruta).stem
+
+
+def calculate_accuracy(best_score: int, played_score: int) -> float:
+    """
+    Calcula la precisión basada en la pérdida de probabilidad de victoria.
+    Basado en el 'Accuracy' de Lichess.
+    """
+    if played_score >= best_score:
+        return 100.0
+
+    def win_percent(cp: float) -> float:
+        # Limitamos el rango para evitar overflows en math.exp
+        cp = max(min(cp, 10000), -10000)
+        return 50 + 50 * (2 / (1 + math.exp(-0.00368208 * cp)) - 1)
+
+    win_best = win_percent(best_score)
+    win_played = win_percent(played_score)
+
+    # Diferencia de probabilidad (siempre positiva por el check inicial)
+    diff = max(0.0, win_best - win_played)
+
+    accuracy = 103.1668 * math.exp(-0.04354 * diff) - 3.1669
+
+    return round(max(0.0, min(100.0, accuracy)), 2)
 
 
 def bug_path(path):

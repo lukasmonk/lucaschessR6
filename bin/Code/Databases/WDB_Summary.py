@@ -52,7 +52,7 @@ class WSummary(QtWidgets.QWidget):
         # Grid
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("number", _("N."), 35, align_center=True)
-        self.delegadoMove = Delegados.EtiquetaPGN(True if self.with_figurines else None)
+        self.delegadoMove = Delegados.EtiquetaPGN(True if self.with_figurines else None, si_indicador_inicial=False)
         o_columns.nueva("move", _("Move"), 60, edicion=self.delegadoMove)
         o_columns.nueva("analysis", _("Analysis"), 60, align_right=True)
         o_columns.nueva("games", _("Games"), 70, align_right=True)

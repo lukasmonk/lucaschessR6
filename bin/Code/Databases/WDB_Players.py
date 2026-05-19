@@ -365,6 +365,28 @@ class WPlayer(QtWidgets.QWidget):
             grid.gobottom()
         return True
 
+    def grid_doubleclick_header(self, grid, obj_column):
+        if grid == self.gridOpeningWhite:
+            data = self.data[OPENINGS_WHITE]
+        elif grid == self.gridOpeningBlack:
+            data = self.data[OPENINGS_BLACK]
+        else:
+            return
+        key = obj_column.key
+        if key == "opening":
+            data.sort(
+                key=lambda rx: rx['opening'],
+                reverse=False,
+            )
+        elif key == "games":
+            data.sort(
+                key=lambda rx: f"{99999 - rx['games']:5d}{rx['opening']}",
+                reverse=False,
+            )
+        else:
+            return
+        grid.refresh()
+
     def read_variable(self, var, default=None):
         return self.db_games.read_config(var, default)
 

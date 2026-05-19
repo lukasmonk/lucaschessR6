@@ -3,6 +3,7 @@ import time
 from typing import Any, List, Optional, TYPE_CHECKING
 
 import Code
+from Code.Z import Util
 
 if TYPE_CHECKING:
     from Code.Base import Game
@@ -763,10 +764,11 @@ class MultiEngineResponse:
         n = len(self.li_rm)
         rm0 = self.li_rm[0]
         cp0 = rm0.centipawns_abs()
-        if Code.configuration.x_eval_goodmove_tolerance and rm0.mate == 0:
-            tolerance = abs(cp0*Code.configuration.x_eval_goodmove_tolerance/100.0)
-        else:
-            tolerance = 0
+
+        tolerance = Code.configuration.x_eval_goodmove_tolerance
+        with_tolerance = bool(tolerance) and rm0.mate == 0
+        min_accuracy = 100.0 - tolerance
+
         li.append(rm0)
         if n > 1:
             for n in range(1, n):
@@ -774,8 +776,8 @@ class MultiEngineResponse:
                 cp = rm.centipawns_abs()
                 if cp0 == cp:
                     li.append(rm)
-                elif tolerance:
-                    if abs(cp0-cp) < tolerance:
+                elif with_tolerance and rm.mate == 0:
+                    if Util.calculate_accuracy(cp0, cp) >= min_accuracy:
                         li.append(rm)
                     else:
                         break
@@ -815,7 +817,7 @@ class MultiEngineResponse:
                 if hasattr(move, "puntosABS_3"):  # se graban en mejormovajustado
                     puntos_previos = move.puntosABS_3
             difpuntos = (
-                rm0.centipawns_abs() - puntos_previos
+                    rm0.centipawns_abs() - puntos_previos
             )  # son puntos ganados por el engine y perdidos por el player
             if difpuntos > mindifpuntos:
                 if fdbg:
@@ -1206,16 +1208,16 @@ class MultiEngineResponse:
                                 break
 
             elif n_tipo in (
-                ADJUST_HIGH_LEVEL,
-                ADJUST_LOW_LEVEL,
-                ADJUST_INTERMEDIATE_LEVEL,
+                    ADJUST_HIGH_LEVEL,
+                    ADJUST_LOW_LEVEL,
+                    ADJUST_INTERMEDIATE_LEVEL,
             ):
                 n_tipo = self.bestmov_adjusted_level(n_tipo)  # Se corta el if para que se calcule el nTipo
 
             if n_tipo in (
-                ADJUST_SOMEWHAT_BETTER,
-                ADJUST_SOMEWHAT_BETTER_MORE_MORE,
-                ADJUST_SOMEWHAT_BETTER_MORE,
+                    ADJUST_SOMEWHAT_BETTER,
+                    ADJUST_SOMEWHAT_BETTER_MORE_MORE,
+                    ADJUST_SOMEWHAT_BETTER_MORE,
             ):
                 nivel = {
                     ADJUST_SOMEWHAT_BETTER: 1,
@@ -1232,9 +1234,9 @@ class MultiEngineResponse:
                 rm_sel = self.bestmov_adjusted_similar(mindifpuntos, maxmate, aterrizaje)
 
             elif n_tipo in (
-                ADJUST_WORSE,
-                ADJUST_SOMEWHAT_WORSE_LESS,
-                ADJUST_SOMEWHAT_WORSE_LESS_LESS,
+                    ADJUST_WORSE,
+                    ADJUST_SOMEWHAT_WORSE_LESS,
+                    ADJUST_SOMEWHAT_WORSE_LESS_LESS,
             ):
                 nivel = {
                     ADJUST_WORSE: 1,

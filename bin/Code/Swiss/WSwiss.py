@@ -659,7 +659,7 @@ class WSwiss(LCDialog.LCDialog):
 
         elif xmatch.is_human_vs_human(self.swiss):
             game = Game.Game()
-            game.set_tag("Site", Code.lucas_chess)
+            game.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
             game.set_tag("Event", self.swiss.name())
             game.set_tag("Season", str(self.swiss.current_num_season + 1))
             game.set_tag("White", self.swiss.opponent_by_xid(xmatch.xid_white).name())
@@ -717,7 +717,7 @@ class WSwiss(LCDialog.LCDialog):
                 grid.refresh()
             elif xmatch.is_human_vs_human(self.swiss):
                 game = Game.Game()
-                game.set_tag("Site", Code.lucas_chess)
+                game.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
                 game.set_tag("Event", self.swiss.name())
                 game.set_tag("Season", str(self.swiss.current_num_season + 1))
                 game.set_tag("White", self.swiss.opponent_by_xid(xmatch.xid_white).name())

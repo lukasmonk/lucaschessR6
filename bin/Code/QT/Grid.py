@@ -430,6 +430,9 @@ class Grid(QtWidgets.QTableView):
         is_control = (m & QtCore.Qt.KeyboardModifier.ControlModifier.value) > 0
         is_alt = (m & QtCore.Qt.KeyboardModifier.AltModifier.value) > 0
 
+        if is_alt and k == QtCore.Qt.Key.Key_R:
+            self.resize_columns()
+
         if hasattr(self.w_parent, "grid_tecla_pulsada"):
             if not (is_control or is_alt) and k < 256:
                 if self.w_parent.grid_tecla_pulsada(self, event.text()) is None:
@@ -702,6 +705,10 @@ class Grid(QtWidgets.QTableView):
             vh.setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Fixed)
             vh.setDefaultSectionSize(heigh_row)
             vh.setVisible(self.with_header_vertical)
+
+    def resize_columns(self):
+        with QTMessages.one_moment_please(self, _("Resizing")):
+            self.resizeColumnsToContents()
 
 
 class ControlGridDragDrop(ControlGrid):

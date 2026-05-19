@@ -551,7 +551,8 @@ class WMemoryMain(LCDialog.LCDialog):
     def grid_color_fondo(_grid, row, _obj_column):
         if _obj_column.key == "cat":
             dic_colors = Code.dic_colors
-            return ScreenUtils.qt_color(dic_colors[f"SQUARED_CONTROLLED_W_{row}"])
+            return ScreenUtils.qt_color(dic_colors[f"SQUARED_CONTROLLED_W_{row}"] if row
+                                        else dic_colors["SQUARED_CONTROLLED_0"])
         return None
 
     def grid_doble_click(self, _grid, row, obj_column):

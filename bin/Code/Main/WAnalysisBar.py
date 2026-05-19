@@ -8,6 +8,7 @@ from Code.Analysis import AnalysisEval
 from Code.Base import Game
 from Code.Engines import EngineRun
 from Code.QT import Colocacion, Controles, FormLayout, Iconos
+from Code.Z import Util
 
 
 class AnalysisBar(QtWidgets.QWidget):
@@ -75,7 +76,8 @@ class AnalysisBar(QtWidgets.QWidget):
         if ok:
             if self.engine_manager is None:
                 self.engine_manager = Code.procesador.analyzer_refresh_clone(0, 0, 0, 1)
-                self.engine_manager.set_priority_very_low()
+                if Util.is_windows():
+                    self.engine_manager.set_priority_very_low()
                 self.engine_manager.connect_depthchanged(self.control_state)
         else:
             if self.engine_manager:
@@ -106,7 +108,7 @@ class AnalysisBar(QtWidgets.QWidget):
             self.game = game
             self.xpv = game.xpv()
             self.engine_manager.run_engine_params = self.get_config_play()
-            self.engine_manager.refresh(game)
+            self.engine_manager.play_game(game)
 
     def show_score(self, txt):
         if self.isVisible():

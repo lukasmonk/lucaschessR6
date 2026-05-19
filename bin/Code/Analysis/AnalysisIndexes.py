@@ -535,6 +535,8 @@ def old_way(
     plantilla_e = start % color + resto % (color, color, color)
 
     def xm(label, var, xcolor):
+        # if var[True] + var[False] == 0:
+        #     return ""
         return plantilla_e % (
             xcolor,
             label,

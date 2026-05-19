@@ -1,9 +1,9 @@
 import os
 import os.path
 import sqlite3
+import subprocess
 from typing import List, Tuple
-
-from PySide6 import QtCore
+from typing import Optional
 
 import Code
 from Code.Base.Constantes import BOOK_BEST_MOVE, ENG_EXTERNAL, MULTIPV_MAXIMIZE, MULTIPV_BYDEFAULT
@@ -558,39 +558,68 @@ def read_engine_uci(exe, args=None):
     return engine
 
 
-def _run_uci_command(path_exe) -> str | None:
+def _run_uci_command(path_exe: str, timeout: int = 10) -> Optional[str]:
+    path_exe = os.path.abspath(path_exe)
     if not os.path.isfile(path_exe):
         return None
 
-    process = QtCore.QProcess()
-    process.setProgram(path_exe)
-    process.setArguments([])
-    process.setWorkingDirectory(os.path.dirname(path_exe))
-    process.start()
+    direxe = os.path.dirname(path_exe)
 
-    if not process.waitForStarted(2000):
-        return None
+    if Util.is_windows():
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        env = None
+    else:
+        startupinfo = None
+        # Preservar LD_LIBRARY_PATH existente y añadir directorio del motor
+        ld_library = os.environ.get("LD_LIBRARY_PATH", "")
+        parts = [p for p in ld_library.split(":") if p]
+        parts.insert(0, os.path.abspath(direxe))
+        # También añadir ./lib si existe (común en algunos motores)
+        lib_path = os.path.join(direxe, "lib")
+        if os.path.isdir(lib_path):
+            parts.insert(0, os.path.abspath(lib_path))
 
-    process.write(b"uci\n")
+        env = {**os.environ, "LD_LIBRARY_PATH": ":".join(parts)}
 
-    buffer = ""
-    ok = False
-    for __ in range(30):
-        if process.waitForReadyRead(100):
-            chunk = process.readAllStandardOutput().data().decode("utf-8", errors="ignore")
-            buffer += chunk
-            if "uciok" in buffer:
-                ok = True
+        if "PATH" in env:
+            env["PATH"] = f"{direxe}:{env['PATH']}"
+
+    try:
+        result = subprocess.run(
+            [path_exe],
+            input="uci\nquit\n",
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=direxe,
+            env=env,
+            startupinfo=startupinfo,
+            errors='ignore'
+        )
+
+        # Extraer respuesta UCI
+        output = result.stdout
+        if not output:
+            return None
+
+        # Buscar hasta "uciok"
+        lines = output.splitlines()
+        uci_lines = []
+        for line in lines:
+            line = line.strip()
+            if line == "uciok":
                 break
-        if process.state() == QtCore.QProcess.ProcessState.NotRunning:
-            break
+            if line and line.startswith(("id ", "option ")):
+                uci_lines.append(line)
 
-    if process.state() != QtCore.QProcess.ProcessState.NotRunning:
-        process.write(b"quit\n")
-        if not process.waitForFinished(200):
-            process.kill()
-            process.waitForFinished(200)
-    return buffer if ok else None
+        return "\n".join(uci_lines) if uci_lines else None
+
+    except subprocess.TimeoutExpired:
+        return None
+    except (subprocess.SubprocessError, OSError, IOError):
+        return None
 
 
 def is_valid_engine(path_exe) -> bool:

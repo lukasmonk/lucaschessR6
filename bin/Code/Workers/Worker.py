@@ -334,7 +334,7 @@ class Worker(QtWidgets.QWidget):
                 self.save_game_done()
 
     def save_game_done(self):
-        self.game.set_tag("Site", Code.lucas_chess)
+        self.game.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
         self.game.set_tag("Event", self.run_worker.name)
         self.run_worker.add_tags_game(self.game)
 

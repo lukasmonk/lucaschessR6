@@ -182,7 +182,7 @@ class Manager:
 
     def new_game(self):
         self.game = Game.Game()
-        self.game.set_tag("Site", Code.lucas_chess)
+        self.game.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
         hoy = Util.today()
         self.game.set_tag("Date", "%d.%02d.%02d" % (hoy.year, hoy.month, hoy.day))
 
@@ -1380,7 +1380,7 @@ class Manager:
         gm.set_unknown()
         gm.is_finished()
         gm.li_tags = []
-        gm.set_tag("Site", Code.lucas_chess)
+        gm.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
         gm.set_tag("Event", _("Play current position"))
         for previous in (
                 "Event",

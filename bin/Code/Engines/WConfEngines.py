@@ -275,6 +275,11 @@ class WConfTutor(QtWidgets.QWidget):
             _("Disabled at the beginning of the game"),
             not self.configuration.x_default_tutor_active,
         )
+        self.chb_save_variations = Controles.CHB(
+            self,
+            _('Convert analyses into variations'),
+            self.configuration.x_save_tutor_variations,
+        )
         self.chb_background = Controles.CHB(
             self,
             _("Work in the background, when possible"),
@@ -311,7 +316,8 @@ class WConfTutor(QtWidgets.QWidget):
         layout.controld(lb_sensitivity, 7, 0).control(self.cb_type, 7, 1)
         layout.empty_row(8, 30)
         layout.control(self.chb_disabled, 9, 0, num_columns=2)
-        layout.control(self.chb_background, 10, 0, num_columns=2)
+        layout.control(self.chb_save_variations, 10, 0, num_columns=2)
+        layout.control(self.chb_background, 11, 0, num_columns=2)
 
         ly = Colocacion.V().otro(layout).relleno(1)
         lyh = Colocacion.H().otro(ly).relleno(1).margen(30)
@@ -321,7 +327,7 @@ class WConfTutor(QtWidgets.QWidget):
         self.changed_engine()
         self.is_changed = False
 
-        for control in (self.chb_background, self.chb_disabled):
+        for control in (self.chb_background, self.chb_disabled, self.chb_save_variations):
             control.capture_changes(self.set_changed)
 
         for control in (
@@ -362,6 +368,8 @@ class WConfTutor(QtWidgets.QWidget):
             self.configuration.x_engine_notbackground = not self.chb_background.valor()
             self.configuration.x_default_tutor_active = not self.chb_disabled.valor()
             self.configuration.x_tutor_diftype = self.cb_type.valor()
+
+            self.configuration.x_save_tutor_variations = self.chb_save_variations.valor()
 
             self.configuration.graba()
 

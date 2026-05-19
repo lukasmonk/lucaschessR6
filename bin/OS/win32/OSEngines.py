@@ -67,7 +67,7 @@ def read_engines(folder_engines):
     cm.set_uci_option("Hash", "32")
     cm.set_min_fixed_depth(2)
 
-    mas("bikjump", "Aart J.C. Bik", "3.0 (64-bit)", "https://www.aartbik.com/strategy.php", "bikjump.exe", 2190)
+    mas("bikjump", "Aart J.C. Bik", "2.1 (32-bit)", "https://www.aartbik.com/strategy.php", "bikjump.exe", 2190)
 
     cm = mas(
         "clarabit",
@@ -176,8 +176,8 @@ def read_engines(folder_engines):
         "Tord RomsTad",
         "2.2 JA",
         "https://www.glaurungchess.com/",
-        "windows/glaurung-w32.exe",
-        2765,
+        "windows/glaurung-w64.exe",
+        2793,
         nodes_compatible=True,
     )
     cm.set_multipv(10, 500)

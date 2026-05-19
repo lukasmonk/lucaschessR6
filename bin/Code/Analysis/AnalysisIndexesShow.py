@@ -62,8 +62,8 @@ class ShowHtml:
         sp = self.check_maxlabel(label)
         w, b = moves[True], moves[False]
         t = w + b
-        # if t == 0:
-        #     return
+        if t == 0:
+            return
         pw = self.pvar(w, self.white_analyzed)
         pb = self.pvar(b, self.black_analyzed)
         pt = self.pvar(t, self.total_analyzed)
@@ -91,25 +91,25 @@ class ShowHtml:
         )
 
     def moves_html(
-        self,
-        moves_very_good,
-        moves_good,
-        moves_good_no,
-        moves_interestings,
-        moves_gray,
-        moves_inaccuracies,
-        moves_mistakes,
-        moves_blunders,
+            self,
+            moves_very_good,
+            moves_good,
+            moves_good_no,
+            moves_interestings,
+            moves_gray,
+            moves_inaccuracies,
+            moves_mistakes,
+            moves_blunders,
     ):
         if self.total_analyzed == 0:
             return _("There are no analyzed moves.")
 
         if self.add_group6(
-            _("Best moves"),
-            moves_very_good,
-            moves_good,
-            moves_interestings,
-            moves_good_no,
+                _("Best moves"),
+                moves_very_good,
+                moves_good,
+                moves_interestings,
+                moves_good_no,
         ):
             self.add_label6("brilliant", _("Brilliant moves"), moves_very_good, "‼")
             self.add_label6("good", _("Good moves"), moves_good, "!")
@@ -157,9 +157,9 @@ class ShowHtml:
 
         add_label("total", ALLGAME, _("Elo performance"))
         for std, tit in (
-            (OPENING, _("Opening")),
-            (MIDDLEGAME, _("Middlegame")),
-            (ENDGAME, _("Endgame")),
+                (OPENING, _("Opening")),
+                (MIDDLEGAME, _("Middlegame")),
+                (ENDGAME, _("Endgame")),
         ):
             add_label("normal", std, tit)
 

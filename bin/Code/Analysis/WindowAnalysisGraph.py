@@ -94,6 +94,11 @@ class WAnalisisGraph(LCDialog.LCDialog):
         w_moves = QtWidgets.QWidget()
         w_moves.setLayout(ly)
 
+        self.em_moves_old = Controles.EM(self, alm.indexesHTMLold).read_only().set_font(font)
+        ly = Colocacion.V().control(self.em_moves_old)
+        w_moves_old = QtWidgets.QWidget()
+        w_moves_old.setLayout(ly)
+
         self.tab_grid = tab_grid = Controles.Tab()
         tab_grid.new_tab(grid_all, _("All moves"))
         tab_grid.new_tab(grid_w, _("White"))
@@ -101,7 +106,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
         tab_grid.new_tab(w_idx, _("Indexes"))
         tab_grid.new_tab(w_elo, _("Elo"))
         tab_grid.new_tab(w_moves, _("Moves analyzed"))
-        # tab_grid.new_tab(w_moves_old, _("Summary"))
+        tab_grid.new_tab(w_moves_old, _("Summary"))
         tab_grid.dispatch_change(self.tab_changed)
         self.tabActive = 0
 

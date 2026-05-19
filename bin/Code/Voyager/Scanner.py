@@ -1,8 +1,8 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from Code.Z import Util
 from Code.Base.Constantes import BLACK, WHITE
 from Code.QT import Iconos
+from Code.Z import Util
 
 
 class ScannerVars:
@@ -75,6 +75,89 @@ class Scanner(QtWidgets.QDialog):
             self.setPathW()
             self.selected = True
 
+    @staticmethod
+    def encontrar_limites_tablero(qpixmap):
+        # 1. Convertir QPixmap a QImage en formato RGB de 24 bits
+        qimage = qpixmap.toImage().convertToFormat(
+            QtGui.QImage.Format.Format_RGB888
+        )
+        width = qimage.width()
+        height = qimage.height()
+        bytes_por_fila = qimage.bytesPerLine()
+
+        # Obtener el memoryview nativo
+        memoria_vista = qimage.bits()
+
+        # Convertir a lista de Python (o usar memoryview directamente)
+        img_plana = list(memoria_vista)
+
+        # Construir la matriz RGB manualmente
+        img_array = []
+        for y in range(height):
+            fila = []
+            for x in range(width):
+                idx = y * bytes_por_fila + x * 3
+                r = img_plana[idx]
+                g = img_plana[idx + 1]
+                b = img_plana[idx + 2]
+                fila.append((r, g, b))
+            img_array.append(fila)
+
+        # 2. Convertir a escala de grises (fórmula de luminosidad)
+        arr_gris = []
+        for y in range(height):
+            fila_gris = []
+            for x in range(width):
+                r, g, b = img_array[y][x]
+                # Fórmula estándar para escala de grises
+                gris = int(0.299 * r + 0.587 * g + 0.114 * b)
+                fila_gris.append(gris)
+            arr_gris.append(fila_gris)
+
+        # 3. Calcular la varianza en el eje X (columnas) y eje Y (filas)
+
+        # Varianza por filas (cada fila es un array de píxeles)
+        varianza_filas = []
+        for y in range(height):
+            fila = arr_gris[y]
+            # Calcular varianza manualmente
+            media = sum(fila) / len(fila)
+            var = sum((x - media) ** 2 for x in fila) / len(fila)
+            varianza_filas.append(var)
+
+        # Varianza por columnas
+        varianza_columnas = []
+        for x in range(width):
+            columna = [arr_gris[y][x] for y in range(height)]
+            media = sum(columna) / len(columna)
+            var = sum((y - media) ** 2 for y in columna) / len(columna)
+            varianza_columnas.append(var)
+
+        # 4. Establecer un umbral (threshold) para ignorar el fondo plano
+        umbral = 10
+
+        # Encontrar índices donde varianza > umbral
+        indices_filas = [i for i, var in enumerate(varianza_filas) if var > umbral]
+        indices_columnas = [i for i, var in enumerate(varianza_columnas) if var > umbral]
+
+        if len(indices_filas) == 0 or len(indices_columnas) == 0:
+            return None, None, None, None
+
+        # 5. Obtener los límites de la caja (Bounding Box)
+        y_min, y_max = indices_filas[0], indices_filas[-1]
+        x_min, x_max = indices_columnas[0], indices_columnas[-1]
+
+        # Ajuste para asegurar que sea un cuadrado perfecto si están muy cerca
+        ancho = x_max - x_min
+        alto = y_max - y_min
+
+        if abs(ancho - alto) < 20:
+            max_lado = max(ancho, alto)
+            x_max = x_min + max_lado
+            y_max = y_min + max_lado
+
+        return x_min + 2, y_min + 2, x_max, y_max
+
     def save(self):
         self.vars.last_width = self.width
         self.vars.last_height = self.height
@@ -84,6 +167,10 @@ class Scanner(QtWidgets.QDialog):
         dpr = self.desktop.devicePixelRatio()
         rect = QtCore.QRect(self.x * dpr, self.y * dpr, self.width * dpr, self.height * dpr)
         selected_pixmap = self.desktop.copy(rect)
+        x1, y1, x2, y2 = self.encontrar_limites_tablero(selected_pixmap)
+        if x1 is not None:
+            selected_pixmap = selected_pixmap.copy(x1, y1, x2 - x1, y2 - y1)
+
         self.selected_pixmap = selected_pixmap.scaled(
             256,
             256,
@@ -142,8 +229,8 @@ class Scanner(QtWidgets.QDialog):
 
     def mousePressEvent(self, event_mouse):
         if event_mouse.button() in (
-            QtCore.Qt.MouseButton.LeftButton,
-            QtCore.Qt.MouseButton.RightButton,
+                QtCore.Qt.MouseButton.LeftButton,
+                QtCore.Qt.MouseButton.RightButton,
         ):
             self.selecting = True
             self.selected = False
@@ -183,9 +270,9 @@ class Scanner(QtWidgets.QDialog):
         height = self.height
 
         if k in (
-            QtCore.Qt.Key.Key_Return,
-            QtCore.Qt.Key.Key_Enter,
-            QtCore.Qt.Key.Key_S,
+                QtCore.Qt.Key.Key_Return,
+                QtCore.Qt.Key.Key_Enter,
+                QtCore.Qt.Key.Key_S,
         ):
             self.save()
             self.accept()
