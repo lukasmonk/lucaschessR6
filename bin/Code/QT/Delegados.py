@@ -487,7 +487,7 @@ class EtiquetaPOS(QtWidgets.QStyledItemDelegate):
         post_pz = None
         salto_fin_pz = 0
         if self.with_figurines and pgn:
-            if pgn[0] in "QBKRN":
+            if pgn[0] in "QBKRNP":
                 ini_pz = pgn[0] if is_white else pgn[0].lower()
                 pgn = pgn[1:]
             elif pgn[-1] in "QBRN":

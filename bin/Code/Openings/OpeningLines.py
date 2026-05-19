@@ -1508,7 +1508,7 @@ class Opening:
 
         add_coments(game_main)
 
-        game_main.set_tag("Site", Code.lucas_chess)
+        game_main.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
         game_main.set_tag("Event", self.title)
         if result:
             game_main.set_tag("Result", result)

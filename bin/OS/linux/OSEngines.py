@@ -461,7 +461,7 @@ def dic_engines_fixed_elo(folder_engines):
             ("cheng", 800, 2500),
             ("greko", 1600, 2400),
             ("texel", 700, 2500),
-            ("fox", 1000, 2700),
+            ("eguzki", 1000, 2700),
     ):
         for elo in range(xfrom, xto + 100, 100):
             cm = d[nm].clone()

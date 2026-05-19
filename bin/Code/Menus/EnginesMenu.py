@@ -6,6 +6,7 @@ from Code.QT import Iconos
 from Code.STS import WindowSTS
 from Code.Swiss import WSwisses
 from Code.Tournaments import WTournaments
+from Code.Kibitzers import Kibitzers
 
 
 class EnginesMenu(BaseMenu.RootMenu):
@@ -27,7 +28,12 @@ class EnginesMenu(BaseMenu.RootMenu):
             key = "log_open"
         self.new(key, label, icono)
 
-        self.new("kibitzers", _("Kibitzers"), Iconos.Kibitzer())
+        submenu_kibitzers = self.new_submenu(_("Kibitzers"), Iconos.Kibitzer())
+        kibitzers = Kibitzers.Kibitzers()
+        for huella, name, ico in kibitzers.lista_menu():
+            submenu_kibitzers.new(f"kibitzer_{huella}", name, ico)
+        submenu_kibitzers.new("kibitzer_edit", _("Maintenance"), Iconos.ModificarP())
+
         self.new("sts", _("STS: Strategic Test Suite"), Iconos.STS())
 
         submenu_competitions = self.new_submenu(_("Competitions"), Iconos.Engine2())
@@ -53,8 +59,12 @@ class EnginesMenu(BaseMenu.RootMenu):
         elif resp == "log_close":
             Code.list_engine_managers.active_logs(False)
 
-        elif resp == "kibitzers":
-            self.procesador.kibitzers_manager.edit()
+        elif resp.startswith("kibitzer_"):
+            order = resp[9:]
+            if order == "edit":
+                self.procesador.kibitzers_manager.edit()
+            else:
+                self.procesador.kibitzers_manager.run_new(order)
 
         elif resp == "sts":
             WindowSTS.sts(self.procesador, self.wparent)

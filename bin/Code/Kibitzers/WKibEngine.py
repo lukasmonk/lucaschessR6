@@ -3,12 +3,12 @@ from typing import Optional
 
 from PySide6 import QtCore
 
-from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import KIB_BEFORE_MOVE
 from Code.Engines import EngineRun
 from Code.Kibitzers import Kibitzers, WindowKibitzers, WKibCommon
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, QTMessages, QTUtils, ScreenUtils
+from Code.Z import Util
 
 
 class WKibEngine(WKibCommon.WKibCommon):

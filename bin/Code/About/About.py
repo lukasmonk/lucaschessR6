@@ -113,7 +113,12 @@ class WAbout(QtWidgets.QDialog):
         lb = Controles.LB(self, txt)
         lb.set_font(self.f)
         lb.set_wrap()
-        sa.setWidget(lb)
+        if key == "dedicated":
+            w = lb
+        else:
+            w = QtWidgets.QWidget()
+            Colocacion.V(w).control(lb).relleno()
+        sa.setWidget(w)
 
 
 

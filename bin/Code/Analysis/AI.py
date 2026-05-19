@@ -96,10 +96,8 @@ def launch_prompt(main_window, oprompt: Prompt, game: Game.Game):
         webbrowser.open(oprompt.web)
 
     prompt = oprompt.prompt
-    game_new = Game.Game()
-    game_new.assign_other_game(game)
-    game_new.remove_info_moves()
-    prompt = f"{prompt.strip()}\nThe game is:\n{game.pgn()}"
+    game_new = game.clone(with_variations=False)
+    prompt = f"{prompt.strip()}\nThe game is:\n{game_new.pgn()}"
     QTUtils.set_clipboard(prompt)
 
     QTMessages.temporary_message(

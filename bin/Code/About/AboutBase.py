@@ -80,6 +80,17 @@ class ThanksTo:
 
     def maincontributors(self):
         li = (
+            ("Eric", "Main betatester."),
+            (
+                '<a href="https://goneill.co.nz/index.php">Graham O\'Neill</a>',
+                "Author of the drivers for the use of the electronic boards (except the official DGT ones)."
+                "<br>Also co-operator in the development of the interface code with the electronic boards.",
+            ),
+            (
+                "Laudecir Daniel",
+                "Main promoter of the Linux version, he did the selection and compilation of engines,"
+                "<br>as well as the establishment of the working Linux version.",
+            ),
             (
                 "Michele Tumbarello",
                 "Definition of Tourney-elo engines and the formulae for calculating the indices.",
@@ -89,24 +100,13 @@ class ThanksTo:
                 "His work was an essential help (saved many hours) in the transition "
                 "from Python 2.7 (version 11) to Python 3 (version R).",
             ),
-            ("Eric", "Main betatester."),
             (
                 "Johannes Bolzano",
                 "Code improvements and ideas to Find best move training and more.",
             ),  # Programme wiki administrator"),
-            (
-                "Laudecir Daniel",
-                "Main promoter of the Linux version, he did the selection and compilation of engines,"
-                "<br>as well as the establishment of the working Linux version.",
-            ),
-            (
-                '<a href="https://goneill.co.nz/index.php">Graham O\'Neill</a>',
-                "Author of the drivers for the use of the electronic boards (except the official DGT ones)."
-                "<br>Also co-operator in the development of the interface code with the electronic boards.",
-            ),
         )
 
-        txt = self.dl_ini()
+        txt = f"<hr>{self.dl_ini()}"
         for person, task in li:
             txt += self.dl_tit(person)
             txt += f"{self.dl_elem(task)}<hr>"
@@ -114,7 +114,7 @@ class ThanksTo:
         return txt
 
     def contributors(self):
-        txt = self.dl_ini()
+        txt = "<hr>" + self.dl_ini()
 
         def version(num, li_basex, li_restox, sim=True):
             random.shuffle(li_basex)
@@ -137,7 +137,20 @@ class ThanksTo:
             mtxt += f"{self.dl_elem(el_txt[:-2])}<hr>"
             return mtxt.replace(", ,", ",")
 
-        # Version R
+        # Version R6
+        li_base = [
+            "Rudolf Krämer",
+            "Stefan Akall",
+            "Zhuge Prajna",
+            '<a href="https://github.com/Ebola-Chan-bot">Ebola-Chan-bot</a>',
+            "tgett",
+            "Baked-Cake1",
+            "Yasmin"
+        ]
+        li_resto = []
+        txt += version("R6", li_base, li_resto, False)
+
+        # Version R2
         li_base = [
             "Alan Lee",
             "Nambi",
@@ -151,11 +164,10 @@ class ThanksTo:
             "Rudolf Krämer",
             "Luis",
             "Stefan Akall",
-            '<a href="https://github.com/Ebola-Chan-bot">Ebola-Chan-bot</a>',
-            "tgett"
         ]
+
         li_resto = []
-        txt += version("R", li_base, li_resto, False)
+        txt += version("R2", li_base, li_resto, False)
 
         # Version 11
         li_base = [

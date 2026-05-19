@@ -9,14 +9,14 @@ class EngineManagerRefresh(EngineManager.EngineManager):
         self.pending_game: Optional[Game.Game] = None
         self.pending_fen: Optional[str] = None
 
-    def play_game(self, game: Game.Game):
+    def refresh(self, game: Game.Game):
         if self.check_engine():
             try:
                 st = self.engine_run.state
                 if st in (EngineRun.EngineState.THINKING, EngineRun.EngineState.READING_EVAL_STOCKFISH):
                     self.pending_game = game
                     self.pending_fen = None
-                    self.engine_run.stop()
+                    # self.engine_run.stop()
                 else:
                     self.pending_game = None
                     self.pending_fen = None
@@ -48,7 +48,7 @@ class EngineManagerRefresh(EngineManager.EngineManager):
         if self.pending_game:
             game = self.pending_game
             self.pending_game = None
-            self.play_game(game)
+            self.refresh(game)
         elif self.pending_fen:
             fen = self.pending_fen
             self.pending_fen = None

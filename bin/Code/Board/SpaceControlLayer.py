@@ -18,8 +18,9 @@ class SpaceControlLayer:
         self._dic_colors = {}
         for side in "WB":
             self._dic_colors[side == "W"] = {
-                pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"]) for pos in range(6)
+                pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"]) for pos in range(1, 6)
             }
+            self._dic_colors[side == "W"][0] = Code.dic_colors["SQUARED_CONTROLLED_0"]
         self._create_marcos()
 
     def _create_marcos(self):
@@ -60,69 +61,117 @@ class SpaceControlLayer:
     def update(self, fen, number):
         """Recalcula frecuencias y actualiza colores (sin crear/destruir items).
         number=2,3 -> casillas controladas por blancas, 7,6 -> por negras."""
-        cp = Position.Position()
-        cp.read_fen(fen)
-        is_white = " w " in fen
-        dic_movs_side = {is_white: cp.aura()}
+        try:
+            cp = Position.Position()
+            cp.read_fen(fen)
+            is_white = " w " in fen
+            dic_movs_side = {is_white: cp.aura()}
 
-        fen2 = FasterCode.fen_other(fen)
-        cp.read_fen(fen2)
-        dic_movs_side[not is_white] = cp.aura()
+            fen2 = FasterCode.fen_other(fen)
+            cp.read_fen(fen2)
+            dic_movs_side[not is_white] = cp.aura()
 
-        if number in (2, 7):
-            li_movs = dic_movs_side[number == 2]
-            dic_frec = collections.Counter(li_movs)
+            if number in (2, 7):
+                li_movs = dic_movs_side[number == 2]
+                dic_frec = collections.Counter(li_movs)
 
-            for sq, box in self.marcos.items():
-                box.physical_pos2xy()
-                frec = min(dic_frec.get(sq, 0), 5)
-                color = self._dic_colors[number == 2][frec]
-                box.block_data.color = color
-                box.block_data.colorinterior = color
+                for sq, box in self.marcos.items():
+                    try:
+                        box.physical_pos2xy()
+                        frec = min(dic_frec.get(sq, 0), 5)
+                        color = self._dic_colors[number == 2][frec]
+                        box.block_data.color = color
+                        box.block_data.colorinterior = color
 
-                box.setVisible(True)
-                box.update()
+                        box.setVisible(True)
+                        box.update()
+                    except RuntimeError:
+                        # El objeto fue eliminado, lo ignoramos
+                        pass
 
-        elif number in (3, 6):
-            dic_frec_w = collections.Counter(dic_movs_side[True])
-            dic_frec_b = collections.Counter(dic_movs_side[False])
+            elif number in (3, 6):
+                dic_frec_w = collections.Counter(dic_movs_side[True])
+                dic_frec_b = collections.Counter(dic_movs_side[False])
 
-            for sq, box in self.marcos.items():
-                box.physical_pos2xy()
-                fw = dic_frec_w.get(sq, 0)
-                fb = dic_frec_b.get(sq, 0)
-                fw = min(fw, 5)
-                fb = min(fb, 5)
-                if fw and fb:
-                    color = self.mezclar_con_pesos(fw, fb)
-                else:
-                    if fw:
-                        color = self._dic_colors[True][fw]
-                    elif fb:
-                        color = self._dic_colors[False][fb]
-                    else:
-                        color = self._dic_colors[False][0]
+                for sq, box in self.marcos.items():
+                    try:
+                        box.physical_pos2xy()
+                        fw = dic_frec_w.get(sq, 0)
+                        fb = dic_frec_b.get(sq, 0)
+                        fw = min(fw, 5)
+                        fb = min(fb, 5)
+                        if fw and fb:
+                            color = self.mezclar_con_pesos(fw, fb)
+                        else:
+                            if fw:
+                                color = self._dic_colors[True][fw]
+                            elif fb:
+                                color = self._dic_colors[False][fb]
+                            else:
+                                color = self._dic_colors[False][0]
 
-                box.block_data.color = color
-                box.block_data.colorinterior = color
-                box.setVisible(True)
-                box.update()
+                        box.block_data.color = color
+                        box.block_data.colorinterior = color
+                        box.setVisible(True)
+                        box.update()
+                    except RuntimeError:
+                        # El objeto fue eliminado, lo ignoramos
+                        pass
 
-        self.board.escena.update()
+            try:
+                self.board.escena.update()
+            except RuntimeError:
+                pass
+        except RuntimeError:
+            # El objeto fue eliminado, lo ignoramos
+            pass
 
     def reposition(self):
-        for box in self.marcos.values():
-            box.physical_pos2xy()
-            box.update()
-        self.board.escena.update()
+        try:
+            for box in self.marcos.values():
+                try:
+                    box.physical_pos2xy()
+                    box.update()
+                except RuntimeError:
+                    # El objeto fue eliminado, lo ignoramos
+                    pass
+            try:
+                self.board.escena.update()
+            except RuntimeError:
+                pass
+        except RuntimeError:
+            # El objeto fue eliminado, lo ignoramos
+            pass
 
     def hide(self):
-        for box in self.marcos.values():
-            box.setVisible(False)
-        self.board.escena.update()
+        try:
+            for box in self.marcos.values():
+                try:
+                    box.setVisible(False)
+                except RuntimeError:
+                    # El objeto fue eliminado, lo ignoramos
+                    pass
+            try:
+                self.board.escena.update()
+            except RuntimeError:
+                pass
+        except RuntimeError:
+            # El objeto fue eliminado, lo ignoramos
+            pass
 
     def remove(self):
-        for box in self.marcos.values():
-            self.board.xremove_item(box)
-        self.marcos = {}
-        self.board.escena.update()
+        try:
+            for box in self.marcos.values():
+                try:
+                    self.board.xremove_item(box)
+                except RuntimeError:
+                    # El objeto fue eliminado, lo ignoramos
+                    pass
+            self.marcos = {}
+            try:
+                self.board.escena.update()
+            except RuntimeError:
+                pass
+        except RuntimeError:
+            # El objeto fue eliminado, lo ignoramos
+            pass

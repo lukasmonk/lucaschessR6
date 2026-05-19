@@ -470,8 +470,11 @@ class WUnSTS(LCDialog.LCDialog):
                 self.grid.refresh()
 
     def export(self):
-        resp = SelectFiles.save_file(self, _("CSV file"), Code.configuration.save_folder(), "csv", True)
+        folder = Code.configuration.save_folder()
+        resp = SelectFiles.save_file(self, _("CSV file"), folder, "csv", True)
         if resp:
+            folder = os.path.dirname(resp)
+            Code.configuration.set_save_folder(folder)
             self.sts.write_csv(resp)
 
     def up(self):
