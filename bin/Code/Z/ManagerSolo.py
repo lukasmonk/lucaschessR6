@@ -349,7 +349,7 @@ class ManagerSolo(Manager.Manager):
         self.xpgn = None
         self.xjugadaInicial = None
         self.start(dic)
-        self.pon_toolbar()
+        # self.pon_toolbar()
         self.guardarHistorico(fich)
         self.valor_inicial = self.dame_valor_actual()
 

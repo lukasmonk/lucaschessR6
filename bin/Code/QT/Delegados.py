@@ -120,6 +120,7 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
         self.si_alineacion = si_alineacion
         self.si_fondo = si_fondo
         self.si_indicador_inicial = si_indicador_inicial
+        self.ancho = 0
         QtWidgets.QStyledItemDelegate.__init__(self, None)
 
     def set_side_of_figurines(self, is_white):
@@ -289,8 +290,6 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
         if txt_analysis:
             document_analysis = QtGui.QTextDocument()
             font = option.font
-            # new_size = max(6, font.pointSize() - 1)  # aseguramos que no baje de 6
-            # font.setPointSize(new_size)
             document_analysis.setDefaultFont(font)
             if color:
                 txt_analysis = f'<font color="{color}">{txt_analysis}</font>'
@@ -300,6 +299,14 @@ class EtiquetaPGN(QtWidgets.QStyledItemDelegate):
             painter.translate(x_total + (w_total - w_analysis) + 2, y)
             document_analysis.drawContents(painter)
             painter.restore()
+            x += w_analysis + 2
+
+        self.ancho = x
+
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+        ancho_final = size.width() if self.ancho == 0 else self.ancho
+        return QtCore.QSize(ancho_final, size.height())
 
 
 class PmIconosBMT(QtWidgets.QStyledItemDelegate):

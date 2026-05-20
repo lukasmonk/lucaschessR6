@@ -5,7 +5,27 @@ from Code.QT import Iconos
 from Code.Z import Util
 
 
+class GridLines:
+    def __init__(self):
+        self.h_lines = []
+        self.v_lines = []
+        self.board_x = 0
+        self.board_y = 0
+
+
 class ScannerVars:
+    opacity: float
+    last_width: int
+    last_height: int
+    x: int
+    y: int
+    tolerance: int
+    tolerance_learns: int
+    scanner: str
+    ask: bool
+    rem_ghost: bool
+    detect_borders: bool
+
     def __init__(self, folder_scanners):
         self.fich_vars = Util.opj(folder_scanners, "last.data64")
         self.read()
@@ -19,12 +39,13 @@ class ScannerVars:
         self.last_width = dic.get("LAST_WIDTH", 0)
         self.x = dic.get("X", 0)
         self.y = dic.get("Y", 0)
-        self.last_height = dic.get("LAST_HEIGHT", self.last_width)
+        self.last_height = dic.get("LAST_HEIGHT", 0)
         self.tolerance = dic.get("TOLERANCE", 6)
         self.tolerance_learns = dic.get("TOLERANCE_LEARNS", max(self.tolerance - 3, 1))
         self.scanner = dic.get("SCANNER", "")
         self.ask = dic.get("ASK", True)
         self.rem_ghost = dic.get("REM_GHOST", False)
+        self.detect_borders = dic.get("DETECT_BORDERS", False)
 
     def write(self):
         dic = {
@@ -38,6 +59,7 @@ class ScannerVars:
             "SCANNER": self.scanner,
             "ASK": self.ask,
             "REM_GHOST": self.rem_ghost,
+            "DETECT_BORDERS": self.detect_borders
         }
         Util.save_pickle(self.fich_vars, dic)
 
@@ -76,87 +98,158 @@ class Scanner(QtWidgets.QDialog):
             self.selected = True
 
     @staticmethod
+    def _sample_background_color(gray, width, height):
+        """Muestrea el color de fondo tomando píxeles de las 4 esquinas."""
+        samples = []
+        margin = 5
+        for y in [margin, height - margin - 1]:
+            for x in [margin, width - margin - 1]:
+                samples.append(gray[y][x])
+        return sum(samples) / len(samples)
+
+    @staticmethod
+    def _crop_background(profile, bg_value, tolerance=15):
+        """Devuelve (lo, hi) recortando por ambos lados mientras el valor
+        se parezca al color de fondo."""
+        n = len(profile)
+        lo = 0
+        while lo < n and abs(profile[lo] - bg_value) <= tolerance:
+            lo += 1
+        hi = n - 1
+        while hi > lo and abs(profile[hi] - bg_value) <= tolerance:
+            hi -= 1
+        return lo, hi
+
+    @staticmethod
+    def _skip_border_lines(gray, x_min, y_min, x_max, y_max, tolerance=15):
+        """Elimina líneas/columnas de borde monocromáticas detectando
+        automáticamente el color de cada borde antes de saltarlo."""
+
+        changed = True
+        while changed:
+            changed = False
+
+            # --- Borde superior ---
+            while y_min < y_max:
+                row = [gray[y_min][x] for x in range(x_min, x_max)]
+                mn, mx = min(row), max(row)
+                if mx - mn <= tolerance:
+                    y_min += 1
+                    changed = True
+                else:
+                    # La fila tiene variación, pero puede ser la línea de borde:
+                    # si el color medio es muy parecido al píxel de esquina, es borde
+                    border_color = sum(row) / len(row)
+                    corner = gray[y_min][x_min]
+                    if abs(border_color - corner) <= tolerance and mx - mn <= tolerance * 2:
+                        y_min += 1
+                        changed = True
+                    else:
+                        break
+
+            # --- Borde inferior ---
+            while y_max > y_min:
+                row = [gray[y_max - 1][x] for x in range(x_min, x_max)]
+                mn, mx = min(row), max(row)
+                if mx - mn <= tolerance:
+                    y_max -= 1
+                    changed = True
+                else:
+                    border_color = sum(row) / len(row)
+                    corner = gray[y_max - 1][x_min]
+                    if abs(border_color - corner) <= tolerance and mx - mn <= tolerance * 2:
+                        y_max -= 1
+                        changed = True
+                    else:
+                        break
+
+            # --- Borde izquierdo ---
+            while x_min < x_max:
+                col = [gray[y][x_min] for y in range(y_min, y_max)]
+                mn, mx = min(col), max(col)
+                if mx - mn <= tolerance:
+                    x_min += 1
+                    changed = True
+                else:
+                    border_color = sum(col) / len(col)
+                    corner = gray[y_min][x_min]
+                    if abs(border_color - corner) <= tolerance and mx - mn <= tolerance * 2:
+                        x_min += 1
+                        changed = True
+                    else:
+                        break
+
+            # --- Borde derecho ---
+            while x_max > x_min:
+                col = [gray[y][x_max - 1] for y in range(y_min, y_max)]
+                mn, mx = min(col), max(col)
+                if mx - mn <= tolerance:
+                    x_max -= 1
+                    changed = True
+                else:
+                    border_color = sum(col) / len(col)
+                    corner = gray[y_min][x_max - 1]
+                    if abs(border_color - corner) <= tolerance and mx - mn <= tolerance * 2:
+                        x_max -= 1
+                        changed = True
+                    else:
+                        break
+
+        return x_min, y_min, x_max, y_max
+
+    @staticmethod
     def encontrar_limites_tablero(qpixmap):
-        # 1. Convertir QPixmap a QImage en formato RGB de 24 bits
         qimage = qpixmap.toImage().convertToFormat(
             QtGui.QImage.Format.Format_RGB888
         )
         width = qimage.width()
         height = qimage.height()
-        bytes_por_fila = qimage.bytesPerLine()
+        bpl = qimage.bytesPerLine()
+        img_plana = list(qimage.bits())
 
-        # Obtener el memoryview nativo
-        memoria_vista = qimage.bits()
-
-        # Convertir a lista de Python (o usar memoryview directamente)
-        img_plana = list(memoria_vista)
-
-        # Construir la matriz RGB manualmente
-        img_array = []
+        # Escala de grises
+        gray = []
         for y in range(height):
-            fila = []
+            row = []
+            base = y * bpl
             for x in range(width):
-                idx = y * bytes_por_fila + x * 3
-                r = img_plana[idx]
-                g = img_plana[idx + 1]
-                b = img_plana[idx + 2]
-                fila.append((r, g, b))
-            img_array.append(fila)
+                idx = base + x * 3
+                r, g, b = img_plana[idx], img_plana[idx + 1], img_plana[idx + 2]
+                row.append(int(0.299 * r + 0.587 * g + 0.114 * b))
+            gray.append(row)
 
-        # 2. Convertir a escala de grises (fórmula de luminosidad)
-        arr_gris = []
-        for y in range(height):
-            fila_gris = []
-            for x in range(width):
-                r, g, b = img_array[y][x]
-                # Fórmula estándar para escala de grises
-                gris = int(0.299 * r + 0.587 * g + 0.114 * b)
-                fila_gris.append(gris)
-            arr_gris.append(fila_gris)
+        # 1. Detectar color de fondo desde las esquinas
+        bg = Scanner._sample_background_color(gray, width, height)
 
-        # 3. Calcular la varianza en el eje X (columnas) y eje Y (filas)
+        # 2. Perfil medio por fila y columna para recorte por fondo
+        row_means = [sum(gray[y]) / width for y in range(height)]
+        col_means = [sum(gray[y][x] for y in range(height)) / height
+                     for x in range(width)]
 
-        # Varianza por filas (cada fila es un array de píxeles)
-        varianza_filas = []
-        for y in range(height):
-            fila = arr_gris[y]
-            # Calcular varianza manualmente
-            media = sum(fila) / len(fila)
-            var = sum((x - media) ** 2 for x in fila) / len(fila)
-            varianza_filas.append(var)
+        y_min, y_max = Scanner._crop_background(row_means, bg)
+        x_min, x_max = Scanner._crop_background(col_means, bg)
 
-        # Varianza por columnas
-        varianza_columnas = []
-        for x in range(width):
-            columna = [arr_gris[y][x] for y in range(height)]
-            media = sum(columna) / len(columna)
-            var = sum((y - media) ** 2 for y in columna) / len(columna)
-            varianza_columnas.append(var)
-
-        # 4. Establecer un umbral (threshold) para ignorar el fondo plano
-        umbral = 10
-
-        # Encontrar índices donde varianza > umbral
-        indices_filas = [i for i, var in enumerate(varianza_filas) if var > umbral]
-        indices_columnas = [i for i, var in enumerate(varianza_columnas) if var > umbral]
-
-        if len(indices_filas) == 0 or len(indices_columnas) == 0:
+        if x_max <= x_min or y_max <= y_min:
             return None, None, None, None
 
-        # 5. Obtener los límites de la caja (Bounding Box)
-        y_min, y_max = indices_filas[0], indices_filas[-1]
-        x_min, x_max = indices_columnas[0], indices_columnas[-1]
+        # 3. Eliminar líneas monocromáticas de borde (línea exterior del tablero)
+        x_min, y_min, x_max, y_max = Scanner._skip_border_lines(
+            gray, x_min, y_min, x_max, y_max
+        )
 
-        # Ajuste para asegurar que sea un cuadrado perfecto si están muy cerca
-        ancho = x_max - x_min
-        alto = y_max - y_min
+        # 4. Forzar cuadrado con lado menor (conservador: no incluye margen)
+        w = x_max - x_min
+        h = y_max - y_min
+        if w != h:
+            side = min(w, h)
+            cx = (x_min + x_max) // 2
+            cy = (y_min + y_max) // 2
+            x_min = max(0, cx - side // 2)
+            y_min = max(0, cy - side // 2)
+            x_max = min(width, x_min + side)
+            y_max = min(height, y_min + side)
 
-        if abs(ancho - alto) < 20:
-            max_lado = max(ancho, alto)
-            x_max = x_min + max_lado
-            y_max = y_min + max_lado
-
-        return x_min + 2, y_min + 2, x_max, y_max
+        return x_min, y_min, x_max, y_max
 
     def save(self):
         self.vars.last_width = self.width
@@ -167,9 +260,10 @@ class Scanner(QtWidgets.QDialog):
         dpr = self.desktop.devicePixelRatio()
         rect = QtCore.QRect(self.x * dpr, self.y * dpr, self.width * dpr, self.height * dpr)
         selected_pixmap = self.desktop.copy(rect)
-        x1, y1, x2, y2 = self.encontrar_limites_tablero(selected_pixmap)
-        if x1 is not None:
-            selected_pixmap = selected_pixmap.copy(x1, y1, x2 - x1, y2 - y1)
+        if self.vars.detect_borders:
+            x1, y1, x2, y2 = self.encontrar_limites_tablero(selected_pixmap)
+            if x1 is not None:
+                selected_pixmap = selected_pixmap.copy(x1, y1, x2 - x1, y2 - y1)
 
         self.selected_pixmap = selected_pixmap.scaled(
             256,
@@ -177,6 +271,7 @@ class Scanner(QtWidgets.QDialog):
             QtCore.Qt.AspectRatioMode.IgnoreAspectRatio,
             QtCore.Qt.TransformationMode.SmoothTransformation,
         )
+        return True
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)

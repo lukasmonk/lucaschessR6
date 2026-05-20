@@ -129,8 +129,8 @@ class WInfomove(QtWidgets.QWidget):
         self.game = game
         if game.opening:
             txt = game.opening.tr_name
-            if game.pending_opening:
-                txt += " ..."
+            # if game.pending_opening:
+            #     txt += " ..."
             self.lb_opening.set_text(txt)
         else:
             self.lb_opening.set_text("")
