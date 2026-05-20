@@ -48,6 +48,7 @@ class ShowHtml:
 
         self.li_body.append(
             f"""<tr class="group"><td>{group}{sp}</td>
+              <td class="val">&nbsp;</td>
               <td class="val">{tw}</td>
               <td class="val">{tb}</td>
               <td class="val">{tt}</td>
@@ -67,15 +68,16 @@ class ShowHtml:
         pw = self.pvar(w, self.white_analyzed)
         pb = self.pvar(b, self.black_analyzed)
         pt = self.pvar(t, self.total_analyzed)
-        rest = f"""<td class="val"><small>{sym}</small></td>""" if sym else ""
+        rest = f"""<td class="val"><small>{sym if sym else "&nbsp;"}</small></td>"""
         self.li_body.append(
             f"""<tr class="{name_class}"><td class="label">{sp}{label}</td>
+                {rest}
               <td class="val">{w}</td>
               <td class="val">{b}</td>
               <td class="val">{t}</td>
               <td class="val">{pw}</td>
               <td class="val">{pb}</td>
-              <td class="val">{pt}</td>{rest}
+              <td class="val">{pt}</td>
             </tr>"""
         )
 
@@ -84,6 +86,7 @@ class ShowHtml:
         sp = self.check_maxlabel(label)
         self.li_body.append(
             f"""<tr class="total"><td class="val">{sp}{label}{sp}</td>
+              <td class="val">&nbsp;</td>
               <td class="val">{self.white_analyzed}</td>
               <td class="val">{self.black_analyzed}</td>
               <td class="val">{self.total_analyzed}</td>
@@ -116,9 +119,7 @@ class ShowHtml:
             self.add_label6("interesting", _("Interesting moves"), moves_interestings, "⁉")
             self.add_label6("easy-good", _("Other best moves"), moves_good_no)
 
-        if self.add_group6(_("Acceptable moves"), moves_gray):
-            pass
-            # self.add_label6("normal", _("Acceptable moves"), moves_gray)
+        self.add_group6(_("Acceptable moves"), moves_gray)
 
         if self.add_group6(_("Bad moves"), moves_inaccuracies, moves_mistakes, moves_blunders):
             self.add_label6("inaccuracy", _("Dubious moves"), moves_inaccuracies, "⁈")
@@ -187,11 +188,12 @@ class ShowHtml:
 
     @staticmethod
     def xhtml(body, is_doble):
-        single = f"""              <th>{_("White")}</th>
-              <th>{_("Black")}</th>
-              <th>{_("Total")}</th>
-"""
-        doble = single if is_doble else ""
+        single = f"""<th>{_("White")}</th><th>{_("Black")}</th><th>{_("Total")}</th>"""
+        if is_doble:
+            doble = single
+            single = f"<td></td>{single}"
+        else:
+            doble = ""
         return f"""<head><style>
           body {{
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;

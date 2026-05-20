@@ -20,7 +20,7 @@ class SpaceControlLayer:
             self._dic_colors[side == "W"] = {
                 pos: ScreenUtils.qt_int(Code.dic_colors[f"SQUARED_CONTROLLED_{side}_{pos}"]) for pos in range(1, 6)
             }
-            self._dic_colors[side == "W"][0] = Code.dic_colors["SQUARED_CONTROLLED_0"]
+            self._dic_colors[side == "W"][0] = ScreenUtils.qt_int(Code.dic_colors["SQUARED_CONTROLLED_0"])
         self._create_marcos()
 
     def _create_marcos(self):

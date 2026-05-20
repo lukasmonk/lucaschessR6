@@ -74,7 +74,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
         ancho_grid = max(grid_b.width_columns_displayables(), ancho_grid) + 24
         self.register_grid(grid_b)
 
-        font = Controles.FontType(puntos=Code.configuration.x_sizefont_infolabels)
+        font = Controles.FontType(puntos=Code.configuration.x_sizefont_infolabels, peso=800)
 
         self.emIndexes = Controles.EM(self, alm.indexesHTML).read_only().set_font(font)
         pb_save = Controles.PB(self, _("Save to game comments"), self.save_indexes, plano=False)
