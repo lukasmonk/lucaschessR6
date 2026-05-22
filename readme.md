@@ -33,13 +33,32 @@ Dependencies
 * certifi
 * beautifulsoup4
 
+Important Note for Developers / Cloning
+---------------------------------------
+
+This repository uses **Git LFS (Large File Storage)** to manage large binary files (such as chess engines, networks, or databases).
+
+If you download the repository using the GitHub web interface as a **.zip file, these large files will not be included correctly** (you will only get small text pointer files).
+
+To get a complete and working copy of the project, please ensure you have **Git LFS** installed on your system before cloning.
+
+1. **Install Git LFS** (if you haven't already):
+   - Windows: `winget install GitHub.GitLFS` or download from [git-lfs.github.com](https://git-lfs.github.com/)
+   - Mac: `brew install git-lfs`
+   - Linux: `sudo apt install git-lfs`
+
+2. **Initialize Git LFS** in your terminal:
+   ```bash
+   git lfs install
+
+3. git clone https://github.com/lukasmonk/lucaschessR6.git
+
 
 Links
 -----
 
 * Web: [https://lucaschess.pythonanywhere.com/](https://lucaschess.pythonanywhere.com/).
 * Blog: [https://lucaschess.blogspot.com.es/](https://lucaschess.blogspot.com.es/).
-* Wiki: [https://chessionate.com/lucaswiki](https://chessionate.com/lucaswiki/).
 
 
 Legal Details
