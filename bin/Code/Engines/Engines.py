@@ -558,10 +558,13 @@ def read_engine_uci(exe, args=None):
     return engine
 
 
-def _run_uci_command(path_exe: str, timeout: int = 10) -> Optional[str]:
+def _run_uci_command(path_exe: str) -> Optional[str]:
     path_exe = os.path.abspath(path_exe)
     if not os.path.isfile(path_exe):
         return None
+
+    size = Util.filesize(path_exe)
+    timeout = max(10, size*10//5000000)
 
     direxe = os.path.dirname(path_exe)
 
@@ -587,6 +590,7 @@ def _run_uci_command(path_exe: str, timeout: int = 10) -> Optional[str]:
             env["PATH"] = f"{direxe}:{env['PATH']}"
 
     try:
+
         result = subprocess.run(
             [path_exe],
             input="uci\nquit\n",

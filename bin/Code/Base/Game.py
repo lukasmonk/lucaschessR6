@@ -1163,9 +1163,9 @@ class Game:
                 is_white = move.is_white()
                 pts = mrm.li_rm[pos].centipawns_abs()
                 pts0 = mrm.li_rm[0].centipawns_abs()
-                lostp_abs = pts0 - pts
 
-                porc = 100 - lostp_abs if lostp_abs < 100 else 0
+                porc = Util.calculate_accuracy(pts0, pts)
+
                 porc_t += porc
 
                 njg_t += 1

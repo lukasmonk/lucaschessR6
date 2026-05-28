@@ -222,25 +222,6 @@ class Book:
             alm.weight = w
             lista_jugadas.append(alm)
 
-        # if extended:
-        #     for exmove in position.get_exmoves():
-        #         pv = exmove.move()
-        #         if pv not in st_pvs_included:
-        #             FasterCode.set_fen(fen)
-        #             from_sq, to_sq, promotion = pv[:2], pv[2:4], pv[4:]
-        #             FasterCode.move_pv(from_sq, to_sq, promotion)
-        #             new_fen = FasterCode.get_fen()
-        #             li = self.book.lista(self.path, new_fen)
-        #             if len(li) > 0:
-        #                 alm = Util.Record()
-        #                 alm.from_sq, alm.to_sq, alm.promotion = from_sq, to_sq, promotion
-        #                 alm.pgn = position.pgn_translated(from_sq, to_sq, promotion)
-        #                 alm.pgnRaw = position.pgn(from_sq, to_sq, promotion)
-        #                 alm.fen = fen
-        #                 alm.porc = ""
-        #                 alm.weight = 0
-        #                 listaJugadas.append(alm)
-
         return lista_jugadas
 
     def select_move_type(self, fen, tipo):
@@ -287,28 +268,17 @@ class Book:
 
         return pv.lower()
 
-    # def miraListaPV(self, fen, maximized, onlyone=True):
-    #     li = self.book.lista(self.path, fen)
-    #
-    #     li_resp = []
-    #     if maximized:
-    #         maxim = -1
-    #         for entry in li:
-    #             w = entry.weight
-    #             if w > maxim:
-    #                 maxim = w
-    #                 li_resp = [entry.pv()]
-    #             elif w == maxim and not onlyone:
-    #                 li_resp.append(entry.pv())
-    #     else:
-    #         for entry in li:
-    #             li_resp.append(entry.pv())
-    #
-    #     return li_resp
+    def si_esta(self, fen, move):
+        if lista_jugadas := self.get_list_moves(fen):
+            for apdesde, aphasta, appromotion, nada, nada1 in lista_jugadas:
+                mx = apdesde + aphasta + appromotion
+                if mx.strip().lower() == move:
+                    return True
+        return False
 
 
-class Libro(Book):  # Cambio de denominación, error en restore wplayagainst engine
-    pass
+# class Libro(Book):  # Cambio de denominación, error en restore wplayagainst engine
+#     pass
 
 
 class BookGame(Book):

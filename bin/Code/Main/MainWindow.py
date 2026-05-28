@@ -301,7 +301,11 @@ class MainWindow(LCDialog.LCDialog):
         self.refresh()
 
     def set_title(self):
-        self.setWindowTitle(f"{Code.lucas_chess} {Code.VERSION}")
+        title = f"{Code.lucas_chess} {Code.VERSION}"
+        if not Code.configuration.is_main:
+            user = Code.configuration.user
+            title += f"   ({_('User')}: {user.name}   -   {_('Folder')}: {user.number})"
+        self.setWindowTitle(title)
 
     def set_label1(self, label):
         return self.base.set_label1(label)

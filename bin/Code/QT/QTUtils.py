@@ -1,4 +1,5 @@
 from PySide6 import QtCore, QtGui, QtWidgets
+from shiboken6 import isValid
 
 
 def refresh_gui():
@@ -100,3 +101,15 @@ def delay(ms: int):
     loop = QtCore.QEventLoop()
     QtCore.QTimer.singleShot(ms, loop.quit)
     loop.exec()
+
+
+def scene_remove_item_safe(scene, item):
+    if item is None:
+        return
+    try:
+        if isValid(item):
+            scene.removeItem(item)
+    except RuntimeError as e:
+        if __debug__:
+            from Code.Z import Debug
+            Debug.prln(f"[warn] scene_remove_item_safe: {e}", color="red")

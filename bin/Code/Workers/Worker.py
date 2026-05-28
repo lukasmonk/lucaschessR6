@@ -609,7 +609,8 @@ class Worker(QtWidgets.QWidget):
             p = Game.Game(self.game.last_position)
             p.read_pv(rm.pv)
             rm.is_white = self.game.last_position.is_white
-            txt = f"<b>[{rm.name}]</b> ({rm.abbrev_text()}) {p.pgn_translated()}"
+            pgn = p.pgn_html() if self.configuration.x_pgn_withfigurines else p.pgn_translated()
+            txt = f"<b>[{rm.name}]</b> ({rm.abbrev_text()}) {pgn}"
             self.lb_rotulo3.set_text(txt)
             self.show_pv(rm.pv, 1)
         return self.set_clock()

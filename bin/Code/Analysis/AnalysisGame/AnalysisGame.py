@@ -213,7 +213,7 @@ class AnalysisGame(QtCore.QObject):
         if book is not None:
             for mov in li_pos_moves:
                 move = game.move(mov)
-                if book.get_list_moves(move.position.fen()):
+                if book.si_esta(move.position_before.fen(), move.movimiento()):
                     move.is_book = True
                     st_to_skip.add(mov)
                     continue

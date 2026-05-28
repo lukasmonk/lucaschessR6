@@ -139,6 +139,7 @@ class CPU:
         OpeningsStd.ap.reset()
 
         self.alm = orden.dv["ALM"]
+
         self.huella = orden.dv["HUELLA"]
 
         self.launch_analysis()
@@ -779,6 +780,15 @@ class AnalyzeGame:
                     continue
                 else:
                     break
+
+        if self.alm.standard_openings:
+            for mov in li_pos_moves:
+                if not self.check_pause_close():
+                    return
+
+                move = game.move(mov)
+                if move.in_the_opening:
+                    st_borrar.add(mov)
 
         if self.from_last_move:
             li_pos_moves.reverse()

@@ -13,9 +13,11 @@ from PySide6 import QtCore
 import Code
 from Code.Base import Game
 from Code.Engines import EngineResponse, Priorities
-from Code.Z import Util, Debug
+from Code.Z import Util
 
 if __debug__:
+    from Code.Z import Debug
+
     prln = Debug.prln
 
 
@@ -149,8 +151,10 @@ class EngineRun(QtCore.QObject):
         self.process: Optional[QtCore.QProcess] = QtCore.QProcess(self)
 
         if not self.mode_timer_poll:
+            # noinspection PyUnresolvedReferences
             self.process.readyReadStandardOutput.connect(self._read_output)
 
+        # noinspection PyUnresolvedReferences
         self.process.finished.connect(self._engine_terminated)
 
         self.state = EngineState.OFF
@@ -173,7 +177,10 @@ class EngineRun(QtCore.QObject):
 
         self.process.start(path_exe, arguments=args)
 
-        if not self.process.waitForStarted(10000):
+        size = Util.filesize(path_exe)
+        ms = max(10000, size*10000//5000000)
+
+        if not self.process.waitForStarted(ms):
             self.state = EngineState.INVALID_ENGINE
             try:
                 self.process.kill()
@@ -634,6 +641,7 @@ class EngineRun(QtCore.QObject):
         if self.timerstop is None:
             self.timerstop = QtCore.QTimer()
             self.timerstop.setSingleShot(True)
+            # noinspection PyUnresolvedReferences
             self.timerstop.timeout.connect(self._on_timeout_timerstop)
         try:
             if self.timerstop.isActive():

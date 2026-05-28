@@ -1,4 +1,7 @@
+import collections
 import contextlib
+import sqlite3
+import threading
 
 from PySide6 import QtCore, QtWidgets
 
@@ -145,32 +148,127 @@ class ListRegs:
     def __init__(self, db_games, nregs: int, li_seleccionadas):
         self.db_games = db_games
         self.li_recnos = li_seleccionadas if li_seleccionadas else list(range(nregs))
+        self._prefetch_lock = threading.Lock()
         self.dic_worker = {}
 
-    def get_game(self, worker):
-        if self.is_finished():
-            return None
-        recno = self.li_recnos.pop(0)
+    def get_next_for_prefetch(self):
+        with self._prefetch_lock:
+            if not self.li_recnos:
+                return None
+            return self.li_recnos.pop(0)
+
+    def assign_to_worker(self, worker, recno):
         self.dic_worker[worker.huella] = recno
-        return recno
+
+    def return_to_queue(self, recno):
+        with self._prefetch_lock:
+            self.li_recnos.insert(0, recno)
+
+    def get_game(self, worker):
+        with self._prefetch_lock:
+            if not self.li_recnos:
+                return None
+            recno = self.li_recnos.pop(0)
+            self.dic_worker[worker.huella] = recno
+            return recno
 
     def received_game(self, worker):
         self.dic_worker[worker.huella] = None
 
     def is_finished(self):
-        return len(self.li_recnos) == 0
+        with self._prefetch_lock:
+            return len(self.li_recnos) == 0
 
     def pending(self):
-        return len(self.li_recnos)
+        with self._prefetch_lock:
+            return len(self.li_recnos)
 
     def remove_worker(self, worker: Worker):
         recno = self.dic_worker.get(worker.huella)
         if recno is not None:
-            self.li_recnos.insert(0, recno)
+            self.return_to_queue(recno)
             self.dic_worker[worker.huella] = None
 
 
+class GamePrefetcher(QtCore.QThread):
+    def __init__(self, db_games, list_regs, buffer_size=8):
+        super().__init__()
+        self.db_games = db_games
+        self.list_regs = list_regs
+        self.buffer_size = buffer_size
+
+        self._buffer = collections.deque()
+        self._lock = threading.Lock()
+        self._space_available = threading.Event()
+        self._space_available.set()
+        self._stop_requested = False
+
+    def run(self):
+        # Cada hilo necesita su propia conexión SQLite
+        conexion = sqlite3.connect(self.db_games.path_file)
+        conexion.row_factory = sqlite3.Row
+
+        try:
+            select_sql = self.db_games.select
+            li_row_ids = self.db_games.li_row_ids
+
+            while not self._stop_requested:
+                # Ver si hay espacio en el buffer
+                with self._lock:
+                    buffer_len = len(self._buffer)
+
+                if buffer_len >= self.buffer_size:
+                    self._space_available.clear()
+                    # Esperar hasta que se consuma un game o se pida parar
+                    self._space_available.wait(timeout=0.1)
+                    continue
+
+                # Obtener el siguiente recno para pre-lectura
+                recno = self.list_regs.get_next_for_prefetch()
+                if recno is None:
+                    # No hay más games en la base de datos
+                    break
+
+                # Realizar la lectura lenta desde la base de datos
+                try:
+                    rowid = li_row_ids[recno]
+                    cursor = conexion.execute(f"SELECT {select_sql} FROM Games WHERE rowid = ?", (rowid,))
+                    raw = cursor.fetchone()
+                    if raw is not None:
+                        # Parsear el game en segundo plano (read_game_raw solo procesa in-memory)
+                        game = self.db_games.read_game_raw(raw)
+                    else:
+                        game = None
+                except Exception:
+                    # En caso de error, devolver a la cola
+                    self.list_regs.return_to_queue(recno)
+                    continue
+
+                if game is not None:
+                    with self._lock:
+                        self._buffer.append((recno, game))
+                else:
+                    self.list_regs.return_to_queue(recno)
+
+        finally:
+            conexion.close()
+
+    def get_game(self):
+        """Retorna (recno, game) pre-leído si está disponible, o None si el buffer está vacío."""
+        with self._lock:
+            if self._buffer:
+                result = self._buffer.popleft()
+                self._space_available.set()  # Despertar el loop del prefetcher
+                return result
+        return None
+
+    def stop(self):
+        self._stop_requested = True
+        self._space_available.set()  # Por si el hilo está esperando
+
+
 class AnalysisMassiveWithWorkers:
+
     def __init__(self, wowner, alm, nregs, li_seleccionadas):
         self.db_games = wowner.db_games
         self.grid = wowner.grid
@@ -192,6 +290,8 @@ class AnalysisMassiveWithWorkers:
         self.window = None
 
         self.list_regs = ListRegs(self.db_games, nregs, li_seleccionadas)
+        buffer_size = max(8, alm.workers * 2)
+        self.prefetcher = GamePrefetcher(self.db_games, self.list_regs, buffer_size)
 
     def gen_workers(self):
         num_workers = min(self.alm.workers, self.nregs)
@@ -215,16 +315,32 @@ class AnalysisMassiveWithWorkers:
         self.list_regs.remove_worker(worker)
 
     def send_game_worker(self, worker: Worker):
-        recno = self.list_regs.get_game(worker)
-        if recno is None:
-            worker.send_terminate()
-            return False
+        result = self.prefetcher.get_game()
+        if result is not None:
+            recno, game = result
+            self.list_regs.assign_to_worker(worker, recno)
+        else:
+            # Fallback a lectura síncrona si el prefetcher está vacío
+            recno = self.list_regs.get_game(worker)
+            if recno is None:
+                worker.send_terminate()
+                return False
+            game = self.db_games.read_game_recno(recno)
 
-        game = self.db_games.read_game_recno(recno)
         worker.send_game(game, recno)
         return True
 
     def close(self):
+        self.prefetcher.stop()
+        self.prefetcher.wait(2000)
+        # Devolver games pre-leídos no consumidos a la cola principal
+        while True:
+            result = self.prefetcher.get_game()
+            if result is None:
+                break
+            recno, game = result
+            self.list_regs.return_to_queue(recno)
+
         worker: Worker
         for worker in self.li_workers:
             worker.close()
@@ -316,16 +432,18 @@ class AnalysisMassiveWithWorkers:
             return
 
     def run(self):
+        self.prefetcher.start()
         self.gen_workers()
         self.window = WProgress(self.wowner, self, self.nregs)
+
         self.window.show()
         self.window.setMinimumWidth(360)
         ScreenUtils.shrink(self.window)
         self.window.exec()
 
         for bmt_lista, name in (
-            (self.bmt_blunders, self.alm.bmtblunders),
-            (self.bmt_brillancies, self.alm.bmtbrilliancies),
+                (self.bmt_blunders, self.alm.bmtblunders),
+                (self.bmt_brillancies, self.alm.bmtbrilliancies),
         ):
             if bmt_lista and len(bmt_lista) > 0:
                 bmt = BMT.BMT(Code.configuration.paths.file_bmt())
