@@ -1,7 +1,6 @@
 import math
 from html import escape
-from typing import Any, Tuple
-from typing import Dict
+from typing import Any, Tuple, Dict
 
 import FasterCode
 
@@ -415,9 +414,9 @@ def gen_indexes(game, elos, alm):
     li_indices = [
         (
             _("Average lost scores"),
-            f"{average[True]:.02f}{cpt}",
-            f"{average[False]:0.02f}{cpt}",
-            f"{average_t:0.02f}{cpt}",
+            f"{average[True]:.02f} {cpt}",
+            f"{average[False]:0.02f} {cpt}",
+            f"{average_t:0.02f} {cpt}",
         ),
         (
             _("Domination"),
@@ -534,12 +533,10 @@ def old_way0(
     resto = '<td align="center">%s</td><td align="center">%s</td><td align="center">%s</td></tr>'
     plantilla_c = "<tr><td>%s</td>" + start + resto
     color = '<b><span style="color:%s">%s</span></b>'
-    plantilla_e = f'<tr><td><b><span style="color:%s">%s</span></b></td>' + '<td align="center">%s</td>' % color + resto % (
-        color, color, color)
+    plantilla_e = ('<tr><td><b><span style="color:%s">%s</span></b></td>' +
+                   '<td align="center">%s</td>' % color + resto % (color, color, color))
 
     def xm(label, var, xcolor, nag):
-        # if var[True] + var[False] == 0:
-        #     return ""
         return plantilla_e % (
             xcolor,
             nag,
@@ -604,10 +601,6 @@ def old_way0(
     cab = (plantilla_c % ("", "", cw, cb, ct)).replace("<td", "<th")
     txt_html_moves = f'<table border="1" cellpadding="5" cellspacing="0" >{cab}{txt}</table>'
     return txt_html_moves
-
-
-from typing import Dict
-from html import escape
 
 
 def old_way(

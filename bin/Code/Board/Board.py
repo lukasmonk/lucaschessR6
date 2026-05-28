@@ -454,14 +454,8 @@ class Board(QtWidgets.QGraphicsView):
     def sizeHint(self):
         return QtCore.QSize(self.ancho + 6, self.ancho + 6)
 
-    @staticmethod
-    def xremove_item(item):
-        try:
-            scene = item.scene()
-        except RuntimeError:
-            return
-        if scene:
-            scene.removeItem(item)
+    def xremove_item(self, item):
+        QTUtils.scene_remove_item_safe(self.escena, item)
 
     def keyPressEvent(self, event):
         k = event.key()
@@ -2713,7 +2707,7 @@ class Board(QtWidgets.QGraphicsView):
 
     def hide_selection(self):
         if self._selection_sc is not None:
-            self.escena.removeItem(self._selection_sc)
+            self.xremove_item(self._selection_sc)
             self._selection_sc = None
 
     # -----------------------------------------------------------------------------------------------------  VISUALMENU
