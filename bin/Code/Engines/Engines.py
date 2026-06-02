@@ -248,7 +248,7 @@ class Engine:
 
     def key_engine(self):
         if self.type != ENG_EXTERNAL:
-            return "maia" if self.key.startswith("maia") else self.key
+            return "maia" if self.key.startswith("maia-") else self.key
         stat = os.stat(self.path_exe)
         return f"{os.path.basename(self.path_exe)}_{stat.st_size}_{stat.st_mtime}"
 

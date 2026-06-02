@@ -990,9 +990,6 @@ class Manager:
                 self.capture_number = number
                 self._update_captures()
 
-        elif number in [2, 7, 3, 6]:
-            pass  # Now handled by the board itself
-
     def _update_on_position_change(self):
         self._update_captures()
 

@@ -656,6 +656,9 @@ class Board(QtWidgets.QGraphicsView):
             if si_flecha:
                 self.reset_arrow_sc()
 
+            if self.space_number is not None:
+                self.update_space_control()
+
         else:
             self.redraw()
 
@@ -670,6 +673,7 @@ class Board(QtWidgets.QGraphicsView):
         self.dic_movables = collections.OrderedDict()  # Flechas, Marcos, SVG
         self.id_last_movable = 0
         self.side_indicator_sc = None
+        self.space_layer = None
 
         self.is_white_bottom = True
 

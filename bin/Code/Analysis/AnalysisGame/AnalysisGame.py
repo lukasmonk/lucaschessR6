@@ -53,7 +53,7 @@ class AnalysisState:
 
 
 class AnalysisGame(QtCore.QObject):
-    def __init__(self, analysis_params, is_massiv, dispatcher: Callable, li_selected: list):
+    def __init__(self, analysis_params, dispatcher: Callable, li_selected: list):
         super().__init__()
 
         self.analysis_params = analysis_params

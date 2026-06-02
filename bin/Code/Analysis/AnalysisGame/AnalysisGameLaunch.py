@@ -73,7 +73,7 @@ def analysis_game(manager):
 
         return not manager_main_window_base.is_canceled()
 
-    run_analysis_game = AnalysisGame.AnalysisGame(analysis_params, False, dispatch_bp, li_moves)
+    run_analysis_game = AnalysisGame.AnalysisGame(analysis_params, dispatch_bp, li_moves)
 
     run_analysis_game.run_analisis(game, manager_main_window_base)
 

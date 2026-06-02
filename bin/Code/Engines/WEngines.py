@@ -32,13 +32,14 @@ def select_engine(wowner):
     :return: MotorExterno / None=error
     """
     # Pedimos el ejecutable
-    folder_engines = Code.configuration.read_variables("FOLDER_ENGINES")
+    key = "FOLDER_ENGINES"
+    folder_engines = Code.configuration.read_variables(key) or Code.configuration.paths.userdata_folder
     extension = "exe" if Util.is_windows() else "*"
-    path_exe_engine = SelectFiles.read_file(wowner, folder_engines if folder_engines else ".", extension, _("Engine"))
+    path_exe_engine = SelectFiles.read_file(wowner, folder_engines, extension, _("Engine"))
     if not path_exe_engine:
         return None
     folder_engines = Util.relative_path(os.path.dirname(path_exe_engine))
-    Code.configuration.write_variables("FOLDER_ENGINES", folder_engines)
+    Code.configuration.write_variables(key, folder_engines)
 
     # Leemos el UCI
     with QTMessages.one_moment_please(wowner):

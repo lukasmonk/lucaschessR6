@@ -1981,7 +1981,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                     pv = " ".join(li1[:tp])
             p = Game.Game(self.game.last_position)
             p.read_pv(pv)
-            li.append(p.pgn_base_raw())
+            pgn = p.pgn_html() if self.configuration.x_pgn_withfigurines else p.pgn_translated()
+            li.append(pgn)
             self.set_label3("<br>".join(li))
             QTUtils.refresh_gui()
 
