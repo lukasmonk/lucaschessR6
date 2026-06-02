@@ -109,7 +109,8 @@ class AllPieces:
         pm = self.pixmap(pieza, name, width)
         return QtGui.QIcon(pm)
 
-    def pixmap(self, pieza, name, width):
+    @staticmethod
+    def pixmap(pieza, name, width):
         fich = Code.path_resource("Pieces", name, f"{'w' if pieza.isupper() else 'b'}{pieza.lower()}.svg")
         pm = QtGui.QPixmap(width, width)
         pm.fill(QtCore.Qt.GlobalColor.transparent)
@@ -126,7 +127,8 @@ class AllPieces:
     def default_pixmap(self, pieza, width):
         return self.pixmap(pieza, DEFAULT_PIECES, width)
 
-    def save_all_png(self, name, px):
+    @staticmethod
+    def save_all_png(name, px):
         if is_only_board(name):
             name = DEFAULT_PIECES
         folder_to_save = Code.configuration.paths.folder_pieces_png()

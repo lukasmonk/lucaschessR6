@@ -1,5 +1,4 @@
 import time
-from typing import Callable, Optional
 
 from PySide6 import QtCore
 
@@ -31,19 +30,6 @@ class ParamsReplay:
             "CUSTOM_SOUNDS": False,
             "SECONDS_BEFORE": 0.0,
             "REPLAY_CONTINUOUS": False,
-            "TRANSPARENCY": 0,
-            "P_WHITE": False,
-            "P_BLACK": False,
-            "N_WHITE": False,
-            "N_BLACK": False,
-            "B_WHITE": False,
-            "B_BLACK": False,
-            "R_WHITE": False,
-            "R_BLACK": False,
-            "Q_WHITE": False,
-            "Q_BLACK": False,
-            "K_WHITE": False,
-            "K_BLACK": False,
         }
         dic.update(Code.configuration.read_variables(self.key))
         return dic
@@ -65,9 +51,6 @@ class Replay:
         self.if_beep: bool = False
         self.if_custom_sounds: bool = False
         self.with_pgn: bool = False
-        self.ghost_level: float = 0  # （0-1）
-        self.dic_ghost_pieces: dict = {}
-        self.board_create_piece: Optional[Callable] = None
 
         self.params = ParamsReplay()
         dic_var = self.params.dic_data
@@ -136,45 +119,6 @@ class Replay:
         self.if_beep = dic_var["BEEP"]
         self.if_custom_sounds = dic_var["CUSTOM_SOUNDS"]
         self.with_pgn = dic_var["PGN"]
-
-        self.ghost_level = dic_var.get("TRANSPARENCY", 0) / 100.0
-        self.dic_ghost_pieces = {
-            "P": dic_var.get("P_WHITE", False),
-            "p": dic_var.get("P_BLACK", False),
-            "N": dic_var.get("N_WHITE", False),
-            "n": dic_var.get("N_BLACK", False),
-            "B": dic_var.get("B_WHITE", False),
-            "b": dic_var.get("B_BLACK", False),
-            "R": dic_var.get("R_WHITE", False),
-            "r": dic_var.get("R_BLACK", False),
-            "Q": dic_var.get("Q_WHITE", False),
-            "q": dic_var.get("Q_BLACK", False),
-            "K": dic_var.get("K_WHITE", False),
-            "k": dic_var.get("K_BLACK", False),
-        }
-        self.update_ghost()
-
-    def update_ghost(self):
-        if self.ghost_level > 0.0:
-            if self.board.create_piece != self.create_piece:
-                self.board_create_piece = self.board.create_piece
-                self.board.create_piece = self.create_piece
-        else:
-            if self.board_create_piece is not None:
-                self.board.create_piece = self.board_create_piece
-
-        for pz, pz_sc, x in self.board.li_pieces:
-            if self.ghost_level > 0.0 and self.dic_ghost_pieces.get(pz, False):
-                pz_sc.setOpacity(1.0 - self.ghost_level)
-            else:
-                pz_sc.setOpacity(1.0)
-
-    def create_piece(self, cpieza, pos_a1_h8):
-        pz_sc = self.board_create_piece(cpieza, pos_a1_h8)
-        if self.ghost_level > 0.0:
-            if self.dic_ghost_pieces.get(cpieza, False):
-                pz_sc.setOpacity(1.0 - self.ghost_level)
-        return pz_sc
 
     def sleep_refresh(self, seconds):
         ini_time = time.time()
@@ -303,10 +247,6 @@ class Replay:
                 self.show_information()
 
     def finalize(self):
-        if self.ghost_level > 0.0:
-            for pz, pz_sc, x in self.board.li_pieces:
-                pz_sc.setOpacity(1.0)
-            self.board.create_piece = self.board_create_piece
         self.stopped = True
         self.main_window.pon_toolbar(self.antAcciones)
         self.manager.set_routine_default(None)

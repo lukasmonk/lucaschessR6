@@ -2,6 +2,7 @@ import contextlib
 import copy
 import os
 import sys
+import time
 from collections import deque
 from typing import Any, Optional
 
@@ -61,6 +62,12 @@ class CPU:
         self.alm: Optional[Any] = None
         self.ag: Optional[AnalyzeGame] = None
         self.huella: Optional[str] = None
+
+        # Throttling de progreso para evitar IPC en cada jugada
+        self._last_progress_time = 0.0
+        self._last_progress_npos = 0
+        self._progress_interval = 0.15
+        self._progress_delta = 5
 
     def xreceive(self) -> None:
         """Recibe órdenes del proceso principal, vaciando toda la cola IPC"""
@@ -218,14 +225,36 @@ class CPU:
         self.send(orden)
 
     def progress(self, npos: int, n_moves: int) -> bool:
-        """Envia orde para actualizar la barra de progreso"""
-        orden = RunAnalysisControl.Orden()
-        orden.key = RUNA_PROGRESS
-        orden.set("HUELLA", self.huella)
-        orden.set("CURRENT", npos)
-        orden.set("TOTAL", n_moves)
-        self.send(orden)
-        QTUtils.refresh_gui()
+        """Envia orden para actualizar la barra de progreso.
+
+        Throttling para evitar enviar demasiadas órdenes R en análisis rápidos.
+        """
+        if self.is_closed:
+            return False
+
+        now = time.monotonic()
+        should_send = False
+
+        if npos >= n_moves:
+            should_send = True
+        elif n_moves <= 20:
+            should_send = True
+        elif (npos - self._last_progress_npos) >= self._progress_delta:
+            should_send = True
+        elif (now - self._last_progress_time) >= self._progress_interval:
+            should_send = True
+
+        if should_send:
+            self._last_progress_time = now
+            self._last_progress_npos = npos
+            orden = RunAnalysisControl.Orden()
+            orden.key = RUNA_PROGRESS
+            orden.set("HUELLA", self.huella)
+            orden.set("CURRENT", npos)
+            orden.set("TOTAL", n_moves)
+            self.send(orden)
+            QTUtils.refresh_gui()
+
         return not self.is_closed
 
 

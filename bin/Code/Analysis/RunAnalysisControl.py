@@ -4,6 +4,7 @@ import sqlite3
 import threading
 
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import Signal
 
 import Code
 from Code.Base import Game
@@ -17,7 +18,7 @@ from Code.Base.Constantes import (
     RUNA_PROGRESS,
 )
 from Code.BestMoveTraining import BMT
-from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTUtils, ScreenUtils
+from Code.QT import Colocacion, Controles, Iconos, LCDialog, ScreenUtils
 from Code.SQL import UtilSQL
 from Code.Z import Util, XRun
 
@@ -36,6 +37,9 @@ class Orden:
 
     def get(self, name):
         return self.dv.get(name)
+
+    def __str__(self):
+        return f"{self.key}: {self.dv}"
 
 
 class IPCAnalysis:
@@ -204,7 +208,6 @@ class GamePrefetcher(QtCore.QThread):
         self._stop_requested = False
 
     def run(self):
-        # Cada hilo necesita su propia conexión SQLite
         conexion = sqlite3.connect(self.db_games.path_file)
         conexion.row_factory = sqlite3.Row
 
@@ -213,34 +216,27 @@ class GamePrefetcher(QtCore.QThread):
             li_row_ids = self.db_games.li_row_ids
 
             while not self._stop_requested:
-                # Ver si hay espacio en el buffer
                 with self._lock:
                     buffer_len = len(self._buffer)
 
                 if buffer_len >= self.buffer_size:
                     self._space_available.clear()
-                    # Esperar hasta que se consuma un game o se pida parar
                     self._space_available.wait(timeout=0.1)
                     continue
 
-                # Obtener el siguiente recno para pre-lectura
                 recno = self.list_regs.get_next_for_prefetch()
                 if recno is None:
-                    # No hay más games en la base de datos
                     break
 
-                # Realizar la lectura lenta desde la base de datos
                 try:
                     rowid = li_row_ids[recno]
                     cursor = conexion.execute(f"SELECT {select_sql} FROM Games WHERE rowid = ?", (rowid,))
                     raw = cursor.fetchone()
                     if raw is not None:
-                        # Parsear el game en segundo plano (read_game_raw solo procesa in-memory)
                         game = self.db_games.read_game_raw(raw)
                     else:
                         game = None
                 except Exception:
-                    # En caso de error, devolver a la cola
                     self.list_regs.return_to_queue(recno)
                     continue
 
@@ -254,28 +250,31 @@ class GamePrefetcher(QtCore.QThread):
             conexion.close()
 
     def get_game(self):
-        """Retorna (recno, game) pre-leído si está disponible, o None si el buffer está vacío."""
         with self._lock:
             if self._buffer:
                 result = self._buffer.popleft()
-                self._space_available.set()  # Despertar el loop del prefetcher
+                self._space_available.set()
                 return result
         return None
 
     def stop(self):
         self._stop_requested = True
-        self._space_available.set()  # Por si el hilo está esperando
+        self._space_available.set()
 
 
-class AnalysisMassiveWithWorkers:
+class AnalysisMassiveWithWorkers(QtCore.QThread):
+    game_analyzed = Signal(int, object, int)
+    worker_progress_changed = Signal(object, int, int)
+    worker_added = Signal(object)
+    finished_successfully = Signal()
 
     def __init__(self, wowner, alm, nregs, li_seleccionadas):
+        super().__init__()
         self.db_games = wowner.db_games
         self.grid = wowner.grid
         self.wowner = wowner
         self.li_seleccionadas = li_seleccionadas
         self.nregs = nregs
-        self.pos_reg = -1
         self.num_games_analyzed = 0
 
         self.bmt_blunders = None
@@ -287,11 +286,19 @@ class AnalysisMassiveWithWorkers:
         self.li_workers = []
         self.dic_huellas_workers = {}
 
-        self.window = None
-
         self.list_regs = ListRegs(self.db_games, nregs, li_seleccionadas)
         buffer_size = max(8, alm.workers * 2)
         self.prefetcher = GamePrefetcher(self.db_games, self.list_regs, buffer_size)
+
+        self._is_canceled = False
+        self._is_paused = False
+        self._pause_cond = threading.Condition()
+
+        # !!! CAMBIO CLAVE !!!
+        # Inicializamos el prefetcher y generamos los workers iniciales AQUÍ en el constructor,
+        # de forma que cuando WProgress se cree, ya existan en self.li_workers.
+        self.prefetcher.start()
+        self.gen_workers()
 
     def gen_workers(self):
         num_workers = min(self.alm.workers, self.nregs)
@@ -305,13 +312,18 @@ class AnalysisMassiveWithWorkers:
     def get_worker(self, huella):
         return self.dic_huellas_workers.get(huella)
 
-    def add_worker(self, worker: Worker):
+    def add_worker_from_gui(self):
+        worker = Worker(self.alm)
         self.li_workers.append(worker)
         self.dic_huellas_workers[worker.huella] = worker
+        self.send_game_worker(worker)
+        self.worker_added.emit(worker)
 
     def remove_worker(self, worker: Worker):
-        del self.dic_huellas_workers[worker.huella]
-        self.li_workers.remove(worker)
+        if worker.huella in self.dic_huellas_workers:
+            del self.dic_huellas_workers[worker.huella]
+        if worker in self.li_workers:
+            self.li_workers.remove(worker)
         self.list_regs.remove_worker(worker)
 
     def send_game_worker(self, worker: Worker):
@@ -320,7 +332,6 @@ class AnalysisMassiveWithWorkers:
             recno, game = result
             self.list_regs.assign_to_worker(worker, recno)
         else:
-            # Fallback a lectura síncrona si el prefetcher está vacío
             recno = self.list_regs.get_game(worker)
             if recno is None:
                 worker.send_terminate()
@@ -330,10 +341,73 @@ class AnalysisMassiveWithWorkers:
         worker.send_game(game, recno)
         return True
 
-    def close(self):
+    def cancel_process(self):
+        self._is_canceled = True
+        with self._pause_cond:
+            self._is_paused = False
+            self._pause_cond.notify_all()
+
+    def set_paused(self, is_paused):
+        with self._pause_cond:
+            self._is_paused = is_paused
+            for worker in self.li_workers:
+                if is_paused:
+                    worker.send_pause()
+                else:
+                    worker.send_resume()
+            if not is_paused:
+                self._pause_cond.notify_all()
+
+    def run(self):
+        """ Bucle principal de control asíncrono """
+        # Quitamos self.prefetcher.start() y self.gen_workers() de aquí porque ya corrieron en __init__
+
+        while not self._is_canceled:
+            with self._pause_cond:
+                while self._is_paused and not self._is_canceled:
+                    self._pause_cond.wait(timeout=0.1)
+
+            if self._is_canceled:
+                break
+
+            actives = 0
+            for worker in list(self.li_workers):
+                if worker.is_closed():
+                    continue
+                if not worker.is_working():
+                    worker.close()
+                    continue
+
+                actives += 1
+                order: Orden = worker.receive()
+
+                if order is None:
+                    pass
+
+                elif order.key == RUNA_GAME:
+                    self.run_game(worker, order)
+
+                elif order.key == RUNA_TERMINATE:
+                    worker.close()
+                    actives -= 1
+                    continue
+
+                elif order.key == RUNA_PROGRESS:
+                    huella = order.get("HUELLA")
+                    current = order.get("CURRENT")
+                    total = order.get("TOTAL")
+                    w = self.get_worker(huella)
+                    if w:
+                        self.worker_progress_changed.emit(w, current, total)
+
+            if actives == 0:
+                break
+
+            self.msleep(30)
+
+        # Cierre ordenado
         self.prefetcher.stop()
         self.prefetcher.wait(2000)
-        # Devolver games pre-leídos no consumidos a la cola principal
         while True:
             result = self.prefetcher.get_game()
             if result is None:
@@ -341,10 +415,11 @@ class AnalysisMassiveWithWorkers:
             recno, game = result
             self.list_regs.return_to_queue(recno)
 
-        worker: Worker
         for worker in self.li_workers:
             worker.close()
-        self.window.xclose()
+
+        if not self._is_canceled:
+            self.finished_successfully.emit()
 
     def run_game(self, worker: Worker, order: Orden):
         self.list_regs.received_game(worker)
@@ -354,9 +429,9 @@ class AnalysisMassiveWithWorkers:
         if self.alm.accuracy_tags:
             game.add_accuracy_tags()
         recno = order.get("RECNO")
-        self.db_games.save_game_recno(recno, game)
+
         self.num_games_analyzed += 1
-        self.window.set_pos(self.num_games_analyzed)
+        self.game_analyzed.emit(recno, game, self.num_games_analyzed)
 
         if li_extra := order.get("EXTRA"):
             for tipo, par1, par2, par3 in li_extra:
@@ -374,73 +449,7 @@ class AnalysisMassiveWithWorkers:
                     with open(par1, "at", encoding="utf-8", errors="ignore") as f:
                         f.write(par2)
 
-    def processing(self):
-        QTUtils.refresh_gui()
-        if self.window.is_canceled():
-            self.close()
-            return
-
-        if self.window.is_paused():
-            return
-
-        actives = 0
-
-        worker: Worker
-        for worker in self.li_workers:
-            if worker.is_closed():
-                continue
-            if not worker.is_working():
-                worker.close()
-                continue
-
-            actives += 1
-
-            order: Orden = worker.receive()
-            if order is None:
-                pass
-
-            elif order.key == RUNA_GAME:
-                self.run_game(worker, order)
-
-            elif order.key == RUNA_TERMINATE:
-                worker.close()
-                actives -= 1
-                continue
-
-            elif order.key == RUNA_PROGRESS:
-                huella = order.get("HUELLA")
-                current = order.get("CURRENT")
-                total = order.get("TOTAL")
-                if self.window:
-                    worker = self.get_worker(huella)
-                    if worker:
-                        self.window.update_worker_progress(worker, current, total)
-
-        if actives == 0:
-            self.close()
-
-    def send_pause_resume(self, is_paused):
-        for worker in self.li_workers:
-            if is_paused:
-                worker.send_pause()
-            else:
-                worker.send_resume()
-
-    @staticmethod
-    def save_bmt(bmt):
-        if bmt is None:
-            return
-
-    def run(self):
-        self.prefetcher.start()
-        self.gen_workers()
-        self.window = WProgress(self.wowner, self, self.nregs)
-
-        self.window.show()
-        self.window.setMinimumWidth(360)
-        ScreenUtils.shrink(self.window)
-        self.window.exec()
-
+    def save_bmt_data(self):
         for bmt_lista, name in (
                 (self.bmt_blunders, self.alm.bmtblunders),
                 (self.bmt_brillancies, self.alm.bmtbrilliancies),
@@ -466,7 +475,6 @@ class AnalysisMassiveWithWorkers:
                 reg.ORDEN = 0
 
                 dbf.insertarReg(reg, siReleer=False)
-
                 bmt.cerrar()
 
 
@@ -474,6 +482,7 @@ class WProgress(LCDialog.LCDialog):
     def __init__(self, w_parent, amww: AnalysisMassiveWithWorkers, nregs: int):
         LCDialog.LCDialog.__init__(self, w_parent, _("Analyzing"), Iconos.Analizar(), "massive_progress")
 
+        self.amww: AnalysisMassiveWithWorkers = amww
         self.lb_game = Controles.LB(self)
 
         self.pb_moves = QtWidgets.QProgressBar(self)
@@ -515,20 +524,17 @@ class WProgress(LCDialog.LCDialog):
         layout = Colocacion.V().otro(lay).otro(lay_time).espacio(10).control(self.frame_workers).otro(lay2)
         self.setLayout(layout)
 
-        self.amww: AnalysisMassiveWithWorkers = amww
         self._is_canceled = False
         self._is_closed = False
-
-        self._games_done = 0
         self._estimator = Util.SmoothedEstimator(total=self.pb_moves.maximum())
 
-        self.restore_video(default_width=550, default_height=220)
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.xreceive)
-        self.timer.start(100)
+        # CONEXIONES DE SEÑALES
+        self.amww.game_analyzed.connect(self.set_pos)
+        self.amww.worker_progress_changed.connect(self.update_worker_progress)
+        self.amww.worker_added.connect(self._add_worker_widget)
+        self.amww.finished_successfully.connect(self.xfinished)
 
-        self.restore_video()
-        self.working = False
+        self.restore_video(default_width=550, default_height=220)
 
     def _create_workers_panel(self, amww: "AnalysisMassiveWithWorkers"):
         self.workers_layout = QtWidgets.QVBoxLayout()
@@ -565,8 +571,6 @@ class WProgress(LCDialog.LCDialog):
         """)
 
         self.dic_worker_widgets = {}
-
-        worker: Worker
         for worker in amww.li_workers:
             self._add_worker_widget(worker)
 
@@ -577,8 +581,6 @@ class WProgress(LCDialog.LCDialog):
 
         pb_worker = QtWidgets.QProgressBar(worker_frame)
         pb_worker.setFormat(f"{_('Movement')} %v/%m")
-        # pb_worker.setRange(0, 100)
-        # pb_worker.setValue(0)
         pb_worker.setFont(Controles.FontTypeNew(extra_bold=True))
 
         bt_pause_worker = Controles.PB(worker_frame, "", lambda checked, w=worker: self.pause_worker(w), plano=True)
@@ -603,11 +605,7 @@ class WProgress(LCDialog.LCDialog):
         }
 
     def add_worker(self):
-        worker = Worker(self.amww.alm)
-        self.amww.add_worker(worker)
-        self._add_worker_widget(worker)
-
-        self.amww.send_game_worker(worker)
+        self.amww.add_worker_from_gui()
 
     def pause_worker(self, worker: Worker):
         if worker.is_paused():
@@ -622,39 +620,34 @@ class WProgress(LCDialog.LCDialog):
             worker.send_terminate()
             worker.close()
 
-        widget_info = self.dic_worker_widgets[worker.huella]
-        widget_info["frame"].hide()
-        self.workers_layout.removeWidget(widget_info["frame"])
-        widget_info["frame"].deleteLater()
-
-        self.dic_worker_widgets.pop(worker.huella)
+        if worker.huella in self.dic_worker_widgets:
+            widget_info = self.dic_worker_widgets[worker.huella]
+            widget_info["frame"].hide()
+            self.workers_layout.removeWidget(widget_info["frame"])
+            widget_info["frame"].deleteLater()
+            self.dic_worker_widgets.pop(worker.huella)
 
         self.amww.remove_worker(worker)
 
     def update_worker_progress(self, worker: Worker, current_move: int, total_moves: int):
-        widget = self.dic_worker_widgets[worker.huella]
-        widget["current_game"] = current_move
-        widget["total_moves"] = total_moves
-        if total_moves > 0:
-            widget["progress_bar"].setRange(0, total_moves)
-            widget["progress_bar"].setValue(current_move)
-
-    def xreceive(self):
-        QTUtils.refresh_gui()
-        if self.working:
-            return
-        self.working = True
-        self.amww.processing()
-        self.working = False
+        if worker.huella in self.dic_worker_widgets:
+            widget = self.dic_worker_widgets[worker.huella]
+            widget["current_game"] = current_move
+            widget["total_moves"] = total_moves
+            if total_moves > 0:
+                widget["progress_bar"].setRange(0, total_moves)
+                widget["progress_bar"].setValue(current_move)
 
     def xcancel(self):
         self._is_canceled = True
-        self.amww.close()
+        self.amww.cancel_process()
+        self.amww.wait()
+        self.xclose()
 
     def pause_resume(self):
         self._is_paused = not self._is_paused
         self.icon_pause_resume()
-        self.amww.send_pause_resume(self._is_paused)
+        self.amww.set_paused(self._is_paused)
 
     def icon_pause_resume(self):
         self.bt_pause.set_icono(Iconos.ContinueColor() if self._is_paused else Iconos.PauseColor())
@@ -665,8 +658,10 @@ class WProgress(LCDialog.LCDialog):
     def is_paused(self):
         return self._is_paused
 
-    def set_pos(self, pos):
+    def set_pos(self, recno, game, pos):
         if not self._is_canceled:
+            self.amww.db_games.save_game_recno(recno, game)
+
             self.pb_moves.setValue(pos)
             str_estimate = self._estimator.estimated(pos)
             if str_estimate is not None:
@@ -674,9 +669,25 @@ class WProgress(LCDialog.LCDialog):
             else:
                 self.lb_time.set_text("")
 
+    def xfinished(self):
+        self.amww.wait()
+        self.amww.save_bmt_data()
+        self.xclose()
+
     def xclose(self):
         if not self._is_closed:
             self._is_closed = True
-            self.timer.stop()
-            self.timer = None
             self.accept()
+
+
+def lanzar_analisis_masivo(wowner, alm, nregs, li_seleccionadas):
+    procesador_hilo = AnalysisMassiveWithWorkers(wowner, alm, nregs, li_seleccionadas)
+
+    ventana = WProgress(wowner, procesador_hilo, nregs)
+    ventana.hilo_controlador = procesador_hilo
+
+    procesador_hilo.start()
+
+    ventana.setMinimumWidth(360)
+    ScreenUtils.shrink(ventana)
+    ventana.exec()

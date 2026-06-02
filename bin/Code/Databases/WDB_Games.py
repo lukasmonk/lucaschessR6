@@ -1452,8 +1452,9 @@ class WGames(QtWidgets.QWidget):
         self.tw_massive_analysis_n_workers(alm, nregs, li_seleccionadas)
 
     def tw_massive_analysis_n_workers(self, alm, nregs, li_seleccionadas):
-        rac = RunAnalysisControl.AnalysisMassiveWithWorkers(self, alm, nregs, li_seleccionadas)
-        rac.run()
+        RunAnalysisControl.lanzar_analisis_masivo(self, alm, nregs, li_seleccionadas)
+        # rac = RunAnalysisControl.AnalysisMassiveWithWorkers(self, alm, nregs, li_seleccionadas)
+        # rac.run()
 
         if alm.accuracy_tags or alm.themes_tags:
             self.rehaz_columnas()
