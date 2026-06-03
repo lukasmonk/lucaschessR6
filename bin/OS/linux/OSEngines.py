@@ -452,17 +452,25 @@ def read_engines(folder_engines):
     return dic_engines
 
 
-def dic_engines_fixed_elo(folder_engines):
-    d = read_engines(folder_engines)
-    dic = {}
-    for nm, xfrom, xto in (
-            ("stockfish", 1400, 3000),
+def li_engines_fixed_elo() -> tuple:
+    return (
+            ("stockfish", 1400, 3100),
             ("arasan", 1000, 2600),
             ("cheng", 800, 2500),
             ("greko", 1600, 2400),
             ("texel", 700, 2500),
             ("eguzki", 1000, 2700),
-    ):
+            ("ct800", 1000, 2500),
+            # ("patricia", 500, 3000),
+    )
+
+
+def dic_engines_fixed_elo(folder_engines):
+    d = read_engines(folder_engines)
+    dic = {}
+    li_engines = li_engines_fixed_elo()
+
+    for nm, xfrom, xto in li_engines:
         for elo in range(xfrom, xto + 100, 100):
             cm = d[nm].clone()
             if elo not in dic:

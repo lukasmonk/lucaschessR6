@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-06-02 08:53+0200\n"
+"POT-Creation-Date: 2026-06-03 17:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -367,7 +367,7 @@ msgstr ""
 #: .\Code\Leagues\WLeagueConfig.py:235
 #: .\Code\Main\WBase.py:202
 #: .\Code\Main\WBase.py:247
-#: .\Code\Menus\CompeteMenu.py:104
+#: .\Code\Menus\CompeteMenu.py:109
 #: .\Code\Openings\ManagerOPLEngines.py:528
 #: .\Code\Replay\WReplayParams.py:13
 #: .\Code\Shortcuts\WShortcuts.py:19
@@ -745,6 +745,7 @@ msgstr ""
 #: .\Code\CompetitionWithTutor\ManagerCompeticion.py:236
 #: .\Code\Competitions\ManagerElo.py:428
 #: .\Code\Competitions\ManagerFideFicsLichess.py:270
+#: .\Code\Competitions\ManagerGrid.py:202
 #: .\Code\Competitions\ManagerMaia.py:272
 #: .\Code\Competitions\ManagerMicElo.py:389
 #: .\Code\Competitions\ManagerWicker.py:389
@@ -785,6 +786,7 @@ msgstr ""
 #: .\Code\Books\WBooksTrainOL.py:524
 #: .\Code\Books\WFactory.py:37
 #: .\Code\Books\WPolyglot.py:80
+#: .\Code\Competitions\WindowGrid.py:126
 #: .\Code\Coordinates\WCoordinatesBasic.py:28
 #: .\Code\Coordinates\WCoordinatesBlocks.py:30
 #: .\Code\Coordinates\WCoordinatesWrite.py:34
@@ -966,7 +968,7 @@ msgstr ""
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:240
 #: .\Code\PlayAgainstEngine\Personalities.py:74
 #: .\Code\QT\GridEditCols.py:104
-#: .\Code\QT\Piezas.py:380
+#: .\Code\QT\Piezas.py:423
 #: .\Code\QT\WColors.py:94
 #: .\Code\STS\WindowSTS.py:655
 #: .\Code\STS\WindowSTS.py:764
@@ -1107,7 +1109,7 @@ msgstr ""
 #: .\Code\PlayAgainstEngine\Personalities.py:295
 #: .\Code\Procesador.py:481
 #: .\Code\QT\GridEditCols.py:87
-#: .\Code\QT\Piezas.py:361
+#: .\Code\QT\Piezas.py:404
 #: .\Code\STS\WindowSTS.py:403
 #: .\Code\STS\WindowSTS.py:686
 #: .\Code\Shortcuts\WShortcuts.py:21
@@ -1271,8 +1273,8 @@ msgstr ""
 #: .\Code\Main\WAnalysisBar.py:175
 #: .\Code\Main\WInformation.py:172
 #: .\Code\Main\WInformation.py:685
-#: .\Code\ManagerBase\ManagerAnalysis.py:69
-#: .\Code\ManagerBase\ManagerAnalysis.py:122
+#: .\Code\ManagerBase\ManagerAnalysis.py:70
+#: .\Code\ManagerBase\ManagerAnalysis.py:123
 #: .\Code\Openings\WindowOpeningLine.py:261
 #: .\Code\Openings\WindowOpeningLine.py:784
 #: .\Code\Openings\WindowOpeningLine.py:862
@@ -1297,8 +1299,8 @@ msgstr ""
 #: .\Code\Databases\WDB_InfoMove.py:231
 #: .\Code\Main\WInformation.py:429
 #: .\Code\Main\WInformation.py:664
-#: .\Code\ManagerBase\ManagerAnalysis.py:51
-#: .\Code\ManagerBase\ManagerAnalysis.py:112
+#: .\Code\ManagerBase\ManagerAnalysis.py:52
+#: .\Code\ManagerBase\ManagerAnalysis.py:113
 #: .\Code\Openings\WindowOpeningLine.py:1152
 #: .\Code\QT\QTMessages.py:257
 #: .\Code\Tutor\Tutor.py:70
@@ -1308,8 +1310,8 @@ msgstr ""
 #: .\Code\Analysis\AnalysisGame\AnalysisGameLaunch.py:44
 #: .\Code\Analysis\WindowAnalysis.py:522
 #: .\Code\Main\WInformation.py:669
-#: .\Code\ManagerBase\ManagerAnalysis.py:52
-#: .\Code\ManagerBase\ManagerAnalysis.py:113
+#: .\Code\ManagerBase\ManagerAnalysis.py:53
+#: .\Code\ManagerBase\ManagerAnalysis.py:114
 msgid "Stop thinking"
 msgstr ""
 
@@ -1335,8 +1337,8 @@ msgstr ""
 #: .\Code\LearnGame\WindowLearnGame.py:263
 #: .\Code\LearnGame\WindowPlayGame.py:214
 #: .\Code\Main\WInformation.py:685
-#: .\Code\ManagerBase\ManagerAnalysis.py:69
-#: .\Code\ManagerBase\ManagerAnalysis.py:122
+#: .\Code\ManagerBase\ManagerAnalysis.py:70
+#: .\Code\ManagerBase\ManagerAnalysis.py:123
 #: .\Code\Mate15\WRunMate15.py:230
 #: .\Code\Openings\WindowOpeningLine.py:1156
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:529
@@ -1570,6 +1572,7 @@ msgstr ""
 #: .\Code\Competitions\ManagerMaia.py:133
 #: .\Code\Competitions\ManagerMicElo.py:280
 #: .\Code\Competitions\ManagerWicker.py:281
+#: .\Code\Competitions\WindowGrid.py:56
 #: .\Code\Coordinates\CoordinatesBasic.py:20
 #: .\Code\Coordinates\WCoordinatesBlocks.py:80
 #: .\Code\Coordinates\WCoordinatesWrite.py:44
@@ -1613,7 +1616,7 @@ msgstr ""
 #: .\Code\PlayAgainstEngine\ManagerPlayAgainstEngine.py:1243
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:1798
 #: .\Code\PlayHuman\WPlayHuman.py:31
-#: .\Code\QT\Piezas.py:267
+#: .\Code\QT\Piezas.py:305
 #: .\Code\Resistance\WindowResistance.py:41
 #: .\Code\Swiss\WSwiss.py:68
 #: .\Code\Swiss\WSwiss.py:115
@@ -1661,6 +1664,7 @@ msgstr ""
 #: .\Code\Competitions\ManagerMaia.py:133
 #: .\Code\Competitions\ManagerMicElo.py:280
 #: .\Code\Competitions\ManagerWicker.py:281
+#: .\Code\Competitions\WindowGrid.py:56
 #: .\Code\Coordinates\CoordinatesBasic.py:20
 #: .\Code\Coordinates\WCoordinatesBlocks.py:82
 #: .\Code\Coordinates\WCoordinatesWrite.py:44
@@ -1704,7 +1708,7 @@ msgstr ""
 #: .\Code\PlayAgainstEngine\ManagerPlayAgainstEngine.py:1243
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:1799
 #: .\Code\PlayHuman\WPlayHuman.py:34
-#: .\Code\QT\Piezas.py:268
+#: .\Code\QT\Piezas.py:306
 #: .\Code\Resistance\WindowResistance.py:42
 #: .\Code\Swiss\WSwiss.py:69
 #: .\Code\Swiss\WSwiss.py:116
@@ -1802,7 +1806,7 @@ msgstr ""
 #: .\Code\Analysis\AnalysisIndexesShow.py:108
 #: .\Code\Analysis\AnalysisIndexesShow.py:140
 #: .\Code\Analysis\AnalysisIndexesShow.py:173
-#: .\Code\ManagerBase\ManagerAnalysis.py:179
+#: .\Code\ManagerBase\ManagerAnalysis.py:180
 msgid "There are no analyzed moves."
 msgstr ""
 
@@ -1844,7 +1848,7 @@ msgstr ""
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:88
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:149
 #: .\Code\QT\GridEditCols.py:104
-#: .\Code\QT\Piezas.py:309
+#: .\Code\QT\Piezas.py:352
 #: .\Code\QT\QTDialogs.py:306
 #: .\Code\QT\QTDialogs.py:309
 #: .\Code\QT\WColors.py:107
@@ -1953,7 +1957,7 @@ msgstr ""
 #: .\Code\QT\Grid.py:386
 #: .\Code\QT\GridEditCols.py:29
 #: .\Code\QT\GridEditCols.py:113
-#: .\Code\QT\Piezas.py:310
+#: .\Code\QT\Piezas.py:353
 #: .\Code\QT\QTDialogs.py:684
 #: .\Code\QT\QTDialogs.py:1136
 #: .\Code\QT\QTMessages.py:111
@@ -2774,7 +2778,7 @@ msgstr ""
 #: .\Code\ManagerBase\ManagerMenuConfig.py:177
 #: .\Code\Menus\EnginesMenu.py:17
 #: .\Code\Openings\WindowOpeningLine.py:377
-#: .\Code\QT\Piezas.py:259
+#: .\Code\QT\Piezas.py:297
 #: .\Code\Tournaments\WTournament.py:160
 #: .\Code\ZQT\WindowDailyTest.py:73
 #: .\Code\ZQT\WindowDailyTest.py:175
@@ -2813,28 +2817,29 @@ msgstr ""
 msgid "Analyzer's prediction"
 msgstr ""
 
-#: .\Code\Base\Game.py:992
+#: .\Code\Base\Game.py:977
 #: .\Code\Competitions\ManagerFideFicsLichess.py:430
 msgid "Congratulations you have won against %1."
 msgstr ""
 
-#: .\Code\Base\Game.py:994
+#: .\Code\Base\Game.py:979
 #: .\Code\LearnGame\ManagerPlayGame.py:378
 msgid "Congratulations you have won."
 msgstr ""
 
-#: .\Code\Base\Game.py:1003
+#: .\Code\Base\Game.py:988
 #: .\Code\Competitions\ManagerFideFicsLichess.py:426
 msgid "Unfortunately you have lost against %1."
 msgstr ""
 
-#: .\Code\Base\Game.py:1005
+#: .\Code\Base\Game.py:990
 #: .\Code\LearnGame\ManagerPlayGame.py:375
 msgid "Unfortunately you have lost."
 msgstr ""
 
-#: .\Code\Base\Game.py:1033
+#: .\Code\Base\Game.py:1018
 #: .\Code\Competitions\ManagerElo.py:322
+#: .\Code\Competitions\ManagerGrid.py:141
 #: .\Code\Competitions\ManagerMicElo.py:238
 #: .\Code\Competitions\ManagerWicker.py:238
 #: .\Code\Databases\WDB_Games.py:1313
@@ -2860,16 +2865,16 @@ msgstr ""
 msgid "Draw"
 msgstr ""
 
-#: .\Code\Base\Game.py:1033
+#: .\Code\Base\Game.py:1018
 #: .\Code\Competitions\ManagerFideFicsLichess.py:434
 msgid "Draw against %1."
 msgstr ""
 
-#: .\Code\Base\Game.py:1044
+#: .\Code\Base\Game.py:1029
 msgid "Lost on time"
 msgstr ""
 
-#: .\Code\Base\Game.py:1048
+#: .\Code\Base\Game.py:1033
 #: .\Code\Coordinates\WRunCoordinatesBasic.py:85
 #: .\Code\Coordinates\WRunCoordinatesBlocks.py:133
 #: .\Code\Databases\WDB_Games.py:1317
@@ -2901,7 +2906,7 @@ msgstr ""
 msgid "Result"
 msgstr ""
 
-#: .\Code\Base\Game.py:1054
+#: .\Code\Base\Game.py:1039
 #: .\Code\Endings\WEndingsGTB.py:114
 #: .\Code\Engines\EngineResponse.py:803
 #: .\Code\Engines\EngineResponse.py:898
@@ -2912,52 +2917,52 @@ msgstr ""
 msgid "Mate"
 msgstr ""
 
-#: .\Code\Base\Game.py:1055
+#: .\Code\Base\Game.py:1040
 #: .\Code\Sound\Sound.py:163
 msgid "Stalemate"
 msgstr ""
 
-#: .\Code\Base\Game.py:1056
+#: .\Code\Base\Game.py:1041
 #: .\Code\Sound\Sound.py:164
 msgid "Draw by threefold repetition"
 msgstr ""
 
-#: .\Code\Base\Game.py:1057
+#: .\Code\Base\Game.py:1042
 #: .\Code\Sound\Sound.py:166
 msgid "Draw by insufficient material"
 msgstr ""
 
-#: .\Code\Base\Game.py:1058
+#: .\Code\Base\Game.py:1043
 #: .\Code\Sound\Sound.py:165
 msgid "Draw by fifty-move rule"
 msgstr ""
 
-#: .\Code\Base\Game.py:1059
+#: .\Code\Base\Game.py:1044
 msgid "Draw by agreement"
 msgstr ""
 
-#: .\Code\Base\Game.py:1060
+#: .\Code\Base\Game.py:1045
 msgid "Resignation"
 msgstr ""
 
-#: .\Code\Base\Game.py:1061
+#: .\Code\Base\Game.py:1046
 #: .\Code\Workers\Worker.py:111
 #: .\Code\Workers\Worker.py:120
 msgid "Adjudication"
 msgstr ""
 
-#: .\Code\Base\Game.py:1062
+#: .\Code\Base\Game.py:1047
 msgid "Won on time"
 msgstr ""
 
-#: .\Code\Base\Game.py:1063
+#: .\Code\Base\Game.py:1048
 #: .\Code\Openings\WindowOpenings.py:267
 #: .\Code\Openings\WindowOpenings.py:278
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:1435
 msgid "Unknown"
 msgstr ""
 
-#: .\Code\Base\Game.py:1064
+#: .\Code\Base\Game.py:1049
 msgid "Engine malfunction"
 msgstr ""
 
@@ -3059,8 +3064,8 @@ msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMT.py:190
 #: .\Code\Maps\WorkMap.py:364
-#: .\Code\Menus\CompeteMenu.py:67
-#: .\Code\Menus\CompeteMenu.py:103
+#: .\Code\Menus\CompeteMenu.py:72
+#: .\Code\Menus\CompeteMenu.py:108
 #: .\Code\Routes\ManagerRoutes.py:352
 #: .\Code\Washing\Washing.py:71
 #: .\Code\Washing\WindowWashing.py:98
@@ -3429,7 +3434,7 @@ msgstr ""
 #: .\Code\Board\Board.py:1037
 #: .\Code\ManagerBase\ManagerMenuConfig.py:22
 #: .\Code\Menus\TrainMenu.py:68
-#: .\Code\QT\Piezas.py:259
+#: .\Code\QT\Piezas.py:297
 #: .\Code\Resistance\ManagerResistance.py:94
 #: .\Code\Resistance\WindowResistance.py:14
 msgid "Blindfold chess"
@@ -3475,7 +3480,7 @@ msgid "Open position in ChessTempo"
 msgstr ""
 
 #: .\Code\Board\Board.py:1042
-#: .\Code\ManagerBase\Manager.py:1381
+#: .\Code\ManagerBase\Manager.py:1382
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:142
 msgid "Play current position"
 msgstr ""
@@ -4060,6 +4065,7 @@ msgstr ""
 #: .\Code\CompetitionWithTutor\WCompetitionWithTutor.py:39
 #: .\Code\CompetitionWithTutor\WCompetitionWithTutor.py:188
 #: .\Code\Competitions\ManagerElo.py:313
+#: .\Code\Competitions\ManagerGrid.py:133
 #: .\Code\Competitions\ManagerMaia.py:217
 #: .\Code\GM\GM.py:67 .\Code\GM\GM.py:73
 #: .\Code\GM\GM.py:181
@@ -4880,6 +4886,7 @@ msgid "Training unit"
 msgstr ""
 
 #: .\Code\Competitions\ManagerElo.py:319
+#: .\Code\Competitions\ManagerGrid.py:138
 #: .\Code\Competitions\ManagerMicElo.py:235
 #: .\Code\Competitions\ManagerWicker.py:235
 #: .\Code\Databases\WDB_Games.py:1312
@@ -4901,6 +4908,7 @@ msgid "Win"
 msgstr ""
 
 #: .\Code\Competitions\ManagerElo.py:325
+#: .\Code\Competitions\ManagerGrid.py:144
 #: .\Code\Competitions\ManagerMicElo.py:241
 #: .\Code\Competitions\ManagerWicker.py:241
 #: .\Code\Databases\WDB_Games.py:1314
@@ -4941,7 +4949,7 @@ msgstr ""
 
 #: .\Code\Competitions\ManagerFideFicsLichess.py:70
 #: .\Code\Config\WindowConfig.py:312
-#: .\Code\Menus\CompeteMenu.py:57
+#: .\Code\Menus\CompeteMenu.py:62
 #: .\Code\QT\QTDialogs.py:782
 msgid "Fics-Elo"
 msgstr ""
@@ -4956,7 +4964,7 @@ msgstr ""
 
 #: .\Code\Competitions\ManagerFideFicsLichess.py:80
 #: .\Code\Config\WindowConfig.py:314
-#: .\Code\Menus\CompeteMenu.py:60
+#: .\Code\Menus\CompeteMenu.py:65
 #: .\Code\QT\QTDialogs.py:834
 msgid "Fide-Elo"
 msgstr ""
@@ -4971,7 +4979,7 @@ msgstr ""
 
 #: .\Code\Competitions\ManagerFideFicsLichess.py:90
 #: .\Code\Config\WindowConfig.py:316
-#: .\Code\Menus\CompeteMenu.py:63
+#: .\Code\Menus\CompeteMenu.py:68
 msgid "Lichess-Elo"
 msgstr ""
 
@@ -4983,9 +4991,19 @@ msgstr ""
 msgid "Elo rival"
 msgstr ""
 
+#: .\Code\Competitions\ManagerGrid.py:151
+#: .\Code\Competitions\WindowGrid.py:117
+#: .\Code\Menus\CompeteMenu.py:35
+msgid "The Grid"
+msgstr ""
+
+#: .\Code\Competitions\ManagerGrid.py:337
+msgid "New Rating"
+msgstr ""
+
 #: .\Code\Competitions\ManagerMaia.py:228
 #: .\Code\Config\WindowConfig.py:323
-#: .\Code\Menus\CompeteMenu.py:70
+#: .\Code\Menus\CompeteMenu.py:75
 msgid "Maia Ladder"
 msgstr ""
 
@@ -5021,12 +5039,44 @@ msgstr ""
 msgid "The Wicker Park Tourney"
 msgstr ""
 
+#: .\Code\Competitions\WindowGrid.py:57
+msgid "Click to play"
+msgstr ""
+
+#: .\Code\Competitions\WindowGrid.py:128
+msgid "New Grid"
+msgstr ""
+
+#: .\Code\Competitions\WindowGrid.py:129
+msgid "Delete Grid"
+msgstr ""
+
+#: .\Code\Competitions\WindowGrid.py:214
+msgid "This Grid already exists!"
+msgstr ""
+
+#: .\Code\Competitions\WindowGrid.py:235
+msgid "Are you sure you want to delete this Grid?"
+msgstr ""
+
+#: .\Code\Competitions\WindowGrid.py:255
+msgid "Welcome to The Grid!"
+msgstr ""
+
+#: .\Code\Competitions\WindowGrid.py:256
+msgid "No competition grids exist yet."
+msgstr ""
+
+#: .\Code\Competitions\WindowGrid.py:257
+msgid "Click <b>New Grid</b> to create one for your chosen time control."
+msgstr ""
+
 #: .\Code\Config\ConfigEngines.py:193
 msgid "Default analyzer"
 msgstr ""
 
 #: .\Code\Config\WindowConfig.py:25
-#: .\Code\Menus\CompeteMenu.py:105
+#: .\Code\Menus\CompeteMenu.py:110
 #: .\Code\Menus\OptionsMenu.py:18
 msgid "General configuration"
 msgstr ""
@@ -5543,7 +5593,7 @@ msgid "Players"
 msgstr ""
 
 #: .\Code\Config\WindowConfig.py:325
-#: .\Code\Menus\CompeteMenu.py:106
+#: .\Code\Menus\CompeteMenu.py:111
 msgid "Change elos"
 msgstr ""
 
@@ -6688,7 +6738,7 @@ msgid "Linear method"
 msgstr ""
 
 #: .\Code\Databases\WDB_Perfomance.py:586
-#: .\Code\ManagerBase\Manager.py:1238
+#: .\Code\ManagerBase\Manager.py:1239
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:422
 #: .\Code\ZQT\WindowSavePGN.py:596
 msgid "It is saved in the clipboard to paste it wherever you want."
@@ -7054,6 +7104,7 @@ msgstr ""
 #: .\Code\Director\WindowTabVCircles.py:53
 #: .\Code\Director\WindowTabVMarcos.py:52
 #: .\Code\Expeditions\WindowEverest.py:70
+#: .\Code\QT\Piezas.py:313
 #: .\Code\QT\WColors.py:35
 #: .\Code\Washing\WindowWashing.py:132
 #: .\Code\Washing\WindowWashing.py:157
@@ -8294,13 +8345,13 @@ msgid "Chess leagues"
 msgstr ""
 
 #: .\Code\Leagues\ManagerLeague.py:686
-#: .\Code\ManagerBase\Manager.py:1298
+#: .\Code\ManagerBase\Manager.py:1299
 #: .\Code\Swiss\ManagerSwiss.py:662
 msgid "%1 wants to resign, do you accept it?"
 msgstr ""
 
 #: .\Code\Leagues\ManagerLeague.py:706
-#: .\Code\ManagerBase\Manager.py:1319
+#: .\Code\ManagerBase\Manager.py:1320
 #: .\Code\Swiss\ManagerSwiss.py:682
 msgid "%1 proposes draw, do you accept it?"
 msgstr ""
@@ -8761,14 +8812,19 @@ msgstr ""
 #: .\Code\ManagerBase\ManagerMenuConfig.py:36
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:287
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:317
-#: .\Code\QT\Piezas.py:277
+#: .\Code\QT\Piezas.py:315
+#: .\Code\QT\Piezas.py:316
+#: .\Code\QT\Piezas.py:317
+#: .\Code\QT\Piezas.py:318
+#: .\Code\QT\Piezas.py:319
+#: .\Code\QT\Piezas.py:320
 #: .\Code\Tournaments\WTournament.py:243
 #: .\Code\ZQT\WindowArbol.py:606
 msgid "Show"
 msgstr ""
 
 #: .\Code\Main\Presentacion.py:118
-#: .\Code\Menus\CompeteMenu.py:74
+#: .\Code\Menus\CompeteMenu.py:79
 #: .\Code\SingularMoves\ManagerSingularM.py:184
 #: .\Code\Z\RemoveResults.py:11
 msgid "Challenge 101"
@@ -8944,11 +9000,11 @@ msgstr ""
 msgid "You have not found the solution"
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1274
+#: .\Code\ManagerBase\Manager.py:1275
 msgid "Sorry, but the engine doesn't accept a draw right now."
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1335
+#: .\Code\ManagerBase\Manager.py:1336
 #: .\Code\Openings\ManagerOPLEngines.py:526
 #: .\Code\PlayAgainstEngine\ManagerPlayAgainstEngine.py:675
 #: .\Code\PlayHuman\ManagerPlayHuman.py:203
@@ -8961,11 +9017,11 @@ msgstr ""
 msgid "Consult a book"
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1403
+#: .\Code\ManagerBase\Manager.py:1404
 msgid "Press the continue button to start."
 msgstr ""
 
-#: .\Code\ManagerBase\Manager.py:1641
+#: .\Code\ManagerBase\Manager.py:1642
 msgid "This utility only works in the last position of the game and if it is not finished."
 msgstr ""
 
@@ -8974,7 +9030,7 @@ msgid "Show/hide"
 msgstr ""
 
 #: .\Code\ManagerBase\ManagerMenuConfig.py:36
-#: .\Code\QT\Piezas.py:274
+#: .\Code\QT\Piezas.py:312
 #: .\Code\ZQT\WindowArbol.py:470
 #: .\Code\ZQT\WindowArbol.py:606
 msgid "Hide"
@@ -10019,13 +10075,13 @@ msgstr ""
 msgid "Elo-Rating"
 msgstr ""
 
-#: .\Code\Menus\CompeteMenu.py:72
+#: .\Code\Menus\CompeteMenu.py:77
 #: .\Code\SingularMoves\WindowSingularM.py:8
 #: .\Code\Washing\WindowWashing.py:197
 msgid "Singular moves"
 msgstr ""
 
-#: .\Code\Menus\CompeteMenu.py:73
+#: .\Code\Menus\CompeteMenu.py:78
 #: .\Code\SingularMoves\WindowSingularM.py:8
 msgid "Calculate your strength"
 msgstr ""
@@ -11442,8 +11498,8 @@ msgid "Double click to change the label"
 msgstr ""
 
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:239
-#: .\Code\QT\Piezas.py:358
-#: .\Code\QT\Piezas.py:384
+#: .\Code\QT\Piezas.py:401
+#: .\Code\QT\Piezas.py:427
 msgid "Save current configuration"
 msgstr ""
 
@@ -11944,7 +12000,7 @@ msgid "What do you want to do?"
 msgstr ""
 
 #: .\Code\QT\GridEditCols.py:34
-#: .\Code\QT\Piezas.py:311
+#: .\Code\QT\Piezas.py:354
 msgid "Configurations"
 msgstr ""
 
@@ -11979,23 +12035,19 @@ msgstr ""
 msgid "Dark"
 msgstr ""
 
-#: .\Code\QT\Piezas.py:275
-msgid "Green"
-msgstr ""
-
-#: .\Code\QT\Piezas.py:276
+#: .\Code\QT\Piezas.py:314
 msgid "Checker"
 msgstr ""
 
-#: .\Code\QT\Piezas.py:302
+#: .\Code\QT\Piezas.py:345
 msgid "All White"
 msgstr ""
 
-#: .\Code\QT\Piezas.py:304
+#: .\Code\QT\Piezas.py:347
 msgid "All Black"
 msgstr ""
 
-#: .\Code\QT\Piezas.py:306
+#: .\Code\QT\Piezas.py:349
 msgid "Swap"
 msgstr ""
 
@@ -15342,6 +15394,9 @@ msgid "Position saved in \"%s\" file."
 msgstr ""
 
 msgid "Home folder"
+msgstr ""
+
+msgid "Green"
 msgstr ""
 
 msgid "Analysis of variation"

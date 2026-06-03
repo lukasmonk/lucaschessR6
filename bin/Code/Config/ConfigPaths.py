@@ -204,6 +204,9 @@ class ConfigPaths:
     def file_estad_elo(self):
         return self._to_results("estad.pkli")
 
+    def file_estad_grid_elo(self):
+        return self._to_results("estadGrid.pkli")
+
     def file_estad_mic_elo(self):
         return self._to_results("estadMic.pkli")
 

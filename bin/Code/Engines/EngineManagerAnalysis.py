@@ -1,5 +1,4 @@
 import contextlib
-import time
 from typing import Callable, Optional, List
 
 from PySide6 import QtCore
@@ -239,22 +238,6 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         mrm.add_rm(rm)
         self.engine_run.set_mrm_cached(mrm)
         return mrm
-
-    def stop_deferred(self, max_mstime):
-        """Lanza un stop() después de un tiempo máximo sin bloquear el hilo principal."""
-        if self.engine_run is None:
-            return
-
-        if self.engine_run.state != EngineRun.EngineState.THINKING:
-            self.stop()
-            return
-
-        while (
-                self.engine_run.state == EngineRun.EngineState.THINKING
-                and self.engine_run.time_played() * 1000 < max_mstime
-        ):
-            time.sleep(0.1)
-        self.stop()
 
     def analyze_last_position(self, game, dispatcher: Optional[Callable]) -> EngineResponse.MultiEngineResponse | None:
 

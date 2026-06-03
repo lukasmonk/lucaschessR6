@@ -21,6 +21,7 @@ from Code.Base.Constantes import (
     GT_TURN_ON_LIGHTS,
     GT_VARIATIONS,
     GT_WICKER,
+    GT_GRID,
     RS_DRAW,
     RS_WIN_OPPONENT,
     RS_WIN_PLAYER,
@@ -228,7 +229,7 @@ class ControlPGN:
             if self.manager.hints:
                 resp += f'[Hints "{self.manager.hints}"]\n'
 
-        if game_type in (GT_ELO, GT_MICELO, GT_WICKER):
+        if game_type in (GT_ELO, GT_MICELO, GT_WICKER, GT_GRID):
             resp += f'[WhiteElo "{self.manager.white_elo}"]\n'
             resp += f'[BlackElo "{self.manager.black_elo}"]\n'
 

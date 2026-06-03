@@ -18,6 +18,7 @@ from Code.Base.Constantes import (
     GT_ELO,
     GT_MICELO,
     GT_WICKER,
+    GT_GRID,
     NO_RATING,
     RESULT_DRAW,
     RS_DRAW,
@@ -1115,7 +1116,7 @@ class Manager:
 
     def can_be_analysed(self):
         return len(self.game) > 0 and not (
-                self.game_type in (GT_ELO, GT_MICELO, GT_WICKER) and self.is_competitive and self.state == ST_PLAYING
+                self.game_type in (GT_ELO, GT_MICELO, GT_WICKER, GT_GRID) and self.is_competitive and self.state == ST_PLAYING
         )
 
     def check_help_to_move(self):

@@ -30,6 +30,11 @@ class CompeteMenu(BaseMenu.RootMenu):
             f"{_('The Wicker Park Tourney')} ({configuration.x_wicker})",
             Iconos.Park(),
         )
+        submenu_elo.new(
+            "thegrid",
+            _("The Grid"),
+            Iconos.Parrilla(),
+        )
 
         rp = QTDialogs.rondo_puntos()
 
@@ -159,6 +164,10 @@ class CompeteMenu(BaseMenu.RootMenu):
                 dic = {"MINUTES": minutos, "SECONDS": seconds}
                 Code.configuration.write_variables(key, dic)
                 manager.start(resp, minutos, seconds)
+
+    def thegrid(self):
+        from Code.Competitions import WindowGrid
+        WindowGrid.play_grid(self.procesador)
 
     def ficselo(self, nivel):
         manager = ManagerFideFicsLichess.ManagerFideFicsLichess(self.procesador)
