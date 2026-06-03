@@ -3437,3 +3437,9 @@ def pmMaiaLadder():
 
 def MaiaLadder():
     return iget("MaiaLadder")
+
+def pmParrilla():
+    return iget("pmParrilla")
+
+def Parrilla():
+    return iget("Parrilla")

@@ -146,7 +146,41 @@ class AllPieces:
             pm.save(path, "PNG")
 
 
-HIDE, GREY, CHECKER, SHOW = range(4)
+HIDE, GREY, CHECKER, SHOW, TRANSPARENT_2, TRANSPARENT_5, TRANSPARENT_10, TRANSPARENT_30, TRANSPARENT_50 = range(9)
+
+TRANSPARENCIES = {
+    TRANSPARENT_2: 0.02,
+    TRANSPARENT_5: 0.05,
+    TRANSPARENT_10: 0.10,
+    TRANSPARENT_30: 0.3,
+    TRANSPARENT_50: 0.5,
+}
+
+
+def save_svg_with_opacity(source_file, dest_file, opacity):
+    try:
+        with open(source_file, "rt", encoding="utf-8", errors="ignore") as f:
+            svg = f.read()
+        import re
+
+        match = re.search(r"(<svg\b[^>]*?)>", svg, re.DOTALL)
+        if not match:
+            raise ValueError("Invalid SVG source")
+        header = match.group(1)
+        if re.search(r'\bopacity\s*=\s*"[^"]*"', header):
+            header = re.sub(
+                r'\bopacity\s*=\s*"[^"]*"',
+                f'opacity="{opacity}"',
+                header,
+                count=1,
+            )
+        else:
+            header = f"{header} opacity=\"{opacity}\""
+        svg = svg[: match.start(1)] + header + ">" + svg[match.end() :]
+        with open(dest_file, "wt", encoding="utf-8") as f:
+            f.write(svg)
+    except Exception:
+        shutil.copy(source_file, dest_file)
 
 
 class BlindfoldConfig:
@@ -164,7 +198,7 @@ class BlindfoldConfig:
         else:
             pz_t = pz
         tipo = self.dic_pieces[pz_t]
-        if tipo == SHOW:
+        if tipo in (SHOW, TRANSPARENT_2, TRANSPARENT_5, TRANSPARENT_10, TRANSPARENT_30, TRANSPARENT_50):
             pz = ("w" if is_white else "b") + pz
             return Code.path_resource("Pieces", self.nom_pieces_ori, f"{pz}.svg")
         if tipo == HIDE:
@@ -245,10 +279,14 @@ class Blindfold(ConjuntoPiezas):
 
         for siWhite in (True, False):
             for pieza in "rnbqkp":
+                tipo = self.config_bf.dic_pieces[pieza.upper()] if siWhite else self.config_bf.dic_pieces[pieza]
                 ori = self.config_bf.base_file(pieza, siWhite)
                 bs = "w" if siWhite else "b"
                 dest = Util.opj(self.carpetaBF, f"{bs}{pieza}.svg")
-                shutil.copy(ori, dest)
+                if tipo in TRANSPARENCIES:
+                    save_svg_with_opacity(ori, dest, TRANSPARENCIES[tipo])
+                else:
+                    shutil.copy(ori, dest)
 
         self.dic_pieces = self.read_pieces()
 
@@ -272,9 +310,14 @@ class WBlindfold(LCDialog.LCDialog):
 
         li_options = (
             (_("Hide"), HIDE),
-            (_("Green"), GREY),
+            (_("Color"), GREY),
             (_("Checker"), CHECKER),
             (_("Show"), SHOW),
+            (f'{_("Show")} 2%', TRANSPARENT_2),
+            (f'{_("Show")} 5%', TRANSPARENT_5),
+            (f'{_("Show")} 10%', TRANSPARENT_10),
+            (f'{_("Show")} 30%', TRANSPARENT_30),
+            (f'{_("Show")} 50%', TRANSPARENT_50),
         )
         dic_nom_piezas = TrListas.dic_nom_pieces()
 
@@ -396,63 +439,6 @@ class WBlindfold(LCDialog.LCDialog):
                 self.config.add_current(name)
         else:
             self.config.remove(cual)
-
-    # def configurations1(self):
-    #     dic = Code.configuration.read_variables("BLINDFOLD")
-    #     dicConf = collections.OrderedDict()
-    #     for k in dic:
-    #         if k.startswith("_"):
-    #             cl = k[1:]
-    #             dicConf[cl] = dic[k]
-    #
-    #     menu = QTDialogs.LCMenu(self)
-    #     for k in dicConf:
-    #         menu.opcion((True, k), k, Iconos.PuntoAzul())
-    #     menu.separador()
-    #     menu.opcion((True, None), _("Save current configuration"), Iconos.PuntoVerde())
-    #     if dicConf:
-    #         menu.separador()
-    #         menudel = menu.submenu(_("Remove"), Iconos.Delete())
-    #         for k in dicConf:
-    #             menudel.opcion((False, k), k, Iconos.PuntoNegro())
-    #
-    #     resp = menu.lanza()
-    #     if resp is None:
-    #         return
-    #
-    #     si, cual = resp
-    #
-    #     if si:
-    #         if cual:
-    #             dpz = dic["_" + cual]
-    #             for pz in "kqrbnp":
-    #                 lb_pz_w, cb_pz_w, lb_pz, lb_pz_b, cb_pz_b, tipo_w, tipo_b = self.dicWidgets[pz]
-    #                 cb_pz_w.set_value(dpz[pz.upper()])
-    #                 cb_pz_b.set_value(dpz[pz])
-    #             self.reset()
-    #         else:
-    #             li_gen = [(None, None)]
-    #             li_gen.append((_("Name") + ":", ""))
-    #
-    #             resultado = FormLayout.fedit(
-    #                 li_gen,
-    #                 title=_("Save current configuration"),
-    #                 parent=self,
-    #                 minimum_width=460,
-    #                 icon=Iconos.TutorialesCrear(),
-    #             )
-    #             if resultado is None:
-    #                 return None
-    #
-    #             accion, li_resp = resultado
-    #             name = li_resp[0].strip()
-    #             if not name:
-    #                 return None
-    #             dic["_%s" % name] = self.config.dic_pieces
-    #             Code.configuration.write_variables("BLINDFOLD", dic)
-    #     else:
-    #         del dic["_%s" % cual]
-    #         Code.configuration.write_variables("BLINDFOLD", dic)
 
     def all_white(self):
         tp = self.cbAll.valor()

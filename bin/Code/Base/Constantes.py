@@ -50,7 +50,8 @@ ST_PLAYING, ST_ENDGAME, ST_WAITING, ST_PAUSE, ST_TUTOR_THINKING = range(5)
     GT_VARIATIONS,
     GT_GAME,
     GT_LEARN_PLAY,
-) = range(37)
+    GT_GRID,
+) = range(38)
 
 DICT_GAME_TYPES = {v: k for k, v in globals().items() if k.startswith("GT_")}
 DICT_GAME_TYPES[None] = "GT_BY_DEFAULT"

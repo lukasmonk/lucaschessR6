@@ -1,4 +1,5 @@
 from typing import Any, Dict, Optional, Union, List
+import textwrap
 
 import FasterCode
 
@@ -427,37 +428,21 @@ class Game:
         return resp
 
     def pgn_base(self, movenum=None, translated: bool = False) -> str:
-        """
-        Return move text wrapped at 80 characters per line.
-        """
+        """Return move text wrapped at 80 characters per line."""
         resp = self.pgn_base_raw(movenum, translated=translated)
-        lines = []
-        total_length = len(resp)
-        pos = 0
-        while pos < total_length:
-            while resp[pos] == " ":
-                pos += 1
-            line_end = pos + 80
-            line_text = resp[pos:line_end]
-            if line_text[-1] == " ":
-                line_text = line_text[:-1]
-            elif line_end < total_length:
-                if resp[line_end] == " ":
-                    line_end += 1
-                else:
-                    while line_end > pos and resp[line_end - 1] != " ":
-                        line_end -= 1
-                    if line_end > pos:
-                        line_text = resp[pos:line_end]
-                    else:
-                        line_end = pos + 80
-            lines.append(line_text)
-            pos = line_end
-        if lines:
-            lines[-1] = lines[-1].strip()
-            return "\n".join(lines)
-        else:
+
+        if not resp:
             return ""
+
+        lines = textwrap.wrap(
+            resp,
+            width=80,
+            break_long_words=False,
+            expand_tabs=False,
+            replace_whitespace=False,
+        )
+
+        return "\n".join(lines)
 
     def pgn_translated(self, movenum=None, until_move=INFINITE) -> str:
         """
@@ -701,8 +686,7 @@ class Game:
 
             if len(repeated_indexes) >= 3:
                 repeated_indexes.sort()
-                label = "".join("%d," % (index / 2 + 1 if index != -1 else 0,) for index in repeated_indexes)
-                label = label.strip(",")
+                label = ",".join(str(index // 2 + 1 if index != -1 else 0) for index in repeated_indexes)
                 self.rotuloTablasRepeticion = label
                 return True
         return False
@@ -728,7 +712,7 @@ class Game:
             else:
                 break
 
-        is_white = self.is_white
+        is_white = self.is_white()
 
         for mov in pv:
             from_sq = mov[:2]
@@ -750,8 +734,9 @@ class Game:
         """
         Return the position after the move at index pos, or the first position if no moves.
         """
-        num_moves = len(self.li_moves)
-        return self.li_moves[pos].position if num_moves else self.first_position
+        if 0 <= pos < len(self.li_moves):
+            return self.li_moves[pos].position
+        return self.first_position
 
     def last_fen(self) -> str:
         return self.last_position.fen()

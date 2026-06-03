@@ -52,3 +52,6 @@ class ProcesadorBar:
         run_engine_params.update(engine, mstime, depth, nodes, engine.multiPV)
         engine_manager = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
         return engine_manager
+
+    def analyzer_refresh_clone(self, mstime: int, depth: int, nodes: int, multipv: str | int):
+        return self.analyzer_clone_new(mstime, depth, nodes, multipv)
