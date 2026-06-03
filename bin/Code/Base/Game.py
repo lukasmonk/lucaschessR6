@@ -435,11 +435,14 @@ class Game:
         total_length = len(resp)
         pos = 0
         while pos < total_length:
-            while resp[pos] == " ":
+            # Bug 3 fix: guard inner loop and subsequent slice against going past end
+            while pos < total_length and resp[pos] == " ":
                 pos += 1
+            if pos >= total_length:
+                break
             line_end = pos + 80
             line_text = resp[pos:line_end]
-            if line_text[-1] == " ":
+            if line_text and line_text[-1] == " ":
                 line_text = line_text[:-1]
             elif line_end < total_length:
                 if resp[line_end] == " ":
@@ -701,7 +704,8 @@ class Game:
 
             if len(repeated_indexes) >= 3:
                 repeated_indexes.sort()
-                label = "".join("%d," % (index / 2 + 1 if index != -1 else 0,) for index in repeated_indexes)
+                # Bug 5 fix: use integer division (//) to get correct full-move numbers
+                label = "".join("%d," % (index // 2 + 1 if index != -1 else 0,) for index in repeated_indexes)
                 label = label.strip(",")
                 self.rotuloTablasRepeticion = label
                 return True
@@ -728,7 +732,8 @@ class Game:
             else:
                 break
 
-        is_white = self.is_white
+        # Bug 1 fix: is_white is a method, must be called with ()
+        is_white = self.is_white()
 
         for mov in pv:
             from_sq = mov[:2]
@@ -750,8 +755,13 @@ class Game:
         """
         Return the position after the move at index pos, or the first position if no moves.
         """
+        # Bug 2 fix: guard against out-of-bounds index to avoid IndexError
         num_moves = len(self.li_moves)
-        return self.li_moves[pos].position if num_moves else self.first_position
+        if not num_moves:
+            return self.first_position
+        if 0 <= pos < num_moves:
+            return self.li_moves[pos].position
+        return self.first_position
 
     def last_fen(self) -> str:
         return self.last_position.fen()

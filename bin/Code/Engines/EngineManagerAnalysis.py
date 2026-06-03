@@ -1,5 +1,4 @@
 import contextlib
-import time
 from typing import Callable, Optional, List
 
 from PySide6 import QtCore
@@ -249,11 +248,15 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             self.stop()
             return
 
+        # Bug 7 fix: time.sleep() blocks the Qt event loop, starving signal delivery
+        # and engine stdout reading.  Use processEvents() so the UI stays alive.
         while (
                 self.engine_run.state == EngineRun.EngineState.THINKING
                 and self.engine_run.time_played() * 1000 < max_mstime
         ):
-            time.sleep(0.1)
+            QtCore.QCoreApplication.processEvents(
+                QtCore.QEventLoop.ProcessEventsFlag.AllEvents, 100
+            )
         self.stop()
 
     def analyze_last_position(self, game, dispatcher: Optional[Callable]) -> EngineResponse.MultiEngineResponse | None:
