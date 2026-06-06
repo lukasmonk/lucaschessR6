@@ -54,6 +54,13 @@ separador = (None, None)
 ) = range(10)
 
 
+class Line:
+    """Representa una línea horizontal con espacios arriba y abajo"""
+    def __init__(self, arriba=0, abajo=0):
+        self.arriba = arriba
+        self.abajo = abajo
+
+
 class FormLayout:
     def __init__(
         self,
@@ -78,6 +85,10 @@ class FormLayout:
 
     def separador(self):
         self.li_gen.append(separador)
+
+    def line(self, arriba=0, abajo=0):
+        """Dibuja una línea horizontal con espacios configurables arriba y abajo"""
+        self.li_gen.append((None, Line(arriba, abajo)))
 
     def base(self, config, valor):
         self.li_gen.append((config, valor))
@@ -697,8 +708,25 @@ class FormWidget(QtWidgets.QWidget):
 
     def setup(self, dispatch):
         for label, value in self.data:
+            # Línea horizontal
+            if isinstance(value, Line):
+                container = QtWidgets.QWidget(self)
+                container_layout = QtWidgets.QVBoxLayout()
+                container_layout.setContentsMargins(0, value.arriba, 0, value.abajo)
+                
+                line = QtWidgets.QFrame(self)
+                line.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+                line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+                
+                container_layout.addWidget(line)
+                container.setLayout(container_layout)
+                
+                self.formlayout.addRow(container)
+                self.widgets.append(None)
+                self.labels.append(None)
+
             # Separador
-            if label is None and value is None:
+            elif label is None and value is None:
                 self.formlayout.addRow(QtWidgets.QLabel(" ", self), QtWidgets.QLabel(" ", self))
                 self.widgets.append(None)
                 self.labels.append(None)

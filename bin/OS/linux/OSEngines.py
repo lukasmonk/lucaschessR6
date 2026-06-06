@@ -461,7 +461,6 @@ def li_engines_fixed_elo() -> tuple:
             ("texel", 700, 2500),
             ("eguzki", 1000, 2700),
             ("ct800", 1000, 2500),
-            # ("patricia", 500, 3000),
     )
 
 

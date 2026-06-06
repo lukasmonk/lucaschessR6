@@ -86,7 +86,9 @@ class WOpeningLines(LCDialog.LCDialog):
         )
 
         self.tree_folders = TreeOpeningFolders(self)
-        self.tree_folders.setHeaderLabel(_("Opening lines"))
+        # self.tree_folders.setHeaderLabel(_("Opening lines"))
+        # self.tree_folders.setHeaderLabel(_("Opening lines"))
+        self.tree_folders.header().hide()
         self.populate_tree()
         self.tree_folders.itemClicked.connect(self.on_folder_selected)
         self.tree_folders.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
@@ -94,7 +96,7 @@ class WOpeningLines(LCDialog.LCDialog):
         self.tree_folders.setToolTip(_("More options with right-click"))
         self.tree_folders.setAcceptDrops(True)
         self.tree_folders.setDropIndicatorShown(True)
-        self.tree_folders.setStyleSheet("""/* Contenedor principal: Un gris medio-claro que da sensación de profundidad */
+        self.tree_folders.setStyleSheet("""
 QTreeView {
     background-color: %s;
     color: %s;
@@ -158,10 +160,17 @@ QScrollBar::handle:vertical:hover {
     background: #909090;
 }""" % (Code.dic_colors["BACKGROUND"], Code.dic_colors["FOREGROUND"]))
 
+        tbh = QTDialogs.LCTB(self)
+        tbh.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        tbh.new(_("New"), Iconos.NewFolder(), self.tree_new)
+
+        vtree = QtWidgets.QWidget(self)
+        Colocacion.V(vtree).control(tbh).control(self.tree_folders).margen(5)
+
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
         tb = QTDialogs.LCTB(self)
-        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        # tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         tb.new(_("Edit"), Iconos.Modificar(), self.modificar)
         tb.new(_("New"), Iconos.Nuevo(), self.new)
         tb.new(_("Copy"), Iconos.Copiar(), self.copy)
@@ -202,7 +211,7 @@ QScrollBar::handle:vertical:hover {
         wright.setLayout(ly)
 
         splitter = QtWidgets.QSplitter(QtCore.Qt.Orientation.Horizontal)
-        splitter.addWidget(self.tree_folders)
+        splitter.addWidget(vtree)
         splitter.addWidget(wright)
         splitter.setSizes([200, self.glista.width_and_vbar()])
         self.register_splitter(splitter, "all")
@@ -611,8 +620,6 @@ QScrollBar::handle:vertical:hover {
         menu.opcion("update", _("Update"), Iconos.Reiniciar())
         menu.separador()
         menu.opcion("direct", _("Direct maintenance"), Iconos.Configurar())
-        menu.separador()
-        menu.opcion("new", _("New opening folder"), Iconos.NewBoxRoom())
         resp = menu.lanza()
         if resp is None:
             return
@@ -620,8 +627,6 @@ QScrollBar::handle:vertical:hover {
             self.tree_edit()
         elif resp == "delete":
             self.tree_delete()
-        elif resp == "new":
-            self.tree_new()
         elif resp == "update":
             self.reiniciar()
         elif resp == "direct":
@@ -662,11 +667,11 @@ QScrollBar::handle:vertical:hover {
 
         # Ejecutar la acción
         if resp == "copy":
-            self._copy_to_folder(items_to_move, target_rel_path, li_rows)
+            self._copy_to_folder(items_to_move, target_rel_path)
         elif resp == "move":
-            self._move_to_folder(items_to_move, target_rel_path, li_rows)
+            self._move_to_folder(items_to_move, target_rel_path)
 
-    def _copy_to_folder(self, items, target_rel_path, li_rows):
+    def _copy_to_folder(self, items, target_rel_path):
         """Copiar opening lines a otra carpeta"""
         try:
             base_path = self.configuration.paths.folder_base_openings()
@@ -710,7 +715,7 @@ QScrollBar::handle:vertical:hover {
         except Exception as e:
             QTMessages.message_error(self, f"{_('Error copying opening lines')}\n{str(e)}")
 
-    def _move_to_folder(self, items, target_rel_path, li_rows):
+    def _move_to_folder(self, items, target_rel_path):
         """Mover opening lines a otra carpeta"""
         try:
             base_path = self.configuration.paths.folder_base_openings()

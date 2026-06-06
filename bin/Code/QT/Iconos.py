@@ -3443,3 +3443,9 @@ def pmParrilla():
 
 def Parrilla():
     return iget("Parrilla")
+
+def pmNewFolder():
+    return iget("pmNewFolder")
+
+def NewFolder():
+    return iget("NewFolder")

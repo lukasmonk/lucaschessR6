@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-06-03 17:58+0200\n"
+"POT-Creation-Date: 2026-06-06 08:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -833,7 +833,7 @@ msgstr ""
 #: .\Code\Memory\WindowMemoria.py:492
 #: .\Code\Openings\WindowOpeningLine.py:78
 #: .\Code\Openings\WindowOpeningLines.py:164
-#: .\Code\Openings\WindowOpeningLines.py:787
+#: .\Code\Openings\WindowOpeningLines.py:792
 #: .\Code\Openings\WindowOpenings.py:299
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:87
 #: .\Code\Resistance\WindowResistance.py:25
@@ -955,12 +955,12 @@ msgstr ""
 #: .\Code\Leagues\WLeagues.py:120
 #: .\Code\Openings\POLAnalisisTree.py:401
 #: .\Code\Openings\POLShortcuts.py:120
-#: .\Code\Openings\WindowOpeningLines.py:194
-#: .\Code\Openings\WindowOpeningLines.py:393
-#: .\Code\Openings\WindowOpeningLines.py:403
-#: .\Code\Openings\WindowOpeningLines.py:456
-#: .\Code\Openings\WindowOpeningLines.py:551
-#: .\Code\Openings\WindowOpeningLines.py:568
+#: .\Code\Openings\WindowOpeningLines.py:203
+#: .\Code\Openings\WindowOpeningLines.py:402
+#: .\Code\Openings\WindowOpeningLines.py:412
+#: .\Code\Openings\WindowOpeningLines.py:465
+#: .\Code\Openings\WindowOpeningLines.py:560
+#: .\Code\Openings\WindowOpeningLines.py:577
 #: .\Code\Openings\WindowOpenings.py:309
 #: .\Code\Openings\WindowOpenings.py:383
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:94
@@ -1017,7 +1017,8 @@ msgstr ""
 #: .\Code\Maps\WindowWorkMap.py:83
 #: .\Code\Mate15\WMate15.py:40
 #: .\Code\Memory\WindowMemoria.py:130
-#: .\Code\Openings\WindowOpeningLines.py:166
+#: .\Code\Openings\WindowOpeningLines.py:165
+#: .\Code\Openings\WindowOpeningLines.py:175
 #: .\Code\Openings\WindowOpenings.py:300
 #: .\Code\STS\WindowSTS.py:399
 #: .\Code\STS\WindowSTS.py:682
@@ -1101,8 +1102,8 @@ msgstr ""
 #: .\Code\Openings\POLShortcuts.py:69
 #: .\Code\Openings\WindowOpeningLine.py:79
 #: .\Code\Openings\WindowOpeningLine.py:1536
-#: .\Code\Openings\WindowOpeningLines.py:171
-#: .\Code\Openings\WindowOpeningLines.py:609
+#: .\Code\Openings\WindowOpeningLines.py:180
+#: .\Code\Openings\WindowOpeningLines.py:618
 #: .\Code\Openings\WindowOpenings.py:67
 #: .\Code\Openings\WindowOpenings.py:302
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:91
@@ -1147,8 +1148,8 @@ msgstr ""
 #: .\Code\Leagues\WLeagues.py:35
 #: .\Code\Leitner\WLeitner.py:108
 #: .\Code\Openings\POLBoard.py:51
-#: .\Code\Openings\WindowOpeningLines.py:167
-#: .\Code\Openings\WindowOpeningLines.py:655
+#: .\Code\Openings\WindowOpeningLines.py:176
+#: .\Code\Openings\WindowOpeningLines.py:660
 #: .\Code\Openings\WindowOpenings.py:303
 #: .\Code\STS\WindowSTS.py:402
 #: .\Code\STS\WindowSTS.py:685
@@ -1173,7 +1174,7 @@ msgstr ""
 #: .\Code\Kibitzers\WindowKibitzers.py:60
 #: .\Code\LearnGame\WindowLearnGame.py:137
 #: .\Code\Leitner\WEditLeitner.py:39
-#: .\Code\Openings\WindowOpeningLines.py:169
+#: .\Code\Openings\WindowOpeningLines.py:178
 #: .\Code\Openings\WindowOpenings.py:304
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:89
 #: .\Code\QT\GridEditCols.py:31
@@ -1200,7 +1201,7 @@ msgstr ""
 #: .\Code\Kibitzers\WindowKibitzers.py:62
 #: .\Code\LearnGame\WindowLearnGame.py:139
 #: .\Code\Leitner\WEditLeitner.py:40
-#: .\Code\Openings\WindowOpeningLines.py:170
+#: .\Code\Openings\WindowOpeningLines.py:179
 #: .\Code\Openings\WindowOpenings.py:305
 #: .\Code\PlayAgainstEngine\ConfigurationsPAE.py:90
 #: .\Code\QT\GridEditCols.py:32
@@ -1230,7 +1231,7 @@ msgstr ""
 #: .\Code\Board\WBoardColors.py:752
 #: .\Code\Kibitzers\WindowKibitzers.py:375
 #: .\Code\Openings\POLShortcuts.py:88
-#: .\Code\Openings\WindowOpeningLines.py:437
+#: .\Code\Openings\WindowOpeningLines.py:446
 #: .\Code\Voyager\Voyager.py:742
 msgid "Are you sure you want to remove %s?"
 msgstr ""
@@ -1293,7 +1294,7 @@ msgstr ""
 #: .\Code\Analysis\Analysis.py:253
 #: .\Code\Analysis\AnalysisGame\AnalysisGameLaunch.py:41
 #: .\Code\Analysis\AnalysisGame\AnalysisGameLaunch.py:52
-#: .\Code\Analysis\WindowAnalysis.py:520
+#: .\Code\Analysis\WindowAnalysis.py:521
 #: .\Code\BestMoveTraining\WindowBMT.py:489
 #: .\Code\BestMoveTraining\WindowBMT.py:1056
 #: .\Code\Databases\WDB_InfoMove.py:231
@@ -1308,7 +1309,7 @@ msgid "Analyzing the move...."
 msgstr ""
 
 #: .\Code\Analysis\AnalysisGame\AnalysisGameLaunch.py:44
-#: .\Code\Analysis\WindowAnalysis.py:522
+#: .\Code\Analysis\WindowAnalysis.py:523
 #: .\Code\Main\WInformation.py:669
 #: .\Code\ManagerBase\ManagerAnalysis.py:53
 #: .\Code\ManagerBase\ManagerAnalysis.py:114
@@ -1561,8 +1562,8 @@ msgstr ""
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:813
 #: .\Code\Board\WBoardColors.py:354
 #: .\Code\Books\PolyglotImportExports.py:50
-#: .\Code\Books\PolyglotImportExports.py:797
-#: .\Code\Books\PolyglotImportExports.py:798
+#: .\Code\Books\PolyglotImportExports.py:828
+#: .\Code\Books\PolyglotImportExports.py:829
 #: .\Code\Books\WBooks.py:18
 #: .\Code\Books\WBooksTrain.py:47
 #: .\Code\Books\WBooksTrainOL.py:144
@@ -1653,8 +1654,8 @@ msgstr ""
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:815
 #: .\Code\Board\WBoardColors.py:359
 #: .\Code\Books\PolyglotImportExports.py:61
-#: .\Code\Books\PolyglotImportExports.py:797
-#: .\Code\Books\PolyglotImportExports.py:799
+#: .\Code\Books\PolyglotImportExports.py:828
+#: .\Code\Books\PolyglotImportExports.py:830
 #: .\Code\Books\WBooks.py:18
 #: .\Code\Books\WBooksTrain.py:49
 #: .\Code\Books\WBooksTrainOL.py:144
@@ -1875,7 +1876,7 @@ msgstr ""
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:342
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:383
 #: .\Code\Odt\WOdt.py:18
-#: .\Code\QT\FormLayout.py:366
+#: .\Code\QT\FormLayout.py:377
 #: .\Code\ZQT\WindowManualSave.py:120
 #: .\Code\ZQT\WindowManualSave.py:307
 #: .\Code\ZQT\WindowManualSave.py:325
@@ -1905,7 +1906,7 @@ msgstr ""
 #: .\Code\Board\WBoardColors.py:1387
 #: .\Code\Books\PolyglotImportExports.py:66
 #: .\Code\Books\PolyglotImportExports.py:104
-#: .\Code\Books\PolyglotImportExports.py:628
+#: .\Code\Books\PolyglotImportExports.py:654
 #: .\Code\Books\WBooksTrain.py:43
 #: .\Code\Books\WBooksTrainOL.py:262
 #: .\Code\Config\WindowUsuarios.py:27
@@ -1916,7 +1917,7 @@ msgstr ""
 #: .\Code\Databases\WDB_GUtils.py:160
 #: .\Code\Databases\WDB_GUtils.py:402
 #: .\Code\Databases\WDB_Games.py:124
-#: .\Code\Databases\WDB_Games.py:1913
+#: .\Code\Databases\WDB_Games.py:1915
 #: .\Code\Databases\WDB_ImportPGN.py:26
 #: .\Code\Databases\WDB_RemComVariations.py:43
 #: .\Code\Databases\WDB_Utils.py:119
@@ -1939,7 +1940,7 @@ msgstr ""
 #: .\Code\LearnGame\WindowLearnGame.py:553
 #: .\Code\LearnGame\WindowLearnGame.py:566
 #: .\Code\Leitner\WEditLeitner.py:22
-#: .\Code\Main\LucasChessGui.py:137
+#: .\Code\Main\LucasChessGui.py:143
 #: .\Code\Main\WBase.py:237
 #: .\Code\Main\WBase.py:897
 #: .\Code\Main\WBase.py:927
@@ -2010,7 +2011,7 @@ msgid "Movement"
 msgstr ""
 
 #: .\Code\Analysis\RunAnalysisControl.py:668
-#: .\Code\Books\PolyglotImportExports.py:683
+#: .\Code\Books\PolyglotImportExports.py:709
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:289
 #: .\Code\QT\QTMessages.py:495
 #: .\Code\QT\QTProgressBars.py:194
@@ -2048,6 +2049,10 @@ msgid "Only the first move of each variation"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysis.py:283
+msgid "Subanalysis"
+msgstr ""
+
+#: .\Code\Analysis\WindowAnalysis.py:283
 #: .\Code\Databases\WDB_ImportPGN.py:101
 #: .\Code\Databases\WDB_RemComVariations.py:20
 #: .\Code\Databases\WDB_Summary.py:57
@@ -2061,10 +2066,6 @@ msgstr ""
 #: .\Code\ZQT\WindowJuicio.py:41
 #: .\Code\ZQT\WindowManualSave.py:172
 msgid "Analysis"
-msgstr ""
-
-#: .\Code\Analysis\WindowAnalysis.py:283
-msgid "Subanalysis"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisConfig.py:9
@@ -2182,7 +2183,7 @@ msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisConfig.py:61
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:834
-#: .\Code\QT\FormLayout.py:1016
+#: .\Code\QT\FormLayout.py:1044
 msgid "Are you sure you want to set the default configuration?"
 msgstr ""
 
@@ -2303,11 +2304,11 @@ msgstr ""
 #: .\Code\Board\WBoardColors.py:728
 #: .\Code\Board\WBoardColors.py:1657
 #: .\Code\Books\PolyglotImportExports.py:202
-#: .\Code\Books\PolyglotImportExports.py:784
-#: .\Code\Databases\WDB_Games.py:1656
-#: .\Code\Databases\WDB_Games.py:1709
-#: .\Code\Databases\WDB_Games.py:1763
-#: .\Code\Databases\WDB_Games.py:1812
+#: .\Code\Books\PolyglotImportExports.py:810
+#: .\Code\Databases\WDB_Games.py:1658
+#: .\Code\Databases\WDB_Games.py:1711
+#: .\Code\Databases\WDB_Games.py:1765
+#: .\Code\Databases\WDB_Games.py:1814
 #: .\Code\Director\WindowDirector.py:191
 #: .\Code\Leagues\WLeague.py:1122
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:463
@@ -2448,8 +2449,8 @@ msgstr ""
 #: .\Code\BestMoveTraining\WindowBMT.py:175
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:90
 #: .\Code\Books\ManagerTrainBooks.py:379
-#: .\Code\Books\PolyglotImportExports.py:831
-#: .\Code\Books\PolyglotImportExports.py:832
+#: .\Code\Books\PolyglotImportExports.py:854
+#: .\Code\Books\PolyglotImportExports.py:855
 #: .\Code\Books\WPolyglot.py:57
 #: .\Code\Competitions\ManagerFideFicsLichess.py:198
 #: .\Code\Competitions\ManagerFideFicsLichess.py:370
@@ -2641,13 +2642,13 @@ msgid "Analyze color"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:295
-#: .\Code\Books\PolyglotImportExports.py:822
+#: .\Code\Books\PolyglotImportExports.py:821
 #: .\Code\Databases\WDB_Games.py:1296
 msgid "Only the following players"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:296
-#: .\Code\Books\PolyglotImportExports.py:825
+#: .\Code\Books\PolyglotImportExports.py:824
 #: .\Code\Databases\WDB_Games.py:1297
 msgid "(You can add multiple aliases separated by ; and wildcards with *)"
 msgstr ""
@@ -3057,7 +3058,7 @@ msgstr ""
 #: .\Code\Endings\WEndingsGTB.py:670
 #: .\Code\Openings\WindowOpeningLine.py:372
 #: .\Code\Openings\WindowOpeningLine.py:384
-#: .\Code\Openings\WindowOpeningLines.py:179
+#: .\Code\Openings\WindowOpeningLines.py:188
 #: .\Code\Tactics\WindowTactics.py:303
 msgid "Positions"
 msgstr ""
@@ -3088,8 +3089,8 @@ msgstr ""
 #: .\Code\Databases\WDB_Games.py:144
 #: .\Code\Databases\WDB_Games.py:833
 #: .\Code\Databases\WDB_Games.py:854
-#: .\Code\Databases\WDB_Games.py:1662
-#: .\Code\Databases\WDB_Games.py:1769
+#: .\Code\Databases\WDB_Games.py:1664
+#: .\Code\Databases\WDB_Games.py:1771
 #: .\Code\Databases\WDB_Perfomance.py:360
 #: .\Code\Databases\WDB_Perfomance.py:611
 #: .\Code\Leagues\WLeague.py:410
@@ -3104,7 +3105,7 @@ msgstr ""
 #: .\Code\Board\WBoardColors.py:1479
 #: .\Code\Books\PolyglotImportExports.py:382
 #: .\Code\Books\PolyglotImportExports.py:408
-#: .\Code\Books\PolyglotImportExports.py:460
+#: .\Code\Books\PolyglotImportExports.py:462
 #: .\Code\Books\WPolyglot.py:83
 #: .\Code\Databases\WDB_GUtils.py:119
 #: .\Code\Databases\WDB_Games.py:143
@@ -3163,14 +3164,14 @@ msgid "Analyze again"
 msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMT.py:264
-#: .\Code\Books\PolyglotImportExports.py:947
-#: .\Code\Odt\WOdt.py:27
-#: .\Code\Washing\WindowWashing.py:199
-msgid "Export to"
+msgid "Open Document Format"
 msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMT.py:264
-msgid "Open Document Format"
+#: .\Code\Books\PolyglotImportExports.py:975
+#: .\Code\Odt\WOdt.py:27
+#: .\Code\Washing\WindowWashing.py:199
+msgid "Export to"
 msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMT.py:313
@@ -3621,13 +3622,13 @@ msgid "Change board size"
 msgstr ""
 
 #: .\Code\Board\BoardSections\BoardVisualMenu.py:53
-#: .\Code\Director\WindowDirector.py:51
-#: .\Code\Director\WindowDirector.py:438
-msgid "Director"
+msgid "F1-F10"
 msgstr ""
 
 #: .\Code\Board\BoardSections\BoardVisualMenu.py:53
-msgid "F1-F10"
+#: .\Code\Director\WindowDirector.py:51
+#: .\Code\Director\WindowDirector.py:438
+msgid "Director"
 msgstr ""
 
 #: .\Code\Board\BoardSections\BoardVisualMenu.py:59
@@ -3649,7 +3650,7 @@ msgstr ""
 #: .\Code\Director\WindowTab.py:386
 #: .\Code\Leagues\WLeagues.py:31
 #: .\Code\Main\WInformation.py:610
-#: .\Code\Openings\WindowOpeningLines.py:165
+#: .\Code\Openings\WindowOpeningLines.py:174
 #: .\Code\PlayAgainstEngine\Personalities.py:291
 #: .\Code\STS\WindowSTS.py:401
 #: .\Code\Swiss\WSwisses.py:31
@@ -3702,7 +3703,7 @@ msgstr ""
 #: .\Code\Coordinates\WRunCoordinatesBlocks.py:68
 #: .\Code\CountsCaptures\WRunCaptures.py:81
 #: .\Code\CountsCaptures\WRunCounts.py:61
-#: .\Code\Databases\WDB_Games.py:1913
+#: .\Code\Databases\WDB_Games.py:1915
 #: .\Code\ForcingMoves\WForcingMoves.py:84
 #: .\Code\Kibitzers\WKibBooks.py:32
 #: .\Code\Kibitzers\WKibDatabases.py:73
@@ -3886,7 +3887,7 @@ msgstr ""
 #: .\Code\GM\WindowGM.py:65
 #: .\Code\GM\WindowGM.py:829
 #: .\Code\Leitner\WEditLeitner.py:21
-#: .\Code\Main\LucasChessGui.py:136
+#: .\Code\Main\LucasChessGui.py:142
 #: .\Code\Main\WBase.py:236
 #: .\Code\Openings\WindowOpeningLine.py:1705
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:145
@@ -4019,7 +4020,7 @@ msgid "This name already exists, what do you want to do?"
 msgstr ""
 
 #: .\Code\Board\WBoardColors.py:1704
-#: .\Code\Books\PolyglotImportExports.py:978
+#: .\Code\Books\PolyglotImportExports.py:1006
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:352
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:401
 #: .\Code\QT\GridEditCols.py:112
@@ -4038,8 +4039,8 @@ msgstr ""
 
 #: .\Code\Board\WBoardColors.py:1706
 #: .\Code\Books\PolyglotImportExports.py:357
-#: .\Code\Books\PolyglotImportExports.py:810
-#: .\Code\Books\PolyglotImportExports.py:848
+#: .\Code\Books\PolyglotImportExports.py:840
+#: .\Code\Books\PolyglotImportExports.py:871
 msgid "Discard"
 msgstr ""
 
@@ -4225,7 +4226,7 @@ msgstr ""
 #: .\Code\Books\PolyglotImportExports.py:36
 #: .\Code\Books\PolyglotImportExports.py:132
 #: .\Code\Books\PolyglotImportExports.py:330
-#: .\Code\Books\PolyglotImportExports.py:460
+#: .\Code\Books\PolyglotImportExports.py:462
 #: .\Code\Databases\WDB_GUtils.py:119
 #: .\Code\Databases\WDB_Games.py:798
 #: .\Code\Endings\WEndingsGTB.py:661
@@ -4246,9 +4247,9 @@ msgstr ""
 #: .\Code\Kibitzers\WindowKibitzers.py:507
 #: .\Code\Leitner\WEditLeitner.py:48
 #: .\Code\Main\WBase.py:204
-#: .\Code\Openings\WindowOpeningLines.py:197
-#: .\Code\Openings\WindowOpeningLines.py:405
-#: .\Code\Openings\WindowOpeningLines.py:456
+#: .\Code\Openings\WindowOpeningLines.py:206
+#: .\Code\Openings\WindowOpeningLines.py:414
+#: .\Code\Openings\WindowOpeningLines.py:465
 #: .\Code\QT\SelectFiles.py:42
 #: .\Code\QT\SelectFiles.py:49
 #: .\Code\Tactics\WindowTactics.py:378
@@ -4263,13 +4264,13 @@ msgid "File"
 msgstr ""
 
 #: .\Code\Books\PolyglotImportExports.py:97
-#: .\Code\Books\PolyglotImportExports.py:586
-#: .\Code\Books\PolyglotImportExports.py:755
+#: .\Code\Books\PolyglotImportExports.py:612
+#: .\Code\Books\PolyglotImportExports.py:781
 #: .\Code\Databases\DBgamesMov.py:58
-#: .\Code\Databases\WDB_Games.py:1622
-#: .\Code\Databases\WDB_Games.py:1672
-#: .\Code\Databases\WDB_Games.py:1733
-#: .\Code\Databases\WDB_Games.py:1779
+#: .\Code\Databases\WDB_Games.py:1624
+#: .\Code\Databases\WDB_Games.py:1674
+#: .\Code\Databases\WDB_Games.py:1735
+#: .\Code\Databases\WDB_Games.py:1781
 #: .\Code\QT\QTDialogs.py:730
 #: .\Code\Tournaments\WTournament.py:935
 #: .\Code\Washing\WindowWashing.py:317
@@ -4279,7 +4280,7 @@ msgstr ""
 
 #: .\Code\Books\PolyglotImportExports.py:130
 #: .\Code\Books\PolyglotImportExports.py:334
-#: .\Code\Books\PolyglotImportExports.py:952
+#: .\Code\Books\PolyglotImportExports.py:980
 #: .\Code\Books\WBooks.py:113
 #: .\Code\Engines\WEngines.py:444
 #: .\Code\Kibitzers\Kibitzers.py:43
@@ -4312,17 +4313,17 @@ msgid "Database"
 msgstr ""
 
 #: .\Code\Books\PolyglotImportExports.py:348
-#: .\Code\Books\PolyglotImportExports.py:850
+#: .\Code\Books\PolyglotImportExports.py:873
 msgid "What to do in case of collisions"
 msgstr ""
 
 #: .\Code\Books\PolyglotImportExports.py:353
-#: .\Code\Books\PolyglotImportExports.py:846
+#: .\Code\Books\PolyglotImportExports.py:869
 msgid "Replace"
 msgstr ""
 
 #: .\Code\Books\PolyglotImportExports.py:355
-#: .\Code\Books\PolyglotImportExports.py:847
+#: .\Code\Books\PolyglotImportExports.py:870
 #: .\Code\Main\WInformation.py:328
 #: .\Code\Main\WInformation.py:332
 #: .\Code\Main\WInformation.py:345
@@ -4341,59 +4342,64 @@ msgstr ""
 msgid "Imported"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:673
+#: .\Code\Books\PolyglotImportExports.py:699
 #: .\Code\QT\QTDialogs.py:663
 msgid "Games read"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:793
+#: .\Code\Books\PolyglotImportExports.py:819
 #: .\Code\Expeditions\WindowEverest.py:148
 msgid "Maximum movements"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:801
+#: .\Code\Books\PolyglotImportExports.py:820
+#: .\Code\Openings\WindowOpeningLine.py:865
+msgid "Only in the opening phase"
+msgstr ""
+
+#: .\Code\Books\PolyglotImportExports.py:832
 msgid "Side to include"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:804
+#: .\Code\Books\PolyglotImportExports.py:835
 msgid "Include games when result is"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:815
+#: .\Code\Books\PolyglotImportExports.py:845
 msgid "Unknown result"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:815
+#: .\Code\Books\PolyglotImportExports.py:845
 msgid "convert to"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:818
+#: .\Code\Books\PolyglotImportExports.py:848
 msgid "Minimum number of games"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:819
+#: .\Code\Books\PolyglotImportExports.py:849
 #: .\Code\Coordinates\WRunCoordinatesBlocks.py:53
 msgid "Minimum score"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:830
-#: .\Code\Books\PolyglotImportExports.py:831
+#: .\Code\Books\PolyglotImportExports.py:853
+#: .\Code\Books\PolyglotImportExports.py:854
 msgid "Number of games"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:835
+#: .\Code\Books\PolyglotImportExports.py:858
 msgid "Calculation of the weight"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:840
+#: .\Code\Books\PolyglotImportExports.py:863
 msgid "Save score"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:954
+#: .\Code\Books\PolyglotImportExports.py:982
 msgid "Uniform distribution"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:975
+#: .\Code\Books\PolyglotImportExports.py:1003
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:349
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:397
 #: .\Code\QT\WGif.py:99
@@ -4402,7 +4408,7 @@ msgstr ""
 msgid "The file %1 already exists, what do you want to do?"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:979
+#: .\Code\Books\PolyglotImportExports.py:1007
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:353
 #: .\Code\QT\WGif.py:103
 #: .\Code\Z\ManagerSolo.py:319
@@ -4576,8 +4582,8 @@ msgstr ""
 #: .\Code\Openings\WindowOpeningLine.py:956
 #: .\Code\Openings\WindowOpeningLine.py:1314
 #: .\Code\Openings\WindowOpeningLine.py:1868
-#: .\Code\Openings\WindowOpeningLines.py:196
-#: .\Code\Openings\WindowOpeningLines.py:436
+#: .\Code\Openings\WindowOpeningLines.py:205
+#: .\Code\Openings\WindowOpeningLines.py:445
 msgid "Lines"
 msgstr ""
 
@@ -4628,7 +4634,7 @@ msgstr ""
 #: .\Code\LearnGame\WindowPlayGame.py:279
 #: .\Code\Leitner\WLeitner.py:94
 #: .\Code\Mate15\WMate15.py:79
-#: .\Code\Openings\WindowOpeningLines.py:480
+#: .\Code\Openings\WindowOpeningLines.py:489
 #: .\Code\STS\WindowSTS.py:591
 #: .\Code\Tactics\WindowTactics.py:184
 #: .\Code\Tournaments\WTournament.py:758
@@ -4692,7 +4698,7 @@ msgstr ""
 #: .\Code\Books\WBooksTrainOL.py:480
 #: .\Code\Databases\WDB_Players.py:453
 #: .\Code\Main\WBase.py:242
-#: .\Code\Openings\WindowOpeningLines.py:168
+#: .\Code\Openings\WindowOpeningLines.py:177
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:583
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:1340
 #: .\Code\Tournaments\WTournament.py:122
@@ -4724,7 +4730,7 @@ msgstr ""
 
 #: .\Code\Books\WFactory.py:45
 #: .\Code\Leagues\WLeagues.py:33
-#: .\Code\Openings\WindowOpeningLines.py:606
+#: .\Code\Openings\WindowOpeningLines.py:615
 #: .\Code\STS\WindowSTS.py:684
 #: .\Code\Swiss\WSwisses.py:33
 #: .\Code\Tournaments\WTournaments.py:37
@@ -4736,8 +4742,8 @@ msgstr ""
 #: .\Code\Leagues\WLeague.py:409
 #: .\Code\Openings\POLAnalisisTree.py:185
 #: .\Code\Openings\POLAnalisisTree.py:186
-#: .\Code\Openings\WindowOpeningLines.py:172
-#: .\Code\Openings\WindowOpeningLines.py:611
+#: .\Code\Openings\WindowOpeningLines.py:181
+#: .\Code\Openings\WindowOpeningLines.py:620
 #: .\Code\Swiss\WSwiss.py:317
 #: .\Code\Z\Update.py:196
 msgid "Update"
@@ -4749,7 +4755,7 @@ msgstr ""
 
 #: .\Code\Books\WFactory.py:81
 #: .\Code\Openings\POLAnalisisTree.py:415
-#: .\Code\Openings\WindowOpeningLines.py:466
+#: .\Code\Openings\WindowOpeningLines.py:475
 msgid "This file already exists"
 msgstr ""
 
@@ -5623,7 +5629,7 @@ msgstr ""
 
 #: .\Code\Config\WindowUsuarios.py:39
 #: .\Code\Databases\WDB_ExternalImporter.py:176
-#: .\Code\Main\LucasChessGui.py:130
+#: .\Code\Main\LucasChessGui.py:136
 #: .\Code\Main\MainWindow.py:307
 msgid "User"
 msgstr ""
@@ -5956,8 +5962,8 @@ msgid "To a PGN file"
 msgstr ""
 
 #: .\Code\Databases\WDB_ExportPGN.py:55
-#: .\Code\Databases\WDB_Games.py:1662
-#: .\Code\Databases\WDB_Games.py:1769
+#: .\Code\Databases\WDB_Games.py:1664
+#: .\Code\Databases\WDB_Games.py:1771
 #: .\Code\Databases\WDB_Perfomance.py:600
 #: .\Code\Databases\WDB_Perfomance.py:611
 msgid "To a CSV file"
@@ -6104,7 +6110,7 @@ msgstr ""
 
 #: .\Code\Databases\WDB_Filters.py:117
 #: .\Code\Databases\WDB_Filters.py:521
-#: .\Code\Databases\WDB_Games.py:2043
+#: .\Code\Databases\WDB_Games.py:2045
 #: .\Code\Databases\WDB_Utils.py:120
 #: .\Code\LearnGame\WindowLearnGame.py:532
 #: .\Code\LearnGame\WindowLearnGame.py:546
@@ -6220,8 +6226,8 @@ msgid "You must indicate a name"
 msgstr ""
 
 #: .\Code\Databases\WDB_GUtils.py:273
-#: .\Code\Openings\WindowOpeningLines.py:556
-#: .\Code\Openings\WindowOpeningLines.py:573
+#: .\Code\Openings\WindowOpeningLines.py:565
+#: .\Code\Openings\WindowOpeningLines.py:582
 msgid "Unable to create the folder"
 msgstr ""
 
@@ -6407,7 +6413,7 @@ msgid "From other database"
 msgstr ""
 
 #: .\Code\Databases\WDB_Games.py:805
-#: .\Code\Databases\WDB_Games.py:1920
+#: .\Code\Databases\WDB_Games.py:1922
 msgid "From the Lichess Puzzle Database"
 msgstr ""
 
@@ -6428,7 +6434,7 @@ msgid "Database options"
 msgstr ""
 
 #: .\Code\Databases\WDB_Games.py:927
-#: .\Code\Databases\WDB_Games.py:2028
+#: .\Code\Databases\WDB_Games.py:2030
 #: .\Code\Kibitzers\WKibDatabases.py:78
 #: .\Code\QT\GridEditCols.py:13
 msgid "Configure the columns"
@@ -6564,35 +6570,35 @@ msgstr ""
 msgid "Remove comments and variations"
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1874
+#: .\Code\Databases\WDB_Games.py:1876
 msgid "You must follow the next steps"
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1875
+#: .\Code\Databases\WDB_Games.py:1877
 msgid "Download the puzzles in csv format from LiChess website"
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1878
+#: .\Code\Databases\WDB_Games.py:1880
 msgid "Uncompress this file with a tool like PeaZip"
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1880
+#: .\Code\Databases\WDB_Games.py:1882
 msgid "Uncompress this file"
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1882
+#: .\Code\Databases\WDB_Games.py:1884
 msgid "If you want to include a field with the opening, you have to download and unzip in the same folder as the puzzle file, the file indicated below"
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1886
+#: .\Code\Databases\WDB_Games.py:1888
 msgid "Original idea and more information"
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1911
+#: .\Code\Databases\WDB_Games.py:1913
 msgid "The import takes a long time."
 msgstr ""
 
-#: .\Code\Databases\WDB_Games.py:1953
+#: .\Code\Databases\WDB_Games.py:1955
 msgid "Importing"
 msgstr ""
 
@@ -7253,8 +7259,8 @@ msgstr ""
 #: .\Code\Menus\TrainMenuRun.py:226
 #: .\Code\Menus\TrainMenuRun.py:236
 #: .\Code\Openings\OpeningLines.py:293
-#: .\Code\Openings\WindowOpeningLines.py:225
-#: .\Code\Openings\WindowOpeningLines.py:654
+#: .\Code\Openings\WindowOpeningLines.py:234
+#: .\Code\Openings\WindowOpeningLines.py:659
 #: .\Code\STS\WindowSTS.py:816
 msgid "Initial"
 msgstr ""
@@ -8058,7 +8064,7 @@ msgstr ""
 msgid "There are %s capture(s)."
 msgstr ""
 
-#: .\Code\GM\GM.py:166 h:\pyLCR2\bin\Code\GM\GM.py:147
+#: .\Code\GM\GM.py:166
 msgid "%d games"
 msgstr ""
 
@@ -8130,7 +8136,7 @@ msgstr ""
 
 #: .\Code\GM\WindowGM.py:570
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:1359
-#: .\Code\QT\FormLayout.py:425
+#: .\Code\QT\FormLayout.py:436
 #: .\Code\ZQT\WindowSavePGN.py:125
 #: .\Code\ZQT\WindowSavePGN.py:140
 #: .\Code\ZQT\WindowSavePGN.py:474
@@ -8669,7 +8675,7 @@ msgstr ""
 #: .\Code\LearnGame\WindowLearnGame.py:377
 #: .\Code\Openings\WindowOpeningLine.py:368
 #: .\Code\Openings\WindowOpeningLine.py:384
-#: .\Code\Openings\WindowOpeningLines.py:177
+#: .\Code\Openings\WindowOpeningLines.py:186
 #: .\Code\TrainPositions\TrainPositions.py:61
 msgid "Sequential"
 msgstr ""
@@ -8800,11 +8806,11 @@ msgstr ""
 msgid "Pending positions"
 msgstr ""
 
-#: .\Code\Main\LucasChessGui.py:133
+#: .\Code\Main\LucasChessGui.py:139
 msgid "Password"
 msgstr ""
 
-#: .\Code\Main\LucasChessGui.py:189
+#: .\Code\Main\LucasChessGui.py:195
 msgid "Select your user"
 msgstr ""
 
@@ -9055,13 +9061,13 @@ msgid "FEN Format"
 msgstr ""
 
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:60
-#: .\Code\Menus\ToolsMenu.py:10
-#: .\Code\Z\ManagerSolo.py:54
-msgid "Create your own game"
+msgid "lcsb Format"
 msgstr ""
 
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:60
-msgid "lcsb Format"
+#: .\Code\Menus\ToolsMenu.py:10
+#: .\Code\Z\ManagerSolo.py:54
+msgid "Create your own game"
 msgstr ""
 
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:66
@@ -10184,7 +10190,7 @@ msgid "Delete a database"
 msgstr ""
 
 #: .\Code\Menus\ToolsMenu.py:42
-#: .\Code\Openings\WindowOpeningLines.py:613
+#: .\Code\Openings\WindowOpeningLines.py:622
 msgid "Direct maintenance"
 msgstr ""
 
@@ -10207,8 +10213,7 @@ msgstr ""
 #: .\Code\Menus\ToolsMenu.py:59
 #: .\Code\Openings\WindowOpeningLine.py:978
 #: .\Code\Openings\WindowOpeningLines.py:83
-#: .\Code\Openings\WindowOpeningLines.py:89
-#: .\Code\Openings\WindowOpeningLines.py:776
+#: .\Code\Openings\WindowOpeningLines.py:781
 #: .\Code\PlayAgainstEngine\WPlayAgainstEngine.py:630
 msgid "Opening lines"
 msgstr ""
@@ -10407,11 +10412,11 @@ msgstr ""
 msgid "Interesting move"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:42 h:\pyLCR2\bin\Code\Nags\Nags.py:34
+#: .\Code\Nags\Nags.py:42
 msgid "Forced move (all others lose quickly)"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:43 h:\pyLCR2\bin\Code\Nags\Nags.py:35
+#: .\Code\Nags\Nags.py:43
 msgid "Singular move (no reasonable alternatives)"
 msgstr ""
 
@@ -10420,223 +10425,223 @@ msgstr ""
 msgid "Worst move"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:45 h:\pyLCR2\bin\Code\Nags\Nags.py:37
+#: .\Code\Nags\Nags.py:45
 msgid "Drawish position"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:46 h:\pyLCR2\bin\Code\Nags\Nags.py:38
+#: .\Code\Nags\Nags.py:46
 msgid "Equal chances, quiet position"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:47 h:\pyLCR2\bin\Code\Nags\Nags.py:39
+#: .\Code\Nags\Nags.py:47
 msgid "Equal chances, active position"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:48 h:\pyLCR2\bin\Code\Nags\Nags.py:40
+#: .\Code\Nags\Nags.py:48
 msgid "Unclear position"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:49 h:\pyLCR2\bin\Code\Nags\Nags.py:41
+#: .\Code\Nags\Nags.py:49
 msgid "White has a slight advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:50 h:\pyLCR2\bin\Code\Nags\Nags.py:42
+#: .\Code\Nags\Nags.py:50
 msgid "Black has a slight advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:51 h:\pyLCR2\bin\Code\Nags\Nags.py:43
+#: .\Code\Nags\Nags.py:51
 msgid "White has a moderate advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:52 h:\pyLCR2\bin\Code\Nags\Nags.py:44
+#: .\Code\Nags\Nags.py:52
 msgid "Black has a moderate advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:53 h:\pyLCR2\bin\Code\Nags\Nags.py:45
+#: .\Code\Nags\Nags.py:53
 msgid "White has a decisive advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:54 h:\pyLCR2\bin\Code\Nags\Nags.py:46
+#: .\Code\Nags\Nags.py:54
 msgid "Black has a decisive advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:55 h:\pyLCR2\bin\Code\Nags\Nags.py:47
+#: .\Code\Nags\Nags.py:55
 msgid "White has a crushing advantage (Black should resign)"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:56 h:\pyLCR2\bin\Code\Nags\Nags.py:48
+#: .\Code\Nags\Nags.py:56
 msgid "Black has a crushing advantage (White should resign)"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:57 h:\pyLCR2\bin\Code\Nags\Nags.py:49
+#: .\Code\Nags\Nags.py:57
 msgid "White is in zugzwang"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:58 h:\pyLCR2\bin\Code\Nags\Nags.py:50
+#: .\Code\Nags\Nags.py:58
 msgid "Black is in zugzwang"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:59 h:\pyLCR2\bin\Code\Nags\Nags.py:51
+#: .\Code\Nags\Nags.py:59
 msgid "White has a slight space advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:60 h:\pyLCR2\bin\Code\Nags\Nags.py:52
+#: .\Code\Nags\Nags.py:60
 msgid "Black has a slight space advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:61 h:\pyLCR2\bin\Code\Nags\Nags.py:53
+#: .\Code\Nags\Nags.py:61
 msgid "White has a moderate space advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:62 h:\pyLCR2\bin\Code\Nags\Nags.py:54
+#: .\Code\Nags\Nags.py:62
 msgid "Black has a moderate space advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:63 h:\pyLCR2\bin\Code\Nags\Nags.py:55
+#: .\Code\Nags\Nags.py:63
 msgid "White has a decisive space advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:64 h:\pyLCR2\bin\Code\Nags\Nags.py:56
+#: .\Code\Nags\Nags.py:64
 msgid "Black has a decisive space advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:65 h:\pyLCR2\bin\Code\Nags\Nags.py:57
+#: .\Code\Nags\Nags.py:65
 msgid "White has a slight time (development) advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:66 h:\pyLCR2\bin\Code\Nags\Nags.py:58
+#: .\Code\Nags\Nags.py:66
 msgid "Black has a slight time (development) advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:67 h:\pyLCR2\bin\Code\Nags\Nags.py:59
+#: .\Code\Nags\Nags.py:67
 msgid "White has a moderate time (development) advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:68 h:\pyLCR2\bin\Code\Nags\Nags.py:60
+#: .\Code\Nags\Nags.py:68
 msgid "Black has a moderate time (development) advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:69 h:\pyLCR2\bin\Code\Nags\Nags.py:61
+#: .\Code\Nags\Nags.py:69
 msgid "White has a decisive time (development) advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:70 h:\pyLCR2\bin\Code\Nags\Nags.py:62
+#: .\Code\Nags\Nags.py:70
 msgid "Black has a decisive time (development) advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:71 h:\pyLCR2\bin\Code\Nags\Nags.py:63
+#: .\Code\Nags\Nags.py:71
 msgid "White has the initiative"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:72 h:\pyLCR2\bin\Code\Nags\Nags.py:64
+#: .\Code\Nags\Nags.py:72
 msgid "Black has the initiative"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:73 h:\pyLCR2\bin\Code\Nags\Nags.py:65
+#: .\Code\Nags\Nags.py:73
 msgid "White has a lasting initiative"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:74 h:\pyLCR2\bin\Code\Nags\Nags.py:66
+#: .\Code\Nags\Nags.py:74
 msgid "Black has a lasting initiative"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:75 h:\pyLCR2\bin\Code\Nags\Nags.py:67
+#: .\Code\Nags\Nags.py:75
 msgid "White has the attack"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:76 h:\pyLCR2\bin\Code\Nags\Nags.py:68
+#: .\Code\Nags\Nags.py:76
 msgid "Black has the attack"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:77 h:\pyLCR2\bin\Code\Nags\Nags.py:69
+#: .\Code\Nags\Nags.py:77
 msgid "White has insufficient compensation for material deficit"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:78 h:\pyLCR2\bin\Code\Nags\Nags.py:70
+#: .\Code\Nags\Nags.py:78
 msgid "Black has insufficient compensation for material deficit"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:79 h:\pyLCR2\bin\Code\Nags\Nags.py:71
+#: .\Code\Nags\Nags.py:79
 msgid "White has sufficient compensation for material deficit"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:80 h:\pyLCR2\bin\Code\Nags\Nags.py:72
+#: .\Code\Nags\Nags.py:80
 msgid "Black has sufficient compensation for material deficit"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:81 h:\pyLCR2\bin\Code\Nags\Nags.py:73
+#: .\Code\Nags\Nags.py:81
 msgid "White has more than adequate compensation for material deficit"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:82 h:\pyLCR2\bin\Code\Nags\Nags.py:74
+#: .\Code\Nags\Nags.py:82
 msgid "Black has more than adequate compensation for material deficit"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:83 h:\pyLCR2\bin\Code\Nags\Nags.py:75
+#: .\Code\Nags\Nags.py:83
 msgid "White has a slight center control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:84 h:\pyLCR2\bin\Code\Nags\Nags.py:76
+#: .\Code\Nags\Nags.py:84
 msgid "Black has a slight center control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:85 h:\pyLCR2\bin\Code\Nags\Nags.py:77
+#: .\Code\Nags\Nags.py:85
 msgid "White has a moderate center control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:86 h:\pyLCR2\bin\Code\Nags\Nags.py:78
+#: .\Code\Nags\Nags.py:86
 msgid "Black has a moderate center control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:87 h:\pyLCR2\bin\Code\Nags\Nags.py:79
+#: .\Code\Nags\Nags.py:87
 msgid "White has a decisive center control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:88 h:\pyLCR2\bin\Code\Nags\Nags.py:80
+#: .\Code\Nags\Nags.py:88
 msgid "Black has a decisive center control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:89 h:\pyLCR2\bin\Code\Nags\Nags.py:81
+#: .\Code\Nags\Nags.py:89
 msgid "White has a slight kingside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:90 h:\pyLCR2\bin\Code\Nags\Nags.py:82
+#: .\Code\Nags\Nags.py:90
 msgid "Black has a slight kingside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:91 h:\pyLCR2\bin\Code\Nags\Nags.py:83
+#: .\Code\Nags\Nags.py:91
 msgid "White has a moderate kingside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:92 h:\pyLCR2\bin\Code\Nags\Nags.py:84
+#: .\Code\Nags\Nags.py:92
 msgid "Black has a moderate kingside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:93 h:\pyLCR2\bin\Code\Nags\Nags.py:85
+#: .\Code\Nags\Nags.py:93
 msgid "White has a decisive kingside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:94 h:\pyLCR2\bin\Code\Nags\Nags.py:86
+#: .\Code\Nags\Nags.py:94
 msgid "Black has a decisive kingside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:95 h:\pyLCR2\bin\Code\Nags\Nags.py:87
+#: .\Code\Nags\Nags.py:95
 msgid "White has a slight queenside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:96 h:\pyLCR2\bin\Code\Nags\Nags.py:88
+#: .\Code\Nags\Nags.py:96
 msgid "Black has a slight queenside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:97 h:\pyLCR2\bin\Code\Nags\Nags.py:89
+#: .\Code\Nags\Nags.py:97
 msgid "White has a moderate queenside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:98 h:\pyLCR2\bin\Code\Nags\Nags.py:90
+#: .\Code\Nags\Nags.py:98
 msgid "Black has a moderate queenside control advantage"
 msgstr ""
 
-#: .\Code\Nags\Nags.py:99 h:\pyLCR2\bin\Code\Nags\Nags.py:91
+#: .\Code\Nags\Nags.py:99
 msgid "White has a decisive queenside control advantage"
 msgstr ""
 
@@ -10978,11 +10983,11 @@ msgid "Do you want to reinit?"
 msgstr ""
 
 #: .\Code\Openings\ManagerOPLEngines.py:277
-msgid "This is not the move in the opening lines"
+msgid "Do you want to go on with this move?"
 msgstr ""
 
 #: .\Code\Openings\ManagerOPLEngines.py:277
-msgid "Do you want to go on with this move?"
+msgid "This is not the move in the opening lines"
 msgstr ""
 
 #: .\Code\Openings\ManagerOPLEngines.py:283
@@ -11212,14 +11217,14 @@ msgstr ""
 
 #: .\Code\Openings\WindowOpeningLine.py:370
 #: .\Code\Openings\WindowOpeningLine.py:384
-#: .\Code\Openings\WindowOpeningLines.py:178
+#: .\Code\Openings\WindowOpeningLines.py:187
 msgid "Static"
 msgstr ""
 
 #: .\Code\Openings\WindowOpeningLine.py:375
 #: .\Code\Openings\WindowOpeningLine.py:387
 #: .\Code\Openings\WindowOpeningLine.py:576
-#: .\Code\Openings\WindowOpeningLines.py:180
+#: .\Code\Openings\WindowOpeningLines.py:189
 msgid "With engines"
 msgstr ""
 
@@ -11248,12 +11253,12 @@ msgid "Maximum number of lost centipawns to pass control"
 msgstr ""
 
 #: .\Code\Openings\WindowOpeningLine.py:502
-#: .\Code\Openings\WindowOpeningLine.py:510
-msgid "Automatic selection"
+msgid "number of engines"
 msgstr ""
 
 #: .\Code\Openings\WindowOpeningLine.py:502
-msgid "number of engines"
+#: .\Code\Openings\WindowOpeningLine.py:510
+msgid "Automatic selection"
 msgstr ""
 
 #: .\Code\Openings\WindowOpeningLine.py:510
@@ -11322,10 +11327,6 @@ msgstr ""
 
 #: .\Code\Openings\WindowOpeningLine.py:808
 msgid "Exclude transpositions"
-msgstr ""
-
-#: .\Code\Openings\WindowOpeningLine.py:865
-msgid "Only in the opening phase"
 msgstr ""
 
 #: .\Code\Openings\WindowOpeningLine.py:875
@@ -11405,62 +11406,61 @@ msgstr ""
 msgid "Minimum weight"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:94
+#: .\Code\Openings\WindowOpeningLines.py:96
 #: .\Code\Themes\WThemes.py:56
 msgid "More options with right-click"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:182
+#: .\Code\Openings\WindowOpeningLines.py:191
 msgid "Trainings"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:195
-#: .\Code\Openings\WindowOpeningLines.py:404
+#: .\Code\Openings\WindowOpeningLines.py:204
+#: .\Code\Openings\WindowOpeningLines.py:413
 msgid "First moves"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:365
+#: .\Code\Openings\WindowOpeningLines.py:374
 msgid "In the next dialog box, play the initial fixed moves for your opening."
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:376
+#: .\Code\Openings\WindowOpeningLines.py:385
 msgid "Now choose a name for this opening."
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:393
+#: .\Code\Openings\WindowOpeningLines.py:402
 msgid "Opening studio name"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:471
+#: .\Code\Openings\WindowOpeningLines.py:480
 msgid "This is not a valid file name"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:546
-#: .\Code\Openings\WindowOpeningLines.py:615
+#: .\Code\Openings\WindowOpeningLines.py:555
 msgid "New opening folder"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:588
+#: .\Code\Openings\WindowOpeningLines.py:597
 msgid "Unable to delete the folder"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:657
+#: .\Code\Openings\WindowOpeningLines.py:662
 msgid "Move || to move"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:711
+#: .\Code\Openings\WindowOpeningLines.py:716
 msgid "Error copying opening lines"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:753
+#: .\Code\Openings\WindowOpeningLines.py:758
 msgid "Opening lines moved successfully"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:755
+#: .\Code\Openings\WindowOpeningLines.py:760
 msgid "Error moving opening lines"
 msgstr ""
 
-#: .\Code\Openings\WindowOpeningLines.py:776
+#: .\Code\Openings\WindowOpeningLines.py:781
 msgid "Static training"
 msgstr ""
 
@@ -11983,19 +11983,19 @@ msgstr ""
 msgid "Play a position"
 msgstr ""
 
-#: .\Code\QT\FormLayout.py:366
+#: .\Code\QT\FormLayout.py:377
 msgid "File to read"
 msgstr ""
 
-#: .\Code\QT\FormLayout.py:436
+#: .\Code\QT\FormLayout.py:447
 msgid "Do you want to remove file %s from the list?"
 msgstr ""
 
-#: .\Code\QT\Grid.py:384 h:\pyLCR2\bin\Code\QT\Grid.py:368
+#: .\Code\QT\Grid.py:384
 msgid "This process takes a very long time"
 msgstr ""
 
-#: .\Code\QT\Grid.py:384 h:\pyLCR2\bin\Code\QT\Grid.py:369
+#: .\Code\QT\Grid.py:384
 msgid "What do you want to do?"
 msgstr ""
 
@@ -12389,6 +12389,10 @@ msgid "Original"
 msgstr ""
 
 #: .\Code\QT\WColors.py:102
+msgid "[DEL key] in column CURRENT to remove change"
+msgstr ""
+
+#: .\Code\QT\WColors.py:102
 msgid "[Mouse Double click] in column CURRENT to change color"
 msgstr ""
 
@@ -12396,15 +12400,11 @@ msgstr ""
 msgid "[Mouse double click] in column ORIGINAL to change all with this color"
 msgstr ""
 
-#: .\Code\QT\WColors.py:102
-msgid "[DEL key] in column CURRENT to remove change"
-msgstr ""
-
-#: .\Code\QT\WGif.py:14 h:\pyLCR2\bin\Code\QT\WGif.py:15
+#: .\Code\QT\WGif.py:14
 msgid "Save as GIF file"
 msgstr ""
 
-#: .\Code\QT\WGif.py:82 h:\pyLCR2\bin\Code\QT\WGif.py:75
+#: .\Code\QT\WGif.py:82
 msgid "Infinite loop"
 msgstr ""
 
@@ -12473,11 +12473,11 @@ msgid "Max lost centipawns in total"
 msgstr ""
 
 #: .\Code\Resistance\WindowResistance.py:126
-msgid "Max lost centipawns in a single move"
+msgid "0 = not consider this limit"
 msgstr ""
 
 #: .\Code\Resistance\WindowResistance.py:126
-msgid "0 = not consider this limit"
+msgid "Max lost centipawns in a single move"
 msgstr ""
 
 #: .\Code\Routes\ManagerRoutes.py:57
@@ -14663,11 +14663,11 @@ msgid "The Immortal Game"
 msgstr ""
 
 #: .\Code\Translations\TrListas.py:493
-msgid "Mid"
+msgid "Light"
 msgstr ""
 
 #: .\Code\Translations\TrListas.py:493
-msgid "Light"
+msgid "Mid"
 msgstr ""
 
 #: .\Code\Translations\TrListas.py:498
@@ -15256,51 +15256,51 @@ msgstr ""
 msgid "Paste position"
 msgstr ""
 
-#: .\Code\Z\Update.py:56 h:\pyLCR2\bin\Code\Update.py:30
+#: .\Code\Z\Update.py:56
 msgid "Updating..."
 msgstr ""
 
-#: .\Code\Z\Update.py:108 h:\pyLCR2\bin\Code\Update.py:82
+#: .\Code\Z\Update.py:108
 msgid "Downloading eboards drivers"
 msgstr ""
 
-#: .\Code\Z\Update.py:130 h:\pyLCR2\bin\Code\Update.py:101
+#: .\Code\Z\Update.py:130
 msgid "Updated the eboards drivers"
 msgstr ""
 
-#: .\Code\Z\Update.py:130 h:\pyLCR2\bin\Code\Update.py:101
+#: .\Code\Z\Update.py:130
 msgid "Version"
 msgstr ""
 
-#: .\Code\Z\Update.py:134 h:\pyLCR2\bin\Code\Update.py:106
+#: .\Code\Z\Update.py:134
 msgid "It has not been possible to update the eboards drivers"
 msgstr ""
 
-#: .\Code\Z\Update.py:160 h:\pyLCR2\bin\Code\Update.py:133
+#: .\Code\Z\Update.py:160
 msgid "An error has occurred during the upgrade to version %1"
 msgstr ""
 
-#: .\Code\Z\Update.py:167 h:\pyLCR2\bin\Code\Update.py:140
+#: .\Code\Z\Update.py:167
 msgid "Encountered a network problem, cannot access the Internet"
 msgstr ""
 
-#: .\Code\Z\Update.py:174 h:\pyLCR2\bin\Code\Update.py:147
+#: .\Code\Z\Update.py:174
 msgid "There are no pending updates"
 msgstr ""
 
-#: .\Code\Z\Update.py:197 h:\pyLCR2\bin\Code\Update.py:170
+#: .\Code\Z\Update.py:197
 msgid "Version %s is ready to update"
 msgstr ""
 
-#: .\Code\Z\Update.py:198 h:\pyLCR2\bin\Code\Update.py:171
+#: .\Code\Z\Update.py:198
 msgid "Update now"
 msgstr ""
 
-#: .\Code\Z\Update.py:199 h:\pyLCR2\bin\Code\Update.py:172
+#: .\Code\Z\Update.py:199
 msgid "Do not do anything"
 msgstr ""
 
-#: .\Code\Z\Update.py:200 h:\pyLCR2\bin\Code\Update.py:173
+#: .\Code\Z\Update.py:200
 msgid "Don't ask again"
 msgstr ""
 
@@ -15352,57 +15352,6 @@ msgstr ""
 
 #: .\Code\setup_linux.py:330
 msgid "The shortcut to the program has been created"
-msgstr ""
-
-msgid "Select the training positions you want to use as a base"
-msgstr ""
-
-msgid "Visual effects"
-msgstr ""
-
-msgid "Speed"
-msgstr ""
-
-msgid "The movement performed is shown by colouring the squares"
-msgstr ""
-
-msgid "Enable high dpi scaling"
-msgstr ""
-
-msgid "From a PGN file"
-msgstr ""
-
-msgid "To other database"
-msgstr ""
-
-msgid "Perfomance"
-msgstr ""
-
-msgid "Opening explorer of %s"
-msgstr ""
-
-msgid "Perfomance Rating"
-msgstr ""
-
-msgid "Selecting the best stockfish version for your CPU"
-msgstr ""
-
-msgid "Change window position"
-msgstr ""
-
-msgid "Position saved in \"%s\" file."
-msgstr ""
-
-msgid "Home folder"
-msgstr ""
-
-msgid "Green"
-msgstr ""
-
-msgid "Analysis of variation"
-msgstr ""
-
-msgid "Test the solution"
 msgstr ""
 
 

@@ -1495,7 +1495,7 @@ class PGNtoGame:
         new_position.read_fen(FasterCode.get_fen())
 
         move: Move.Move = Move.Move(
-            self,
+            self.game,
             base_position,
             new_position,
             move_str[:2],
