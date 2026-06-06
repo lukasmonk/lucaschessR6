@@ -829,3 +829,8 @@ def legal_fenm2(fen):
     p.read_fen(fen)
     return p.fenm2()
 
+
+def fen_in_opening(fen: str) -> bool:
+    p = Position()
+    p.read_fen(fen)
+    return p.phase() == OPENING

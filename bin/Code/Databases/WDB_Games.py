@@ -1545,6 +1545,7 @@ class WGames(QtWidgets.QWidget):
             return
         (
             plies,
+            in_opening,
             st_side,
             st_results,
             ru,
@@ -1568,6 +1569,7 @@ class WGames(QtWidgets.QWidget):
         ok = PolyglotImportExports.add_db(
             self.db_games,
             plies,
+            in_opening,
             st_results,
             st_side,
             li_players,

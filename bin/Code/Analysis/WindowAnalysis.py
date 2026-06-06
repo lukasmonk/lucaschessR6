@@ -95,7 +95,7 @@ class OneAnalysis(QtWidgets.QWidget):
         layout = Colocacion.V().control(self.lb_engine_m).otro(row_time).control(self.wrm).margen(3)
         self.setLayout(layout)
 
-    # ── Activation / deactivation ─────────────────────────────────────────────
+    # -- Activation / deactivation ---------------------------------------------
 
     def activate(self, is_active: bool):
         """Highlight this panel (blue) when active, dim it (grey) when inactive."""
@@ -113,7 +113,7 @@ class OneAnalysis(QtWidgets.QWidget):
         """Remove this analysis panel from the parent window."""
         self.owner.remove_analysis(self.tab_analysis)
 
-    # ── Move selection and board refresh ──────────────────────────────────────
+    # -- Move selection and board refresh --------------------------------------
 
     def select_candidate(self, row):
         """Select a candidate move by grid row and update the board."""
@@ -136,7 +136,7 @@ class OneAnalysis(QtWidgets.QWidget):
         self.lbPGN.set_text(self.tab_analysis.pgn_active())
         QTUtils.refresh_gui()
 
-    # ── Grid callbacks (called by the Grid widget) ────────────────────────────
+    # -- Grid callbacks (called by the Grid widget) ----------------------------
 
     def grid_num_datos(self, _grid):
         return len(self.list_rm_name)
@@ -169,7 +169,7 @@ class OneAnalysis(QtWidgets.QWidget):
     def grid_color_fondo(self, _grid, row, _obj_column):
         return self.color_odd_row if row % 2 == 1 else None
 
-    # ── Navigation within the candidate list ──────────────────────────────────
+    # -- Navigation within the candidate list ----------------------------------
 
     def grid_wheel_event(self, ogrid, forward):
         self._go_to(ogrid.recno() + (-1 if forward else +1))
@@ -192,7 +192,7 @@ class OneAnalysis(QtWidgets.QWidget):
     def go_last(self):
         self._go_to(len(self.list_rm_name) - 1)
 
-    # ── Toolbar / keyboard actions ────────────────────────────────────────────
+    # -- Toolbar / keyboard actions --------------------------------------------
 
     def process_toolbar(self, action):
         """Handle an action dispatched by the parent WAnalisis.
@@ -216,7 +216,7 @@ class OneAnalysis(QtWidgets.QWidget):
             QTUtils.set_clipboard(self.tab_analysis.fen_active())
             QTDialogs.fen_is_in_clipboard(self)
 
-    # ── Timed playback ────────────────────────────────────────────────────────
+    # -- Timed playback --------------------------------------------------------
 
     def _toggle_timed_playback(self):
         self.is_timed_active = not self.is_timed_active
@@ -237,7 +237,7 @@ class OneAnalysis(QtWidgets.QWidget):
                 Code.runSound.play_beep()
             QtCore.QTimer.singleShot(Code.configuration.x_interval_replay, self._timed_next)
 
-    # ── Play / save helpers ───────────────────────────────────────────────────
+    # -- Play / save helpers ---------------------------------------------------
 
     def _play_position(self):
         position, _, __ = self.tab_analysis.activate_position()
@@ -366,7 +366,8 @@ class WAnalisis(LCDialog.LCDialog):
         pgn_scroll = self._build_pgn_scroll()
 
         ly_board = Colocacion.H().relleno().control(self.board).relleno()
-        ly_engine_row = Colocacion.H().control(self.lbPuntuacion).relleno().control(self.lb_engine).control(self.lb_time)
+        ly_engine_row = (Colocacion.H().control(self.lbPuntuacion).relleno().control(self.lb_engine)
+                         .control(self.lb_time))
         ly_left = (
             Colocacion.V()
             .control(tb_work)
@@ -387,44 +388,44 @@ class WAnalisis(LCDialog.LCDialog):
         scroll.setWidget(container)
         return scroll
 
-    # ── PGN link callback ─────────────────────────────────────────────────────
+    # -- PGN link callback -----------------------------------------------------
 
     def change_pos_active(self, pos):
         """Called when the user clicks a move link in the PGN text label."""
         self.active_tab.wmu.change_pos_active(int(pos))
 
-    # ── Keyboard and wheel ────────────────────────────────────────────────────
+    # -- Keyboard and wheel ----------------------------------------------------
 
     def keyPressEvent(self, event):
         self._handle_key(event.key())
 
     def _handle_key(self, k):
         wmu = self.active_tab.wmu
-        Key = QtCore.Qt.Key
-        if k == Key.Key_Down:
+        key = QtCore.Qt.Key
+        if k == key.Key_Down:
             wmu.go_down()
-        elif k == Key.Key_Up:
+        elif k == key.Key_Up:
             wmu.go_up()
-        elif k == Key.Key_Left:
+        elif k == key.Key_Left:
             wmu.process_toolbar("move_back")
-        elif k == Key.Key_Right:
+        elif k == key.Key_Right:
             wmu.process_toolbar("move_forward")
-        elif k == Key.Key_Home:
+        elif k == key.Key_Home:
             wmu.process_toolbar("move_to_beginning")
-        elif k == Key.Key_End:
+        elif k == key.Key_End:
             wmu.process_toolbar("move_to_end")
-        elif k == Key.Key_PageUp:
+        elif k == key.Key_PageUp:
             wmu.go_first()
-        elif k == Key.Key_PageDown:
+        elif k == key.Key_PageDown:
             wmu.go_last()
-        elif k == Key.Key_Escape:
+        elif k == key.Key_Escape:
             self.finalize()
 
     def board_wheel_event(self, _board, forward):
         forward = Code.configuration.wheel_board(forward)
         self._handle_key(QtCore.Qt.Key.Key_Left if forward else QtCore.Qt.Key.Key_Right)
 
-    # ── Window lifecycle ──────────────────────────────────────────────────────
+    # -- Window lifecycle ------------------------------------------------------
 
     def closeEvent(self, event):
         self.finalize(False)
@@ -444,7 +445,7 @@ class WAnalisis(LCDialog.LCDialog):
         else:
             self.reject()
 
-    # ── Analysis panel management ─────────────────────────────────────────────
+    # -- Analysis panel management ---------------------------------------------
 
     def activate_analysis(self, tab_analysis):
         """Make ``tab_analysis`` the active panel; dim all others."""
@@ -478,7 +479,7 @@ class WAnalisis(LCDialog.LCDialog):
         else:
             self.active_tab.wmu.process_toolbar(key)
 
-    # ── Clock (used by external callers) ─────────────────────────────────────
+    # -- Clock (used by external callers) -------------------------------------
 
     def start_clock(self, funcion):
         if self.timer is None:
@@ -491,7 +492,7 @@ class WAnalisis(LCDialog.LCDialog):
             self.timer.stop()
             self.timer = None
 
-    # ── New analysis / play from board ────────────────────────────────────────
+    # -- New analysis / play from board ----------------------------------------
 
     def new_analysis(self):
         if alm := WindowAnalysisParam.analysis_parameters(self, False, True, False, False):

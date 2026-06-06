@@ -1,3 +1,4 @@
+import os
 import sys
 
 from PySide6 import QtCore, QtWidgets
@@ -8,7 +9,7 @@ from Code.Config import Configuration, Usuarios
 from Code.Main import InitApp
 from Code.QT import Colocacion, Controles, GarbageCollector, Iconos
 from Code.Translations import WSelectLanguage
-from Code.Z import XRun
+from Code.Z import XRun, Util
 
 
 # class GlobalFilter(QtCore.QObject):
@@ -30,6 +31,11 @@ from Code.Z import XRun
 #
 
 def run_gui(procesador):
+
+    if Util.is_linux() and (os.environ.get("XDG_SESSION_TYPE") == "wayland" or os.environ.get("WAYLAND_DISPLAY")):
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
+        # sudo apt install libxcb-cursor0  en Wayland
+
     main_config = Configuration.Configuration("")
     main_config.lee()
 

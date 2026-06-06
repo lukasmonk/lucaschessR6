@@ -214,7 +214,7 @@ class EngineRun(QtCore.QObject):
 
         self._ucinewgame()
         self.play_time_begin = None
-        self.emit = True
+        self.emit_enabled = True
 
     def _start_polling(self):
         """Activa la lectura periódica si no está activada."""
@@ -404,7 +404,7 @@ class EngineRun(QtCore.QObject):
                 return
             try:
                 output = self.process.readAllStandardOutput()
-                if not self.emit:
+                if not self.emit_enabled:
                     return
             except (RuntimeError, AttributeError):
                 return
@@ -458,7 +458,7 @@ class EngineRun(QtCore.QObject):
                                 # APAGAMOS POLLING
                                 self._stop_polling()
 
-                            if self.emit:
+                            if self.emit_enabled:
                                 try:
                                     self.eval_stockfish_found.emit("\n".join(self.li_cache))
                                 except Exception:
@@ -477,7 +477,7 @@ class EngineRun(QtCore.QObject):
                             new_depth = self.mrm.get_current_depth()
                             if new_depth > self.last_depth_emit:
                                 self.mrm.ordena()
-                                if self.emit:
+                                if self.emit_enabled:
                                     if current_time - self.last_time_depth_emit >= self.time_interval_depth_emit:
                                         self.last_depth_emit = new_depth
                                         self.last_time_depth_emit = current_time
@@ -495,12 +495,12 @@ class EngineRun(QtCore.QObject):
 
                             li = line.split(" ")
                             self.bestmove = li[1] if len(li) > 1 else ""
-                            if self.emit:
+                            if self.emit_enabled:
                                 try:
                                     if not emited_depth:  # si no se ha emitido el depth, lo emitimos
                                         self.last_depth_emit = new_depth
                                         self.last_time_depth_emit = current_time
-                                        self.depth_changed.emit()  # sino no se ve la ultima depth
+                                        self.depth_changed.emit()
                                     self.bestmove_found.emit(self.bestmove)
                                 except Exception:
                                     self._log_exception("bestmove_found emit failed")
@@ -527,7 +527,7 @@ class EngineRun(QtCore.QObject):
                     self._wait_loop.quit()
                 except Exception:
                     self._log_exception("wait_loop quit failed")
-            if self.emit:
+            if self.emit_enabled:
                 try:
                     self.engine_terminated.emit()
                 except Exception:
@@ -668,7 +668,7 @@ class EngineRun(QtCore.QObject):
         """
         if self.state == EngineState.CLOSED:
             return
-        self.emit = False
+        self.emit_enabled = False
 
         if self.mode_timer_poll:
             # --- CRUCIAL: Parar polling antes de tocar el proceso ---

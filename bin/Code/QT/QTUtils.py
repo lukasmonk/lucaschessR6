@@ -1,3 +1,4 @@
+import os
 from PySide6 import QtCore, QtGui, QtWidgets
 from shiboken6 import isValid
 
@@ -94,7 +95,8 @@ def close_app():
     app: QtWidgets.QApplication = QtWidgets.QApplication.instance()
     if app is not None:
         app.closeAllWindows()
-        QtCore.QTimer.singleShot(100, app.quit)
+        app.quit()
+        os._exit(0)
 
 
 def delay(ms: int):

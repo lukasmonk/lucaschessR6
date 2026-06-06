@@ -7,7 +7,7 @@ from PySide6 import QtCore, QtWidgets
 
 import Code
 from Code.Z import Util
-from Code.Base import Game
+from Code.Base import Game, Position
 from Code.Base.Constantes import (
     BLACK,
     CALCWEIGHT_NUMGAMES,
@@ -411,6 +411,7 @@ class PolyglotImport:
             return
         (
             plies,
+            in_opening,
             st_side,
             st_results,
             ru,
@@ -424,10 +425,10 @@ class PolyglotImport:
 
         db = UtilSQL.DictBig()
 
-        def fsum(keymove, pt):
+        def fadd(keymove, count, pts_add):
             num, pts = db.get(keymove, (0, 0))
-            num += 1
-            pts += pt
+            num += count
+            pts += pts_add
             db[keymove] = num, pts
 
         dltmp = ImportarPGNDB(self.wpolyglot, os.path.basename(path_db))
@@ -437,12 +438,13 @@ class PolyglotImport:
         ok = add_db(
             db_games,
             plies,
+            in_opening,
             st_results,
             st_side,
             li_players,
             ru,
             dltmp.dispatch,
-            fsum,
+            fadd,
         )
         dltmp.close()
         if not ok:
@@ -463,6 +465,7 @@ class PolyglotImport:
             return
         (
             plies,
+            in_opening,
             st_side,
             st_results,
             ru,
@@ -477,10 +480,10 @@ class PolyglotImport:
         db = UtilSQL.DictBig()
         for path_pgn in li_path_pgn:
 
-            def fsum(keymove, pt):
+            def fadd(keymove, count, pts_add):
                 num, pts = db.get(keymove, (0, 0))
-                num += 1
-                pts += pt
+                num += count
+                pts += pts_add
                 db[keymove] = num, pts
 
             dltmp = ImportarPGNDB(self.wpolyglot, os.path.basename(path_pgn))
@@ -488,6 +491,7 @@ class PolyglotImport:
             ok = self.add_pgn(
                 path_pgn,
                 plies,
+                in_opening,
                 st_results,
                 st_side,
                 li_players,
@@ -495,7 +499,7 @@ class PolyglotImport:
                 time.time,
                 0.1,
                 dltmp.dispatch,
-                fsum,
+                fadd,
             )
             dltmp.close()
             if not ok:
@@ -508,6 +512,7 @@ class PolyglotImport:
     def add_pgn(
         path_pgn,
         plies,
+        in_opening,
         st_results,
         st_side,
         li_players,
@@ -515,11 +520,20 @@ class PolyglotImport:
         ftime,
         time_dispatch,
         dispatch,
-        fsum,
+        fadd,
     ):
         time_prev = ftime()
         cancelled = False
         bfen_inicial = FEN_INITIAL.encode()
+        # accumulator: keymove -> (count, pts_sum)
+        acc = {}
+
+        def flush_acc():
+            if not acc:
+                return
+            for k, (c, p) in acc.items():
+                fadd(k, c, p)
+            acc.clear()
 
         with FasterCode.PGNreader(path_pgn, plies) as fpgn:
             bsize = fpgn.size
@@ -531,6 +545,8 @@ class PolyglotImport:
 
                 if (ftime() - time_prev) >= time_dispatch:
                     time_prev = ftime()
+                    # flush buffered updates before UI dispatch/check
+                    flush_acc()
                     if not dispatch(False, btell, num_games):
                         cancelled = True
                         break
@@ -566,6 +582,8 @@ class PolyglotImport:
                 lipv = pv.split(" ")
                 is_white = b" w" in bfen0
                 for pos, bfen in enumerate(liFens):
+                    if in_opening and not Position.fen_in_opening(bfen.decode()):
+                        break
                     ok = (is_white in st_side) and (ok_white if is_white else ok_black)
                     if ok:
                         mv = lipv[pos]
@@ -573,12 +591,20 @@ class PolyglotImport:
                         key = FasterCode.hash_polyglot(bfen0)
                         keymove = FasterCode.keymove_str(key, move)
                         pt = pw if is_white else pb
-                        fsum(keymove, pt)
+                        # accumulate
+                        c, s = acc.get(keymove, (0, 0))
+                        acc[keymove] = (c + 1, s + pt)
+                        # flush if buffer grows too large
+                        if len(acc) > 5000:
+                            flush_acc()
 
                     is_white = not is_white
                     bfen0 = bfen
 
                 num_games += 1
+
+            # final flush after reading file
+            flush_acc()
 
         return not cancelled
 
@@ -785,27 +811,31 @@ def create_bin_from_dbbig(owner, path_bin, db, min_games, min_score, calc_weight
 
 
 def import_polyglot_config(owner, configuration, titulo, with_collisions):
-    dic = configuration.read_variables("POLYGLOT_IMPORT")
+    key = "POLYGLOT_IMPORT"
+    dic = configuration.read_variables(key)
 
     form = FormLayout.FormLayout(owner, titulo, Iconos.Import8(), minimum_width=440)
-    form.separador()
-
+    form.line()
     form.spinbox(_("Maximum movements"), 1, 999, 60, dic.get("PLIES", 50))
-    form.separador()
-
+    form.checkbox(_("Only in the opening phase"), dic.get("IN_OPENING", False))
+    form.edit(_("Only the following players"), dic.get("PLAYERS", ""))
+    form.apart_simple_np(
+        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<small>%s</small>"
+        % _("(You can add multiple aliases separated by ; and wildcards with *)")
+    )
+    form.line()
     li_options = (
         (f"{_('White')} + {_('Black')}", {True, False}),
         (_("White"), {True}),
         (_("Black"), {False}),
     )
     form.combobox(_("Side to include"), li_options, dic.get("SIDE", {True, False}))
-    form.separador()
+    form.line()
 
     form.apart_simple(_("Include games when result is"))
     form.checkbox("1-0", dic.get("1-0", True))
     form.checkbox("0-1", dic.get("0-1", True))
     form.checkbox("1/2-1/2", dic.get("1/2-1/2", True))
-    form.separador()
     li_options = (
         (_("Discard"), ""),
         ("1-0", "1-0"),
@@ -813,18 +843,11 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
         ("1/2-1/2", "1/2-1/2"),
     )
     form.combobox(f"{_('Unknown result')} {_('convert to')}", li_options, dic.get("*", ""))
-    form.separador()
+    form.line()
 
     form.spinbox(_("Minimum number of games"), 1, 999999, 50, dic.get("MINGAMES", 3))
     form.spinbox(f"{_('Minimum score')} (0-100)", 0, 100, 50, dic.get("MINSCORE", 0))
-    form.separador()
-
-    form.edit(_("Only the following players"), dic.get("PLAYERS", ""))
-    form.apart_simple_np(
-        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<small>%s</small>"
-        % _("(You can add multiple aliases separated by ; and wildcards with *)")
-    )
-    form.separador()
+    form.line()
 
     li_options = (
         (_("Number of games"), CALCWEIGHT_NUMGAMES),
@@ -836,9 +859,9 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
         li_options,
         dic.get("CALCWEIGHT", CALCWEIGHT_NUMGAMES),
     )
-    form.separador()
+    form.line()
     form.checkbox(_("Save score"), dic.get("SAVESCORE", False))
-    form.separador()
+    form.line()
 
     collisions = dic.get("COLLISIONS", "replace")
     if with_collisions:
@@ -857,6 +880,8 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
     if with_collisions:
         (
             plies,
+            in_opening,
+            players,
             st_side,
             r1_0,
             r0_1,
@@ -864,7 +889,6 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
             ru,
             min_games,
             min_score,
-            players,
             calc_weight,
             save_score,
             collisions,
@@ -872,6 +896,8 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
     else:
         (
             plies,
+            in_opening,
+            players,
             st_side,
             r1_0,
             r0_1,
@@ -879,7 +905,6 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
             ru,
             min_games,
             min_score,
-            players,
             calc_weight,
             save_score,
         ) = resp
@@ -897,6 +922,8 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
         st_results.add(b"*")
 
     dic["PLIES"] = plies
+    dic["IN_OPENING"] = in_opening
+    dic["PLAYERS"] = players
     dic["SIDE"] = st_side
     dic["1-0"] = r1_0
     dic["0-1"] = r0_1
@@ -904,11 +931,10 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
     dic["*"] = ru
     dic["MINGAMES"] = min_games
     dic["MINSCORE"] = min_score
-    dic["PLAYERS"] = players
     dic["CALCWEIGHT"] = calc_weight
     dic["SAVESCORE"] = save_score
     dic["COLLISIONS"] = collisions
-    configuration.write_variables("POLYGLOT_IMPORT", dic)
+    configuration.write_variables(key, dic)
 
     if players:
         li_players = list(player.upper().strip() for player in players.split(";"))
@@ -918,6 +944,7 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
     if with_collisions:
         return (
             plies,
+            in_opening,
             st_side,
             st_results,
             ru,
@@ -931,6 +958,7 @@ def import_polyglot_config(owner, configuration, titulo, with_collisions):
     else:
         return (
             plies,
+            in_opening,
             st_side,
             st_results,
             ru,
@@ -1015,21 +1043,33 @@ def test_players(li_players, player) -> bool:
 def add_db(
     db,
     plies,
+    in_opening,
     st_results,
     st_side,
     li_players,
     unknown_convert,
     dispatch,
-    fsum,
+    fadd,
 ):
     time_prev = time.time()
     cancelled = False
     st_results = {x.decode() for x in st_results}
+    # accumulator: keymove -> (count, pts_sum)
+    acc = {}
+
+    def flush_acc():
+        if not acc:
+            return
+        for k, (c, p) in acc.items():
+            fadd(k, c, p)
+        acc.clear()
 
     dispatch(True, db.all_reccount(), 0)
     for num_games, (xpv, result, white, black) in enumerate(db.yield_polyglot()):
         if (time.time() - time_prev) >= 0.1:
             time_prev = time.time()
+            # flush before updating UI
+            flush_acc()
             if not dispatch(False, num_games, num_games):
                 cancelled = True
                 break
@@ -1066,11 +1106,19 @@ def add_db(
             if ok:
                 move = FasterCode.string_movepolyglot(mv)
                 fen = FasterCode.get_fen()
+                if in_opening and not Position.fen_in_opening(fen):
+                    break
                 key = FasterCode.hash_polyglot8(fen)
                 keymove = FasterCode.keymove_str(key, move)
                 pt = pw if is_white else pb
-                fsum(keymove, pt)
+                c, s = acc.get(keymove, (0, 0))
+                acc[keymove] = (c + 1, s + pt)
+                if len(acc) > 5000:
+                    flush_acc()
             FasterCode.make_move(mv)
             is_white = not is_white
+
+    # final flush
+    flush_acc()
 
     return not cancelled

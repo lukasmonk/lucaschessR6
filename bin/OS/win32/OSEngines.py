@@ -476,10 +476,8 @@ def li_engines_fixed_elo() -> tuple:
         ("ufim", 700, 2000),
         ("texel", 700, 2500),
         ("eguzki", 1000, 2700),
-        # ("patricia", 500, 3000),
         ("ct800", 1000, 2500),
-        ("delfi", 1000, 2600)
-    )
+    )  # delfi y patricia siempre juegan a mucho mas nivel
 
 
 def dic_engines_fixed_elo(folder_engines):
