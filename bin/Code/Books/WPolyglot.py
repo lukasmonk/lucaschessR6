@@ -1,4 +1,5 @@
 import os
+import sqlite3
 
 import FasterCode
 from PySide6 import QtCore
@@ -6,7 +7,7 @@ from PySide6 import QtCore
 from Code.Base import Position
 from Code.Board import Board
 from Code.Books import DBPolyglot, PolyglotImportExports
-from Code.QT import Colocacion, Columnas, Delegados, Grid, Iconos, LCDialog, QTDialogs
+from Code.QT import Colocacion, Columnas, Delegados, Grid, Iconos, LCDialog, FormLayout, QTDialogs, QTMessages
 from Code.Voyager import Voyager
 
 
@@ -79,7 +80,8 @@ class WPolyglot(LCDialog.LCDialog):
         self.tb = QTDialogs.LCTB(self)
         self.tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
         self.tb.new(_("Takeback"), Iconos.Atras(), self.takeback)
-        self.tb.new(_("Voyager"), Iconos.Voyager32(), self.voyager)
+
+        self.tb.new(_("Utilities"), Iconos.Utilidades(), self.utilities)
         self.tb.new(_("Import"), Iconos.Import8(), self.pol_import.importar)
         # (_("Create book"), Iconos.BinBook(), self.pol_export.exportar),
         # None,
@@ -153,7 +155,7 @@ class WPolyglot(LCDialog.LCDialog):
             else:
                 return san
         elif key == "%":
-            return f"{move.porc:.1f}%" if move.porc > 0 else ""
+            return f"{move.porc:.2f}%" if move.porc > 0 else ""
         else:
             valor = move.get_field(key)
             return str(valor) if valor else ""
@@ -241,3 +243,50 @@ class WPolyglot(LCDialog.LCDialog):
         position, is_white_bottom = Voyager.voyager_position(self, self.position, wownerowner=self.owner)
         if position:
             self.set_position(position, True)
+
+    def remove_moves(self):
+        form = FormLayout.FormLayout(self, _("Remove"), Iconos.Delete())
+        form.separador()
+        form.editbox(_("Moves with a weight of less than or equal to %"), 50, tipo=float, decimales=3,
+                     init_value=0.00)
+        form.separador()
+
+        resp = form.run()
+        if not resp:
+            return
+        accion, li_resp = resp
+        tope, = li_resp
+
+        conn = sqlite3.connect(self.path_lcbin)
+        cursor = conn.cursor()
+
+        with QTMessages.one_moment_please(self):
+            cursor.execute(f"""
+                DELETE FROM BOOK 
+                WHERE (CKEY, WEIGHT) IN (
+                    SELECT b.CKEY, b.WEIGHT
+                    FROM BOOK b
+                    JOIN (
+                        SELECT CKEY, SUM(WEIGHT) as total_weight
+                        FROM BOOK
+                        GROUP BY CKEY
+                    ) t ON b.CKEY = t.CKEY
+                    WHERE b.WEIGHT <= (t.total_weight * {tope / 100.0})
+                )
+            """)
+
+            regs_removed = cursor.rowcount
+            conn.commit()
+            conn.close()
+
+        self.set_position(self.position, True)
+        QTMessages.message(self, f'{_("Deleted records")}: {regs_removed}')
+
+    def utilities(self):
+        menu = QTDialogs.LCMenu(self)
+        menu.opcion(self.voyager, _("Voyager"), Iconos.Voyager())
+        menu.separador()
+        menu.opcion(self.remove_moves, _("Remove moves by percentage"), Iconos.Delete())
+        resp = menu.lanza()
+        if resp:
+            resp()

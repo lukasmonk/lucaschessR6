@@ -17,6 +17,7 @@ from Code.Base.Constantes import (
     GT_FICS,
     GT_FIDE,
     GT_HUMAN,
+    GT_GRID,
     GT_LICHESS,
     GT_MICELO,
     GT_WICKER,
@@ -42,6 +43,7 @@ from Code.Books import (
 )
 from Code.CompetitionWithTutor import ManagerCompeticion
 from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
+from Code.Competitions import ManagerGrid
 from Code.Config import Configuration, WindowConfig, WindowUsuarios
 from Code.Databases import DBgames
 from Code.Engines import (
@@ -514,6 +516,8 @@ class Procesador:
                     self.manager = ManagerSwiss.ManagerSwiss(self)
                 elif tp == GT_HUMAN:
                     self.manager = ManagerPlayHuman.ManagerPlayHuman(self)
+                elif tp == GT_GRID:
+                    self.manager = ManagerGrid.ManagerGrid(self)
                 else:
                     return
                 self.manager.run_adjourn(dic)

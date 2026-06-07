@@ -564,7 +564,7 @@ def _run_uci_command(path_exe: str) -> Optional[str]:
         return None
 
     size = Util.filesize(path_exe)
-    timeout = max(10, size*10//5000000)
+    timeout = max(10, size * 10 // 5000000)
 
     direxe = os.path.dirname(path_exe)
 

@@ -1,4 +1,3 @@
-import os
 from PySide6 import QtCore, QtGui, QtWidgets
 from shiboken6 import isValid
 
@@ -91,12 +90,40 @@ def deferred_call(mstime: int, called):
     QtCore.QTimer.singleShot(mstime, called)
 
 
+# def close_app():
+#     app: QtWidgets.QApplication = QtWidgets.QApplication.instance()
+#     if app is not None:
+#         app.closeAllWindows()
+#         app.quit()
+#         try:
+#             os._exit(0)
+#         except Exception:
+#             pass
+
 def close_app():
-    app: QtWidgets.QApplication = QtWidgets.QApplication.instance()
+    app = QtWidgets.QApplication.instance()
     if app is not None:
+        # 1. Detener todos los QTimers
+        for timer in app.findChildren(QtCore.QTimer):
+            timer.stop()
+
+        # 2. Detener TODOS los QThreads
+        for thread in app.findChildren(QtCore.QThread):
+            if thread.isRunning():
+                thread.quit()  # Solicita detención
+                thread.wait(1000)  # Espera máximo 1 segundo
+                if thread.isRunning():
+                    thread.terminate()  # Último recurso
+                    thread.wait()
+
+        # 3. Cerrar ventanas
         app.closeAllWindows()
+
+        # 4. Procesar eventos pendientes
+        app.processEvents()
+
+        # 5. Salir del bucle de eventos
         app.quit()
-        os._exit(0)
 
 
 def delay(ms: int):
@@ -106,11 +133,10 @@ def delay(ms: int):
 
 
 def scene_remove_item_safe(scene, item):
-    if item is None:
+    if item is None or not isValid(item) or scene != item.scene():
         return
     try:
-        if isValid(item):
-            scene.removeItem(item)
+        scene.removeItem(item)
     except RuntimeError as e:
         if __debug__:
             from Code.Z import Debug

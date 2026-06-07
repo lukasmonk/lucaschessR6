@@ -143,6 +143,8 @@ class ThanksTo:
             "Stefan Akall",
             "Zhuge Prajna",
             '<a href="https://github.com/Ebola-Chan-bot">Ebola-Chan-bot</a>',
+            '<a href="https://github.com/neuroflowinfinix">neuroflowinfinix</a>',
+            '<a href="https://github.com/landroni">landroni</a>',
             "tgett",
             "Baked-Cake1",
             "Yasmin"

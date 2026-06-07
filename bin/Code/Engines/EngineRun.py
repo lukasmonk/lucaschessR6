@@ -205,7 +205,9 @@ class EngineRun(QtCore.QObject):
         self.uci_ok = False
 
         # Iniciar lectura de UCI
-        self._read_uci()
+        # self._read_uci()  # no hace falta, la lectura de uci se hace en otro lado
+        # self.state = EngineState.READING_UCI
+        self._send_command("uci")   # motores que han de decidir si uci o WinBoard
 
         if config.li_options_uci:
             self._set_options_uci(config.li_options_uci)
