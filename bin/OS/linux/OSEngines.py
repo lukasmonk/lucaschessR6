@@ -462,22 +462,3 @@ def li_engines_fixed_elo() -> tuple:
             ("eguzki", 1000, 2700),
             ("ct800", 1000, 2500),
     )
-
-
-def dic_engines_fixed_elo(folder_engines):
-    d = read_engines(folder_engines)
-    dic = {}
-    li_engines = li_engines_fixed_elo()
-
-    for nm, xfrom, xto in li_engines:
-        for elo in range(xfrom, xto + 100, 100):
-            cm = d[nm].clone()
-            if elo not in dic:
-                dic[elo] = []
-            cm.set_uci_option("UCI_LimitStrength", "true")
-            cm.set_uci_option("UCI_Elo", str(elo))
-            cm.name += " (%d)" % elo
-            cm.key += " (%d)" % elo
-            cm.elo = elo
-            dic[elo].append(cm)
-    return dic

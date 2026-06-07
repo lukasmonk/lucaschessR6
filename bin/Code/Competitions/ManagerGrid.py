@@ -1,28 +1,52 @@
-
 import Code
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_GRID,
     ST_ENDGAME,
+    ST_PAUSE,
     ST_PLAYING,
+    TB_ADJOURN,
     TB_CANCEL,
     TB_CONFIG,
+    TB_CONTINUE,
     TB_DRAW,
+    TB_PAUSE,
     TB_RESIGN,
     TB_UTILITIES,
 )
 from Code.Engines import EngineResponse, Engines
+from Code.Engines.EnginesFixed import dic_engines_raw_elo
 from Code.ManagerBase import Manager
 from Code.Openings import Opening
 from Code.QT import QTMessages
-from Code.Z import TimeControl, Util
+from Code.Z import Adjournments, TimeControl, Util
 
 
 class GridDB:
     @staticmethod
     def load_all():
         path = Code.configuration.paths.file_estad_grid_elo()
-        return Util.restore_pickle(path, {})
+        saved = Util.restore_pickle(path, {})
+        for tg, dic_data in saved.items():
+            dic_raw = dic_engines_raw_elo()
+            dic_engines = dic_data["engines"]
+            dic_new = {}
+            for key_eng in dic_raw:
+                max_elo = dic_raw[key_eng]["max_elo"]
+                min_elo = dic_raw[key_eng]["min_elo"]
+                current_elo = min_elo
+                last_color = None
+                if key_eng in dic_engines:
+                    current_elo = dic_engines[key_eng].get("current_elo", min_elo)
+                    last_color = dic_engines[key_eng].get("last_color", None)
+                dic_new[key_eng] = {
+                    "max_elo": max_elo,
+                    "min_elo": min_elo,
+                    "current_elo": Util.clamp(current_elo, min_elo, max_elo),
+                    "last_color": last_color
+                }
+            dic_data["engines"] = dic_new
+        return saved
 
     @staticmethod
     def save_all(data):
@@ -174,7 +198,7 @@ class ManagerGrid(Manager.Manager):
         self.game.add_tag_timestart()
 
     def pon_toolbar(self):
-        li_tool = (TB_RESIGN, TB_DRAW, TB_CONFIG, TB_UTILITIES)
+        li_tool = (TB_RESIGN, TB_DRAW, TB_PAUSE, TB_ADJOURN, TB_CONFIG, TB_UTILITIES)
         self.set_toolbar(li_tool)
 
     def run_action(self, key):
@@ -182,6 +206,12 @@ class ManagerGrid(Manager.Manager):
             self.rendirse()
         elif key == TB_DRAW:
             self.check_draw_player()
+        elif key == TB_PAUSE:
+            self.xpause()
+        elif key == TB_CONTINUE:
+            self.xcontinue()
+        elif key == TB_ADJOURN:
+            self.adjourn()
         elif key == TB_CONFIG:
             self.configurar(with_sounds=True)
         elif key == TB_UTILITIES:
@@ -193,6 +223,76 @@ class ManagerGrid(Manager.Manager):
 
     def final_x(self):
         return self.rendirse()
+
+    def xpause(self):
+        self.state = ST_PAUSE
+        if self.human_is_playing:
+            self.tc_player.pause()
+        else:
+            self.tc_rival.pause()
+            self.manager_rival.stop()
+        self.show_clocks()
+        self.thinking(False)
+        self.board.set_position(self.game.first_position)
+        self.board.disable_all()
+        self.main_window.hide_pgn()
+        self.set_toolbar([TB_CONTINUE])
+
+    def xcontinue(self):
+        self.state = ST_PLAYING
+        self.board.set_position(self.game.last_position)
+        self.pon_toolbar()
+        self.main_window.show_pgn()
+        self.play_next_move()
+
+    def save_state(self):
+        self.main_window.stop_clock()
+        self.tc_white.stop()
+        self.tc_black.stop()
+        return {
+            "grid_id": self.grid_id,
+            "engine_alias": self.engine_alias,
+            "elo_level": self.elo_level,
+            "min_elo": self.min_elo,
+            "max_elo": self.max_elo,
+            "is_white": self.is_white,
+            "minutes": self.minutes,
+            "seconds": self.seconds,
+            "game_save": self.game.save(),
+            "time_white": self.tc_white.save(),
+            "time_black": self.tc_black.save(),
+        }
+
+    def adjourn(self):
+        if QTMessages.pregunta(self.main_window, _("Do you want to adjourn the game?")):
+            dic = self.save_state()
+            rival_name = Util.primera_mayuscula(self.engine_alias)
+            label_menu = f"{_('The Grid')}. {rival_name} ({self.elo_level})"
+            self.state = ST_ENDGAME
+            with Adjournments.Adjournments() as adj:
+                adj.add(self.game_type, dic, label_menu)
+                adj.si_seguimos(self)
+
+    def run_adjourn(self, dic):
+        self.grid_id = dic["grid_id"]
+        self.engine_alias = dic["engine_alias"]
+        self.elo_level = dic["elo_level"]
+        self.min_elo = dic["min_elo"]
+        self.max_elo = dic["max_elo"]
+        self.is_white = dic["is_white"]
+        self.minutes = dic["minutes"]
+        self.seconds = dic["seconds"]
+
+        self.base_inicio()
+        self.game.restore(dic["game_save"])
+        if self.with_time:
+            self.tc_white.restore(dic["time_white"])
+            self.tc_black.restore(dic["time_black"])
+        self.show_clocks()
+        self.main_window.start_clock(self.set_clock, 1000)
+        self.check_boards_setposition()
+        self.goto_end()
+        self.play_next_move()
 
     def rendirse(self):
         if self.state == ST_ENDGAME:

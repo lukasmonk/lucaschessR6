@@ -1,7 +1,8 @@
 import Code
 from Code.Base.Constantes import GT_FICS, GT_FIDE, GT_LICHESS
-from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker, ManagerMaia
 from Code.CompetitionWithTutor import ManagerCompeticion, WCompetitionWithTutor
+from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker, ManagerMaia
+from Code.Competitions import WindowGrid
 from Code.Engines import WEngines
 from Code.Main import Presentacion
 from Code.Menus import BaseMenu
@@ -105,10 +106,10 @@ class CompeteMenu(BaseMenu.RootMenu):
     def maialadder(self):
         maia_state = ManagerMaia.MaiaState()
         if maia_state.is_finished():
-            QTMessages.message_bold(self.wparent,f'{_("Finished")}'
-                                                 f'\n\n→ {_("Options")}/'
-                                                 f'{_("General configuration")}/'
-                                                 f'{_("Change elos")}\n')
+            QTMessages.message_bold(self.wparent, f'{_("Finished")}'
+                                                  f'\n\n→ {_("Options")}/'
+                                                  f'{_("General configuration")}/'
+                                                  f'{_("Change elos")}\n')
             return
         manager = ManagerMaia.ManagerMaia(self.procesador)
         manager.start()
@@ -166,7 +167,6 @@ class CompeteMenu(BaseMenu.RootMenu):
                 manager.start(resp, minutos, seconds)
 
     def thegrid(self):
-        from Code.Competitions import WindowGrid
         WindowGrid.play_grid(self.procesador)
 
     def ficselo(self, nivel):

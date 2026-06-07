@@ -332,6 +332,7 @@ class WTournament(LCDialog.LCDialog):
     def cerrar(self):
         if self.torneo:
             self.grabar()
+            self.torneo.close()
             self.torneo = None
         self.save_video()
 

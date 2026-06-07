@@ -2601,6 +2601,9 @@ class Board(QtWidgets.QGraphicsView):
     def finalize(self):
         if self.dirvisual:
             self.dirvisual.finalize()
+        if self.dbVisual:
+            self.dbVisual.close()
+            self.dbVisual = None
 
     def allow_takeback(self):
         return (

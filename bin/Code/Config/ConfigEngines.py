@@ -7,7 +7,7 @@ from Code.Z import Util
 from Code.Base.Constantes import (
     ENG_FIXED,
 )
-from Code.Engines import CheckEngines
+from Code.Engines import CheckEngines, EnginesFixed
 
 
 class ConfigEngines:
@@ -137,7 +137,7 @@ class ConfigEngines:
 
     @staticmethod
     def dic_fixed_elo():
-        d = OSEngines.dic_engines_fixed_elo(Code.folder_engines)
+        d = EnginesFixed.dic_engines_fixed_elo(Code.folder_engines)
         for elo, lien in d.items():
             for cm in lien:
                 cm.type = ENG_FIXED

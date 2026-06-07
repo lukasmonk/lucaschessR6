@@ -112,12 +112,16 @@ class GridView(QtWidgets.QGraphicsView):
 class WGrid(LCDialog.LCDialog):
     def __init__(self, procesador, default_grid_id=None):
         self.procesador = procesador
-        self.configuration = Code.configuration
 
         title = _("The Grid")
         icono = Iconos.Parrilla()
 
         LCDialog.LCDialog.__init__(self, procesador.main_window, title, icono, "thegrid3")
+
+        self.key_var = "THEGRID"
+        if default_grid_id is None:
+            dic = Code.configuration.read_variables(self.key_var)
+            default_grid_id = dic.get("GRID_ID", None)
 
         self.grid_id = default_grid_id
 
@@ -192,11 +196,18 @@ class WGrid(LCDialog.LCDialog):
         else:
             self.grid_id = None
             self.draw_empty_placeholder()
+        self.save_grid_id()
+
+    def save_grid_id(self):
+        dic = Code.configuration.read_variables(self.key_var)
+        dic["GRID_ID"] = self.grid_id
+        Code.configuration.write_variables(self.key_var, dic)
 
     def grid_selected_changed(self, idx):
         if idx >= 0:
             self.grid_id = self.cb_grids.itemData(idx)
             self.draw_grid()
+            self.save_grid_id()
 
     def grid_new(self):
         resp_t = QTDialogs.vtime(
@@ -254,7 +265,8 @@ class WGrid(LCDialog.LCDialog):
             f"<center>"
             f"<h2 style='color:{C_TEXT};'>{_('Welcome to The Grid!')}</h2>"
             f"<p style='color:{C_TEXT_DIM};'>{_('No competition grids exist yet.')}</p>"
-            f"<p style='color:{C_TEXT_DIM};'>{_('Click <b>New Grid</b> to create one for your chosen time control.')}</p>"
+            f"<p style='color:{C_TEXT_DIM};'>{_('Click <b>New Grid</b> to create one for your chosen time control.')}"
+            "</p>"
             f"</center>"
         )
         text_item.setTextWidth(500)
