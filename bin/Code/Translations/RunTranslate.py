@@ -229,17 +229,13 @@ class WTranslate(LCDialog.LCDialog):
                 dporc = {}
                 for xkey in li_porc:
                     dporc[xkey] = txt.count(xkey)
-                return txt.count("%"), dporc
+                return dporc
 
-            ori_porc, ori_dic = calc(key)
-            tra_porc, tra_dic = calc(value)
-            if ori_porc != tra_porc:
-                QTMessages.message_error(self, "The % number does not xmatch the English text.")
-                self.automatic_reorder = auto_reorder
-                return
+            ori_dic = calc(key)
+            tra_dic = calc(value)
             for k in li_porc:
                 if ori_dic[k] != tra_dic[k]:
-                    QTMessages.message_error(self, f"The command {k} does not xmatch the English text.")
+                    QTMessages.message_error(self, f"The command {k} does not match the English text.")
                     self.automatic_reorder = auto_reorder
                     return
             if "||" in value:

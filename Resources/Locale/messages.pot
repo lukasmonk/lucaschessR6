@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2026-06-07 08:40+0200\n"
+"POT-Creation-Date: 2026-06-09 09:01+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,9 +26,9 @@ msgid "version %1"
 msgstr ""
 
 #: .\Code\About\About.py:33
-#: .\Code\About\AboutBase.py:396
-#: .\Code\About\AboutBase.py:425
-#: .\Code\About\AboutBase.py:655
+#: .\Code\About\AboutBase.py:398
+#: .\Code\About\AboutBase.py:427
+#: .\Code\About\AboutBase.py:657
 #: .\Code\CompetitionWithTutor\WCompetitionWithTutor.py:178
 #: .\Code\CompetitionWithTutor\WCompetitionWithTutor.py:196
 #: .\Code\Engines\WExternalEngines.py:245
@@ -38,9 +38,9 @@ msgid "Author"
 msgstr ""
 
 #: .\Code\About\About.py:39
-#: .\Code\About\AboutBase.py:397
-#: .\Code\About\AboutBase.py:427
-#: .\Code\About\AboutBase.py:620
+#: .\Code\About\AboutBase.py:399
+#: .\Code\About\AboutBase.py:429
+#: .\Code\About\AboutBase.py:622
 msgid "License"
 msgstr ""
 
@@ -104,7 +104,7 @@ msgid "Pieces"
 msgstr ""
 
 #: .\Code\About\AboutBase.py:17
-#: .\Code\About\AboutBase.py:618
+#: .\Code\About\AboutBase.py:620
 msgid "Training"
 msgstr ""
 
@@ -154,8 +154,8 @@ msgstr ""
 msgid "Version %s"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:269
-#: .\Code\About\AboutBase.py:270
+#: .\Code\About\AboutBase.py:271
+#: .\Code\About\AboutBase.py:272
 #: .\Code\Books\WBooksTrainOL.py:108
 #: .\Code\Books\WBooksTrainOL.py:515
 #: .\Code\Config\WindowUsuarios.py:156
@@ -174,8 +174,8 @@ msgstr ""
 msgid "Current"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:269
-#: .\Code\About\AboutBase.py:270
+#: .\Code\About\AboutBase.py:271
+#: .\Code\About\AboutBase.py:272
 #: .\Code\Databases\WDB_Summary.py:77
 #: .\Code\Main\WBase.py:187
 #: .\Code\Main\WBase.py:215
@@ -189,30 +189,28 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:292
-#: .\Code\About\AboutBase.py:619
-#: .\Code\About\AboutBase.py:656
+#: .\Code\About\AboutBase.py:294
+#: .\Code\About\AboutBase.py:621
+#: .\Code\About\AboutBase.py:658
 #: .\Code\Analysis\AI.py:129
 #: .\Code\Analysis\AI.py:216
 #: .\Code\CompetitionWithTutor\WCompetitionWithTutor.py:181
 msgid "Web"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:349
+#: .\Code\About\AboutBase.py:351
 msgid "Free for personal non-commercial use"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:361
-#: .\Code\About\AboutBase.py:507
-#: .\Code\About\AboutBase.py:517
-#: .\Code\About\AboutBase.py:522
-#: .\Code\About\AboutBase.py:527
-#: .\Code\About\AboutBase.py:631
+#: .\Code\About\AboutBase.py:363
+#: .\Code\About\AboutBase.py:509
+#: .\Code\About\AboutBase.py:519
+#: .\Code\About\AboutBase.py:524
+#: .\Code\About\AboutBase.py:529
+#: .\Code\About\AboutBase.py:633
 msgid "Freeware"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:401
-#: .\Code\About\AboutBase.py:402
 #: .\Code\About\AboutBase.py:403
 #: .\Code\About\AboutBase.py:404
 #: .\Code\About\AboutBase.py:405
@@ -224,22 +222,24 @@ msgstr ""
 #: .\Code\About\AboutBase.py:411
 #: .\Code\About\AboutBase.py:412
 #: .\Code\About\AboutBase.py:413
-#: .\Code\About\AboutBase.py:477
-#: .\Code\About\AboutBase.py:482
-#: .\Code\About\AboutBase.py:497
-#: .\Code\About\AboutBase.py:502
-#: .\Code\About\AboutBase.py:557
-#: .\Code\About\AboutBase.py:562
-#: .\Code\About\AboutBase.py:567
-#: .\Code\About\AboutBase.py:627
+#: .\Code\About\AboutBase.py:414
+#: .\Code\About\AboutBase.py:415
+#: .\Code\About\AboutBase.py:479
+#: .\Code\About\AboutBase.py:484
+#: .\Code\About\AboutBase.py:499
+#: .\Code\About\AboutBase.py:504
+#: .\Code\About\AboutBase.py:559
+#: .\Code\About\AboutBase.py:564
+#: .\Code\About\AboutBase.py:569
 #: .\Code\About\AboutBase.py:629
-#: .\Code\About\AboutBase.py:630
+#: .\Code\About\AboutBase.py:631
 #: .\Code\About\AboutBase.py:632
-#: .\Code\About\AboutBase.py:638
+#: .\Code\About\AboutBase.py:634
+#: .\Code\About\AboutBase.py:640
 msgid "Permission of author"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:424
+#: .\Code\About\AboutBase.py:426
 #: .\Code\Board\BoardSections\BoardVisualMenu.py:33
 #: .\Code\Board\WBoardColors.py:256
 #: .\Code\Board\WBoardColors.py:713
@@ -249,37 +249,37 @@ msgstr ""
 msgid "Colors"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:625
+#: .\Code\About\AboutBase.py:627
 #: .\Code\Translations\TrListas.py:78
 msgid "Checkmates by Eduardo Sadier"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:629
+#: .\Code\About\AboutBase.py:631
 #: .\Code\Translations\TrListas.py:90
 msgid "Endgames by Rui Grafino"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:630
+#: .\Code\About\AboutBase.py:632
 #: .\Code\Translations\TrListas.py:141
 msgid "Varied positions by Joaquin Alvarez"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:631
+#: .\Code\About\AboutBase.py:633
 #: .\Code\Translations\TrListas.py:118
 msgid "Tactics by Uwe Auerswald"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:632
+#: .\Code\About\AboutBase.py:634
 #: .\Code\Translations\TrListas.py:148
 msgid "Endgames by Victor Perez"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:634
+#: .\Code\About\AboutBase.py:636
 #: .\Code\Translations\TrListas.py:152
 msgid "Tactics by UNED chess school"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:654
+#: .\Code\About\AboutBase.py:656
 #: .\Code\Adjudicator\Adjudicator.py:200
 #: .\Code\Analysis\WindowAnalysisParam.py:259
 #: .\Code\Analysis\WindowAnalysisParam.py:478
@@ -324,28 +324,28 @@ msgstr ""
 msgid "Engine"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:681
-#: .\Code\About\AboutBase.py:711
-#: .\Code\About\AboutBase.py:717
-#: .\Code\About\AboutBase.py:729
-#: .\Code\About\AboutBase.py:754
-#: .\Code\About\AboutBase.py:760
+#: .\Code\About\AboutBase.py:683
+#: .\Code\About\AboutBase.py:713
+#: .\Code\About\AboutBase.py:719
+#: .\Code\About\AboutBase.py:731
+#: .\Code\About\AboutBase.py:756
+#: .\Code\About\AboutBase.py:762
 msgid "Created by %1"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:703
+#: .\Code\About\AboutBase.py:705
 msgid "Programming language"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:708
+#: .\Code\About\AboutBase.py:710
 msgid "GUI"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:722
+#: .\Code\About\AboutBase.py:724
 msgid "Polyglot books"
 msgstr ""
 
-#: .\Code\About\AboutBase.py:723
+#: .\Code\About\AboutBase.py:725
 msgid "Based on work by %1"
 msgstr ""
 
@@ -1564,8 +1564,8 @@ msgstr ""
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:813
 #: .\Code\Board\WBoardColors.py:354
 #: .\Code\Books\PolyglotImportExports.py:50
-#: .\Code\Books\PolyglotImportExports.py:828
-#: .\Code\Books\PolyglotImportExports.py:829
+#: .\Code\Books\PolyglotImportExports.py:834
+#: .\Code\Books\PolyglotImportExports.py:835
 #: .\Code\Books\WBooks.py:18
 #: .\Code\Books\WBooksTrain.py:47
 #: .\Code\Books\WBooksTrainOL.py:144
@@ -1656,8 +1656,8 @@ msgstr ""
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:815
 #: .\Code\Board\WBoardColors.py:359
 #: .\Code\Books\PolyglotImportExports.py:61
-#: .\Code\Books\PolyglotImportExports.py:828
-#: .\Code\Books\PolyglotImportExports.py:830
+#: .\Code\Books\PolyglotImportExports.py:834
+#: .\Code\Books\PolyglotImportExports.py:836
 #: .\Code\Books\WBooks.py:18
 #: .\Code\Books\WBooksTrain.py:49
 #: .\Code\Books\WBooksTrainOL.py:144
@@ -1873,7 +1873,7 @@ msgstr ""
 
 #: .\Code\Analysis\Histogram.py:477
 #: .\Code\Board\Board.py:371
-#: .\Code\Books\PolyglotImportExports.py:206
+#: .\Code\Books\PolyglotImportExports.py:209
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:217
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:342
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:383
@@ -1908,7 +1908,7 @@ msgstr ""
 #: .\Code\Board\WBoardColors.py:1387
 #: .\Code\Books\PolyglotImportExports.py:66
 #: .\Code\Books\PolyglotImportExports.py:104
-#: .\Code\Books\PolyglotImportExports.py:654
+#: .\Code\Books\PolyglotImportExports.py:660
 #: .\Code\Books\WBooksTrain.py:43
 #: .\Code\Books\WBooksTrainOL.py:262
 #: .\Code\Config\WindowUsuarios.py:27
@@ -2013,7 +2013,7 @@ msgid "Movement"
 msgstr ""
 
 #: .\Code\Analysis\RunAnalysisControl.py:668
-#: .\Code\Books\PolyglotImportExports.py:709
+#: .\Code\Books\PolyglotImportExports.py:715
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:289
 #: .\Code\QT\QTMessages.py:495
 #: .\Code\QT\QTProgressBars.py:194
@@ -2305,8 +2305,8 @@ msgstr ""
 #: .\Code\Board\Board.py:357
 #: .\Code\Board\WBoardColors.py:728
 #: .\Code\Board\WBoardColors.py:1657
-#: .\Code\Books\PolyglotImportExports.py:202
-#: .\Code\Books\PolyglotImportExports.py:810
+#: .\Code\Books\PolyglotImportExports.py:205
+#: .\Code\Books\PolyglotImportExports.py:816
 #: .\Code\Databases\WDB_Games.py:1658
 #: .\Code\Databases\WDB_Games.py:1711
 #: .\Code\Databases\WDB_Games.py:1765
@@ -2451,8 +2451,8 @@ msgstr ""
 #: .\Code\BestMoveTraining\WindowBMT.py:175
 #: .\Code\BestMoveTraining\WindowBMTtrain.py:90
 #: .\Code\Books\ManagerTrainBooks.py:379
-#: .\Code\Books\PolyglotImportExports.py:854
-#: .\Code\Books\PolyglotImportExports.py:855
+#: .\Code\Books\PolyglotImportExports.py:860
+#: .\Code\Books\PolyglotImportExports.py:861
 #: .\Code\Books\WPolyglot.py:58
 #: .\Code\Competitions\ManagerFideFicsLichess.py:198
 #: .\Code\Competitions\ManagerFideFicsLichess.py:370
@@ -2644,13 +2644,13 @@ msgid "Analyze color"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:295
-#: .\Code\Books\PolyglotImportExports.py:821
+#: .\Code\Books\PolyglotImportExports.py:827
 #: .\Code\Databases\WDB_Games.py:1296
 msgid "Only the following players"
 msgstr ""
 
 #: .\Code\Analysis\WindowAnalysisParam.py:296
-#: .\Code\Books\PolyglotImportExports.py:824
+#: .\Code\Books\PolyglotImportExports.py:830
 #: .\Code\Databases\WDB_Games.py:1297
 msgid "(You can add multiple aliases separated by ; and wildcards with *)"
 msgstr ""
@@ -3106,9 +3106,9 @@ msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMT.py:240
 #: .\Code\Board\WBoardColors.py:1479
-#: .\Code\Books\PolyglotImportExports.py:382
-#: .\Code\Books\PolyglotImportExports.py:408
-#: .\Code\Books\PolyglotImportExports.py:462
+#: .\Code\Books\PolyglotImportExports.py:388
+#: .\Code\Books\PolyglotImportExports.py:414
+#: .\Code\Books\PolyglotImportExports.py:468
 #: .\Code\Books\WPolyglot.py:85
 #: .\Code\Databases\WDB_GUtils.py:119
 #: .\Code\Databases\WDB_Games.py:143
@@ -3171,7 +3171,7 @@ msgid "Open Document Format"
 msgstr ""
 
 #: .\Code\BestMoveTraining\WindowBMT.py:264
-#: .\Code\Books\PolyglotImportExports.py:975
+#: .\Code\Books\PolyglotImportExports.py:981
 #: .\Code\Odt\WOdt.py:27
 #: .\Code\Washing\WindowWashing.py:199
 msgid "Export to"
@@ -4023,7 +4023,7 @@ msgid "This name already exists, what do you want to do?"
 msgstr ""
 
 #: .\Code\Board\WBoardColors.py:1704
-#: .\Code\Books\PolyglotImportExports.py:1006
+#: .\Code\Books\PolyglotImportExports.py:1012
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:352
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:401
 #: .\Code\QT\GridEditCols.py:112
@@ -4041,9 +4041,9 @@ msgid "Append"
 msgstr ""
 
 #: .\Code\Board\WBoardColors.py:1706
-#: .\Code\Books\PolyglotImportExports.py:357
-#: .\Code\Books\PolyglotImportExports.py:840
-#: .\Code\Books\PolyglotImportExports.py:871
+#: .\Code\Books\PolyglotImportExports.py:363
+#: .\Code\Books\PolyglotImportExports.py:846
+#: .\Code\Books\PolyglotImportExports.py:877
 msgid "Discard"
 msgstr ""
 
@@ -4227,9 +4227,9 @@ msgid "Three first moves"
 msgstr ""
 
 #: .\Code\Books\PolyglotImportExports.py:36
-#: .\Code\Books\PolyglotImportExports.py:132
-#: .\Code\Books\PolyglotImportExports.py:330
-#: .\Code\Books\PolyglotImportExports.py:462
+#: .\Code\Books\PolyglotImportExports.py:135
+#: .\Code\Books\PolyglotImportExports.py:336
+#: .\Code\Books\PolyglotImportExports.py:468
 #: .\Code\Databases\WDB_GUtils.py:119
 #: .\Code\Databases\WDB_Games.py:798
 #: .\Code\Endings\WEndingsGTB.py:661
@@ -4267,8 +4267,8 @@ msgid "File"
 msgstr ""
 
 #: .\Code\Books\PolyglotImportExports.py:97
-#: .\Code\Books\PolyglotImportExports.py:612
-#: .\Code\Books\PolyglotImportExports.py:781
+#: .\Code\Books\PolyglotImportExports.py:618
+#: .\Code\Books\PolyglotImportExports.py:787
 #: .\Code\Databases\DBgamesMov.py:58
 #: .\Code\Databases\WDB_Games.py:1624
 #: .\Code\Databases\WDB_Games.py:1674
@@ -4281,9 +4281,9 @@ msgstr ""
 msgid "Saving..."
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:130
-#: .\Code\Books\PolyglotImportExports.py:334
-#: .\Code\Books\PolyglotImportExports.py:980
+#: .\Code\Books\PolyglotImportExports.py:133
+#: .\Code\Books\PolyglotImportExports.py:340
+#: .\Code\Books\PolyglotImportExports.py:986
 #: .\Code\Books\WBooks.py:113
 #: .\Code\Engines\WEngines.py:444
 #: .\Code\Kibitzers\Kibitzers.py:43
@@ -4298,11 +4298,11 @@ msgstr ""
 msgid "Polyglot book"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:153
+#: .\Code\Books\PolyglotImportExports.py:156
 msgid "Create book"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:332
+#: .\Code\Books\PolyglotImportExports.py:338
 #: .\Code\Databases\WDB_GUtils.py:42
 #: .\Code\Databases\WDatabase.py:23
 #: .\Code\Endings\WEndingsGTB.py:663
@@ -4315,18 +4315,18 @@ msgstr ""
 msgid "Database"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:348
-#: .\Code\Books\PolyglotImportExports.py:873
+#: .\Code\Books\PolyglotImportExports.py:354
+#: .\Code\Books\PolyglotImportExports.py:879
 msgid "What to do in case of collisions"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:353
-#: .\Code\Books\PolyglotImportExports.py:869
+#: .\Code\Books\PolyglotImportExports.py:359
+#: .\Code\Books\PolyglotImportExports.py:875
 msgid "Replace"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:355
-#: .\Code\Books\PolyglotImportExports.py:870
+#: .\Code\Books\PolyglotImportExports.py:361
+#: .\Code\Books\PolyglotImportExports.py:876
 #: .\Code\Main\WInformation.py:328
 #: .\Code\Main\WInformation.py:332
 #: .\Code\Main\WInformation.py:345
@@ -4334,75 +4334,75 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:365
+#: .\Code\Books\PolyglotImportExports.py:371
 msgid "Polyglot bin file name"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:397
+#: .\Code\Books\PolyglotImportExports.py:403
 #: .\Code\Endings\WEndingsGTB.py:718
 #: .\Code\Openings\WindowOpeningLine.py:956
 #: .\Code\QT\QTDialogs.py:675
 msgid "Imported"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:699
+#: .\Code\Books\PolyglotImportExports.py:705
 #: .\Code\QT\QTDialogs.py:663
 msgid "Games read"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:819
+#: .\Code\Books\PolyglotImportExports.py:825
 #: .\Code\Expeditions\WindowEverest.py:148
 msgid "Maximum movements"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:820
+#: .\Code\Books\PolyglotImportExports.py:826
 #: .\Code\Openings\WindowOpeningLine.py:865
 msgid "Only in the opening phase"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:832
+#: .\Code\Books\PolyglotImportExports.py:838
 msgid "Side to include"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:835
+#: .\Code\Books\PolyglotImportExports.py:841
 msgid "Include games when result is"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:845
+#: .\Code\Books\PolyglotImportExports.py:851
 msgid "Unknown result"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:845
+#: .\Code\Books\PolyglotImportExports.py:851
 msgid "convert to"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:848
+#: .\Code\Books\PolyglotImportExports.py:854
 msgid "Minimum number of games"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:849
+#: .\Code\Books\PolyglotImportExports.py:855
 #: .\Code\Coordinates\WRunCoordinatesBlocks.py:53
 msgid "Minimum score"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:853
-#: .\Code\Books\PolyglotImportExports.py:854
+#: .\Code\Books\PolyglotImportExports.py:859
+#: .\Code\Books\PolyglotImportExports.py:860
 msgid "Number of games"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:858
+#: .\Code\Books\PolyglotImportExports.py:864
 msgid "Calculation of the weight"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:863
+#: .\Code\Books\PolyglotImportExports.py:869
 msgid "Save score"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:982
+#: .\Code\Books\PolyglotImportExports.py:988
 msgid "Uniform distribution"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:1003
+#: .\Code\Books\PolyglotImportExports.py:1009
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:349
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:397
 #: .\Code\QT\WGif.py:99
@@ -4411,7 +4411,7 @@ msgstr ""
 msgid "The file %1 already exists, what do you want to do?"
 msgstr ""
 
-#: .\Code\Books\PolyglotImportExports.py:1007
+#: .\Code\Books\PolyglotImportExports.py:1013
 #: .\Code\ManagerBase\ManagerMenuUtilities.py:353
 #: .\Code\QT\WGif.py:103
 #: .\Code\Z\ManagerSolo.py:319
@@ -4794,15 +4794,15 @@ msgstr ""
 msgid "Moves with a weight of less than or equal to %"
 msgstr ""
 
-#: .\Code\Books\WPolyglot.py:283
+#: .\Code\Books\WPolyglot.py:286
 msgid "Deleted records"
 msgstr ""
 
-#: .\Code\Books\WPolyglot.py:287
+#: .\Code\Books\WPolyglot.py:290
 msgid "Voyager"
 msgstr ""
 
-#: .\Code\Books\WPolyglot.py:289
+#: .\Code\Books\WPolyglot.py:292
 msgid "Remove moves by percentage"
 msgstr ""
 

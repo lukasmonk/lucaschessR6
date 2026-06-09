@@ -429,7 +429,7 @@ def read_engines(folder_engines):
 
     cm = mas(
         "stockfish",
-        " T. Romstad, M. Costalba, J. Kiiski, G. Linscott",
+        "T. Romstad, M. Costalba, J. Kiiski, G. Linscott",
         "18 64",
         "https://stockfishchess.org/",
         "Stockfish-18-64.exe",
