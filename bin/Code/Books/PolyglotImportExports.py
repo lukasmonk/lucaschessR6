@@ -122,7 +122,10 @@ class PolyglotExport:
     def __init__(self, wpolyglot):
         self.wpolyglot = wpolyglot
         self.configuration = wpolyglot.configuration
-        self.db_entries = wpolyglot.db_entries
+
+    @property
+    def db_entries(self):
+        return self.wpolyglot.db_entries
 
     def export(self):
         menu = QTDialogs.LCMenu(self.wpolyglot)
@@ -323,7 +326,10 @@ class PolyglotImport:
     def __init__(self, wpolyglot):
         self.wpolyglot = wpolyglot
         self.configuration = wpolyglot.configuration
-        self.db_entries = wpolyglot.db_entries
+
+    @property
+    def db_entries(self):
+        return self.wpolyglot.db_entries
 
     def importar(self):
         menu = QTDialogs.LCMenu(self.wpolyglot)

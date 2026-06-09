@@ -257,10 +257,11 @@ class WPolyglot(LCDialog.LCDialog):
         accion, li_resp = resp
         tope, = li_resp
 
-        conn = sqlite3.connect(self.path_lcbin)
-        cursor = conn.cursor()
-
         with QTMessages.one_moment_please(self):
+            self.db_entries.close()
+
+            conn = sqlite3.connect(self.path_lcbin)
+            cursor = conn.cursor()
             cursor.execute(f"""
                 DELETE FROM BOOK 
                 WHERE (CKEY, WEIGHT) IN (
@@ -279,7 +280,9 @@ class WPolyglot(LCDialog.LCDialog):
             conn.commit()
             conn.close()
 
-        self.set_position(self.position, True)
+            self.db_entries = DBPolyglot.DBPolyglot(self.path_lcbin)
+            self.set_position(self.position, True)
+
         QTMessages.message(self, f'{_("Deleted records")}: {regs_removed}')
 
     def utilities(self):

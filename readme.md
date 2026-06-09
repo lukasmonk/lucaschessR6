@@ -51,8 +51,9 @@ To get a complete and working copy of the project, please ensure you have **Git 
    ```bash
    git lfs install
 
-3. git clone https://github.com/lukasmonk/lucaschessR6.git
-
+3. Clone the repository:
+   ```bash
+   git clone https://github.com/lukasmonk/lucaschessR6.git
 
 Links
 -----
