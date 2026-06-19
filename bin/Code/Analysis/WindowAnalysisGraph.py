@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Analysis import Histogram
+from Code.Analysis import Histogram, Analysis
 from Code.Board import Board
 from Code.Nags import Nags
 from Code.Openings import OpeningsStd
@@ -10,7 +10,7 @@ from Code.Base.Constantes import OPENING,MIDDLEGAME, ENDGAME
 
 
 class WAnalisisGraph(LCDialog.LCDialog):
-    def __init__(self, wowner, manager, alm, show_analysis):
+    def __init__(self, wowner, manager, alm):
         titulo = _("Result of analysis")
         icono = Iconos.Estadisticas()
         extparam = "estadisticasv3"
@@ -27,7 +27,6 @@ class WAnalisisGraph(LCDialog.LCDialog):
         self.manager = manager
         self.configuration = manager.configuration
         self.with_figurines = self.configuration.x_pgn_withfigurines
-        self.show_analysis = show_analysis
         self.colorWhite = ScreenUtils.qt_color_rgb(231, 244, 254)
 
         self.dic_phases = {OPENING: "📖", MIDDLEGAME: "⚡", ENDGAME: "🎯"}
@@ -236,9 +235,8 @@ class WAnalisisGraph(LCDialog.LCDialog):
     def grid_doble_click(self, grid, row, _column):
         move = self.dicLiJG[grid.id][row]
         mrm, pos = move.analysis
-        self.show_analysis(
-            self.procesador,
-            self.procesador.manager_tutor,
+        Analysis.show_analysis(
+            None,
             move,
             self.board.is_white_bottom,
             pos,
@@ -397,6 +395,6 @@ class WAnalisisGraph(LCDialog.LCDialog):
         self.hscale(1.0, 1.0)
 
 
-def show_graph(wowner, manager, alm, show_analysis):
-    w = WAnalisisGraph(wowner, manager, alm, show_analysis)
+def show_graph(wowner, manager, alm):
+    w = WAnalisisGraph(wowner, manager, alm)
     w.exec()

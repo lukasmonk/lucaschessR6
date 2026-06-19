@@ -427,12 +427,7 @@ class WVariations(QtWidgets.QWidget):
         move_var = variation.move(num_move_variation)
         xanalyzer = Code.procesador.get_manager_analyzer()
         with QTMessages.WaitingMessage(self, _("Analyzing the move....")):
-            move_var.analysis = xanalyzer.analyzes_move_game(
-                move_var.game,
-                num_move_variation,
-                xanalyzer.mstime_engine,
-                xanalyzer.depth_engine,
-            )
+            move_var.analysis = xanalyzer.analyze_move(move_var.game, num_move_variation, None)
         Analysis.show_analysis(
             xanalyzer,
             move_var,
@@ -670,11 +665,12 @@ class WVariations(QtWidgets.QWidget):
         main_window_base.tb.setDisabled(True)
         ya_cancelado = [False]
         tm_ini = time.time()
+        mstime_analyzer = xanalyzer.mstime_run()
         position_before: Position.Position = self.move.position_before.copia()
         position = position_before.copia()
         position.play_pv(exmove.move())
 
-        def test_me(xrm):
+        def test_me(rm, ms):
             if main_window_base.is_canceled():
                 if not ya_cancelado[0]:
                     xanalyzer.stop()
@@ -682,26 +678,27 @@ class WVariations(QtWidgets.QWidget):
             else:
                 tm = time.time() - tm_ini
                 main_window_base.change_message(
-                    '%s<br><small>%s: %d %s: %.01f"' % (mens, _("Depth"), xrm.depth, _("Time"), xrm.time / 1000)
+                    '%s<br><small>%s: %d %s: %.01f"' % (mens, _("Depth"), rm.depth, _("Time"), ms / 1000)
                 )
-                if xanalyzer.mstime_engine and tm * 1000 > xanalyzer.mstime_engine:
+                if mstime_analyzer and tm * 1000 > mstime_analyzer:
                     xanalyzer.stop()
                     ya_cancelado[0] = True
             return True
 
-        xanalyzer.set_gui_dispatch(test_me)
-
-        rm = xanalyzer.valora(position_before, exmove.xfrom(), exmove.xto(), exmove.promotion())
-        xanalyzer.set_gui_dispatch(None)
+        mrm = xanalyzer.analyze_fen(position.fen(), test_me)
+        if mrm is None:
+            return
+        rm_best = mrm.best_rm_ordered()
         main_window_base.tb.setDisabled(False)
         main_window_base.hide_message()
 
         game_base = Game.Game(first_position=position_before)
-        nmoves = num_moves_extra if num_moves_extra else 999999
-        li_pv = rm.pv.split(" ")[:nmoves]
+        nmoves = num_moves_extra if num_moves_extra else 9999
+        li_pv = rm_best.pv.split(" ")[:nmoves]
+        li_pv.insert(0, exmove.move())
         game_base.read_lipv(li_pv)
 
-        puntuacion = rm.abbrev_text()
+        puntuacion = rm_best.abbrev_text()
         move0 = game_base.move(0)
         move0.set_comment(puntuacion)
         self.move.add_variation(game_base)

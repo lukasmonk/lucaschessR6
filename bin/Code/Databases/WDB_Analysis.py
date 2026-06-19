@@ -142,7 +142,7 @@ class WDBAnalisis:
 
         with QTMessages.analizando(self.wowner):
             if alm.engine == "default":
-                xengine = Code.procesador.analyzer_clone(alm.vtime, alm.depth, alm.multiPV)
+                xengine = Code.procesador.analyzer_clone(alm.vtime, alm.depth, alm.nodes, alm.multiPV)
             else:
                 conf_engine: Engines.Engine = Code.configuration.engines.search(alm.engine)
                 conf_engine.set_multipv_var(alm.multiPV)
@@ -151,7 +151,7 @@ class WDBAnalisis:
 
             game = Game.Game()
             game.read_pv(pv)
-            mrm, pos = xengine.analyzes_move_game(game, 9999, alm.vtime, alm.depth)
+            mrm = xengine.analyze_last_position(game, None)
 
             rotulo = mrm.name
             if alm.vtime:

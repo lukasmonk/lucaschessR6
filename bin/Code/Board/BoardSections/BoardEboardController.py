@@ -20,7 +20,7 @@ class BoardEboardController:
         if Code.eboard.fen_eboard == board.last_position.fen():
             return 0
         if board.allow_takeback():
-            against_engine = board.main_window.manager.xrival is not None
+            against_engine = getattr(board.main_window.manager, "xrival", None) is not None
             if against_engine and hasattr(board.main_window.manager, "play_against_engine"):
                 against_engine = board.main_window.manager.play_against_engine
 

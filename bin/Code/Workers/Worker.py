@@ -268,6 +268,7 @@ class Worker(QtWidgets.QWidget):
         }
         for side in (WHITE, BLACK):
             self.lb_player[side].set_text(rival[side].name)
+            self.lb_player[side].show()
 
         self.dic_engine_managers = {}
 
@@ -589,7 +590,7 @@ class Worker(QtWidgets.QWidget):
                 pts = rm.puntos
                 if not si_w:
                     pts = -pts
-                info = f"{float(pts / 100.0):+0.2f}"
+                info = f"{pts / 100.0:+0.2f}"
 
             nag, color_nag = mrm.set_nag_color(rm)
             if nag:

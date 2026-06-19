@@ -67,10 +67,12 @@ class TournamentWork:
     def get_engines(self, tgame: Tournament.GameTournament):
         with self.tournament() as torneo:
             engine_white = torneo.search_hengine(tgame.hwhite)
+            engine_white.name = engine_white.key
             engine_white.max_depth = engine_white.depth
             engine_white.max_time = engine_white.time
             engine_white.max_nodes = engine_white.nodes
             engine_black = torneo.search_hengine(tgame.hblack)
+            engine_black.name = engine_black.key
             engine_black.max_depth = engine_black.depth
             engine_black.max_time = engine_black.time
             engine_black.max_nodes = engine_black.nodes

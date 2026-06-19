@@ -934,3 +934,21 @@ def time_message(seconds):
     else:
         lb_sec = _("seconds")
         return f"{seconds} {lb_sec}"
+
+
+def message_with_links(title: str, text: str, detailed_text: str, type_icon: str):
+    # type_icon = Critical, Warning, Information, NoIcon, Question
+    msg = QtWidgets.QMessageBox()
+
+    icon = getattr(QtWidgets.QMessageBox.Icon, type_icon)
+    msg.setIcon(icon)
+
+    msg.setWindowTitle(title)
+    msg.setText(text)
+
+    msg.setInformativeText(detailed_text)
+    msg.setTextFormat(msg.textFormat().RichText)
+    msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
+
+    msg.exec()
+

@@ -229,9 +229,7 @@ class WInfomove(QtWidgets.QWidget):
         move = self.game.move(self.pos_move)
         xanalyzer = Code.procesador.get_manager_analyzer()
         with QTMessages.WaitingMessage(self, _("Analyzing the move....")):
-            move.analysis = xanalyzer.analyzes_move_game(
-                move.game, self.pos_move, xanalyzer.mstime_engine, xanalyzer.depth_engine
-            )
+            move.analysis = xanalyzer.analyze_move(move.game, self.pos_move, None)
         Analysis.show_analysis(
             xanalyzer,
             move,

@@ -243,6 +243,9 @@ class EngineManager:
     def is_run_fast(self):
         return self.run_engine_params.is_fast()
 
+    def mstime_run(self):
+        return self.run_engine_params.fixed_ms
+
     def update_time_run(self, time_secs_white, time_secs_black, inc_time_secs_move):
         self.run_engine_params.update_var_time(time_secs_white, time_secs_black, inc_time_secs_move)
 

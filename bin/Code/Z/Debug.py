@@ -8,8 +8,9 @@ import inspect
 
 from Code.Z import Util
 
-DEBUG_ENGINES = False
-DEBUG_ENGINES_SEND = False
+DEBUG_ENGINES_ALL = False
+DEBUG_ENGINES = False or DEBUG_ENGINES_ALL
+DEBUG_ENGINES_SEND = False or DEBUG_ENGINES_ALL
 COLORS = {
     "red": "\033[91m",
     "green": "\033[92m",

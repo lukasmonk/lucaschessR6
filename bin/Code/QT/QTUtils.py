@@ -1,3 +1,5 @@
+import os
+import sys
 from PySide6 import QtCore, QtGui, QtWidgets
 from shiboken6 import isValid
 
@@ -110,13 +112,14 @@ def close_app():
         # 2. Detener TODOS los QThreads
         for thread in app.findChildren(QtCore.QThread):
             if thread.isRunning():
-                thread.quit()  # Solicita detención
-                thread.wait(1000)  # Espera máximo 1 segundo
+                thread.quit()
+                thread.wait(1000)
                 if thread.isRunning():
-                    thread.terminate()  # Último recurso
+                    thread.terminate()
                     thread.wait()
 
-        # 3. Cerrar ventanas
+        # 3. Cerrar ventanas (aquí se disparan los closeEvent que
+        #    guardan configuración, posición, etc.)
         app.closeAllWindows()
 
         # 4. Procesar eventos pendientes
@@ -125,10 +128,25 @@ def close_app():
         # 5. Salir del bucle de eventos
         app.quit()
 
+    # Asegurar que todo lo escrito (logs, configuración) queda en disco
+    # antes de saltarnos la finalización normal del proceso.
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    # Salida inmediata a nivel de SO: evita que se ejecuten los
+    # destructores de librerías nativas cargadas dinámicamente
+    # (p.ej. los drivers .so de los eboards, que en Linux nunca se
+    # descargan con dlclose), cuya finalización choca con la
+    # limpieza de Qt/PySide6 y provoca el segfault al cerrar.
+    os._exit(0)
+
 
 def delay(ms: int):
     loop = QtCore.QEventLoop()
-    QtCore.QTimer.singleShot(ms, loop.quit)
+    timer = QtCore.QTimer(loop)
+    timer.setSingleShot(True)
+    timer.timeout.connect(loop.quit)
+    timer.start(ms)
     loop.exec()
 
 

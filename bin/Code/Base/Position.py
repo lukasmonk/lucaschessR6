@@ -447,7 +447,7 @@ class Position:
 
     def is_check(self):
         self.set_lce()
-        return FasterCode.ischeck()
+        return bool(FasterCode.ischeck())
 
     def is_finished(self):
         return self.set_lce() == 0
