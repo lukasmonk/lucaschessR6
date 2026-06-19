@@ -328,6 +328,17 @@ class WKibEngine(WKibCommon.WKibCommon):
 
         self.test_tb_home()
 
+    def bad_threats_position(self, position: Position.Position):
+        self.stop()
+
+        def refresh():
+            self.board.set_position(position)
+            self.board.disable_all()
+            self.li_moves = []
+            self.grid.refresh()
+
+        QTUtils.deferred_call(100, refresh)
+
     def pegar(self):
         tp, data = QTUtils.get_clipboard()
         if tp:

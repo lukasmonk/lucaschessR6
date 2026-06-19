@@ -1557,10 +1557,10 @@ class WGames(QtWidgets.QWidget):
         ) = resp
         db = UtilSQL.DictBig()
 
-        def fsum(keymove, pt):
+        def fadd(keymove, count, pts_add):
             num, pts = db.get(keymove, (0, 0))
-            num += 1
-            pts += pt
+            num += count
+            pts += pts_add
             db[keymove] = num, pts
 
         dltmp = PolyglotImportExports.ImportarPGNDB(self, titulo)
@@ -1575,7 +1575,7 @@ class WGames(QtWidgets.QWidget):
             li_players,
             ru,
             dltmp.dispatch,
-            fsum,
+            fadd,
         )
         dltmp.close()
 

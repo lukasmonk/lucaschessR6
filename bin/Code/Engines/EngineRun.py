@@ -160,8 +160,9 @@ class EngineRun(QtCore.QObject):
         self.state = EngineState.OFF
 
         path_exe = os.path.abspath(self.config.path_exe)
+        engine_dir = os.path.dirname(path_exe)
 
-        self.process.setWorkingDirectory(os.path.dirname(path_exe))
+        self.process.setWorkingDirectory(engine_dir)
         args = self.config.args or []
 
         if Util.is_linux():
@@ -174,6 +175,15 @@ class EngineRun(QtCore.QObject):
                         Debug.prln(f"{path_exe} Permission execution added", color="yellow")
                 except Exception:
                     self._log_exception(f"Could not add execution permission to {path_exe}")
+
+            # para los motores linux que cargan librerías
+            env = QtCore.QProcessEnvironment.systemEnvironment()
+            if env.contains("LD_LIBRARY_PATH"):
+                new_path = f"{engine_dir}:{env.value('LD_LIBRARY_PATH')}"
+            else:
+                new_path = engine_dir
+            env.insert("LD_LIBRARY_PATH", new_path)
+            self.process.setProcessEnvironment(env)
 
         self.process.start(path_exe, arguments=args)
 

@@ -95,7 +95,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         # Cache
         fenm2 = ""
         if self.cache_analysis is not None:
-            position = move.position_before if movement >= 0 else game.first_position
+            position = move.position_before if len(game) > 0 and movement >= 0 else game.first_position
             fenm2 = position.fenm2()
             if fenm2 in self.cache_analysis:
                 mrm: EngineResponse.MultiEngineResponse = self.cache_analysis[fenm2]

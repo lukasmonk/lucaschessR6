@@ -179,7 +179,7 @@ class ManagerAnalysis:
         if len(alm.lijg) == 0:
             QTMessages.message(self.main_window, _("There are no analyzed moves."))
         else:
-            WindowAnalysisGraph.show_graph(self.main_window, self.manager, alm, Analysis.show_analysis)
+            WindowAnalysisGraph.show_graph(self.main_window, self.manager, alm)
 
     def refresh_analysis(self):
         if not self.manager.game:

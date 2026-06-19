@@ -537,8 +537,8 @@ class PolyglotImport:
         def flush_acc():
             if not acc:
                 return
-            for k, (c, p) in acc.items():
-                fadd(k, c, p)
+            for k, (ct, p) in acc.items():
+                fadd(k, ct, p)
             acc.clear()
 
         with FasterCode.PGNreader(path_pgn, plies) as fpgn:
@@ -1066,8 +1066,8 @@ def add_db(
     def flush_acc():
         if not acc:
             return
-        for k, (c, p) in acc.items():
-            fadd(k, c, p)
+        for k, (ct, p) in acc.items():
+            fadd(k, ct, p)
         acc.clear()
 
     dispatch(True, db.all_reccount(), 0)

@@ -213,14 +213,18 @@ class WBDatabase(LCDialog.LCDialog):
         if mime_data.hasUrls():
             li = mime_data.urls()
             if len(li) > 0:
-                paths = [elem.path().strip("/") for elem in li]
+                # 1. Convertimos a archivo local y normalizamos la ruta (local o red UNC)
+                paths = [os.path.normpath(elem.toLocalFile()) for elem in li]
+
+                # 2. Filtramos para quedarnos solo con los archivos .pgn
                 paths = [path for path in paths if path.lower().endswith(".pgn")]
+
                 if paths:
                     if QTMessages.pregunta(
-                        self,
-                        f"{_('Import')}:\n"
-                        f"{', '.join([os.path.basename(path) for path in paths])}"
-                        f"\n\n{_('Are you sure?')}",
+                            self,
+                            f"{_('Import')}:\n"
+                            f"{', '.join([os.path.basename(path) for path in paths])}"
+                            f"\n\n{_('Are you sure?')}",
                     ):
                         self.wgames.tw_importar_pgn(paths)
 

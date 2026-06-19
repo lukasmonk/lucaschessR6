@@ -1,11 +1,11 @@
 import ctypes
-
 import os
 import time
 
 import Code
+from Code.QT import Iconos, QTMessages
 from Code.Z import Util
-from Code.QT import Iconos
+
 
 # Install: Wbase #90
 # Assign toolbar: Wbase #132
@@ -21,6 +21,7 @@ class Eboard:
         self.allowHumanTB = False
         self.working_time = None
         self.side_takeback = None
+        self._callbacks = []
 
     def is_working(self):
         return self.working_time is not None and 1.0 > (time.time() - self.working_time)
@@ -101,6 +102,19 @@ class Eboard:
         # assert prln("registerBlackTakeBackFunc")
         return self.envia("blackTakeBack", True)
 
+    @staticmethod
+    def message_install_libs_linux():
+        title = "Driver Installation Failed"
+        text = "An error occurred while configuring the board."
+        detailed_text = (
+            "It is not possible to install the driver for the board. "
+            "One way to solve the problem is to install the libraries "
+            "following the instructions on the website:<br><br>"
+            "<a href='https://goneill.co.nz/chess#linux'>https://goneill.co.nz/chess#linux</a>"
+        )
+        type_icon = "Critical"
+        QTMessages.message_with_links(title, text, detailed_text, type_icon)
+
     def activate(self, dispatch):
         # assert prln("activate")
         self.fen_eboard = None
@@ -113,59 +127,31 @@ class Eboard:
 
         if Util.is_linux():
             functype = ctypes.CFUNCTYPE
-            if self.name == "DGT-gon":
-                path_so = Util.opj(path_eboards, "libdgt.so")
-            elif self.name == "Certabo":
-                path_so = Util.opj(path_eboards, "libcer.so")
-            elif self.name == "Chessnut":
-                path_so = Util.opj(path_eboards, "libnut.so")
-            elif self.name == "Pegasus":
-                path_so = Util.opj(path_eboards, "libpeg.so")
-            elif self.name == "Millennium":
-                path_so = Util.opj(path_eboards, "libmcl.so")
-            elif self.name == "Citrine":
-                path_so = Util.opj(path_eboards, "libcit.so")
-            elif self.name == "Saitek":
-                path_so = Util.opj(path_eboards, "libosa.so")
-            elif self.name == "Square Off":
-                path_so = Util.opj(path_eboards, "libsop.so")
-            elif self.name == "Tabutronic":
-                path_so = Util.opj(path_eboards, "libtab.so")
-            elif self.name == "iChessOne":
-                path_so = Util.opj(path_eboards, "libico.so")
-            elif self.name == "Chessnut Evo":
-                path_so = Util.opj(path_eboards, "libevo.so")
-            elif self.name == "HOS Sensory":
-                path_so = Util.opj(path_eboards, "libhos.so")
-            elif self.name == "Chessnut Move":
-                path_so = Util.opj(path_eboards, "libmov.so")
-            else:
-                path_so = Util.opj(path_eboards, "libucb.so")
+
+            board_so_prefixes = {
+                "DGT-gon": "dgt",
+                "Certabo": "cer",
+                "Chessnut": "nut",
+                "Pegasus": "peg",
+                "Millennium": "mcl",
+                "Citrine": "cit",
+                "Saitek": "osa",
+                "Square Off": "sop",
+                "Tabutronic": "tab",
+                "iChessOne": "ico",
+                "Chessnut Evo": "evo",
+                "HOS Sensory": "hos",
+                "Chessnut Move": "mov",
+            }
+            prefijo = board_so_prefixes.get(self.name, "ucb")
+            path_so = Util.opj(path_eboards, f"lib{prefijo}.so")
+
             if os.path.isfile(path_so):
                 try:
                     driver = ctypes.CDLL(path_so)
                 except:
                     driver = None
-                    from Code.QT import QTMessages
-
-                    if self.name == "Chessnut":
-                        QTMessages.message(
-                            None,
-                            """It is not possible to install the driver for the board, one way to solve the problem is to install the libraries:
-    sudo apt install libqt5pas1
-    sudo apt install libhidapi-dev
-    or
-    sudo dnf install qt5pas-devel
-    sudo dnf install hidapi-devel""",
-                        )
-                    else:
-                        QTMessages.message(
-                            None,
-                            """It is not possible to install the driver for the board, one way to solve the problem is to install the libraries:
-    sudo apt install libqt5pas1
-    or
-    sudo dnf install qt5pas-devel""",
-                        )
+                    self.message_install_libs_linux()
 
         else:
             functype = ctypes.WINFUNCTYPE
@@ -173,14 +159,14 @@ class Eboard:
 
             if self.name == "DGT":
                 for folder_dll_dgt in (
-                    "C:/Program Files (x86)/DGT/DGT e-Board drivers",
-                    "C:/Program Files (x86)/DGT/DGT e-Board drivers/Applications/RabbitPlugin/32bit/Common Files",
-                    "C:/Program Files (x86)/DGT Projects/",
-                    "C:/Program Files (x86)/Common Files/DGT Projects/",
-                    "C:/Program Files/DGT Projects/",
-                    "C:/Program Files/Common Files/DGT Projects/",
-                    "",
-                    path_eboards,
+                        "C:/Program Files (x86)/DGT/DGT e-Board drivers",
+                        "C:/Program Files (x86)/DGT/DGT e-Board drivers/Applications/RabbitPlugin/32bit/Common Files",
+                        "C:/Program Files (x86)/DGT Projects/",
+                        "C:/Program Files (x86)/Common Files/DGT Projects/",
+                        "C:/Program Files/DGT Projects/",
+                        "C:/Program Files/Common Files/DGT Projects/",
+                        "",
+                        path_eboards,
                 ):
                     path_dll = Util.opj(folder_dll_dgt, "DGTEBDLL.dll")
                     if os.path.isfile(path_dll):
@@ -191,36 +177,24 @@ class Eboard:
                         except:
                             pass
             else:
-                if self.name == "Certabo":
-                    path_dll = Util.opj(path_eboards, "gon-CER64.dll")
-                elif self.name == "Chessnut":
-                    path_dll = Util.opj(path_eboards, "gon-NUT64.dll")
-                elif self.name == "DGT-gon":
-                    path_dll = Util.opj(path_eboards, "gon-DGT64.dll")
-                elif self.name == "Pegasus":
-                    path_dll = Util.opj(path_eboards, "gon-PEG64.dll")
-                elif self.name == "Millennium":
-                    path_dll = Util.opj(path_eboards, "gon-MCL64.dll")
-                elif self.name == "Citrine":
-                    path_dll = Util.opj(path_eboards, "gon-CIT64.dll")
-                elif self.name == "Saitek":
-                    path_dll = Util.opj(path_eboards, "gon-OSA64.dll")
-                elif self.name == "Square Off":
-                    path_dll = Util.opj(path_eboards, "gon-SOP64.dll")
-                elif self.name == "Tabutronic":
-                    path_dll = Util.opj(path_eboards, "gon-TAB64.dll")
-                elif self.name == "iChessOne":
-                    path_dll = Util.opj(path_eboards, "gon-ICO64.dll")
-                elif self.name == "Cynus":
-                    path_dll = Util.opj(path_eboards, "gon-CYN64.dll")
-                elif self.name == "Chessnut Evo":
-                    path_dll = Util.opj(path_eboards, "gon-EVO64.dll")
-                elif self.name == "HOS Sensory":
-                    path_dll = Util.opj(path_eboards, "gon-HOS64.dll")
-                elif self.name == "Chessnut Move":
-                    path_dll = Util.opj(path_eboards, "gon-MOV64.dll")
-                else:
-                    path_dll = Util.opj(path_eboards, "gon-UCB64.dll")
+                board_dll_suffixes = {
+                    "Certabo": "CER64",
+                    "Chessnut": "NUT64",
+                    "DGT-gon": "DGT64",
+                    "Pegasus": "PEG64",
+                    "Millennium": "MCL64",
+                    "Citrine": "CIT64",
+                    "Saitek": "OSA64",
+                    "Square Off": "SOP64",
+                    "Tabutronic": "TAB64",
+                    "iChessOne": "ICO64",
+                    "Cynus": "CYN64",
+                    "Chessnut Evo": "EVO64",
+                    "HOS Sensory": "HOS64",
+                    "Chessnut Move": "MOV64",
+                }
+                sufijo = board_dll_suffixes.get(self.name, "UCB64")
+                path_dll = Util.opj(path_eboards, f"gon-{sufijo}.dll")
                 if os.path.isfile(path_dll):
                     try:
                         driver = ctypes.WinDLL(path_dll)
@@ -233,65 +207,73 @@ class Eboard:
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
         st = cmpfunc(self.registerStatusFunc)
-        driver._DGTDLL_RegisterStatusFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterStatusFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterStatusFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterStatusFunc(st)
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
         st = cmpfunc(self.registerScanFunc)
-        driver._DGTDLL_RegisterScanFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterScanFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterScanFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterScanFunc(st)
 
         cmpfunc = functype(ctypes.c_int)
         st = cmpfunc(self.registerStartSetupFunc)
-        driver._DGTDLL_RegisterStartSetupFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterStartSetupFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterStartSetupFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterStartSetupFunc(st)
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
         st = cmpfunc(self.registerStableBoardFunc)
-        driver._DGTDLL_RegisterStableBoardFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterStableBoardFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterStableBoardFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterStableBoardFunc(st)
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
         st = cmpfunc(self.registerStopSetupWTMFunc)
-        driver._DGTDLL_RegisterStopSetupWTMFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterStopSetupWTMFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterStopSetupWTMFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterStopSetupWTMFunc(st)
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
         st = cmpfunc(self.registerStopSetupBTMFunc)
-        driver._DGTDLL_RegisterStopSetupBTMFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterStopSetupBTMFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterStopSetupBTMFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterStopSetupBTMFunc(st)
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
         st = cmpfunc(self.registerWhiteMoveInputFunc)
-        driver._DGTDLL_RegisterWhiteMoveInputFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterWhiteMoveInputFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterWhiteMoveInputFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterWhiteMoveInputFunc(st)
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
         st = cmpfunc(self.registerBlackMoveInputFunc)
-        driver._DGTDLL_RegisterBlackMoveInputFunc.argtype = [st]
+        self._callbacks.append(st)
+        driver._DGTDLL_RegisterBlackMoveInputFunc.argtypes = [cmpfunc]
         driver._DGTDLL_RegisterBlackMoveInputFunc.restype = ctypes.c_int
         driver._DGTDLL_RegisterBlackMoveInputFunc(st)
 
-        driver._DGTDLL_WritePosition.argtype = [ctypes.c_char_p]
+        driver._DGTDLL_WritePosition.argtypes = [ctypes.c_char_p]
         driver._DGTDLL_WritePosition.restype = ctypes.c_int
 
-        driver._DGTDLL_ShowDialog.argtype = [ctypes.c_int]
+        driver._DGTDLL_ShowDialog.argtypes = [ctypes.c_int]
         driver._DGTDLL_ShowDialog.restype = ctypes.c_int
 
-        driver._DGTDLL_HideDialog.argtype = [ctypes.c_int]
+        driver._DGTDLL_HideDialog.argtypes = [ctypes.c_int]
         driver._DGTDLL_HideDialog.restype = ctypes.c_int
 
-        driver._DGTDLL_WriteDebug.argtype = [ctypes.c_bool]
+        driver._DGTDLL_WriteDebug.argtypes = [ctypes.c_bool]
         driver._DGTDLL_WriteDebug.restype = ctypes.c_int
 
-        driver._DGTDLL_SetNRun.argtype = [
+        driver._DGTDLL_SetNRun.argtypes = [
             ctypes.c_char_p,
             ctypes.c_char_p,
             ctypes.c_int,
@@ -299,21 +281,21 @@ class Eboard:
         driver._DGTDLL_SetNRun.restype = ctypes.c_int
 
         if self.name != "DGT":
-            driver._DGTDLL_GetVersion.argtype = []
+            driver._DGTDLL_GetVersion.argtypes = []
             driver._DGTDLL_GetVersion.restype = ctypes.c_int
             Code.configuration.x_digital_board_version = driver._DGTDLL_GetVersion()
             try:
-                driver._DGTDLL_AllowTakebacks.argtype = [ctypes.c_bool]
+                driver._DGTDLL_AllowTakebacks.argtypes = [ctypes.c_bool]
                 driver._DGTDLL_AllowTakebacks.restype = ctypes.c_int
                 driver._DGTDLL_AllowTakebacks(ctypes.c_bool(True))
                 cmpfunc = functype(ctypes.c_int)
                 st = cmpfunc(self.registerWhiteTakeBackFunc)
-                driver._DGTDLL_RegisterWhiteTakebackFunc.argtype = [st]
+                driver._DGTDLL_RegisterWhiteTakebackFunc.argtypes = [cmpfunc]
                 driver._DGTDLL_RegisterWhiteTakebackFunc.restype = ctypes.c_int
                 driver._DGTDLL_RegisterWhiteTakebackFunc(st)
                 cmpfunc = functype(ctypes.c_int)
                 st = cmpfunc(self.registerBlackTakeBackFunc)
-                driver._DGTDLL_RegisterBlackTakebackFunc.argtype = [st]
+                driver._DGTDLL_RegisterBlackTakebackFunc.argtypes = [cmpfunc]
                 driver._DGTDLL_RegisterBlackTakebackFunc.restype = ctypes.c_int
                 driver._DGTDLL_RegisterBlackTakebackFunc(st)
             except:
@@ -338,8 +320,8 @@ class Eboard:
                 kernel32.FreeLibrary.restype = wintypes.BOOL
                 kernel32.FreeLibrary(self.driver._handle)
 
-            del self.driver
             self.driver = None
+            self._callbacks = []
             return True
         return False
 
@@ -418,35 +400,23 @@ class Eboard:
         return dato[1:3] + dato[4:6]
 
     def icon_eboard(self):
-        board = self.name
-        if board == "DGT":
-            return Iconos.DGT()
-        elif board in ("DGT-gon", "Pegasus"):
-            return Iconos.DGTB()
-        elif board == "Certabo":
-            return Iconos.Certabo()
-        elif board == "Chessnut":
-            return Iconos.Chessnut()
-        elif board == "Chessnut Evo":
-            return Iconos.Chessnut()
-        elif board == "Chessnut Move":
-            return Iconos.Chessnut()
-        elif board == "HOS Sensory":
-            return Iconos.HOS()
-        elif board == "Cynus":
-            return Iconos.Manya()
-        elif board == "iChessOne":
-            return Iconos.IChessOne()
-        elif board == "Millennium":
-            return Iconos.Millenium()
-        elif board == "Saitek":
-            return Iconos.Saitek()
-        elif board == "Square Off":
-            return Iconos.SquareOff()
-        elif board == "Tabutronic":
-            return Iconos.Tabutronic()
-        else:
-            return Iconos.Novag()
+        mapping = {
+            "DGT": Iconos.DGT,
+            "DGT-gon": Iconos.DGTB,
+            "Pegasus": Iconos.DGTB,
+            "Certabo": Iconos.Certabo,
+            "Chessnut": Iconos.Chessnut,
+            "Chessnut Evo": Iconos.Chessnut,
+            "Chessnut Move": Iconos.Chessnut,
+            "HOS Sensory": Iconos.HOS,
+            "Cynus": Iconos.Manya,
+            "iChessOne": Iconos.IChessOne,
+            "Millennium": Iconos.Millenium,
+            "Saitek": Iconos.Saitek,
+            "Square Off": Iconos.SquareOff,
+            "Tabutronic": Iconos.Tabutronic
+        }
+        return mapping.get(self.name, Iconos.Novag)()
 
 
 def version():

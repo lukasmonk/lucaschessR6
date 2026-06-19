@@ -632,7 +632,7 @@ class WBase(QtWidgets.QWidget):
                 pts = rm.puntos
                 if not is_white:
                     pts = -pts
-                info = f"{float(pts / 100.0):+0.2f}"
+                info = f"{pts / 100.0:+0.2f}"
 
             if color_nag == NAG_0:  # Son prioritarios los nags manuales
                 nothing, color_nag = mrm.set_nag_color(rm)

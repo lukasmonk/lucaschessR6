@@ -262,7 +262,7 @@ class CreateAnalysis:
 
 
 def show_analysis(
-        manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis,
+        manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None,
         move: Move.Move,
         is_white: bool,
         pos_move: int,
