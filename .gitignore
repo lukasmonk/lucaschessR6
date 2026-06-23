@@ -23,3 +23,12 @@ bin/bug.log
 # PyInstaller output
 build/
 dist/
+
+# macOS app icon (generated locally)
+# bin/_genicons/lucas/LucasChessR.icns
+
+# Symlink to external Resources (local dev only)
+bin/Resources
+
+# macOS DS_Store
+.DS_Store
