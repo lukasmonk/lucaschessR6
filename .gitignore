@@ -32,3 +32,4 @@ bin/Resources
 
 # macOS DS_Store
 .DS_Store
+bin/OS/darwin/Engines/stockfish/stockfish-18-arm64
