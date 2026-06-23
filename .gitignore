@@ -19,3 +19,7 @@ bin/OS/linux/FasterCode.cpython-*-darwin.so
 
 # Bug log (runtime file)
 bin/bug.log
+
+# PyInstaller output
+build/
+dist/

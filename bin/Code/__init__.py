@@ -16,7 +16,7 @@ if current_dir:
 
 lucas_chess: Optional[str] = None  # asignado en Translate
 
-platform = "win32" if sys.platform == "win32" else "linux"
+platform = "win32" if sys.platform == "win32" else "darwin" if sys.platform == "darwin" else "linux"
 
 folder_os = Util.opj(current_dir, "OS", platform)
 sys.path.insert(0, folder_os)
