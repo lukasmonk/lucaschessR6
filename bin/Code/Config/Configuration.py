@@ -717,6 +717,7 @@ class Configuration:
         st_needs_reinit = {
             "x_style",
             "x_digital_board",
+            "x_font_points",
             "x_font_family",
             "x_margin_pieces",
             "x_opacity_tool_board",

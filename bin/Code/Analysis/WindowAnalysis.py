@@ -466,8 +466,9 @@ class WAnalisis(LCDialog.LCDialog):
 
     def remove_analysis(self, tab_analysis):
         tab_analysis.desactiva()
-        self.adjustSize()
-        QTUtils.refresh_gui()
+        ScreenUtils.shrink(self)
+        # self.adjustSize()
+        # QTUtils.refresh_gui()
 
     def process_toolbar(self):
         key = getattr(self.sender(), "key")
@@ -495,7 +496,8 @@ class WAnalisis(LCDialog.LCDialog):
     # -- New analysis / play from board ----------------------------------------
 
     def new_analysis(self):
-        if alm := WindowAnalysisParam.analysis_parameters(self, False, True, False, False):
+        alm = WindowAnalysisParam.analysis_parameters(self, False, True, False, False)
+        if alm is not None:
             tab_analysis = self.tb_analysis.create_show(self, alm)
             self.create_analysis(tab_analysis)
 

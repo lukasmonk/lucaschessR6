@@ -74,7 +74,6 @@ class Information(QtWidgets.QWidget):
             .control(self.lb_cpws_lost)
             .relleno(1)
             .controld(self.lb_time)
-            .espacio(-5)
             .controld(self.lb_clock)
         )
         ly_rating.otro(ly_pw_tm)
@@ -554,11 +553,15 @@ class WVariations(QtWidgets.QWidget):
             is_disabled=True,
             font_type=Controles.FontType(puntos=16),
         )
+
         menu.separador()
         rondo = QTDialogs.rondo_puntos()
+        with_figurines = Code.configuration.x_pgn_withfigurines
+        f = Controles.FontTypeNew("Chess Merida") if with_figurines else None
         for num, variante in enumerate(li_variations):
             move = variante.move(0)
-            menu.opcion(num, move.pgn_translated(), rondo.otro())
+            if with_figurines:
+                menu.opcion(num, move.pgn_menu(with_figurines), rondo.otro(), font_type=f)
         if with_all:
             menu.separador()
             menu.opcion(-1, _("All variations"), Iconos.Borrar())

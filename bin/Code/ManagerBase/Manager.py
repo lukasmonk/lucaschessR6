@@ -423,6 +423,7 @@ class Manager:
         if len(self.game):
             move = self.game.last_jg()
             self.board.set_position(move.position_before)
+            self.check_auto_rotate()
             self.board.put_arrow_sc(move.from_sq, move.to_sq)
             QTUtils.refresh_gui()
             time.sleep(0.1)
@@ -436,6 +437,7 @@ class Manager:
             self.configuration.x_pieces_speed = ant_speed
 
             self.board.set_position(move.position)
+            self.check_auto_rotate()
             self.main_window.base.pgn.refresh()
             self.main_window.base.pgn.gobottom(1 if move.is_white() else 2)
             self.board.put_arrow_sc(move.from_sq, move.to_sq)
@@ -1022,6 +1024,7 @@ class Manager:
             if self.board.arrow_sc:
                 self.board.arrow_sc.hide()
             self.board.set_position(move.position_before)
+            self.check_auto_rotate()
 
             def show(xpos):
                 if xpos >= len(mrm.li_rm):
@@ -1044,6 +1047,7 @@ class Manager:
 
         else:
             self.board.set_position(move.position)
+            self.check_auto_rotate()
             self.board.remove_arrows()
             self.board.put_arrow_sc(move.from_sq, move.to_sq)
             if Code.configuration.x_show_bestmove:
@@ -1101,11 +1105,17 @@ class Manager:
         else:
             return None
 
+    def check_auto_rotate(self):
+        if self.auto_rotate:
+            self.board.set_side_bottom(self.board.last_position.is_white)
+
     def set_position(self, position, variation_history=None):
         self.board.set_position(position, variation_history=variation_history)
+        self.check_auto_rotate()
 
     def check_boards_setposition(self):
         self.board.set_raw_last_position(self.game.last_position)
+        self.check_auto_rotate()
 
     def control1(self):
         if self.active_play_instead_of_me():

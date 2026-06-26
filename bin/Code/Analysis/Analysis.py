@@ -253,7 +253,11 @@ class CreateAnalysis:
         with QTMessages.WaitingMessage(main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
             game = self.move.game
             pos = self.move.get_num_in_game()
-            mrm, pos = xengine.analyze_move(game, pos, None)
+            if pos == -1:
+                mrm = xengine.analyze_last_position(game, None)
+                pos = 0
+            else:
+                mrm, pos = xengine.analyze_move(game, pos, None)
             xengine.close()
 
         tab_analysis = ControlAnalysis(self, mrm, pos, self.li_tabs_analysis[-1].number + 1, xengine)

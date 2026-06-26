@@ -25,10 +25,7 @@ COLORS = {
 def pr(*x):
     lx = len(x) - 1
     for n, cl in enumerate(x):
-        if isinstance(cl, (str, int, float, bool, type(None))):
-            sys.stdout.write(str(cl))
-        else:
-            sys.stdout.write(cl)
+        sys.stdout.write(str(cl))
 
         if n < lx:
             sys.stdout.write(" ")
@@ -98,6 +95,7 @@ def timeit(func):
 
 setattr(builtins, "stack", stack)
 setattr(builtins, "stack0", stack0)
+setattr(builtins, "prln", prln)
 
 
 class LogDebug:

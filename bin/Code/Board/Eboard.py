@@ -148,6 +148,8 @@ class Eboard:
 
             if os.path.isfile(path_so):
                 try:
+                    ctypes.CDLL(Util.opj(path_eboards, "libQt6PrintSupport.so.6.2"), mode=ctypes.RTLD_GLOBAL)
+                    ctypes.CDLL(Util.opj(path_eboards, "libQt6Pas.so.6.2"), mode=ctypes.RTLD_GLOBAL)
                     driver = ctypes.CDLL(path_so)
                 except:
                     driver = None
@@ -290,11 +292,13 @@ class Eboard:
                 driver._DGTDLL_AllowTakebacks(ctypes.c_bool(True))
                 cmpfunc = functype(ctypes.c_int)
                 st = cmpfunc(self.registerWhiteTakeBackFunc)
+                self._callbacks.append(st)
                 driver._DGTDLL_RegisterWhiteTakebackFunc.argtypes = [cmpfunc]
                 driver._DGTDLL_RegisterWhiteTakebackFunc.restype = ctypes.c_int
                 driver._DGTDLL_RegisterWhiteTakebackFunc(st)
                 cmpfunc = functype(ctypes.c_int)
                 st = cmpfunc(self.registerBlackTakeBackFunc)
+                self._callbacks.append(st)
                 driver._DGTDLL_RegisterBlackTakebackFunc.argtypes = [cmpfunc]
                 driver._DGTDLL_RegisterBlackTakebackFunc.restype = ctypes.c_int
                 driver._DGTDLL_RegisterBlackTakebackFunc(st)

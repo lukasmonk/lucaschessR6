@@ -128,10 +128,12 @@ def close_app():
         # 5. Salir del bucle de eventos
         app.quit()
 
-    # Asegurar que todo lo escrito (logs, configuración) queda en disco
+    # Asegurar que lo escrito (logs, configuración) queda en disco
     # antes de saltarnos la finalización normal del proceso.
-    sys.stdout.flush()
-    sys.stderr.flush()
+    if sys.stdout:
+        sys.stdout.flush()
+    if sys.stderr:
+        sys.stderr.flush()
 
     # Salida inmediata a nivel de SO: evita que se ejecuten los
     # destructores de librerías nativas cargadas dinámicamente

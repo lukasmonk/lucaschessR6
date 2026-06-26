@@ -619,11 +619,11 @@ def old_way(
 ) -> str:
     """Genera una tabla HTML con estadísticas de movimientos de ajedrez"""
 
-    def get_color(nag_code: int = None, default: str = "black") -> str:
+    def get_color(xnag_code: int = None) -> str:
         """Obtiene color para un tipo de movimiento"""
-        if nag_code is None:
-            return default
-        return Nags.nag_color(nag_code)
+        if xnag_code is None:
+            return Code.dic_colors["FOREGROUND"]
+        return Nags.nag_color(xnag_code)
 
     def get_opacity_style(is_not_analyzed: bool = False) -> str:
         """Retorna estilo CSS para opacidad"""
@@ -637,21 +637,21 @@ def old_way(
             return " 0.00%"
         return f" {value * 100 / total:.2f}%"
 
-    def create_row(label: str, var: Dict[bool, int], nag_code: int = None, annotation: str = "",
-                   is_faded: bool = False) -> str:
+    def create_row(xlabel: str, xvar: Dict[bool, int], xnag_code: int | None = None, xannotation: str = "",
+                   xis_faded: bool = False) -> str:
         """Crea una fila de la tabla para un tipo de movimiento (siempre visible)"""
-        white = var.get(True, 0)
-        black = var.get(False, 0)
+        white = xvar.get(True, 0)
+        black = xvar.get(False, 0)
         total = white + black
-        if is_faded and total == 0:
+        if xis_faded and total == 0:
             return ""
-        color = get_color(nag_code)
-        fade_style = get_opacity_style(is_faded)
+        color = get_color(xnag_code)
+        fade_style = get_opacity_style(xis_faded)
 
         return f"""
         <tr>{fade_style}
-            <td align="center"><b><span style="color:{color}">{annotation}</span></b></td>
-            <td align="center"><b><span style="color:{color}">{escape(label)}</span></b></td>
+            <td align="center"><b><span style="color:{color}">{xannotation}</span></b></td>
+            <td align="center"><b><span style="color:{color}">{escape(xlabel)}</span></b></td>
             <td align="center"><span style="color:{color}">{white}</span></td>
             <td align="center"><span style="color:{color}">{black}</span></td>
             <td align="center"><span style="color:{color}">{total}</span></td>

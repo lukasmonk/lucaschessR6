@@ -1,5 +1,4 @@
 import os
-import time
 
 import FasterCode
 from PySide6 import QtCore
@@ -198,11 +197,6 @@ class ManagerSolo(Manager.Manager):
 
         is_white = self.game.last_position.is_white
         self.is_human_side_white = is_white  # Compatibilidad, sino no funciona el cambio en pgn
-
-        if self.auto_rotate:
-            time.sleep(0.5)
-            if is_white != self.board.is_white_bottom:
-                self.board.rotate_board()
 
         if self.game.is_finished():
             self.show_result()

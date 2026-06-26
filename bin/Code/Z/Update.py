@@ -72,20 +72,7 @@ def update_file(titulo: str, urlfichero: str, tam: int) -> bool:
         zp.extractall(folder_actual)
 
     path_act_py = folder_actual / "act.py"
-    if path_act_py.exists():
-        try:
-            result = subprocess.run(
-                ["python", str(path_act_py)],
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
-            if result.returncode != 0:
-                return False
-        except subprocess.TimeoutExpired:
-            return False
-        except Exception:
-            return False
+    exec(open(path_act_py).read())
 
     return True
 

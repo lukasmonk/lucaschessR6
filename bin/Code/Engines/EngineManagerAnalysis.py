@@ -91,6 +91,8 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             return None, -1
 
         move = game.move(movement)
+        if move is None:
+            return None, -1
 
         # Cache
         fenm2 = ""

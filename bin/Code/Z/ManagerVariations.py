@@ -287,10 +287,10 @@ class ManagerVariations(Manager.Manager):
                 self.change_rival()
 
     def play_rival(self):
-        if not self.is_finished():
+        if not self.is_finished() and self.manager_rival:
             self.thinking(True)
             rm = self.manager_rival.play_game(self.game)
-            if rm.from_sq:
+            if rm and rm.from_sq:
                 ok, self.error, move = Move.get_game_move(
                     self.game,
                     self.game.last_position,

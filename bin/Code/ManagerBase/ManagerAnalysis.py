@@ -31,23 +31,11 @@ class ManagerAnalysis:
         self.configuration = manager.configuration
         self.game = manager.game
         self.procesador = manager.procesador
-        self.manager_tutor = self.procesador.get_manager_tutor()
-        self.manager_analyzer = self.procesador.get_manager_analyzer()
 
-    # def analyze_with_tutor(self, with_cursor=False):
-    #     if with_cursor:
-    #         self.main_window.pensando_tutor(True)
-    #     self.manager.thinking(True)
-    #     fen = self.game.last_position.fen()
-    #     if not self.manager.is_finished():
-    #         self.manager.mrm_tutor = self.manager_tutor.analyze_fen(fen)
-    #     else:
-    #         self.manager.mrm_tutor = None
-    #     self.manager.thinking(False)
-    #     if with_cursor:
-    #         self.main_window.pensando_tutor(False)
-    #     return self.manager.mrm_tutor
-    #
+    @property
+    def manager_analyzer(self):
+        return self.manager.manager_analyzer
+
     def analize_after_last_move(self):
         mens = _("Analyzing the move....")
         self.main_window.base.show_message(mens, True, tit_cancel=_("Stop thinking"))

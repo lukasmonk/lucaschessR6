@@ -289,6 +289,19 @@ class Move:
             parts.append(c)
         return "".join(parts)
 
+    def pgn_menu(self, with_figurines):
+        if not with_figurines:
+            return self.pgn_translated()
+        base = self.base_pgn().replace("b", chr(0x185))
+        if not self.is_white():
+            parts = []
+            for c in base:
+                if c in "NBRQKP":
+                    c = c.lower()
+                parts.append(c)
+            base = "".join(parts)
+        return base
+
     def pgn_html(self, with_figurines):
         return self.pgn_html_base(with_figurines) + self.resto()
 

@@ -17,9 +17,10 @@ from Code.Base.Constantes import (
     HIGHLIGHT_STYLE_FILL,
     HIGHLIGHT_STYLE_NONE, HIGHLIGHT_STYLE_ARROW_CURVED,
 )
+from Code.Competitions import ManagerMaia
 from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
 from Code.Z import Util
-from Code.Competitions import ManagerMaia
+
 
 def options(parent, configuration):
     form = FormLayout.FormLayout(parent, _("General configuration"), Iconos.Opciones(), minimum_width=640)
@@ -395,11 +396,11 @@ def options(parent, configuration):
                             parent,
                             "%s<br><br>%s %s<br><br>%s<br>%s"
                             % (
-                                    _("Are you sure %s is the correct driver ?") % dboard,
-                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
-                                    _("Proceed at your own risk."),
-                                    _("Please read the driver's user manual at:"),
-                                    '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
+                                _("Are you sure %s is the correct driver ?") % dboard,
+                                _("WARNING: selecting the wrong driver might cause damage to your board."),
+                                _("Proceed at your own risk."),
+                                _("Please read the driver's user manual at:"),
+                                '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
                             ),
                     ):
                         dboard = ""

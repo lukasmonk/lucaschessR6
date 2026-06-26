@@ -145,6 +145,8 @@ class ThanksTo:
             '<a href="https://github.com/Ebola-Chan-bot">Ebola-Chan-bot</a>',
             '<a href="https://github.com/neuroflowinfinix">neuroflowinfinix</a>',
             '<a href="https://github.com/landroni">landroni</a>',
+            '<a href="https://github.com/macalimlim">macalimlim</a>',
+            '<a href="https://github.com/jpaverd">jpaverd</a>',
             "tgett",
             "Baked-Cake1",
             "Yasmin"
@@ -805,6 +807,12 @@ class ThanksTo:
                 "Matthew Brennan Jones",
                 "https://github.com/workhorsy/py-cpuinfo",
                 "MIT License",
+            ),
+            (
+                "Unofficial LibQt6Pas for Linux",
+                "David Bannon",
+                "https://github.com/davidbannon/libqt6pas",
+                "GPL",
             ),
         )
         txt = self.table_ini()

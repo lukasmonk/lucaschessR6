@@ -31,20 +31,20 @@ def dic_keys():
 
 class WaitingMessage(QtWidgets.QWidget):
     def __init__(
-        self,
-        parent,
-        mensaje,
-        with_cancel=False,
-        opacity=0.91,
-        physical_pos="c",
-        fixed_size=None,
-        tit_cancel=None,
-        background=None,
-        pm_image=None,
-        puntos=None,
-        with_image=True,
-        if_parent_none=False,
-        with_progressbar=False,
+            self,
+            parent,
+            mensaje,
+            with_cancel=False,
+            opacity=0.91,
+            physical_pos="c",
+            fixed_size=None,
+            tit_cancel=None,
+            background=None,
+            pm_image=None,
+            puntos=None,
+            with_image=True,
+            if_parent_none=False,
+            with_progressbar=False,
     ):
         # No se indica parent cuando le afecta el disable general, cuando se analiza posicion por ejemplo
         super(WaitingMessage, self).__init__(None if if_parent_none else parent)
@@ -258,17 +258,17 @@ def analizando(owner, with_cancel=False):
 
 
 def temporary_message(
-    main_window,
-    mensaje,
-    seconds,
-    background=None,
-    pm_image=None,
-    physical_pos="c",
-    fixed_size=None,
-    with_cancel=None,
-    tit_cancel=None,
-    puntos=None,
-    with_image=True,
+        main_window,
+        mensaje,
+        seconds,
+        background=None,
+        pm_image=None,
+        physical_pos="c",
+        fixed_size=None,
+        with_cancel=None,
+        tit_cancel=None,
+        puntos=None,
+        with_image=True,
 ):
     if with_cancel is None:
         with_cancel = seconds > 3.0
@@ -626,15 +626,15 @@ def combobox_lb(parent, li_options, valor, etiqueta=None):
 
 
 def message(
-    owner,
-    texto,
-    explanation=None,
-    titulo=None,
-    pixmap=None,
-    px=None,
-    py=None,
-    si_bold=False,
-    delayed=False,
+        owner,
+        texto,
+        explanation=None,
+        titulo=None,
+        pixmap=None,
+        px=None,
+        py=None,
+        si_bold=False,
+        delayed=False,
 ):
     def send():
         msg = QtWidgets.QMessageBox(owner)
@@ -803,7 +803,7 @@ def message_menu(owner, main, the_message, delayed, zzpos=True, dont_show=False)
                 continue
             for i in range(tb.layout().lineCount()):
                 line = tb.layout().lineAt(i)
-                ret.append(block_text[line.textStart() : line.textStart() + line.textLength()])
+                ret.append(block_text[line.textStart(): line.textStart() + line.textLength()])
             tb = tb.next()
 
         for linea in ret:
@@ -893,14 +893,14 @@ class SimpleWindow(QtWidgets.QDialog):
 
 
 def read_simple(
-    owner,
-    title,
-    label,
-    value,
-    mas_info=None,
-    width=None,
-    in_cursor=False,
-    li_values=None,
+        owner,
+        title,
+        label,
+        value,
+        mas_info=None,
+        width=None,
+        in_cursor=False,
+        li_values=None,
 ):
     v = SimpleWindow(owner, title, label, value, mas_info, width, in_cursor, li_values)
     if v.exec():
@@ -951,4 +951,3 @@ def message_with_links(title: str, text: str, detailed_text: str, type_icon: str
     msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
 
     msg.exec()
-

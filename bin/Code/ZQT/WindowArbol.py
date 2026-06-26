@@ -373,7 +373,8 @@ class TreeMoves(QtWidgets.QTreeWidget):
             dif = self.columnWidth(0) - x
             if dif > 0:
                 sz = self.owner.splitter.sizes()
-                sz[1] += dif
+                if len(sz) > 1:
+                    sz[1] += dif
                 self.owner.resize(self.owner.width() + dif, self.owner.height())
                 self.owner.splitter.setSizes(sz)
 

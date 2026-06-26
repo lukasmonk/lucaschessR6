@@ -237,11 +237,6 @@ class ManagerPlayGame(Manager.Manager):
 
         if is_turn_human:
             self.human_is_playing = True
-            if self.auto_rotate:
-                if is_white != self.board.is_white_bottom:
-                    self.board.rotate_board()
-
-            self.human_is_playing = True
             self.activate_side(is_white)
             self.initial_time = time.time()
             self.adjudicator.analyze_begin(self.game)

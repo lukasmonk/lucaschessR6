@@ -380,7 +380,7 @@ class WPerfomance(QtWidgets.QWidget):
         o_columns.nueva("opponent", f"{_('Avg Opponent')}\n{awb}", 150, align_center=True)
 
         font_metrics = QtGui.QFontMetrics(self.font())
-        alto_cabecera = font_metrics.height() * 2 + 6
+        alto_cabecera = font_metrics.height() * 2 + 12
 
         self.grid = Grid.Grid(self, o_columns, complete_row_select=True, header_heigh=alto_cabecera)
 

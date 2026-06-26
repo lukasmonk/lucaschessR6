@@ -336,7 +336,11 @@ class AnalysisMassiveWithWorkers(QtCore.QThread):
             if recno is None:
                 worker.send_terminate()
                 return False
-            game = self.db_games.read_game_recno(recno)
+            try:
+                game = self.db_games.read_game_recno(recno)
+            except sqlite3.ProgrammingError:  # si dos threads lo intentan a la vez
+                worker.send_terminate()
+                return False
 
         worker.send_game(game, recno)
         return True
