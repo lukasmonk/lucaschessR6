@@ -1,2 +1,35 @@
 UserData/
 
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+bin/_fastercode/src/FasterCode.c
+bin/_fastercode/src/FasterCode.pyx
+bin/_fastercode/src/FasterCode.cpython-*.so
+bin/_fastercode/src/libirina.a
+bin/_fastercode/src/build/
+
+# macOS compiled extension (built locally, not committed)
+bin/OS/linux/FasterCode.cpython-*-darwin.so
+
+# Bug log (runtime file)
+bin/bug.log
+
+# PyInstaller output
+build/
+dist/
+
+# macOS app icon (generated locally)
+# bin/_genicons/lucas/LucasChessR.icns
+
+# Symlink to external Resources (local dev only)
+bin/Resources
+
+# macOS DS_Store
+.DS_Store
+bin/OS/darwin/Engines/stockfish/stockfish-18-arm64
