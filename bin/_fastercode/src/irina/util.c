@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/timeb.h>
+#include <sys/select.h>
 #include <string.h>
 #include <ctype.h>
 #include "defs.h"
