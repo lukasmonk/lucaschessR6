@@ -156,10 +156,10 @@ class WRun(LCDialog.LCDialog):
                 QTUtils.refresh_gui()
             if not self.playing:
                 return
-            t0 = time.time()
+            t0 = time.monotonic()
 
             rm = self.engine_manager.play_fen(self.elem.fen, self.dispatcher)
-            t1 = time.time() - t0
+            t1 = time.monotonic() - t0
             if rm is not None:
                 mov = rm.movimiento()
                 # results = ",".join(f"{k}:{v}" for k, v in self.elem.dic_results.items())
@@ -250,7 +250,7 @@ class WRun(LCDialog.LCDialog):
 
 class WWork(QtWidgets.QDialog):
     def __init__(self, w_parent, osts, work):
-        super(WWork, self).__init__(w_parent)
+        super().__init__(w_parent)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -794,10 +794,11 @@ class WSTS(LCDialog.LCDialog):
             nombre_base = self.nombre_num(n)
             name = self.edit_name(nombre_base, True)
             if name:
-                osts = STS.STS(nombre_base)
-                osts.save_copy_new(name)
-                osts = STS.STS(name)
+                path_ori = Util.opj(self.carpetaSTS, f"{nombre_base}.sts")
+                path_dest = Util.opj(self.carpetaSTS, f"{name}.sts")
+                shutil.copy(path_ori, path_dest)
                 self.reread()
+                osts = STS.STS(name)
                 self.trabajar(osts)
 
     def configurar(self):

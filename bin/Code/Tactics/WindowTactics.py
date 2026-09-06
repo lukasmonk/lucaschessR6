@@ -1,8 +1,8 @@
 from PySide6 import QtWidgets
 
-from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 def historical_consult(main_window, tactica, icono):

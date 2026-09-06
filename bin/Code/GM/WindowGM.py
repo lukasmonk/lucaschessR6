@@ -2,36 +2,36 @@ import shutil
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, Any
+from typing import Any
 
 import Code
-from Code.Z import Util
 from Code.Books import Books
+from Code.Engines import Engines
 from Code.GM import GM
 from Code.Openings import WindowOpenings
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages, ScreenUtils
 from Code.SQL import UtilSQL
-from Code.Engines import Engines
+from Code.Z import Util
 
 
 @dataclass
 class GMConfiguration:
-    gm: Optional[str] = None
+    gm: str | None = None
     modo: GM.GameMode = GM.GameMode.STANDARD
-    gameElegida: Optional[int] = None
+    gameElegida: int | None = None
     is_white: bool = True
     with_adjudicator: bool = True
     show_evals: bool = False
-    engine: Optional[str] = None
+    engine: str | None = None
     vtime: int = 10
     mostrar: GM.ShowOption = GM.ShowOption.WHEN_DIFFERENT
     depth: int = 0
     multiPV: str = "PD"
     select_rival_move: bool = False
     jugInicial: int = 1
-    bypass_book: Optional[Any] = None
-    opening: Optional[Any] = None
-    li_preferred_openings: List[Any] = None
+    bypass_book: Any | None = None
+    opening: Any | None = None
+    li_preferred_openings: list[Any] = None
 
     def __post_init__(self):
         if self.li_preferred_openings is None:

@@ -78,8 +78,9 @@ class WKibitzers(LCDialog.LCDialog):
             edicion=Delegados.PmIconosBMT(self, dict_icons=self.tipos.dict_delegado()),
         )
         o_columns.nueva("NOMBRE", _("Kibitzer"), 209)
-        self.grid_kibitzers = Grid.GridDragDrop(self, o_columns, complete_row_select=True, select_multiple=True,
-                                                xid="kib")
+        self.grid_kibitzers = Grid.GridDragDrop(
+            self, o_columns, complete_row_select=True, select_multiple=True, xid="kib"
+        )
         self.grid_kibitzers.setAlternatingRowColors(False)
 
         p = self.grid_kibitzers.palette()

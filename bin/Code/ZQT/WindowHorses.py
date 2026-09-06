@@ -253,7 +253,7 @@ class WHorses(LCDialog.LCDialog):
         self.board.set_side_bottom(True)
         self.board.set_position(self.cp_inicial)
         self.board.remove_arrows()
-        self.timer = time.time()
+        self.timer = time.monotonic()
         self.moves = 0
         self.hints = 0
         self.nayuda = 0  # para que haga un rondo al elegir en la get_help de todos los caminos uno de ellos
@@ -295,7 +295,7 @@ class WHorses(LCDialog.LCDialog):
         self.pon_siguiente()
 
     def final(self):
-        seconds = int(time.time() - self.timer)
+        seconds = int(time.monotonic() - self.timer)
         self.historico.append(Util.today(), self.moves, seconds, self.hints)
 
         min_moves = sum(value for value in self.dic_min_moves.values())

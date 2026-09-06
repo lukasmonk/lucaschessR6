@@ -3,24 +3,23 @@ import time
 from PySide6 import QtCore
 
 from Code.Adjudicator import Adjudicator
-from Code.Base import Move, Game
+from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GT_AGAINST_PGN,
     ST_ENDGAME,
     ST_PLAYING,
+    TB_ADJUDICATOR,
+    TB_ADJUDICATOR_STOP,
     TB_CANCEL,
     TB_CLOSE,
     TB_CONFIG,
-    TB_UTILITIES,
     TB_RESIGN,
-    TB_ADJUDICATOR_STOP,
-    TB_ADJUDICATOR,
     TB_TAKEBACK,
+    TB_UTILITIES,
 )
 from Code.Expeditions import Everest
 from Code.ManagerBase import Manager
-from Code.QT import Iconos
-from Code.QT import QTMessages
+from Code.QT import Iconos, QTMessages
 from Code.ZQT import WindowJuicio
 
 
@@ -117,10 +116,7 @@ class ManagerEverest(Manager.Manager):
         self.set_label2("%s : <b>%d</b>" % (_("Score"), self.puntos))
 
     def run_action(self, key):
-        if key == TB_CANCEL:
-            self.resign()
-
-        elif key == TB_RESIGN:
+        if key == TB_CANCEL or key == TB_RESIGN:
             self.resign()
 
         elif key == TB_CONFIG:
@@ -223,7 +219,7 @@ class ManagerEverest(Manager.Manager):
         else:
             self.human_is_playing = True
             self.activate_side(is_white)
-            self.initial_time = time.time()
+            self.initial_time = time.monotonic()
             self.adjudicator.analyze_begin(self.game)
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
@@ -231,7 +227,7 @@ class ManagerEverest(Manager.Manager):
         if not user_move:
             return False
 
-        self.vtime += time.time() - self.initial_time
+        self.vtime += time.monotonic() - self.initial_time
 
         self.board.set_position(user_move.position)
         self.put_arrow_sc(user_move.from_sq, user_move.to_sq)

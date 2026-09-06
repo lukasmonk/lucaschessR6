@@ -4,7 +4,6 @@ import random
 import FasterCode
 
 import Code
-from Code.Z import Adjournments, Util
 from Code.Adjudicator import Adjudicator
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
@@ -18,18 +17,19 @@ from Code.Base.Constantes import (
     ST_ENDGAME,
     ST_PLAYING,
     TB_ADJOURN,
+    TB_ADJUDICATOR,
+    TB_ADJUDICATOR_STOP,
     TB_CANCEL,
     TB_CONFIG,
     TB_RESIGN,
     TB_TAKEBACK,
     TB_UTILITIES,
-    TB_ADJUDICATOR_STOP,
-    TB_ADJUDICATOR,
 )
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages, QTUtils
-from Code.ZQT import WindowJuicio
 from Code.SQL import Base, UtilSQL
+from Code.Z import Adjournments, Util
+from Code.ZQT import WindowJuicio
 
 
 class ManagerFideFicsLichess(Manager.Manager):
@@ -438,8 +438,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         self.beep_result_change(quien)
 
         nelo = self.eloUsu + difelo
-        if nelo < 0:
-            nelo = 0
+        nelo = max(nelo, 0)
         self._ponActivo(nelo)
 
         self.historial(self.eloUsu, nelo)

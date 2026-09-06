@@ -4,7 +4,6 @@ import time
 from PySide6 import QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     KIB_BEFORE_MOVE,
@@ -38,6 +37,7 @@ from Code.Main import InitApp
 from Code.Openings import OpeningsStd
 from Code.QT import GarbageCollector, QTUtils
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class Orden:
@@ -189,13 +189,7 @@ class CPU:
 
         self.configuration.load_translation()
 
-        if self.tipo == KIB_BESTMOVE:
-            self.ventana = WKibEngine.WKibEngine(self)
-
-        elif self.tipo == KIB_CANDIDATES:
-            self.ventana = WKibEngine.WKibEngine(self)
-
-        elif self.tipo == KIB_THREATS:
+        if self.tipo == KIB_BESTMOVE or self.tipo == KIB_CANDIDATES or self.tipo == KIB_THREATS:
             self.ventana = WKibEngine.WKibEngine(self)
 
         elif self.tipo == KIB_BESTMOVE_ONELINE:

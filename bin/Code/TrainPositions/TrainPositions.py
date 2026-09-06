@@ -1,13 +1,12 @@
 import os
 import random
-from typing import Optional
 
 import Code
-from Code.Z import Util
 from Code.QT import Controles, FormLayout, Iconos, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
 from Code.TrainPositions import ManagerTrainPositions
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class TrainPositions:
@@ -32,7 +31,7 @@ class TrainPositions:
         remove_solutions: bool,
         show_comments: bool,
         advanced: bool,
-    ) -> Optional[tuple[int, str, bool, bool, bool, bool, bool]]:
+    ) -> tuple[int, str, bool, bool, bool, bool, bool] | None:
         """Display dialog to configure training position parameters.
 
         Args:
@@ -281,7 +280,7 @@ class TrainingDir:
             add_menu_option(bmenu, f"ep_{training_file.path}", _F(training_file.name), ico_op)
 
 
-def select_one_fns(owner) -> Optional[str]:
+def select_one_fns(owner) -> str | None:
     """Display menu to select a training file.
 
     Args:

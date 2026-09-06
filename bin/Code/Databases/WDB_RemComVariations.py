@@ -63,9 +63,7 @@ class WRemoveCommentsVariations(LCDialog.LCDialog):
             self.chb_cal,
             self.chb_other,
         ):
-            if chb == self.chb_brackets:
-                sp += 20
-            elif chb == self.chb_clk:
+            if chb == self.chb_brackets or chb == self.chb_clk:
                 sp += 20
             elif chb == self.chb_other:
                 lychb = Colocacion.H().espacio(sp).control(chb).control(self.ed_other)

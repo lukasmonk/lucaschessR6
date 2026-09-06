@@ -1,5 +1,6 @@
 from typing import Any
 
+from Code.Albums import Albums
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_ALBUM,
@@ -13,7 +14,6 @@ from Code.Base.Constantes import (
     TB_UTILITIES,
 )
 from Code.ManagerBase import Manager
-from Code.Albums import Albums
 from Code.QT import QTMessages
 from Code.Z import Adjournments
 

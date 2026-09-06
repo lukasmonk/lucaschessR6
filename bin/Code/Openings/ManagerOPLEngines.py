@@ -1,6 +1,5 @@
 import random
 import time
-from typing import Optional
 
 from PySide6 import QtCore
 from PySide6.QtCore import Qt
@@ -22,8 +21,7 @@ from Code.Base.Constantes import (
     TOP_RIGHT,
 )
 from Code.Books import Books
-from Code.Engines import EngineManagerAnalysis, EngineManagerPlay, EngineRun
-from Code.Engines import EngineResponse
+from Code.Engines import EngineManagerAnalysis, EngineManagerPlay, EngineResponse, EngineRun
 from Code.ManagerBase import Manager
 from Code.Openings import OpeningLines
 from Code.QT import Iconos, QTDialogs, QTMessages
@@ -53,8 +51,8 @@ class ManagerOpeningEngines(Manager.Manager):
     book: Books.Book | None
     keybook_engine: str
     manager_adjudicator: EngineManagerAnalysis.EngineManagerAnalysis
-    manager_rival: Optional[EngineManagerPlay.EngineManagerPlay] = None
-    um: Optional[QTMessages.WaitingMessage] = None
+    manager_rival: EngineManagerPlay.EngineManagerPlay | None = None
+    um: QTMessages.WaitingMessage | None = None
     mstime_adjudicator: int
     key_adjudicator_cache: str
     training_engines: dict
@@ -181,7 +179,7 @@ class ManagerOpeningEngines(Manager.Manager):
         self.check_boards_setposition()
 
         self.errores = 0
-        self.ini_time = time.time()
+        self.ini_time = time.monotonic()
         self.show_labels()
         self.play_next_move()
 
@@ -386,7 +384,7 @@ class ManagerOpeningEngines(Manager.Manager):
         move: Move.Move = self.game.move(num_move)
         fen: str = move.position_before.fen()
         vtime: float = self.mstime_adjudicator
-        mrm: Optional[EngineResponse.MultiEngineResponse] = self.dbop.get_cache_engines(
+        mrm: EngineResponse.MultiEngineResponse | None = self.dbop.get_cache_engines(
             self.key_adjudicator_cache, vtime, fen
         )
         if mrm is not None:

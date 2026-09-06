@@ -1,7 +1,6 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Board import BoardTypes
 from Code.Director import (
     TabVisual,
@@ -27,6 +26,7 @@ from Code.QT import (
 )
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class WPanelDirector(LCDialog.LCDialog):

@@ -1,5 +1,5 @@
 import contextlib
-from typing import Callable, Optional, List
+from collections.abc import Callable
 
 from PySide6 import QtCore
 
@@ -16,7 +16,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         self.set_faster_mode()
 
     def _run_analysis_loop(
-            self, dispatcher: Optional[Callable], run_engine_params: Optional[EngineRun.RunEngineParams] = None
+        self, dispatcher: Callable | None, run_engine_params: EngineRun.RunEngineParams | None = None
     ):
         """Ejecuta el loop de análisis con manejo de señales."""
         loop = QtCore.QEventLoop()
@@ -86,7 +86,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
     def set_cache(self, fenm2, mrm):
         self.cache_analysis[fenm2] = mrm
 
-    def analyze_move(self, game, movement: int, dispatcher: Optional[Callable]) -> tuple:
+    def analyze_move(self, game, movement: int, dispatcher: Callable | None) -> tuple:
         if not self.check_engine():
             return None, -1
 
@@ -168,7 +168,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         return True
 
     def analyze_tutor(
-            self, game, dispatcher_bestmove: Optional[Callable], dispatcher_changedepth: Optional[Callable]
+        self, game, dispatcher_bestmove: Callable | None, dispatcher_changedepth: Callable | None
     ) -> bool:
         if not self.check_engine():
             return False
@@ -241,7 +241,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
         self.engine_run.set_mrm_cached(mrm)
         return mrm
 
-    def analyze_last_position(self, game, dispatcher: Optional[Callable]) -> EngineResponse.MultiEngineResponse | None:
+    def analyze_last_position(self, game, dispatcher: Callable | None) -> EngineResponse.MultiEngineResponse | None:
 
         if not self.check_engine():
             return None
@@ -261,7 +261,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             self.mrm.ordena()
         return self.mrm
 
-    def analyze_fen(self, fen, dispatcher: Optional[Callable] = None) -> EngineResponse.MultiEngineResponse | None:
+    def analyze_fen(self, fen, dispatcher: Callable | None = None) -> EngineResponse.MultiEngineResponse | None:
 
         if not self.check_engine():
             return None
@@ -280,7 +280,7 @@ class EngineManagerAnalysis(EngineManager.EngineManager):
             self.mrm.ordena()
         return self.mrm
 
-    def seek_mate(self, game: Game.Game, mate: int) -> List[EngineResponse.EngineResponse] | None:
+    def seek_mate(self, game: Game.Game, mate: int) -> list[EngineResponse.EngineResponse] | None:
 
         def check_mate(rm: EngineResponse.EngineResponse, ms: float):
             if 0 < rm.mate <= mate:

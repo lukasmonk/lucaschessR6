@@ -11,13 +11,13 @@ from Code.Base.Constantes import (
     GT_BOOK,
     GT_ELO,
     GT_GAME,
+    GT_GRID,
     GT_MICELO,
     GT_OPENINGS,
     GT_POSITIONS,
     GT_TACTICS,
     GT_VARIATIONS,
     GT_WICKER,
-    GT_GRID,
     ST_ENDGAME,
     TB_EBOARD,
 )
@@ -92,7 +92,10 @@ class ManagerAnalysis:
                     GT_OPENINGS,
                     GT_TACTICS,
                 ]
-                or (self.manager.game_type in [GT_ELO, GT_MICELO, GT_WICKER, GT_GRID] and not self.manager.is_competitive)
+                or (
+                    self.manager.game_type in [GT_ELO, GT_MICELO, GT_WICKER, GT_GRID]
+                    and not self.manager.is_competitive
+                )
             ):
                 if si_ultimo or self.manager.hints == 0:
                     return

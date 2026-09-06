@@ -107,7 +107,7 @@ class DBFcache:
         cSQL = f"SELECT rowid FROM {self.ctabla} {resto}"
         self.cursorBuffer.execute(cSQL)
         self.liIDs = []
-        xInicio = time.time()
+        xInicio = time.monotonic()
         while True:
             li = self.cursorBuffer.fetchmany(chunk)
             if li:
@@ -117,7 +117,7 @@ class DBFcache:
                 self.cursorBuffer.close()
                 self.cursorBuffer = None
                 break
-            xt = time.time() - xInicio
+            xt = time.monotonic() - xInicio
             if xt > seconds:
                 break
         return self.siBufferPendiente
@@ -125,7 +125,7 @@ class DBFcache:
     def leerMasBuffer(self, seconds=1.0, chunk=200):
         if not self.siBufferPendiente:
             return True
-        xInicio = time.time()
+        xInicio = time.monotonic()
         while True:
             li = self.cursorBuffer.fetchmany(chunk)
 
@@ -135,7 +135,7 @@ class DBFcache:
                 self.siBufferPendiente = False
                 self.cursorBuffer.close()
                 break
-            xt = time.time() - xInicio
+            xt = time.monotonic() - xInicio
             if xt > seconds:
                 break
         return self.siBufferPendiente

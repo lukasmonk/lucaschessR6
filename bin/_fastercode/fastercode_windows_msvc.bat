@@ -5,21 +5,22 @@ REM -------------------------------------------------------
 REM CONFIGURATION
 REM -------------------------------------------------------
 
-:: Change these paths to match your local environment
-set "PYTHON_EXE=H:\lucaschessR6\.venv\Scripts\python.exe"
+:: Use python from PATH (venv must be activated before running this script)
+set "PYTHON_EXE=python"
 set "VS_PATH=C:\Program Files\Microsoft Visual Studio\18\Community"
 
 REM -------------------------------------------------------
 REM VALIDATION
 REM -------------------------------------------------------
 
-:: Check if Python exists at the specified path
-if not exist "%PYTHON_EXE%" (
+:: Check if Python is available in PATH
+where %PYTHON_EXE% >nul 2>&1
+if errorlevel 1 (
     echo.
-    echo [ERROR] Python executable not found at: "%PYTHON_EXE%"
+    echo [ERROR] Python not found in PATH.
     echo.
-    echo Help: Please edit this .bat file and update the 'set PYTHON_EXE=...'
-    echo       line with the correct path to your python.exe.
+    echo Help: Please activate your Python virtual environment first.
+    echo       Example: .venv\Scripts\activate
     echo.
     pause
     exit /b 1
@@ -67,14 +68,14 @@ echo.
 cd src\irina
 
 cl /nologo /O2 /DNDEBUG /DWIN32 /MD /c ^
-    lc.c board.c data.c eval.c hash.c loop.c makemove.c ^
-    movegen.c movegen_piece_to.c search.c util.c ^
-    pgn.c parser.c polyglot.c
+    lc.c board.c data.c hash.c makemove.c ^
+    movegen.c movegen_piece_to.c util.c ^
+    pgn.c parser.c polyglot.c cpu_flags.c
 
 lib /nologo /OUT:..\irina.lib ^
-    lc.obj board.obj data.obj eval.obj hash.obj loop.obj makemove.obj ^
-    movegen.obj movegen_piece_to.obj search.obj util.obj ^
-    pgn.obj parser.obj polyglot.obj
+    lc.obj board.obj data.obj hash.obj makemove.obj ^
+    movegen.obj movegen_piece_to.obj util.obj ^
+    pgn.obj parser.obj polyglot.obj cpu_flags.obj
 
 del *.obj
 cd ..

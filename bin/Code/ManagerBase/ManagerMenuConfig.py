@@ -2,8 +2,8 @@ import Code
 from Code.Base.Constantes import (
     GT_AGAINST_ENGINE,
     NOTATION_ALGEBRAIC,
-    NOTATION_LONGALGEBRAIC,
     NOTATION_DESCRIPTIVE,
+    NOTATION_LONGALGEBRAIC,
 )
 from Code.Engines import WConfEngines, WExternalEngines
 from Code.ManagerBase import ManagerMenu
@@ -216,7 +216,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
         self.manager.is_analyzed_by_tutor = False
 
         if self.manager.game_type == GT_AGAINST_ENGINE:
-            getattr(self.manager, "analyze_begin")()
+            self.manager.analyze_begin()
 
     def conf_engines(self):
         w = WConfEngines.WConfEngines(self.main_window)

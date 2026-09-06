@@ -5,14 +5,14 @@ import time
 from PySide6 import QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import INFINITE_FLOAT
 from Code.Board import Board2
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTMessages, ScreenUtils
-from Code.ZQT import WindowPotencia
 from Code.SQL import Base
 from Code.Translations import TrListas
+from Code.Z import Util
+from Code.ZQT import WindowPotencia
 
 
 class PuenteHistorico:
@@ -54,8 +54,7 @@ class PuenteHistorico:
         for x in range(n):
             self.dbf.goto(x)
             s = self.dbf.SEGUNDOS
-            if s < self.mejor:
-                self.mejor = s
+            self.mejor = min(self.mejor, s)
             ts += s
         self.media = ts * 1.0 / n if n else 0.0
 
@@ -488,7 +487,7 @@ class WPuente(LCDialog.LCDialog):
         self.adjustSize()
 
         # Tiempo
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.bt_seguir.hide()
         self.bt_terminar.hide()
@@ -582,7 +581,7 @@ class WPuente(LCDialog.LCDialog):
         for wm in self.liwm:
             wm.limpia()
 
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.bt_comprobar.show()
         self.bt_seguir.hide()
@@ -594,7 +593,7 @@ class WPuente(LCDialog.LCDialog):
         ScreenUtils.shrink(self)
 
     def correcto(self):
-        seconds = float(time.time() - self.time_base)
+        seconds = float(time.monotonic() - self.time_base)
         self.lb_time.set_text(f"<h2>{_X(_('Right, it took %1 seconds.'), f'{seconds:.02f}')}</h2>")
 
         self.historico.append(Util.today(), seconds)

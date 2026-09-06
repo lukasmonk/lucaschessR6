@@ -21,7 +21,13 @@ from Code.Books import PolyglotImportExports
 from Code.Databases import (
     DBgames,
     DBgamesMov,
+    WDB_ExportPGN,
+    WDB_ExternalImporter,
+    WDB_Filters,
     WDB_GUtils,
+    WDB_ImportPGN,
+    WDB_RemComVariations,
+    WDB_Trainings,
 )
 from Code.GM import GM
 from Code.LearnGame import WindowLearnGame, WindowPlayGame
@@ -37,9 +43,9 @@ from Code.QT import (
     Iconos,
     QTDialogs,
     QTMessages,
+    QTProgressBars,
     QTUtils,
     SelectFiles,
-    QTProgressBars,
 )
 from Code.SQL import UtilSQL
 from Code.Themes import WDB_Theme_Analysis
@@ -47,14 +53,6 @@ from Code.Translations import TrListas
 from Code.Voyager import Voyager
 from Code.Z import Util, XRun
 from Code.ZQT import WindowSavePGN
-from Code.Databases import (
-    WDB_Trainings,
-    WDB_Filters,
-    WDB_RemComVariations,
-    WDB_ExternalImporter,
-    WDB_ImportPGN,
-    WDB_ExportPGN,
-)
 
 
 class WGames(QtWidgets.QWidget):
@@ -741,7 +739,7 @@ class WGames(QtWidgets.QWidget):
         self.db_games.filter_positions(li_seq, [rowid for rowid, pos in li_games])
         self.grid.refresh()
         self.grid_cambiado_registro(None, 0, None)
-        txt = f'{_("Games")}: {self.db_games.reccount()} | {_("Filter")}: {fen}'
+        txt = f"{_('Games')}: {self.db_games.reccount()} | {_('Filter')}: {fen}"
         self.status.showMessage(txt, 0)
 
     def tw_remove_tb(self):
@@ -1370,7 +1368,7 @@ class WGames(QtWidgets.QWidget):
             return
 
     def tw_uti_tactic(self):
-        def rutina_datos(recno, skip_first):
+        def rutina_datos(recno, skip_first, max_depth):
             dic = {}
             for key in self.db_games.li_fields:
                 dic[key] = self.db_games.field(recno, key)
@@ -1378,6 +1376,9 @@ class WGames(QtWidgets.QWidget):
             if skip_first:
                 dic["PGN_REAL"] = p.pgn()
                 p.skip_first()
+
+            if max_depth:
+                p.set_max_moves(max_depth)
             p.remove_bad_variations()
             fen = dic["FEN"] = p.first_position.fen()
             p.set_tag("FEN", fen)
@@ -1400,7 +1401,7 @@ class WGames(QtWidgets.QWidget):
         )
 
     def tw_training_positions(self):
-        def rutina_datos(recno, skip_first):
+        def rutina_datos(recno, skip_first, max_depth):
             try:
                 dic = {}
                 for key in self.db_games.li_fields:
@@ -1410,6 +1411,8 @@ class WGames(QtWidgets.QWidget):
                     dic["PGN_REAL"] = p.pgn()
                     p.skip_first()
                     dic["FEN"] = p.get_tag("FEN")
+                if max_depth:
+                    p.set_max_moves(max_depth)
                 p.remove_bad_variations()
                 dic["PGN"] = p.pgn()
                 dic["PLIES"] = len(p)

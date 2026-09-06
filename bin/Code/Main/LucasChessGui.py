@@ -9,8 +9,7 @@ from Code.Config import Configuration, Usuarios
 from Code.Main import InitApp
 from Code.QT import Colocacion, Controles, GarbageCollector, Iconos
 from Code.Translations import WSelectLanguage
-from Code.Z import XRun, Util
-
+from Code.Z import Util, XRun
 
 # class GlobalFilter(QtCore.QObject):
 #     def eventFilter(self, obj, event):
@@ -29,6 +28,7 @@ from Code.Z import XRun, Util
 #         if resp is not None:
 #             XRun.run_lucas(f"{resp.key}.shortcut")
 #
+
 
 def run_gui(procesador):
 

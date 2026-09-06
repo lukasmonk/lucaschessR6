@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "defs.h"
-#include "defs.h"
 #include "protos.h"
 
 Board board;
@@ -20,19 +19,6 @@ Bitmap KNIGHT_ATTACKS[64];
 Bitmap KING_ATTACKS[64];
 Bitmap LINE_ATTACKS[64];
 Bitmap DIAG_ATTACKS[64];
-int PAWN_VALUE = 100;
-int KNIGHT_VALUE = 300;
-int BISHOP_VALUE = 325;
-int ROOK_VALUE = 500;
-int QUEEN_VALUE = 900;
-int KING_VALUE = 9999;
-int CHECK_MATE = 9999;
-
-Bitmap BLACK_SQUARES;
-Bitmap WHITE_SQUARES;
-
-
-Bitmap inodes;
 
 
 char *POS_AH[64] ={
@@ -50,103 +36,6 @@ char NAMEPZ[16] ={
     '\0', 'P', 'K', 'N', '\0', 'B', 'R', 'Q',
     '\0', 'p', 'k', 'n', '\0', 'b', 'r', 'q'
 };
-
-int PAWNPOS_W[64] ={
-     0,   0,   0,   0,   0,   0,   0,   0,
-    50,  50,  50,  50,  50,  50,  50,  50,
-    10,  10,  20,  30,  30,  20,  10,  10,
-     5,   5,  10,  25,  25,  10,   5,   5,
-     0,   0,   0,  20,  20,   0,   0,   0,
-     5,  -5, -10,   0,   0, -10,  -5,   5,
-     5,  10,  10, -20, -20,  10,  10,   5,
-     0,   0,   0,   0,   0,   0,   0,   0
-};
-
-
-int KNIGHTPOS_W[64] ={
-    -50, -40, -30, -30, -30, -30, -40, -50,
-    -40, -20,   0,   0,   0,   0, -20, -40,
-    -30,   0,  10,  15,  15,  10,   0, -30,
-    -30,   5,  15,  20,  20,  15,   5, -30,
-    -30,   0,  15,  20,  20,  15,   0, -30,
-    -30,   5,  10,  15,  15,  10,   5, -30,
-    -40, -20,   0,   5,   5,   0, -20, -40,
-    -50, -40, -30, -30, -30, -30, -40, -50,
-};
-
-int BISHOPPOS_W[64] ={
-    -20, -10, -10, -10, -10, -10, -10, -20,
-    -10,   0,   0,   0,   0,   0,   0, -10,
-    -10,   0,   5,  10,  10,   5,   0, -10,
-    -10,   5,   5,  10,  10,   5,   5, -10,
-    -10,   0,  10,  10,  10,  10,   0, -10,
-    -10,  10,  10,  10,  10,  10,  10, -10,
-    -10,   5,   0,   0,   0,   0,   5, -10,
-    -20, -10, -10, -10, -10, -10, -10, -20,
-};
-
-int ROOKPOS_W[64] ={
-      0,   0,   0,   0,   0,   0,   0,   0,
-      5,  10,  10,  10,  10,  10,  10,   5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-      0,   0,   0,   5,   5,   0,   0,   0
-};
-
-int QUEENPOS_W[64] ={
-    -20, -10, -10,  -5,  -5, -10, -10, -20,
-    -10,   0,   0,   0,   0,   0,   0, -10,
-    -10,   0,   5,   5,   5,   5,   0, -10,
-     -5,   0,   5,   5,   5,   5,   0,  -5,
-      0,   0,   5,   5,   5,   5,   0,  -5,
-    -10,   5,   5,   5,   5,   5,   0, -10,
-    -10,   0,   5,   0,   0,   0,   0, -10,
-    -20, -10, -10,  -5,  -5, -10, -10, -20
-};
-
-int KINGPOS_W[64] ={
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -20, -30, -30, -40, -40, -30, -30, -20,
-    -10, -20, -20, -20, -20, -20, -20, -10,
-     20,  20,   0,   0,   0,   0,  20,  20,
-     20,  30,  10,   0,   0,  10,  30,  20
-};
-
-int KINGPOS_ENDGAME_W[64] ={
-    -50, -40, -30, -20, -20, -30, -40, -50,
-    -30, -20, -10,   0,   0, -10, -20, -30,
-    -30, -10,  20,  30,  30,  20, -10, -30,
-    -30, -10,  30,  40,  40,  30, -10, -30,
-    -30, -10,  30,  40,  40,  30, -10, -30,
-    -30, -10,  20,  30,  30,  20, -10, -30,
-    -30, -30,   0,   0,   0,   0, -30, -30,
-    -50, -30, -30, -30, -30, -30, -30, -50
-};
-
-int MIRROR[64] ={
-    56, 57, 58, 59, 60, 61, 62, 63,
-    48, 49, 50, 51, 52, 53, 54, 55,
-    40, 41, 42, 43, 44, 45, 46, 47,
-    32, 33, 34, 35, 36, 37, 38, 39,
-    24, 25, 26, 27, 28, 29, 30, 31,
-    16, 17, 18, 19, 20, 21, 22, 23,
-     8,  9, 10, 11, 12, 13, 14, 15,
-     0,  1,  2,  3,  4,  5,  6,  7
-};
-
-int PAWNPOS_B[64];
-int KNIGHTPOS_B[64];
-int BISHOPPOS_B[64];
-int ROOKPOS_B[64];
-int QUEENPOS_B[64];
-int KINGPOS_B[64];
-int KINGPOS_ENDGAME_B[64];
 
 void init_data(void) {
     int i;
@@ -420,34 +309,5 @@ void init_data(void) {
                 DIAG_ATTACKS[from] |= BITSET[to];
             }
         }
-    }
-
-    // Eval
-    WHITE_SQUARES = 0;
-    for (i = 0; i < 64; i++) {
-        if ((i + FILA(i)) % 2) {
-            WHITE_SQUARES ^= BITSET[i];
-        }
-    }
-    BLACK_SQUARES = ~WHITE_SQUARES;
-
-    for (i = 0; i < 64; i++) {
-        PAWNPOS_B[i] = PAWNPOS_W[i];
-        KNIGHTPOS_B[i] = KNIGHTPOS_W[i];
-        BISHOPPOS_B[i] = BISHOPPOS_W[i];
-        ROOKPOS_B[i] = ROOKPOS_W[i];
-        QUEENPOS_B[i] = QUEENPOS_W[i];
-        KINGPOS_B[i] = KINGPOS_W[i];
-        KINGPOS_ENDGAME_B[i] = KINGPOS_ENDGAME_W[i];
-    }
-
-    for (i = 0; i < 64; i++) {
-        PAWNPOS_W[i] = PAWNPOS_B[MIRROR[i]];
-        KNIGHTPOS_W[i] = KNIGHTPOS_B[MIRROR[i]];
-        BISHOPPOS_W[i] = BISHOPPOS_B[MIRROR[i]];
-        ROOKPOS_W[i] = ROOKPOS_B[MIRROR[i]];
-        QUEENPOS_W[i] = QUEENPOS_B[MIRROR[i]];
-        KINGPOS_W[i] = KINGPOS_B[MIRROR[i]];
-        KINGPOS_ENDGAME_W[i] = KINGPOS_ENDGAME_B[MIRROR[i]];
     }
 }

@@ -3,9 +3,9 @@ import shutil
 import time
 
 import Code
-from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.Tournaments import WTournament
+from Code.Z import Util
 
 GRID_ALIAS, GRID_VALUES, GRID_GAMES_QUEUED, GRID_GAMES_FINISHED, GRID_RESULTS = range(5)
 

@@ -161,12 +161,6 @@ int make_nummove(int num)
     return movegen();
 }
 
-char * play_fen( char * fen, int depth, int time )
-{
-    fen_board( fen );
-    return play( depth, time );
-}
-
 int num_moves(  )
 {
     int from_moves, toMoves;

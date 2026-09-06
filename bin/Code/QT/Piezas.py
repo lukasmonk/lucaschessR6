@@ -1,4 +1,5 @@
 import collections
+import itertools
 import os
 import shutil
 
@@ -6,11 +7,10 @@ from PySide6 import QtCore, QtGui, QtSvg
 from PySide6.QtSvgWidgets import QSvgWidget
 
 import Code
-import itertools
-from Code.Z import Util
 from Code.Base.Constantes import BLINDFOLD_BLACK, BLINDFOLD_CONFIG, BLINDFOLD_WHITE
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs
 from Code.Translations import TrListas
+from Code.Z import Util
 
 DEFAULT_PIECES = "Cburnett"
 
@@ -24,6 +24,7 @@ class ConjuntoPiezas:
     def __init__(self, name):
         self.name = name
         self.dic_pieces = self.read_pieces(name)
+        self._pixmap_cache = {}
 
     def is_only_board(self):
         return is_only_board(self.name)
@@ -50,6 +51,29 @@ class ConjuntoPiezas:
 
     def render(self, pieza):
         return QtSvg.QSvgRenderer(self.dic_pieces[pieza])
+
+    def render_pixmap(self, pieza, size):
+        """Return a pre-rendered QPixmap cached by (pieza, size).
+
+        This avoids re-rasterizing the SVG from vector data on every
+        paint() call, which is the main bottleneck during animation.
+        """
+        key = (pieza, size)
+        cached = self._pixmap_cache.get(key)
+        if cached is not None:
+            return cached
+        renderer = QtSvg.QSvgRenderer(self.dic_pieces[pieza])
+        pm = QtGui.QPixmap(size, size)
+        pm.fill(QtCore.Qt.GlobalColor.transparent)
+        painter = QtGui.QPainter(pm)
+        renderer.render(painter)
+        painter.end()
+        self._pixmap_cache[key] = pm
+        return pm
+
+    def clear_cache(self):
+        """Invalidate all cached pixmaps. Call when piece size changes."""
+        self._pixmap_cache.clear()
 
     def widget(self, pieza):
         w = QSvgWidget()
@@ -89,6 +113,7 @@ class ConjuntoPiezas:
     def change_set(self, new):
         self.name = new
         self.dic_pieces = self.read_pieces(new)
+        self._pixmap_cache.clear()
 
 
 class AllPieces:
@@ -175,7 +200,7 @@ def save_svg_with_opacity(source_file, dest_file, opacity):
                 count=1,
             )
         else:
-            header = f"{header} opacity=\"{opacity}\""
+            header = f'{header} opacity="{opacity}"'
         svg = svg[: match.start(1)] + header + ">" + svg[match.end() :]
         with open(dest_file, "wt", encoding="utf-8") as f:
             f.write(svg)
@@ -313,11 +338,11 @@ class WBlindfold(LCDialog.LCDialog):
             (_("Color"), GREY),
             (_("Checker"), CHECKER),
             (_("Show"), SHOW),
-            (f'{_("Show")} 2%', TRANSPARENT_2),
-            (f'{_("Show")} 5%', TRANSPARENT_5),
-            (f'{_("Show")} 10%', TRANSPARENT_10),
-            (f'{_("Show")} 30%', TRANSPARENT_30),
-            (f'{_("Show")} 50%', TRANSPARENT_50),
+            (f"{_('Show')} 2%", TRANSPARENT_2),
+            (f"{_('Show')} 5%", TRANSPARENT_5),
+            (f"{_('Show')} 10%", TRANSPARENT_10),
+            (f"{_('Show')} 30%", TRANSPARENT_30),
+            (f"{_('Show')} 50%", TRANSPARENT_50),
         )
         dic_nom_piezas = TrListas.dic_nom_pieces()
 

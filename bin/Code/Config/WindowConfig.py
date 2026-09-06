@@ -6,16 +6,17 @@ import Code
 from Code.Base.Constantes import (
     GO_BACK,
     GO_FORWARD,
+    HIGHLIGHT_STYLE_ARROW,
+    HIGHLIGHT_STYLE_ARROW_CURVED,
+    HIGHLIGHT_STYLE_FILL,
+    HIGHLIGHT_STYLE_NONE,
+    HIGHLIGHT_STYLE_OUTLINE,
     MENU_PLAY_ANY_ENGINE,
     MENU_PLAY_BOTH,
     MENU_PLAY_YOUNG_PLAYERS,
     NOTATION_ALGEBRAIC,
-    NOTATION_LONGALGEBRAIC,
     NOTATION_DESCRIPTIVE,
-    HIGHLIGHT_STYLE_ARROW,
-    HIGHLIGHT_STYLE_OUTLINE,
-    HIGHLIGHT_STYLE_FILL,
-    HIGHLIGHT_STYLE_NONE, HIGHLIGHT_STYLE_ARROW_CURVED,
+    NOTATION_LONGALGEBRAIC,
 )
 from Code.Competitions import ManagerMaia
 from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
@@ -177,40 +178,35 @@ def options(parent, configuration):
     ]
     form.combobox(_("Mouse shortcuts"), li_mouse_sh, configuration.x_mouse_shortcuts)
     form.slider(
-        f"{_("Show square pressed")}:<br><small>{_('By default')}=50%",
+        f"{_('Show square pressed')}:<br><small>{_('By default')}=50%",
         0,
         100,
         Code.configuration.x_show_square_shortcut,
         siporc=True,
         interval=10,
-        step=5
+        step=5,
     )
     form.separador()
 
-    x = f" - {_('developed by')} Graham O'Neill (https://goneill.co.nz)"
     li_db = [
         (_("None"), ""),
-        (_("Certabo") + x, "Certabo"),
-        (_("Chessnut") + x, "Chessnut"),
-        (_("Chessnut Evo") + x, "Chessnut Evo"),
-        (_("Chessnut Move") + x, "Chessnut Move"),
-        (_("DGT (Alternative)") + x, "DGT-gon"),
-        (_("DGT Pegasus") + x, "Pegasus"),
-        (_("HOS Sensory") + x, "HOS Sensory"),
-        (_("iChessOne") + x, "iChessOne"),
-        (_("Millennium") + x, "Millennium"),
-        (_("Novag Citrine") + x, "Citrine"),
-        (_("Novag UCB") + x, "Novag UCB"),
-        (_("Saitek") + x, "Saitek"),
-        (_("Square Off Pro") + x, "Square Off"),
-        (_("Tabutronic") + x, "Tabutronic"),
+        (_("Certabo"), "Certabo"),
+        (_("Chessnut"), "Chessnut"),
+        (_("Chessnut Evo"), "Chessnut Evo"),
+        (_("Chessnut Move"), "Chessnut Move"),
+        (_("DGT (Alternative)"), "DGT-gon"),
+        (_("DGT Pegasus"), "Pegasus"),
+        (_("HOS Sensory"), "HOS Sensory"),
+        (_("iChessOne"), "iChessOne"),
+        (_("Millennium"), "Millennium"),
+        (_("Novag Citrine"), "Citrine"),
+        (_("Novag UCB"), "Novag UCB"),
+        (_("Saitek"), "Saitek"),
+        (_("Square Off Pro"), "Square Off"),
+        (_("Tabutronic"), "Tabutronic"),
     ]
     if Util.is_windows():
-        li_db.insert(5, (_("DGT"), "DGT"))
-        li_db.insert(10, (_("Manya Cynus") + x, "Cynus"))
-
-    form.combobox(_("Digital board"), li_db, configuration.x_digital_board)
-    form.separador()
+        li_db.insert(10, (_("Manya Cynus"), "Cynus"))
 
     li_gr = [
         (_("Show nothing"), None),
@@ -221,6 +217,16 @@ def options(parent, configuration):
     form.separador()
 
     form.checkbox(_("Live graphics with the right mouse button"), configuration.x_direct_graphics)
+
+    form.separador()
+    form.line()
+    form.combobox(_("Digital board"), li_db, configuration.x_digital_board)
+    espacios = " " * 30
+    form.apart_simple_np(
+        f"{espacios}{_('Drivers developed by')} Graham O'Neill "
+        f'(<a href="https://goneill.co.nz">https://goneill.co.nz</a>)'
+    )
+    form.line()
 
     form.add_tab(f"{_('Boards')} 2")
 
@@ -289,6 +295,13 @@ def options(parent, configuration):
     )
     form.checkbox(_("Enable information panel by default"), configuration.x_info_activate)
     form.checkbox(_("Enable analysis bar by default"), configuration.x_analyzer_activate_ab)
+
+    li_decimals = (
+        ("1", 1),
+        ("2", 2),
+    )
+    form.combobox(_("Decimals shown in the analyses"), li_decimals, configuration.x_analyses_decimals)
+
     form.separador()
     form.spinbox(
         _("Font size of information labels"),
@@ -373,35 +386,35 @@ def options(parent, configuration):
             configuration.x_autopromotion_q,
             configuration.x_mouse_shortcuts,
             configuration.x_show_square_shortcut,
-            dboard,
             configuration.x_director_icon,
             configuration.x_direct_graphics,
+            dboard,
         ) = li_b2
 
         if configuration.x_digital_board != dboard:
             if dboard:
                 if dboard == "DGT":
                     if not QTMessages.pregunta(
-                            parent,
-                            "%s<br><br>%s %s"
-                            % (
-                                    _("Are you sure %s is the correct driver ?") % dboard,
-                                    _("WARNING: selecting the wrong driver might cause damage to your board."),
-                                    _("Proceed at your own risk."),
-                            ),
+                        parent,
+                        "%s<br><br>%s %s"
+                        % (
+                            _("Are you sure %s is the correct driver ?") % dboard,
+                            _("WARNING: selecting the wrong driver might cause damage to your board."),
+                            _("Proceed at your own risk."),
+                        ),
                     ):
                         dboard = ""
                 else:
                     if not QTMessages.pregunta(
-                            parent,
-                            "%s<br><br>%s %s<br><br>%s<br>%s"
-                            % (
-                                _("Are you sure %s is the correct driver ?") % dboard,
-                                _("WARNING: selecting the wrong driver might cause damage to your board."),
-                                _("Proceed at your own risk."),
-                                _("Please read the driver's user manual at:"),
-                                '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
-                            ),
+                        parent,
+                        "%s<br><br>%s %s<br><br>%s<br>%s"
+                        % (
+                            _("Are you sure %s is the correct driver ?") % dboard,
+                            _("WARNING: selecting the wrong driver might cause damage to your board."),
+                            _("Proceed at your own risk."),
+                            _("Please read the driver's user manual at:"),
+                            '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
+                        ),
                     ):
                         dboard = ""
             configuration.x_digital_board = dboard
@@ -453,6 +466,7 @@ def options(parent, configuration):
             configuration.x_captures_activate,
             configuration.x_info_activate,
             configuration.x_analyzer_activate_ab,
+            configuration.x_analyses_decimals,
             configuration.x_sizefont_infolabels,
             configuration.x_sizefont_players,
         ) = li_asp2
@@ -480,7 +494,7 @@ def options(parent, configuration):
             configuration.x_fics,
             configuration.x_fide,
             configuration.x_lichess,
-            new_maia_elo
+            new_maia_elo,
         ) = li_nc
 
         if new_maia_elo != maia_state.current_elo():

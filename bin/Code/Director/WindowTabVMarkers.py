@@ -4,7 +4,6 @@ import os
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Board import Board
 from Code.Director import TabVisual
 from Code.QT import (
@@ -20,6 +19,7 @@ from Code.QT import (
     QTUtils,
     SelectFiles,
 )
+from Code.Z import Util
 
 
 class WTVMarker(QtWidgets.QDialog):

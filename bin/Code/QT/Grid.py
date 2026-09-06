@@ -245,10 +245,7 @@ class HeaderFontVertical(Header):
 
     def _get_text_width(self):
         return max(
-            [
-                self._metrics.horizontalAdvance(self._get_data(i))
-                for i in range(0, self.model().columnCount(self.parent))
-            ]
+            [self._metrics.horizontalAdvance(self._get_data(i)) for i in range(self.model().columnCount(self.parent))]
         )
 
     def _get_data(self, index):
@@ -281,23 +278,23 @@ class Grid(QtWidgets.QTableView):
     """
 
     def __init__(
-            self,
-            w_parent,
-            o_columns,
-            dic_video=None,
-            heigh_row=None,
-            complete_row_select=False,
-            select_multiple=False,
-            with_lines=True,
-            is_editable=False,
-            is_column_header_movable=True,
-            xid=None,
-            background="",
-            header_visible=True,
-            header_heigh=None,
-            alternate=True,
-            cab_vertical_font=None,
-            with_header_vertical=False,
+        self,
+        w_parent,
+        o_columns,
+        dic_video=None,
+        heigh_row=None,
+        complete_row_select=False,
+        select_multiple=False,
+        with_lines=True,
+        is_editable=False,
+        is_column_header_movable=True,
+        xid=None,
+        background="",
+        header_visible=True,
+        header_heigh=None,
+        alternate=True,
+        cab_vertical_font=None,
+        with_header_vertical=False,
     ):
         """
         @param w_parent: ventana propietaria
@@ -380,10 +377,10 @@ class Grid(QtWidgets.QTableView):
     def selectAll(self):
         if self.w_parent.grid_num_datos(self) > 20000:
             if not QTMessages.pregunta(
-                    self,
-                    f"{_('This process takes a very long time')}.<br><br>{_('What do you want to do?')}",
-                    label_yes=_("Continue"),
-                    label_no=_("Cancel"),
+                self,
+                f"{_('This process takes a very long time')}.<br><br>{_('What do you want to do?')}",
+                label_yes=_("Continue"),
+                label_no=_("Cancel"),
             ):
                 return
         QtWidgets.QTableView.selectAll(self)
@@ -596,7 +593,7 @@ class Grid(QtWidgets.QTableView):
 
     def width_and_vbar(self):
         width_vbar = self.style().pixelMetric(QtWidgets.QStyle.PixelMetric.PM_ScrollBarExtent)
-        return self.width_columns_displayables() + width_vbar + 6
+        return self.width_columns_displayables() + width_vbar + 8
 
     def fix_min_width(self):
         n_ancho = self.width_and_vbar()
@@ -614,7 +611,7 @@ class Grid(QtWidgets.QTableView):
         """
         n = self.currentIndex().row()
         n_x = self.cg.num_rows - 1
-        return n if n <= n_x else n_x
+        return min(n, n_x)
 
     def reccount(self):
         return self.cg.num_rows
@@ -674,14 +671,14 @@ class Grid(QtWidgets.QTableView):
         return self.recno(), self.currentIndex().column()
 
     def font_type(
-            self,
-            name="",
-            puntos=8,
-            peso=50,
-            is_italic=False,
-            is_underlined=False,
-            is_striked=False,
-            txt=None,
+        self,
+        name="",
+        puntos=8,
+        peso=50,
+        is_italic=False,
+        is_underlined=False,
+        is_striked=False,
+        txt=None,
     ):
         font = QtGui.QFont()
         if txt is None:

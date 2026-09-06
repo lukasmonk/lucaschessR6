@@ -1,19 +1,19 @@
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Analysis import Histogram, Analysis
+from Code.Analysis import Analysis, Histogram
+from Code.Base.Constantes import ENDGAME, MIDDLEGAME, OPENING
 from Code.Board import Board
 from Code.Nags import Nags
 from Code.Openings import OpeningsStd
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTMessages, ScreenUtils
-from Code.Base.Constantes import OPENING,MIDDLEGAME, ENDGAME
 
 
 class WAnalisisGraph(LCDialog.LCDialog):
     def __init__(self, wowner, manager, alm):
         titulo = _("Result of analysis")
         icono = Iconos.Estadisticas()
-        extparam = "estadisticasv3"
+        extparam = "estadisticasv4"
         LCDialog.LCDialog.__init__(self, wowner, titulo, icono, extparam)
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
@@ -60,6 +60,11 @@ class WAnalisisGraph(LCDialog.LCDialog):
                 o_columns.nueva("TIME", _("Time"), 50, align_right=True)
             o_columns.nueva("PORC", _("Accuracy"), 80, align_center=True)
             o_columns.nueva("ELO", _("Elo"), 80, align_center=True)
+
+            o_columns.nueva("pwin", f"% {_('Win')}", 80, align_center=True)
+            o_columns.nueva("pdraw", f"% {_('Draw')}", 80, align_center=True)
+            o_columns.nueva("ploss", f"% {_('Loss')}", 80, align_center=True)
+
             return o_columns
 
         self.dicLiJG = {"A": self.alm.lijg, "W": self.alm.lijgW, "B": self.alm.lijgB}
@@ -274,8 +279,9 @@ class WAnalisisGraph(LCDialog.LCDialog):
         if obj_column.key == "PHASE":
             return None
         if grid.id == "A":
-            move = self.alm.lijg[row]
-            return "i" if move.xsiW else "d"
+            if obj_column.key[0] != "p":  # no pwin/pdrw/ploss
+                move = self.alm.lijg[row]
+                return "i" if move.xsiW else "d"
         return None
 
     def grid_num_datos(self, grid):
@@ -306,6 +312,19 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
         elif column == "PHASE":
             return self.dic_phases.get(move.phase, "")
+
+        elif column == "pwin":
+            win, draw, lost = move.get_wdl()
+            return f"{win / 10:.1f}%"
+
+        elif column == "pdraw":
+            win, draw, lost = move.get_wdl()
+            draw = 100.0 - win / 10 - lost / 10
+            return f"{draw:.1f}%"
+
+        elif column == "ploss":
+            win, draw, lost = move.get_wdl()
+            return f"{lost / 10:.1f}%"
 
         return None
 

@@ -8,16 +8,17 @@ class ListEngineManagers:
 
     def append(self, engine_manager):
         if __debug__:
-            import Code.Z.Debug
+            from Code.Z import Debug
+            if Debug.DEBUG_ENGINES or Debug.DEBUG_ENGINES_SEND:
+                Code.Z.Debug.prln("appending", engine_manager.engine.name, engine_manager.huella, color="green")
 
-            Code.Z.Debug.prln("appending", engine_manager.engine.name, engine_manager.huella, color="green")
         self.lista.append(engine_manager)
         if self.with_logs:
             engine_manager.log_open()
 
     def close_all(self):
         self.cleanup_closed()
-        for engine_manager in self.lista[:]:  # Iterar sobre copia
+        for engine_manager in self.lista[:]:
             engine_manager.close()
         self.lista = []
 

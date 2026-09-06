@@ -1,8 +1,8 @@
 import os
 import random
 import time
+from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Callable, Optional
 
 from PySide6 import QtCore
 
@@ -12,7 +12,7 @@ from Code.Engines import EngineManager, EngineResponse, EngineRun, Engines, Engi
 
 
 class PlayBook:
-    book: Optional[Books.Book] = None
+    book: Books.Book | None = None
     num_tries: int = 0
     active: bool = False
     name: str
@@ -31,9 +31,7 @@ class PlayBook:
         self.num_tries = 0
         self.active = True
 
-    def check_move(
-        self, game: Optional[Game.Game] = None, fen: Optional[str] = None
-    ) -> Optional[EngineResponse.EngineResponse]:
+    def check_move(self, game: Game.Game | None = None, fen: str | None = None) -> EngineResponse.EngineResponse | None:
         if not self.active:
             return None
 
@@ -63,7 +61,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
     def __init__(self, engine: Engines.Engine, run_engine_params: EngineRun.RunEngineParams):
         super().__init__(engine, run_engine_params, False)
 
-        self.playbook: Optional[PlayBook] = None
+        self.playbook: PlayBook | None = None
         self.playbook_active: bool = False
         self.seconds_humanize: float = 0
 
@@ -71,9 +69,10 @@ class EngineManagerPlay(EngineManager.EngineManager):
         # Once this is done, it switches to None.
         self.wicker_ctrl: EnginesWicker.WickerCtrl | None = EnginesWicker.check_is_wicker(engine, self.engine_run)
 
-    def check_previous(
-        self, game: Optional[Game.Game] = None, fen: Optional[str] = None, dispatcher: Optional[Callable] = None
-    ):
+    def set_seconds_per_move(self, seconds_per_move: int):
+        self.run_engine_params.set_seconds_per_move(seconds_per_move)
+
+    def check_previous(self, game: Game.Game | None = None, fen: str | None = None, dispatcher: Callable | None = None):
         if not self.check_engine():
             return None
         resp = None
@@ -100,13 +99,13 @@ class EngineManagerPlay(EngineManager.EngineManager):
                 self.playbook_active = self.playbook.active
         return resp
 
-    def play_game(self, game, dispatcher: Optional[Callable] = None) -> Optional[EngineResponse.EngineResponse]:
+    def play_game(self, game, dispatcher: Callable | None = None) -> EngineResponse.EngineResponse | None:
         return self.play(game=game, dispatcher=dispatcher)
 
-    def play_fen(self, fen: str, dispatcher: Optional[Callable] = None) -> Optional[EngineResponse.EngineResponse]:
+    def play_fen(self, fen: str, dispatcher: Callable | None = None) -> EngineResponse.EngineResponse | None:
         return self.play(fen=fen, dispatcher=dispatcher)
 
-    def play(self, game: Optional[Game.Game] = None, fen: Optional[str] = None, dispatcher: Optional[Callable] = None):
+    def play(self, game: Game.Game | None = None, fen: str | None = None, dispatcher: Callable | None = None):
         rm = self.check_previous(game, fen, dispatcher)
         if rm:
             return rm
@@ -127,7 +126,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
             or self.seconds_humanize > 0
         )
         state = SimpleNamespace(
-            ini_time=time.time(), secs_humanize=self.seconds_humanize, with_timer=with_timer, found_bestmove=False
+            ini_time=time.monotonic(), secs_humanize=self.seconds_humanize, with_timer=with_timer, found_bestmove=False
         )
 
         self.seconds_humanize = 0  # must be restarted each time
@@ -164,7 +163,7 @@ class EngineManagerPlay(EngineManager.EngineManager):
 
             if state.found_bestmove:
                 if state.secs_humanize > 0:
-                    used_time = time.time() - state.ini_time
+                    used_time = time.monotonic() - state.ini_time
                     if used_time < state.secs_humanize:
                         return
                 close()

@@ -7,7 +7,7 @@ class Priorities:
     def __init__(self):
         self.normal, self.low, self.verylow, self.high, self.veryhigh = range(5)
 
-        if Util.is_linux():
+        if Util.is_posix():
             p_normal = 0
             p_low, p_verylow = 10, 20
             p_high, p_veryhigh = -10, -20

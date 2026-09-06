@@ -121,8 +121,8 @@ class Replay:
         self.with_pgn = dic_var["PGN"]
 
     def sleep_refresh(self, seconds):
-        ini_time = time.time()
-        while (time.time() - ini_time) < seconds:
+        ini_time = time.monotonic()
+        while (time.monotonic() - ini_time) < seconds:
             QTUtils.refresh_gui()
             if self.stopped:
                 return False
@@ -168,7 +168,6 @@ class Replay:
     def move_the_pieces(self, li_movs):
         if self.stopped:
             return
-        self.procesador.cpu.stop()
 
         move = self.li_moves[self.current_position]
         num = self.current_position

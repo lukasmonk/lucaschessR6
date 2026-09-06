@@ -1,9 +1,8 @@
 import random
 import time
-from typing import Optional, Any
-from PySide6 import QtCore
+from typing import Any
 
-import FasterCode
+from PySide6 import QtCore
 
 import Code
 from Code.Base import Game, Move, Position
@@ -36,9 +35,12 @@ class GREngine:
         self._label = f"{_('Engine')} - {TrListas.level(nlevel)}"
         self.configuration = Code.configuration
         self.level = nlevel
+        self.manager = None
+        self.manager_irina = None
         if nlevel == 0:
-            self.manager = None
             self._name = self._label
+            irina = Code.configuration.engines.search("irina")
+            self.manager_irina = procesador.create_manager_engine(irina, 0, 1, 0)
         else:
             d_engines = self.elos()
             x = +1 if nlevel < 6 else -1
@@ -60,6 +62,9 @@ class GREngine:
         if self.manager and self.manager != self:
             self.manager.close()
             self.manager = None
+        if self.manager_irina:
+            self.manager_irina.close()
+            self.manager_irina = None
 
     @property
     def label(self):
@@ -74,7 +79,8 @@ class GREngine:
             mrm = self.manager.analyze_fen(fen)
             return mrm.rm_best().movimiento()
         else:
-            return FasterCode.run_fen(fen, 1, 0, 2)
+            mrm = self.manager_irina.analyze_fen(fen)
+            return mrm.rm_best().movimiento()
 
     def elos(self):
 
@@ -117,11 +123,11 @@ class ManagerRoutes(Manager.Manager):
         self.game_type = GT_ROUTES
 
     def ini_time(self):
-        self.time_start = time.time()
+        self.time_start = time.monotonic()
 
     def add_time(self):
         if self.time_start:
-            self.route.add_time(time.time() - self.time_start, self.route_state)
+            self.route.add_time(time.monotonic() - self.time_start, self.route_state)
             self.time_start = 0
 
     def terminate(self):
@@ -145,11 +151,11 @@ class ManagerRoutes(Manager.Manager):
 
 
 class ManagerRoutesPlay(ManagerRoutes):
-    engine: Optional[GREngine] = None
+    engine: GREngine | None = None
     liPVopening: list[str] = []
     posOpening: int = 0
     is_opening: bool = False
-    book: Optional[Books.Book] = None
+    book: Books.Book | None = None
     must_win: bool = False
     is_rival_thinking: bool = False
     human_is_playing: bool = False
@@ -367,7 +373,7 @@ class ManagerRoutesPlay(ManagerRoutes):
 
 class ManagerRoutesEndings(ManagerRoutes):
     is_guided: bool = False
-    t4: Optional[LibChess.T4] = None
+    t4: LibChess.T4 | None = None
     fen: str = ""
     li_pv: list[str] = []
     posPV: int = 0

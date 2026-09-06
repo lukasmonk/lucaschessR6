@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Any
+from typing import Any
 
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
@@ -110,7 +110,7 @@ class ManagerSingularM(Manager.Manager):
         self.activate_side(is_white)
 
         self.main_window.start_clock(self.set_clock, transicion=1000)
-        self.time_inicio = time.time()
+        self.time_inicio = time.monotonic()
         self.set_clock()
 
     def calc_puntuacion(self, vtime):
@@ -123,7 +123,7 @@ class ManagerSingularM(Manager.Manager):
             return (max_time - vtime) * 100.0 / max_time
 
     def set_clock(self):
-        p = self.calc_puntuacion(time.time() - self.time_inicio)
+        p = self.calc_puntuacion(time.monotonic() - self.time_inicio)
         self.main_window.set_clock_white(f"{p:0.2f}", None)
 
     def resign(self):
@@ -136,9 +136,9 @@ class ManagerSingularM(Manager.Manager):
         self.add_move(move_select)
         return True
 
-    def add_move(self, move: Optional[Move.Move]):
+    def add_move(self, move: Move.Move | None):
         self.main_window.stop_clock()
-        tm = time.time() - self.time_inicio
+        tm = time.monotonic() - self.time_inicio
         self.linea_bloque.time = tm
         score = self.calc_puntuacion(tm)
 

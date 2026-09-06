@@ -5,7 +5,6 @@ import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from enum import Enum, auto
-from typing import List, Optional
 
 import psutil
 from PySide6 import QtCore
@@ -25,11 +24,11 @@ if __debug__:
 class StartEngineParams:
     name: str = ""
     path_exe: str = ""
-    li_options_uci: Optional[list] = None
+    li_options_uci: list | None = None
     num_multipv: int = 0
-    priority: Optional[int] = None
-    args: Optional[list] = None
-    path_log: Optional[str] = None
+    priority: int | None = None
+    args: list | None = None
+    path_log: str | None = None
     emulate_movetime: bool = False
     faster_mode_always: bool = False
 
@@ -64,7 +63,7 @@ class RunEngineParams:
         self.fixed_ms = int(fixed_ms)
         self.fixed_depth = fixed_depth
         self.fixed_nodes = fixed_nodes
-        self.multipv = engine.multiPV
+        self.multipv = int(multipv) if isinstance(multipv, (int, str)) and str(multipv).isdigit() else engine.multiPV
         if self.fixed_ms == 0 and self.fixed_depth == 0 and self.fixed_nodes == 0:
             self.infinite = True
 
@@ -86,25 +85,34 @@ class EngineState(Enum):
     OK = auto()
     THINKING = auto()
     ERROR = auto()
-    READING_UCI = auto()
     READING_EVAL_STOCKFISH = auto()
     READING_MATE_STOCKFISH = auto()
     INVALID_ENGINE = auto()
+    PENDING_UCIOK = auto()
     PENDING_READYOK = auto()
     CLOSED = auto()
+
+
+_PENDING_MAX_BYTES = 65536
+
+# Tiempo máximo (ms) para esperar "uciok" tras "uci" o "readyok" tras "isready".
+# Si se supera, se considera que el motor no responde y se pasa a EngineState.ERROR.
+_HANDSHAKE_TIMEOUT_MS = 8000
 
 
 class StreamLineProcessor:
     def __init__(self):
         self._pending = ""
 
-    def convert(self, salida_bytes: QtCore.QByteArray) -> List[str]:
+    def convert(self, salida_bytes: QtCore.QByteArray) -> list[str]:
         salida_str = salida_bytes.data().decode("utf-8", errors="ignore")
         salida_str = self._pending + salida_str
         self._pending = ""
         lineas = salida_str.splitlines()
         if not salida_str.endswith("\n"):
             self._pending = lineas.pop() if lineas else salida_str
+            if len(self._pending) > _PENDING_MAX_BYTES:
+                self._pending = ""
         return lineas
 
 
@@ -113,6 +121,7 @@ class EngineRun(QtCore.QObject):
     bestmove_found = QtCore.Signal(str)
     eval_stockfish_found = QtCore.Signal(str)
     engine_terminated = QtCore.Signal()
+    engine_error = QtCore.Signal(str)  # emitida si el motor no responde a "uci"/"isready" a tiempo
 
     def __init__(self, config: StartEngineParams):
         super().__init__()
@@ -122,7 +131,8 @@ class EngineRun(QtCore.QObject):
         self.last_depth_emit: int = 0
         self.last_time_depth_emit: int = 0
         self.time_interval_depth_emit: int = 500
-        self.timerstop: Optional[QtCore.QTimer] = None
+        self.timerstop: QtCore.QTimer | None = None
+        self.handshake_timeout: QtCore.QTimer | None = None  # para readyok y uciok
 
         self.log = None
         if config.path_log:
@@ -135,7 +145,6 @@ class EngineRun(QtCore.QObject):
                 self.color_debug = "green" if "stock" in config.name.lower() else "cyan"
 
         self.config = config
-        self._wait_loop: Optional[QtCore.QEventLoop] = None
         self.stream_line_processor = StreamLineProcessor()
 
         self.mode_timer_poll = Code.configuration.x_msrefresh_poll_engines > 0 and not config.faster_mode_always
@@ -143,12 +152,14 @@ class EngineRun(QtCore.QObject):
         if self.mode_timer_poll:
             # Configuración del Timer de Polling (Queue virtual)
             # Se inicia solo cuando es necesario leer.
-            self._timer_poll = QtCore.QTimer()
+            self._timer_poll = QtCore.QTimer(self)
             mstimer_poll = Util.clamp(Code.configuration.x_msrefresh_poll_engines, 20, 500)
             self._timer_poll.setInterval(mstimer_poll)  # Revisar cada x ms
             self._timer_poll.timeout.connect(self._poll_output)
+        else:
+            self._timer_poll = None
 
-        self.process: Optional[QtCore.QProcess] = QtCore.QProcess(self)
+        self.process: QtCore.QProcess | None = QtCore.QProcess(self)
 
         if not self.mode_timer_poll:
             # noinspection PyUnresolvedReferences
@@ -158,6 +169,7 @@ class EngineRun(QtCore.QObject):
         self.process.finished.connect(self._engine_terminated)
 
         self.state = EngineState.OFF
+        self.bestmove = ""
 
         path_exe = os.path.abspath(self.config.path_exe)
         engine_dir = os.path.dirname(path_exe)
@@ -165,9 +177,10 @@ class EngineRun(QtCore.QObject):
         self.process.setWorkingDirectory(engine_dir)
         args = self.config.args or []
 
-        if Util.is_linux():
+        if Util.is_posix():
             if os.path.isfile(path_exe) and not os.access(path_exe, os.X_OK):
                 import stat
+
                 try:
                     current_mode = os.stat(path_exe).st_mode
                     os.chmod(path_exe, current_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
@@ -177,18 +190,35 @@ class EngineRun(QtCore.QObject):
                     self._log_exception(f"Could not add execution permission to {path_exe}")
 
             # para los motores linux que cargan librerías
+            # (macOS uses DYLD_LIBRARY_PATH for the same purpose)
+            var_library_path = "DYLD_LIBRARY_PATH" if Util.is_macos() else "LD_LIBRARY_PATH"
             env = QtCore.QProcessEnvironment.systemEnvironment()
-            if env.contains("LD_LIBRARY_PATH"):
-                new_path = f"{engine_dir}:{env.value('LD_LIBRARY_PATH')}"
+            if env.contains(var_library_path):
+                new_path = f"{engine_dir}:{env.value(var_library_path)}"
             else:
                 new_path = engine_dir
-            env.insert("LD_LIBRARY_PATH", new_path)
+            env.insert(var_library_path, new_path)
             self.process.setProcessEnvironment(env)
+
+        # Acumula ordenes mientras está pendiente un uciok o readyok
+        self.cmd_queue: list[tuple[str, EngineState]] = []
+
+        # Atributos que deben existir siempre, incluso si el motor no llega a arrancar
+        # (estado INVALID_ENGINE más abajo), para que get_mrm(), uci_lines(),
+        # time_played(), play(), etc. no fallen con AttributeError si se invocan
+        # sobre una instancia cuyo proceso no pudo iniciarse.
+        self.mrm: EngineResponse.MultiEngineResponse | None = None
+        self.li_uci: list[str] = []
+        self.li_cache: list[str] = []
+        self.play_time_begin = None
+        self.emit_enabled = True
 
         self.process.start(path_exe, arguments=args)
 
         size = Util.filesize(path_exe)
-        ms = max(10000, size*10000//5000000)
+        # Timeout proporcional al tamaño del binario: más tiempo para binarios grandes.
+        # Mínimo 10s; ~1s adicional por cada 500 KB por encima de 5 MB.
+        ms = max(10000, size * 10000 // 5000000)
 
         if not self.process.waitForStarted(ms):
             self.state = EngineState.INVALID_ENGINE
@@ -198,6 +228,7 @@ class EngineRun(QtCore.QObject):
                 self._log_exception("Process kill failed")
             self.process = None
             return
+        self._state = EngineState.STARTED
         self.state = EngineState.STARTED
 
         # set priority if requested
@@ -208,16 +239,15 @@ class EngineRun(QtCore.QObject):
             except Exception:
                 self._log_exception("Set priority failed")
 
-        self.mrm: Optional[EngineResponse.MultiEngineResponse] = None
-
-        self.li_uci: List[str] = []
-        self.li_cache: List[str] = []
-        self.uci_ok = False
-
         # Iniciar lectura de UCI
-        # self._read_uci()  # no hace falta, la lectura de uci se hace en otro lado
-        # self.state = EngineState.READING_UCI
-        self._send_command("uci")   # motores que han de decidir si uci o WinBoard
+        # Los comandos enviados antes de recibir "uciok" se encolan en self.li_waiting
+        # y se vuelcan al proceso cuando llega "uciok". Evita que motores estrictos
+        # descarten setoption/ucinewgame recibidos antes del handshake, sin bloquear
+        # la GUI (los motores lentos en responder uciok simplemente reciben todo al final).
+        self.state = EngineState.OK
+        if self.mode_timer_poll:
+            self._start_polling()
+        self._send_command("uci", EngineState.PENDING_UCIOK)  # para los motores que han de decidir si uci o WinBoard
 
         if config.li_options_uci:
             self._set_options_uci(config.li_options_uci)
@@ -225,20 +255,27 @@ class EngineRun(QtCore.QObject):
             self.set_multipv(config.num_multipv)
 
         self._ucinewgame()
-        self.play_time_begin = None
-        self.emit_enabled = True
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
+        self._state = value
 
     def _start_polling(self):
         """Activa la lectura periódica si no está activada."""
-        timer = getattr(self, "_timer_poll", None)
-        if timer is not None and not timer.isActive():
-            timer.start()
+        if self._timer_poll is not None and not self._timer_poll.isActive():
+            self._timer_poll.start()
 
     def _stop_polling(self):
         """Detiene la lectura periódica."""
-        timer = getattr(self, "_timer_poll", None)
-        if timer is not None and timer.isActive():
-            timer.stop()
+        if self._timer_poll is not None and self._timer_poll.isActive():
+            self._timer_poll.stop()
+
+    def is_waiting_handshake(self):
+        return self.state in (EngineState.PENDING_UCIOK, EngineState.PENDING_READYOK)
 
     @QtCore.Slot()
     def _poll_output(self):
@@ -254,7 +291,7 @@ class EngineRun(QtCore.QObject):
     def _log_open(self, file: str):
         try:
             self.log = open(file, "at", encoding="utf-8")
-            self.log.write(f"{str(Util.today())}       {'-' * 70}\n\n")
+            self.log.write(f"{Util.today()!s}       {'-' * 70}\n\n")
         except Exception:
             self._log_exception("Log open failed")
             self.log = None
@@ -366,37 +403,53 @@ class EngineRun(QtCore.QObject):
             except Exception:
                 self._log_exception(f"Error al finalizar proceso padre {pid}: {traceback.format_exc()}")
 
-        # Asegurar que esté muerto (solo para el padre)
-        if including_parent:
-            try:
-                if parent.is_running():
-                    parent.kill()
-                    parent.wait(timeout=1)
-            except Exception:
-                pass
-
     # --- protected send command ---
-    def _send_command(self, command: str) -> bool:
+    def _send_command(self, command: str, state: EngineState) -> bool:
+        """Encola el comando y procesa la cola."""
+        if self.state == EngineState.CLOSED or self.process is None:
+            self.cmd_queue.clear()
+            return False
+        self.cmd_queue.append((command, state))
+        return self._process_queue()
+
+    def _process_queue(self) -> bool:
+        """Procesa y escribe en el motor las órdenes encoladas mientras no haya un handshake pendiente."""
+        if not self.cmd_queue or self.process is None:
+            return False
+
+        while self.cmd_queue and not self.is_waiting_handshake():
+            command, state = self.cmd_queue.pop(0)
+
+            self.state = state
+            success = self._write_command(command)
+            if not success:
+                return False
+            if state in (EngineState.PENDING_UCIOK, EngineState.PENDING_READYOK):
+                self._handshake_timeout_run()
+                self._start_polling()
+                return True
+            elif command.startswith("go "):
+                self._start_polling()
+                return True
+
+        return True
+
+    def _write_command(self, command: str) -> bool:
+        """Escribe directamente en el stdin del proceso QProcess."""
         try:
             if self.process is None:
                 return False
-            try:
-                running = self.process.state() == QtCore.QProcess.ProcessState.Running
-            except (RuntimeError, AttributeError):
-                return False
+            running = self.process.state() == QtCore.QProcess.ProcessState.Running
 
             if running:
-                try:
-                    self.process.write(f"{command}\n".encode("utf-8"))
+                self.process.write(f"{command}\n".encode())
 
-                    if self.control_ponder:
-                        self.control_ponder.check_command(command)
-                except (RuntimeError, OSError) as e:
-                    self._log_exception(f"write failed [{self.config.name}] '{command}': {e}")
-                    return False
+                if self.control_ponder:
+                    self.control_ponder.check_command(command)
 
                 if __debug__ and Debug.DEBUG_ENGINES_SEND:
-                    Debug.prln(f"->{self.config.name}: {command}")
+                    Debug.prln(f"->{self.config.name}: {command} {self.state}")
+                    Debug.prln(f"->{self.cmd_queue=}")
                 if self.log is not None:
                     try:
                         self.log.write(f"-> {command}\n")
@@ -405,8 +458,46 @@ class EngineRun(QtCore.QObject):
                 return True
             return False
         except Exception:
-            self._log_exception("Unexpected _send_command error")
+            self._log_exception("Unexpected _write_command error")
             return False
+
+    # --- Procesamiento de Respuestas del Motor ---
+
+    def _process_line(self, line: str):
+        if __debug__ and Debug.DEBUG_ENGINES:
+            Debug.prln(f"{self.config.name}: {line} {self.state}")
+
+        if self.log is not None:
+            try:
+                self.log.write(f"{line}\n")
+            except Exception:
+                self._log_exception("Log write line failed")
+
+        st = self.state
+        if st == EngineState.PENDING_UCIOK:
+            self._handle_reading_uci(line)
+        elif st == EngineState.PENDING_READYOK:
+            self._handle_pending_readyok(line)
+        elif st == EngineState.READING_EVAL_STOCKFISH:
+            self._handle_eval_stockfish(line)
+        elif st == EngineState.THINKING:
+            self._handle_thinking(line)
+
+    def _handle_reading_uci(self, line: str):
+        line = line.strip()
+        if line == "uciok":
+            self._handshake_timeout_off()
+            self.state = EngineState.OK
+            self._process_queue()  # Procesa los comandos acumulados durante el uciok
+        elif line.startswith(("id ", "option ")):
+            self.li_uci.append(line)
+
+    def _handle_pending_readyok(self, line: str):
+        line = line.strip()
+        if line == "readyok":
+            self._handshake_timeout_off()
+            self.state = EngineState.OK
+            self._process_queue()
 
     # --- read output safely ---
     @QtCore.Slot()
@@ -430,115 +521,77 @@ class EngineRun(QtCore.QObject):
             lines = self.stream_line_processor.convert(output)
             for line in lines:
                 try:
-                    if __debug__ and Debug.DEBUG_ENGINES:
-                        Debug.prln(f"{self.config.name}: {line}")
-                    if self.log is not None:
-                        try:
-                            self.log.write(f"{line}\n")
-                        except Exception:
-                            self._log_exception("Log write line failed")
-
-                    st = self.state
-
-                    if st == EngineState.READING_UCI:
-                        if line == "uciok":
-                            self.state = EngineState.OK
-                            if self.mode_timer_poll:
-                                # APAGAMOS POLLING
-                                self._stop_polling()
-                            if self._wait_loop:
-                                self._wait_loop.quit()
-                        else:
-                            if line.startswith(("id ", "option ")):
-                                self.li_uci.append(line.strip())
-
-                    elif st == EngineState.PENDING_READYOK:
-                        if line == "readyok":
-                            self.state = EngineState.OK
-                            if self.mode_timer_poll:
-                                # APAGAMOS POLLING
-                                self._stop_polling()
-
-                            if self._wait_loop:
-                                self._wait_loop.quit()
-
-                    elif st == EngineState.READING_EVAL_STOCKFISH:
-                        self.li_cache.append(line)
-                        if line.startswith("Final "):
-                            self.state = EngineState.OK
-                            if self.mode_timer_poll:
-                                # APAGAMOS POLLING
-                                self._stop_polling()
-
-                            if self.emit_enabled:
-                                try:
-                                    self.eval_stockfish_found.emit("\n".join(self.li_cache))
-                                except Exception:
-                                    self._log_exception("eval_stockfish_found emit failed")
-                            self.li_cache = []
-
-                    elif st == EngineState.THINKING:
-                        emited_depth = False
-                        new_depth = 0
-                        current_time = int(time.time() * 1000)
-                        if self.mrm is not None:
-                            try:
-                                self.mrm.dispatch(line)
-                            except Exception:
-                                self._log_exception("mrm.dispatch error")
-                            new_depth = self.mrm.get_current_depth()
-                            if new_depth > self.last_depth_emit:
-                                self.mrm.ordena()
-                                if self.emit_enabled:
-                                    if current_time - self.last_time_depth_emit >= self.time_interval_depth_emit:
-                                        self.last_depth_emit = new_depth
-                                        self.last_time_depth_emit = current_time
-                                        try:
-                                            self.depth_changed.emit()
-                                            emited_depth = True
-                                        except Exception:
-                                            self._log_exception("depth_changed emit failed")
-
-                        if line.startswith("bestmove"):
-                            self.state = EngineState.OK
-                            if self.mode_timer_poll:
-                                # APAGAMOS POLLING
-                                self._stop_polling()
-
-                            li = line.split(" ")
-                            self.bestmove = li[1] if len(li) > 1 else ""
-                            if self.emit_enabled:
-                                try:
-                                    if not emited_depth:  # si no se ha emitido el depth, lo emitimos
-                                        self.last_depth_emit = new_depth
-                                        self.last_time_depth_emit = current_time
-                                        self.depth_changed.emit()
-                                    self.bestmove_found.emit(self.bestmove)
-                                except Exception:
-                                    self._log_exception("bestmove_found emit failed")
-
-                            if self.control_ponder and self.bestmove:
-                                self.control_ponder.received_bestmove(line)
+                    self._process_line(line)
                 except Exception:
                     self._log_exception("Unhandled error processing engine line")
                     continue
         except Exception:
             self._log_exception("Critical error in _read_output")
 
+    def _handle_eval_stockfish(self, line: str):
+        self.li_cache.append(line)
+        if line.startswith("Final "):
+            self.state = EngineState.OK
+            if self.mode_timer_poll:
+                self._stop_polling()
+            if self.emit_enabled:
+                try:
+                    self.eval_stockfish_found.emit("\n".join(self.li_cache))
+                except Exception:
+                    self._log_exception("eval_stockfish_found emit failed")
+            self.li_cache = []
+
+    def _handle_thinking(self, line: str):
+        emited_depth = False
+        new_depth = 0
+        current_time = int(time.monotonic() * 1000)
+        if self.mrm is not None:
+            try:
+                self.mrm.dispatch(line)
+            except Exception:
+                self._log_exception("mrm.dispatch error")
+            new_depth = self.mrm.get_current_depth()
+            if new_depth > self.last_depth_emit:
+                self.mrm.ordena()
+                if self.emit_enabled:
+                    if current_time - self.last_time_depth_emit >= self.time_interval_depth_emit:
+                        self.last_depth_emit = new_depth
+                        self.last_time_depth_emit = current_time
+                        try:
+                            self.depth_changed.emit()
+                            emited_depth = True
+                        except Exception:
+                            self._log_exception("depth_changed emit failed")
+        li = line.split()
+        if line.startswith("bestmove") and len(li) > 1:
+            self.state = EngineState.OK
+            if self.mode_timer_poll:
+                self._stop_polling()
+
+            self.bestmove = li[1]
+            if self.emit_enabled and self.bestmove:
+                try:
+                    if not emited_depth:
+                        self.last_depth_emit = new_depth
+                        self.last_time_depth_emit = current_time
+                        self.depth_changed.emit()
+                    self.bestmove_found.emit(self.bestmove)
+                except Exception:
+                    self._log_exception("bestmove_found emit failed")
+
+            if self.control_ponder and self.bestmove:
+                self.control_ponder.received_bestmove(line)
+
     # --- terminated handler ---
     @QtCore.Slot(int, QtCore.QProcess.ExitStatus)
     def _engine_terminated(self, exit_code: int, exit_status: QtCore.QProcess.ExitStatus):
         try:
             self.state = EngineState.OFF
+            self._handshake_timeout_off()
             if self.mode_timer_poll:
                 # APAGAMOS POLLING
                 self._stop_polling()
 
-            if self._wait_loop:
-                try:
-                    self._wait_loop.quit()
-                except Exception:
-                    self._log_exception("wait_loop quit failed")
             if self.emit_enabled:
                 try:
                     self.engine_terminated.emit()
@@ -552,39 +605,6 @@ class EngineRun(QtCore.QObject):
         except Exception:
             self._log_exception("Error handling engine termination")
 
-    # --- wait helper ---
-    def _wait_for(self, command: str, wait_state: EngineState, timeout_ms: int = 3000) -> bool:
-        self.state = wait_state
-
-        self._wait_loop = QtCore.QEventLoop()
-
-        if self.mode_timer_poll:
-            # ACTIVAR POLLING para esperar la respuesta
-            self._start_polling()
-
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.timeout.connect(self._wait_loop.quit)
-        timer.start(timeout_ms)
-        QtCore.QTimer.singleShot(0, lambda: self._send_command(command))
-
-        # ELIMINADO: QtCore.QCoreApplication.processEvents()  # Causa reentrancia peligrosa
-        self._wait_loop.exec()
-        timer.stop()
-
-        ok = self.state == EngineState.OK
-        if self.mode_timer_poll:
-            # Si salimos por timeout, apagar polling manualmente
-            if not ok:
-                self._stop_polling()
-
-        self._wait_loop = None
-        return ok
-
-    def _read_uci(self) -> str:
-        self.uci_ok = self._wait_for("uci", EngineState.READING_UCI)
-        return "\n".join(self.li_uci)
-
     # --- public API ---
     def path_exe(self):
         return self.config.path_exe
@@ -593,7 +613,7 @@ class EngineRun(QtCore.QObject):
         return self.li_uci
 
     def isready(self):
-        return self._wait_for("isready", EngineState.PENDING_READYOK)
+        self._send_command("isready", EngineState.PENDING_READYOK)
 
     def log_open(self, file):
         self._log_open(file)
@@ -606,12 +626,19 @@ class EngineRun(QtCore.QObject):
             self._timerstop_off()
             is_pondering = self.control_ponder and self.control_ponder.ponder
             if self.state not in (EngineState.OFF, EngineState.OK) or is_pondering:
-                self._send_command("stop")
+                self._write_command("stop")
+                # No se vacía toda la cola (perdería los "setoption" aún pendientes de
+                # aplicar durante un handshake). Se descartan solo las órdenes que ya
+                # no tienen sentido tras un stop (go, position, etc.); "setoption" se
+                # conserva para que se aplique en cuanto termine el handshake.
+                self.cmd_queue = [
+                    (command, state) for command, state in self.cmd_queue if command.startswith("setoption")
+                ]
         except Exception:
             self._log_exception("Error in stop()")
 
     def time_played(self):
-        return (time.time() - self.play_time_begin) if self.play_time_begin else 0.0
+        return (time.monotonic() - self.play_time_begin) if self.play_time_begin else 0.0
 
     def set_multipv(self, num_multipv: int):
         self._set_option("MultiPV", str(num_multipv))
@@ -621,13 +648,13 @@ class EngineRun(QtCore.QObject):
 
     def _set_option(self, option, value):
         if value:
-            self._send_command(f"setoption name {option} value {value}")
+            self._send_command(f"setoption name {option} value {value}", EngineState.OK)
             if option == "Ponder" and value == "true":
                 self.control_ponder = Ponder(
                     self, self._send_command, self._start_polling if self.mode_timer_poll else None
                 )
         else:
-            self._send_command(f"setoption name {option}")
+            self._send_command(f"setoption name {option}", EngineState.OK)
 
     def _set_options_uci(self, li_options_uci):
         for opcion, valor in li_options_uci:
@@ -637,7 +664,7 @@ class EngineRun(QtCore.QObject):
 
     def _ucinewgame(self):
         self._timerstop_off()
-        self._send_command("ucinewgame")
+        self._send_command("ucinewgame", EngineState.OK)
 
     def _timerstop_off(self, remove: bool = False):
         if self.timerstop is not None:
@@ -651,7 +678,7 @@ class EngineRun(QtCore.QObject):
 
     def _timerstop_run(self, mstime: int):
         if self.timerstop is None:
-            self.timerstop = QtCore.QTimer()
+            self.timerstop = QtCore.QTimer(self)
             self.timerstop.setSingleShot(True)
             # noinspection PyUnresolvedReferences
             self.timerstop.timeout.connect(self._on_timeout_timerstop)
@@ -666,9 +693,54 @@ class EngineRun(QtCore.QObject):
     def _on_timeout_timerstop(self):
         self.stop()
 
+    # --- handshake timeout (uci -> uciok / isready -> readyok) ---
+    def _handshake_timeout_off(self, remove: bool = False):
+        if self.handshake_timeout is not None:
+            try:
+                if self.handshake_timeout.isActive():
+                    self.handshake_timeout.stop()
+                if remove:
+                    self.handshake_timeout = None
+            except Exception:
+                self._log_exception("handshake_timeout_off failed")
+
+    def _handshake_timeout_run(self, mstime: int = _HANDSHAKE_TIMEOUT_MS):
+        if self.handshake_timeout is None:
+            self.handshake_timeout = QtCore.QTimer(self)
+            self.handshake_timeout.setSingleShot(True)
+            # noinspection PyUnresolvedReferences
+            self.handshake_timeout.timeout.connect(self._on_handshake_timeout)
+        try:
+            if self.handshake_timeout.isActive():
+                self.handshake_timeout.stop()
+            self.handshake_timeout.start(mstime)
+        except Exception:
+            self._log_exception("handshake_timeout_run failed")
+
+    @QtCore.Slot()
+    def _on_handshake_timeout(self):
+        """Se dispara si el motor no respondió 'uciok'/'readyok' a tiempo."""
+        if not self.is_waiting_handshake():
+            return  # se resolvió justo antes de disparar; nada que hacer
+        estado_esperado = self.state
+        if __debug__:
+            Debug.prln(
+                f"{self.config.name}: timeout esperando respuesta a {estado_esperado} (motor no responde)",
+                color="red",
+            )
+        self.cmd_queue.clear()
+        self.state = EngineState.ERROR
+        if self.mode_timer_poll:
+            self._stop_polling()
+        if self.emit_enabled:
+            try:
+                self.engine_error.emit(f"El motor '{self.config.name}' no respondió a tiempo ({estado_esperado.name})")
+            except Exception:
+                self._log_exception("engine_error emit failed")
+
     def stop_and_wait(self, timeout_ms: int = 3000) -> bool:
         try:
-            self._send_command("stop")
+            self._send_command("stop", EngineState.OK)
             return self.process.waitForFinished(timeout_ms) if self.process else True
         except Exception:
             self._log_exception("stop_and_wait failed")
@@ -698,13 +770,6 @@ class EngineRun(QtCore.QObject):
                 self._log_exception("polling cleanup failed")
             self._timer_poll = None
 
-        # Terminar bucles de eventos pendientes
-        if self._wait_loop:
-            try:
-                self._wait_loop.quit()
-            except Exception:
-                self._log_exception("wait_loop quit failed")
-
         # Bloquear señales para evitar eventos durante el cierre
         with contextlib.suppress(RuntimeError, AttributeError):
             self.blockSignals(True)
@@ -716,14 +781,17 @@ class EngineRun(QtCore.QObject):
         except Exception:
             self._log_exception("timerstop_off failed")
 
+        # Detener timeout de handshake si existe
+        try:
+            self._handshake_timeout_off(True)
+        except Exception:
+            self._log_exception("handshake_timeout_off failed")
+
         # Desconectar señales Qt
         if self.process is not None:
             try:
-                if self.mode_timer_poll:
-                    self._safe_disconnect(self.process.finished, self._engine_terminated)
-                else:
-                    self._safe_disconnect(self.process.readyReadStandardOutput, self._read_output)
-                    self._safe_disconnect(self.process.finished, self._engine_terminated)
+                self._safe_disconnect(self.process.readyReadStandardOutput, self._read_output)
+                self._safe_disconnect(self.process.finished, self._engine_terminated)
             except Exception:
                 self._log_exception("signal disconnect failed")
 
@@ -742,7 +810,7 @@ class EngineRun(QtCore.QObject):
                 if pid > 0:
                     # Estrategia 1: Intento de cierre normal
                     try:
-                        self._send_command("quit")
+                        self._send_command("quit", EngineState.OK)
                     except Exception:
                         self._log_exception("quit command failed")
 
@@ -766,6 +834,8 @@ class EngineRun(QtCore.QObject):
             except Exception:
                 self._log_exception("QProcess close failed")
 
+        self.cmd_queue.clear()
+
         # Limpiar referencias
         self.process = None
 
@@ -777,7 +847,7 @@ class EngineRun(QtCore.QObject):
         self.state = EngineState.CLOSED
 
     # --- positions / play ---
-    def set_game_position(self, game: Game.Game, movement: Optional[int], pre_move: bool):
+    def set_game_position(self, game: Game.Game, movement: int | None, pre_move: bool):
         self.stop()
         self.isready()
         order = "startpos" if game.is_fen_initial() else f"fen {game.first_position.fen()}"
@@ -801,7 +871,7 @@ class EngineRun(QtCore.QObject):
         if self.control_ponder:
             self.control_ponder.send_command(order)
         else:
-            self._send_command(order)
+            self._send_command(order, EngineState.OK)
 
     def set_fen_position(self, fen: str):
         self.stop()
@@ -812,7 +882,7 @@ class EngineRun(QtCore.QObject):
         if self.control_ponder:
             self.control_ponder.send_command(order)
         else:
-            self._send_command(order)
+            self._send_command(order, EngineState.OK)
 
     def play(self, run_engine_params: RunEngineParams):
 
@@ -820,8 +890,7 @@ class EngineRun(QtCore.QObject):
             self.last_depth_emit = 0
             self.last_time_depth_emit = 0
 
-            self.play_time_begin = time.time()
-            self.state = EngineState.THINKING
+            self.play_time_begin = time.monotonic()
 
             if self.mode_timer_poll:
                 # ACTIVAMOS POLLING
@@ -832,7 +901,7 @@ class EngineRun(QtCore.QObject):
             if self.control_ponder:
                 self.control_ponder.send_command(xorder)
             else:
-                self._send_command(xorder)
+                self._send_command(xorder, EngineState.THINKING)
 
             if run_engine_params.fixed_ms or run_engine_params.fixed_depth:
                 if self.mrm:
@@ -860,7 +929,7 @@ class EngineRun(QtCore.QObject):
             send_go(f"movetime {int(run_engine_params.fixed_ms)}")
             return
 
-        if run_engine_params.timems_white > 0:
+        if run_engine_params.timems_white > 0 or run_engine_params.timems_black > 0:
             order = f"wtime {run_engine_params.timems_white} btime {run_engine_params.timems_black}"
             if run_engine_params.inc_timems_move:
                 order += f" winc {run_engine_params.inc_timems_move} binc {run_engine_params.inc_timems_move}"
@@ -876,15 +945,19 @@ class EngineRun(QtCore.QObject):
         return self.mrm.clone() if self.mrm else None
 
     def run_eval_stockfish(self, fen: str):
+        """Envía el comando 'eval' a Stockfish para obtener una evaluación de la posición FEN dada.
+
+        Método específico de Stockfish. No usar con otros motores UCI.
+        Requiere que el motor esté en estado OK y que tenga habilitado el comando 'EvalFile'.
+        """
         self.set_fen_position(fen)
         self.li_cache = []
-        self.state = EngineState.READING_EVAL_STOCKFISH
 
         if self.mode_timer_poll:
             # ACTIVAMOS POLLING
             self._start_polling()
 
-        self._send_command("eval")
+        self._send_command("eval", EngineState.READING_EVAL_STOCKFISH)
 
 
 class Ponder:
@@ -894,7 +967,7 @@ class Ponder:
         self._start_polling: Callable | None = start_polling  # si es none es porque el mode no es polling
         self.last_position_sent = ""
         self.last_go_sent = ""
-        self.last_time = 0
+        self.last_time = 0.0
         self.ponder: str = ""
         self.post_ponderhit: bool = False  # True después de enviar ponderhit, el próximo go debe descartarse
         self.lock = False  # para que no se mezclen los chequeos de las ordenes con las de la clase
@@ -914,8 +987,8 @@ class Ponder:
             self.last_position_sent = command
         elif command.startswith("go"):
             self.last_go_sent = command
-            self.last_time = time.time()
-        elif command.startswith('stop'):
+            self.last_time = time.monotonic()
+        elif command.startswith("stop"):
             self.reset()
 
     def send_command(self, command):
@@ -957,15 +1030,15 @@ class Ponder:
         if len(li) >= 4 and li[2] == "ponder":
             self.ponder = li[3]
             if "fen" in self.last_position_sent and "moves" not in self.last_position_sent:
-                command = f'{self.last_position_sent} moves'
+                command = f"{self.last_position_sent} moves"
             else:
                 command = self.last_position_sent
-            command_position = f'{command.strip()} {li[1]} {li[3]}'
+            command_position = f"{command.strip()} {li[1]} {li[3]}"
 
             li_go = self.last_go_sent.split()
             if "wtime" in self.last_go_sent:
                 try:
-                    mstime_used = int((time.time() - self.last_time) * 1000)
+                    mstime_used = int((time.monotonic() - self.last_time) * 1000)
                     is_white = self.engine_run.is_white
                     token_time = "wtime" if is_white else "btime"
                     if token_time in li_go:

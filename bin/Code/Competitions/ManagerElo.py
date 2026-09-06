@@ -1,10 +1,7 @@
 import datetime
 import random
 
-import OSEngines
-
 import Code
-from Code.Z import Adjournments, Util
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_ELO,
@@ -25,6 +22,7 @@ from Code.ManagerBase import Manager
 from Code.Openings import Opening
 from Code.QT import QTDialogs, QTMessages
 from Code.SQL import UtilSQL
+from Code.Z import Adjournments, Util
 
 
 def list_engines_play_elo():
@@ -137,8 +135,8 @@ umko|2|1385|6869
 umko|3|1883|7462
 umko|4|2081|7887"""
     li = []
-    dic_engines = OSEngines.read_engines(Code.folder_engines)
 
+    dic_engines = Code.configuration.engines.dic_engines_internal()
     for linea in x.split("\n"):
         key, depth, fide, sts = linea.split("|")
         if key in dic_engines:

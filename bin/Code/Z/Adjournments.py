@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import Code
 from Code.Base.Constantes import GT_AGAINST_ENGINE_LEAGUE, GT_AGAINST_ENGINE_SWISS
@@ -55,7 +55,7 @@ class Adjournments:
         if num_elem == 0:
             Util.remove_file(self.file)
 
-    def list_menu(self) -> Optional[List[Tuple[str, str, int]]]:
+    def list_menu(self) -> list[tuple[str, str, int]] | None:
         try:
             with self.open() as db:
                 li = db.keys(True)
@@ -97,7 +97,7 @@ class Adjournments:
             manager.procesador.start()
             return True
 
-    def _key_match(self, xmatch, game_type: int) -> Optional[Tuple[str, dict]]:
+    def _key_match(self, xmatch, game_type: int) -> tuple[str, dict] | None:
         with self.open() as db:
             li = db.keys(True)
             for key in li:
@@ -111,10 +111,10 @@ class Adjournments:
                             return key, dic
         return None
 
-    def key_match_league(self, xmatch) -> Optional[Tuple[str, dict]]:
+    def key_match_league(self, xmatch) -> tuple[str, dict] | None:
         return self._key_match(xmatch, GT_AGAINST_ENGINE_LEAGUE)
 
-    def key_match_swiss(self, xmatch) -> Optional[Tuple[str, dict]]:
+    def key_match_swiss(self, xmatch) -> tuple[str, dict] | None:
         return self._key_match(xmatch, GT_AGAINST_ENGINE_SWISS)
 
     def __enter__(self):

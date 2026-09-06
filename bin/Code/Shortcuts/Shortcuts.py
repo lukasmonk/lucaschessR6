@@ -1,7 +1,6 @@
-from typing import Optional, Literal
+from typing import Literal
 
 import Code
-from Code.Z import Util
 from Code.Menus import (
     BaseMenu,
     CompeteMenu,
@@ -12,12 +11,13 @@ from Code.Menus import (
     ToolsMenu,
     TrainMenu,
 )
-from Code.QT import Iconos, QTDialogs
+from Code.QT import Controles, Iconos, QTDialogs
 from Code.Shortcuts import WShortcuts
+from Code.Z import Util
 
 
 class Shortcut:
-    __slots__ = ("key_menu", "key", "label")
+    __slots__ = ("key", "key_menu", "label")
 
     key_menu: str
     key: str
@@ -57,13 +57,13 @@ class Shortcuts:
     def __init__(self, procesador) -> None:
         self.procesador = procesador
         self.wparent = procesador.main_window
-        self._play_menu: Optional[PlayMenu.PlayMenu] = None
-        self._train_menu: Optional[TrainMenu.TrainMenu] = None
-        self._compete_menu: Optional[CompeteMenu.CompeteMenu] = None
-        self._tools_menu: Optional[ToolsMenu.ToolsMenu] = None
-        self._engines_menu: Optional[EnginesMenu.EnginesMenu] = None
-        self._options_menu: Optional[OptionsMenu.OptionsMenu] = None
-        self._information_menu: Optional[InformationMenu.InformationMenu] = None
+        self._play_menu: PlayMenu.PlayMenu | None = None
+        self._train_menu: TrainMenu.TrainMenu | None = None
+        self._compete_menu: CompeteMenu.CompeteMenu | None = None
+        self._tools_menu: ToolsMenu.ToolsMenu | None = None
+        self._engines_menu: EnginesMenu.EnginesMenu | None = None
+        self._options_menu: OptionsMenu.OptionsMenu | None = None
+        self._information_menu: InformationMenu.InformationMenu | None = None
         self.li_shortcuts: list[Shortcut] = []
         self.read()
 
@@ -142,8 +142,8 @@ class Shortcuts:
         del self.li_shortcuts[nshortcut]
 
     @staticmethod
-    def _format_label_and_shortcut(label: str, alt: int, with_add: bool) -> tuple[str, Optional[str], int]:
-        shortcut_text: Optional[str]
+    def _format_label_and_shortcut(label: str, alt: int, with_add: bool) -> tuple[str, str | None, int]:
+        shortcut_text: str | None
         if alt <= 9 and with_add:
             shortcut_text = f"ALT+{alt}"
             alt += 1
@@ -158,8 +158,16 @@ class Shortcuts:
         if not with_add and not self.li_shortcuts:
             return None
         menu = QTDialogs.LCMenu(self.wparent)
+        if with_add:
+            menu.opcion(
+                "shortcuts",
+                _("Shortcuts"),
+                font_type=Controles.FontType(peso=700, point_size_delta=+4),
+                icono=Iconos.Atajos(),
+            )
+            menu.separador()
         alt = 1
-        option: Optional[BaseMenu.Option]
+        option: BaseMenu.Option | None
         for shortcut in self.li_shortcuts:
             key = shortcut.key
             key_menu = shortcut.key_menu
@@ -174,10 +182,8 @@ class Shortcuts:
                     not option.enabled,
                     shortcut=sh,
                 )
-                menu.separador()
-        if with_add:
-            menu.separador()
-            menu.opcion("shortcuts", _("Add new shortcuts"), Iconos.Mas())
+                if not with_add:
+                    menu.separador()
         return menu.lanza()
 
     def menu(self) -> None:

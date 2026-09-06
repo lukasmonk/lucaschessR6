@@ -1,11 +1,10 @@
 import os
 import ssl
 import sys
-from typing import Optional
 
 from Code.Z import Util
 
-VERSION = "R 6.0.4"
+VERSION = "R 6.1.0"
 BASE_VERSION = "C"
 
 Util.randomize()
@@ -14,9 +13,14 @@ current_dir = os.path.abspath(os.path.realpath(os.path.dirname(sys.argv[0])))
 if current_dir:
     os.chdir(current_dir)
 
-lucas_chess: Optional[str] = None  # asignado en Translate
+lucas_chess: str | None = None  # asignado en Translate
 
-platform = "win32" if sys.platform == "win32" else "linux"
+if sys.platform == "win32":
+    platform = "win32"
+elif sys.platform == "darwin":
+    platform = "darwin"
+else:
+    platform = "linux"
 
 folder_os = Util.opj(current_dir, "OS", platform)
 sys.path.insert(0, folder_os)
@@ -36,7 +40,7 @@ def path_resource(*lista):
 folder_engines = Util.opj(folder_os, "Engines")
 
 if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(ssl, "_create_unverified_context", None):
-    ssl._create_default_https_context = getattr(ssl, "_create_unverified_context")
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 configuration = None
 procesador = None
@@ -48,7 +52,12 @@ tbookPTZ = path_resource("Openings", "fics15.bin")
 tbookI = path_resource("Openings", "irina.bin")
 manager_tutor = None
 
-font_mono = "Courier New" if Util.is_windows() else "Mono"
+if Util.is_windows():
+    font_mono = "Courier New"
+elif Util.is_macos():
+    font_mono = "Menlo"  # macOS has no "Mono" family
+else:
+    font_mono = "Mono"
 
 list_engine_managers = None
 
@@ -62,8 +71,8 @@ analysis_eval = None
 
 eboard = None
 
-dic_colors: Optional[dict] = None
-dic_qcolors: Optional[dict] = None
+dic_colors: dict | None = None
+dic_qcolors: dict | None = None
 
 dic_markers: dict = {}
 
@@ -72,8 +81,6 @@ themes = None
 main_window = None
 
 garbage_collector = None
-
-engines_has_been_checked = False
 
 web = "https://lucaschess.pythonanywhere.com"
 blog = "https://lucaschess.blogspot.com"
@@ -105,8 +112,8 @@ def relative_root(path):
 if __debug__:
     from Code.Z import Debug
 
-    Debug.prln("Modo debug activado", color="green")
+    Debug.prln("Debug Mode", color="green")
     if Debug.DEBUG_ENGINES:
-        Debug.prln("Modo debug engine", color="red")
+        Debug.prln("Engine Debug", color="red")
     if Debug.DEBUG_ENGINES_SEND:
-        Debug.prln("Modo debug engine send", color="blue")
+        Debug.prln("Send Engine Debug", color="blue")

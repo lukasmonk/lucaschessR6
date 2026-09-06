@@ -1,5 +1,4 @@
 import Code
-from Code.Z import Adjournments, Util
 from Code.Base.Constantes import (
     BLACK,
     GT_HUMAN,
@@ -27,6 +26,7 @@ from Code.Base.Constantes import (
 )
 from Code.ManagerBase import Manager
 from Code.QT import Iconos, QTMessages, QTUtils
+from Code.Z import Adjournments, Util
 
 
 class ManagerPlayHuman(Manager.Manager):

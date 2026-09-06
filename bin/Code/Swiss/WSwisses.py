@@ -3,9 +3,9 @@ import shutil
 import time
 
 import Code
-from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.Swiss import Swiss, WSwiss, WSwissConfig
+from Code.Z import Util
 
 
 class WSwisses(LCDialog.LCDialog):

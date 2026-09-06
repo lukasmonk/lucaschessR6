@@ -8,7 +8,7 @@ from Code.QT import Colocacion, Controles, Iconos
 class WAbout(QtWidgets.QDialog):
     def __init__(self):
         procesador = Code.procesador
-        super(WAbout, self).__init__(procesador.main_window)
+        super().__init__(procesador.main_window)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -119,7 +119,6 @@ class WAbout(QtWidgets.QDialog):
             w = QtWidgets.QWidget()
             Colocacion.V(w).control(lb).relleno()
         sa.setWidget(w)
-
 
 
 # def gen_web_bootstrap():

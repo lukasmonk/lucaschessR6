@@ -3,10 +3,10 @@ import copy
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Board import Board, BoardArrows, BoardTypes
 from Code.Director import TabVisual
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
+from Code.Z import Util
 
 
 def types_destination():

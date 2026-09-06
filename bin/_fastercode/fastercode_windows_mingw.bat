@@ -39,8 +39,8 @@ REM Library Irina
 echo Creating the C irina library
 cd src
 cd irina
-gcc -DNDEBUG -DWIN32 -fPIC -O2 -march=x86-64 -mtune=generic -c lc.c board.c data.c eval.c hash.c loop.c makemove.c movegen.c movegen_piece_to.c search.c util.c pgn.c parser.c polyglot.c
-ar cr ../libirina.so lc.o board.o data.o eval.o hash.o loop.o makemove.o movegen.o movegen_piece_to.o search.o util.o pgn.o parser.o polyglot.o
+gcc -DNDEBUG -DWIN32 -fPIC -O2 -march=x86-64 -mtune=generic -c lc.c board.c data.c hash.c makemove.c movegen.c movegen_piece_to.c util.c pgn.c parser.c polyglot.c
+ar cr ../libirina.so lc.o board.o data.o hash.o makemove.o movegen.o movegen_piece_to.o util.o pgn.o parser.o polyglot.o
 del *.o
 cd ..
 REM ---------------------------------------------------------------------------------------------------------

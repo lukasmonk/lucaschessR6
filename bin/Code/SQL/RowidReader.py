@@ -1,8 +1,7 @@
 import random
 import sqlite3
-from typing import Optional, List
 
-from PySide6.QtCore import QThread, Signal, QMutex, QMutexLocker
+from PySide6.QtCore import QMutex, QMutexLocker, QThread, Signal
 
 
 class RowidReader(QThread):
@@ -17,14 +16,14 @@ class RowidReader(QThread):
         super().__init__(parent)
         self.path_file = path_file
         self.tabla = tabla
-        self.where: Optional[str] = None
-        self.order: Optional[str] = None
-        self.li_row_ids: List[int] = []
+        self.where: str | None = None
+        self.order: str | None = None
+        self.li_row_ids: list[int] = []
         self.chunk = 2024
         self._stop_flag = False
         self._mutex = QMutex()
 
-    def setup(self, li_row_ids: List[int], where: Optional[str], order: Optional[str]) -> None:
+    def setup(self, li_row_ids: list[int], where: str | None, order: str | None) -> None:
         """Prepara los parámetros para la lectura"""
         self.stopnow()
         self.where = where
@@ -76,7 +75,7 @@ class RowidReader(QThread):
         except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
             self.error_occurred.emit(str(e))
         except Exception as e:
-            self.error_occurred.emit(f"Unexpected error: {str(e)}")
+            self.error_occurred.emit(f"Unexpected error: {e!s}")
         finally:
             if cursor:
                 cursor.close()
@@ -101,7 +100,7 @@ class RowidReader(QThread):
         with QMutexLocker(self._mutex):
             return len(self.li_row_ids)
 
-    def get_rowids(self) -> List[int]:
+    def get_rowids(self) -> list[int]:
         """Retorna una copia de los rowids leídos"""
         with QMutexLocker(self._mutex):
             return self.li_row_ids.copy()

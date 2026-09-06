@@ -1,12 +1,10 @@
 from dataclasses import dataclass
-from typing import List, Optional, Union
 
 from PySide6.QtGui import QIcon
 
 import Code
 from Code.Base.Constantes import ExitProgram
-from Code.QT import Controles, QTDialogs
-from Code.QT import QTUtils
+from Code.QT import Controles, QTDialogs, QTUtils
 
 
 @dataclass(frozen=True)
@@ -38,7 +36,7 @@ class Option:
 
 class RootMenuBase:
     def __init__(self):
-        self.li_options: List[Union[Option, SubMenu]] = []
+        self.li_options: list[Option | SubMenu] = []
 
     def new(self, key: str, label: str, icon: QIcon, sep=True, enabled=True) -> Option:
         option = Option(key, label, icon, sep, enabled)
@@ -111,9 +109,9 @@ class RootMenu(RootMenuBase):
 
         return list_pshortcuts
 
-    def locate_key(self, key: str) -> Optional[Option]:
+    def locate_key(self, key: str) -> Option | None:
         self.check_pending()
-        locate_option: Optional[Option] = None
+        locate_option: Option | None = None
 
         def locate_in(opt: Option):
             nonlocal locate_option

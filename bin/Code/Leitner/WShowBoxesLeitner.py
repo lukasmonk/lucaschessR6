@@ -1,6 +1,6 @@
-from PySide6 import QtCore, QtWidgets, QtSvgWidgets
+from PySide6 import QtCore, QtSvgWidgets, QtWidgets
 
-from Code.QT import Controles, Colocacion
+from Code.QT import Colocacion, Controles
 
 SVG_TEMPLATE_BOX = """<?xml version="1.0" encoding="UTF-8"?>
 <svg width="120" height="110" xmlns="http://www.w3.org/2000/svg">
@@ -144,7 +144,7 @@ class WShowBoxesLeitner(QtWidgets.QWidget):
         }
 
         layout = Colocacion.H()
-        for num_box in range(0, 6):
+        for num_box in range(6):
             wbox = self.create_box(num_box, box_contents[num_box], box_session[num_box])
             layout.control(wbox)
             if num_box != 5:

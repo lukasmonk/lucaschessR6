@@ -682,10 +682,8 @@ class ManagerSolo(Manager.Manager):
                 delattr(rival, "icono")  # problem with configuration.write_variables and saving qt variables
             r_t = int(dr["ENGINE_TIME"] * 100)  # Se guarda en decimas -> milesimas
             r_p = dr["ENGINE_DEPTH"]
-            if r_t <= 0:
-                r_t = 0
-            if r_p <= 0:
-                r_p = 0
+            r_t = max(0, r_t)
+            r_p = max(0, r_p)
             if r_t == 0 and r_p == 0 and not dic.get("SITIEMPO", False):
                 r_t = 1000
 

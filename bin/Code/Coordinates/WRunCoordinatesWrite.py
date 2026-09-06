@@ -206,7 +206,7 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
 
     def show_info(self):
         done = f"{_('Done')}: {self.coord.str_done_info(self.pieces)}"
-        add_seconds = int(time.time() - self.time_ini) if self.time_ini else 0
+        add_seconds = int(time.monotonic() - self.time_ini) if self.time_ini else 0
         tm = f"{_('Time')}: {self.coord.str_time(add_seconds)}"
         errors = f"{_('Errors')}: {self.coord.errors}"
         side = _("White") if self.side == WHITE else _("Black")
@@ -238,12 +238,12 @@ class WRunCoordinatesWrite(LCDialog.LCDialog):
             position.squares[a1] = pz
         self.board.set_position(position)
         self.position = position
-        self.time_ini = time.time()
+        self.time_ini = time.monotonic()
         QTUtils.refresh_gui()
 
     def check_time(self):
         if self.time_ini:
-            tm = time.time() - self.time_ini
+            tm = time.monotonic() - self.time_ini
             self.coord.add_time(int(tm * 1000))
             self.db_coordinates.save(self.coord)
 

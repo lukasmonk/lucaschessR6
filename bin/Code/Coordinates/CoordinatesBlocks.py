@@ -1,5 +1,3 @@
-from typing import Optional
-
 import datetime
 
 from Code.Base.Constantes import BLACK, WHITE
@@ -9,7 +7,7 @@ from Code.SQL import UtilSQL
 
 class CoordinatesBlocks:
     date_ini: datetime.datetime
-    date_end: Optional[datetime.datetime]
+    date_end: datetime.datetime | None
     min_score: int
     tries: int
     current_block: int

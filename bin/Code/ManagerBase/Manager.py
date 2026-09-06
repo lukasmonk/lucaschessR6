@@ -16,9 +16,9 @@ from Code.Base.Constantes import (
     GO_FORWARD2,
     GOOD_MOVE,
     GT_ELO,
+    GT_GRID,
     GT_MICELO,
     GT_WICKER,
-    GT_GRID,
     NO_RATING,
     RESULT_DRAW,
     RS_DRAW,
@@ -43,7 +43,7 @@ from Code.Base.Constantes import (
     WHITE,
 )
 from Code.Databases import DBgames
-from Code.Engines import EngineResponse, EngineManagerAnalysis
+from Code.Engines import EngineManagerAnalysis, EngineResponse
 from Code.ManagerBase import (
     ManagerAnalysis,
     ManagerMenuConfig,
@@ -55,7 +55,7 @@ from Code.Openings import Opening, OpeningsStd
 from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils
 from Code.Replay import WReplay
 from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
-from Code.ZQT import WindowArbolBook, WindowArbol
+from Code.ZQT import WindowArbol, WindowArbolBook
 
 
 class Manager:
@@ -484,11 +484,11 @@ class Manager:
                 self.board.show_lichess_graphics(move.comment)
 
         if (
-                self.main_window.siCapturas
-                or self.main_window.siInformacionPGN
-                or self.kibitzers_manager.some_working()
-                or self.configuration.x_show_bestmove
-                or self.configuration.x_show_rating
+            self.main_window.siCapturas
+            or self.main_window.siInformacionPGN
+            or self.kibitzers_manager.some_working()
+            or self.configuration.x_show_bestmove
+            or self.configuration.x_show_rating
         ):
             if move and (self.configuration.x_show_bestmove or self.configuration.x_show_rating):
                 move_check = move
@@ -926,7 +926,7 @@ class Manager:
 
         if self.with_previous_next:
             if params.dic_data["REPLAY_CONTINUOUS"]:
-                getattr(self, "replay_continuous")()
+                self.replay_continuous()
                 return
 
         self.xpelicula = WReplay.Replay(self)
@@ -974,7 +974,7 @@ class Manager:
             return False
         if self.is_analyzing:
             self.main_window.base.check_is_hide()
-        return getattr(self, "final_x")()
+        return self.final_x()
 
     def do_pressed_number(self, si_activar, number):
         if number in [1, 8]:
@@ -1126,13 +1126,15 @@ class Manager:
 
     def can_be_analysed(self):
         return len(self.game) > 0 and not (
-                self.game_type in (GT_ELO, GT_MICELO, GT_WICKER, GT_GRID) and self.is_competitive and self.state == ST_PLAYING
+            self.game_type in (GT_ELO, GT_MICELO, GT_WICKER, GT_GRID)
+            and self.is_competitive
+            and self.state == ST_PLAYING
         )
 
     def check_help_to_move(self):
         if self.active_help_to_move():
             if hasattr(self, "help_to_move"):
-                getattr(self, "help_to_move")()
+                self.help_to_move()
 
     def play_instead_of_me(self):
         if self.is_in_last_move():
@@ -1391,15 +1393,15 @@ class Manager:
         gm.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
         gm.set_tag("Event", _("Play current position"))
         for previous in (
-                "Event",
-                "Site",
-                "Date",
-                "Round",
-                "White",
-                "Black",
-                "Result",
-                "WhiteElo",
-                "BlackElo",
+            "Event",
+            "Site",
+            "Date",
+            "Round",
+            "White",
+            "Black",
+            "Result",
+            "WhiteElo",
+            "BlackElo",
         ):
             ori = self.game.get_tag(previous)
             if ori:
@@ -1432,10 +1434,7 @@ class Manager:
                 game_len = len(self.game)
 
                 # Es variación si el índice es menor al antepenúltimo movimiento
-                if move_idx < 0:
-                    is_variation = True
-                # O si es el penúltimo, pero el usuario hizo click en el número del movimiento
-                elif move_idx < game_len - 2:
+                if move_idx < 0 or move_idx < game_len - 2:
                     is_variation = True
                 elif move_idx < game_len - 1:
                     __, column = self.main_window.pgn_pos_actual()
@@ -1624,10 +1623,7 @@ class Manager:
             elif nkey == GO_FORWARD:
                 li_var[-1] = str(last + 1)
 
-            elif nkey == GO_BACK2:
-                li_var = li_var[:-2]
-
-            elif nkey == GO_FORWARD2:
+            elif nkey == GO_BACK2 or nkey == GO_FORWARD2:
                 li_var = li_var[:-2]
 
             else:

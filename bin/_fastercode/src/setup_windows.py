@@ -16,7 +16,7 @@ extensions = [
         libraries=[IRINA_LIB],
         library_dirs=[IRINA_LIB_DIR],
         include_dirs=[
-            os.path.join(BASE_DIR, "source", "irina"),
+            os.path.join(BASE_DIR, "irina"),
         ],
         extra_compile_args=[
             "/O2",

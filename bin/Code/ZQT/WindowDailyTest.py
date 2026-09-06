@@ -2,8 +2,6 @@ import os.path
 import random
 import time
 from dataclasses import dataclass
-from typing import List
-
 
 import Code
 from Code.Analysis import Analysis
@@ -15,6 +13,7 @@ from Code.QT import (
     Colocacion,
     Columnas,
     Controles,
+    Delegados,
     FormLayout,
     Grid,
     Iconos,
@@ -22,9 +21,6 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
     ScreenUtils,
-)
-from Code.QT import (
-    Delegados,
 )
 from Code.SQL import UtilSQL
 from Code.Z import Util
@@ -248,18 +244,19 @@ class DataMovement:
 
 class WDailyTest(LCDialog.LCDialog):
     manager_analysis: EngineManagerAnalysis.EngineManagerAnalysis
-    li_data: List[DataMovement]
+    li_data: list[DataMovement]
 
     def __init__(self, owner, li_fens, name_engine, seconds, fns):
 
-        super(WDailyTest, self).__init__(owner, _("Your daily test"), Iconos.DailyTest(), "nivel")
+        super().__init__(owner, _("Your daily test"), Iconos.DailyTest(), "nivel")
         self.procesador = owner.procesador
         self.configuration = Code.configuration
 
-        if name_engine.startswith("*"):
-            name_engine = name_engine[1:]
+        name_engine = name_engine.removeprefix("*")
         engine = self.configuration.engines.search_tutor(name_engine)
-        self.manager_analysis = self.procesador.create_manager_analyzer_var(engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE)
+        self.manager_analysis = self.procesador.create_manager_analyzer_var(
+            engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE
+        )
 
         self.historico = owner.historico
 
@@ -428,7 +425,7 @@ class WDailyTest(LCDialog.LCDialog):
         self.lbColor.set_text(mens)
 
         self.continue_human()
-        self.initial_time = time.time()
+        self.initial_time = time.monotonic()
 
     def finish_the_test(self):
         self.stop_human()
@@ -500,7 +497,7 @@ class WDailyTest(LCDialog.LCDialog):
             self.continue_human()
 
     def calc_time_score(self):
-        vtime = time.time() - self.initial_time
+        vtime = time.monotonic() - self.initial_time
 
         with QTMessages.analizando(self):
             self.mrm, pos = self.manager_analysis.analyze_move(self.move_done.game, 0, None)

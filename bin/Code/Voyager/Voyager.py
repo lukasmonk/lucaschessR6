@@ -7,7 +7,6 @@ from PIL import Image
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Move, Position
 from Code.Base.Constantes import BLACK, INFINITE, WHITE
 from Code.Board import Board, Board2
@@ -26,6 +25,7 @@ from Code.QT import (
     ScreenUtils,
 )
 from Code.Voyager import Scanner
+from Code.Z import Util
 
 MODO_POSICION, MODO_PARTIDA = range(2)
 
@@ -147,7 +147,7 @@ class WPosicion(QtWidgets.QWidget):
 
         self.chb_rem_ghost_deductions = Controles.CHB(self, _("Remove ghost deductions"), self.vars_scanner.rem_ghost)
 
-        self.chb_detect_borders = Controles.CHB(self, _("Detect borders"),  self.vars_scanner.detect_borders)
+        self.chb_detect_borders = Controles.CHB(self, _("Detect borders"), self.vars_scanner.detect_borders)
 
         self.cb_scanner_select, lb_scanner_select = QTMessages.combobox_lb(self, [], None, _("OPR"))
         self.cb_scanner_select.capture_changes(self.scanner_change)
@@ -565,7 +565,6 @@ class WPosicion(QtWidgets.QWidget):
             self.vars_scanner.tolerance_learns = min(
                 self.sb_scanner_tolerance_learns.valor(), self.vars_scanner.tolerance
             )
-
 
             self.chb_scanner_flip.set_value(sc.side == BLACK)
 

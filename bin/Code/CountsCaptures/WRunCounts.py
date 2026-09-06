@@ -89,7 +89,7 @@ class WRunCounts(LCDialog.LCDialog):
         # self.adjustSize()
 
         # Tiempo
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.gb_counts.setDisabled(True)
 
@@ -161,8 +161,7 @@ class WRunCounts(LCDialog.LCDialog):
                 QTUtils.refresh_gui()
                 dif = depth - x
                 factor = 1.0 - dif * 0.1
-                if factor < 0.5:
-                    factor = 0.5
+                factor = max(factor, 0.5)
 
                 time.sleep(2.6 * factor * factor)
                 self.board.pon_texto("", 0)
@@ -175,12 +174,12 @@ class WRunCounts(LCDialog.LCDialog):
         self.gb_counts.setEnabled(True)
 
         # Marcamos el tiempo
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.ed_moves.setFocus()
 
     def verify(self):
-        tiempo = time.time() - self.time_base
+        tiempo = time.monotonic() - self.time_base
 
         moves = FasterCode.get_exmoves_fen(self.position_obj.fen())
 
@@ -207,8 +206,7 @@ class WRunCounts(LCDialog.LCDialog):
         else:
             if self.count.current_depth >= 1:
                 self.count.current_posmove += self.count.current_depth - 1
-                if self.count.current_posmove < 0:
-                    self.count.current_posmove = 0
+                self.count.current_posmove = max(self.count.current_posmove, 0)
                 self.count.current_depth = 0
                 self.lb_result.set_text(
                     "%s (%d)"

@@ -5,7 +5,7 @@ import Code
 from Code.Base import Game
 from Code.Board import Board
 from Code.Kibitzers import Kibitzers
-from Code.QT import Controles, Delegados, Iconos, Piezas, QTDialogs, ScreenUtils, QTUtils
+from Code.QT import Controles, Delegados, Iconos, Piezas, QTDialogs, QTUtils, ScreenUtils
 from Code.Voyager import Voyager
 
 

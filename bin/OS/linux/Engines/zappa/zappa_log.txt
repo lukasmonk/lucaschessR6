@@ -4,5 +4,45 @@ hash_reallocate(): Allocated pawn hash table: 1024K
 hash_reallocate(): Allocated king hash table: 8M
 worker_cpu(): CPU0 starting.
 hash_reallocate(): Allocated transposition table: 64M
-game_stop_thread(): stopping CPU0
-worker_cpu(): CPU0 exiting.
+set_option(): hash = 16777216 (16M)
+hash_reallocate(): Allocated transposition table: 16M
+r n b q k b n r 
+p p p p p p p p 
+- - - - - - - - 
+- - - - - - - - 
+- - - - - - - - 
+- - - - - - - - 
+P P P P P P P P 
+R N B Q K B N R 
+
+WQC:1 WKC:1 BQC:1 BKC:1 Turn:WHITE EP:0
+MB:     0 WPC: 7 BPC: 7 HM:0 HKL:22E35B22 HKH:7716EAE1
+
+Book Lookup failed (0 entries / 0 bytes / 0 ms)
+
+1. Ng1-f3 
+ = (0.38)	Depth: 1/1	00:00:00.00	0kN (inf KN/s, 0 splits, 0 aborts)
+1. Ng1-f3 Ng8-f6 
+ = (0.00)	Depth: 2/2	00:00:00.00	0kN (inf KN/s, 0 splits, 0 aborts)
+1. Ng1-f3!
+ + (0.30)	Depth: 3/3	00:00:00.00	0kN (inf KN/s, 0 splits, 0 aborts)
+1. Ng1-f3 Ng8-f6 2. Nf3-e5 
+ = (0.38)	Depth: 3/3	00:00:00.00	0kN (inf KN/s, 0 splits, 0 aborts)
+1. Ng1-f3 Ng8-f6 2. Nf3-e5 Nb8-c6 
+ = (0.00)	Depth: 4/6	00:00:00.00	1kN (1298 KN/s, 0 splits, 0 aborts)
+1. Ng1-f3 Ng8-f6 2. Nb1-c3 Nb8-c6 3. Nf3-g5 
+ = (0.28)	Depth: 5/11	00:00:00.00	2kN (1194 KN/s, 0 splits, 0 aborts)
+1. Ng1-f3 Ng8-f6 2. Nb1-c3 Nb8-c6 3. d2-d4 Nc6-b4 
+ = (-0.07)	Depth: 6/11	00:00:00.00	3kN (1247 KN/s, 0 splits, 0 aborts)
+1. Nb1-c3 Nb8-c6 2. d2-d4 d7-d5 3. Bc1-f4 Bc8-f5 
+ = (0.00)	Depth: 6/12	00:00:00.00	7kN (1793 KN/s, 0 splits, 0 aborts)
+1. Nb1-c3 Nb8-c6 2. d2-d4 d7-d5 3. Bc1-f4 Bc8-f5 
+ = (0.00)	Depth: 6/13	00:00:00.00	10kN (1729 KN/s, 0 splits, 0 aborts)
+1. Nb1-c3!
+ + (0.30)	Depth: 7/16	00:00:00.01	18kN (1501 KN/s, 0 splits, 0 aborts)
+1. Nb1-c3 Nb8-c6 2. d2-d4 d7-d6 3. Ng1-f3 Bc8-f5 4. Bc1-f4 
+ = (0.35)	Depth: 7/16	00:00:00.01	25kN (1566 KN/s, 0 splits, 0 aborts)
+1. Nb1-c3 Nb8-c6 2. d2-d4 d7-d6 3. Ng1-f3 Bc8-f5 4. Bc1-f4 
+ = (0.35)	Depth: 7/16	00:00:00.01	26kN (1540 KN/s, 0 splits, 0 aborts)
+1. Nb1-c3 Nb8-c6 2. d2-d4 Ng8-f6 3. Bc1-f4 d7-d6 4. Ng1-f3 Bc8-f5 
+ = (-0.03)	Depth: 8/16	00:00:00.02	40kN (1487 KN/s, 0 splits, 0 aborts)

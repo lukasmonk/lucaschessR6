@@ -1,9 +1,9 @@
 import time
-from PySide6 import QtCore
 
 import FasterCode
+from PySide6 import QtCore
 
-from Code.Z import Util
+from Code.Adjudicator import Adjudicator
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GT_LEARN_PLAY,
@@ -11,20 +11,20 @@ from Code.Base.Constantes import (
     RS_WIN_PLAYER,
     ST_ENDGAME,
     ST_PLAYING,
+    TB_ADJUDICATOR,
     TB_CANCEL,
     TB_CLOSE,
     TB_CONFIG,
     TB_QUIT,
     TB_REINIT,
     TB_UTILITIES,
-    TB_ADJUDICATOR,
 )
 from Code.LearnGame import WindowPlayGame
 from Code.ManagerBase import Manager
 from Code.Openings import Opening, OpeningsStd
 from Code.QT import QTMessages
+from Code.Z import Util
 from Code.ZQT import WindowJuicio
-from Code.Adjudicator import Adjudicator
 
 
 class ManagerPlayGame(Manager.Manager):
@@ -238,7 +238,7 @@ class ManagerPlayGame(Manager.Manager):
         if is_turn_human:
             self.human_is_playing = True
             self.activate_side(is_white)
-            self.initial_time = time.time()
+            self.initial_time = time.monotonic()
             self.adjudicator.analyze_begin(self.game)
         else:
             self.add_move(False)
@@ -258,7 +258,7 @@ class ManagerPlayGame(Manager.Manager):
         if not user_move:
             return False
 
-        self.vtime += time.time() - self.initial_time
+        self.vtime += time.monotonic() - self.initial_time
 
         self.board.set_position(user_move.position)
         self.put_arrow_sc(user_move.from_sq, user_move.to_sq)

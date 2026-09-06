@@ -1,8 +1,8 @@
 import os
 import shutil
-from typing import Optional, Dict, Any
+from typing import Any
 
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtCore, QtWidgets
 
 import Code
 from Code.Base import Game
@@ -71,16 +71,16 @@ class WOpeningLines(LCDialog.LCDialog):
     def __init__(self, procesador):
         self.procesador = procesador
         self.configuration = Code.configuration
-        self.resultado: Optional[Dict[str, Any]] = None
+        self.resultado: dict[str, Any] | None = None
         self.listaOpenings = OpeningLines.ListaOpenings(True)
-        self.glista: Optional[Grid.Grid] = None
-        self.tbtrain: Optional[Controles.TBrutina] = None
-        self.wtrain: Optional[QtWidgets.QWidget] = None
+        self.glista: Grid.Grid | None = None
+        self.tbtrain: Controles.TBrutina | None = None
+        self.wtrain: QtWidgets.QWidget | None = None
 
         LCDialog.LCDialog.__init__(
             self,
             procesador.main_window,
-            _('Opening lines'),
+            _("Opening lines"),
             Iconos.OpeningLines(),
             "openingLines",
         )
@@ -96,7 +96,8 @@ class WOpeningLines(LCDialog.LCDialog):
         self.tree_folders.setToolTip(_("More options with right-click"))
         self.tree_folders.setAcceptDrops(True)
         self.tree_folders.setDropIndicatorShown(True)
-        self.tree_folders.setStyleSheet("""
+        self.tree_folders.setStyleSheet(
+            """
 QTreeView {
     background-color: %s;
     color: %s;
@@ -158,7 +159,9 @@ QScrollBar::handle:vertical {
 
 QScrollBar::handle:vertical:hover {
     background: #909090;
-}""" % (Code.dic_colors["BACKGROUND"], Code.dic_colors["FOREGROUND"]))
+}"""
+            % (Code.dic_colors["BACKGROUND"], Code.dic_colors["FOREGROUND"])
+        )
 
         tbh = QTDialogs.LCTB(self)
         tbh.new(_("Close"), Iconos.MainMenu(), self.finalize)
@@ -466,8 +469,7 @@ QScrollBar::handle:vertical:hover {
         if not new_name:
             return None
         new_name = new_name.strip()
-        if new_name.endswith(".opk"):
-            new_name = new_name[:-4]
+        new_name = new_name.removesuffix(".opk")
         if new_name == name_file:
             return None
         new_path = Util.opj(os.path.dirname(current_path), f"{new_name}.opk")
@@ -635,7 +637,7 @@ QScrollBar::handle:vertical:hover {
 
     def handle_tree_drop(self, li_rows, target_rel_path):
         """Manejar drop de opening lines al tree de carpetas
-        
+
         Args:
             li_rows: Lista de índices de filas seleccionadas en el grid
             target_rel_path: Ruta relativa de la carpeta destino
@@ -706,14 +708,15 @@ QScrollBar::handle:vertical:hover {
 
             # Volver a la carpeta original
             self.configuration.paths.set_folder_openings(
-                os.path.relpath(self.listaOpenings.folder, base_path) if self.listaOpenings.folder.startswith(
-                    base_path) else ""
+                os.path.relpath(self.listaOpenings.folder, base_path)
+                if self.listaOpenings.folder.startswith(base_path)
+                else ""
             )
             self.listaOpenings = OpeningLines.ListaOpenings(True)
             self.glista.refresh()
 
         except Exception as e:
-            QTMessages.message_error(self, f"{_('Error copying opening lines')}\n{str(e)}")
+            QTMessages.message_error(self, f"{_('Error copying opening lines')}\n{e!s}")
 
     def _move_to_folder(self, items, target_rel_path):
         """Mover opening lines a otra carpeta"""
@@ -749,15 +752,16 @@ QScrollBar::handle:vertical:hover {
 
             # Volver a la carpeta original
             self.configuration.paths.set_folder_openings(
-                os.path.relpath(self.listaOpenings.folder, base_path) if self.listaOpenings.folder.startswith(
-                    base_path) else ""
+                os.path.relpath(self.listaOpenings.folder, base_path)
+                if self.listaOpenings.folder.startswith(base_path)
+                else ""
             )
             self.listaOpenings = OpeningLines.ListaOpenings(True)
             self.glista.refresh()
 
             QTMessages.message_information(self, _("Opening lines moved successfully"))
         except Exception as e:
-            QTMessages.message_error(self, f"{_('Error moving opening lines')}\n{str(e)}")
+            QTMessages.message_error(self, f"{_('Error moving opening lines')}\n{e!s}")
 
     def closeEvent(self, event):  # Cierre con X
         self.save_video()
@@ -773,8 +777,7 @@ class WStaticTraining(LCDialog.LCDialog):
         self.ligames = self.training["LIGAMES_STATIC"]
         self.num_games = len(self.ligames)
         self.elems_fila = 10
-        if self.num_games < self.elems_fila:
-            self.elems_fila = self.num_games
+        self.elems_fila = min(self.elems_fila, self.num_games)
         self.num_filas = (self.num_games - 1) / self.elems_fila + 1
         self.seleccionado = None
 

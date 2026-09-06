@@ -4,7 +4,6 @@ import random
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
     BOOK_RANDOM_PROPORTIONAL,
@@ -24,6 +23,7 @@ from Code.QT import (
     ScreenUtils,
     SelectFiles,
 )
+from Code.Z import Util
 
 
 def select_engine(wowner):
@@ -123,10 +123,8 @@ class WSelectEngineElo(LCDialog.LCDialog):
         maximo = 0
         for mt in self.list_engines:
             if mt.siJugable:
-                if mt.elo < minimo:
-                    minimo = mt.elo
-                if mt.elo > maximo:
-                    maximo = mt.elo
+                minimo = min(minimo, mt.elo)
+                maximo = max(maximo, mt.elo)
         self.sbElo, lbElo = QTMessages.spinbox_lb(self, elo, minimo, maximo, max_width=75, etiqueta=_("Elo"))
         self.sbElo.capture_changes(self.filtrar)
 
@@ -338,7 +336,7 @@ def select_engine_wicker(manager, elo):
 class WEngineExtend(QtWidgets.QDialog):
     def __init__(self, w_parent, list_engines, engine, is_tournament=False):
 
-        super(WEngineExtend, self).__init__(w_parent)
+        super().__init__(w_parent)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -587,7 +585,7 @@ def wgen_options_engine(owner, engine):
 
 
 def wsave_options_engine_test(engine, controls):
-    li_uci = engine.liUCI = []
+    li_uci = engine.li_changed_options = []
     for opcion in engine.li_uci_options_editable():
         tipo = opcion.tipo
         control = controls[opcion.name]
@@ -611,7 +609,7 @@ def wsave_options_engine_test(engine, controls):
 
 
 def wsave_options_engine(engine):
-    li_uci = engine.liUCI = []
+    li_uci = engine.li_changed_options = []
     for opcion in engine.li_uci_options_editable():
         tipo = opcion.tipo
         control = opcion.control

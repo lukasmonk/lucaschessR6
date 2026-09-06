@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from Code.QT import QTDialogs, Iconos
+from Code.QT import Iconos, QTDialogs
 from Code.Translations import TrListas
 
 
@@ -78,8 +78,7 @@ class FNSanalyzer:
             return _F(txt)
 
         def name(nm):
-            if nm.endswith(".fns"):
-                nm = nm[:-4]
+            nm = nm.removesuffix(".fns")
             if nm[-1] in "0123456789" and nm[-2] not in "0123456789":
                 num = nm[-1]
                 rest = nm[:-1]

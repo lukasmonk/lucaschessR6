@@ -4,9 +4,9 @@ from PIL import Image
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util
 from Code.Board import Board2
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
+from Code.Z import Util
 
 
 class WGif(LCDialog.LCDialog):

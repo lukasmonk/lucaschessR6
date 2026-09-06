@@ -3,7 +3,6 @@ import math
 import random
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     BLACK,
@@ -17,6 +16,7 @@ from Code.Base.Constantes import (
 )
 from Code.Engines import Engines
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class Human:

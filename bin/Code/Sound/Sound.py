@@ -8,10 +8,10 @@ from PySide6 import QtCore, QtMultimedia, QtWidgets
 from PySide6.QtMultimedia import QAudioFormat, QAudioSource, QMediaDevices
 
 import Code
-from Code.Z import Util
 from Code.QT import QTUtils
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
+from Code.Z import Util
 
 DATABASE = "D"
 PLAY_ESPERA = "P"
@@ -284,8 +284,7 @@ class TallerSonido:
         else:
             pcm_val = -pcm_val - 1
 
-        if pcm_val > clip:
-            pcm_val = clip
+        pcm_val = min(pcm_val, clip)
 
         if pcm_val >= 256:
 
@@ -364,13 +363,13 @@ class TallerSonido:
 
         self.cent_desde = cent_desde
         self.cent_hasta = cent_hasta
-        self.ini_time = time.time()
+        self.ini_time = time.monotonic()
         self.playing()
 
     def playing(self):
         if self.owner.is_canceled():
             return
-        t1 = time.time()
+        t1 = time.monotonic()
         hundreds_of_second = (t1 - self.ini_time) * 100 + self.cent_desde
         try:
             if hundreds_of_second >= self.cent_hasta:

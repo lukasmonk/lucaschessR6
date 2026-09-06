@@ -1,8 +1,8 @@
 import Code
-from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import BOOK_RANDOM_UNIFORM, ENG_WICKER
 from Code.Engines import EnginesMicElo
+from Code.Z import Util
 
 
 def read_wicker_engines():
@@ -13,6 +13,17 @@ def read_wicker_engines():
     li = []
     for alias, dic in dic_wicker.items():
         nom_base_engine = dic["ENGINE"]
+
+        # Both the engine and its opening book have to be installed: engines
+        # that do not build on this platform are simply not offered.
+        engine = configuration.engines.dic_engines().get(nom_base_engine)
+        if engine is None:
+            continue
+        nom_book = dic["BOOK"]
+        book = configuration.path_book(nom_book)
+        if book is None:
+            continue
+
         id_info = dic["IDINFO"]
         li_info = [_F(x.strip()) for x in id_info.split(",")]
         id_info = "\n".join(li_info)
@@ -36,7 +47,7 @@ def read_wicker_engines():
             eng.id_info = id_info
             eng.key = alias
             eng.elo = elo
-            eng.liUCI = li_uci
+            eng.li_changed_options = li_uci
             eng.book = book
             eng.book_max_plies = max_plies
             eng.book_rr = book_rr

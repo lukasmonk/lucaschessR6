@@ -4,8 +4,7 @@ import os
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
-from Code.Engines import Engines, WEngines, SelectEngines
+from Code.Engines import Engines, SelectEngines, WEngines
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -19,6 +18,7 @@ from Code.QT import (
     QTMessages,
     SelectFiles,
 )
+from Code.Z import Util
 
 
 class WExternalEngines(LCDialog.LCDialog):
@@ -28,7 +28,7 @@ class WExternalEngines(LCDialog.LCDialog):
     def __init__(self, owner):
         icono = Iconos.Engine()
         titulo = _("External engines")
-        extparam = "external_engines"
+        extparam = "external_engines_2"
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
 
         self.configuration = Code.configuration
@@ -70,7 +70,7 @@ class WExternalEngines(LCDialog.LCDialog):
         opcion = self.li_uci_options[recno]
         key = opcion.name
         value = opcion.valor
-        for xkey, xvalue in self.engine.liUCI:
+        for xkey, xvalue in self.engine.li_changed_options:
             if xkey == key:
                 value = xvalue
                 break
@@ -202,7 +202,7 @@ class WExternalEngines(LCDialog.LCDialog):
         else:
             name = op.name
             valor = op.valor
-            for xname, xvalue in self.engine.liUCI:
+            for xname, xvalue in self.engine.li_changed_options:
                 if xname == name:
                     valor = xvalue
                     break
@@ -240,11 +240,14 @@ class WConfExternals(QtWidgets.QWidget):
 
         # Lista
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("ALIAS", _("Alias"), 114)
-        o_columns.nueva("ENGINE", _("Engine"), 128)
+        o_columns.nueva("KEY", _("Identifier"), 114)
+        o_columns.nueva("NAME", _("Name"), 128)
         o_columns.nueva("AUTOR", _("Author"), 132)
         o_columns.nueva("INFO", _("Information"), 205)
         o_columns.nueva("ELO", _("Elo"), 64, align_center=True)
+        o_columns.nueva("MAX_DEPTH", _("Max depth"), 100, align_center=True)
+        o_columns.nueva("MAX_TIME", _("Time"), 100, align_center=True)
+        o_columns.nueva("NODES", _("Fixed nodes"), 100, align_center=True)
 
         self.grid = None
 
@@ -295,12 +298,20 @@ class WConfExternals(QtWidgets.QWidget):
         me = self.lista_motores[row]
         if key == "AUTOR":
             return me.autor
-        elif key == "ALIAS":
+        elif key == "KEY":
             return me.key
-        elif key == "ENGINE":
+        elif key == "NAME":
             return me.name
         elif key == "INFO":
             return me.id_info.replace("\n", ", ")
+        elif key == "ELO":
+            return str(me.elo) if me.elo else "-"
+        elif key == "MAX_TIME":
+            return str(me.max_time) if me.max_time else "-"
+        elif key == "MAX_DEPTH":
+            return str(me.max_depth) if me.max_depth else "-"
+        elif key == "NODES":
+            return str(me.nodes) if me.nodes else "-"
         elif key == "ELO":
             return str(me.elo) if me.elo else "-"
         return None
@@ -328,7 +339,7 @@ class WConfExternals(QtWidgets.QWidget):
             command = resp[0]
             li_args = []
             if not command or not os.path.isfile(command):
-                return None
+                return
             for x in range(1, len(resp)):
                 arg = resp[x].strip()
                 if arg:
@@ -346,7 +357,7 @@ class WConfExternals(QtWidgets.QWidget):
                         command,
                     ),
                 )
-                return None
+                return
 
             # Editamos
             w = WEngineFast(self, self.lista_motores, me)
@@ -355,7 +366,7 @@ class WConfExternals(QtWidgets.QWidget):
                 self.grid.refresh()
                 self.grid.gobottom(0)
                 self.set_changed()
-        return None
+        return
 
     def nuevo(self):
         me = WEngines.select_engine(self)
@@ -371,9 +382,9 @@ class WConfExternals(QtWidgets.QWidget):
 
     def grid_doubleclick_header(self, _grid, obj_column):
         key = obj_column.key
-        if key == "ALIAS":
+        if key == "KEY":
             key = "key"
-        elif key == "ENGINE":
+        elif key == "NAME":
             key = "name"
         elif key == "ELO":
             key = "elo"
@@ -441,7 +452,6 @@ class WConfExternals(QtWidgets.QWidget):
 
         return True
 
-
     def borrar(self):
         row = self.grid.recno()
         if row >= 0:
@@ -492,7 +502,7 @@ class WConfExternals(QtWidgets.QWidget):
 class WEngineFast(QtWidgets.QDialog):
     def __init__(self, w_parent, list_engines, engine, is_tournament=False):
 
-        super(WEngineFast, self).__init__(w_parent)
+        super().__init__(w_parent)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -517,7 +527,7 @@ class WEngineFast(QtWidgets.QDialog):
         # Toolbar
         tb = QTDialogs.tb_accept_cancel(self)
 
-        lb_alias = Controles.LB2P(self, _("Alias"))
+        lb_alias = Controles.LB2P(self, _("Identifier"))
         self.edAlias = Controles.ED(self, engine.key).minimum_width(360)
 
         lb_nombre = None
@@ -532,6 +542,15 @@ class WEngineFast(QtWidgets.QDialog):
         lb_elo = Controles.LB(self, "ELO: ")
         self.sbElo = Controles.SB(self, engine.elo, 0, 4000)
 
+        lb_depth = Controles.LB2P(self, _("Max depth"))
+        self.sbDepth = Controles.SB(self, engine.max_depth, 0, 250)
+
+        lb_time = Controles.LB2P(self, _("Maximum seconds to think"))
+        self.edTime = Controles.ED(self, "").set_float(engine.max_time).relative_width(60).align_right()
+
+        lb_nodes = Controles.LB2P(self, _("Fixed nodes"))
+        self.edNodes = Controles.ED(self, "").set_integer(engine.nodes).relative_width(80).align_right()
+
         lb_exe = Controles.LB(self, f"{_('File')}: {Code.relative_root(engine.path_exe)}")
 
         # Layout
@@ -541,7 +560,10 @@ class WEngineFast(QtWidgets.QDialog):
             ly.controld(lb_nombre, 1, 0).control(self.edNombre, 1, 1)
         ly.controld(lb_info, 2, 0).control(self.emInfo, 2, 1)
         ly.controld(lb_elo, 3, 0).control(self.sbElo, 3, 1)
-        ly.control(lb_exe, 7, 0, 1, 2)
+        ly.controld(lb_depth, 4, 0).control(self.sbDepth, 4, 1)
+        ly.controld(lb_time, 5, 0).control(self.edTime, 5, 1)
+        ly.controld(lb_nodes, 6, 0).control(self.edNodes, 6, 1)
+        ly.control(lb_exe, 8, 0, 1, 2)
 
         layout = Colocacion.V().control(tb).otro(ly)
 
@@ -552,14 +574,16 @@ class WEngineFast(QtWidgets.QDialog):
     def aceptar(self):
         alias = self.edAlias.texto().strip()
         if not alias:
-            QTMessages.message_error(self, _("You have not indicated any alias"))
+            QTMessages.message_error(self, _("You have not indicated any identifier"))
             return
 
         # Comprobamos que no se repita el alias
         if alias.lower() in self.st_other_alias:
             QTMessages.message_error(
                 self,
-                _("There is already another engine with the same alias, the alias must change in order to have both."),
+                _(
+                    "There is already another engine with the same identifier, the identifier must change in order to have both."
+                ),
             )
             return
         self.external_engine.key = alias
@@ -567,6 +591,9 @@ class WEngineFast(QtWidgets.QDialog):
             name = self.edNombre.texto().strip()
             self.external_engine.name = name if name else alias
         self.external_engine.id_info = self.emInfo.texto()
+        self.external_engine.max_depth = self.sbDepth.valor()
+        self.external_engine.max_time = self.edTime.text_to_float()
+        self.external_engine.nodes = self.edNodes.text_to_integer()
         self.external_engine.elo = self.sbElo.valor()
 
         self.accept()

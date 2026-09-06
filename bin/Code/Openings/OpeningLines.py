@@ -168,11 +168,11 @@ class ListaOpenings:
         dicline = self.lista[item]
         del self.lista[item]
         filepath = Util.opj(self.folder, dicline["file"])
-        
+
         # Retry logic to handle file locks in Windows
         max_retries = 5
         retry_delay = 0.1  # seconds
-        
+
         for attempt in range(max_retries):
             try:
                 gc.collect()  # Force garbage collection before attempting to remove
@@ -184,7 +184,7 @@ class ListaOpenings:
                 else:
                     # All retries exhausted, re-raise the exception
                     raise
-        
+
         self.save()
 
     def read(self):
@@ -1582,7 +1582,7 @@ class Opening:
                     s0.add(fenm2)
                     dir_prev[fenm2].add(" ".join(lipv[: pos + 1]))
                     if pos < len(lipv) - 1:
-                        dir_post[fenm2].add(" ".join(lipv[pos + 1:]))
+                        dir_post[fenm2].add(" ".join(lipv[pos + 1 :]))
             st_pv = set()
             for fenm2, li_pv_prev in dir_prev.items():
                 for pv_prev in li_pv_prev:

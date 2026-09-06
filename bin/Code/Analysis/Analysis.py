@@ -1,10 +1,8 @@
-from typing import List, Tuple
-
 import Code
 from Code.Analysis import AnalysisIndexes, WindowAnalysis
 from Code.Base import Game, Move
 from Code.Base.Constantes import TOP_RIGHT
-from Code.Engines import EngineResponse, EngineManagerAnalysis, Engines
+from Code.Engines import EngineManagerAnalysis, EngineResponse, Engines
 from Code.QT import QTMessages
 
 
@@ -13,7 +11,7 @@ class ControlAnalysis:
     rm: EngineResponse.EngineResponse
     game: Game.Game
     mrm: EngineResponse.MultiEngineResponse
-    list_rm_name: List[Tuple[EngineResponse.EngineResponse, str, int]]
+    list_rm_name: list[tuple[EngineResponse.EngineResponse, str, int]]
 
     def __init__(self, tb_analysis, mrm, pos_selected, number, xengine):
 
@@ -46,7 +44,7 @@ class ControlAnalysis:
         else:
             return ""
 
-    def do_lirm(self) -> List[Tuple[EngineResponse.EngineResponse, str, int]]:
+    def do_lirm(self) -> list[tuple[EngineResponse.EngineResponse, str, int]]:
         li = []
         pb = self.move.position_before
         for rm in self.mrm.li_rm:
@@ -217,7 +215,7 @@ class CreateAnalysis:
         move: Move.Move = self.move
         if move.analysis is None:
             with QTMessages.WaitingMessage(
-                    main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT, with_cancel=True
+                main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT, with_cancel=True
             ) as me:
                 game = move.game
                 mrm, pos = xengine.analyze_move(game, game.move_pos(move), me.dispatcher_analysis)
@@ -238,7 +236,7 @@ class CreateAnalysis:
 
         else:
             xengine = None
-            busca = alm.engine[1:] if alm.engine.startswith("*") else alm.engine
+            busca = alm.engine.removeprefix("*")
             for tab_analysis in self.li_tabs_analysis:
                 if tab_analysis.xengine.engine.key == busca:
                     xengine = tab_analysis.xengine
@@ -247,8 +245,9 @@ class CreateAnalysis:
             if xengine is None:
                 conf_engine: Engines.Engine = self.configuration.engines.search(alm.engine)
                 conf_engine.set_multipv_var(alm.multiPV)
-                xengine = self.procesador.create_manager_analyzer_var(conf_engine, alm.vtime, alm.depth, alm.nodes,
-                                                                      conf_engine.multiPV)
+                xengine = self.procesador.create_manager_analyzer_var(
+                    conf_engine, alm.vtime, alm.depth, alm.nodes, conf_engine.multiPV
+                )
 
         with QTMessages.WaitingMessage(main_window, _("Analyzing the move...."), physical_pos=TOP_RIGHT):
             game = self.move.game
@@ -269,13 +268,13 @@ class CreateAnalysis:
 
 
 def show_analysis(
-        manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None,
-        move: Move.Move,
-        is_white: bool,
-        pos_move: int,
-        main_window=None,
-        must_save: bool = True,
-        subanalysis: bool = False,
+    manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None,
+    move: Move.Move,
+    is_white: bool,
+    pos_move: int,
+    main_window=None,
+    must_save: bool = True,
+    subanalysis: bool = False,
 ):
     main_window = Code.procesador.main_window if main_window is None else main_window
 

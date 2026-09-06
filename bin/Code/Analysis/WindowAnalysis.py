@@ -64,9 +64,7 @@ class OneAnalysis(QtWidgets.QWidget):
         self.time_engine = tab_analysis.time_engine()
         self.time_label = tab_analysis.time_label()
 
-        self.lb_engine_m = (
-            Controles.LB(self, self.time_engine).align_center().set_font_type(peso=75).set_wrap()
-        )
+        self.lb_engine_m = Controles.LB(self, self.time_engine).align_center().set_font_type(peso=75).set_wrap()
         self.lb_tiempo_m = Controles.LB(self, self.time_label).align_center().set_font_type(puntos=9, peso=75)
         self.bt_remove = Controles.PB(self, "", self.remove).set_icono(Iconos.X())
 
@@ -285,7 +283,7 @@ class WAnalisis(LCDialog.LCDialog):
         LCDialog.LCDialog.__init__(self, ventana, titulo, Iconos.Analizar(), extparam)
 
         self.tb_analysis = tb_analysis
-        self.active_tab = None   # the currently focused TabAnalysis
+        self.active_tab = None  # the currently focused TabAnalysis
         self.timer = None
         self.subanalysis = subanalysis
 
@@ -359,20 +357,27 @@ class WAnalisis(LCDialog.LCDialog):
         self.setStyleSheet("QStatusBar::item { border-style: outset; border: 1px solid LightSlateGray ;}")
         list_more_actions = ((f"FEN:{_('Copy to clipboard')}", "MoverFEN", Iconos.Clipboard()),)
         lytb, self.tb = QTDialogs.ly_mini_buttons(
-            self, "", must_save=must_save, if_save_all=must_save,
-            if_play=True, list_more_actions=list_more_actions, icon_size=24,
+            self,
+            "",
+            must_save=must_save,
+            if_save_all=must_save,
+            if_play=True,
+            list_more_actions=list_more_actions,
+            icon_size=24,
         )
 
         pgn_scroll = self._build_pgn_scroll()
 
         ly_board = Colocacion.H().relleno().control(self.board).relleno()
-        ly_engine_row = (Colocacion.H().control(self.lbPuntuacion).relleno().control(self.lb_engine)
-                         .control(self.lb_time))
+        ly_engine_row = (
+            Colocacion.H().control(self.lbPuntuacion).relleno().control(self.lb_engine).control(self.lb_time)
+        )
         ly_left = (
             Colocacion.V()
             .control(tb_work)
             .otro(ly_board)
-            .otro(lytb).espacio(20)
+            .otro(lytb)
+            .espacio(20)
             .otro(ly_engine_row)
             .control(pgn_scroll)
         )
@@ -435,7 +440,7 @@ class WAnalisis(LCDialog.LCDialog):
         for window in QtWidgets.QApplication.topLevelWidgets():
             if hasattr(window, "key_video") and window.key_video.startswith("subanalysis"):
                 with contextlib.suppress(AttributeError):
-                    getattr(window, "save_video")()
+                    window.save_video()
         # Stop timed playback in all panels
         for tab in self.tb_analysis.li_tabs_analysis:
             tab.wmu.is_timed_active = False
@@ -471,7 +476,7 @@ class WAnalisis(LCDialog.LCDialog):
         # QTUtils.refresh_gui()
 
     def process_toolbar(self):
-        key = getattr(self.sender(), "key")
+        key = self.sender().key
         if key == "finalize":
             self.finalize()
             self.accept()

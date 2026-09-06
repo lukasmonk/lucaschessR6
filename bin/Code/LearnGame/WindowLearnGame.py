@@ -4,7 +4,6 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import BLACK, LI_BASIC_TAGS, WHITE
 from Code.Board import Board, Board2
@@ -12,6 +11,7 @@ from Code.Databases import WDatabase
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class DBLearnGame(UtilSQL.DictSQL):
@@ -364,18 +364,14 @@ class WLearn1(LCDialog.LCDialog):
         form.apart(_("Side you play with"))
         form.checkbox(_("White"), "w" in dic.get("COLOR", "bw"))
         form.checkbox(_("Black"), "b" in dic.get("COLOR", "bw"))
-        form.separador()
-
         form.apart(_("Board"))
         li_options = ((_("White"), WHITE), (_("Black"), BLACK))
         form.combobox(_("Side"), li_options, dic.get("BOARD_SIDE", WHITE))
-
-        form.separador()
         form.checkbox(_("Show clock"), dic.get("CLOCK", True))
-
-        form.separador()
         li = [(_("Sequential"), "s"), (_("Random"), "r")]
         form.combobox(_("Type"), li, dic.get("TYPE", "s"))
+        form.separador()
+        form.checkbox(_("Remove comments and variations"), dic.get("REMCOMMENTS", False))
 
         resultado = form.run()
 
@@ -391,6 +387,7 @@ class WLearn1(LCDialog.LCDialog):
         side = li_resp[3]
         si_clock = li_resp[4]
         ctype = li_resp[5]
+        rem_comments = li_resp[6]
         color = ""
         if white:
             color += "w"
@@ -404,9 +401,10 @@ class WLearn1(LCDialog.LCDialog):
 
         dic["BOARD_SIDE"] = side
         dic["CLOCK"] = si_clock
+        dic["REMCOMMENTS"] = rem_comments
         self.configuration.write_variables("MEMORIZING_GAME", dic)
 
-        w = WLearnPuente(self, self.game, level, white, black, side, si_clock, ctype)
+        w = WLearnPuente(self, self.game, level, white, black, side, si_clock, ctype, rem_comments)
         w.exec()
 
 
@@ -418,7 +416,7 @@ class WLearnPuente(LCDialog.LCDialog):
     errors: int
     hints: int
 
-    def __init__(self, owner: WLearn1, game, nivel, white, black, side, si_clock, ctype):
+    def __init__(self, owner: WLearn1, game, nivel, white, black, side, si_clock, ctype, rem_comments):
 
         LCDialog.LCDialog.__init__(self, owner, owner.label(), Iconos.PGN(), "learnpuente")
 
@@ -432,6 +430,8 @@ class WLearnPuente(LCDialog.LCDialog):
         self.is_random = ctype == "r"
 
         self.game = game.copia()
+        if rem_comments:
+            self.game.remove_info_moves()
         for pos, move in enumerate(self.game.li_moves):
             move.previous_move = self.game.li_moves[pos - 1] if pos else None
             move.pos_move = pos
@@ -649,7 +649,7 @@ class WLearnPuente(LCDialog.LCDialog):
         self.replay_dispatch()
 
     def reset(self):
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
         self.boardIni.set_position(self.game.move(0).position_before)
 
         self.current_num_move = -1
@@ -741,7 +741,7 @@ class WLearnPuente(LCDialog.LCDialog):
         if self.black:
             color += "b"
         dic = {
-            "SECONDS": time.time() - self.time_base,
+            "SECONDS": time.monotonic() - self.time_base,
             "DATE": Util.today(),
             "LEVEL": self.nivel,
             "COLOR": color,
@@ -777,7 +777,7 @@ class WLearnPuente(LCDialog.LCDialog):
 
     def adjust_clock(self):
         if self.working_clock:
-            s = int(time.time() - self.time_base)
+            s = int(time.monotonic() - self.time_base)
 
             m = s // 60
             s -= m * 60

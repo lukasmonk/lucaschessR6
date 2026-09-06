@@ -1,10 +1,8 @@
-from typing import Optional
-
-from Code.Z import Util
 from Code.Analysis import WindowAnalysisParam
 from Code.Analysis.AnalysisGame import AnalysisGame
-from Code.Engines import EngineResponse
 from Code.Databases import WDB_Trainings
+from Code.Engines import EngineResponse
+from Code.Z import Util
 
 
 def analysis_game(manager):
@@ -45,7 +43,7 @@ def analysis_game(manager):
     manager_main_window_base.tb.setDisabled(True)
 
     def dispatch_bp(
-        position: Optional[tuple] = None, rm: Optional[EngineResponse.EngineResponse] = None, ms: Optional[int] = None
+        position: tuple | None = None, rm: EngineResponse.EngineResponse | None = None, ms: int | None = None
     ):
         if position is not None:
             pos, ntotal, njg = position

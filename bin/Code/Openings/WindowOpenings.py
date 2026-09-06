@@ -1,11 +1,10 @@
 import copy
 from pathlib import Path
-from typing import Optional, Dict, List, Any
+from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
 import Code.Procesador
-from Code.Z import Util, Variations
 from Code.Base import Game, Move
 from Code.Board import Board
 from Code.Openings import OpeningsStd
@@ -21,10 +20,11 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
 )
+from Code.Z import Util, Variations
 
 
 class WOpenings(LCDialog.LCDialog):
-    def __init__(self, owner, opening_block: Optional[OpeningsStd.Opening]):
+    def __init__(self, owner, opening_block: OpeningsStd.Opening | None):
         icono = Iconos.Opening()
         titulo = _("Select an opening")
         extparam = "selectOpening"
@@ -33,12 +33,12 @@ class WOpenings(LCDialog.LCDialog):
         # Variables--------------------------------------------------------------------------
         self.ap_std = OpeningsStd.ap
         self.game = Game.Game()
-        self.opening_block: Optional[OpeningsStd.Opening] = opening_block
-        self.liActivas: List[OpeningsStd.Opening] = []
+        self.opening_block: OpeningsStd.Opening | None = opening_block
+        self.liActivas: list[OpeningsStd.Opening] = []
         self.configuration = Code.configuration
         self.posCurrent: int = -1
         self.is_moving_time: bool = False
-        self.dicPGNSP: Dict[str, str] = {}
+        self.dicPGNSP: dict[str, str] = {}
 
         # Board
         config_board = self.configuration.config_board("APERTURAS", 32)
@@ -285,7 +285,7 @@ class OpeningsCustom(LCDialog.LCDialog):
     def __init__(self, procesador, owner=None):
         self.procesador = procesador
         self.ficheroDatos: Path = Code.configuration.paths.file_pers_openings()
-        self.lista: List[Dict[str, Any]] = self.leer()
+        self.lista: list[dict[str, Any]] = self.leer()
 
         if owner is None:
             owner = procesador.main_window
@@ -328,7 +328,6 @@ class OpeningsCustom(LCDialog.LCDialog):
         OpeningsStd.ap.reset()
         self.save_video()
         self.reject()
-        return
 
     def grid_num_datos(self, _grid):
         return len(self.lista)

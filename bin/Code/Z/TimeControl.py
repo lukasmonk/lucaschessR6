@@ -1,12 +1,18 @@
 import time
 
-from Code.Base.Constantes import INFINITE, TIMEMODE_FISCHER, TIMEMODE_BRONSTEIN, TIMEMODE_DELAY_SIMPLE, \
-    TIMEMODE_SUDDEN_DEATH, TIMEMODE_HOURGLASS, TIMEMODE_MOVES_IN_TIME
+from Code.Base.Constantes import (
+    INFINITE,
+    TIMEMODE_BRONSTEIN,
+    TIMEMODE_DELAY_SIMPLE,
+    TIMEMODE_FISCHER,
+    TIMEMODE_HOURGLASS,
+    TIMEMODE_MOVES_IN_TIME,
+    TIMEMODE_SUDDEN_DEATH,
+)
 from Code.Z import Util
 
-
 # Modos estándar de control de tiempo en ajedrez.
-# 
+#
 # SUDDEN_DEATH   : Tiempo fijo, sin incremento. Se acaba → pierde.
 #                  Ej: 5min, 10min, 30min
 # FISCHER        : Tiempo base + incremento por jugada.
@@ -169,8 +175,7 @@ class TimeControl:
 
     @staticmethod
     def text(segs):
-        if segs <= 0.0:
-            segs = 0.0
+        segs = max(0.0, segs)
         tp = round(segs)
         txt = "%02d:%02d" % (int(tp / 60), tp % 60)
         return txt
@@ -178,8 +183,7 @@ class TimeControl:
     @staticmethod
     def text_with_hours(segs):
         """Formato H:MM:SS para partidas largas."""
-        if segs <= 0.0:
-            segs = 0.0
+        segs = max(0.0, segs)
         tp = round(segs)
         hh = tp // 3600
         mm = (tp % 3600) // 60
@@ -201,7 +205,7 @@ class TimeControl:
 
     def get_seconds(self):
         if self.time_init:
-            elapsed = time.time() - self.time_init
+            elapsed = time.monotonic() - self.time_init
             if self.time_mode == TIMEMODE_DELAY_SIMPLE:
                 elapsed = max(0.0, elapsed - self._delay_remaining)
             tp = self.pending_time - elapsed
@@ -211,20 +215,6 @@ class TimeControl:
 
     def label(self):
         return self.text(self.get_seconds())
-
-    def get_seconds2(self):
-        if self.time_init:
-            tp2 = time.time() - self.time_init
-            elapsed = tp2
-            if self.time_mode == TIMEMODE_DELAY_SIMPLE:
-                elapsed = max(0.0, elapsed - self._delay_remaining)
-            tp = self.pending_time - elapsed
-        else:
-            tp = self.pending_time - self.time_paused
-            tp2 = self.time_paused
-        if tp <= 0.0:
-            tp = 0
-        return tp, tp2 + self.time_previous
 
     # -- Ciclo start / stop / pause --------------------------------------------
 
@@ -236,7 +226,7 @@ class TimeControl:
             self.time_previous = 0
             self.pending_time_initial = self.pending_time
 
-        self.time_init = time.time()
+        self.time_init = time.monotonic()
         self.time_paused = 0.0
 
         # Bronstein: guarda tiempo al inicio del turno
@@ -254,7 +244,7 @@ class TimeControl:
         correspondiente al modo activo.
         """
         if self.time_init:
-            t_used = time.time() - self.time_init
+            t_used = time.monotonic() - self.time_init
             self.time_init = None
             self.time_previous = 0
 
@@ -314,7 +304,7 @@ class TimeControl:
 
     def pause(self):
         if self.time_init:
-            t_used = time.time() - self.time_init
+            t_used = time.monotonic() - self.time_init
             self.time_init = None
             self.time_paused = t_used
 
@@ -328,17 +318,34 @@ class TimeControl:
         self._current_phase = 0
 
     def restart(self):
-        self.time_init = time.time() - self.time_paused
+        self.time_init = time.monotonic() - self.time_paused
         self.time_paused = 0
         self.set_labels()
 
     # -- Display ---------------------------------------------------------------
+    def get_seconds2(self):
+        if self.time_init:
+            tp2 = time.monotonic() - self.time_init
+            elapsed = tp2
+            if self.time_mode == TIMEMODE_DELAY_SIMPLE:
+                elapsed = max(0.0, elapsed - self._delay_remaining)
+            tp = self.pending_time - elapsed
+        else:
+            tp = self.pending_time - self.time_paused
+            tp2 = self.time_paused
+        if tp <= 0.0:
+            tp = 0
+        return tp, tp2 + self.time_previous
 
     def set_labels(self):
         if self.is_displayed:
             tp, tp2 = self.get_seconds2()
-            eti = self.text(tp)
-            eti2 = self.text(tp2)
+            # Redondear la suma antes de separar ambos relojes evita que
+            # cada uno cambie de segundo en instantes distintos.
+            elapsed = round(tp2)
+            remaining = max(0, round(tp + tp2) - elapsed)
+            eti = self.text(remaining)
+            eti2 = self.text(elapsed)
             if eti:
                 if self.time_mode == TIMEMODE_MOVES_IN_TIME:
                     eti2 += self.phase_label()
@@ -357,16 +364,16 @@ class TimeControl:
 
     def time_is_consumed(self):
         if self.time_init:
-            elapsed = time.time() - self.time_init
+            elapsed = time.monotonic() - self.time_init
             if self.time_mode == TIMEMODE_DELAY_SIMPLE:
                 elapsed = max(0.0, elapsed - self._delay_remaining)
             return (self.pending_time - elapsed) <= 0.0
-        return self.pending_time <= 0.0
+        return int(self.pending_time * 1000) <= 0  # menos que 1 milésima se considera 0
 
     def is_zeitnot(self):
         if self.zeitnot_marker:
             if self.time_init:
-                t = self.pending_time - (time.time() - self.time_init)
+                t = self.pending_time - (time.monotonic()- self.time_init)
             else:
                 t = self.pending_time
             if t > 0:

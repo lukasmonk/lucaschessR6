@@ -1,9 +1,9 @@
 import Code
 from Code.Analysis import WindowAnalysisParam
 from Code.Base import Game
+from Code.Engines import Engines
 from Code.QT import Iconos, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
-from Code.Engines import Engines
 
 
 class DBAnalysis:
@@ -146,8 +146,9 @@ class WDBAnalisis:
             else:
                 conf_engine: Engines.Engine = Code.configuration.engines.search(alm.engine)
                 conf_engine.set_multipv_var(alm.multiPV)
-                xengine = Code.procesador.create_manager_analyzer_var(conf_engine, alm.vtime, alm.depth, alm.nodes,
-                                                                      conf_engine.multiPV)
+                xengine = Code.procesador.create_manager_analyzer_var(
+                    conf_engine, alm.vtime, alm.depth, alm.nodes, conf_engine.multiPV
+                )
 
             game = Game.Game()
             game.read_pv(pv)

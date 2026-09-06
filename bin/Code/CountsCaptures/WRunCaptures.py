@@ -3,7 +3,7 @@ import time
 import FasterCode
 
 import Code
-from Code.Base import Position, Move
+from Code.Base import Move, Position
 from Code.Board import Board2
 from Code.CountsCaptures import WRunCommon
 from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
@@ -105,7 +105,7 @@ class WRunCaptures(LCDialog.LCDialog):
         self.adjustSize()
 
         # Tiempo
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.gb_captures.setDisabled(True)
         self.gb_threats.setDisabled(True)
@@ -165,17 +165,17 @@ class WRunCaptures(LCDialog.LCDialog):
 
     def test_celdas(self):
         if len(self.liwm_captures[self.visible_captures - 1].movimiento()) == 4:
-            complete = all(len(wm.movimiento()) == 4 for wm in self.liwm_captures[:self.visible_captures])
+            complete = all(len(wm.movimiento()) == 4 for wm in self.liwm_captures[: self.visible_captures])
             if complete:
                 self.visible_captures += 2
-                for wm in self.liwm_captures[:self.visible_captures]:
+                for wm in self.liwm_captures[: self.visible_captures]:
                     if not wm.isVisible():
                         wm.setVisible(True)
         if len(self.liwm_threats[self.visible_threats - 1].movimiento()) == 4:
-            complete = all(len(wm.movimiento()) == 4 for wm in self.liwm_threats[:self.visible_threats])
+            complete = all(len(wm.movimiento()) == 4 for wm in self.liwm_threats[: self.visible_threats])
             if complete:
                 self.visible_threats += 2
-                for wm in self.liwm_threats[:self.visible_threats]:
+                for wm in self.liwm_threats[: self.visible_threats]:
                     wm.show()
 
     def set_last_square(self, wmcelda):
@@ -228,8 +228,7 @@ class WRunCaptures(LCDialog.LCDialog):
                 QTUtils.refresh_gui()
                 dif = depth - x
                 factor = 1.0 - dif * 0.1
-                if factor < 0.7:
-                    factor = 0.7
+                factor = max(factor, 0.7)
                 time.sleep(2.6 * factor * factor)
                 self.board.pon_texto("", 1)
                 QTUtils.refresh_gui()
@@ -242,12 +241,12 @@ class WRunCaptures(LCDialog.LCDialog):
         self.gb_threats.setEnabled(True)
 
         # Marcamos el tiempo
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.liwm_captures[0].activate()
 
     def verify(self):
-        tiempo = time.time() - self.time_base
+        tiempo = time.monotonic() - self.time_base
 
         def test(liwm, si_mb):
             st_busca = {mv.xfrom() + mv.xto() for mv in FasterCode.get_captures(self.position_obj.fen(), si_mb)}
@@ -298,8 +297,7 @@ class WRunCaptures(LCDialog.LCDialog):
         else:
             if self.capture.current_depth >= 1:
                 self.capture.current_posmove += self.capture.current_depth - 1
-                if self.capture.current_posmove < 0:
-                    self.capture.current_posmove = 0
+                self.capture.current_posmove = max(self.capture.current_posmove, 0)
                 self.capture.current_depth = 0
                 self.lb_result.set_text(
                     "%s (%d)"

@@ -4,7 +4,6 @@ import os
 from PySide6 import QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -19,6 +18,7 @@ from Code.QT import (
     SelectFiles,
 )
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 def read_config_savepgn() -> dict:

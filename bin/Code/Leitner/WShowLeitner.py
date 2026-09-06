@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtWidgets
 
 from Code.Leitner import WShowBoxesLeitner
-from Code.QT import LCDialog, Iconos, Controles, Colocacion
+from Code.QT import Colocacion, Controles, Iconos, LCDialog
 
 
 class WShowLeitner(LCDialog.LCDialog):

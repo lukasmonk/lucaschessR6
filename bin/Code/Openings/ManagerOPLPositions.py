@@ -3,7 +3,6 @@ import time
 from PySide6 import QtCore
 from PySide6.QtCore import Qt
 
-from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     GT_OPENING_LINES,
@@ -19,6 +18,7 @@ from Code.Base.Constantes import (
 )
 from Code.Openings import ManagerOPL, OpeningLines
 from Code.QT import Iconos, QTMessages, QTUtils
+from Code.Z import Util
 
 
 class ManagerOpeningLinesPositions(ManagerOPL.ManagerOpeningLines):
@@ -87,7 +87,7 @@ class ManagerOpeningLinesPositions(ManagerOPL.ManagerOpeningLines):
         self.check_boards_setposition()
 
         self.errores = 0
-        self.ini_time = time.time()
+        self.ini_time = time.monotonic()
         self.show_labels()
         self.play_next_move()
 
@@ -108,7 +108,7 @@ class ManagerOpeningLinesPositions(ManagerOPL.ManagerOpeningLines):
         for tr in self.trposition["TRIES"]:
             tgm += tr["TIME"]
 
-        mas = time.time() - self.ini_time
+        mas = time.monotonic() - self.ini_time
 
         mens = f"\n{'\n'.join(self.li_mens_basic)}"
         mens += "\n%s:\n    %s %s\n    %s %s" % (
@@ -122,7 +122,7 @@ class ManagerOpeningLinesPositions(ManagerOPL.ManagerOpeningLines):
         self.set_label2(mens)
 
     def posicion_terminada(self):
-        tm = time.time() - self.ini_time
+        tm = time.monotonic() - self.ini_time
 
         sin_errores = self.errores == 0 and self.with_help is False
 
@@ -156,8 +156,7 @@ class ManagerOpeningLinesPositions(ManagerOPL.ManagerOpeningLines):
             no_error = self.trposition["NOERROR"]
             salto = self.pos_active + 2 ** (no_error + 1) + 1
             num_posics = len(self.li_trainPositions)
-            if salto > num_posics:
-                salto = num_posics
+            salto = min(salto, num_posics)
 
             li_nuevo = self.li_trainPositions[:]
             del li_nuevo[self.pos_active]

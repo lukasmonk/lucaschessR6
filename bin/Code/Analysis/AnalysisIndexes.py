@@ -1,6 +1,6 @@
 import math
 from html import escape
-from typing import Any, Tuple, Dict
+from typing import Any
 
 import FasterCode
 
@@ -21,7 +21,7 @@ from Code.Nags import Nags
 PIECE_MATERIAL_VALUES = {"k": 3.0, "q": 9.9, "r": 5.5, "b": 3.5, "n": 3.1, "p": 1.0}
 
 
-def _compute_material_balance(cp) -> Tuple[float, float, float, int, int]:
+def _compute_material_balance(cp) -> tuple[float, float, float, int, int]:
     """Calcula material total, blanco, negro, y número de pieces."""
     total_material = white_material = black_material = 0.0
     white_pieces = black_pieces = 0
@@ -58,10 +58,10 @@ def _compute_gmo(mrm) -> float:
         elif diff < 101:
             gmo100 += 1
 
-    return float(gmo34) + (gmo68 ** 0.8) + (gmo100 ** 0.5)
+    return float(gmo34) + (gmo68**0.8) + (gmo100**0.5)
 
 
-def _compute_context_variables(cp, mrm, is_white: bool) -> Dict[str, Any]:
+def _compute_context_variables(cp, mrm, is_white: bool) -> dict[str, Any]:
     """Construye el diccionario de variables para la fórmula."""
     (
         total_material,
@@ -100,7 +100,7 @@ def calc_formula(cual: str, cp, mrm) -> float:
         formula_path = Code.path_resource("IntFiles", "Formulas", f"{cual}.formula")
         with open(formula_path, "rt") as f:
             formula = f.read().strip()
-    except (FileNotFoundError, IOError):
+    except (OSError, FileNotFoundError):
         return 0.0
 
     is_white = cp.is_white
@@ -322,7 +322,7 @@ def gen_indexes(game, elos, alm):
             mrm, pos = move.analysis
             rm = mrm.li_rm[pos]
             if (
-                    not hasattr(mrm, "dic_depth") or len(mrm.dic_depth) == 0
+                not hasattr(mrm, "dic_depth") or len(mrm.dic_depth) == 0
             ):  # Generación de gráficos sin un análisis previo con su depth
                 if INTERESTING_MOVE in move.li_nags:
                     nag_move, nag_color = INTERESTING_MOVE, INTERESTING_MOVE
@@ -513,18 +513,18 @@ def gen_indexes(game, elos, alm):
 
 
 def old_way0(
-        nmoves_analyzed,
-        moves_best,
-        moves_book,
-        moves_very_good,
-        moves_good,
-        moves_interestings,
-        moves_inaccuracies,
-        moves_mistakes,
-        moves_blunders,
-        moves_good_no,
-        moves_noanalyzed,
-        moves_gray,
+    nmoves_analyzed,
+    moves_best,
+    moves_book,
+    moves_very_good,
+    moves_good,
+    moves_interestings,
+    moves_inaccuracies,
+    moves_mistakes,
+    moves_blunders,
+    moves_good_no,
+    moves_noanalyzed,
+    moves_gray,
 ):
     cw = _("White")
     cb = _("Black")
@@ -533,8 +533,11 @@ def old_way0(
     resto = '<td align="center">%s</td><td align="center">%s</td><td align="center">%s</td></tr>'
     plantilla_c = "<tr><td>%s</td>" + start + resto
     color = '<b><span style="color:%s">%s</span></b>'
-    plantilla_e = ('<tr><td><b><span style="color:%s">%s</span></b></td>' +
-                   '<td align="center">%s</td>' % color + resto % (color, color, color))
+    plantilla_e = (
+        '<tr><td><b><span style="color:%s">%s</span></b></td>'
+        + '<td align="center">%s</td>' % color
+        + resto % (color, color, color)
+    )
 
     def xm(label, var, xcolor, nag):
         return plantilla_e % (
@@ -589,7 +592,7 @@ def old_way0(
     txt = best_moves
     txt += xm(_("Opening"), moves_book, "black", "")
     txt += xm(_("Brilliant moves"), moves_very_good, Nags.nag_color(VERY_GOOD_MOVE), "!!")
-    txt += xm(_('Good moves'), moves_good, Nags.nag_color(GOOD_MOVE), "!")
+    txt += xm(_("Good moves"), moves_good, Nags.nag_color(GOOD_MOVE), "!")
     txt += xm(_("Other best moves"), moves_good_no, Nags.nag_color(GOOD_MOVE), "")
     txt += xm(_("Interesting moves"), moves_interestings, Nags.nag_color(INTERESTING_MOVE), "!?")
     txt += xm(_("Acceptable moves"), moves_gray, "#333333", "")
@@ -604,18 +607,18 @@ def old_way0(
 
 
 def old_way(
-        nmoves_analyzed: Dict[bool, int],
-        moves_best: Dict[bool, int],
-        moves_book: Dict[bool, int],
-        moves_very_good: Dict[bool, int],
-        moves_good: Dict[bool, int],
-        moves_interestings: Dict[bool, int],
-        moves_inaccuracies: Dict[bool, int],
-        moves_mistakes: Dict[bool, int],
-        moves_blunders: Dict[bool, int],
-        moves_good_no: Dict[bool, int],
-        moves_noanalyzed: Dict[bool, int],
-        moves_gray: Dict[bool, int],
+    nmoves_analyzed: dict[bool, int],
+    moves_best: dict[bool, int],
+    moves_book: dict[bool, int],
+    moves_very_good: dict[bool, int],
+    moves_good: dict[bool, int],
+    moves_interestings: dict[bool, int],
+    moves_inaccuracies: dict[bool, int],
+    moves_mistakes: dict[bool, int],
+    moves_blunders: dict[bool, int],
+    moves_good_no: dict[bool, int],
+    moves_noanalyzed: dict[bool, int],
+    moves_gray: dict[bool, int],
 ) -> str:
     """Genera una tabla HTML con estadísticas de movimientos de ajedrez"""
 
@@ -637,8 +640,9 @@ def old_way(
             return " 0.00%"
         return f" {value * 100 / total:.2f}%"
 
-    def create_row(xlabel: str, xvar: Dict[bool, int], xnag_code: int | None = None, xannotation: str = "",
-                   xis_faded: bool = False) -> str:
+    def create_row(
+        xlabel: str, xvar: dict[bool, int], xnag_code: int | None = None, xannotation: str = "", xis_faded: bool = False
+    ) -> str:
         """Crea una fila de la tabla para un tipo de movimiento (siempre visible)"""
         white = xvar.get(True, 0)
         black = xvar.get(False, 0)
@@ -671,7 +675,7 @@ def old_way(
     rows.append(f"""
     <tr>
         <td align="center"></td>
-        <td align="center"><b>{_('Best moves')} %</b></td>
+        <td align="center"><b>{_("Best moves")} %</b></td>
         <td align="center">{format_percentage(moves_best.get(True, 0), white_analyzed)}</td>
         <td align="center">{format_percentage(moves_best.get(False, 0), black_analyzed)}</td>
         <td align="center">{format_percentage(best_total, total_analyzed)}</td>
@@ -681,7 +685,7 @@ def old_way(
     rows.append(f"""
     <tr>
         <td align="center"></td>
-        <td align="center"><b>{_('Best moves')}</b></td>
+        <td align="center"><b>{_("Best moves")}</b></td>
         <td align="center">{moves_best.get(True, 0)}</td>
         <td align="center">{moves_best.get(False, 0)}</td>
         <td align="center">{best_total}</td>
@@ -714,5 +718,5 @@ def old_way(
     return f"""
     <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
         {header_html}
-        {''.join(rows)}
+        {"".join(rows)}
     </table>"""

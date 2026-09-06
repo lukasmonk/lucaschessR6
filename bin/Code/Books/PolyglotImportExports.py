@@ -6,7 +6,6 @@ import FasterCode
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     BLACK,
@@ -19,6 +18,7 @@ from Code.Base.Constantes import (
 from Code.Databases import DBgames
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, QTDialogs, QTMessages, QTUtils, SelectFiles
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class WExportarPGN(QtWidgets.QDialog):
@@ -163,6 +163,20 @@ class PolyglotExport:
         def save():
             if not li_current:
                 return
+
+            merged = {}
+            changed = False
+            for xentry in li_current:
+                pv = xentry.pv()
+                if pv in merged:
+                    merged[pv].weight += xentry.weight
+                    merged[pv].score += xentry.score
+                    changed = True
+                else:
+                    merged[pv] = xentry
+            if changed:
+                li_current[:] = list(merged.values())
+
             factor = None
             if not uniform:
                 weight_max = max(xentry.weight for xentry in li_current)
@@ -175,12 +189,9 @@ class PolyglotExport:
                         xentry.weight = 100
                     elif factor:
                         xentry.weight = max(int(factor * xentry.weight), 1)
-                    if xentry.score > 32767:
-                        xentry.score = 32767
-                    if xentry.depth > 255:
-                        xentry.depth = 255
-                    if xentry.learn > 255:
-                        xentry.learn = 255
+                    xentry.score = min(xentry.score, 32767)
+                    xentry.depth = min(xentry.depth, 255)
+                    xentry.learn = min(xentry.learn, 255)
                     wpoly.write(xentry)
 
         cancelled = False
@@ -222,7 +233,7 @@ class PolyglotExport:
         game = Game.Game()
         game.set_tag("Event", self.wpolyglot.title)
 
-        control = [time.time() + 0.8, 0]
+        control = [time.monotonic() + 0.8, 0]
 
         for side in (WHITE, BLACK):
             control[1] = 0
@@ -236,7 +247,7 @@ class PolyglotExport:
                 st_hash = set()
                 st_fenm2 = set()
 
-                control[0] = time.time()
+                control[0] = time.monotonic()
 
                 def add_lipv(li_pv):
                     spv = " ".join(li_pv)
@@ -246,9 +257,9 @@ class PolyglotExport:
                     st_hash.add(h)
 
                     dblist.append(spv)
-                    if time.time() - control[0] > 1.0:
+                    if time.monotonic() - control[0] > 1.0:
                         wexport.set_positions(control[1])
-                        control[0] = time.time()
+                        control[0] = time.monotonic()
 
                 def is_already_fen(fen):
                     fenm2 = FasterCode.fen_fenm2(fen)
@@ -302,7 +313,7 @@ class PolyglotExport:
                         wexport.pon_saving()
                         result = "1-0" if side == WHITE else "0-1"
                         num_games = 0
-                        control[0] = time.time() + 0.8
+                        control[0] = time.monotonic() + 0.8
                         for pv in dblist.lista(True):
                             if not previo.startswith(pv):
                                 previo = pv
@@ -312,8 +323,8 @@ class PolyglotExport:
                                 game.read_pv(pv)
                                 q.write(f"{game.pgn()}\n\n\n")
                                 num_games += 1
-                                if time.time() - control[0] > 1.0:
-                                    control[0] = time.time()
+                                if time.monotonic() - control[0] > 1.0:
+                                    control[0] = time.monotonic()
                                     wexport.set_games(num_games)
                                 if wexport.is_canceled():
                                     break
@@ -502,7 +513,7 @@ class PolyglotImport:
                 st_side,
                 li_players,
                 ru.encode(),
-                time.time,
+                time.monotonic,
                 0.1,
                 dltmp.dispatch,
                 fadd,
@@ -697,13 +708,13 @@ class ImportarPGNDB(QtWidgets.QDialog):
     def dispatch(self, is_total, valor, num_games):
         if is_total:
             self.bp.setRange(0, 100)
-            self.time_inicial = time.time()
+            self.time_inicial = time.monotonic()
             self.total = valor
         elif valor > 0 and self.total > 0:
             porc_valor = valor * 100 / self.total
             self.bp.setValue(porc_valor)
             self.lbgames_readed.set_text("%s: %d" % (_("Games read"), num_games))
-            tm = time.time() - self.time_inicial
+            tm = time.monotonic() - self.time_inicial
 
             tm1 = tm / valor
             if self.invalid_prevision:
@@ -1057,7 +1068,7 @@ def add_db(
     dispatch,
     fadd,
 ):
-    time_prev = time.time()
+    time_prev = time.monotonic()
     cancelled = False
     st_results = {x.decode() for x in st_results}
     # accumulator: keymove -> (count, pts_sum)
@@ -1072,8 +1083,8 @@ def add_db(
 
     dispatch(True, db.all_reccount(), 0)
     for num_games, (xpv, result, white, black) in enumerate(db.yield_polyglot()):
-        if (time.time() - time_prev) >= 0.1:
-            time_prev = time.time()
+        if (time.monotonic() - time_prev) >= 0.1:
+            time_prev = time.monotonic()
             # flush before updating UI
             flush_acc()
             if not dispatch(False, num_games, num_games):

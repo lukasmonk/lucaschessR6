@@ -10,26 +10,30 @@ from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTMessag
 
 
 class WebExternalImporter:
-    def __init__(self, owner, db_games, title: str, url: str, icon):
+    def __init__(self, owner, db_games, title: str, url: str, icon, with_token: bool):
         self.owner = owner
         self.title = title
         self.db_games = db_games
         self.url = url
         self.icon = icon
+        self.with_token = with_token
 
         self.username_import = None
         self.from_date = None
         self.to_date = None
+        self.token = None
 
         self.message_import = f"{_('Games Loaded')}: %d"
         self.message_import_initial = f"{_('Reading')}..."
 
     def params(self):
-        w = WParams(self.owner, self.title, self.icon, self.url)
+        w = WParams(self.owner, self.title, self.icon, self.url, self.with_token)
         if w.exec():
             self.username_import = w.username_import
             self.from_date = w.from_date
             self.to_date = w.to_date
+            if self.with_token:
+                self.token = w.token
             return True
 
         return False
@@ -44,7 +48,14 @@ class WebExternalImporter:
 
 class Lichess(WebExternalImporter):
     def __init__(self, owner, db):
-        super().__init__(owner, db, "Lichess", "https://lichess.org", Iconos.Lichess())
+        super().__init__(
+            owner,
+            db,
+            "Lichess",
+            "https://lichess.org/account/oauth/token",
+            Iconos.Lichess(),
+            True,
+        )
 
     def import_games(self):
         # Convertir fechas a Unix timestamp
@@ -67,7 +78,12 @@ class Lichess(WebExternalImporter):
                 }
                 if omp.is_canceled():
                     break
-                response = requests.get(url, params=params, headers={"Accept": "application/x-ndjson"})
+                headers = {"Accept": "application/x-ndjson"}
+                if self.token:
+                    headers["Authorization"] = f"Bearer {self.token}"
+
+                response = requests.get(url, params=params, headers=headers)
+
                 if response.status_code == 200:
                     games_json = response.text.strip().split("\n")
                     num_imported_now = 0
@@ -79,14 +95,20 @@ class Lichess(WebExternalImporter):
                         dic_game = json.loads(game_json)
                         if "createdAt" not in dic_game:
                             continue
+
                         until = dic_game["createdAt"]
-                        num_imported += 1
-                        num_imported_now += 1
-                        omp.label(self.message_import % num_imported)
-                        pgn = dic_game["pgn"]
+                        num_imported_now += 1  # Cuenta cada partida procesada devuelta por Lichess
+
+                        pgn = dic_game.get("pgn")
+                        if not pgn:
+                            continue
+
                         ok, game = Game.pgn_game(pgn)
                         if ok and not game.get_tag("FEN"):
+                            num_imported += 1
+                            omp.label(self.message_import % num_imported)
                             self.db_games.insert(game)
+
                     if num_imported_now >= max_read:
                         until -= 1
                     else:
@@ -101,7 +123,7 @@ class Lichess(WebExternalImporter):
 
 class ChessCom(WebExternalImporter):
     def __init__(self, owner, db):
-        super().__init__(owner, db, "chess.com", "https://chess.com", Iconos.ChessCom())
+        super().__init__(owner, db, "chess.com", "https://chess.com", Iconos.ChessCom(), False)
 
     def import_games(self):
         headers = {
@@ -163,13 +185,15 @@ class ChessCom(WebExternalImporter):
 
 
 class WParams(LCDialog.LCDialog):
-    def __init__(self, owner, title, icon, url):
-        self.key = "wparams_importexternal"
+    def __init__(self, owner, title, icon, url, with_token: bool):
+        self.key = f"params_importexternal{title}"
         super().__init__(owner, title, icon, self.key)
 
         self.username_import = None
         self.from_date = None
         self.to_date = None
+        self.with_token = with_token
+        self.token = None
 
         tb = QTDialogs.tb_accept_cancel(self)
 
@@ -194,7 +218,14 @@ class WParams(LCDialog.LCDialog):
         layout.empty_row(4, 20)
         layout.controld(lb_to, 5, 0).control(self.dt_to, 5, 1)
         layout.empty_row(6, 20)
-        layout.control(lb_url, 7, 0)
+        pos_url = 7
+        if with_token:
+            lb_token = Controles.LB(self, f"{_('Personal access token')}:")
+            self.ed_token = Controles.ED(self, "").minimum_width(200)
+            layout.controld(lb_token, 7, 0).control(self.ed_token, 7, 1)
+            pos_url = 8
+
+        layout.control(lb_url, pos_url, 0, num_columns=2)
 
         layout_gen = Colocacion.V()
         layout_gen.control(tb)
@@ -215,12 +246,16 @@ class WParams(LCDialog.LCDialog):
             self.dt_from.set_date(dic["from_date"])
         if "to_date" in dic:
             self.dt_to.set_date(dic["to_date"])
+        if self.with_token:
+            self.ed_token.set_text(dic.get("token", ""))
 
     def save_data(self):
         dic = Code.configuration.read_variables(self.key)
         dic["user"] = self.username_import
         dic["from_date"] = self.from_date
         dic["to_date"] = self.to_date
+        if self.with_token:
+            dic["token"] = self.token
         Code.configuration.write_variables(self.key, dic)
 
     def aceptar(self):
@@ -229,6 +264,8 @@ class WParams(LCDialog.LCDialog):
         self.to_date = self.dt_to.pydate()
         if self.from_date > self.to_date:
             self.from_date, self.to_date = self.to_date, self.from_date
+        if self.with_token:
+            self.token = self.ed_token.text()
         self.save_video()
         if self.username_import:
             self.save_data()

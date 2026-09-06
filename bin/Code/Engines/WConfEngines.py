@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from PySide6 import QtCore, QtWidgets
 
@@ -14,14 +13,14 @@ from Code.Base.Constantes import (
     POS_TUTOR_HORIZONTAL_2_1,
     POS_TUTOR_VERTICAL,
 )
-from Code.Engines import CheckEngines, Priorities
-from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, SelectFiles, QTUtils
+from Code.Engines import Priorities
+from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTUtils, SelectFiles
 from Code.Z import Util
 
 
 class WConfEngines(LCDialog.LCDialog):
-    me_control: Optional[str]
-    me_key: Optional[str]
+    me_control: str | None
+    me_key: str | None
 
     def __init__(self, owner):
         icono = Iconos.ConfEngines()
@@ -101,7 +100,7 @@ class WConfEngines(LCDialog.LCDialog):
         opcion = self.li_uci_options[recno]
         key = opcion.name
         value = opcion.valor
-        for xkey, xvalue in self.engine.liUCI:
+        for xkey, xvalue in self.engine.li_changed_options:
             if xkey == key:
                 value = xvalue
                 break
@@ -201,7 +200,7 @@ class WConfEngines(LCDialog.LCDialog):
         else:
             name = op.name
             valor = next(
-                (xvalue for xname, xvalue in self.engine.liUCI if xname == name),
+                (xvalue for xname, xvalue in self.engine.li_changed_options if xname == name),
                 op.valor,
             )
             valor = str(valor)
@@ -277,7 +276,7 @@ class WConfTutor(QtWidgets.QWidget):
         )
         self.chb_save_variations = Controles.CHB(
             self,
-            _('Convert analyses into variations'),
+            _("Convert analyses into variations"),
             self.configuration.x_save_tutor_variations,
         )
         self.chb_background = Controles.CHB(
@@ -374,7 +373,7 @@ class WConfTutor(QtWidgets.QWidget):
             self.configuration.graba()
 
             dic = self.configuration.read_variables("TUTOR_ANALYZER")
-            dic["TUTOR"] = self.engine.list_uci_changed()
+            dic["TUTOR"] = self.engine.get_changed_options()
             self.configuration.write_variables("TUTOR_ANALYZER", dic)
             Code.procesador.change_manager_tutor()
 
@@ -491,7 +490,7 @@ class WConfAnalyzer(QtWidgets.QWidget):
             self.configuration.x_analyzer_depth_ab = self.ed_depth_ab.text_to_integer()
 
             dic = self.configuration.read_variables("TUTOR_ANALYZER")
-            dic["ANALYZER"] = self.engine.list_uci_changed()
+            dic["ANALYZER"] = self.engine.get_changed_options()
             self.configuration.write_variables("TUTOR_ANALYZER", dic)
             Code.procesador.change_manager_analyzer()
 
@@ -571,16 +570,6 @@ class WOthers(QtWidgets.QWidget):
         self.bt_gaviota_remove = Controles.PB(self, "", self.remove_gaviota).set_icono(Iconos.Delete())
         ly_gav = Colocacion.H().control(self.bt_gaviota).control(self.bt_gaviota_remove).relleno()
 
-        lb_stockfish = Controles.LB2P(self, "Stockfish")
-        self.lb_stockfish_version = Controles.LB(self, CheckEngines.current_stockfish()).set_font_type(
-            peso=500, puntos=11
-        )
-        self.lb_stockfish_version.setStyleSheet("border:1px solid gray;padding:3px")
-        bt_stockfish = (
-            Controles.PB(self, "", self.change_stockfish).set_icono(Iconos.Reiniciar()).set_tooltip(_("Update"))
-        )
-        ly_stk = Colocacion.H().control(self.lb_stockfish_version).control(bt_stockfish).relleno()
-
         sep = 40
         layout = Colocacion.G()
         layout.relleno_column(1, 1)
@@ -593,8 +582,6 @@ class WOthers(QtWidgets.QWidget):
         layout.controld(lb_gaviota, 4, 0)
         layout.otro(ly_gav, 4, 1)
         layout.empty_row(5, sep)
-        layout.controld(lb_stockfish, 6, 0)
-        layout.otro(ly_stk, 6, 1)
 
         layoutg = Colocacion.V().espacio(sep).otro(layout).relleno().margen(30)
 
@@ -615,12 +602,6 @@ class WOthers(QtWidgets.QWidget):
         self.gaviota = Code.configuration.carpeta_gaviota_defecto()
         self.set_gaviota()
         self.save()
-
-    def change_stockfish(self):
-        self.lb_stockfish_version.set_text(_("Working..."))
-        QTUtils.refresh_gui()
-        CheckEngines.check_stockfish(True)
-        self.lb_stockfish_version.set_text(CheckEngines.current_stockfish())
 
     def save(self):
         self.configuration.x_carpeta_gaviota = self.gaviota

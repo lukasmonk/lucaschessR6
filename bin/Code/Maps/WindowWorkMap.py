@@ -208,9 +208,9 @@ class WMap(LCDialog.LCDialog):
         tipo = self.workmap.get_tipo()
         txt = f'<b><span style="color:#C156F8">{_("Active")}: {current}</span>' if current else ""
         txt += (
-                f'<br><span style="color:brown">{_("Type")}: {tipo}</span></b>'
-                + '<br><span style="color:teal">%s: %d/%d</span></b>' % (_("Done"), hechos, total)
-                + f'<br><span style="color:blue">{_("Result")}: {info if info else ""}</span></b>'
+            f'<br><span style="color:brown">{_("Type")}: {tipo}</span></b>'
+            + '<br><span style="color:teal">%s: %d/%d</span></b>' % (_("Done"), hechos, total)
+            + f'<br><span style="color:blue">{_("Result")}: {info if info else ""}</span></b>'
         )
         self.lbInfo.set_text(txt)
 
@@ -396,8 +396,7 @@ class WUnSTSMap(LCDialog.LCDialog):
                 san,
                 points,
             )
-            if points > mx:
-                mx = points
+            mx = max(mx, points)
         if not ok:
             san = Game.pv_san(self.alm.fen, done_pv)
             mens += '<tr%s><td align="center">%s</td><td align="right">%d</td></tr>' % (

@@ -56,6 +56,7 @@ separador = (None, None)
 
 class Line:
     """Representa una línea horizontal con espacios arriba y abajo"""
+
     def __init__(self, arriba=0, abajo=0):
         self.arriba = arriba
         self.abajo = abajo
@@ -138,11 +139,11 @@ class FormLayout:
     def minutes(self, label: str, init_value: float):
         self.editbox(label, ancho=60, tipo=float, init_value=init_value, decimales=2)
 
-    def combobox(self, label, lista, init_value, is_editable=False, tooltip=None):
-        self.li_gen.append((Combobox(label, lista, is_editable, tooltip), init_value))
+    def combobox(self, label, lista, init_value, is_editable=False, tooltip=None, auto_width: bool = True):
+        self.li_gen.append((Combobox(label, lista, is_editable, tooltip, auto_width=auto_width), init_value))
 
     def checkbox(self, label: str, init_value: bool):
-        self.eddefault(label, init_value)
+        self.eddefault(label, bool(init_value))
 
     # def float(self, label: str, init_value: float):
     #     self.eddefault(label, float(init_value) if init_value else 0.0)
@@ -252,13 +253,14 @@ class CHSpinbox:
 
 
 class Combobox:
-    def __init__(self, label, lista, is_editable=False, tooltip=None, extend_seek=False):
+    def __init__(self, label, lista, is_editable=False, tooltip=None, extend_seek=False, auto_width=False):
         self.tipo = COMBOBOX
         self.lista = lista  # (key,titulo),....
         self.label = f"{label}:"
         self.is_editable = is_editable
         self.extend_seek = extend_seek
         self.tooltip = tooltip
+        self.auto_width = auto_width
 
 
 class FontCombobox:
@@ -695,7 +697,7 @@ class Slider(Colocacion.H):
 
 class FormWidget(QtWidgets.QWidget):
     def __init__(self, data, comment="", parent=None, dispatch=None):
-        super(FormWidget, self).__init__(parent)
+        super().__init__(parent)
         self.data = data
         self.widgets = []
         self.labels = []
@@ -713,14 +715,14 @@ class FormWidget(QtWidgets.QWidget):
                 container = QtWidgets.QWidget(self)
                 container_layout = QtWidgets.QVBoxLayout()
                 container_layout.setContentsMargins(0, value.arriba, 0, value.abajo)
-                
+
                 line = QtWidgets.QFrame(self)
                 line.setFrameShape(QtWidgets.QFrame.Shape.HLine)
                 line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
-                
+
                 container_layout.addWidget(line)
                 container.setLayout(container_layout)
-                
+
                 self.formlayout.addRow(container)
                 self.widgets.append(None)
                 self.labels.append(None)
@@ -761,6 +763,8 @@ class FormWidget(QtWidgets.QWidget):
                             field.valueChanged.connect(dispatch)
                     elif tipo == COMBOBOX:
                         field = Controles.CB(self, config.lista, value, extend_seek=config.extend_seek)
+                        if config.auto_width:
+                            field.set_auto_width()
                         if config.is_editable:
                             field.setEditable(True)
                         if config.tooltip:
@@ -906,11 +910,7 @@ class FormWidget(QtWidgets.QWidget):
                     value = field.lista[n][1]
                 elif tipo == FONTCOMBOBOX:
                     value = field.currentFont().family()
-                elif tipo == COLORBOX:
-                    value = field.value()
-                elif tipo == DIAL:
-                    value = field.value()
-                elif tipo == SLIDER:
+                elif tipo == COLORBOX or tipo == DIAL or tipo == SLIDER:
                     value = field.value()
                 elif tipo == EDITBOX:
                     value = field.valor()
@@ -962,7 +962,7 @@ class FormWidget(QtWidgets.QWidget):
 
 class FormTabWidget(QtWidgets.QWidget):
     def __init__(self, datalist, comment="", parent=None, dispatch=None):
-        super(FormTabWidget, self).__init__(parent)
+        super().__init__(parent)
         layout = Colocacion.V()
         self.tabwidget = QtWidgets.QTabWidget()
         layout.control(self.tabwidget)
@@ -996,7 +996,7 @@ class FormDialog(QtWidgets.QDialog):
         dispatch=None,
         li_extra_options=None,
     ):
-        super(FormDialog, self).__init__(parent, QtCore.Qt.WindowType.Dialog)
+        super().__init__(parent, QtCore.Qt.WindowType.Dialog)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 

@@ -1,7 +1,5 @@
-from typing import Optional
-
 import Code
-from Code.Base import Move, Position, Game
+from Code.Base import Game, Move, Position
 from Code.Base.Constantes import (
     GT_WASHING_CREATE,
     GT_WASHING_REPLAY,
@@ -20,7 +18,7 @@ from Code.Engines import EngineResponse
 from Code.ManagerBase import Manager
 from Code.Openings import Opening
 from Code.QT import QTMessages, QTUtils
-from Code.Tutor import Tutor, AnalystTutor
+from Code.Tutor import AnalystTutor, Tutor
 from Code.Washing import Washing
 
 
@@ -514,7 +512,7 @@ class ManagerWashingCreate(Manager.Manager):
     is_human_side_white: bool = False
     is_engine_side_white: bool = False
     is_competitive: bool = True
-    opening: Optional[Opening.OpeningPol] = None
+    opening: Opening.OpeningPol | None = None
     is_tutor_enabled: bool = False
     tc_player = None
     tc_rival = None

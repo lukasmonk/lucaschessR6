@@ -12,10 +12,15 @@ class Icons:
     dic_icons = None
     mode = NORMAL
 
+    def __init__(self):
+        self.cache = {}
+
     def reset(self, mode):
-        self.mode = mode
-        self.bin_icons = self.read_bin()
-        self.dic_icons = self.read_dic()
+        if mode != self.mode or self.bin_icons is None:
+            self.mode = mode
+            self.bin_icons = self.read_bin()
+            self.dic_icons = self.read_dic()
+            self.cache.clear()
 
     def combobox(self):
         return [
@@ -40,19 +45,23 @@ class Icons:
             return d
 
     def icon(self, name):
-        return self.__getattr__(name)
+        return self.get(name)
 
     def pixmap(self, name):
-        return self.__getattr__(f"pm{name}")
+        return self.get(f"pm{name}")
 
     def get(self, name_icon):
+        resp = self.cache.get(name_icon)
+        if resp is not None:
+            return resp
         is_pixmap = name_icon[0] == "p"
-        if is_pixmap:
-            name_icon = name_icon[2:]
-        xfrom, xto = self.dic_icons[name_icon]
+        name = name_icon[2:] if is_pixmap else name_icon
+        xfrom, xto = self.dic_icons[name]
         pm = QtGui.QPixmap()
         pm.loadFromData(self.bin_icons[xfrom:xto])
-        return pm if is_pixmap else QtGui.QIcon(pm)
+        resp = pm if is_pixmap else QtGui.QIcon(pm)
+        self.cache[name_icon] = resp
+        return resp
 
 
 icons = Icons()

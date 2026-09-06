@@ -1,5 +1,4 @@
 import Code
-from Code.Z import XRun
 from Code.Base.Constantes import (
     KIBRUN_CLOSE,
     KIBRUN_CONFIGURATION,
@@ -8,6 +7,7 @@ from Code.Base.Constantes import (
 )
 from Code.Kibitzers import WindowKibitzers
 from Code.SQL import UtilSQL
+from Code.Z import XRun
 
 
 class Manager:

@@ -5,7 +5,6 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
 import Code.Nags.Nags
-from Code.Z import Util
 from Code.Base import Position
 from Code.Board import Board, BoardArrows, ConfBoards
 from Code.Director import (
@@ -24,6 +23,7 @@ from Code.QT import (
     ScreenUtils,
     SelectFiles,
 )
+from Code.Z import Util
 
 
 class BotonTema(QtWidgets.QPushButton):
@@ -969,7 +969,7 @@ def add_menu_themes(menu_base, li_temas, base_resp):
     li_root = []
     for n, uno in enumerate(li_temas):
         if uno:
-            if "SECCION" in uno and uno["SECCION"]:
+            if uno.get("SECCION"):
                 folder = uno["SECCION"]
                 if folder not in d_folders:
                     d_folders[folder] = []
@@ -1349,7 +1349,7 @@ def theme_icon(tema, tam):
 
 class WNameTheme(QtWidgets.QDialog):
     def __init__(self, owner, theme, your_themes):
-        super(WNameTheme, self).__init__(owner)
+        super().__init__(owner)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 

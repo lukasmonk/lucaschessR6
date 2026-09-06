@@ -1,8 +1,8 @@
 import collections
 
 import Code
-from Code.Z import Util
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class Resistance:
@@ -17,7 +17,7 @@ class Resistance:
         if self.conf is None:
             self.conf = {"SEGUNDOS": 5, "PUNTOS": 100, "NIVELHECHO": 0, "MAXERROR": 0}
 
-        self.list_engines = self.configuration.engines.list_name_alias()  # name, key
+        self.list_engines = self.configuration.engines.list_name_alias_elo()  # name, key
         self.claveActual = self.calcClaveActual()
         self.dicActual = self.dameDicActual()
 
@@ -39,6 +39,9 @@ class Resistance:
 
     def dameEtiEngine(self, row):
         return self.list_engines[row][0]
+
+    def get_elo(self, row):
+        return f"{self.list_engines[row][2]}"
 
     def dameClaveEngine(self, row):
         return self.list_engines[row][1]

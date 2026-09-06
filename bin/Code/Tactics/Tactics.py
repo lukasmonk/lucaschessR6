@@ -1,8 +1,8 @@
 import random
 
-from Code.Z import Util
 from Code.Base import Game, Position
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class Reinforcement:
@@ -434,8 +434,7 @@ class Tactic:
             for li in lif:
                 n = li[0]
                 lif0 = li[1]
-                if len(lif0) < n:
-                    n = len(lif0)
+                n = min(n, len(lif0))
                 lir = lif0[:n]
                 for x in lir:
                     li_fns.append(x)
@@ -779,8 +778,7 @@ class Tactic:
             self.w_next_position = self.w_current_position - self.penalization_positions(
                 self.w_current_position, self.w_total_positions
             )
-            if self.w_next_position < 0:
-                self.w_next_position = 0
+            self.w_next_position = max(self.w_next_position, 0)
 
         with self.dbdatos() as db:
             db["ERRORS"] += 1

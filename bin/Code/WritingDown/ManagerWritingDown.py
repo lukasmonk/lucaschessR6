@@ -1,6 +1,5 @@
 import time
 
-from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     GT_NOTE_DOWN,
@@ -16,6 +15,7 @@ from Code.Base.Constantes import (
 from Code.ManagerBase import Manager
 from Code.QT import QTDialogs
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class ManagerWritingDown(Manager.Manager):
@@ -91,7 +91,7 @@ class ManagerWritingDown(Manager.Manager):
             self.move_the_pieces(move.list_piece_moves, True)
             self.board.put_arrow_sc(move.from_sq, move.to_sq)
 
-            tm = time.time()
+            tm = time.monotonic()
 
             w = QTDialogs.ReadAnnotation(self.main_window, move.pgn_translated())
             if not w.exec():
@@ -99,7 +99,7 @@ class ManagerWritingDown(Manager.Manager):
                 self.finalizar()
                 return False
 
-            self.vtime += time.time() - tm
+            self.vtime += time.monotonic() - tm
             con_ayuda, errores = w.resultado
             if con_ayuda:
                 self.ayudas_recibidas += 1

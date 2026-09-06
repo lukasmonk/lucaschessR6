@@ -107,7 +107,7 @@ class WForcingMoves(LCDialog.LCDialog):
         self.adjustSize()
 
         # Tiempo
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.gb_counts.setDisabled(True)
 
@@ -304,10 +304,7 @@ class WForcingMoves(LCDialog.LCDialog):
         for move in self.owner.li_all_moves:
             if move not in self.owner.li_checks and move not in self.owner.li_captures:
                 if arrow_count <= 6 and move not in self.owner.st_best_moves:
-                    if self.owner.bm_is_threat and move in self.owner.li_threats:
-                        self.board.show_one_arrow_temp(move[:2], move[2:4], False)
-                        arrow_count += 1
-                    elif not self.owner.bm_is_threat:
+                    if self.owner.bm_is_threat and move in self.owner.li_threats or not self.owner.bm_is_threat:
                         self.board.show_one_arrow_temp(move[:2], move[2:4], False)
                         arrow_count += 1
 
@@ -362,7 +359,7 @@ class WForcingMoves(LCDialog.LCDialog):
         self.gb_counts.setEnabled(True)
 
         # Marcamos el tiempo
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
         self.ed_moves.setFocus()
         self.level += 1

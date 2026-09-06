@@ -5,7 +5,6 @@ import os
 import random
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
@@ -13,6 +12,7 @@ from Code.Base.Constantes import (
     BOOK_RANDOM_UNIFORM,
 )
 from Code.Books import Polyglot
+from Code.Z import Util
 
 
 class ListBooks:
@@ -179,8 +179,7 @@ class Book:
         for entry in li:
             w = entry.weight
             total += w
-            if w > maxim:
-                maxim = w
+            maxim = max(maxim, w)
 
         lista_jugadas = []
         for entry in li:
@@ -204,8 +203,7 @@ class Book:
         for entry in li:
             w = entry.weight
             total += w
-            if w > maxim:
-                maxim = w
+            maxim = max(maxim, w)
 
         lista_jugadas = []
         st_pvs_included = set()

@@ -219,8 +219,7 @@ class ManagerTrainBooks(Manager.Manager):
         if found and self.player_highest:  # si el jugador busca elegir el maximo
             maxpeso = 0.0
             for jdesde, jhasta, jpromotion, jpgn, peso in list_moves:
-                if peso > maxpeso:
-                    maxpeso = peso
+                maxpeso = max(maxpeso, peso)
             if actpeso < maxpeso:
                 found = False
 
@@ -319,11 +318,9 @@ class ManagerTrainBooks(Manager.Manager):
         if len(self.game) and self.in_end_of_line():
             self.state = ST_PLAYING
             self.movimientos -= 1
-            if self.movimientos < 0:
-                self.movimientos = 0
+            self.movimientos = max(self.movimientos, 0)
             self.aciertos -= 1
-            if self.aciertos < 0:
-                self.aciertos = 0
+            self.aciertos = max(self.aciertos, 0)
             self.game.remove_last_move(self.is_human_side_white)
             self.goto_end()
             self.refresh()

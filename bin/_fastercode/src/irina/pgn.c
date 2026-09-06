@@ -42,15 +42,20 @@ void pgn_start(int depth)
     for( i=0; i < depth; i++)
     {
         fens[i] = (char *) malloc(128);
+        if( !fens[i] ) {
+            max_depth = i;
+            return;
+        }
     }
 }
 
 void pgn_stop( void )
 {
     int i;
-    for( i=0; i < MAX_MDEPTH; i++)
+    for( i=0; i < max_depth; i++)
     {
         free(fens[i]);
+        fens[i] = NULL;
     }
 }
 

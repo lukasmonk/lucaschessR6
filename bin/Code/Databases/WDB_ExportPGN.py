@@ -1,6 +1,6 @@
-import Code
 from PySide6 import QtWidgets
 
+import Code
 from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, ScreenUtils
 
 
@@ -57,7 +57,7 @@ class WExportPGN(LCDialog.LCDialog):
 
         self.rb_db = Controles.RB(self, _("To another database"), init_value=False)
         self.rb_db.setIcon(Iconos.Datos())
-        
+
         ly.control(self.rb_pgn)
         ly.control(self.rb_csv)
         ly.control(self.rb_db)

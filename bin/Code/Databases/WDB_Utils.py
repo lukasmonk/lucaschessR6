@@ -5,15 +5,15 @@ import webbrowser
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import FEN_INITIAL
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class WFiltrar(QtWidgets.QDialog):
     def __init__(self, w_parent, li_filter, db_save_nom=None):
-        super(WFiltrar, self).__init__(w_parent)
+        super().__init__(w_parent)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -459,16 +459,16 @@ def create_tactics(wowner, li_registros_selected, li_registros_total, rutina_dat
 
     fen0 = FEN_INITIAL
 
-    t = time.time()
+    t = time.monotonic()
 
     for n in range(nregs):
         if tmp_bp.is_canceled():
             break
 
         tmp_bp.pon(n + 1)
-        if time.time() - t > 1.0 or (nregs - n) < 10:
+        if time.monotonic() - t > 1.0 or (nregs - n) < 10:
             tmp_bp.mensaje("%d/%d" % (n + 1, nregs))
-            t = time.time()
+            t = time.monotonic()
 
         recno = li_registros[n]
 

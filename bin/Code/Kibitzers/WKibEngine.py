@@ -1,5 +1,4 @@
 import sys
-from typing import Optional
 
 from PySide6 import QtCore
 
@@ -14,7 +13,7 @@ from Code.Z import Util
 class WKibEngine(WKibCommon.WKibCommon):
     engine_name: str
     run_engine_params: EngineRun.RunEngineParams
-    engine_run: Optional[EngineRun.EngineRun]
+    engine_run: EngineRun.EngineRun | None
 
     def __init__(self, cpu):
         WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Kibitzer())
@@ -267,7 +266,7 @@ class WKibEngine(WKibCommon.WKibCommon):
         run_param = EngineRun.StartEngineParams()
         run_param.name = self.kibitzer.name
         run_param.path_exe = exe
-        run_param.li_options_uci = self.kibitzer.liUCI
+        run_param.li_options_uci = self.kibitzer.get_changed_options()
         run_param.args = self.kibitzer.args
         run_param.num_multipv = num_multipv
         run_param.emulate_movetime = True

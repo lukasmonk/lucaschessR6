@@ -60,37 +60,40 @@ def save_brilliancies_fns(file, fen, mrm, game: Game.Game, njg):
         f.write(f"{fen}||{p.pgn_base_raw()}|{cab} {game_raw.pgn_base_raw_copy(None, njg - 1)}")
 
 
-def graba_tactic(tacticblunders, game, njg, mrm, pos_act) -> bool:
-    if not tacticblunders:
-        return False
-
-    # Esta creado el folder
-    before = f"{_('Avoid the blunder')}.fns"
-    after = f"{_('Take advantage of blunder')}.fns"
-    if not os.path.isdir(tacticblunders):
+def check_base_tactic(folder: str):
+    if not os.path.isdir(folder):
+        before = f"{_('Avoid the blunder')}.fns"
+        after = f"{_('Take advantage of blunder')}.fns"
         dtactics = Util.opj(Code.configuration.paths.folder_personal_trainings(), "../Tactics")
         if not os.path.isdir(dtactics):
             Util.create_folder(dtactics)
-        Util.create_folder(tacticblunders)
+        Util.create_folder(folder)
         with open(
-                Util.opj(tacticblunders, "Config.ini"),
-                "wt",
-                encoding="utf-8",
-                errors="ignore",
+            Util.opj(folder, "Config.ini"),
+            "wt",
+            encoding="utf-8",
+            errors="ignore",
         ) as f:
             f.write(
                 f"""[COMMON]
-ed_reference=20
-REPEAT=0
-SHOWTEXT=1
-[TACTIC1]
-MENU={_("Avoid the blunder")}
-FILESW={before}:100
-[TACTIC2]
-MENU={_("Take advantage of blunder")}
-FILESW={after}:100
-"""
+    ed_reference=20
+    REPEAT=0
+    SHOWTEXT=1
+    [TACTIC1]
+    MENU={_("Avoid the blunder")}
+    FILESW={before}:100
+    [TACTIC2]
+    MENU={_("Take advantage of blunder")}
+    FILESW={after}:100
+    """
             )
+
+
+def save_tactic(tacticblunders, game, njg, mrm, pos_act) -> bool:
+    if not tacticblunders:
+        return False
+
+    check_base_tactic(tacticblunders)
 
     cab = ""
     for k, v in game.dic_tags().items():
@@ -104,6 +107,7 @@ FILESW={after}:100
     rm = mrm.li_rm[0]
     p.read_pv(rm.pv)
     game_raw = Game.game_without_variations(game)
+    before = f"{_('Avoid the blunder')}.fns"
     with open(Util.opj(tacticblunders, before), "at", encoding="utf-8", errors="ignore") as f:
         f.write(f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg - 1)}\n")
 
@@ -112,8 +116,45 @@ FILESW={after}:100
     rm = mrm.li_rm[pos_act]
     li = rm.pv.split(" ")
     p.read_pv(" ".join(li[1:]))
+    after = f"{_('Take advantage of blunder')}.fns"
     with open(Util.opj(tacticblunders, after), "at", encoding="utf-8", errors="ignore") as f:
         f.write(f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg)}\n")
+
+    return True
+
+
+def save_in(path, li_lines):
+    directorio = os.path.dirname(path)
+    if directorio:
+        os.makedirs(directorio, exist_ok=True)
+    if not Util.exist_file(path):
+        with open(path, "wt", encoding="utf-8", errors="ignore") as ofile:
+            ofile.writelines(li_lines)
+        return
+    dic_data = {}
+    with open(path, "rt", encoding="utf-8", errors="ignore") as ofile:
+        for line in ofile:
+            if "||" in line:
+                fen = line.split("||")[0]
+                dic_data[fen] = line
+    for line in li_lines:
+        fen = line.split("||")[0]
+        dic_data[fen] = line
+    with open(path, "wt", encoding="utf-8", errors="ignore") as ofile:
+        ofile.writelines(dic_data.values())
+
+
+def save_massive_tactics(tacticblunders, li_avoid, li_advantage) -> bool:
+    if not tacticblunders:
+        return False
+
+    check_base_tactic(tacticblunders)
+
+    path_avoid = Util.opj(tacticblunders, f"{_('Avoid the blunder')}.fns")
+    save_in(path_avoid, li_avoid)
+
+    path_advantage = Util.opj(tacticblunders, f"{_('Take advantage of blunder')}.fns")
+    save_in(path_advantage, li_advantage)
 
     return True
 
@@ -182,14 +223,14 @@ def save_pgn(file, name, dic_cab, fen, move, rm, mj):
 
 
 def save_bmt(
-        si_blunder,
-        fen,
-        mrm,
-        pos_act,
-        cl_game,
-        txt_game,
-        bmt_lista_blunders,
-        bmt_lista_brilliancies,
+    si_blunder,
+    fen,
+    mrm,
+    pos_act,
+    cl_game,
+    txt_game,
+    bmt_lista_blunders,
+    bmt_lista_brilliancies,
 ):
     """
     Se graba una position en un entrenamiento BMT

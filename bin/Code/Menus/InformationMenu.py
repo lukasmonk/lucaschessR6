@@ -1,10 +1,10 @@
 import webbrowser
 
 import Code
-from Code.Z import Update
 from Code.About import About
 from Code.Menus import BaseMenu
 from Code.QT import Iconos
+from Code.Z import Update
 
 
 class InformationMenu(BaseMenu.RootMenu):

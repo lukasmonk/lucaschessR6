@@ -6,7 +6,7 @@ from Code.Board import BoardBlocks
 class CircleSC(BoardBlocks.BloqueEspSC):
     def __init__(self, escena, bloque_circle, routine_if_pressed=None):
 
-        super(CircleSC, self).__init__(escena, bloque_circle)
+        super().__init__(escena, bloque_circle)
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None

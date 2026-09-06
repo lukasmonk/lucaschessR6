@@ -1,9 +1,7 @@
 import os
-from typing import Optional
 
 from PySide6 import QtCore
 
-from Code.Z import FNSLine, Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import (
     GT_POSITIONS,
@@ -32,6 +30,7 @@ from Code.QT import Iconos, QTMessages, QTUtils
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
 from Code.Tutor import Tutor
+from Code.Z import FNSLine, Util
 
 
 class ManagerTrainPositions(Manager.Manager):
@@ -39,7 +38,7 @@ class ManagerTrainPositions(Manager.Manager):
 
     line_fns: FNSLine.FNSLine
     pos_obj: int
-    game_obj: Optional[Game.Game]
+    game_obj: Game.Game | None
     pos_training: int
     num_trainings: int
     title_training: str
@@ -57,10 +56,10 @@ class ManagerTrainPositions(Manager.Manager):
     current_helps: int
     li_options_toolbar: list = []
     show_comments: bool
-    mrm_tutor: Optional[EngineResponse.MultiEngineResponse] = None
+    mrm_tutor: EngineResponse.MultiEngineResponse | None = None
     is_tutor_enabled: bool = False
     is_tutor_analysing: bool = False
-    player_has_moved_a1h8: Optional[Move.Move] = None
+    player_has_moved_a1h8: Move.Move | None = None
     wsolve: WindowSolve.WSolve
 
     def set_training(self, entreno: str) -> None:
@@ -130,7 +129,7 @@ class ManagerTrainPositions(Manager.Manager):
         num_trainings: int,
         title_training: str,
         li_trainings: list[tuple[str, int]],
-        is_tutor_enabled: Optional[bool],
+        is_tutor_enabled: bool | None,
         is_automatic_jump: bool,
         remove_solutions: bool,
         show_comments: bool,
@@ -715,6 +714,8 @@ class ManagerTrainPositions(Manager.Manager):
 
         self.is_rival_thinking = False
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
+        if not ok:
+            return
         self.is_analyzed_by_tutor = False
 
         self.move_the_pieces(move.list_piece_moves, True)
@@ -896,11 +897,7 @@ class ManagerTrainPositions(Manager.Manager):
     def update_help(self) -> None:
         if self.is_finished():
             with_help = False
-        elif self.is_playing_gameobj():
-            with_help = True
-        elif self.is_tutor_enabled:
-            with_help = True
-        elif self.is_active_analysys_bar():
+        elif self.is_playing_gameobj() or self.is_tutor_enabled or self.is_active_analysys_bar():
             with_help = True
         else:
             with_help = False
@@ -914,4 +911,3 @@ class ManagerTrainPositions(Manager.Manager):
             self.analyze_end()
         elif self.human_is_playing:
             self.analyze_begin()
-

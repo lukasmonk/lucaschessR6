@@ -36,7 +36,7 @@ def read_engines(folder_engines):
         # engine.read_uci_options()
         return engine
 
-    bmi2 = "-bmi2" if FasterCode.bmi2() else ""
+    bmi2 = "-bmi2" if FasterCode.is_bmi2() else ""
 
     levels = list(range(1100, 2000, 100)) + [2200]
     for level in levels:
@@ -71,9 +71,9 @@ def read_engines(folder_engines):
     cm = mas(
         "stockfish",
         "Tord Romstad, Marco Costalba, Joona Kiiski",
-        "18",
+        "19",
         "https://stockfishchess.org/",
-        "stockfish-18-64",
+        "stockfish-linux-x86-64-universal",
         3700,
     )
     cm.set_uci_option("Hash", "64")
@@ -125,7 +125,7 @@ def read_engines(folder_engines):
 
     mas(
         "cassandre",
-        "Jean-Francois Romang), Raphael Grundrich, Thomas Adolph, Chad Koch",
+        "Jean-Francois Romang, Raphael Grundrich, Thomas Adolph, Chad Koch",
         "0.24",
         "https://sourceforge.net/projects/cassandre/",
         "Cassandre-0.24",
@@ -341,7 +341,7 @@ def read_engines(folder_engines):
 
     mas("patricia", "Adam Kulju", "4 v2", "https://github.com/Adam-Kulju/Patricia", "patricia_4_v2", 3500)
 
-    mas("pawny", "Mincho Georgiev", "1.2", "https://pawny.netii.net/", "Pawny-1.2", 2550)
+    mas("pawny", "Mincho Georgiev", "1.2", "https://pawny.netii.net/", "Pawny-1.2", 2786)
 
     mas("pigeon", "Stuart Riffle", "1.5.1", "https://github.com/StuartRiffle/pigeon", "Pigeon-1.5.1", 1836)
 
@@ -437,7 +437,7 @@ def read_engines(folder_engines):
 
     mas("tunguska", "Fernando Tenorio", "1.1", "https://github.com/fernandotenorio/Tunguska", "Tunguska-1.1", 2439)
 
-    mas("velvet", "Martin Honert", "1.2.0", "https://github.com/mhonert/velvet-chess", "Velvet-1.2.0", 2686)
+    mas("velvet", "Martin Honert", "1.2.0", "https://github.com/mhonert/velvet-chess", "Velvet-1.2.0", 2764)
 
     mas("weiss", "Terje Kirstihagen", "1.2", "https://github.com/TerjeKir/weiss", "Weiss-1.2", 2982)
 

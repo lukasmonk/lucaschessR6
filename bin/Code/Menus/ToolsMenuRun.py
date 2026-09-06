@@ -3,10 +3,9 @@ import random
 import stat
 
 import Code
-from Code.Z import ManagerSolo, Util
 from Code.Base.Constantes import TB_QUIT
 from Code.Books import WBooks, WFactory, WPolyglot
-from Code.Databases import DBgames, WDB_GUtils, WDatabase
+from Code.Databases import DBgames, WDatabase, WDB_GUtils
 from Code.Openings import (
     ManagerOPLEngines,
     ManagerOPLPositions,
@@ -18,6 +17,7 @@ from Code.Openings import (
     WindowOpenings,
 )
 from Code.QT import Delegados, QTDialogs, QTMessages, QTUtils, ScreenUtils, SelectFiles
+from Code.Z import ManagerSolo, Util
 from Code.ZQT import WindowManualSave
 
 

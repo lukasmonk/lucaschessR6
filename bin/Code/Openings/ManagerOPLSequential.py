@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from typing import Optional, Dict, List, Any
+from typing import Any
 
 from PySide6 import QtCore
 from PySide6.QtCore import Qt
@@ -27,31 +27,31 @@ from Code.Z import Util
 
 
 class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
-    show_comments: Optional[str] = None
+    show_comments: str | None = None
     used_hints: int = 0
     repeat_moves: bool
     repeating: bool = False
-    file_path: Optional[Path] = None
-    dbop: Optional[OpeningLines.Opening] = None
+    file_path: Path | None = None
+    dbop: OpeningLines.Opening | None = None
     game_type: str = ""
     modo: str = ""
-    training: Optional[Dict[str, Any]] = None
-    liGames: Optional[List[Dict[str, Any]]] = None
+    training: dict[str, Any] | None = None
+    liGames: list[dict[str, Any]] | None = None
     num_linea: int = 0
-    game_info: Optional[Dict[str, Any]] = None
-    li_pv: Optional[List[str]] = None
+    game_info: dict[str, Any] | None = None
+    li_pv: list[str] | None = None
     numPV: int = 0
-    dict_fenm2: Optional[Dict[str, List[str]]] = None
-    dic_comments: Optional[Dict[str, str]] = None
-    li_mens_basic: List[str] = []
+    dict_fenm2: dict[str, list[str]] | None = None
+    dic_comments: dict[str, str] | None = None
+    li_mens_basic: list[str] = []
     hints: int = 9999
     is_human_side_white: bool = False
     is_engine_side_white: bool = False
-    game: Optional[Game.Game] = None
+    game: Game.Game | None = None
     errores: int = 0
     ini_time: float = 0.0
     tm: int = 0
-    rm_rival: Optional[EngineResponse.EngineResponse] = None
+    rm_rival: EngineResponse.EngineResponse | None = None
     error: str
     jump_auto: bool
 
@@ -116,7 +116,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
         self.check_boards_setposition()
 
         self.errores = 0
-        self.ini_time = time.time()
+        self.ini_time = time.monotonic()
         self.show_labels()
 
         if not self.repeat_moves:
@@ -167,7 +167,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
 
     def game_finished(self, is_complete):
         self.state = ST_ENDGAME
-        tm = time.time() - self.ini_time
+        tm = time.monotonic() - self.ini_time
         li = [_("Line completed")]
         if self.used_hints:
             li.append(f"{_('Hints')}: {self.used_hints}")
@@ -244,7 +244,7 @@ class ManagerOpeningLinesSequential(ManagerOPL.ManagerOpeningLines):
             sep = (None, None, None, None)
 
             title = _("Disable") if self.jump_auto else _("Enable")
-            li_extra_options.append(("jump", f'{title}: {_("Jump to the next after solving")}', Iconos.Jump()))
+            li_extra_options.append(("jump", f"{title}: {_('Jump to the next after solving')}", Iconos.Jump()))
             li_extra_options.append(sep)
 
             ico_all, ico_dif = Iconos.AceptarPeque(), None

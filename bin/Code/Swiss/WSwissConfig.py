@@ -1,7 +1,6 @@
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
     BOOK_RANDOM_PROPORTIONAL,
@@ -22,6 +21,7 @@ from Code.QT import (
     QTMessages,
 )
 from Code.Swiss import Swiss
+from Code.Z import Util
 
 
 class WSwissConfig(LCDialog.LCDialog):

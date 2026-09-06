@@ -5,7 +5,6 @@ from deep_translator import GoogleTranslator
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -19,6 +18,7 @@ from Code.QT import (
     ScreenUtils,
     SelectFiles,
 )
+from Code.Z import Util
 
 
 class WTranslateOpenings(LCDialog.LCDialog):

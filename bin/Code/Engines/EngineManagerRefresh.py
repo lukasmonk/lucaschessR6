@@ -1,13 +1,12 @@
-from typing import Optional
-from Code.Engines import EngineManager, EngineRun
 from Code.Base import Game
+from Code.Engines import EngineManager, EngineRun
 
 
 class EngineManagerRefresh(EngineManager.EngineManager):
     def __init__(self, engine, run_engine_params: EngineRun.RunEngineParams):
         super().__init__(engine, run_engine_params, False)
-        self.pending_game: Optional[Game.Game] = None
-        self.pending_fen: Optional[str] = None
+        self.pending_game: Game.Game | None = None
+        self.pending_fen: str | None = None
 
     def play_game(self, game: Game.Game):
         if self.check_engine():

@@ -1,8 +1,10 @@
 import OSEngines
 
+import Code
+
 
 def dic_engines_fixed_elo(folder_engines):
-    d = OSEngines.read_engines(folder_engines)
+    d = Code.configuration.engines.dic_engines_internal()
     dic = {}
     li_engines = OSEngines.li_engines_fixed_elo()
 
@@ -13,13 +15,8 @@ def dic_engines_fixed_elo(folder_engines):
                 dic[elo] = []
             cm.set_uci_option("UCI_LimitStrength", "true")
             cm.set_uci_option("UCI_Elo", str(elo))
-            cm.name += " (%d)" % elo
-            cm.key += " (%d)" % elo
+            cm.name += f" ({elo})"
+            cm.key += f" ({elo})"
             cm.elo = elo
             dic[elo].append(cm)
     return dic
-
-
-def dic_engines_raw_elo():
-    return {key: {"min_elo": min_elo, "max_elo": max_elo}
-            for key, min_elo, max_elo in OSEngines.li_engines_fixed_elo()}

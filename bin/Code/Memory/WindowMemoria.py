@@ -7,9 +7,19 @@ import Code
 from Code.Base import Position
 from Code.Base.Constantes import BLACK, WHITE
 from Code.Board import Board2
-from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTMessages, \
-    ScreenUtils
 from Code.Memory import Memory
+from Code.QT import (
+    Colocacion,
+    Columnas,
+    Controles,
+    Delegados,
+    Grid,
+    Iconos,
+    LCDialog,
+    QTDialogs,
+    QTMessages,
+    ScreenUtils,
+)
 
 
 class WMemoryWork(LCDialog.LCDialog):
@@ -290,7 +300,7 @@ class WMemoryWork(LCDialog.LCDialog):
         else:
             self.repetitions += 1
             if self.ini_time_target:
-                self.cumulative_time += time.time() - self.ini_time_target
+                self.cumulative_time += time.monotonic() - self.ini_time_target
 
         self.ini_time_target = None
         self.position.read_fen(self.fen_aim)
@@ -349,7 +359,7 @@ class WMemoryWork(LCDialog.LCDialog):
         )
         self.rotuloDispone.setVisible(False)
 
-        self.initial_time = time.time()
+        self.initial_time = time.monotonic()
 
         for k in self.squares:
             self.squares[k] = None
@@ -371,7 +381,7 @@ class WMemoryWork(LCDialog.LCDialog):
         self.board.setCursor(cursor)
 
     def comprobar(self):
-        self.vtime = time.time() - self.initial_time
+        self.vtime = time.monotonic() - self.initial_time
         self.cumulative_time += self.vtime
 
         fen_nuevo = self.position.fen()
@@ -410,7 +420,7 @@ class WMemoryWork(LCDialog.LCDialog):
         self.pon_toolbar(li)
 
     def target(self):
-        self.ini_time_target = time.time()
+        self.ini_time_target = time.monotonic()
         self.position.read_fen(self.fen_aim)
         self.board.set_position(self.position)
         self.board.disable_all()
@@ -418,7 +428,7 @@ class WMemoryWork(LCDialog.LCDialog):
 
     def wrong(self):
         if self.ini_time_target:
-            self.cumulative_time += time.time() - self.ini_time_target
+            self.cumulative_time += time.monotonic() - self.ini_time_target
             self.ini_time_target = None
         self.position.read_fen(self.fen_user)
         self.board.set_position(self.position)
@@ -470,8 +480,8 @@ class WMemoryWork(LCDialog.LCDialog):
 
 class WMemoryMain(LCDialog.LCDialog):
     def __init__(self, w_parent):
-        title = f'{_("Check your memory on a chessboard")}'
-        super(WMemoryMain, self).__init__(w_parent, title, Iconos.Memoria(), "memory_resultsF")
+        title = f"{_('Check your memory on a chessboard')}"
+        super().__init__(w_parent, title, Iconos.Memoria(), "memory_resultsF")
 
         self.memory = Memory.Memory()
 
@@ -539,7 +549,7 @@ class WMemoryMain(LCDialog.LCDialog):
                 return "➕", ""
             else:
                 return "", ""
-        main_value = f"{record:0.02f}\""
+        main_value = f'{record:0.02f}"'
         delta = f"{record / (xlv + 3):0.02f}"
         return main_value, delta
 
@@ -551,8 +561,9 @@ class WMemoryMain(LCDialog.LCDialog):
     def grid_color_fondo(_grid, row, _obj_column):
         if _obj_column.key == "cat":
             dic_colors = Code.dic_colors
-            return ScreenUtils.qt_color(dic_colors[f"SQUARED_CONTROLLED_W_{row}"] if row
-                                        else dic_colors["SQUARED_CONTROLLED_0"])
+            return ScreenUtils.qt_color(
+                dic_colors[f"SQUARED_CONTROLLED_W_{row}"] if row else dic_colors["SQUARED_CONTROLLED_0"]
+            )
         return None
 
     def grid_doble_click(self, _grid, row, obj_column):

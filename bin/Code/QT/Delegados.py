@@ -935,8 +935,11 @@ class MemoryResultCell(QtWidgets.QStyledItemDelegate):
             y_delta = y0 + h - 3
 
             painter.setFont(font_delta)
-            color = option.palette.text().color() if not (option.state & QtWidgets.QStyle.StateFlag.State_Selected) \
+            color = (
+                option.palette.text().color()
+                if not (option.state & QtWidgets.QStyle.StateFlag.State_Selected)
                 else option.palette.highlightedText().color()
+            )
             color.setAlphaF(0.75)
             painter.setPen(color)
             painter.drawText(int(x_delta), int(y_delta), delta)

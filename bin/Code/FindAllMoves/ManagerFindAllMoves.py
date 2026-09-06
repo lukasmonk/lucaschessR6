@@ -2,13 +2,12 @@ import ast
 import os
 import random
 import time
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import FasterCode
 from PySide6.QtCore import Qt
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import (
     ST_ENDGAME,
@@ -23,18 +22,19 @@ from Code.CompetitionWithTutor import WCompetitionWithTutor
 from Code.ManagerBase import Manager
 from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class ControlFindAllMoves:
     def __init__(self, manager: "ManagerFindAllMoves", is_the_player: bool):
         with open(Code.path_resource("IntFiles", "findallmoves.dkv"), "r", encoding="utf-8") as f:
-            self.db: List[List[str]] = ast.literal_eval(f.read())
+            self.db: list[list[str]] = ast.literal_eval(f.read())
 
         mas = "P" if is_the_player else "R"
         self.fichPuntos = f"{manager.configuration.paths.folder_results()}/score60{mas}.dkv"
 
         if os.path.isfile(self.fichPuntos):
-            self.li_puntos: List[List[Any]] = Util.restore_pickle(self.fichPuntos)
+            self.li_puntos: list[list[Any]] = Util.restore_pickle(self.fichPuntos)
         else:
             self.li_puntos = [[0, 0] for _ in range(len(self.db))]
 
@@ -88,7 +88,7 @@ class ControlFindAllMoves:
         pos = random.randint(0, len(li) - 1)
         return f"{li[pos]} 0 1"
 
-    def message_result(self, number: int, vtime: int, errors: int) -> Tuple[str, bool]:
+    def message_result(self, number: int, vtime: int, errors: int) -> tuple[str, bool]:
         tm = vtime / (number + 1)
 
         if self.li_puntos[number][0] > 0:
@@ -131,9 +131,9 @@ class ControlFindAllMoves:
 
 class ManagerFindAllMoves(Manager.Manager):
     is_the_player: bool
-    last_a1h8: Optional[str] = None
+    last_a1h8: str | None = None
     pgn: ControlFindAllMoves
-    number: Optional[int]
+    number: int | None
     is_human_side_white: bool
     is_white: bool
     li_movs: list
@@ -224,15 +224,14 @@ class ManagerFindAllMoves(Manager.Manager):
             return
         pos = self.pgn.first_no_solved()
         pos_with_error = self.pgn.pos_with_error()
-        if pos_with_error <= pos:
-            pos = pos_with_error
+        pos = min(pos_with_error, pos)
         self.play(pos)
 
     def control_teclado(self, nkey) -> None:
         if nkey in (Qt.Key.Key_Plus, Qt.Key.Key_PageDown):
             self.next()
 
-    def play(self, number: Optional[int] = None) -> None:
+    def play(self, number: int | None = None) -> None:
         if self.state == ST_PLAYING:
             self.state = ST_ENDGAME
             self.disable_all()
@@ -240,8 +239,7 @@ class ManagerFindAllMoves(Manager.Manager):
         if number is None:
             pos = self.pgn.first_no_solved() + 1
             pos_with_error = self.pgn.pos_with_error() + 1
-            if pos_with_error <= pos:
-                pos = pos_with_error
+            pos = min(pos_with_error, pos)
 
             mens = _("Movements must be indicated in the following order: King, Queen, Rook, Bishop, Knight and Pawn.")
             number = WCompetitionWithTutor.edit_training_position(
@@ -289,7 +287,7 @@ class ManagerFindAllMoves(Manager.Manager):
             self.order_pz += d[k]
 
         self.errors = 0
-        self.ini_time = time.time()
+        self.ini_time = time.monotonic()
         self.state = ST_PLAYING
 
         self.board.remove_arrows()
@@ -367,7 +365,7 @@ class ManagerFindAllMoves(Manager.Manager):
         return False
 
     def put_result(self) -> None:
-        vtime = int((time.time() - self.ini_time) * 100.0)
+        vtime = int((time.monotonic() - self.ini_time) * 100.0)
         self.end_game()
 
         mensaje, si_record = self.pgn.message_result(self.number, vtime, self.errors)

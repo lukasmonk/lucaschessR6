@@ -1,5 +1,5 @@
-from typing import Any, Dict, Optional, Union, List
 import textwrap
+from typing import Any
 
 import FasterCode
 
@@ -16,12 +16,15 @@ from Code.Base.Constantes import (
     BEEP_WIN_PLAYER,
     BEEP_WIN_PLAYER_TIME,
     BLACK,
+    ENDGAME,
     FEN_INITIAL,
     INFINITE,
     LI_BASIC_TAGS,
+    MIDDLEGAME,
     NONE,
     ONLY_BLACK,
     ONLY_WHITE,
+    OPENING,
     RESULT_DRAW,
     RESULT_UNKNOWN,
     RESULT_WIN_BLACK,
@@ -40,9 +43,6 @@ from Code.Base.Constantes import (
     TERMINATION_UNKNOWN,
     TERMINATION_WIN_ON_TIME,
     WHITE,
-    OPENING,
-    MIDDLEGAME,
-    ENDGAME,
 )
 from Code.Nags.Nags import NAG_1, NAG_2, NAG_3, NAG_4, NAG_5, NAG_6
 from Code.Openings import OpeningsStd
@@ -63,7 +63,7 @@ class Game:
     result = RESULT_UNKNOWN
     first_position = None
 
-    def __init__(self, first_position=None, fen: Optional[str] = None, li_tags=None):
+    def __init__(self, first_position=None, fen: str | None = None, li_tags=None):
         self.first_comment = ""
         self.li_tags = li_tags or []
         if fen:
@@ -77,7 +77,7 @@ class Game:
         """
         self.set_position(self.first_position)
 
-    def set_fen(self, fen: Optional[str]) -> None:
+    def set_fen(self, fen: str | None) -> None:
         """
         Initialize the game from a FEN string.
 
@@ -249,10 +249,10 @@ class Game:
         for index, (tag, value) in enumerate(self.li_tags):
             if tag.upper() == "RESULT":
                 if value.strip() not in (
-                        RESULT_UNKNOWN,
-                        RESULT_WIN_BLACK,
-                        RESULT_WIN_WHITE,
-                        RESULT_DRAW,
+                    RESULT_UNKNOWN,
+                    RESULT_WIN_BLACK,
+                    RESULT_WIN_WHITE,
+                    RESULT_DRAW,
                 ):
                     value = RESULT_UNKNOWN
                 self.li_tags[index] = ["Result", value]
@@ -275,7 +275,7 @@ class Game:
         """
         return bool(self.get_tag(tag))
 
-    def dic_tags(self) -> Dict[str, str]:
+    def dic_tags(self) -> dict[str, str]:
         """
         Return all PGN tags as a dictionary {name: value}.
         """
@@ -697,16 +697,16 @@ class Game:
     def read_xpv(self, xpv: str) -> "Game":
         return self.read_pv(FasterCode.xpv_pv(xpv))
 
-    def read_lipv(self, lipv: List[str]) -> "Game":
+    def read_lipv(self, lipv: list[str]) -> "Game":
         position = self.last_position
         pv = []
         for mov in lipv:
             if (
-                    len(mov) >= 4
-                    and mov[0] in "abcdefgh"
-                    and mov[1] in "12345678"
-                    and mov[2] in "abcdefgh"
-                    and mov[3] in "12345678"
+                len(mov) >= 4
+                and mov[0] in "abcdefgh"
+                and mov[1] in "12345678"
+                and mov[2] in "abcdefgh"
+                and mov[3] in "12345678"
             ):
                 pv.append(mov)
             else:
@@ -811,11 +811,11 @@ class Game:
         pv = " ".join([move.movimiento() for move in self.li_moves[: num_move + 1]])
         return FasterCode.pv_xpv(pv)
 
-    def all_pv(self, pv_previo: str, with_variations, in_opening: bool) -> List[str]:
+    def all_pv(self, pv_previo: str, with_variations, in_opening: bool) -> list[str]:
         """
         Return a list with all principal variations (optionally including move variations).
         """
-        li_pvc: List[str] = []
+        li_pvc: list[str] = []
         if pv_previo:
             pv_previo += " "
         for move in self.li_moves:
@@ -825,9 +825,9 @@ class Game:
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                        (with_variations == ALL)
-                        or (is_w and with_variations == ONLY_WHITE)
-                        or (not is_w and with_variations == ONLY_BLACK)
+                    (with_variations == ALL)
+                    or (is_w and with_variations == ONLY_WHITE)
+                    or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
                         li_pvc.extend(variation.all_pv(pv_previo.strip(), with_variations, in_opening))
@@ -844,9 +844,9 @@ class Game:
             if with_variations != NONE and move.variations:
                 is_w = move.is_white()
                 if (
-                        (with_variations == ALL)
-                        or (is_w and with_variations == ONLY_WHITE)
-                        or (not is_w and with_variations == ONLY_BLACK)
+                    (with_variations == ALL)
+                    or (is_w and with_variations == ONLY_WHITE)
+                    or (not is_w and with_variations == ONLY_BLACK)
                 ):
                     for variation in move.variations.li_variations:
                         if dicv := variation.all_comments(with_variations):
@@ -876,7 +876,7 @@ class Game:
         data["C"] = comment
         comment_map[fenm2] = data
 
-    def lipv(self) -> List[str]:
+    def lipv(self) -> list[str]:
         return [move.movimiento() for move in self.li_moves]
 
     def pv_hasta(self, njug: int) -> str:
@@ -969,7 +969,7 @@ class Game:
             return False
         return all(move.only_has_move() for move in self.li_moves)
 
-    def dic_labels(self) -> Dict[str, str]:
+    def dic_labels(self) -> dict[str, str]:
         return dict(self.li_tags)
 
     def _label_won(self, nom_other):
@@ -1004,12 +1004,12 @@ class Game:
         beep = None
         player_lost = False
         if (self.result == RESULT_WIN_WHITE and player_side == WHITE) or (
-                self.result == RESULT_WIN_BLACK and player_side == BLACK
+            self.result == RESULT_WIN_BLACK and player_side == BLACK
         ):
             mensaje, beep = self._label_won(nom_other)
 
         elif (self.result == RESULT_WIN_WHITE and player_side == BLACK) or (
-                self.result == RESULT_WIN_BLACK and player_side == WHITE
+            self.result == RESULT_WIN_BLACK and player_side == WHITE
         ):
             player_lost = True
             mensaje, beep = self._label_lost(nom_other)
@@ -1051,6 +1051,9 @@ class Game:
 
     def shrink(self, until_move: int) -> None:
         self.li_moves = self.li_moves[: until_move + 1]
+
+    def set_max_moves(self, max_moves: int) -> None:
+        self.li_moves = self.li_moves[:max_moves]
 
     def copy_raw(self, xto):
         g = Game(self.first_position)
@@ -1097,14 +1100,14 @@ class Game:
                 move0.add_variation(variation)
 
     def remove_info_moves(
-            self,
-            variations=True,
-            ratings=True,
-            comments=True,
-            analysis=True,
-            themes=True,
-            time_ms=True,
-            clock_ms=True,
+        self,
+        variations=True,
+        ratings=True,
+        comments=True,
+        analysis=True,
+        themes=True,
+        time_ms=True,
+        clock_ms=True,
     ):
         if comments:
             self.first_comment = ""
@@ -1129,7 +1132,7 @@ class Game:
             self.li_moves = self.li_moves[:num_move]
             self.set_unknown()
         else:
-            self.li_moves = self.li_moves[num_move + 1:]
+            self.li_moves = self.li_moves[num_move + 1 :]
             if self.li_moves:
                 move: Move.Move = self.li_moves[0]
                 self.first_position = move.position_before.copia()
@@ -1362,7 +1365,7 @@ class PGNtoGame:
     Represents a chess game and provides PGN import capabilities.
     """
 
-    NAG_SYMBOLS: Dict[str, int] = {
+    NAG_SYMBOLS: dict[str, int] = {
         "!": NAG_1,
         "?": NAG_2,
         "!!": NAG_3,
@@ -1378,7 +1381,7 @@ class PGNtoGame:
     _active_move: object
     _fen_detected: bool
 
-    def __init__(self, pgn: Union[str, bytes], game: Game | None = None):
+    def __init__(self, pgn: str | bytes, game: Game | None = None):
         """Initialize a PGNtoGame instance with PGN content and an optional game object.
         This sets up the converter to populate or update the provided Game instance.
 
@@ -1394,7 +1397,7 @@ class PGNtoGame:
 
     def read(self):
         normalized_pgn: str = self._normalize_pgn(self.pgn)
-        tokens: Optional[List[str]] = FasterCode.xparse_pgn(normalized_pgn)
+        tokens: list[str] | None = FasterCode.xparse_pgn(normalized_pgn)
         if not tokens:
             return False, self.game
 
@@ -1431,7 +1434,7 @@ class PGNtoGame:
         return True, self.game
 
     @staticmethod
-    def _normalize_pgn(pgn: Union[str, bytes]) -> str:
+    def _normalize_pgn(pgn: str | bytes) -> str:
         """
         Normalize PGN input to a UTF-8 string.
 
@@ -1461,7 +1464,7 @@ class PGNtoGame:
             return
 
         label: str = kv[:pos]
-        value: str = kv[pos + 1:].strip()
+        value: str = kv[pos + 1 :].strip()
         label_upper: str = label.upper()
 
         if label_upper == "FEN":

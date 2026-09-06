@@ -39,7 +39,7 @@ class EditCols(LCDialog.LCDialog):
         # Grid
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("SIMOSTRAR", "", 20, is_checked=True)
-        o_columns.nueva("CLAVE", _("Key"), 80, align_center=True)
+        o_columns.nueva("CLAVE", _("Identifier"), 80, align_center=True)
         o_columns.nueva("CABECERA", _("Title"), 150, edicion=Delegados.LineaTexto())
         o_columns.nueva(
             "ANCHO",
@@ -107,10 +107,10 @@ class EditCols(LCDialog.LCDialog):
                 if name:
                     if name in dic_conf:
                         if not QTMessages.pregunta(
-                                self,
-                                f"{name}<br>{_('This name already exists, what do you want to do?')}",
-                                label_yes=_("Overwrite"),
-                                label_no=_("Cancel"),
+                            self,
+                            f"{name}<br>{_('This name already exists, what do you want to do?')}",
+                            label_yes=_("Overwrite"),
+                            label_no=_("Cancel"),
                         ):
                             return
                     dic_current = self.o_columns.save_dic(self.grid_owner)

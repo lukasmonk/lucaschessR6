@@ -173,7 +173,7 @@ class ManagerTurnOnLights(Manager.Manager):
     def reiniciar(self):
         if self.state == ST_PLAYING:
             if self.ini_time:
-                self.total_time_used += time.time() - self.ini_time
+                self.total_time_used += time.monotonic() - self.ini_time
         if self.total_time_used:
             self.block.new_reinit(self.total_time_used, self.errores, self.hints)
             self.total_time_used = 0.0
@@ -210,7 +210,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
         else:
             self.human_is_playing = True
-            self.base_time = time.time()
+            self.base_time = time.monotonic()
             if not (
                 self.calculation_mode and self.ini_time is None
             ):  # Se inicia salvo que sea el principio de la linea
@@ -221,7 +221,7 @@ class ManagerTurnOnLights(Manager.Manager):
 
     def dispatch_move(self):
         if self.ini_time is None:
-            self.ini_time = time.time()
+            self.ini_time = time.monotonic()
 
     def end_line(self):
         self.num_line += 1
@@ -321,7 +321,7 @@ class ManagerTurnOnLights(Manager.Manager):
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         if self.ini_time is None:
             self.ini_time = self.base_time
-        end_time = time.time()
+        end_time = time.monotonic()
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             return False

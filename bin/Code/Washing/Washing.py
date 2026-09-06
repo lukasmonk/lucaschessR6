@@ -3,9 +3,9 @@ import os
 import random
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 INACTIVE, CREATING, REPLAY, TACTICS, ENDED = range(5)
 

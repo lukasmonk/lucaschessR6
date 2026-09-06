@@ -6,12 +6,12 @@ from PySide6 import QtCore
 
 import Code
 import Code.SQL.Base as SQLBase
+from Code.Maps import Countries
 from Code.QT import QTMessages
 from Code.SQL import UtilSQL
 from Code.STS import STS
 from Code.Translations import TrListas
 from Code.Z import Util
-from Code.Maps import Countries
 
 
 class DBWorkMap(SQLBase.DBBase):

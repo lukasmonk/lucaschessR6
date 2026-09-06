@@ -17,7 +17,7 @@ import uuid
 import zlib
 from pathlib import Path
 from shutil import which
-from typing import Optional, Union, List, Tuple, Any
+from typing import Any
 
 import psutil
 from charset_normalizer import from_bytes
@@ -28,7 +28,7 @@ def md5_lc(x: str) -> int:
 
 
 class Log:
-    def __init__(self, logname: Union[str, Path]):
+    def __init__(self, logname: str | Path):
         self.logname = Path(logname).absolute()
 
     def write(self, buf: str) -> None:
@@ -46,7 +46,7 @@ class Log:
         pass  # To remove error 120 at exit
 
 
-def remove_file(file: Union[str, Path]) -> bool:
+def remove_file(file: str | Path) -> bool:
     try:
         Path(file).unlink(missing_ok=True)
     except Exception:
@@ -54,7 +54,7 @@ def remove_file(file: Union[str, Path]) -> bool:
     return not Path(file).is_file()
 
 
-def remove_folder_files(folder: Union[str, Path]) -> bool:
+def remove_folder_files(folder: str | Path) -> bool:
     folder_path = Path(folder)
     try:
         for entry in folder_path.iterdir():
@@ -66,7 +66,7 @@ def remove_folder_files(folder: Union[str, Path]) -> bool:
     return not folder_path.is_dir()
 
 
-def remove_folder_if_no_subfolders(folder: Union[str, Path]) -> bool:
+def remove_folder_if_no_subfolders(folder: str | Path) -> bool:
     folder_path = Path(folder)
     try:
         if not folder_path.exists():
@@ -97,11 +97,22 @@ def is_windows() -> bool:
     return sys.platform == "win32"
 
 
-def create_folder(folder: Union[str, Path]) -> bool:
+def is_macos() -> bool:
+    return sys.platform == "darwin"
+
+
+def is_posix() -> bool:
+    """True on Linux and macOS: use it for POSIX behaviour (permissions, nice
+    values, file dialogs) rather than is_linux(), which means "Linux only"
+    (ELF shared libraries, Wayland, the e-board drivers)."""
+    return not is_windows()
+
+
+def create_folder(folder: str | Path) -> bool:
     folder_path = Path(folder)
     try:
         folder_path.mkdir()
-        if is_linux():
+        if is_posix():
             folder_path.chmod(
                 stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
             )
@@ -110,13 +121,13 @@ def create_folder(folder: Union[str, Path]) -> bool:
         return False
 
 
-def rename_folder(old_folder: Union[str, Path], new_name: Union[str, Path]) -> bool:
+def rename_folder(old_folder: str | Path, new_name: str | Path) -> bool:
     old_path = Path(old_folder)
     new_path = old_path.parent / Path(new_name)
 
     try:
         old_path.rename(new_path)
-        if is_linux():
+        if is_posix():
             new_path.chmod(
                 stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
             )
@@ -125,13 +136,13 @@ def rename_folder(old_folder: Union[str, Path], new_name: Union[str, Path]) -> b
         return False
 
 
-def check_folders(folder: Union[str, Path]) -> bool:
+def check_folders(folder: str | Path) -> bool:
     folder_path = Path(folder)
     if folder_path:
         if not folder_path.is_dir():
             try:
                 folder_path.mkdir(parents=True, exist_ok=True)
-                if is_linux():
+                if is_posix():
                     folder_path.chmod(
                         stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
                     )
@@ -140,34 +151,34 @@ def check_folders(folder: Union[str, Path]) -> bool:
     return True
 
 
-def check_folders_filepath(filepath: Union[str, Path]) -> None:
+def check_folders_filepath(filepath: str | Path) -> None:
     Path(filepath).parent.mkdir(parents=True, exist_ok=True)
 
 
-def same_path(path1: Union[str, Path], path2: Union[str, Path]) -> bool:
+def same_path(path1: str | Path, path2: str | Path) -> bool:
     return Path(path1).absolute() == Path(path2).absolute()
 
 
-def norm_path(path: Union[str, Path]) -> Path:
+def norm_path(path: str | Path) -> Path:
     return Path(path).absolute()
 
 
-def filesize(file: Union[str, Path]) -> int:
+def filesize(file: str | Path) -> int:
     try:
         return Path(file).stat().st_size
     except (FileNotFoundError, OSError):
         return -1
 
 
-def exist_file(file: Union[str, Path]) -> bool:
+def exist_file(file: str | Path) -> bool:
     return Path(file).is_file() if file else False
 
 
-def exist_folder(folder: Union[str, Path]) -> bool:
+def exist_folder(folder: str | Path) -> bool:
     return Path(folder).is_dir() if folder else False
 
 
-def file_copy(origin: Union[str, Path], destino: Union[str, Path]) -> bool:
+def file_copy(origin: str | Path, destino: str | Path) -> bool:
     origin_path = Path(origin)
     destino_path = Path(destino)
     if origin_path.is_file():
@@ -177,7 +188,7 @@ def file_copy(origin: Union[str, Path], destino: Union[str, Path]) -> bool:
     return False
 
 
-def file_next(folder: Union[str, Path], base: str, ext: str) -> Path:
+def file_next(folder: str | Path, base: str, ext: str) -> Path:
     folder_path = Path(folder)
     n = 1
     while True:
@@ -187,7 +198,7 @@ def file_next(folder: Union[str, Path], base: str, ext: str) -> Path:
         n += 1
 
 
-def rename_file(origin: Union[str, Path], destination: Union[str, Path]) -> bool:
+def rename_file(origin: str | Path, destination: str | Path) -> bool:
     origin_path = Path(origin).absolute()
     destination_path = Path(destination).absolute()
 
@@ -206,7 +217,7 @@ def rename_file(origin: Union[str, Path], destination: Union[str, Path]) -> bool
     return True
 
 
-def temporary_file(path_temp: Union[str, Path], ext: str) -> Path:
+def temporary_file(path_temp: str | Path, ext: str) -> Path:
     temp_folder = Path(path_temp)
     temp_folder.mkdir(parents=True, exist_ok=True)
     while True:
@@ -215,7 +226,7 @@ def temporary_file(path_temp: Union[str, Path], ext: str) -> Path:
             return fich
 
 
-def list_vars_values(obj: Any, li_exclude: Optional[List[str]] = None) -> List[Tuple[str, Any]]:
+def list_vars_values(obj: Any, li_exclude: list[str] | None = None) -> list[tuple[str, Any]]:
     if li_exclude is None:
         li_exclude = []
 
@@ -252,13 +263,13 @@ def list_vars_values(obj: Any, li_exclude: Optional[List[str]] = None) -> List[T
     return li_vars
 
 
-def restore_list_vars_values(obj: Any, li_vars_values: List[Tuple[str, Any]]) -> None:
+def restore_list_vars_values(obj: Any, li_vars_values: list[tuple[str, Any]]) -> None:
     for name, value in li_vars_values:
         if hasattr(obj, name):
             setattr(obj, name, value)
 
 
-def save_obj_dict(obj: Any, li_exclude: Optional[List[str]] = None) -> dict:
+def save_obj_dict(obj: Any, li_exclude: list[str] | None = None) -> dict:
     li_vars_values = list_vars_values(obj, li_exclude)
     return {var: value for var, value in li_vars_values}
 
@@ -269,7 +280,7 @@ def restore_obj_dict(obj: Any, dic: dict) -> None:
             setattr(obj, k, v)
 
 
-def save_obj_pickle(obj: Any, li_exclude: Optional[List[str]] = None) -> bytes:
+def save_obj_pickle(obj: Any, li_exclude: list[str] | None = None) -> bytes:
     return pickle.dumps(save_obj_dict(obj, li_exclude), protocol=4)
 
 
@@ -278,7 +289,7 @@ def restore_obj_pickle(obj: Any, js_txt: bytes) -> None:
     restore_obj_dict(obj, dic)
 
 
-def ini_dic(file: Union[str, Path]) -> dict:
+def ini_dic(file: str | Path) -> dict:
     dic = {}
     file_path = Path(file)
     if file_path.is_file():
@@ -291,7 +302,7 @@ def ini_dic(file: Union[str, Path]) -> dict:
                     n = line.find("=")
                     if n:
                         key = line[:n].strip()
-                        value = line[n + 1:].strip()
+                        value = line[n + 1 :].strip()
                         dic[key] = value
     return dic
 
@@ -301,13 +312,13 @@ def today() -> datetime.datetime:
 
 
 def huella() -> str:
-    timestamp = int(time.time() * 1000).to_bytes(6, byteorder="big")
+    timestamp = int(time.monotonic() * 1000).to_bytes(6, byteorder="big")
     random_part = uuid.uuid4().bytes[:10]
     combined = timestamp + random_part
     return base64.urlsafe_b64encode(combined).decode().rstrip("=")
 
 
-def save_pickle(fich: Union[str, Path], obj: Any) -> bool:
+def save_pickle(fich: str | Path, obj: Any) -> bool:
     file_path = Path(fich)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     with file_path.open("wb") as q:
@@ -315,7 +326,7 @@ def save_pickle(fich: Union[str, Path], obj: Any) -> bool:
     return True
 
 
-def restore_pickle(fich: Union[str, Path], default: Any = None) -> Any:
+def restore_pickle(fich: str | Path, default: Any = None) -> Any:
     file_path = Path(fich)
     if file_path.is_file():
         try:
@@ -326,7 +337,7 @@ def restore_pickle(fich: Union[str, Path], default: Any = None) -> Any:
     return default
 
 
-def urlretrieve(url: str, fich: Union[str, Path]) -> bool:
+def urlretrieve(url: str, fich: str | Path) -> bool:
     try:
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req) as response:
@@ -347,7 +358,7 @@ def var2zip(var: Any) -> bytes:
     return zlib.compress(varp, 5)
 
 
-def zip2var(blob: Optional[bytes]) -> Any:
+def zip2var(blob: bytes | None) -> Any:
     if blob is None:
         return None
     try:
@@ -357,7 +368,7 @@ def zip2var(blob: Optional[bytes]) -> Any:
         return None
 
 
-def zip2var_change_import(blob: Optional[bytes], li_replace: List[Tuple[str, str]]) -> Any:
+def zip2var_change_import(blob: bytes | None, li_replace: list[tuple[str, str]]) -> Any:
     if blob is None:
         return None
     try:
@@ -449,7 +460,7 @@ def ini2dic(file):
                         n = linea.find("=")
                         if n > 0:
                             clave1 = linea[:n].strip()
-                            valor = linea[n + 1:].strip()
+                            valor = linea[n + 1 :].strip()
                             dic[clave1] = valor
 
     return dic_base
@@ -459,8 +470,7 @@ def dic2ini(file, dic):
     with open(file, "wt", encoding="utf-8", errors="ignore") as f:
         for k in dic:
             f.write(f"[{k}]\n")
-            for key in dic[k]:
-                f.write(f"{key}={dic[k][key]}\n")
+            f.writelines(f"{key}={dic[k][key]}\n" for key in dic[k])
 
 
 def ini_base2dic(file, rfind_equal=False):
@@ -476,7 +486,7 @@ def ini_base2dic(file, rfind_equal=False):
                     n = linea.rfind("=") if rfind_equal else linea.find("=")
                     if n:
                         key = linea[:n].strip()
-                        valor = linea[n + 1:].strip()
+                        valor = linea[n + 1 :].strip()
                         dic[key] = valor
 
     return dic
@@ -484,8 +494,7 @@ def ini_base2dic(file, rfind_equal=False):
 
 def dic2ini_base(file, dic):
     with open(file, "wt", encoding="utf-8", errors="ignore") as f:
-        for k, v in dic.items():
-            f.write(f"{k}={v}\n")
+        f.writelines(f"{k}={v}\n" for k, v in dic.items())
 
 
 def secs2str(s):
@@ -691,6 +700,38 @@ def fide_elo(elo_jugador, elo_rival, resultado):
     return int(k * (resultado - probabilidad))
 
 
+class EloEngineManager:
+    def __init__(self, k_max=80.0, k_min=20.0, decay_rate=0.1):
+        self.k_max = k_max
+        self.k_min = k_min
+        self.decay_rate = decay_rate
+
+    def get_k_factor(self, games_played: int) -> float:
+        """Calcula el factor K dinámico en función del número de partidas."""
+        return self.k_min + (self.k_max - self.k_min) * math.exp(-self.decay_rate * games_played)
+
+    def calculate_new_rating(self, player_rating, engine_rating, score, games_played):
+        """
+        Calcula el nuevo Elo del jugador tras una partida.
+        :param player_rating: Elo actual del jugador
+        :param engine_rating: UCI_Elo con el que jugó el motor
+        :param score: 1.0 (victoria), 0.5 (tablas), 0.0 (derrota)
+        :param games_played: Partidas totales jugadas en este modo
+        """
+        expected = 1.0 / (1.0 + 10.0 ** ((engine_rating - player_rating) / 400.0))
+        k = self.get_k_factor(games_played)
+        new_rating = player_rating + k * (score - expected)
+        return round(new_rating)
+
+    @staticmethod
+    def get_next_engine_uci_elo(player_rating, uci_elo_min, uci_elo_max):
+        """
+        Ajusta el UCI_Elo a enviar al motor, delimitado por sus min/max soportados.
+        """
+        target_elo = round(player_rating)
+        return max(uci_elo_min, min(uci_elo_max, target_elo))
+
+
 date_format = ["%Y.%m.%d"]
 
 
@@ -841,7 +882,7 @@ def div_list(xlist, max_group):
     xfrom = 0
     li_groups = []
     while xfrom < nlist:
-        li_groups.append(xlist[xfrom: xfrom + max_group])
+        li_groups.append(xlist[xfrom : xfrom + max_group])
         xfrom += max_group
     return li_groups
 
@@ -884,7 +925,7 @@ def file_crc(ruta_archivo):
     return crc & 0xFFFFFFFF
 
 
-def startfile(path: Union[str, Path]) -> bool:
+def startfile(path: str | Path) -> bool:
     """
     Opens a file or directory with the default system application.
     Returns True if the operation was launched successfully, False otherwise.
@@ -918,7 +959,7 @@ def startfile(path: Union[str, Path]) -> bool:
         return False
 
 
-def _resolve_linux_opener(path_obj: Path) -> Optional[str]:
+def _resolve_linux_opener(path_obj: Path) -> str | None:
     """Resolves the best available opener for the given path on Linux."""
     if path_obj.is_dir():
         desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
@@ -962,14 +1003,14 @@ def _build_linux_env() -> dict:
     return env
 
 
-def clamp(n: Union[int, float], smallest: Union[int, float], largest: Union[int, float]) -> Union[int, float]:
+def clamp(n: float, smallest: float, largest: float) -> int | float:
     return max(smallest, min(n, largest))
 
 
 class SmoothedEstimator:
     def __init__(self, total):
         self.total = total
-        self.start_time = time.time()
+        self.start_time = time.monotonic()
         self.q_est = collections.deque(maxlen=100)
 
     def estimated(self, current_pos):
@@ -977,7 +1018,7 @@ class SmoothedEstimator:
             return self.format_seconds(None)
 
         remaining_units = self.total - current_pos
-        dif_time = time.time() - self.start_time
+        dif_time = time.monotonic() - self.start_time
         cur_est = dif_time / current_pos  # Dividir por current_pos en lugar de current_pos+1
 
         # Manejar el histórico
@@ -997,7 +1038,7 @@ class SmoothedEstimator:
         return f"{hours:02d}:{minutes:02d}:{secs:02d}"
 
 
-def get_name_without_ext(ruta: Union[str, Path]) -> str:
+def get_name_without_ext(ruta: str | Path) -> str:
     """Devuelve el nombre del archivo sin la extensión."""
     return Path(ruta).stem
 

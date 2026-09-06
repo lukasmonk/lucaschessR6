@@ -3,7 +3,6 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Variations
 from Code.Analysis import Analysis
 from Code.Base import Game, Position
 from Code.Nags import Nags, WNags
@@ -15,8 +14,9 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
 )
-from Code.ZQT import ShowPGN
 from Code.Themes import WThemes
+from Code.Z import Variations
+from Code.ZQT import ShowPGN
 
 
 class Information(QtWidgets.QWidget):
@@ -69,13 +69,7 @@ class Information(QtWidgets.QWidget):
         self.lb_clock.hide()
         Code.configuration.set_property(self.lb_time, "time_ms")
         Code.configuration.set_property(self.lb_clock, "clock")
-        ly_pw_tm = (
-            Colocacion.H()
-            .control(self.lb_cpws_lost)
-            .relleno(1)
-            .controld(self.lb_time)
-            .controld(self.lb_clock)
-        )
+        ly_pw_tm = Colocacion.H().control(self.lb_cpws_lost).relleno(1).controld(self.lb_time).controld(self.lb_clock)
         ly_rating.otro(ly_pw_tm)
 
         bt_rating = (
@@ -667,7 +661,7 @@ class WVariations(QtWidgets.QWidget):
         main_window_base.show_message(mens, True, tit_cancel=_("Stop thinking"))
         main_window_base.tb.setDisabled(True)
         ya_cancelado = [False]
-        tm_ini = time.time()
+        tm_ini = time.monotonic()
         mstime_analyzer = xanalyzer.mstime_run()
         position_before: Position.Position = self.move.position_before.copia()
         position = position_before.copia()
@@ -679,7 +673,7 @@ class WVariations(QtWidgets.QWidget):
                     xanalyzer.stop()
                     ya_cancelado[0] = True
             else:
-                tm = time.time() - tm_ini
+                tm = time.monotonic() - tm_ini
                 main_window_base.change_message(
                     '%s<br><small>%s: %d %s: %.01f"' % (mens, _("Depth"), rm.depth, _("Time"), ms / 1000)
                 )

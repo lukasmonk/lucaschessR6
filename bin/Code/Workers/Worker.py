@@ -29,7 +29,7 @@ from Code.Engines import (
 from Code.Main import WAnalysisBar
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, QTDialogs, QTUtils, ScreenUtils
 from Code.Sound import Sound
-from Code.Z import ControlPGN, CPU, TimeControl, Util
+from Code.Z import ControlPGN, TimeControl, Util
 
 
 class Worker(QtWidgets.QWidget):
@@ -92,8 +92,6 @@ class Worker(QtWidgets.QWidget):
 
         layout = Colocacion.H().otro(ly_tt).otro(ly_pgn).relleno().margen(3)
         self.setLayout(layout)
-
-        self.cpu = CPU.CPU(self)
 
         self.pon_estado(ST_WAITING)
 
@@ -307,8 +305,7 @@ class Worker(QtWidgets.QWidget):
         h_max = 0
         for side in (WHITE, BLACK):
             h = self.lb_player[side].height()
-            if h > h_max:
-                h_max = h
+            h_max = max(h_max, h)
         for side in (WHITE, BLACK):
             self.lb_player[side].fixed_height(h_max)
 
@@ -529,7 +526,8 @@ class Worker(QtWidgets.QWidget):
             return True
 
         if engine_manager.mrm:
-            move.analysis = engine_manager.mrm.clone(), 0
+            if len(engine_manager.mrm) > 0:
+                move.analysis = engine_manager.mrm.clone(), 0
             move.del_nags()
 
         if time_seconds:
@@ -699,49 +697,17 @@ class Worker(QtWidgets.QWidget):
         self.game.set_termination(TERMINATION_ADJUDICATION, result)
         return True
 
-    def move_the_pieces(self, li_movs):
+    def move_the_pieces(self, li_moves):
         if self.run_worker.slow_pieces:
-            rapidez = self.configuration.pieces_speed_porc()
-            cpu = self.cpu
-            cpu.reset()
-            seconds = None
+            self.board.animate_move(li_moves)
 
-            # primero los movimientos
-            for movim in li_movs:
-                if movim[0] == "m":
-                    if seconds is None:
-                        from_sq, to_sq = movim[1], movim[2]
-                        dc = ord(from_sq[0]) - ord(to_sq[0])
-                        df = int(from_sq[1]) - int(to_sq[1])
-                        # Maxima distancia = 9.9 ( 9,89... sqrt(7**2+7**2)) = 4 seconds
-                        dist = (dc**2 + df**2) ** 0.5
-                        seconds = 4.0 * dist / (9.9 * rapidez)
-                    cpu.move_piece(movim[1], movim[2], is_exclusive=False, seconds=seconds)
-
-            if seconds is None:
-                seconds = 1.0
-
-            # segundo los borrados
-            for movim in li_movs:
-                if movim[0] == "b":
-                    cpu.wait(seconds * 0.80)
-                    cpu.remove_piece(movim[1])
-
-            # tercero los cambios
-            for movim in li_movs:
-                if movim[0] == "c":
-                    cpu.change_piece(movim[1], movim[2], is_exclusive=True)
-
-            cpu.run_linear()
-
-        else:
-            for movim in li_movs:
-                if movim[0] == "b":
-                    self.board.remove_piece(movim[1])
-                elif movim[0] == "m":
-                    self.board.move_piece(movim[1], movim[2])
-                elif movim[0] == "c":
-                    self.board.change_piece(movim[1], movim[2])
+        for movim in li_moves:
+            if movim[0] == "b":
+                self.board.remove_piece(movim[1])
+            elif movim[0] == "m":
+                self.board.move_piece(movim[1], movim[2])
+            elif movim[0] == "c":
+                self.board.change_piece(movim[1], movim[2])
 
     def changeEvent(self, event: QtCore.QEvent):
         QtWidgets.QWidget.changeEvent(self, event)

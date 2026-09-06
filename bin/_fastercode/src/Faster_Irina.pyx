@@ -5,10 +5,13 @@ import os.path
 import os
 import shutil
 import tempfile
+import threading
 from collections import deque
 from libc.stdio cimport FILE
 from libc.stdlib cimport malloc, free
 from typing import Dict, Tuple, Iterator, List, Optional
+
+_engine_lock = threading.RLock()
 
 """
 PGNreader: class to read pgn files
@@ -42,7 +45,6 @@ def xpv_pv(xpv): convert xpv to a list of moves separated by spaces
 def xpv_pgn(xpv): convert xpv to a pgn
 def lipv_pgn(fen, lipv):
 def pv_xpv(pv): convert list of moves to xpv
-def run_fen( fen, depth, ms, level ): plays internal engine of a level during ms time and a depth
 def set_fen(fen): internally fen is setted
 def get_fen(): returns current fen
 def get_moves(): returns possible moves with current fen
@@ -82,7 +84,6 @@ cdef extern from "irina.h":
     ctypedef struct MoveBin:
         pass
 
-    int is_bmi2()
     void init_board()
     void fen_board(char *fen)
     char *board_fen(char *fen)
@@ -90,7 +91,6 @@ cdef extern from "irina.h":
     int movegen()
     int pgn2pv(char *pgn, char *pv)
     int make_nummove(int num)
-    char * play_fen(char *fen, int depth, int time)
     int num_moves()
     void get_move(int num, char *pv)
     int num_base_move()
@@ -98,7 +98,6 @@ cdef extern from "irina.h":
     void get_move_ex(int num, char *info)
     char * to_san(int num, char *sanMove)
     char incheck()
-    void set_level(int lv)
 
     void pgn_start(int depth)
     void pgn_stop()
@@ -117,12 +116,8 @@ cdef extern from "irina.h":
     int move_to_string(char move_s[6], unsigned int move)
     void open_poly_w(char * name)
     void close_poly()
-    void set_ext_fen_body(char * ext_fen, char * ext_body, char * pv )
     void pv_xpv_c(const char* pv, char* res)
-
-
-def bmi2():
-    return is_bmi2()
+    int cpu_flags_to_string(char *buffer, int size)
 
 
 class PGNreader:
@@ -190,7 +185,8 @@ class PGNreader:
         if self.utf_bom:
             self.f.seek(3)
         self._started = False
-        pgn_start(self.depth)
+        with _engine_lock:
+            pgn_start(self.depth)
         self._started = True
         return self
 
@@ -209,7 +205,8 @@ class PGNreader:
 
         if self._started:
             try:
-                pgn_stop()
+                with _engine_lock:
+                    pgn_stop()
             except Exception:
                 pass
             self._started = False
@@ -262,13 +259,15 @@ class PGNreader:
         fen = labels_values.get(b"FEN", b"")
 
         try:
-            pgn_read(body, fen)
+            with _engine_lock:
+                pgn_read(body, fen)
         except Exception as e:
             return self.__next__()
 
-        pv = pgn_pv()
-        is_raw = pgn_raw()
-        fens = [pgn_fen(i) for i in range(pgn_numfens())]
+        with _engine_lock:
+            pv = pgn_pv()
+            is_raw = pgn_raw()
+            fens = [pgn_fen(i) for i in range(pgn_numfens())]
 
         self.final = self.f.tell()
 
@@ -315,12 +314,13 @@ class PGNreader:
 
 def xpgn_pv(pgn: str) -> str:
     cdef char pv[10];
-    bpgn = bytes(pgn, "utf-8")
-    resp = pgn2pv(bpgn, pv)
-    if resp == 9999:
-        return ""
-    else:
-        return pv.decode("utf-8")
+    with _engine_lock:
+        bpgn = bytes(pgn, "utf-8")
+        resp = pgn2pv(bpgn, pv)
+        if resp == 9999:
+            return ""
+        else:
+            return pv.decode("utf-8")
 
 
 def pos_rc(pos: int) -> tuple:
@@ -345,7 +345,7 @@ def a1_pos(a1: str) -> int:
 def move_num(a1h8q: str) ->int:
     num = a1_pos(a1h8q[:2]) + a1_pos(a1h8q[2:4])*64
     if len(a1h8q)>4:
-        num += ({b"q":1, b"r":2, b"b":3, b"n":4}.get(a1h8q[4], 0))*64*64
+        num += ({'q':1, 'r':2, 'b':3, 'n':4}.get(a1h8q[4].lower(), 0))*64*64
     return num
 
 
@@ -555,160 +555,154 @@ def xpv_pv(xpv:str) -> str:
 
 
 def pv_xpv(str pv):
-    if not pv:
-        return ""
-
-    # Codificamos a bytes
-    cdef bytes b_pv = pv.encode('ascii')
+    cdef bytes b_pv = pv.encode('ascii') if pv else b''
     cdef char* c_pv = b_pv
-
-    # Cambiamos int por Py_ssize_t para evitar el warning C4244
     cdef Py_ssize_t n = len(b_pv)
-
-    # El buffer de salida puede ser del mismo tamaño + 1 para el nulo
     cdef char* buffer = <char*>malloc((n + 1) * sizeof(char))
 
-    try:
-        pv_xpv_c(c_pv, buffer)
-        # Convertimos de nuevo a string de Python
-        return buffer.decode('ascii')
-    finally:
-        free(buffer)
+    with _engine_lock:
+        if not pv:
+            free(buffer)
+            return ""
 
-
-def run_fen(fen: str, depth: int, ms: int, level: int):
-    set_level(level)
-    bfen = bytes(fen, "utf-8")
-    x = play_fen(bfen, depth, ms)
-    set_level(0)
-    return x.decode("utf-8")
+        try:
+            pv_xpv_c(c_pv, buffer)
+            return buffer.decode('ascii')
+        finally:
+            free(buffer)
 
 
 def set_fen(fen):
-    fen = fen.encode("utf-8")
-    fen_board(fen)
-    return movegen()
+    with _engine_lock:
+        fen = fen.encode("utf-8")
+        fen_board(fen)
+        return movegen()
 
 
 def get_fen():
     cdef char fen[256]
-    board_fen(fen)
-    x = fen.decode("utf-8")
-    return x
+    with _engine_lock:
+        board_fen(fen)
+        x = fen.decode("utf-8")
+        return x
 
 def get_fenm2():
     cdef char fen[256]
-    board_fenM2(fen)
-    x = fen.decode("utf-8")
-    return x
+    with _engine_lock:
+        board_fenM2(fen)
+        x = fen.decode("utf-8")
+        return x
 
 def get_moves():
     cdef char pv[32]
     cdef int nmoves, x, nbase
-    nmoves = num_moves()
+    with _engine_lock:
+        nmoves = num_moves()
 
-    nbase = num_base_move()
-    li = []
-    for x in range(nmoves):
-        get_move(x+nbase, pv)
-        r = pv
-        li.append(r.decode())
-    return li
+        nbase = num_base_move()
+        li = []
+        for x in range(nmoves):
+            get_move(x+nbase, pv)
+            r = pv
+            li.append(r.decode())
+        return li
 
 
 def get_pgn(from_a1h8: str, to_a1h8: str, promotion: str) -> str:
     cdef char san[32]
+    with _engine_lock:
+        bfrom_a1h8 = from_a1h8.encode("utf-8")
+        bto_a1h8 = to_a1h8.encode("utf-8")
+        bpromotion = promotion.encode("utf-8") if promotion else b""
 
-    bfrom_a1h8 = from_a1h8.encode("utf-8")
-    bto_a1h8 = to_a1h8.encode("utf-8")
-    bpromotion = promotion.encode("utf-8") if promotion else b""
+        num = search_move(bfrom_a1h8, bto_a1h8, bpromotion)
+        if num == -1:
+            return None
 
-    num = search_move(bfrom_a1h8, bto_a1h8, bpromotion)
-    if num == -1:
-        return None
-
-    to_san(num, san)
-    return san.decode("utf-8")
+        to_san(num, san)
+        return san.decode("utf-8")
 
 
 def get_pgn_b(bfrom_a1h8, bto_a1h8, bpromotion):
     cdef char san[32]
+    with _engine_lock:
+        num = search_move(bfrom_a1h8, bto_a1h8, bpromotion)
+        if num == -1:
+            return None
 
-    num = search_move(bfrom_a1h8, bto_a1h8, bpromotion)
-    if num == -1:
-        return None
-
-    to_san(num, san)
-    return san.decode("utf-8")
+        to_san(num, san)
+        return san.decode("utf-8")
 
 
 def xpv_pgn(xpv):
     cdef char san[32]
+    with _engine_lock:
+        set_init_fen()
+        is_white = True
+        num = 1
+        li = []
+        tam = 0
+        for pv in xpv_lipv(xpv):
+            if is_white:
+                x = b"%d." % num
+                tam += len(x)
+                li.append(x)
+                num += 1
+            is_white = not is_white
 
-    set_init_fen()
-    is_white = True
-    num = 1
-    li = []
-    tam = 0
-    for pv in xpv_lipv(xpv):
-        if is_white:
-            x = b"%d." % num
-            tam += len(x)
+            num_move = search_move( pv[:2].encode("utf-8"), pv[2:4].encode("utf-8"), pv[4:].encode("utf-8") )
+            if num_move == -1:
+                break
+            to_san(num_move, san)
+            x = san + b""
             li.append(x)
-            num += 1
-        is_white = not is_white
-
-        num_move = search_move( pv[:2].encode("utf-8"), pv[2:4].encode("utf-8"), pv[4:].encode("utf-8") )
-        if num_move == -1:
-            break
-        to_san(num_move, san)
-        x = san + b""
-        li.append(x)
-        tam += len(x)
-        if tam >= 80:
-            li.append(b"\n")
-            tam = 0
-        else:
-            li.append(b" ")
-            tam += 1
-        make_nummove(num_move)
-    return (b"".join(li)).decode("utf-8")
+            tam += len(x)
+            if tam >= 80:
+                li.append(b"\n")
+                tam = 0
+            else:
+                li.append(b" ")
+                tam += 1
+            make_nummove(num_move)
+        return (b"".join(li)).decode("utf-8")
 
 def lipv_pgn(fen, lipv):
     cdef char san[32]
-    set_fen(fen)
-    is_white = " w " in fen
-    li_pv = fen.split(" ")
-    num = int(li_pv[len(li_pv) - 1])
-    li = []
-    tam = 0
-    for pv in lipv:
-        if is_white:
-            x = b"%d." % num
-            tam += len(x)
-            li.append(x)
-            num += 1
-        is_white = not is_white
+    with _engine_lock:
+        set_fen(fen)
+        is_white = " w " in fen
+        li_pv = fen.split(" ")
+        num = int(li_pv[len(li_pv) - 1])
+        li = []
+        tam = 0
+        for pv in lipv:
+            if is_white:
+                x = b"%d." % num
+                tam += len(x)
+                li.append(x)
+                num += 1
+            is_white = not is_white
 
-        num_move = search_move( pv[:2].encode("utf-8"), pv[2:4].encode("utf-8"), pv[4:].encode("utf-8") )
-        if num_move == -1:
-            break
-        to_san(num_move, san)
-        x = san + b""
-        li.append(x)
-        tam += len(x)
-        if tam >= 80:
-            li.append(b"\n")
-            tam = 0
-        else:
-            li.append(b" ")
-            tam += 1
-        make_nummove(num_move)
-    return (b"".join(li)).decode("utf-8")
+            num_move = search_move( pv[:2].encode("utf-8"), pv[2:4].encode("utf-8"), pv[4:].encode("utf-8") )
+            if num_move == -1:
+                break
+            to_san(num_move, san)
+            x = san + b""
+            li.append(x)
+            tam += len(x)
+            if tam >= 80:
+                li.append(b"\n")
+                tam = 0
+            else:
+                li.append(b" ")
+                tam += 1
+            make_nummove(num_move)
+        return (b"".join(li)).decode("utf-8")
 
 
 def ischeck():
-    return incheck()
+    with _engine_lock:
+        return incheck()
 
 
 class InfoMove(object):
@@ -784,56 +778,60 @@ class InfoMove(object):
 
 
 def get_exmoves():
-    nmoves = num_moves()
+    with _engine_lock:
+        nmoves = num_moves()
 
-    nbase = num_base_move()
-    li = []
-    for x in range(nmoves):
-        mv = InfoMove(x + nbase)
-        li.append(mv)
-    return li
+        nbase = num_base_move()
+        li = []
+        for x in range(nmoves):
+            mv = InfoMove(x + nbase)
+            li.append(mv)
+        return li
 
 
 def move_expv(xfrom: str, xto: str, promotion: str):
-    bfrom = bytes(xfrom, "utf-8")
-    bto = bytes(xto, "utf-8")
-    bpromotion = bytes(promotion, "utf-8") if promotion else b""
-    num = search_move( bfrom, bto, bpromotion )
-    if num == -1:
-        return None
+    with _engine_lock:
+        bfrom = bytes(xfrom, "utf-8")
+        bto = bytes(xto, "utf-8")
+        bpromotion = bytes(promotion, "utf-8") if promotion else b""
+        num = search_move( bfrom, bto, bpromotion )
+        if num == -1:
+            return None
 
-    infoMove = InfoMove(num)
-    make_nummove(num)
+        infoMove = InfoMove(num)
+        make_nummove(num)
 
-    return infoMove
+        return infoMove
 
 
 def move_pv(xfrom: str, xto: str, promotion):
-    bfrom = xfrom.encode("utf-8")
-    bto = xto.encode("utf-8")
-    bpromotion = bytes(promotion, "utf-8") if promotion else b""
-    num = search_move( bfrom, bto, bpromotion )
-    if num == -1:
-        return False
+    with _engine_lock:
+        bfrom = xfrom.encode("utf-8")
+        bto = xto.encode("utf-8")
+        bpromotion = bytes(promotion, "utf-8") if promotion else b""
+        num = search_move( bfrom, bto, bpromotion )
+        if num == -1:
+            return False
 
-    make_nummove(num)
+        make_nummove(num)
 
-    return True
+        return True
 
 
 def make_move(a1h8):
-    xfrom = a1h8[:2]
-    xto = a1h8[2:4]
-    promotion = a1h8[4:]
-    bfrom = bytes(xfrom, "utf-8")
-    bto = bytes(xto, "utf-8")
-    bpromotion = bytes(promotion, "utf-8")
-    num = search_move( bfrom, bto, bpromotion )
-    if num == -1:
-        return False
+    with _engine_lock:
+        xfrom = a1h8[:2]
+        xto = a1h8[2:4]
+        promotion = a1h8[4:]
+        bfrom = bytes(xfrom, "utf-8")
+        bto = bytes(xto, "utf-8")
+        bpromotion = bytes(promotion, "utf-8")
+        num = search_move( bfrom, bto, bpromotion )
+        if num == -1:
+            return False
 
-    make_nummove(num)
-    return True
+        make_nummove(num)
+        return True
 
 
 def fen_fenm2(fen: str) -> str:
@@ -843,39 +841,44 @@ def fen_fenm2(fen: str) -> str:
 
 
 def set_init_fen():
-    fen_board(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    movegen()
+    with _engine_lock:
+        fen_board(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        movegen()
 
 
 def make_pv(pv: str):
-    set_init_fen()
-    if pv:
-        for move in pv.split(" "):
-            make_move(move)
-    return get_fen()
+    with _engine_lock:
+        set_init_fen()
+        if pv:
+            for move in pv.split(" "):
+                make_move(move)
+        return get_fen()
 
 
 def get_exmoves_fen(fen):
-    set_fen(fen)
-    return get_exmoves()
+    with _engine_lock:
+        set_fen(fen)
+        return get_exmoves()
 
 
 def get_captures_fen(fen):
-    set_fen(fen)
-    nmoves = num_moves()
-    nbase = num_base_move()
-    li = []
-    for x in range(nmoves):
-        mv = InfoMove(x + nbase)
-        if mv.capture():
-            li.append(mv)
-    return li
+    with _engine_lock:
+        set_fen(fen)
+        nmoves = num_moves()
+        nbase = num_base_move()
+        li = []
+        for x in range(nmoves):
+            mv = InfoMove(x + nbase)
+            if mv.capture():
+                li.append(mv)
+        return li
 
 
 def get_captures(fen, siMB):
-    if not siMB:
-        fen = fen_other(fen)
-    return get_captures_fen(fen)
+    with _engine_lock:
+        if not siMB:
+            fen = fen_other(fen)
+        return get_captures_fen(fen)
 
 
 def fen_other(fen):
@@ -886,32 +889,35 @@ def fen_other(fen):
 
 
 def fen_ended(fen):
-    return set_fen(fen) == 0
+    with _engine_lock:
+        return set_fen(fen) == 0
 
 
 def xparse_body(fen, body):
-    body = bytes(body, "utf-8")
-    fen = bytes(fen, "utf-8")
-    resp = bytearray(len(body)*14//10)
-    tam = parse_body( fen, body, resp )
-    if tam:
-        return resp[:tam].decode("utf-8").split("\n")
-    else:
-        return None
+    with _engine_lock:
+        body = bytes(body, "utf-8")
+        fen = bytes(fen, "utf-8")
+        resp = bytearray(len(body)*3 + 4096)
+        tam = parse_body( fen, body, resp )
+        if tam:
+            return resp[:tam].decode("utf-8").split("\n")
+        else:
+            return None
 
 def xparse_pgn(pgn):
-    pgn = pgn.strip()
-    if len(pgn) == 0:
-        return None
-    if pgn[0] != "[":
-        pgn = f'[Event "?"]\n{pgn}'
-    pgn = bytes(pgn, "utf-8")
-    resp = bytearray(len(pgn)*14//10)
-    tam = parse_pgn( pgn, resp )
-    if tam:
-        return resp[:tam].decode("utf-8").split("\n")
-    else:
-        return None
+    with _engine_lock:
+        pgn = pgn.strip()
+        if len(pgn) == 0:
+            return None
+        if pgn[0] != "[":
+            pgn = f'[Event "?"]\n{pgn}'
+        pgn = bytes(pgn, "utf-8")
+        resp = bytearray(len(pgn)*3 + 4096)
+        tam = parse_pgn( pgn, resp )
+        if tam:
+            return resp[:tam].decode("utf-8").split("\n")
+        else:
+            return None
 
 def last_letter(x: str):
     return x[len(x)-1] if x else ""
@@ -1093,3 +1099,17 @@ def get_pgn_longalgebraic(from_sq, to_sq, promotion):
     elif info.check():
         end += "+"
     return f"{ini}{sep}{end}"
+
+
+def get_cpu_flags() -> set:
+    cdef char buf[256]
+    cdef int n = cpu_flags_to_string(buf, sizeof(buf))
+    s = buf[:n].decode('ascii')
+    if not s:
+        return set()
+    return set(s.split(','))
+    
+    
+def is_bmi2() -> bool:
+    return "bmi2" in get_cpu_flags()
+    

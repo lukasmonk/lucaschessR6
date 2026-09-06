@@ -3,7 +3,6 @@ import os.path
 from PySide6 import QtGui
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import (
     KIB_AFTER_MOVE,
     KIB_BEFORE_MOVE,
@@ -21,6 +20,7 @@ from Code.Base.Constantes import (
 from Code.Books import Books
 from Code.Engines import Engines, Priorities
 from Code.QT import Iconos
+from Code.Z import Util
 
 
 def cb_pointofview_options():

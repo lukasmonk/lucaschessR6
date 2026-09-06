@@ -41,6 +41,12 @@ def create_tactics(wowner, li_registros_selected, li_registros_total, rutina_dat
     form.checkbox(_("Skip the first move"), False)
 
     form.separador()
+    form.editbox(_("Max depth"), tipo=int, ancho=40, init_value="")
+
+    form.separador()
+    form.checkbox(_("Remove previous training"), False)
+
+    form.separador()
     selected = nregs > 1
     form.checkbox("%s (%d)" % (_("Only selected games"), nregs), selected)
     form.separador()
@@ -57,7 +63,9 @@ def create_tactics(wowner, li_registros_selected, li_registros_total, rutina_dat
         return
     pointview = str(li_gen[1])
     skip_first = li_gen[2]
-    only_selected = li_gen[3]
+    max_depth = li_gen[3]
+    rem_previous = li_gen[4]
+    only_selected = li_gen[5]
 
     li_registros = li_registros_selected if only_selected else li_registros_total
     nregs = len(li_registros)
@@ -65,6 +73,8 @@ def create_tactics(wowner, li_registros_selected, li_registros_total, rutina_dat
     rest_dir = Util.valid_filename(menuname)
     nom_dir = Util.opj(Code.configuration.paths.folder_tactics(), rest_dir)
     nom_ini = Util.opj(nom_dir, "Config.ini")
+    if rem_previous:
+        Util.remove_folder_files(nom_dir)
     if os.path.isfile(nom_ini):
         dic_ini = Util.ini2dic(nom_ini)
         n = 1
@@ -99,20 +109,20 @@ def create_tactics(wowner, li_registros_selected, li_registros_total, rutina_dat
 
     fen0 = FEN_INITIAL
 
-    t = time.time()
+    t = time.monotonic()
 
     for n in range(nregs):
         if tmp_bp.is_canceled():
             break
 
         tmp_bp.pon(n + 1)
-        if time.time() - t > 1.0 or (nregs - n) < 10:
+        if time.monotonic() - t > 1.0 or (nregs - n) < 10:
             tmp_bp.mensaje("%d/%d" % (n + 1, nregs))
-            t = time.time()
+            t = time.monotonic()
 
         recno = li_registros[n]
 
-        dic_valores = rutina_datos(recno, skip_first)
+        dic_valores = rutina_datos(recno, skip_first, max_depth)
         if dic_valores is None:
             continue
         plies = dic_valores["PLIES"]
@@ -200,29 +210,29 @@ def create_tactics(wowner, li_registros_selected, li_registros_total, rutina_dat
     QTMessages.message_bold(
         wowner,
         (
-                "%s<br>%s<br><br>%s<br>%s<br>%s"
+            "%s<br>%s<br><br>%s<br>%s<br>%s"
+            % (
+                _("Tactic training %s created.") % menuname,
+                _("You can access this training from"),
+                "%s/%s" % (_("Train"), _("Tactics")),
+                "%s1) %s / %s / %s <br>%s➔ %s"
                 % (
-                    _("Tactic training %s created.") % menuname,
-                    _("You can access this training from"),
-                    "%s/%s" % (_("Train"), _("Tactics")),
-                    "%s1) %s / %s / %s <br>%s➔ %s"
-                    % (
-                        sp(5),
-                        _("Training positions"),
-                        _("Personal Training"),
-                        _("Personal tactics"),
-                        sp(12),
-                        _("for a standard training"),
-                    ),
-                    "%s2) %s / %s <br>%s➔ %s"
-                    % (
-                        sp(5),
-                        _("Learn tactics by repetition"),
-                        _("Personal tactics"),
-                        sp(12),
-                        _("for a training by repetition"),
-                    ),
-                )
+                    sp(5),
+                    _("Training positions"),
+                    _("Personal Training"),
+                    _("Personal tactics"),
+                    sp(12),
+                    _("for a standard training"),
+                ),
+                "%s2) %s / %s <br>%s➔ %s"
+                % (
+                    sp(5),
+                    _("Learn tactics by repetition"),
+                    _("Personal tactics"),
+                    sp(12),
+                    _("for a training by repetition"),
+                ),
+            )
         ),
     )
 
@@ -237,6 +247,9 @@ def create_training_positions(wowner, li_registros_selected, li_registros_total,
 
     form.separador()
     form.checkbox(_("Skip the first move"), False)
+
+    form.separador()
+    form.editbox(_("Max depth"), tipo=int, ancho=40, init_value="")
 
     form.separador()
     selected = nregs > 1
@@ -254,7 +267,8 @@ def create_training_positions(wowner, li_registros_selected, li_registros_total,
     if not menuname:
         return
     skip_first = li_gen[1]
-    only_selected = li_gen[2]
+    max_depth = li_gen[2]
+    only_selected = li_gen[3]
 
     li_registros = li_registros_selected if only_selected else li_registros_total
     nregs = len(li_registros)
@@ -290,7 +304,7 @@ def create_training_positions(wowner, li_registros_selected, li_registros_total,
 
         recno = li_registros[n]
 
-        dic_valores = rutina_datos(recno, skip_first)
+        dic_valores = rutina_datos(recno, skip_first, max_depth)
         fen = dic_valores.get("FEN")
         if not fen:
             continue

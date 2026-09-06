@@ -2,7 +2,7 @@ import random
 import sys
 
 import Code
-from Code.Z import Update
+from Code.Albums import ManagerAlbum
 from Code.Base import Position
 from Code.Base.Constantes import (
     GT_AGAINST_CHILD_ENGINE,
@@ -16,8 +16,8 @@ from Code.Base.Constantes import (
     GT_ELO,
     GT_FICS,
     GT_FIDE,
-    GT_HUMAN,
     GT_GRID,
+    GT_HUMAN,
     GT_LICHESS,
     GT_MICELO,
     GT_WICKER,
@@ -41,13 +41,11 @@ from Code.Books import (
     WBooksTrain,
     WBooksTrainOL,
 )
+from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerGrid, ManagerMicElo, ManagerWicker
 from Code.CompetitionWithTutor import ManagerCompeticion
-from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMicElo, ManagerWicker
-from Code.Competitions import ManagerGrid
 from Code.Config import Configuration, WindowConfig, WindowUsuarios
 from Code.Databases import DBgames
 from Code.Engines import (
-    CheckEngines,
     EngineManagerAnalysis,
     EngineManagerPlay,
     EngineManagerRefresh,
@@ -76,16 +74,15 @@ from Code.Menus import (
 )
 from Code.Openings import OpeningsStd
 from Code.PlayAgainstEngine import ManagerPerson, ManagerPlayAgainstEngine, WPlayAgainstEngine
-from Code.Albums import ManagerAlbum
 from Code.PlayHuman import ManagerPlayHuman
 from Code.QT import Iconos, Piezas, QTDialogs
 from Code.Routes import ManagerRoutes, Routes, WindowRoutes
-from Code.SQL import UtilSQL
 from Code.Shortcuts import Shortcuts
+from Code.SQL import UtilSQL
 from Code.Swiss import ManagerSwiss
 from Code.Washing import ManagerWashing, WindowWashing
 from Code.WritingDown import ManagerWritingDown, WritingDown
-from Code.Z import Adjournments, CPU, ManagerGame, ManagerSolo, Util
+from Code.Z import Adjournments, ManagerGame, ManagerSolo, Update, Util
 
 
 class Procesador:
@@ -101,7 +98,6 @@ class Procesador:
     in_the_presentation: bool
     initial_position: Position.Position
     kibitzers_manager: KibitzersManager.Manager = None
-    cpu: CPU.CPU
     manager_rival = None
 
     def __init__(self):
@@ -126,8 +122,6 @@ class Procesador:
 
         self.configuration = Configuration.Configuration(user)
         self.configuration.start()
-
-        CheckEngines.check_engines()
 
         Code.procesador = self
         Code.runSound.read_sounds()
@@ -190,8 +184,6 @@ class Procesador:
         self.kibitzers_manager = KibitzersManager.Manager(self)
 
         self.board = self.main_window.board
-
-        self.cpu = CPU.CPU(self.main_window)
 
         if self.configuration.x_check_for_update:
             Update.test_update(self)
@@ -286,7 +278,6 @@ class Procesador:
     def presentacion(self, if_start=True):
         self.in_the_presentation = if_start
         if not if_start:
-            self.cpu.stop()
             self.board.set_side_bottom(True)
             self.board.activa_menu_visual(True)
             self.board.set_position(self.initial_position)
@@ -382,12 +373,12 @@ class Procesador:
         assert type(depth) is int and depth >= 0
         assert type(nodes) is int and nodes >= 0
 
-        run_engine_params = EngineRun.RunEngineParams()
+        run_engine_params: EngineRun.RunEngineParams = EngineRun.RunEngineParams()
         multipv = engine.multiPV if has_multipv else 1
         run_engine_params.update(engine, mstime, depth, nodes, multipv)
-        if faster_mode:
-            run_engine_params.faster_mode_always = True
         engine_manager = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
+        if faster_mode:
+            engine_manager.set_faster_mode()
         if priority is not None:
             engine_manager.set_priority(priority)
         return engine_manager
@@ -441,8 +432,6 @@ class Procesador:
 
         if key == TB_QUIT:
             self.close_engines()
-            if hasattr(self, "cpu"):
-                self.cpu.stop()
             self.main_window.final_processes()
             self.main_window.accept()
 
@@ -630,7 +619,6 @@ class Procesador:
                     self.manager.start(w.recno, is_white, is_black, close_on_exit=True)
         else:
             db.close()
-        return
 
     def play_route(self, route):
         if route.state == Routes.BETWEEN:
@@ -841,5 +829,3 @@ class ProcesadorVariations(Procesador):
         # self.replayBeep = None
 
         self.initial_position = None
-
-        self.cpu = CPU.CPU(self.main_window)

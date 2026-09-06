@@ -2,9 +2,9 @@ import ast
 
 import FasterCode
 
-from Code.Z import Util
 from Code.Base import Game
 from Code.SQL import Base
+from Code.Z import Util
 
 
 def str_file(file):
@@ -69,7 +69,7 @@ class Expedition:
             d = {"ROUTE": f"{li_p[x][4]} - {li_p[x + 1][4]}"}
             xc = li_distribution[x]
             d["GAMES"] = str(xc)
-            done = xgame if xc >= xgame else xc
+            done = min(xgame, xc)
             xgame -= xc
             if xcurrent is None and xgame < 0:
                 xcurrent = x
@@ -131,9 +131,7 @@ class Expedition:
         # color
         if self.reg.COLOR == "D":
             self.is_white = True
-            if result == "0-1":
-                self.is_white = False
-            elif result == "1/2-1/2":
+            if result == "0-1" or result == "1/2-1/2":
                 self.is_white = False
             elif fen:
                 self.is_white = "w" in fen

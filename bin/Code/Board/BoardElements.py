@@ -1,6 +1,5 @@
 import base64
 
-
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
@@ -11,7 +10,7 @@ from Code.QT import Controles, ScreenUtils
 class BloqueSC(QtWidgets.QGraphicsItem):
     def __init__(self, escena, physical_pos):
 
-        super(BloqueSC, self).__init__()
+        super().__init__()
 
         self.setPos(physical_pos.x, physical_pos.y)
         self.rect = QtCore.QRectF(0, 0, physical_pos.ancho, physical_pos.alto)
@@ -28,7 +27,6 @@ class BloqueSC(QtWidgets.QGraphicsItem):
         self.siRecuadro = False
 
         self.setZValue(physical_pos.orden)
-
 
     def boundingRect(self):
         return self.rect
@@ -51,7 +49,7 @@ class CajaSC(BloqueSC):
 
         physical_pos = block_caja.physical_pos
 
-        super(CajaSC, self).__init__(escena, physical_pos)
+        super().__init__(escena, physical_pos)
 
         self.block_data = self.bloqueCaja = block_caja
 
@@ -77,7 +75,7 @@ class CirculoSC(BloqueSC):
 
         physical_pos = block_circulo.physical_pos
 
-        super(CirculoSC, self).__init__(escena, physical_pos)
+        super().__init__(escena, physical_pos)
 
         self.block_data = self.bloqueCirculo = block_circulo
 
@@ -128,7 +126,7 @@ class PuntoSC(CirculoSC):
 class TextoSC(BloqueSC):
     def __init__(self, escena, block_texto, rutina=None):
 
-        super(TextoSC, self).__init__(escena, block_texto.physical_pos)
+        super().__init__(escena, block_texto.physical_pos)
 
         self.block_data = self.bloqueTexto = block_texto
 
@@ -188,14 +186,14 @@ class PiezaSC(BloqueSC):
 
         physical_pos = block_pieza.physical_pos
 
-        super(PiezaSC, self).__init__(escena, physical_pos)
+        super().__init__(escena, physical_pos)
 
         self.block_data = self.bloquePieza = block_pieza
 
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations, True)
 
         pz = block_pieza.pieza
-        self.pixmap = board.pieces.render(pz)
+        self.pixmap = board.pieces.render_pixmap(pz, physical_pos.ancho)
 
         self.ini_pos = None
 
@@ -227,9 +225,7 @@ class PiezaSC(BloqueSC):
         self.update()
 
     def paint(self, painter, option, widget=None):
-        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
-        self.pixmap.render(painter, self.rect)
+        painter.drawPixmap(0, 0, self.pixmap)
 
     def hoverMoveEvent(self, event):
         if self.is_active:
@@ -297,17 +293,15 @@ class PiezaSC(BloqueSC):
 
     def reload_graphics(self):
         """
-        Recarga el renderer gráfico de la pieza
+        Recarga el pixmap de la pieza
         según la configuración actual del board.
         """
         pz = self.bloquePieza.pieza
 
-        # Pedir de nuevo el renderer al proveedor de piezas
-        self.pixmap = self.board.pieces.render(pz)
+        self.pixmap = self.board.pieces.render_pixmap(pz, self.bloquePieza.physical_pos.ancho)
 
         self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
 
-        # Forzar repaint
         self.update()
 
 

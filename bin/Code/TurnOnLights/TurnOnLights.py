@@ -3,8 +3,8 @@ import os
 import random
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Position
+from Code.Z import Util
 
 QUALIFICATIONS = (
     ("Mind-bending", "7", 0.7, 0.5),
@@ -416,8 +416,7 @@ def read_oneline_tol():
 
 def num_color_minimum(tol):
     num = tol.levels[tol.work_level].num_level + 1
-    if num >= 3:
-        num = 3
+    num = min(3, num)
     return num, tol.work_level == tol.num_levels - 1
 
 

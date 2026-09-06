@@ -1,5 +1,6 @@
 import os
 import sys
+
 from PySide6 import QtCore, QtGui, QtWidgets
 from shiboken6 import isValid
 
@@ -52,9 +53,7 @@ def get_clipboard():
 
     if mimedata.hasImage():
         return "p", mimedata.imageData()
-    elif mimedata.hasHtml():
-        return "h", mimedata.html()
-    elif mimedata.hasHtml():
+    elif mimedata.hasHtml() or mimedata.hasHtml():
         return "h", mimedata.html()
     elif mimedata.hasText():
         return "t", mimedata.text()
@@ -101,6 +100,7 @@ def deferred_call(mstime: int, called):
 #             os._exit(0)
 #         except Exception:
 #             pass
+
 
 def close_app():
     app = QtWidgets.QApplication.instance()
@@ -160,4 +160,5 @@ def scene_remove_item_safe(scene, item):
     except RuntimeError as e:
         if __debug__:
             from Code.Z import Debug
+
             Debug.prln(f"[warn] scene_remove_item_safe: {e}", color="red")

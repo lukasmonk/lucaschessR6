@@ -15,8 +15,7 @@ class T4:
         for pv, dtm in dic.items():
             if dtm < 0:
                 if max_dtm < 0:
-                    if dtm < max_dtm:
-                        max_dtm = dtm
+                    max_dtm = min(max_dtm, dtm)
             elif dtm == 0:
                 if max_dtm < 0:
                     max_dtm = dtm

@@ -1,9 +1,7 @@
 import datetime
 import random
-from typing import List, Optional, Tuple
 
 import Code
-from Code.Z import Adjournments, TimeControl, Util
 from Code.Base import Move
 from Code.Base.Constantes import (
     BOOK_RANDOM_PROPORTIONAL,
@@ -24,10 +22,11 @@ from Code.Base.Constantes import (
     TERMINATION_RESIGN,
 )
 from Code.Books import Books
-from Code.Engines import EngineResponse, Engines, EnginesWicker, EnginesMicElo, EngineManagerPlay
+from Code.Engines import EngineManagerPlay, EngineResponse, Engines, EnginesMicElo, EnginesWicker
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages, QTUtils
 from Code.SQL import UtilSQL
+from Code.Z import Adjournments, TimeControl, Util
 
 
 class DicWickerElos:
@@ -58,20 +57,20 @@ def lista():
 
 
 class ManagerWicker(Manager.Manager):
-    li_t: Optional[Tuple[Tuple[int, int, int], ...]] = None
+    li_t: tuple[tuple[int, int, int], ...] | None = None
     with_time: bool = True
-    list_engines: List[EnginesMicElo.EngineTourneys]
+    list_engines: list[EnginesMicElo.EngineTourneys]
     engine_rival: EnginesMicElo.EngineTourneys
     minutos: int
     seconds: int
     is_competitive: bool
-    resultado: Optional[int]
+    resultado: int | None
     human_is_playing: bool
     state: int
     showed_result: bool
     is_human_side_white: bool
     is_engine_side_white: bool
-    lirm_engine: List[EngineResponse.EngineResponse]
+    lirm_engine: list[EngineResponse.EngineResponse]
     next_test_resign: int
     resign_limit: int
     is_tutor_enabled: bool
@@ -81,7 +80,7 @@ class ManagerWicker(Manager.Manager):
     seconds_per_move: int
     tc_player: TimeControl.TimeControl
     tc_rival: TimeControl.TimeControl
-    book: Optional[Books.Book]
+    book: Books.Book | None
     maxMoveBook: int
     white_elo: int
     black_elo: int
@@ -553,13 +552,11 @@ class ManagerWicker(Manager.Manager):
             difelo = self.engine_rival.points_lose
 
         nelo = elo + difelo
-        if nelo < 0:
-            nelo = 0
+        nelo = max(nelo, 0)
         self.configuration.set_wicker(nelo)
 
         rnelo = relo - difelo
-        if rnelo < 100:
-            rnelo = 100
+        rnelo = max(rnelo, 100)
         dme = DicWickerElos()
         dme.cambia_elo(self.engine_rival.key, rnelo)
 

@@ -4,7 +4,6 @@ import os
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Board import Board, BoardTypes
 from Code.Director import TabVisual
 from Code.QT import (
@@ -20,6 +19,7 @@ from Code.QT import (
     QTUtils,
     SelectFiles,
 )
+from Code.Z import Util
 
 estrellaSVG = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (https://www.inkscape.org/) -->

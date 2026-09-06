@@ -1,3 +1,5 @@
+import OSEngines
+
 import Code
 from Code.Base import Move
 from Code.Base.Constantes import (
@@ -15,11 +17,14 @@ from Code.Base.Constantes import (
     TB_UTILITIES,
 )
 from Code.Engines import EngineResponse, Engines
-from Code.Engines.EnginesFixed import dic_engines_raw_elo
 from Code.ManagerBase import Manager
 from Code.Openings import Opening
 from Code.QT import QTMessages
 from Code.Z import Adjournments, TimeControl, Util
+
+
+def dic_engines_raw_elo():
+    return {key: {"min_elo": min_elo, "max_elo": max_elo} for key, min_elo, max_elo in OSEngines.li_engines_fixed_elo()}
 
 
 class GridDB:
@@ -27,6 +32,7 @@ class GridDB:
     def load_all():
         path = Code.configuration.paths.file_estad_grid_elo()
         saved = Util.restore_pickle(path, {})
+
         for tg, dic_data in saved.items():
             dic_raw = dic_engines_raw_elo()
             dic_engines = dic_data["engines"]
@@ -36,14 +42,20 @@ class GridDB:
                 min_elo = dic_raw[key_eng]["min_elo"]
                 current_elo = min_elo
                 last_color = None
+                games = 0
                 if key_eng in dic_engines:
                     current_elo = dic_engines[key_eng].get("current_elo", min_elo)
                     last_color = dic_engines[key_eng].get("last_color", None)
+                    games = dic_engines[key_eng].get("games", 0)
+                    if not isinstance(games, int):
+                        games = 0
+
                 dic_new[key_eng] = {
                     "max_elo": max_elo,
                     "min_elo": min_elo,
-                    "current_elo": Util.clamp(current_elo, min_elo, max_elo),
-                    "last_color": last_color
+                    "current_elo": max(0, current_elo),
+                    "last_color": last_color,
+                    "games": games,
                 }
             dic_data["engines"] = dic_new
         return saved
@@ -57,9 +69,12 @@ class GridDB:
 class ManagerGrid(Manager.Manager):
     grid_id: str
     engine_alias: str
-    elo_level: int
+    player_elo: int
     min_elo: int
     max_elo: int
+    games_played: int
+    rival_elo: int
+    elo_manager: Util.EloEngineManager
     is_white: bool
     minutes: int
     seconds: int
@@ -77,12 +92,16 @@ class ManagerGrid(Manager.Manager):
     in_the_opening: bool
     opening: Opening.OpeningPol
 
-    def start(self, grid_id, engine_alias, elo_level, min_elo, max_elo, is_white, minutes, seconds):
+    showed_result: bool
+    pte_tool_resigndraw: bool
+
+    def start(self, grid_id, engine_alias, player_elo, min_elo, max_elo, is_white, minutes, seconds):
         self.grid_id = grid_id
         self.engine_alias = engine_alias
-        self.elo_level = elo_level
+        self.player_elo = player_elo
         self.min_elo = min_elo
         self.max_elo = max_elo
+        self.rival_elo = Util.clamp(player_elo, min_elo, max_elo)
         self.is_white = is_white
         self.minutes = minutes
         self.seconds = seconds
@@ -120,24 +139,38 @@ class ManagerGrid(Manager.Manager):
         self.tc_rival = self.tc_white if self.is_engine_side_white else self.tc_black
 
         self.in_the_opening = True
-        self.opening = Opening.OpeningPol(100, elo=self.elo_level)
+        self.opening = Opening.OpeningPol(100, elo=self.player_elo)
 
         # Expected score rating changes
-        self.points_win = Util.fide_elo(self.elo_level, self.elo_level, 1)
-        self.points_draw = Util.fide_elo(self.elo_level, self.elo_level, 0)
-        self.points_lose = Util.fide_elo(self.elo_level, self.elo_level, -1)
-        self.white_elo = self.elo_level
-        self.black_elo = self.elo_level
+        self.elo_manager = Util.EloEngineManager()
+        dic_engine = GridDB.load_all().get(self.grid_id, {}).get("engines", {}).get(self.engine_alias, {})
+        self.games_played = dic_engine.get("games", 0)
+
+        self.rival_elo = self.elo_manager.get_next_engine_uci_elo(self.player_elo, self.min_elo, self.max_elo)
+
+        self.points_win = (
+            self.elo_manager.calculate_new_rating(self.player_elo, self.rival_elo, 1.0, self.games_played)
+            - self.player_elo
+        )
+        self.points_draw = (
+            self.elo_manager.calculate_new_rating(self.player_elo, self.rival_elo, 0.5, self.games_played)
+            - self.player_elo
+        )
+        self.points_lose = (
+            self.elo_manager.calculate_new_rating(self.player_elo, self.rival_elo, 0.0, self.games_played)
+            - self.player_elo
+        )
 
         # Engine initialization
         rival: Engines.Engine = self.configuration.engines.search(self.engine_alias)
 
         rival.set_uci_option("UCI_LimitStrength", "true")
-        rival.set_uci_option("UCI_Elo", str(self.elo_level))
+        rival.set_uci_option("rival_elo", str(self.rival_elo))
 
-        rival.elo = self.elo_level
-        rival.name = f"{rival.name} ({self.elo_level})"
-        rival.key = f"{rival.key} ({self.elo_level})"
+        rival.elo = self.rival_elo
+        rival_label = f"{rival.name}<br><small>({self.rival_elo})</small>"
+        rival.name = f"{rival.name} ({self.rival_elo})"
+        rival.key = f"{rival.key} ({self.rival_elo})"
 
         self.manager_rival = self.procesador.create_manager_engine(rival, 0, 0, 0)
         self.manager_rival.check_engine()
@@ -153,9 +186,9 @@ class ManagerGrid(Manager.Manager):
         self.show_side_indicator(True)
 
         # Labels
-        rival_name = Util.primera_mayuscula(self.engine_alias)
-        label_title = f"{_('Opponent')}: <b>{rival_name} ({self.elo_level})</b>"
-        self.set_label1(label_title)
+        # rival_name = Util.primera_mayuscula(self.engine_alias)
+        # label_title = f"{_('Opponent')}: <b>{rival_name} ({self.rival_elo})</b>"
+        # self.set_label1(label_title)
 
         nbsp = "&nbsp;" * 3
         txt = "%s:%+d%s%s:%+d%s%s:%+d" % (
@@ -173,25 +206,34 @@ class ManagerGrid(Manager.Manager):
         self.show_info_extra()
 
         self.game.set_tag("Event", _("The Grid"))
-        player = self.configuration.nom_player()
-        other = rival.name
-        w, b = (player, other) if self.is_human_side_white else (other, player)
-        self.game.set_tag("White", w)
-        self.game.set_tag("Black", b)
-        self.game.set_tag("WhiteElo", str(self.elo_level))
-        self.game.set_tag("BlackElo", str(self.elo_level))
+        player_name = self.configuration.nom_player()
+        player_label = f"{player_name}<br><small>({self.player_elo})</small"
+        rival_name = rival.name
+        white_name, black_name = (player_name, rival_name) if self.is_human_side_white else (rival_name, player_name)
+        white_label, black_label = (
+            (player_label, rival_label) if self.is_human_side_white else (rival_label, player_label)
+        )
+        welo, belo = (
+            (self.player_elo, self.rival_elo) if self.is_human_side_white else (self.rival_elo, self.player_elo)
+        )
+        self.game.set_tag("White", white_name)
+        self.game.set_tag("Black", black_name)
+        self.game.set_tag("WhiteElo", str(welo))
+        self.game.set_tag("BlackElo", str(belo))
 
         if self.with_time:
             time_control = f"{int(self.max_seconds)}"
             if self.seconds_per_move:
                 time_control += "+%d" % self.seconds_per_move
             self.game.set_tag("TimeControl", time_control)
+            tp_bl, tp_ng = self.tc_white.label(), self.tc_black.label()
             self.tc_player.config_clock(self.max_seconds, self.seconds_per_move, 0, 0)
             self.tc_rival.config_clock(self.max_seconds, self.seconds_per_move, 0, 0)
 
-            tp_bl, tp_ng = self.tc_white.label(), self.tc_black.label()
-            self.main_window.set_data_clock(w, tp_bl, b, tp_ng)
+            self.main_window.set_data_clock(white_label, tp_bl, black_label, tp_ng)
             self.main_window.start_clock(self.set_clock, 1000)
+        else:
+            self.main_window.change_player_labels(white_label, black_label)
 
         self.refresh()
         self.check_boards_setposition()
@@ -252,7 +294,7 @@ class ManagerGrid(Manager.Manager):
         return {
             "grid_id": self.grid_id,
             "engine_alias": self.engine_alias,
-            "elo_level": self.elo_level,
+            "player_elo": self.player_elo,
             "min_elo": self.min_elo,
             "max_elo": self.max_elo,
             "is_white": self.is_white,
@@ -267,7 +309,7 @@ class ManagerGrid(Manager.Manager):
         if QTMessages.pregunta(self.main_window, _("Do you want to adjourn the game?")):
             dic = self.save_state()
             rival_name = Util.primera_mayuscula(self.engine_alias)
-            label_menu = f"{_('The Grid')}. {rival_name} ({self.elo_level})"
+            label_menu = f"{_('The Grid')}. {rival_name} ({self.player_elo})"
             self.state = ST_ENDGAME
             with Adjournments.Adjournments() as adj:
                 adj.add(self.game_type, dic, label_menu)
@@ -276,7 +318,7 @@ class ManagerGrid(Manager.Manager):
     def run_adjourn(self, dic):
         self.grid_id = dic["grid_id"]
         self.engine_alias = dic["engine_alias"]
-        self.elo_level = dic["elo_level"]
+        self.player_elo = dic["player_elo"]
         self.min_elo = dic["min_elo"]
         self.max_elo = dic["max_elo"]
         self.is_white = dic["is_white"]
@@ -298,8 +340,8 @@ class ManagerGrid(Manager.Manager):
         if self.state == ST_ENDGAME:
             return True
         if not QTMessages.pregunta(
-                self.main_window,
-                _("Do you want to resign?") + " (%d)" % self.points_lose,
+            self.main_window,
+            _("Do you want to resign?") + " (%d)" % self.points_lose,
         ):
             return False
         self.game.resign(self.is_human_side_white)
@@ -421,14 +463,15 @@ class ManagerGrid(Manager.Manager):
         else:
             difelo = self.points_lose
 
-        nelo = self.elo_level + difelo
-        nelo = max(self.min_elo, min(nelo, self.max_elo))
+        nelo = self.player_elo + difelo
+        nelo = max(nelo, 0)
 
         # Save Grid Rating
         grid_data = GridDB.load_all()
         if self.grid_id in grid_data:
             grid_data[self.grid_id]["engines"][self.engine_alias]["current_elo"] = nelo
             grid_data[self.grid_id]["engines"][self.engine_alias]["last_color"] = self.is_human_side_white
+            grid_data[self.grid_id]["engines"][self.engine_alias]["games"] = self.games_played + 1
             GridDB.save_all(grid_data)
 
         self.autosave()
@@ -441,6 +484,7 @@ class ManagerGrid(Manager.Manager):
 
         # Reopen WindowGrid to update view
         from Code.Competitions import WindowGrid
+
         WindowGrid.play_grid(self.procesador, self.grid_id)
 
     def set_clock(self):

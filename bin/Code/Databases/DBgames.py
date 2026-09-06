@@ -11,7 +11,7 @@ from Code.Base import Game
 from Code.Base.Constantes import FEN_INITIAL, STANDARD_TAGS, TACTICTHEMES
 from Code.Databases import DBgamesST
 from Code.Openings import OpeningsStd
-from Code.SQL import UtilSQL, RowidReader
+from Code.SQL import RowidReader, UtilSQL
 from Code.Z import Util
 
 pos_a1 = FasterCode.pos_a1
@@ -55,6 +55,7 @@ class DBgames:
 
         self.conexion = sqlite3.connect(self.path_file)
         self.conexion.row_factory = sqlite3.Row
+        self.conexion.execute("PRAGMA busy_timeout = 5000")
         self.order = None
         self.filter = None
 
@@ -140,13 +141,13 @@ class DBgames:
         sql_select = ",".join(['Games_old."%s"' % f.replace('"', "") for f in lifields])
 
         for sql in (
-                "PRAGMA foreign_keys=off;",
-                "BEGIN TRANSACTION;",
-                "ALTER TABLE Games RENAME TO Games_old;",
-                f"CREATE TABLE Games ({sql_create});",
-                f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
-                "DROP TABLE Games_old;",
-                "CREATE INDEX XPV_INDEX ON Games (XPV);",
+            "PRAGMA foreign_keys=off;",
+            "BEGIN TRANSACTION;",
+            "ALTER TABLE Games RENAME TO Games_old;",
+            f"CREATE TABLE Games ({sql_create});",
+            f"INSERT INTO Games ({sql_fields}) SELECT {sql_select} FROM Games_old;",
+            "DROP TABLE Games_old;",
+            "CREATE INDEX XPV_INDEX ON Games (XPV);",
         ):
             try:
                 self.conexion.execute(sql)
@@ -170,13 +171,13 @@ class DBgames:
             cursor = self.conexion.execute("pragma table_info(Games)")
             if not cursor.fetchall():
                 for sql in (
-                        "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
-                        "CREATE INDEX XPV_INDEX ON Games (XPV);",
-                        "PRAGMA journal_mode = WAL;",
-                        "PRAGMA synchronous = NORMAL;",
-                        "PRAGMA temp_store = MEMORY;",
-                        "PRAGMA cache_size = -32000;",
-                        "PRAGMA mmap_size = 268435456;",
+                    "CREATE TABLE Games(XPV VARCHAR,_DATA_ BLOB,PLYCOUNT INT);",
+                    "CREATE INDEX XPV_INDEX ON Games (XPV);",
+                    "PRAGMA journal_mode = WAL;",
+                    "PRAGMA synchronous = NORMAL;",
+                    "PRAGMA temp_store = MEMORY;",
+                    "PRAGMA cache_size = -32000;",
+                    "PRAGMA mmap_size = 268435456;",
                 ):
                     self.conexion.execute(sql)
                 self.conexion.commit()
@@ -708,6 +709,11 @@ class DBgames:
         raw = self.read_complete_recno(recno)
         return self.read_game_raw(raw)
 
+    def read_game_rowid(self, rowid):
+        cursor = self.conexion.execute(f"SELECT {self.select} FROM Games WHERE rowid = ?", (rowid,))
+        raw = cursor.fetchone()
+        return self.read_game_raw(raw)
+
     def read_raw_recno(self, recno):
         return self.read_complete_recno(recno)
 
@@ -718,7 +724,7 @@ class DBgames:
         fen, pv = self.read_xpv(raw["XPV"])
         if xpgn:
             if xpgn.startswith(BODY_SAVE):
-                pgn_read = xpgn[len(BODY_SAVE):].strip()
+                pgn_read = xpgn[len(BODY_SAVE) :].strip()
                 if fen:
                     pgn_read = b'[FEN "%s"]\n' % fen.encode() + pgn_read
                 ok, game = Game.pgn_game(pgn_read)
@@ -770,8 +776,19 @@ class DBgames:
 
     def save_game_recno(self, recno, game, with_commit=True):
         game.refresh_tacticthemes(TACTICTHEMES.upper() in self.st_fields)
-        return self.insert(game, with_commit=with_commit) if recno is None else self.modify(recno, game,
-                                                                                            with_commit=with_commit)
+        return (
+            self.insert(game, with_commit=with_commit)
+            if recno is None
+            else self.modify(recno, game, with_commit=with_commit)
+        )
+
+    def save_game_rowid(self, rowid, game, with_commit=True):
+        game.refresh_tacticthemes(TACTICTHEMES.upper() in self.st_fields)
+        return self._modify_rowid(rowid, game, with_commit=with_commit)
+
+    def modify(self, recno, game_modificada: Game.Game, with_commit=True):
+        rowid = self.li_row_ids[recno]
+        return self._modify_rowid(rowid, game_modificada, with_commit=with_commit)
 
     def fill(self, li_field_value):
         lset = ",".join(f"{field}=?" for field, value in li_field_value)
@@ -887,7 +904,7 @@ class DBgames:
         allows_cero_moves = self.allows_zero_moves
         duplicate_check = not self.allows_duplicates
 
-        t1 = time.time() - 0.7  # para que empiece enseguida
+        t1 = time.monotonic() - 0.7  # para que empiece enseguida
 
         if self.with_db_stat:
             self.db_stat.massive_append_set(True)
@@ -931,16 +948,16 @@ class DBgames:
                 bsize = fpgn.size
                 for n, (body, is_raw, pv, fens, bdCab, bdCablwr, btell) in enumerate(fpgn, 1):
                     if n == next_n:
-                        if time.time() - t1 > 0.5:
+                        if time.monotonic() - t1 > 0.5:
                             if not dl_tmp.actualiza(
-                                    erroneos + duplicados + importados,
-                                    erroneos,
-                                    duplicados,
-                                    importados,
-                                    btell * 100.0 / bsize,
+                                erroneos + duplicados + importados,
+                                erroneos,
+                                duplicados,
+                                importados,
+                                btell * 100.0 / bsize,
                             ):
                                 break
-                            t1 = time.time()
+                            t1 = time.monotonic()
                         next_n = n + random.randint(800, 1500)
 
                     # Sin movimientos
@@ -1034,7 +1051,7 @@ class DBgames:
                             if rem_comvar_run:
                                 body = rem_comvar_run(body)
                                 is_raw = body is None or not (
-                                        b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
+                                    b"{" in body or b"(" in body or b"?" in body or b"!" in body or b"$" in body
                                 )
                             if not is_raw:
                                 data = memoryview(BODY_SAVE + body)
@@ -1084,7 +1101,7 @@ class DBgames:
         allows_cero_moves = self.allows_zero_moves
         duplicate_check = not self.allows_duplicates
 
-        t1 = time.time() - 0.7  # para que empiece enseguida
+        t1 = time.monotonic() - 0.7  # para que empiece enseguida
 
         if self.with_db_stat:
             self.db_stat.massive_append_set(True)
@@ -1116,16 +1133,16 @@ class DBgames:
         bsize = len(li_recnos)
         for btell, recno in enumerate(li_recnos):
             if btell == next_n:
-                if time.time() - t1 > 0.9:
+                if time.monotonic() - t1 > 0.9:
                     if not dl_tmp.actualiza(
-                            erroneos + duplicados + importados,
-                            erroneos,
-                            duplicados,
-                            importados,
-                            btell * 100.0 / bsize,
+                        erroneos + duplicados + importados,
+                        erroneos,
+                        duplicados,
+                        importados,
+                        btell * 100.0 / bsize,
                     ):
                         break
-                    t1 = time.time()
+                    t1 = time.monotonic()
                 next_n = btell + random.randint(1000, 2000)
 
             row = db.read_complete_recno(recno)
@@ -1236,7 +1253,7 @@ class DBgames:
         if with_commit:
             self.conexion.commit()
 
-    def modify(self, recno, game_modificada: Game.Game, with_commit=True):
+    def _modify_rowid(self, rowid, game_modificada: Game.Game, with_commit=True):
         resp = Util.Record()
         resp.ok = True
         resp.changed = False
@@ -1253,7 +1270,7 @@ class DBgames:
         # Optimization: Only read old game if stats are enabled
         game_antiguo = None
         if self.with_db_stat:
-            game_antiguo = self.read_game_recno(recno)
+            game_antiguo = self.read_game_rowid(rowid)
 
         # Test si hay nuevos tags
         for tag, valor in game_modificada.li_tags:
@@ -1277,7 +1294,6 @@ class DBgames:
 
         # Securely build the assignment list with quoted identifiers
         set_clause = ",".join([f'"{field}"=?' for field in self.li_fields])
-        rowid = self.li_row_ids[recno]
         sql = f"UPDATE Games SET {set_clause} WHERE ROWID = ?"
         try:
             self.conexion.execute(sql, li_data + [rowid])

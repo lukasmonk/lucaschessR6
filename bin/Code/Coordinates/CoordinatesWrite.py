@@ -96,9 +96,7 @@ class DBCoordinatesWrite:
                 coord = CoordinatesWrite()
                 coord.restore(dic_data[date])
                 if coord.finished():
-                    if coord_record is None:
-                        coord_record = coord
-                    elif coord.errors < coord_record.errors:
+                    if coord_record is None or coord.errors < coord_record.errors:
                         coord_record = coord
                     elif coord.errors == coord_record.errors:
                         if coord.ms_time < coord_record.ms_time:

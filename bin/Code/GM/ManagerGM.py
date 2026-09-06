@@ -1,10 +1,11 @@
 import random
 import time
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
+
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Adjournments, Util
 from Code.Adjudicator import Adjudicator
 from Code.Base import Move
 from Code.Base.Constantes import (
@@ -22,8 +23,9 @@ from Code.Books import Books
 from Code.GM import GM, WindowGM
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages
-from Code.ZQT import WindowJuicio
 from Code.SQL import UtilSQL
+from Code.Z import Adjournments, Util
+from Code.ZQT import WindowJuicio
 
 
 class AdjudicatorGM(Adjudicator.Adjudicator):
@@ -304,7 +306,7 @@ class ManagerGM(Manager.Manager):
 
     def play_human(self, is_white):
         self.human_is_playing = True
-        self.ini_time_s = time.time()
+        self.ini_time_s = time.monotonic()
         if self.with_adjudicator:
             self.adjudicator.analyze_begin(self.game)
         self.activate_side(is_white)
@@ -313,7 +315,7 @@ class ManagerGM(Manager.Manager):
         user_move = self.check_human_move(from_sq, to_sq, promotion)
         if not user_move:
             return False
-        self.time_s_end = time.time()
+        self.time_s_end = time.monotonic()
 
         self.board.set_position(user_move.position)
         self.put_arrow_sc(user_move.from_sq, user_move.to_sq)
@@ -490,9 +492,9 @@ class ManagerGM(Manager.Manager):
     def save_state(self):
         dic = {}
         li_vars = dir(self)
-        ti = type(1)
-        tb = type(True)
-        ts = type("x")
+        ti = int
+        tb = bool
+        ts = str
         for var in li_vars:
             xvar = getattr(self, var)
             if not var.startswith("__"):

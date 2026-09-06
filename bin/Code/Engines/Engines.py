@@ -2,11 +2,10 @@ import os
 import os.path
 import sqlite3
 import subprocess
-from typing import List, Tuple
-from typing import Optional
+import threading
 
 import Code
-from Code.Base.Constantes import BOOK_BEST_MOVE, ENG_EXTERNAL, MULTIPV_MAXIMIZE, MULTIPV_BYDEFAULT
+from Code.Base.Constantes import BOOK_BEST_MOVE, ENG_EXTERNAL, MULTIPV_BYDEFAULT, MULTIPV_MAXIMIZE
 from Code.QT import QTDialogs
 from Code.SQL import UtilSQL
 from Code.Z import Util
@@ -22,7 +21,7 @@ class Engine:
         self.autor = autor
         self.args = [] if args is None else args
         self.version = version
-        self.liUCI = []
+        self._li_changed_options = []
         self.multiPV = 0
         self.maxMultiPV = 0
         self.siDebug = False
@@ -50,6 +49,36 @@ class Engine:
         # self.fixed_depth = None
 
         self._li_uci_options = None
+
+    @property
+    def li_changed_options(self):
+        return self._li_changed_options
+
+    @li_changed_options.setter
+    def li_changed_options(self, li):
+        self._li_changed_options = li
+
+    def get_changed_options(self):
+        self._clean_elo()
+        return self._li_changed_options
+
+    def _clean_elo(self):
+        pos_limit = -1
+        pos_elo = -1
+
+        for pos, (name, value) in enumerate(self._li_changed_options):
+            if name == "UCI_LimitStrength" and value == "true":
+                pos_limit = pos
+            elif name == "UCI_Elo":
+                pos_elo = pos
+
+        if pos_limit == -1 and pos_elo > -1:
+            del self._li_changed_options[pos_elo]
+        elif pos_elo == -1 and pos_limit > -1:
+            for op in self.li_uci_options():
+                if op.name == "UCI_Elo":
+                    self._li_changed_options.append(("UCI_Elo", op.default))
+                    break
 
     def set_nodes_compatible(self, ok):
         self.nodes_compatible = ok
@@ -146,7 +175,7 @@ class Engine:
         li_uci_options = self.li_uci_options()
         for op in li_uci_options:
             op.valor = op.default
-        self.liUCI = []
+        self._li_changed_options = []
 
     def change_uci_default(self, name, default):
         li_uci_options = self.li_uci_options()
@@ -163,25 +192,28 @@ class Engine:
                     valor = str(valor).lower()
                     if valor not in ("true", "false"):
                         valor = "false"
+                    is_changed = valor != str(op.default).lower()
+                elif op.tipo == "spin":
+                    try:
+                        valor = int(valor)
+                    except AttributeError:
+                        valor = int(op.default)
+                    is_changed = valor != int(op.default)
+                else:
+                    valor = str(valor)
+                    is_changed = valor != str(op.default)
                 op.valor = valor
-                if op.default != valor:
-                    if isinstance(op.default, int):
-                        if isinstance(op.default, int) or (isinstance(op.default, str) and valor.isdigit()):
-                            is_changed = op.default != int(valor)
-                        else:
-                            is_changed = True
-                    else:
-                        is_changed = True
-                    break
-        for pos, (xcomando, xvalor) in enumerate(self.liUCI):
+                break
+
+        for pos, (xcomando, xvalor) in enumerate(self._li_changed_options):
             if xcomando == name:
                 if is_changed:
-                    self.liUCI[pos] = (name, valor)
+                    self._li_changed_options[pos] = (name, valor)
                 else:
-                    del self.liUCI[pos]
+                    del self._li_changed_options[pos]
                 return
         if is_changed:
-            self.liUCI.append((name, valor))
+            self._li_changed_options.append((name, valor))
 
     def set_multipv(self, num, maximo):
         self.multiPV = int(num) if num else 1
@@ -193,7 +225,7 @@ class Engine:
         elif xmultipv == MULTIPV_BYDEFAULT:
             multi_pv = min(self.maxMultiPV, 10)
             multi_pv = next(
-                (int(valor) for comando, valor in self.liUCI if comando == "MultiPV"),
+                (int(valor) for comando, valor in self._li_changed_options if comando == "MultiPV"),
                 max(multi_pv, self.multiPV),
             )
             self.multiPV = multi_pv
@@ -272,6 +304,12 @@ class Engine:
                         pass
 
                 else:
+                    # Cache engines that do not answer over a pipe, otherwise they
+                    # would be re-probed (subprocess) on every single startup.
+                    try:
+                        dbuci[key] = ""
+                    except sqlite3.IntegrityError:
+                        pass
                     lines = []  # Ensure lines is always an iterable
 
         self._li_uci_options = []
@@ -293,7 +331,7 @@ class Engine:
                     if op.name == "MultiPV":
                         self.set_multipv(op.default, op.maximo)
 
-        for comando, valor in self.liUCI:
+        for comando, valor in self._li_changed_options:
             if comando in dc_op:
                 op = dc_op[comando]
                 op.valor = valor
@@ -329,9 +367,6 @@ class Engine:
             (int(op.valor) for op in self.li_uci_options_editable() if op.name == "MultiPV"),
             self.multiPV,
         )
-
-    def list_uci_changed(self):
-        return self.liUCI
 
     def xhash(self):
         return hash(self.key + self.key)
@@ -434,7 +469,7 @@ class OpcionUCI:
         if len(li) >= 8:
             for x in [2, 4, 6]:
                 n = li[x + 1]
-                nm = n[1:] if n.startswith("-") else n
+                nm = n.removeprefix("-")
                 if not nm.isdigit():
                     return False
                 n = int(n)
@@ -527,10 +562,7 @@ class OpcionUCI:
         if self.tipo == "spin":
             return "%d:%d-%d" % (self.default, self.minimo, self.maximo)
 
-        elif self.tipo == "check":
-            return str(self.default).lower()
-
-        elif self.tipo == "button":
+        elif self.tipo == "check" or self.tipo == "button":
             return str(self.default).lower()
 
         elif self.tipo == "combo":
@@ -558,14 +590,13 @@ def read_engine_uci(exe, args=None):
     return engine
 
 
-def _run_uci_command(path_exe: str) -> Optional[str]:
+def _run_uci_command(path_exe: str) -> str | None:
     path_exe = os.path.abspath(path_exe)
     if not os.path.isfile(path_exe):
         return None
 
     size = Util.filesize(path_exe)
     timeout = max(10, size * 10 // 5000000)
-
     direxe = os.path.dirname(path_exe)
 
     if Util.is_windows():
@@ -575,54 +606,67 @@ def _run_uci_command(path_exe: str) -> Optional[str]:
         env = None
     else:
         startupinfo = None
-        # Preservar LD_LIBRARY_PATH existente y añadir directorio del motor
         ld_library = os.environ.get("LD_LIBRARY_PATH", "")
         parts = [p for p in ld_library.split(":") if p]
         parts.insert(0, os.path.abspath(direxe))
-        # También añadir ./lib si existe (común en algunos motores)
         lib_path = os.path.join(direxe, "lib")
         if os.path.isdir(lib_path):
             parts.insert(0, os.path.abspath(lib_path))
 
         env = {**os.environ, "LD_LIBRARY_PATH": ":".join(parts)}
-
         if "PATH" in env:
             env["PATH"] = f"{direxe}:{env['PATH']}"
 
     try:
-
-        result = subprocess.run(
+        proc = subprocess.Popen(
             [path_exe],
-            input="uci\nquit\n",
-            capture_output=True,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
             text=True,
-            timeout=timeout,
             cwd=direxe,
             env=env,
             startupinfo=startupinfo,
-            errors='ignore'
+            bufsize=1
         )
 
-        # Extraer respuesta UCI
-        output = result.stdout
-        if not output:
-            return None
-
-        # Buscar hasta "uciok"
-        lines = output.splitlines()
         uci_lines = []
-        for line in lines:
-            line = line.strip()
-            if line == "uciok":
-                break
-            if line and line.startswith(("id ", "option ")):
-                uci_lines.append(line)
+
+        # Temporizador para forzar el cierre del proceso si supera el timeout
+        timer = threading.Timer(timeout, proc.kill)
+        timer.start()
+
+        try:
+            # 1. Enviar solo 'uci'
+            proc.stdin.write("uci\n")
+            proc.stdin.flush()
+
+            # 2. Leer stdout hasta recibir 'uciok'
+            while True:
+                line = proc.stdout.readline()
+                if not line:
+                    break
+
+                line = line.strip()
+                if line == "uciok":
+                    break
+                if line.startswith(("id ", "option ")):
+                    uci_lines.append(line)
+
+            # 3. Decirle al motor que cierre amigablemente
+            proc.stdin.write("quit\n")
+            proc.stdin.flush()
+            proc.communicate(timeout=2)
+
+        finally:
+            # Cancelar el temporizador si terminó a tiempo
+            timer.cancel()
+            if proc.poll() is None:
+                proc.kill()
 
         return "\n".join(uci_lines) if uci_lines else None
 
-    except subprocess.TimeoutExpired:
-        return None
-    except (subprocess.SubprocessError, OSError, IOError):
+    except (subprocess.SubprocessError, OSError):
         return None
 
 
@@ -635,7 +679,7 @@ def get_uci_options(path_exe) -> list | None:
     return buffer.splitlines() if buffer else None
 
 
-def list_depths_to_cb() -> List[Tuple[str, str]]:
+def list_depths_to_cb() -> list[tuple[str, str]]:
     return [(_("By default"), "PD"), (_("Maximum"), "MX")] + [
         (str(x), str(x)) for x in list(range(1, 16)) + [20, 30, 40, 50, 75, 100, 150, 200]
     ]

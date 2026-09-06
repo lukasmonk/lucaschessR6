@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import (
     TACTICS_BASIC,
     TACTICS_PERSONAL,
@@ -11,6 +10,7 @@ from Code.Menus import BaseMenu, TrainMenuRun
 from Code.QT import Iconos, QTDialogs
 from Code.Tactics import Tactics
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class TrainMenu(BaseMenu.RootMenu):

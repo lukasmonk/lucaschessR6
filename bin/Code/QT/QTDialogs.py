@@ -3,9 +3,9 @@ import os
 from PySide6 import QtCore, QtGui, QtSvg, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import BLACK, RESULT_DRAW, RESULT_WIN_BLACK, RESULT_WIN_WHITE
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, QTMessages, QTUtils
+from Code.Z import Util
 
 
 class BlancasNegras(QtWidgets.QDialog):
@@ -188,7 +188,7 @@ class Tiempo(QtWidgets.QDialog):
         default_minutes=10,
         default_seconds=0,
     ):
-        super(Tiempo, self).__init__(parent)
+        super().__init__(parent)
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
             | QtCore.Qt.WindowType.Dialog
@@ -1158,7 +1158,7 @@ def tb_accept_cancel(parent, if_default=False, with_cancel=True):
 
 class WInfo(QtWidgets.QDialog):
     def __init__(self, wparent, titulo, head, txt, min_tam, pm_icon):
-        super(WInfo, self).__init__(wparent)
+        super().__init__(wparent)
 
         self.setWindowTitle(titulo)
         self.setWindowIcon(Iconos.Aplicacion64())

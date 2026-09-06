@@ -2,6 +2,7 @@ import FasterCode
 
 import Code
 import Code.Base.Game  # To prevent recursivity in Variations -> import direct
+from Code.Analysis import AnalysisWDL
 from Code.Base import Position
 from Code.Base.Constantes import BETTER_VARIATIONS, HIGHEST_VARIATIONS, PHASE_NODEFINED
 from Code.Engines import EngineResponse
@@ -16,8 +17,7 @@ from Code.Nags.Nags import (
 )
 from Code.Openings import OpeningsStd
 from Code.Translations import TrListas
-from Code.Z import PGNtoGame
-from Code.Z import Util
+from Code.Z import PGNtoGame, Util
 
 
 def crea_dic_html() -> dict[str, str]:
@@ -584,6 +584,13 @@ class Move:
                 return pos
         return -1
 
+    def get_wdl(self):
+        if self.analysis:
+            mrm, pos = self.analysis
+            rm = mrm.li_rm[pos]
+            return AnalysisWDL.cp_to_wdl(rm.puntos, rm.mate, self.position_before.fen())
+        return 0, 0, 0
+
 
 def get_game_move(game, position_before, from_sq, to_sq, promotion):
     position = position_before.copia()
@@ -599,7 +606,7 @@ def get_game_move(game, position_before, from_sq, to_sq, promotion):
 
 
 class Variations:
-    __slots__ = ("move_base", "li_variations")
+    __slots__ = ("li_variations", "move_base")
 
     def __init__(self, move_base):
         """
@@ -740,7 +747,7 @@ class Variations:
             if pos == pos_move:
                 if not include_played:
                     continue
-            elif limit_score and (highest_score - rm.centipawns_abs()) > limit_score:
+            elif limit_score and (highest_score - rm.centipawns_abs()) >= limit_score:
                 continue
             elif what_variations == HIGHEST_VARIATIONS:
                 if rm.centipawns_abs() < highest_score:

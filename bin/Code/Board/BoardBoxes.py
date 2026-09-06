@@ -6,7 +6,7 @@ from Code.Board import BoardBlocks
 class MarcoSC(BoardBlocks.BloqueEspSC):
     def __init__(self, escena, block_marco, routine_if_pressed=None):
 
-        super(MarcoSC, self).__init__(escena, block_marco)
+        super().__init__(escena, block_marco)
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None

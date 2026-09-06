@@ -1,4 +1,5 @@
 from PySide6 import QtWidgets
+
 from Code.QT import Colocacion, Columnas, Controles, Delegados, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 
 
@@ -24,7 +25,7 @@ class WShortcuts(LCDialog.LCDialog):
 
         # Lista
         o_columnas = Columnas.ListaColumnas()
-        o_columnas.nueva("KEY", _("Key"), 70, align_center=True)
+        o_columnas.nueva("KEY", _("Shortcut"), 70, align_center=True)
         o_columnas.nueva("MENU", _("Menu"), 90, align_center=True)
         o_columnas.nueva("OPTION", _("Option"), 300)
         o_columnas.nueva(

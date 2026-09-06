@@ -4,12 +4,11 @@ import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Optional
 
 import Code
 from Code import Util
 from Code.Board import Eboard
-from Code.QT import QTProgressBars, SelectFiles, QTMessages
+from Code.QT import QTMessages, QTProgressBars, SelectFiles
 
 platform = "r6_win" if Util.is_windows() else "r6_linux"
 
@@ -22,7 +21,7 @@ def _download_with_progress(
     url: str,
     destination: Path,
     progress_bar: QTProgressBars.ProgressBarSimple,
-    expected_size: Optional[int] = None,
+    expected_size: int | None = None,
 ) -> bool:
     try:
         with urllib.request.urlopen(url) as response:

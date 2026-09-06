@@ -3,11 +3,11 @@ import os
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Move
 from Code.Base.Constantes import BLACK, WHITE
 from Code.Openings import OpeningLines
 from Code.QT import Colocacion, Controles, Delegados, Iconos, QTDialogs, QTMessages, QTUtils, ScreenUtils
+from Code.Z import Util
 
 
 class LabelTreeDelegate(QtWidgets.QStyledItemDelegate):
@@ -407,8 +407,7 @@ class TabTree(QtWidgets.QWidget):
             return
 
         filename = Util.valid_filename(name)
-        if filename.endswith(".opk"):
-            filename = filename[:-4]
+        filename = filename.removesuffix(".opk")
         list_openings = OpeningLines.ListaOpenings(False)
         path_opening = Util.opj(list_openings.folder, f"{filename}.opk")
         if os.path.isfile(path_opening):

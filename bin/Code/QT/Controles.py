@@ -2,8 +2,6 @@ import datetime
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from typing import Optional
-
 
 def calc_fixed_width(fixed_width: int) -> int:
     metricas = QtGui.QFontMetrics(QtWidgets.QApplication.font())
@@ -311,6 +309,21 @@ class CB(QtWidgets.QComboBox):
         # set popup view widget into the combo box
         self.setView(list_view)
         return self
+
+    def set_auto_width(self):
+        if self.count() == 0:
+            return
+
+        font_metrics = self.fontMetrics()
+        max_width = 0
+
+        for i in range(self.count()):
+            texto = self.itemText(i)
+            width = font_metrics.horizontalAdvance(texto)
+            max_width = max(max_width, width)
+
+        # Añadir padding para el botón y márgenes
+        self.setFixedWidth(max_width + 30)
 
 
 class CHB(QtWidgets.QCheckBox):
@@ -1152,12 +1165,12 @@ class FontTypeNew(QtGui.QFont):
         self,
         family: str = "",
         point_size: int = 0,
-        bold: Optional[bool] = None,
-        extra_bold: Optional[bool] = None,
-        italic: Optional[bool] = None,
-        underline: Optional[bool] = None,
-        strike_out: Optional[bool] = None,
-        txt: Optional[str] = None,
+        bold: bool | None = None,
+        extra_bold: bool | None = None,
+        italic: bool | None = None,
+        underline: bool | None = None,
+        strike_out: bool | None = None,
+        txt: str | None = None,
         point_size_delta: int = 0,
     ) -> None:
         super().__init__()

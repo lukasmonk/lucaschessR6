@@ -2,7 +2,7 @@ import os.path
 import pickle
 from datetime import date
 
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 
 import Code
@@ -12,11 +12,11 @@ from Code.Base.Constantes import (
     DBSHOW_LAST_MOVE,
     DICT_GAME_TYPES,
     GO_FORWARD,
+    HIGHLIGHT_STYLE_ARROW,
     INACCURACY,
     MENU_PLAY_BOTH,
-    POS_TUTOR_HORIZONTAL,
     NOTATION_ALGEBRAIC,
-    HIGHLIGHT_STYLE_ARROW,
+    POS_TUTOR_HORIZONTAL,
 )
 from Code.Board import ConfBoards
 from Code.Config import ConfigEngines, ConfigPaths
@@ -32,11 +32,11 @@ def int_toolbutton(xint):
         (
             tbi
             for tbi in (
-            Qt.ToolButtonStyle.ToolButtonIconOnly,
-            Qt.ToolButtonStyle.ToolButtonTextOnly,
-            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
-        )
+                Qt.ToolButtonStyle.ToolButtonIconOnly,
+                Qt.ToolButtonStyle.ToolButtonTextOnly,
+                Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+                Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+            )
             if xint == tbi.value
         ),
         Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
@@ -45,10 +45,10 @@ def int_toolbutton(xint):
 
 def toolbutton_int(qt_tbi):
     if qt_tbi in (
-            Qt.ToolButtonStyle.ToolButtonIconOnly,
-            Qt.ToolButtonStyle.ToolButtonTextOnly,
-            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+        Qt.ToolButtonStyle.ToolButtonIconOnly,
+        Qt.ToolButtonStyle.ToolButtonTextOnly,
+        Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+        Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
     ):
         return qt_tbi.value
     return Qt.ToolButtonStyle.ToolButtonTextUnderIcon.value
@@ -182,7 +182,7 @@ class Configuration:
         self.x_tutor_clave = self.tutor_default
         self.x_tutor_multipv = 10  # 0: maximo
         self.x_tutor_diftype = INACCURACY
-        self.x_tutor_mstime = int(3000)
+        self.x_tutor_mstime = 3000
         self.x_tutor_depth = 0
         self.x_tutor_priority = Priorities.priorities.low
         self.x_tutor_view = POS_TUTOR_HORIZONTAL
@@ -200,6 +200,8 @@ class Configuration:
         self.x_analyzer_mstime_refresh_ab = 200
         self.x_analyzer_activate_ab = False
 
+        self.x_analyses_decimals = 2
+
         self.x_maia_nodes_exponential = False
 
         self.x_eval_limit_score = 2000  # Score in cps means 100% Win
@@ -211,7 +213,7 @@ class Configuration:
 
         self.x_eval_mate_human = 15  # Max mate to consider
 
-        self.x_eval_blunder = 15.5  #
+        self.x_eval_blunder = 15.5
         self.x_eval_mistake = 7.5
         self.x_eval_inaccuracy = 3.3
 
@@ -296,6 +298,8 @@ class Configuration:
             self._dic_books = {}
 
             def add_folder(folder):
+                if not os.path.isdir(folder):
+                    return
                 entry: os.DirEntry
                 for entry in os.scandir(folder):
                     if entry.is_dir():
@@ -309,7 +313,7 @@ class Configuration:
         return self._dic_books
 
     def path_book(self, alias):
-        return self.dic_books[alias]
+        return self.dic_books.get(alias)
 
     def read_eval(self):
         return {key[7:]: getattr(self, key) for key in dir(self) if key.startswith("x_eval_")}
@@ -609,8 +613,8 @@ class Configuration:
             self.dic_conf_boards_pk = db.as_dictionary()
             if "BASE" not in self.dic_conf_boards_pk:
                 with open(
-                        Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
-                        "rb",
+                    Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
+                    "rb",
                 ) as f:
                     var = pickle.loads(f.read())
                     alto = ScreenUtils.desktop_height()
@@ -626,8 +630,7 @@ class Configuration:
                         ancho_pieza = alt_ancho_pieza
                     else:
                         base = ancho * 950 / 1495
-                        if alto > base:
-                            alto = base
+                        alto = min(alto, base)
                         ancho_pieza = int(alto * 8 / 100)
 
                     var["x_anchoPieza"] = ancho_pieza

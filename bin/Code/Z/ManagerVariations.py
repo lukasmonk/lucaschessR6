@@ -334,12 +334,9 @@ class ManagerVariations(Manager.Manager):
         r_timems = int(dr.get("ENGINE_TIME", 0) * 100)  # Se guarda en decimas -> milesimas
         r_depth = int(dr.get("ENGINE_DEPTH", 0))
         r_nodes = int(dr.get("ENGINE_NODES", 0))
-        if r_timems <= 0:
-            r_timems = 0
-        if r_depth <= 0:
-            r_depth = 0
-        if r_nodes <= 0:
-            r_nodes = 0
+        r_timems = max(0, r_timems)
+        r_depth = max(0, r_depth)
+        r_nodes = max(0, r_nodes)
         if r_timems == 0 and r_depth == 0 and r_nodes == 0 and not dic.get("SITIEMPO", False):
             r_timems = 1000
         self.manager_rival = self.procesador.create_manager_engine(rival, r_timems, r_depth, r_nodes)

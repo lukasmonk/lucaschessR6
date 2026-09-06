@@ -17,8 +17,7 @@ class Elem:
             pv, pts = resp.split("=")
             pts = int(pts)
             dr[pv] = pts
-            if pts > mx:
-                mx = pts
+            mx = max(mx, pts)
         self._dicResults = dr
         self._maxpts = mx
 
@@ -252,7 +251,7 @@ class Work:
 
     def title(self):
         if self.seconds:
-            tm = ('%0.3f' % self.seconds).rstrip('0').rstrip('.') + '"'
+            tm = ("%0.3f" % self.seconds).rstrip("0").rstrip(".") + '"'
         else:
             tm = ""
         dp = "^%d" % self.depth if self.depth else ""

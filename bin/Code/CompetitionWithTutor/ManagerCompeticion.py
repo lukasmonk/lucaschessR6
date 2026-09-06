@@ -1,7 +1,4 @@
-from typing import Optional
-
 import Code
-from Code.Z import Adjournments
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_COMPETITION_WITH_TUTOR,
@@ -24,6 +21,7 @@ from Code.Openings import Opening
 from Code.QT import QTMessages
 from Code.Translations import TrListas
 from Code.Tutor import Tutor
+from Code.Z import Adjournments
 
 
 class ManagerCompeticion(Manager.Manager):
@@ -37,9 +35,9 @@ class ManagerCompeticion(Manager.Manager):
     in_the_opening: bool
     opening: Opening.OpeningPol
     rival_conf: Engines.Engine
-    mrm_tutor: Optional[EngineResponse.MultiEngineResponse]
+    mrm_tutor: EngineResponse.MultiEngineResponse | None
     error: str
-    player_has_moved_move: Optional[Move.Move]
+    player_has_moved_move: Move.Move | None
     is_tutor_analysing: bool
 
     def start(self, categorias, categoria, nivel, is_white, puntos):

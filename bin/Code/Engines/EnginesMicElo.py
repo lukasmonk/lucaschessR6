@@ -1,7 +1,7 @@
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import ENG_MICGM, ENG_MICPER
 from Code.Engines import Engines
+from Code.Z import Util
 
 
 class EngineTourneys(Engines.Engine):
@@ -35,7 +35,7 @@ def read_mic_engines():
             eng.id_info = id_info
             eng.key = alias
             eng.elo = elo
-            eng.liUCI = li_uci
+            eng.li_changed_options = li_uci
             if alias.isupper():
                 eng.name = Util.primera_mayuscula(alias)
                 eng.key = eng.name

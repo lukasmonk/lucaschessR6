@@ -16,6 +16,7 @@ from Code.Base.Constantes import (
     ZVALUE_PIECE_MOVING,
 )
 from Code.QT import Colocacion, Controles, Iconos, QTDialogs, QTUtils, ScreenUtils
+from Code.Z import Util
 
 
 def dic_keys():
@@ -31,23 +32,23 @@ def dic_keys():
 
 class WaitingMessage(QtWidgets.QWidget):
     def __init__(
-            self,
-            parent,
-            mensaje,
-            with_cancel=False,
-            opacity=0.91,
-            physical_pos="c",
-            fixed_size=None,
-            tit_cancel=None,
-            background=None,
-            pm_image=None,
-            puntos=None,
-            with_image=True,
-            if_parent_none=False,
-            with_progressbar=False,
+        self,
+        parent,
+        mensaje,
+        with_cancel=False,
+        opacity=0.91,
+        physical_pos="c",
+        fixed_size=None,
+        tit_cancel=None,
+        background=None,
+        pm_image=None,
+        puntos=None,
+        with_image=True,
+        if_parent_none=False,
+        with_progressbar=False,
     ):
         # No se indica parent cuando le afecta el disable general, cuando se analiza posicion por ejemplo
-        super(WaitingMessage, self).__init__(None if if_parent_none else parent)
+        super().__init__(None if if_parent_none else parent)
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
         self.setWindowFlags(
@@ -62,6 +63,7 @@ class WaitingMessage(QtWidgets.QWidget):
         if puntos is None:
             puntos = Code.configuration.x_sizefont_messages
 
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(f"QWidget, QLabel {{ background: {background} }}")
 
         lbi = None
@@ -84,7 +86,7 @@ class WaitingMessage(QtWidgets.QWidget):
 
         self.mensaje = mensaje
         ly_lb = Colocacion.V()
-        self.lb = lb = Controles.LB(parent, resalta(mensaje)).set_font(Controles.FontType(puntos=puntos)).align_center()
+        self.lb = lb = Controles.LB(self, resalta(mensaje)).set_font(Controles.FontType(puntos=puntos)).align_center()
         if fixed_size is not None:
             lb.set_wrap().relative_width(fixed_size - 60)
         ly_lb.control(self.lb)
@@ -147,7 +149,6 @@ QPushButton:pressed {
 
         self.setWindowOpacity(opacity)
         self.show()
-
         self.is_closed = False
 
     def cancelar(self):
@@ -169,7 +170,19 @@ QPushButton:pressed {
 
     def label(self, nuevo):
         self.lb.set_text(resalta(nuevo))
-        QTUtils.refresh_gui()
+        self.lb.update()
+        self.lb.repaint()
+        self.update()
+        self.repaint()
+        QtCore.QCoreApplication.processEvents()
+        if Util.is_posix():
+            QtCore.QTimer.singleShot(10, self._linux_repaint)
+
+    def _linux_repaint(self):
+        if not self.is_closed:
+            self.lb.repaint()
+            self.repaint()
+            QtCore.QCoreApplication.processEvents()
 
     def show(self):
         super().show()
@@ -190,6 +203,8 @@ QPushButton:pressed {
                 self.move(QtCore.QPoint(x, y))
             else:
                 ScreenUtils.center_on_widget(self)
+
+        self.repaint()
         QTUtils.refresh_gui()
         return self
 
@@ -258,17 +273,17 @@ def analizando(owner, with_cancel=False):
 
 
 def temporary_message(
-        main_window,
-        mensaje,
-        seconds,
-        background=None,
-        pm_image=None,
-        physical_pos="c",
-        fixed_size=None,
-        with_cancel=None,
-        tit_cancel=None,
-        puntos=None,
-        with_image=True,
+    main_window,
+    mensaje,
+    seconds,
+    background=None,
+    pm_image=None,
+    physical_pos="c",
+    fixed_size=None,
+    with_cancel=None,
+    tit_cancel=None,
+    puntos=None,
+    with_image=True,
 ):
     if with_cancel is None:
         with_cancel = seconds > 3.0
@@ -473,7 +488,7 @@ class ProgressBarWithTime(QtWidgets.QDialog):
         self.bp1.setRange(0, maximo)
         if self.show_time:
             self.li_times = []
-            self.time_inicial = time.time()
+            self.time_inicial = time.monotonic()
             self.valor_previo = 0
 
     def pon(self, valor):
@@ -483,7 +498,7 @@ class ProgressBarWithTime(QtWidgets.QDialog):
             salto = valor - self.valor_previo
             if salto == 0:
                 return
-            time_actual = time.time()
+            time_actual = time.monotonic()
             tm = (time_actual - self.time_inicial) / salto
             self.valor_previo = valor
             self.time_inicial = time_actual
@@ -493,7 +508,8 @@ class ProgressBarWithTime(QtWidgets.QDialog):
             xmessage = time_message(previsto)
 
             lb_pt = _("Pending time")
-            self.lb_time.set_text(f"{lb_pt}: {xmessage}")
+            if not self._is_canceled:
+                self.lb_time.set_text(f"{lb_pt}: {xmessage}")
 
     def is_canceled(self):
         QTUtils.refresh_gui()
@@ -626,15 +642,15 @@ def combobox_lb(parent, li_options, valor, etiqueta=None):
 
 
 def message(
-        owner,
-        texto,
-        explanation=None,
-        titulo=None,
-        pixmap=None,
-        px=None,
-        py=None,
-        si_bold=False,
-        delayed=False,
+    owner,
+    texto,
+    explanation=None,
+    titulo=None,
+    pixmap=None,
+    px=None,
+    py=None,
+    si_bold=False,
+    delayed=False,
 ):
     def send():
         msg = QtWidgets.QMessageBox(owner)
@@ -803,7 +819,7 @@ def message_menu(owner, main, the_message, delayed, zzpos=True, dont_show=False)
                 continue
             for i in range(tb.layout().lineCount()):
                 line = tb.layout().lineAt(i)
-                ret.append(block_text[line.textStart(): line.textStart() + line.textLength()])
+                ret.append(block_text[line.textStart() : line.textStart() + line.textLength()])
             tb = tb.next()
 
         for linea in ret:
@@ -893,14 +909,14 @@ class SimpleWindow(QtWidgets.QDialog):
 
 
 def read_simple(
-        owner,
-        title,
-        label,
-        value,
-        mas_info=None,
-        width=None,
-        in_cursor=False,
-        li_values=None,
+    owner,
+    title,
+    label,
+    value,
+    mas_info=None,
+    width=None,
+    in_cursor=False,
+    li_values=None,
 ):
     v = SimpleWindow(owner, title, label, value, mas_info, width, in_cursor, li_values)
     if v.exec():

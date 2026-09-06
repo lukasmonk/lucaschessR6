@@ -85,7 +85,7 @@ class WConfigurationsPAE(LCDialog.LCDialog):
 
         tb = QTDialogs.LCTB(self)
         tb.new(_("Close"), Iconos.MainMenu(), self.terminate)
-        tb.new(_("Save"), Iconos.SaveAs(), self.saveas)
+        tb.new(f"{_('Add')}/{_('Change')}", Iconos.Nuevo(), self.saveas)
         tb.new(_("Up"), Iconos.Arriba(), self.up, sep=False)
         tb.new(_("Down"), Iconos.Abajo(), self.down)
         tb.new(_("Remove"), Iconos.Borrar(), self.remove)
@@ -125,8 +125,7 @@ class WConfigurationsPAE(LCDialog.LCDialog):
         the_last_order = 0
         for dicv in self.configurations_pae.values():
             norder = dicv[self.korder]
-            if norder > the_last_order:
-                the_last_order = norder
+            the_last_order = max(the_last_order, norder)
         return the_last_order
 
     def refresh_gui(self):

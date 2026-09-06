@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from enum import Enum, auto
-from typing import Optional, Callable
 
 import Code
 from Code.Base import Game, Move
@@ -13,11 +13,11 @@ class AnalystTutorState(Enum):
 
 
 class AnalystTutor:
-    manager_tutor: Optional[EngineManagerAnalysis.EngineManagerAnalysis]
-    mrm: Optional[EngineResponse.MultiEngineResponse]
-    move_played: Optional[Move.Move]
-    _rut_player_move: Optional[Callable]
-    user_move: Optional[Move.Move]
+    manager_tutor: EngineManagerAnalysis.EngineManagerAnalysis | None
+    mrm: EngineResponse.MultiEngineResponse | None
+    move_played: Move.Move | None
+    _rut_player_move: Callable | None
+    user_move: Move.Move | None
     state: AnalystTutorState
 
     def __init__(self, rut_player_move: Callable):

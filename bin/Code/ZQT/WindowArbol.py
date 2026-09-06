@@ -18,9 +18,9 @@ from Code.Base.Constantes import (
     VERY_GOOD_MOVE,
 )
 from Code.Board import Board
+from Code.Engines import EngineManagerAnalysis, EngineRun, Engines
 from Code.QT import Colocacion, Controles, FormLayout, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
-from Code.Engines import EngineManagerAnalysis, Engines, EngineRun
 
 
 class UnMove:
@@ -424,7 +424,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
 
         resp = menu.lanza()
         if resp is None:
-            return None
+            return
 
         mov.valoracion = resp
         self.ponIconoValoracion(item, resp)
@@ -443,7 +443,7 @@ class TreeMoves(QtWidgets.QTreeWidget):
         linea_pgn = game.pgn_base_raw()
         wowner = self.owner
         board = wowner.infoMove.board
-        import Code.Z.Variations as Variations
+        from Code.Z import Variations
 
         game_resp = Variations.edit_variation_moves(
             self.procesador,

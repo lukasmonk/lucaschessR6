@@ -1,5 +1,4 @@
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
     BOOK_RANDOM_PROPORTIONAL,
@@ -8,6 +7,7 @@ from Code.Base.Constantes import (
 )
 from Code.Books import Books, WBooks
 from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs
+from Code.Z import Util
 
 
 class WBooksTrain(LCDialog.LCDialog):

@@ -1,5 +1,5 @@
-#ifndef IRINA_DEFS_H
-#define IRINA_DEFS_H
+#ifndef IRINA_H
+#define IRINA_H
 
 typedef struct
 {
@@ -13,13 +13,11 @@ typedef struct
    unsigned is_castle : 2;
 } MoveBin;
 
-int is_bmi2(void);
 void init_board(void);
 void fen_board(char *fen);
 int movegen(void);
 int pgn2pv(char *pgn, char * pv);
 int make_nummove(int resp);
-char * play_fen(char * fen, int depth, int time);
 int num_moves( void );
 void get_move( int num, char * pv );
 
@@ -31,7 +29,6 @@ int search_move( char *desde, char *hasta, char * promotion );
 void get_move_ex( int num, char * info );
 char * to_san(int num, char *sanMove);
 char incheck(void);
-void set_level(int lv);
 
 void pgn_start(int depth);
 void pgn_stop( void );
@@ -54,8 +51,8 @@ int move_to_string(char move_s[6], unsigned int move);
 void open_poly_w(char * name);
 void close_poly(void);
 
-void set_ext_fen_body(char * ext_fen, char * ext_body, char * ext_pv );
-
 void pv_xpv_c(const char* pv, char* res);
+
+int cpu_flags_to_string(char *buffer, int size);
 
 #endif

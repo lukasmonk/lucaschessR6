@@ -1,6 +1,6 @@
 import Code
-from Code.Z import Util
 from Code.QT import Iconos, QTDialogs, QTMessages
+from Code.Z import Util
 
 
 class RemoveResults:

@@ -1,15 +1,15 @@
 import FasterCode
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Base.Constantes import ALL_MOVES, BLACK, FEN_INITIAL, FIRST_BEST_MOVE, WHITE
 from Code.Books import Books, Polyglot, WBooks
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 from Code.Voyager import Voyager
+from Code.Z import Util
 
 
-class BooksTrainOL(object):
+class BooksTrainOL:
     def __init__(self):
         self.lines = []
         self.side = WHITE

@@ -2,8 +2,8 @@ import sqlite3
 
 import FasterCode
 
-from Code.Z import Util
 from Code.Base import Game
+from Code.Z import Util
 
 pv_xpv = FasterCode.pv_xpv
 set_fen = FasterCode.set_fen

@@ -1,7 +1,7 @@
 import ast
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import Code
 from Code.SQL import UtilSQL
@@ -15,11 +15,11 @@ class Mate15:
     date: datetime.datetime = field(default_factory=datetime.datetime.now)
     info: str = ""
     move: str = ""
-    resp: Dict[str, Any] = field(default_factory=dict)
-    tries: List[int] = field(default_factory=list)  # List of times taken (int?)
+    resp: dict[str, Any] = field(default_factory=dict)
+    tries: list[int] = field(default_factory=list)  # List of times taken (int?)
     pos: int = 0
 
-    def result(self) -> Optional[int]:
+    def result(self) -> int | None:
         """Return the best (minimum) time from tries, or None if no tries."""
         if not self.tries:
             return None
@@ -31,7 +31,7 @@ class Mate15:
     def append_try(self, tm: int) -> None:
         self.tries.append(tm)
 
-    def save(self) -> Dict[str, Any]:
+    def save(self) -> dict[str, Any]:
         """Return a dictionary representation of the object for storage."""
         # We use asdict but we might need to ensure compatibility with the specific keys
         # expected by the existing restore/DB logic if they differ from field names.
@@ -46,7 +46,7 @@ class Mate15:
             "tries": self.tries,
         }
 
-    def restore(self, dic: Dict[str, Any]) -> None:
+    def restore(self, dic: dict[str, Any]) -> None:
         """Update object state from a dictionary."""
         self.date = dic["date"]
         self.pos = dic["pos"]
@@ -74,7 +74,7 @@ class Mate15:
 class DBMate15:
     def __init__(self, path: str):
         self.path = path
-        self.li_data: List[Mate15] = []
+        self.li_data: list[Mate15] = []
 
         with self.db() as db:
             li_dates = db.keys(True, True)
@@ -93,7 +93,7 @@ class DBMate15:
     def __len__(self) -> int:
         return len(self.li_data)
 
-    def last(self) -> Optional[Mate15]:
+    def last(self) -> Mate15 | None:
         if self.li_data:
             return self.li_data[0]
         return None
@@ -139,7 +139,7 @@ class DBMate15:
             db[str(m15.date)] = m15.save()
             self.li_data.insert(0, m15)
 
-    def remove_mate15(self, li_recno: List[int]) -> None:
+    def remove_mate15(self, li_recno: list[int]) -> None:
         with self.db() as db:
             li_recno.sort(reverse=True)
             for recno in li_recno:

@@ -1,15 +1,15 @@
 import random
 
 import Code
+from Code.Albums import Albums, ManagerAlbum, WindowAlbumes
+from Code.Base.Constantes import MENU_PLAY_ANY_ENGINE, MENU_PLAY_BOTH, MENU_PLAY_YOUNG_PLAYERS
 from Code.Menus import BaseMenu
 from Code.PlayAgainstEngine import (
+    ConfigurationsPAE,
     ManagerPerson,
     ManagerPlayAgainstEngine,
     WPlayAgainstEngine,
-    ConfigurationsPAE,
 )
-from Code.Base.Constantes import MENU_PLAY_BOTH, MENU_PLAY_ANY_ENGINE, MENU_PLAY_YOUNG_PLAYERS
-from Code.Albums import ManagerAlbum, Albums, WindowAlbumes
 from Code.PlayHuman import ManagerPlayHuman, WPlayHuman
 from Code.QT import Iconos, QTDialogs
 

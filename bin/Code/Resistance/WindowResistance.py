@@ -16,7 +16,7 @@ class WResistance(LCDialog.LCDialog):
                 titulo += f"-{_('Hide only our pieces')}"
             elif tipo == "p2":
                 titulo += f"-{_('Hide only opponent pieces')}"
-        extparam = "boxing"
+        extparam = "boxing9"
         LCDialog.LCDialog.__init__(self, owner, titulo, icono, extparam)
         # self.setStyleSheet("QWidget { background: #AFC3D7 }")
 
@@ -38,6 +38,7 @@ class WResistance(LCDialog.LCDialog):
         # Lista
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("ENGINE", _("Engine"), 198)
+        o_columns.nueva("ELO", _("Elo"), 60, align_center=True)
         o_columns.nueva("WHITE", _("White"), 200, align_center=True)
         o_columns.nueva("BLACK", _("Black"), 200, align_center=True)
 
@@ -46,11 +47,11 @@ class WResistance(LCDialog.LCDialog):
         self.register_grid(grid)
 
         # Layout
-        lyB = Colocacion.V().controlc(self.lb).control(self.grid).margen(3)
-        layout = Colocacion.V().control(tb).otro(lyB).margen(0)
+        ly_b = Colocacion.V().controlc(self.lb).control(self.grid).margen(3)
+        layout = Colocacion.V().control(tb).otro(ly_b).margen(0)
         self.setLayout(layout)
 
-        self.restore_video(with_tam=True, default_width=677, default_height=562)
+        self.restore_video(with_tam=True, default_width=self.grid.width_and_vbar() + 6, default_height=562)
 
         self.grid.gotop()
 
@@ -70,6 +71,8 @@ class WResistance(LCDialog.LCDialog):
         key = obj_column.key
         if key == "ENGINE":
             return self.resistance.dameEtiEngine(row)
+        elif key == "ELO":
+            return self.resistance.get_elo(row)
         else:
             return self.resistance.dameEtiRecord(key, row)
 

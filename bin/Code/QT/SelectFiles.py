@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Union
 
 from PySide6 import QtWidgets
 
@@ -44,7 +43,7 @@ def _lf_title_filter(extension, titulo):
         filtro = extension
     else:
         pathext = f"*.{extension}"
-        if extension == "*" and Util.is_linux():
+        if extension == "*" and Util.is_posix():
             pathext = "*"
         filtro = f"{_('File')} {extension} ({pathext})"
     return titulo, filtro
@@ -72,9 +71,7 @@ def read_files(owner, carpeta, extension, titulo=None):
     )
 
     titulo, filtro = _lf_title_filter(extension, titulo)
-    resp = QtWidgets.QFileDialog.getOpenFileNames(
-        owner, titulo, carpeta, filtro, options=options
-    )
+    resp = QtWidgets.QFileDialog.getOpenFileNames(owner, titulo, carpeta, filtro, options=options)
     return resp[0] if resp else None
 
 
@@ -89,11 +86,11 @@ def read_or_create_file(owner, carpeta, extension, titulo=None):
 
 
 def save_file(
-        main_window: QtWidgets.QWidget | None,
-        titulo: str,
-        carpeta: Union[str, Path, None],
-        extension: str,
-        confirm_overwrite: bool = True
+    main_window: QtWidgets.QWidget | None,
+    titulo: str,
+    carpeta: str | Path | None,
+    extension: str,
+    confirm_overwrite: bool = True,
 ) -> str:
     titulo, filtro = _lf_title_filter(extension, titulo)
     carpeta = str(carpeta) if carpeta is not None else ""

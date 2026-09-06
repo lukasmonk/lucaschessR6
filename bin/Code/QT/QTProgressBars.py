@@ -2,7 +2,7 @@ import time
 
 from PySide6 import QtCore, QtWidgets
 
-from Code.QT import Colocacion, Controles, QTUtils, ScreenUtils, QTMessages
+from Code.QT import Colocacion, Controles, QTMessages, QTUtils, ScreenUtils
 
 
 class TwoProgressBars(QtWidgets.QDialog):
@@ -172,7 +172,7 @@ class ProgressBarWithTime(QtWidgets.QDialog):
         self.progressbar.setRange(0, maximo)
         if self.show_time:
             self.li_times = []
-            self.time_inicial = time.time()
+            self.time_inicial = time.monotonic()
             self.valor_previo = 0
 
     def pon(self, valor):
@@ -182,7 +182,7 @@ class ProgressBarWithTime(QtWidgets.QDialog):
             salto = valor - self.valor_previo
             if salto == 0:
                 return
-            time_actual = time.time()
+            time_actual = time.monotonic()
             tm = (time_actual - self.time_inicial) / salto
             self.valor_previo = valor
             self.time_inicial = time_actual

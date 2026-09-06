@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
@@ -279,10 +279,10 @@ class WSummary(QtWidgets.QWidget):
     def reindexar_question(self, depth, question):
         if not self.db_games.has_result_field():
             QTMessages.message_error(self, _("This database does not have a RESULT field"))
-            return None
+            return
 
         if question or self.wb_database.is_temporary:
-            li_gen: List[tuple[Any, Any]] = [
+            li_gen: list[tuple[Any, Any]] = [
                 (None, None),
                 (None, _("Select the number of half-moves <br> for each game to be considered")),
                 (None, None),
@@ -293,7 +293,7 @@ class WSummary(QtWidgets.QWidget):
 
             resultado = FormLayout.fedit(li_gen, title=_("Rebuild"), parent=self, icon=Iconos.Reindexar())
             if resultado is None:
-                return None
+                return
 
             accion, li_resp = resultado
 
@@ -315,7 +315,7 @@ class WSummary(QtWidgets.QWidget):
         bp_tmp.cerrar()
         self.start()
 
-        return None
+        return
 
     def active_move(self):
         recno = self.grid.recno()

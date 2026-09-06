@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Any
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
@@ -43,7 +43,7 @@ class LCDialog(QtWidgets.QDialog):
         if splitter and name:
             self.liSplitters.append((splitter, name))
 
-    def save_video(self, dic_extended: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def save_video(self, dic_extended: dict[str, Any] | None = None) -> dict[str, Any]:
         dic = dic_extended if dic_extended is not None else {}
 
         pos = self.pos()
@@ -61,16 +61,16 @@ class LCDialog(QtWidgets.QDialog):
         Code.configuration.save_video(self.key_video, dic)
         return dic
 
-    def restore_dicvideo(self) -> Optional[Dict[str, Any]]:
+    def restore_dicvideo(self) -> dict[str, Any] | None:
         return Code.configuration.restore_video(self.key_video)
 
     def restore_video(
         self,
         with_tam: bool = True,
         with_width: bool = True,
-        default_width: Optional[int] = None,
-        default_height: Optional[int] = None,
-        default_dic: Optional[Dict[str, Any]] = None,
+        default_width: int | None = None,
+        default_height: int | None = None,
+        default_dic: dict[str, Any] | None = None,
         shrink: bool = False,
     ) -> bool:
         dic = self.restore_dicvideo()

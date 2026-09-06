@@ -147,6 +147,9 @@ class ConfigPaths:
     def folder_personal_trainings(self):
         return self.folder_from_userdata("Personal Training")
 
+    def folder_personal_tactics(self):
+        return self.folder_from_userdata("Tactics")
+
     def file_singular_moves_save(self):
         return os.path.join(self.folder_personal_trainings(), "Challenge 101.fns")
 

@@ -4,7 +4,6 @@ import time
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util, XRun
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     BOOK_BEST_MOVE,
@@ -29,9 +28,10 @@ from Code.QT import (
     ScreenUtils,
     SelectFiles,
 )
-from Code.ZQT import WindowSavePGN
 from Code.Tournaments import Tournament
 from Code.Voyager import Voyager
+from Code.Z import Util, XRun
+from Code.ZQT import WindowSavePGN
 
 GRID_ALIAS, GRID_VALUES, GRID_GAMES_QUEUED, GRID_GAMES_FINISHED, GRID_RESULTS = range(5)
 

@@ -1,22 +1,22 @@
 import collections
+import contextlib
+import itertools
 import string
 
 import FasterCode
 
 import Code
-import contextlib
-import itertools
 from Code.Base.Constantes import (
     BLACK,
+    ENDGAME,
     FEN_INITIAL,
     INFINITE,
+    MIDDLEGAME,
+    NOTATION_ALGEBRAIC,
+    NOTATION_LONGALGEBRAIC,
+    OPENING,
     PZ_VALUES,
     WHITE,
-    OPENING,
-    MIDDLEGAME,
-    ENDGAME,
-    NOTATION_LONGALGEBRAIC,
-    NOTATION_ALGEBRAIC,
 )
 from Code.Translations import TrListas
 
@@ -28,13 +28,13 @@ class Position:
     """
 
     __slots__ = (
-        "li_extras",
-        "squares",
         "castles",
         "en_passant",
         "is_white",
-        "num_moves",
+        "li_extras",
         "mov_pawn_capt",
+        "num_moves",
+        "squares",
     )
 
     def __init__(self):
@@ -780,7 +780,7 @@ class Position:
         0        Pure ending  Only pawns and kings (or insufficient material).
         """
 
-        piece_values = {'N': 1, 'B': 1, 'R': 2, 'Q': 4, 'n': 1, 'b': 1, 'r': 2, 'q': 4}
+        piece_values = {"N": 1, "B": 1, "R": 2, "Q": 4, "n": 1, "b": 1, "r": 2, "q": 4}
         squares = self.squares
 
         npm = sum(piece_values.get(piece, 0) for piece in squares.values())
@@ -789,12 +789,12 @@ class Position:
             return ENDGAME
 
         white_developed = 0
-        for sq in ['b1', 'c1', 'f1', 'g1']:
+        for sq in ["b1", "c1", "f1", "g1"]:
             if squares.get(sq, "x") not in "NB":
                 white_developed += 1
 
         black_developed = 0
-        for sq in ['b8', 'c8', 'f8', 'g8']:
+        for sq in ["b8", "c8", "f8", "g8"]:
             if squares.get(sq, "x") not in "nb":
                 black_developed += 1
         if white_developed >= 3 and black_developed >= 3:
@@ -812,6 +812,9 @@ class Position:
             return OPENING
 
         return MIDDLEGAME
+
+    def num_plies(self):
+        return self.num_moves * 2 + (0 if self.is_white else 1)
 
 
 def distancia(from_sq, to_sq):

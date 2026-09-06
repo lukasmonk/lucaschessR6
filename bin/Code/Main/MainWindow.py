@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Base.Constantes import TB_CANCEL, TB_CLOSE, TB_QUIT, TB_STOP, TB_TUTOR_STOP, TB_END_REPLAY
+from Code.Base.Constantes import TB_CANCEL, TB_CLOSE, TB_END_REPLAY, TB_QUIT, TB_STOP, TB_TUTOR_STOP
 from Code.Board import Eboard
 from Code.Main import WBase, WInformation
 from Code.QT import Colocacion, Iconos, LCDialog, QTUtils, ScreenUtils

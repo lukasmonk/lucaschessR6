@@ -2,7 +2,6 @@ import os
 import random
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
     BLACK,
@@ -14,6 +13,7 @@ from Code.Base.Constantes import (
 )
 from Code.Engines import Engines
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class EngineTournament(Engines.Engine):
@@ -139,7 +139,7 @@ class EngineTournament(Engines.Engine):
                 quita(self.draw_black, other_huella)
 
 
-class GameTournament(object):
+class GameTournament:
     def __init__(self):
         self.id_game = Util.huella()
         self.hwhite: str | None = None  # la huella de un engine

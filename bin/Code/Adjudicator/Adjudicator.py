@@ -1,14 +1,13 @@
+from collections.abc import Callable
 from enum import Enum, auto
 from functools import partial
-from typing import Optional, Callable
 
 from PySide6 import QtCore
 
 import Code
 from Code.Base import Game, Move
 from Code.Engines import EngineManagerAnalysis, EngineResponse, Engines
-from Code.QT import FormLayout, Iconos
-from Code.QT import QTMessages
+from Code.QT import FormLayout, Iconos, QTMessages
 
 
 class AdjudicatorState(Enum):
@@ -19,12 +18,12 @@ class AdjudicatorState(Enum):
 
 class Adjudicator:
     book_active: bool
-    manager_analyzer: Optional[EngineManagerAnalysis.EngineManagerAnalysis]
-    mrm: Optional[EngineResponse.MultiEngineResponse]
-    move_played: Optional[Move.Move]
-    _rut_player_move: Optional[Callable]
-    obj_move: Optional[Move.Move]
-    user_move: Optional[Move.Move]
+    manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None
+    mrm: EngineResponse.MultiEngineResponse | None
+    move_played: Move.Move | None
+    _rut_player_move: Callable | None
+    obj_move: Move.Move | None
+    user_move: Move.Move | None
     state: AdjudicatorState
 
     def __init__(self, owner, wowner, name_obj: str, rut_player_move: Callable):
@@ -38,9 +37,9 @@ class Adjudicator:
 
         self.manager_analyzer: EngineManagerAnalysis.EngineManagerAnalysis | None = self.open_manager_analyzer()
 
-        self.move_played: Optional[Move.Move] = None
-        self.mrm: Optional[EngineResponse.MultiEngineResponse] = None
-        self.game: Optional[Game.Game] = None
+        self.move_played: Move.Move | None = None
+        self.mrm: EngineResponse.MultiEngineResponse | None = None
+        self.game: Game.Game | None = None
         self.book_active: bool = True
         self.state: AdjudicatorState = AdjudicatorState.active
         self._message_same_book_moves: bool = True

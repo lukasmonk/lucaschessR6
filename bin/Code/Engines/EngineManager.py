@@ -1,10 +1,11 @@
 import os
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from PySide6 import QtCore
 
 import Code
 from Code.Z import Util
+
 if __debug__:
     from Code import Debug
 from Code.Engines import EngineResponse, EngineRun, Engines, Priorities
@@ -14,7 +15,7 @@ from Code.SQL import UtilSQL
 class EngineManager:
     def __init__(self, engine, run_engine_params: EngineRun.RunEngineParams, with_cache: bool):
 
-        self.engine_run: Optional[EngineRun.EngineRun] = None
+        self.engine_run: EngineRun.EngineRun | None = None
         self.engine: Engines.Engine = engine
 
         self.starting_the_engine = False
@@ -26,12 +27,12 @@ class EngineManager:
         self._is_canceled = False
         self.elapsed_time = QtCore.QElapsedTimer()
 
-        self.path_log: Optional[str] = None
+        self.path_log: str | None = None
 
-        self.mrm: Optional[EngineResponse.MultiEngineResponse] = None
-        self.bestmove: Optional[str] = None
-        self.depthchanged_connected_to: Optional[Callable] = None
-        self.bestmove_connected_to: Optional[Callable] = None
+        self.mrm: EngineResponse.MultiEngineResponse | None = None
+        self.bestmove: str | None = None
+        self.depthchanged_connected_to: Callable | None = None
+        self.bestmove_connected_to: Callable | None = None
 
         self.ms_refresh: int = 325
 
@@ -45,7 +46,7 @@ class EngineManager:
         self.is_closed = False
         self.is_disabled = False  # util al analizar un movimiento que se espera hasta que termine
 
-        self.active_loop: Optional[QtCore.QEventLoop] = None
+        self.active_loop: QtCore.QEventLoop | None = None
 
         self.huella = Util.huella()
 
@@ -131,13 +132,14 @@ class EngineManager:
         self.starting_the_engine = True
 
         if __debug__:
-            Debug.prln(f"EngineManager.open called for {self.engine.name} {self.huella}", color="yellow")
+            if Debug.DEBUG_ENGINES or Debug.DEBUG_ENGINES_SEND:
+                Debug.prln(f"EngineManager.open called for {self.engine.name} {self.huella}", color="yellow")
 
         config_enginerun = EngineRun.StartEngineParams()
         config_enginerun.name = self.engine.name
         config_enginerun.path_exe = self.engine.ejecutable()
         config_enginerun.args = self.engine.argumentos()
-        config_enginerun.li_options_uci = self.engine.liUCI
+        config_enginerun.li_options_uci = self.engine.get_changed_options()
         config_enginerun.faster_mode_always = self.allways_faster_mode
         config_enginerun.priority = self.priority
         if self.engine.emulate_movetime:
@@ -164,14 +166,16 @@ class EngineManager:
     def stop(self):
         if self.engine_run:
             if __debug__:
-                Debug.prln(f"EngineManager.stop() called for {self.engine.name}", color="yellow")
+                if Debug.DEBUG_ENGINES or Debug.DEBUG_ENGINES_SEND:
+                    Debug.prln(f"EngineManager.stop() called for {self.engine.name}", color="yellow")
             self.engine_run.stop()
 
     def close(self):
         if self.is_closed:
             return
         if __debug__:
-            Debug.prln(f"EngineManager.close() called for {self.engine.name} {self.huella}", color="yellow")
+            if Debug.DEBUG_ENGINES or Debug.DEBUG_ENGINES_SEND:
+                Debug.prln(f"EngineManager.close() called for {self.engine.name} {self.huella}", color="yellow")
         self.is_closed = True
 
         if self.active_loop:
@@ -197,7 +201,7 @@ class EngineManager:
 
         if Code.list_engine_managers:
             Code.list_engine_managers.cleanup_closed()
-            
+
     def set_path_log(self):
         carpeta = Util.opj(Code.configuration.paths.folder_userdata(), "EngineLogs")
         if not os.path.isdir(carpeta):
@@ -211,7 +215,7 @@ class EngineManager:
             path_log = plantlog % pos
 
         self.path_log = path_log
-            
+
         return path_log
 
     def log_open(self):

@@ -59,7 +59,7 @@ class ScannerVars:
             "SCANNER": self.scanner,
             "ASK": self.ask,
             "REM_GHOST": self.rem_ghost,
-            "DETECT_BORDERS": self.detect_borders
+            "DETECT_BORDERS": self.detect_borders,
         }
         Util.save_pickle(self.fich_vars, dic)
 
@@ -199,9 +199,7 @@ class Scanner(QtWidgets.QDialog):
 
     @staticmethod
     def encontrar_limites_tablero(qpixmap):
-        qimage = qpixmap.toImage().convertToFormat(
-            QtGui.QImage.Format.Format_RGB888
-        )
+        qimage = qpixmap.toImage().convertToFormat(QtGui.QImage.Format.Format_RGB888)
         width = qimage.width()
         height = qimage.height()
         bpl = qimage.bytesPerLine()
@@ -223,8 +221,7 @@ class Scanner(QtWidgets.QDialog):
 
         # 2. Perfil medio por fila y columna para recorte por fondo
         row_means = [sum(gray[y]) / width for y in range(height)]
-        col_means = [sum(gray[y][x] for y in range(height)) / height
-                     for x in range(width)]
+        col_means = [sum(gray[y][x] for y in range(height)) / height for x in range(width)]
 
         y_min, y_max = Scanner._crop_background(row_means, bg)
         x_min, x_max = Scanner._crop_background(col_means, bg)
@@ -233,9 +230,7 @@ class Scanner(QtWidgets.QDialog):
             return None, None, None, None
 
         # 3. Eliminar líneas monocromáticas de borde (línea exterior del tablero)
-        x_min, y_min, x_max, y_max = Scanner._skip_border_lines(
-            gray, x_min, y_min, x_max, y_max
-        )
+        x_min, y_min, x_max, y_max = Scanner._skip_border_lines(gray, x_min, y_min, x_max, y_max)
 
         # 4. Forzar cuadrado con lado menor (conservador: no incluye margen)
         w = x_max - x_min
@@ -324,8 +319,8 @@ class Scanner(QtWidgets.QDialog):
 
     def mousePressEvent(self, event_mouse):
         if event_mouse.button() in (
-                QtCore.Qt.MouseButton.LeftButton,
-                QtCore.Qt.MouseButton.RightButton,
+            QtCore.Qt.MouseButton.LeftButton,
+            QtCore.Qt.MouseButton.RightButton,
         ):
             self.selecting = True
             self.selected = False
@@ -365,9 +360,9 @@ class Scanner(QtWidgets.QDialog):
         height = self.height
 
         if k in (
-                QtCore.Qt.Key.Key_Return,
-                QtCore.Qt.Key.Key_Enter,
-                QtCore.Qt.Key.Key_S,
+            QtCore.Qt.Key.Key_Return,
+            QtCore.Qt.Key.Key_Enter,
+            QtCore.Qt.Key.Key_S,
         ):
             self.save()
             self.accept()
@@ -377,14 +372,12 @@ class Scanner(QtWidgets.QDialog):
 
         elif k == QtCore.Qt.Key.Key_Plus:
             self.vars.opacity += 0.05
-            if self.vars.opacity > 0.5:
-                self.vars.opacity = 0.5
+            self.vars.opacity = min(self.vars.opacity, 0.5)
             self.setWindowOpacity(self.vars.opacity)
 
         elif k == QtCore.Qt.Key.Key_Minus:
             self.vars.opacity -= 0.05
-            if self.vars.opacity < 0.1:
-                self.vars.opacity = 0.1
+            self.vars.opacity = max(self.vars.opacity, 0.1)
             self.setWindowOpacity(self.vars.opacity)
 
         else:

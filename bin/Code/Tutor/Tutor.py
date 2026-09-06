@@ -228,7 +228,6 @@ class Tutor:
         self.max_tutor = len(self.game_tutor)
         self.moving_tutor(True)
 
-
     def mueve(self, quien: str, que: str) -> None:
         valid_quien = {"user", "tutor", "opening", "rival"}
         if quien not in valid_quien:

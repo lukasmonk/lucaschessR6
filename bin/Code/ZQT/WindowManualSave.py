@@ -7,6 +7,7 @@ import Code
 from Code.Base import Game, Position
 from Code.Base.Constantes import INFINITE
 from Code.Board import Board
+from Code.Engines import EngineManagerAnalysis
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -20,7 +21,6 @@ from Code.QT import (
     SelectFiles,
 )
 from Code.Voyager import Voyager
-from Code.Engines import EngineManagerAnalysis
 
 
 class WManualSave(LCDialog.LCDialog):

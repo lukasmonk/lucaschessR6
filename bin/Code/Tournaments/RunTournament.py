@@ -9,7 +9,7 @@ from Code.Base.Constantes import BOOK_RANDOM_UNIFORM
 from Code.Config import Configuration
 from Code.Main import InitApp
 from Code.Openings import OpeningsStd
-from Code.QT import Piezas, Iconos
+from Code.QT import Iconos, Piezas
 from Code.SQL import UtilSQL
 from Code.Tournaments import Tournament, TournamentWork
 from Code.Workers import RunWorker, Worker

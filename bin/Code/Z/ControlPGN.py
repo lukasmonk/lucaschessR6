@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import Code
 from Code.Base.Constantes import (
@@ -13,6 +13,7 @@ from Code.Base.Constantes import (
     GT_FICS,
     GT_FIDE,
     GT_GAME,
+    GT_GRID,
     GT_LEARN_PLAY,
     GT_MICELO,
     GT_NOTE_DOWN,
@@ -21,7 +22,6 @@ from Code.Base.Constantes import (
     GT_TURN_ON_LIGHTS,
     GT_VARIATIONS,
     GT_WICKER,
-    GT_GRID,
     RS_DRAW,
     RS_WIN_OPPONENT,
     RS_WIN_PLAYER,
@@ -56,7 +56,7 @@ class ControlPGN:
         else:
             return 0
 
-    def only_move(self, row: int, key: str) -> Optional[Any]:
+    def only_move(self, row: int, key: str) -> Any | None:
         li_moves = self.manager.game.li_moves
 
         pos = row * 2
@@ -87,7 +87,7 @@ class ControlPGN:
         else:
             return " "
 
-    def analysis(self, row: int, key: str) -> Optional[Any]:
+    def analysis(self, row: int, key: str) -> Any | None:
         if key == COL_NUMBER:
             return None
         return self.only_move(row, key)
@@ -136,7 +136,7 @@ class ControlPGN:
             self.manager.put_arrow_sc(move.from_sq, move.to_sq)
             self.manager.refresh()
 
-    def get_pos_move(self, row: int, key: str) -> Tuple[Optional[int], Optional[Any]]:
+    def get_pos_move(self, row: int, key: str) -> tuple[int | None, Any | None]:
         tam_lj = len(self.manager.game)
         if tam_lj == 0:
             return None, None

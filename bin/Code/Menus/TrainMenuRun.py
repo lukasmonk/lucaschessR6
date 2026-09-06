@@ -22,7 +22,7 @@ from Code.Resistance import ManagerResistance, Resistance, WindowResistance
 from Code.Tactics import ManagerTactics, Tactics, WindowTactics
 from Code.TrainPositions import TrainPositions
 from Code.TurnOnLights import ManagerTurnOnLights, TurnOnLights, WindowTurnOnLights
-from Code.ZQT import WindowVisualiza, WindowPuente, WindowPotencia, WindowHorses, WindowDailyTest
+from Code.ZQT import WindowDailyTest, WindowHorses, WindowPotencia, WindowPuente, WindowVisualiza
 
 
 class TrainMenuRun:

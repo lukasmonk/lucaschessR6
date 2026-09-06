@@ -7,7 +7,7 @@ from PySide6 import QtCore
 from Code.Base import Position
 from Code.Board import Board
 from Code.Books import DBPolyglot, PolyglotImportExports
-from Code.QT import Colocacion, Columnas, Delegados, Grid, Iconos, LCDialog, FormLayout, QTDialogs, QTMessages
+from Code.QT import Colocacion, Columnas, Delegados, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 from Code.Voyager import Voyager
 
 
@@ -245,18 +245,22 @@ class WPolyglot(LCDialog.LCDialog):
     def remove_moves(self):
         form = FormLayout.FormLayout(self, _("Remove"), Iconos.Delete())
         form.separador()
-        form.editbox(_("Moves with a weight of less than or equal to %"), 50, tipo=float, decimales=3,
-                     init_value=0.00)
+        form.editbox(_("Moves with a weight of less than or equal to %"), 50, tipo=float, decimales=3, init_value=0.00)
+        form.checkbox("⚠ " + _("Remove childrens recursively") + " ⚠", False)
         form.separador()
 
         resp = form.run()
         if not resp:
             return
         accion, li_resp = resp
-        tope, = li_resp
+        tope, recursive = li_resp
 
         with QTMessages.one_moment_please(self):
-            # self.db_entries.remove_entries(tope)
+            QTUtils.refresh_gui()
+            if recursive:
+                num_recursive = self.db_entries.remove_entries(tope)
+            else:
+                num_recursive = 0
             self.db_entries.close()
 
             conn = sqlite3.connect(self.path_lcbin)
@@ -275,7 +279,7 @@ class WPolyglot(LCDialog.LCDialog):
                 )
             """)
 
-            regs_removed = cursor.rowcount
+            regs_removed = cursor.rowcount + num_recursive
             conn.commit()
             conn.close()
 
@@ -283,7 +287,7 @@ class WPolyglot(LCDialog.LCDialog):
             self.db_entries.pack()
             self.set_position(self.position, True)
 
-        QTMessages.message(self, f'{_("Deleted records")}: {regs_removed}')
+        QTMessages.message(self, f"{_('Deleted records')}: {regs_removed}")
 
     def utilities(self):
         menu = QTDialogs.LCMenu(self)

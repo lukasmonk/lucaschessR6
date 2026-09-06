@@ -247,7 +247,7 @@ class WKibIndex(QtWidgets.QDialog):
         run_param = EngineRun.StartEngineParams()
         run_param.name = self.kibitzer.name
         run_param.path_exe = self.kibitzer.path_exe
-        run_param.li_options_uci = self.kibitzer.liUCI
+        run_param.li_options_uci = self.kibitzer.get_changed_options()
         run_param.args = self.kibitzer.args
         run_param.num_multipv = 1
         run_param.emulate_movetime = True

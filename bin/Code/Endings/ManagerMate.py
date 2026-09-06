@@ -77,9 +77,7 @@ class BlockMate:
 
     def test_record(self, errors, seconds):
         is_record = False
-        if self.seconds == 0:
-            is_record = True
-        elif errors < self.errors:
+        if self.seconds == 0 or errors < self.errors:
             is_record = True
         elif errors == self.errors:
             is_record = self.seconds > seconds
@@ -302,10 +300,10 @@ class ControlMate:
         self.work_li_fen_info = self.work_block.list_positions()
         self.work_current_pos = -1
 
-        self.work_time_init = time.time()
+        self.work_time_init = time.monotonic()
 
     def work_end(self, errors):
-        seconds = int(time.time() - self.work_time_init)
+        seconds = int(time.monotonic() - self.work_time_init)
 
         si_record = self.work_block.test_record(errors, seconds)
 

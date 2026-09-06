@@ -3,11 +3,11 @@ import sys
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Move
 from Code.Engines import EngineRun
 from Code.Kibitzers import WindowKibitzers
 from Code.QT import Colocacion, Controles, Iconos, QTDialogs, QTMessages, ScreenUtils
+from Code.Z import Util
 
 
 class ResizeHandle(QtWidgets.QWidget):
@@ -271,7 +271,7 @@ class WKibLine(QtWidgets.QMainWindow):
         run_param = EngineRun.StartEngineParams()
         run_param.name = self.kibitzer.name
         run_param.path_exe = exe
-        run_param.li_options_uci = self.kibitzer.liUCI
+        run_param.li_options_uci = self.kibitzer.get_changed_options()
         run_param.args = self.kibitzer.args
         run_param.num_multipv = 1
         run_param.emulate_movetime = True

@@ -3,13 +3,13 @@ import collections
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import XRun
 from Code.Base import Game
 from Code.Base.Constantes import RESULT_DRAW, RESULT_WIN_BLACK, RESULT_WIN_WHITE
 from Code.Databases import DBgames, WDB_GUtils
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
 from Code.Swiss import Swiss, SwissWork
+from Code.Z import XRun
 
 NONE, PLAY_HUMAN, REINIT = range(3)
 
@@ -521,8 +521,7 @@ class WSwiss(LCDialog.LCDialog):
             cpts = f"{d_panel[nom_column]:0.02f}"
             while cpts.endswith("0"):
                 cpts = cpts[:-1]
-            if cpts.endswith("."):
-                cpts = cpts[:-1]
+            cpts = cpts.removesuffix(".")
             return cpts
         if nom_column == "NAME":
             return self.dic_xid_name[d_panel["XID"]]
@@ -1005,8 +1004,7 @@ class WSwiss(LCDialog.LCDialog):
                             cs = f"{valor:0.02f}"
                             while cs.endswith("0"):
                                 cs = cs[:-1]
-                            if cs.endswith("."):
-                                cs = cs[:-1]
+                            cs = cs.removesuffix(".")
                             valor = cs
                     un_elem[key] = valor
 

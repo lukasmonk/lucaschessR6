@@ -1,7 +1,7 @@
 import Code
-from Code.Z import Util
 from Code.Coordinates import CoordinatesBlocks, CoordinatesConfig, WRunCoordinatesBlocks
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
+from Code.Z import Util
 
 
 class WCoordinatesBlocks(LCDialog.LCDialog):

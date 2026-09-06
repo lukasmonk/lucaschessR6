@@ -133,7 +133,7 @@ class WRunMate15(LCDialog.LCDialog):
 
         self.gb.setEnabled(True)
         self.li_lb_wm[0][1].activate()
-        self.time_base = time.time()
+        self.time_base = time.monotonic()
 
     def pulsada_celda(self, celda):
         if self.use_pgn:
@@ -226,7 +226,7 @@ class WRunMate15(LCDialog.LCDialog):
         if si_error:
             self.bt_check.show()
         else:
-            tiempo = time.time() - self.time_base
+            tiempo = time.monotonic() - self.time_base
             self.lb_result.set_text(f'{_("Time")}: {tiempo:.1f}"')
             self.lb_result.show()
             self.mate15.append_try(tiempo)

@@ -1,8 +1,8 @@
 import random
+
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Adjournments, Util
 from Code.Base import Move
 from Code.Base.Constantes import (
     BLACK,
@@ -31,6 +31,7 @@ from Code.Engines import EngineManagerPlay, EngineResponse, Engines
 from Code.ManagerBase import Manager
 from Code.QT import QTMessages, QTUtils
 from Code.Swiss import Swiss, WSwisses
+from Code.Z import Adjournments, Util
 
 
 class ManagerSwiss(Manager.Manager):
@@ -97,9 +98,7 @@ class ManagerSwiss(Manager.Manager):
 
         self.book = None
         bk = engine.book
-        if bk == "*":
-            bk = None
-        elif bk == "-":
+        if bk == "*" or bk == "-":
             bk = None
         if bk:
             self.book = Books.Book("P", bk, bk, True)

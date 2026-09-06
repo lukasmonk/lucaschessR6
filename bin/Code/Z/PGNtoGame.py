@@ -1,10 +1,8 @@
-from typing import Dict, Optional, Union, List
-
 import FasterCode
 
 import Code
 from Code import Util
-from Code.Base import Position, Move
+from Code.Base import Move, Position
 from Code.Base.Constantes import FEN_INITIAL, RESULT_DRAW, RESULT_UNKNOWN, RESULT_WIN_BLACK, RESULT_WIN_WHITE
 from Code.Nags.Nags import NAG_1, NAG_2, NAG_3, NAG_4, NAG_5, NAG_6
 
@@ -14,7 +12,7 @@ class PGNtoGame:
     Represents a chess game and provides PGN import capabilities.
     """
 
-    NAG_SYMBOLS: Dict[str, int] = {
+    NAG_SYMBOLS: dict[str, int] = {
         "!": NAG_1,
         "?": NAG_2,
         "!!": NAG_3,
@@ -30,7 +28,7 @@ class PGNtoGame:
     _active_move: object
     _fen_detected: bool
 
-    def __init__(self, pgn: Union[str, bytes], game: object | None = None):
+    def __init__(self, pgn: str | bytes, game: object | None = None):
         """Initialize a PGNtoGame instance with PGN content and an optional game object.
         This sets up the converter to populate or update the provided Game instance.
 
@@ -46,7 +44,7 @@ class PGNtoGame:
 
     def read(self):
         normalized_pgn: str = self._normalize_pgn(self.pgn)
-        tokens: Optional[List[str]] = FasterCode.xparse_pgn(normalized_pgn)
+        tokens: list[str] | None = FasterCode.xparse_pgn(normalized_pgn)
         if not tokens:
             return False, self.game
 
@@ -83,7 +81,7 @@ class PGNtoGame:
         return True, self.game
 
     @staticmethod
-    def _normalize_pgn(pgn: Union[str, bytes]) -> str:
+    def _normalize_pgn(pgn: str | bytes) -> str:
         """
         Normalize PGN input to a UTF-8 string.
 

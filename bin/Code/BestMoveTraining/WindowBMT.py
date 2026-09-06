@@ -1,7 +1,6 @@
 import os.path
 
 import Code
-from Code.Z import Util
 from Code.Base import Game, Position
 from Code.Base.Constantes import INFINITE
 from Code.BestMoveTraining import BMT, WindowBMTtrain
@@ -23,6 +22,7 @@ from Code.QT import (
     SelectFiles,
 )
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class WHistorialBMT(LCDialog.LCDialog):
@@ -210,7 +210,6 @@ class WBMT(LCDialog.LCDialog):
         self.bmt.cerrar()
         self.save_video()
         self.reject()
-        return
 
     def actual(self):
         if self.tab.current_position() == 0:
@@ -624,8 +623,7 @@ class WBMT(LCDialog.LCDialog):
                 extra = reg.EXTRA
                 while from_sq < mx:
                     to_sq = from_sq + bl
-                    if to_sq >= mx:
-                        to_sq = mx
+                    to_sq = min(mx, to_sq)
                     bmt_lista_nv = bmt_lista.extrae(from_sq, to_sq)
                     reg.TOTAL = to_sq - from_sq
                     reg.BMT_LISTA = Util.var2zip(bmt_lista_nv)
@@ -1021,7 +1019,7 @@ class WBMT(LCDialog.LCDialog):
                 init_value=secs_time,
             )
             form.spinbox(_("From number"), 1, n_fen, 50, init_value=1)
-            form.spinbox(_("To number"), 1, n_fen, 50, init_value=n_fen if n_fen < 20 else 20)
+            form.spinbox(_("To number"), 1, n_fen, 50, init_value=min(20, n_fen))
             form.separador()
 
             resultado = form.run()

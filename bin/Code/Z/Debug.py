@@ -1,16 +1,18 @@
 import builtins
 import functools
+import inspect
 import os
 import sys
 import time
 import traceback
-import inspect
+from datetime import datetime
 
 from Code.Z import Util
 
 DEBUG_ENGINES_ALL = False
 DEBUG_ENGINES = False or DEBUG_ENGINES_ALL
 DEBUG_ENGINES_SEND = False or DEBUG_ENGINES_ALL
+
 COLORS = {
     "red": "\033[91m",
     "green": "\033[92m",
@@ -35,6 +37,11 @@ def prln(*x, color=None):
     if color and color in COLORS:
         sys.stdout.write(COLORS[color])
 
+    dt = datetime.fromtimestamp(time.time())
+    decimas = dt.microsecond // 100000
+    resultado = f"{dt.strftime('%H:%M:%S')}.{decimas} "
+    pr(resultado)
+
     pr(*x)
 
     if color and color in COLORS:
@@ -56,13 +63,12 @@ def stack0(txt=None):
     archivo = frame.filename
     linea = frame.lineno
     funcion = frame.function
-    prln(f"Llamado desde: función '{funcion}' en {archivo}, línea {linea}, {str(txt or '')}")
+    prln(f"Llamado desde: función '{funcion}' en {archivo}, línea {linea}, {txt or ''!s}")
 
 
 def printf(*txt):
     with open("stack.txt", "at", encoding="utf-8") as q:
-        for t in txt:
-            q.write(f"{str(t)} ")
+        q.writelines(f"{t!s} " for t in txt)
         q.write("\n")
 
 
@@ -72,30 +78,30 @@ class Timer:
         self.start = 0
 
     def __enter__(self):
-        self.start = time.time()
+        self.start = time.monotonic()
         return self
 
     def __exit__(self, *args):
-        elapsed = time.time() - self.start
+        elapsed = time.monotonic() - self.start
         prln(f"[{self.label}] Elapsed: {elapsed:.4f}s", color="cyan")
 
 
 def timeit(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        start = time.time()
+        start = time.monotonic()
         try:
             return func(*args, **kwargs)
         finally:
-            elapsed = time.time() - start
+            elapsed = time.monotonic() - start
             prln(f"[{func.__name__}] Executed in {elapsed:.4f}s", color="cyan")
 
     return wrapper
 
 
-setattr(builtins, "stack", stack)
-setattr(builtins, "stack0", stack0)
-setattr(builtins, "prln", prln)
+builtins.stack = stack
+builtins.stack0 = stack0
+builtins.prln = prln
 
 
 class LogDebug:

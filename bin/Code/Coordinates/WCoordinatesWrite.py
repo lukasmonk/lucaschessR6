@@ -1,8 +1,8 @@
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import BLACK, WHITE
 from Code.Coordinates import CoordinatesWrite, WRunCoordinatesWrite
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
+from Code.Z import Util
 
 
 class WCoordinatesWrite(LCDialog.LCDialog):

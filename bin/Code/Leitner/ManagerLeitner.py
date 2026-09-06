@@ -1,11 +1,12 @@
 import time
 
 from PySide6 import QtCore
+
 from Code.Base import Game
-from Code.Base.Constantes import GT_TACTICS, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, ON_TOOLBAR, TB_CONFIG, TB_NEXT
+from Code.Base.Constantes import GT_TACTICS, ON_TOOLBAR, ST_ENDGAME, ST_PLAYING, TB_ADVICE, TB_CLOSE, TB_CONFIG, TB_NEXT
 from Code.Leitner import Leitner
 from Code.ManagerBase import Manager
-from Code.QT import QTMessages, QTDialogs, Iconos
+from Code.QT import Iconos, QTDialogs, QTMessages
 from Code.Z import FNSLine
 
 
@@ -256,7 +257,7 @@ class ManagerLeitner(Manager.Manager):
     def play_human(self):
         self.human_is_playing = True
         self.activate_side(self.is_human_side_white)
-        self.ini_clock = time.time()
+        self.ini_clock = time.monotonic()
 
     def add_move(self, is_our_move: bool) -> None:
         move_obj = self.game_obj.move(self.pos_obj)
@@ -279,4 +280,3 @@ class ManagerLeitner(Manager.Manager):
     def list_help_keyboard(self, add_key) -> None:
         if self.main_window.is_enabled_option_toolbar(TB_NEXT):
             add_key(f"+/{_('Page Down')}", _("Next"))
-

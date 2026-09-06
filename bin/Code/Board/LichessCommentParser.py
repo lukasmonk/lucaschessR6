@@ -1,6 +1,6 @@
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, List
 
 # --- Data structures -------------------------------------------------------
 
@@ -48,8 +48,8 @@ def _split_items(body: str) -> Iterable[str]:
         yield token.strip()
 
 
-def _parse_csl(body: str) -> List[ColoredSquare]:
-    out: List[ColoredSquare] = []
+def _parse_csl(body: str) -> list[ColoredSquare]:
+    out: list[ColoredSquare] = []
     for token in _split_items(body):
         m = RE_CSL_ITEM.fullmatch(token)
         if not m:
@@ -59,8 +59,8 @@ def _parse_csl(body: str) -> List[ColoredSquare]:
     return out
 
 
-def _parse_cal(body: str) -> List[Arrow]:
-    out: List[Arrow] = []
+def _parse_cal(body: str) -> list[Arrow]:
+    out: list[Arrow] = []
     for token in _split_items(body):
         m = RE_CAL_ITEM.fullmatch(token)
         if not m:
@@ -73,8 +73,8 @@ def _parse_cal(body: str) -> List[Arrow]:
 
 
 def parse_lichess_graphics(text: str):
-    squares: List[ColoredSquare] = []
-    arrows: List[Arrow] = []
+    squares: list[ColoredSquare] = []
+    arrows: list[Arrow] = []
     text = text.replace("[", " ").replace("]", " ")
 
     for m in RE_BLOCK.finditer(text):

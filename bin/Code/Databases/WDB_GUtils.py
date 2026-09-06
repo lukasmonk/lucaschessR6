@@ -2,7 +2,6 @@ import os
 
 from PySide6 import QtCore, QtWidgets
 
-from Code.Z import Util
 from Code.Databases import DBgames
 from Code.QT import (
     Colocacion,
@@ -16,11 +15,12 @@ from Code.QT import (
     QTMessages,
     SelectFiles,
 )
+from Code.Z import Util
 
 
 class WOptionsDatabase(QtWidgets.QDialog):
     def __init__(self, owner, configuration, dic_data, with_import_pgn=False, name=""):
-        super(WOptionsDatabase, self).__init__(owner)
+        super().__init__(owner)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -361,7 +361,7 @@ class WTags(LCDialog.LCDialog):
             self.li_data.append(dic)
 
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("KEY", _("Key"), 132, align_center=True)
+        o_columns.nueva("KEY", _("Identifier"), 132, align_center=True)
         o_columns.nueva(
             "LABEL",
             _("PGN Label"),

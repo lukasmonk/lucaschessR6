@@ -83,7 +83,7 @@ class ThanksTo:
             ("Eric", "Main betatester."),
             (
                 '<a href="https://goneill.co.nz/index.php">Graham O\'Neill</a>',
-                "Author of the drivers for the use of the electronic boards (except the official DGT ones)."
+                "Author of the drivers for the use of the electronic boards."
                 "<br>Also co-operator in the development of the interface code with the electronic boards.",
             ),
             (
@@ -102,7 +102,7 @@ class ThanksTo:
             ),
             (
                 "Johannes Bolzano",
-                "Code improvements and ideas to Find best move training and more.",
+                "Code improvements and ideas to Find best move training and more. MacOS support.",
             ),  # Programme wiki administrator"),
         )
 
@@ -149,7 +149,7 @@ class ThanksTo:
             '<a href="https://github.com/jpaverd">jpaverd</a>',
             "tgett",
             "Baked-Cake1",
-            "Yasmin"
+            "Yasmin",
         ]
         li_resto = []
         txt += version("R6", li_base, li_resto, False)
@@ -801,12 +801,6 @@ class ThanksTo:
                 "Leonard Richardson",
                 "https://pypi.org/project/bs4",
                 "Mozilla Public License 2.0",
-            ),
-            (
-                "py-cpuinfo",
-                "Matthew Brennan Jones",
-                "https://github.com/workhorsy/py-cpuinfo",
-                "MIT License",
             ),
             (
                 "Unofficial LibQt6Pas for Linux",

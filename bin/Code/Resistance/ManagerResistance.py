@@ -1,5 +1,5 @@
-
 from PySide6 import QtCore
+
 from Code.Base import Move
 from Code.Base.Constantes import (
     GT_RESISTANCE,
@@ -11,12 +11,12 @@ from Code.Base.Constantes import (
     TB_RESIGN,
     TB_UTILITIES,
 )
+from Code.Engines import EngineManagerPlay
 from Code.ManagerBase import Manager
 from Code.Menus import TrainMenu
 from Code.QT import QTMessages
-from Code.Z import Util
 from Code.Resistance import Resistance
-from Code.Engines import EngineManagerPlay
+from Code.Z import Util
 
 
 class ManagerResistance(Manager.Manager):

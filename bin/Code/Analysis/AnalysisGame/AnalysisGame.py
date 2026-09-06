@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional
 
 from PySide6 import QtCore
 
@@ -49,7 +49,7 @@ class AnalysisState:
     total_moves: int
     pgn_original_blunders: bool = False
     pgn_original_brilliancies: bool = False
-    cl_game: Optional[str] = None
+    cl_game: str | None = None
 
 
 class AnalysisGame(QtCore.QObject):
@@ -97,9 +97,10 @@ class AnalysisGame(QtCore.QObject):
         self.bmt_listaBrilliancies = None
 
         self.mate_save_folder = (
-            Util.opj(Code.configuration.paths.folder_personal_trainings(),
-                     Util.valid_filename(analysis_params.mates_saved_name)
-                     )
+            Util.opj(
+                Code.configuration.paths.folder_personal_trainings(),
+                Util.valid_filename(analysis_params.mates_saved_name),
+            )
             if analysis_params.mates_saved_name
             else None
         )
@@ -298,10 +299,13 @@ class AnalysisGame(QtCore.QObject):
             allow_add_variations = self._allow_add_variations(move, ap)
             rm, nag = self._update_move_indexes(move, mrm, pos_act)
 
-            if (mad.is_main and training_state.si_blunders
-                    or training_state.si_brilliancies
-                    or training_state.si_mates
-                    or ap.include_variations):
+            if (
+                mad.is_main
+                and training_state.si_blunders
+                or training_state.si_brilliancies
+                or training_state.si_mates
+                or ap.include_variations
+            ):
                 self._process_main_move(
                     game,
                     move,
@@ -367,17 +371,17 @@ class AnalysisGame(QtCore.QObject):
         return rm, nag
 
     def _process_main_move(
-            self,
-            game,
-            move,
-            mrm,
-            pos_act,
-            move_data,
-            analysis_params,
-            training_state,
-            allow_add_variations,
-            rm,
-            nag,
+        self,
+        game,
+        move,
+        mrm,
+        pos_act,
+        move_data,
+        analysis_params,
+        training_state,
+        allow_add_variations,
+        rm,
+        nag,
     ):
         fen = move.position_before.fen()
 
@@ -388,7 +392,7 @@ class AnalysisGame(QtCore.QObject):
 
         if training_state.si_blunders and nag in self.kblunders_condition_list:
             mj = mrm.li_rm[0]
-            self.si_tactic_blunders = AnalysisGameSaveTrainings.graba_tactic(
+            self.si_tactic_blunders = AnalysisGameSaveTrainings.save_tactic(
                 self.tacticblunders,
                 game,
                 move_data.pos_in_game,
@@ -397,13 +401,13 @@ class AnalysisGame(QtCore.QObject):
             )
 
             if AnalysisGameSaveTrainings.save_pgn(
-                    analysis_params.pgnblunders,
-                    mrm.name,
-                    game.dic_tags(),
-                    fen,
-                    move,
-                    rm,
-                    mj,
+                analysis_params.pgnblunders,
+                mrm.name,
+                game.dic_tags(),
+                fen,
+                move,
+                rm,
+                mj,
             ):
                 training_state.pgn_original_blunders = True
 
@@ -432,13 +436,13 @@ class AnalysisGame(QtCore.QObject):
             )
 
             if AnalysisGameSaveTrainings.save_pgn(
-                    analysis_params.pgnbrilliancies,
-                    mrm.name,
-                    game.dic_tags(),
-                    fen,
-                    move,
-                    rm,
-                    None,
+                analysis_params.pgnbrilliancies,
+                mrm.name,
+                game.dic_tags(),
+                fen,
+                move,
+                rm,
+                None,
             ):
                 training_state.pgn_original_brilliancies = True
 

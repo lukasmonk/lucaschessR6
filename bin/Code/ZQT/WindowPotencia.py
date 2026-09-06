@@ -48,7 +48,7 @@ def lee_linea_mfn():
 
 
 def lee_varias_lineas_mfn(nlineas):  # WindowDailyTest
-    lipos = random.sample(range(0, 9999), nlineas)
+    lipos = random.sample(range(9999), nlineas)
     lifen = []
     with open(Code.path_resource("IntFiles", "games.mfn"), "rt", encoding="utf-8") as f:
         for num, linea in enumerate(f):
@@ -583,7 +583,7 @@ class WPotencia(LCDialog.LCDialog):
 
     def __init__(self, owner, name_engine, seconds, min_min, min_max, linea=None, ref=None):
 
-        super(WPotencia, self).__init__(owner, _("Determine your calculating power"), Iconos.Potencia(), "potencia")
+        super().__init__(owner, _("Determine your calculating power"), Iconos.Potencia(), "potencia")
 
         self.game, self.dicPGN, info, self.jugadaInicial, self.linea = (
             lee_1_linea_mfn(linea) if linea else lee_linea_mfn()
@@ -595,10 +595,11 @@ class WPotencia(LCDialog.LCDialog):
         self.procesador = owner.procesador
         self.configuration = Code.configuration
 
-        if name_engine.startswith("*"):
-            name_engine = name_engine[1:]
+        name_engine = name_engine.removeprefix("*")
         engine = self.configuration.engines.search_tutor(name_engine)
-        self.manager_analysis = self.procesador.create_manager_analyzer_var(engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE)
+        self.manager_analysis = self.procesador.create_manager_analyzer_var(
+            engine, seconds * 1000, 0, 0, MULTIPV_MAXIMIZE
+        )
 
         # Board
         config_board = self.configuration.config_board("POTENCIA", 48)
@@ -663,7 +664,7 @@ class WPotencia(LCDialog.LCDialog):
         # Tiempo
         self.timer = None
         if min_min or min_max:
-            self.time_base = time.time()
+            self.time_base = time.monotonic()
             if min_min:
                 self.gbMovs.hide()
                 self.start_clock(self.pensandoHastaMin)
@@ -710,14 +711,14 @@ class WPotencia(LCDialog.LCDialog):
         self.last_square = wmcelda
 
     def pensandoHastaMin(self):
-        dif = self.min_min * 60 - int(time.time() - self.time_base)
+        dif = self.min_min * 60 - int(time.monotonic() - self.time_base)
         if dif <= 0:
             self.pon_toolbar([self.comprobar, self.cancelar])
             self.stop_clock()
             if self.min_max:
                 self.gbMovs.show()
                 self.liwm[0].activate()
-                self.time_base = time.time()
+                self.time_base = time.monotonic()
                 self.start_clock(self.pensandoHastaMax)
         else:
             self.lbTiempo.set_text(
@@ -728,7 +729,7 @@ class WPotencia(LCDialog.LCDialog):
             )
 
     def pensandoHastaMax(self):
-        dif = (self.min_max - self.min_min) * 60 - int(time.time() - self.time_base)
+        dif = (self.min_max - self.min_min) * 60 - int(time.monotonic() - self.time_base)
         if dif <= 0:
             self.stop_clock()
             self.comprobar()

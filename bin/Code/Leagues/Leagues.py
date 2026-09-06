@@ -2,7 +2,6 @@ import random
 import time
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Base.Constantes import (
     BLACK,
@@ -16,6 +15,7 @@ from Code.Base.Constantes import (
 )
 from Code.Engines import Engines
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class Human:
@@ -279,15 +279,13 @@ def create_journeys(num_opponents: int) -> list:
 
         min_uniones = None
         li_minimo = None
-        t = time.time()
+        t = time.monotonic()
         k_time = max(len(li_opponents) / 3, 1.0)
-        while (time.time() - t) < k_time:
+        while (time.monotonic() - t) < k_time:
             dr = {xr: "" for xr in li_opponents}
             for journey in journeys:
                 for xpos, (w, b) in enumerate(journey):
-                    if dr[w].endswith("W"):
-                        journey[xpos] = (b, w)
-                    elif dr[b].endswith("B"):
+                    if dr[w].endswith("W") or dr[b].endswith("B"):
                         journey[xpos] = (b, w)
                     w, b = journey[xpos]
                     dr[w] += "W"
@@ -312,7 +310,7 @@ def create_journeys(num_opponents: int) -> list:
             if min_uniones is None or uniones < min_uniones:
                 li_minimo = [[(w, b) for w, b in journey] for journey in journeys]
                 min_uniones = uniones
-                t = time.time()
+                t = time.monotonic()
             random.shuffle(journeys)
 
     journeys_with_returns = list(li_minimo[:])
@@ -506,8 +504,7 @@ class League:
         dv = 999
         for opponent in self.li_opponents:
             if opponent.elo() <= elo:
-                if opponent.initialdivision < dv:
-                    dv = opponent.initialdivision
+                dv = min(dv, opponent.initialdivision)
         return dv if dv < 999 else 0
 
     def dic_names(self):
@@ -840,8 +837,7 @@ class Season:
         t = 0
         for division in self.li_divisions:
             t1 = division.get_num_journeys()
-            if t1 > t:
-                t = t1
+            t = max(t, t1)
         return t
 
     def get_all_matches(self):

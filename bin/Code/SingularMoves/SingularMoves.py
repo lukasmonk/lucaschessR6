@@ -2,8 +2,8 @@ import datetime
 import random
 
 import Code
-from Code.Z import Util
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class SingularMoves:

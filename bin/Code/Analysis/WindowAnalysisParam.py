@@ -244,7 +244,7 @@ def _form_mates(analysis_params):
         (f"{_('Save all mates detected with the name')}:", mates_saved_name),
         (None, f"📚️ {_('Train')}/{_('Tactics')}/{_('Training positions')}/{_('Personal Training')}"),
         SEPARADOR,
-        (f"{_('Keep settings')}:", analysis_params.mates_keep_settings)
+        (f"{_('Keep settings')}:", analysis_params.mates_keep_settings),
     ]
 
 
@@ -293,7 +293,7 @@ def _form_general_options(analysis_params, multiple_selected, is_massive):
     li_gen.append(
         (
             f'<div align="right">{_("Only the following players")}:<br>'
-            f'{_("(You can add multiple aliases separated by ; and wildcards with *)")}</div>',
+            f"{_('(You can add multiple aliases separated by ; and wildcards with *)')}</div>",
             cjug,
         )
     )
@@ -329,8 +329,7 @@ def _form_general_options(analysis_params, multiple_selected, is_massive):
     if is_massive:
         cores = 999
         li_gen.append(
-            (FormLayout.Spinbox(_("Number of parallel processes"), 1, cores, 40),
-             min(analysis_params.workers, cores))
+            (FormLayout.Spinbox(_("Number of parallel processes"), 1, cores, 40), min(analysis_params.workers, cores))
         )
         li_gen.append(SEPARADOR)
 
@@ -357,10 +356,10 @@ def _create_dispatch():
                     reg.cb_add_variations.setChecked(False)
         else:
             if (
-                    reg.cb_variations
-                    and reg.cb_add_variations
-                    and reg.cb_variations.isChecked()
-                    and reg.cb_add_variations.isChecked()
+                reg.cb_variations
+                and reg.cb_add_variations
+                and reg.cb_variations.isChecked()
+                and reg.cb_add_variations.isChecked()
             ):
                 if reg.cb_variations_checked:
                     reg.cb_variations.setChecked(False)
@@ -568,13 +567,13 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
         _save_analysis_params(analysis_params)
 
         if not (
-                analysis_params.tacticblunders
-                or analysis_params.pgnblunders
-                or analysis_params.bmtblunders
-                or analysis_params.fnsbrilliancies
-                or analysis_params.pgnbrilliancies
-                or analysis_params.bmtbrilliancies
-                or is_database
+            analysis_params.tacticblunders
+            or analysis_params.pgnblunders
+            or analysis_params.bmtblunders
+            or analysis_params.fnsbrilliancies
+            or analysis_params.pgnbrilliancies
+            or analysis_params.bmtbrilliancies
+            or is_database
         ):
             QTMessages.message_error(parent, _("No file was specified where to save results"))
             return None

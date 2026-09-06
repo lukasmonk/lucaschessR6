@@ -1,15 +1,13 @@
 import os
 
-
 import Code
 from Code.Base import Move
 from Code.Base.Constantes import (
-    WHITE,
     BLACK,
     GT_MAIA,
+    RS_DRAW,
     RS_WIN_OPPONENT,
     RS_WIN_PLAYER,
-    RS_DRAW,
     ST_ENDGAME,
     ST_PLAYING,
     TB_CANCEL,
@@ -17,6 +15,7 @@ from Code.Base.Constantes import (
     TB_DRAW,
     TB_RESIGN,
     TB_UTILITIES,
+    WHITE,
 )
 from Code.Engines import EngineResponse, Engines
 from Code.ManagerBase import Manager
@@ -58,12 +57,7 @@ class MaiaState:
         self.book_path = os.path.join(base, f"{book}.bin")
 
     def write(self):
-        dic = {
-            "current": self.current,
-            "white": self.white,
-            "black": self.black,
-            "last": self.last
-        }
+        dic = {"current": self.current, "white": self.white, "black": self.black, "last": self.last}
         Code.configuration.write_variables(self.key, dic)
 
     def get_side(self):
@@ -130,7 +124,7 @@ class MaiaState:
     def stats(self):
         st = {1: "🟢", -1: "🔴", 0: "⚪"}
         sp = "&nbsp;"
-        return f'{st.get(self.white, "⚪")} {_("White")} {sp * 5} {st.get(self.black, "⚪")} {_("Black")}'
+        return f"{st.get(self.white, '⚪')} {_('White')} {sp * 5} {st.get(self.black, '⚪')} {_('Black')}"
 
     def current_elo(self):
         if self.current <= 1900:

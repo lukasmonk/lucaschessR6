@@ -8,7 +8,6 @@ from deep_translator import GoogleTranslator
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Config import Configuration
 from Code.QT import (
     Colocacion,
@@ -25,6 +24,7 @@ from Code.QT import (
     SelectFiles,
 )
 from Code.Translations import RunTranslateOpenings, WorkTranslate
+from Code.Z import Util
 
 
 class WTranslate(LCDialog.LCDialog):

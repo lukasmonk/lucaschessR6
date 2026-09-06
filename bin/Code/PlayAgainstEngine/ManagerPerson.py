@@ -1,11 +1,7 @@
-from typing import Any, Dict
+from typing import Any
 
 import Code
-from Code.Base.Constantes import (
-    GT_AGAINST_CHILD_ENGINE,
-    ST_PLAYING,
-    TIMEMODE_FISCHER
-)
+from Code.Base.Constantes import GT_AGAINST_CHILD_ENGINE, ST_PLAYING, TIMEMODE_FISCHER
 from Code.Openings import Opening
 from Code.PlayAgainstEngine import ManagerPlayAgainstEngine
 from Code.QT import QTDialogs
@@ -14,7 +10,7 @@ from Code.QT import QTDialogs
 class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
     imagen: Any
 
-    def _init_vars(self, dic_var: Dict[str, Any]):
+    def _init_vars(self, dic_var: dict[str, Any]):
         self.reinicio = dic_var
 
         self.game_type = GT_AGAINST_CHILD_ENGINE
@@ -33,7 +29,7 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
 
         self.play_while_win = False
 
-    def _init_show(self, dic_var: Dict[str, Any]):
+    def _init_show(self, dic_var: dict[str, Any]):
         n_box_height = dic_var.get("BOXHEIGHT", 24)
         mx = max(self.thoughtOp, self.thoughtTt)
         if mx > -1:
@@ -86,7 +82,7 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
             Code.eboard.activate(self.board.dispatch_eboard)
         self.check_boards_setposition()
 
-    def _init_time(self, dic_var: Dict[str, Any]):
+    def _init_time(self, dic_var: dict[str, Any]):
         self.tc_player = self.tc_white if self.is_human_side_white else self.tc_black
         self.tc_rival = self.tc_white if self.is_engine_side_white else self.tc_black
 
@@ -104,7 +100,7 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
             self.tc_player.config_clock(self.max_seconds, self.seconds_per_move, zeitnot, self.secs_extra)
             self.tc_rival.config_clock(self.max_seconds, self.seconds_per_move, zeitnot, 0)
 
-    def _init_hints(self, dic_var: Dict[str, Any]):
+    def _init_hints(self, dic_var: dict[str, Any]):
         self.hints = 0
         self.with_takeback = False
         self.is_tutor_enabled = False
@@ -113,14 +109,14 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
         self.tutor_book = None
         self.is_analyzed_by_tutor = False
 
-    def _init_opening(self, dic_var: Dict[str, Any]):
+    def _init_opening(self, dic_var: dict[str, Any]):
         self.opening_mandatory = None
         self.opening_line = None
         self.book_rival_active = False
         self.book_player_active = False
         self.aperturaStd = Opening.OpeningPol(1)
 
-    def _init_game(self, dic_var: Dict[str, Any]):
+    def _init_game(self, dic_var: dict[str, Any]):
         self.game.set_tag("Event", _("Opponents for young players"))
 
         self.player_name = self.configuration.nom_player()
@@ -141,7 +137,7 @@ class ManagerPerson(ManagerPlayAgainstEngine.ManagerPlayAgainstEngine):
             time_control += f"+{self.seconds_per_move}"
         self.game.set_tag("TimeControl", time_control)
 
-    def _init_rival(self, dic_var: Dict[str, Any]):
+    def _init_rival(self, dic_var: dict[str, Any]):
         engine = self.configuration.engines.search("irina", None)
         self.manager_rival = self.procesador.create_manager_engine(engine, 0, 2, 0)
         self.imagen = None

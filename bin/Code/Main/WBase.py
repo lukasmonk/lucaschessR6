@@ -8,6 +8,8 @@ from Code.Base.Constantes import (  # TB_BOXROOMS_PGN,
     TB_ACCEPT,
     TB_ADJOURN,
     TB_ADJOURNMENTS,
+    TB_ADJUDICATOR,
+    TB_ADJUDICATOR_STOP,
     TB_ADVICE,
     TB_CANCEL,
     TB_CHANGE,
@@ -54,10 +56,8 @@ from Code.Base.Constantes import (  # TB_BOXROOMS_PGN,
     TB_TOOLS,
     TB_TRAIN,
     TB_TUTOR_STOP,
-    TB_ADJUDICATOR_STOP,
     TB_UTILITIES,
     TB_VARIATIONS,
-    TB_ADJUDICATOR,
 )
 from Code.Board import Board
 from Code.Main import WAnalysisBar, WindowSolve
@@ -88,7 +88,7 @@ class WBase(QtWidgets.QWidget):
     wsolve: WindowSolve.WSolve
 
     def __init__(self, parent, manager):
-        super(WBase, self).__init__(parent)
+        super().__init__(parent)
 
         self.parent = parent
         if "Main" in str(self.parent):
@@ -633,7 +633,7 @@ class WBase(QtWidgets.QWidget):
                     pts = rm.puntos
                     if not is_white:
                         pts = -pts
-                    info = f"{pts / 100.0:+0.2f}"
+                    info = rm.cp_label(pts)
 
                 if color_nag == NAG_0:  # Son prioritarios los nags manuales
                     nothing, color_nag = mrm.set_nag_color(rm)
@@ -818,7 +818,7 @@ class WBase(QtWidgets.QWidget):
                 html += f'<img src="{folder_pgn_pieces}/{tp}{xpz.lower()}.png" width="30" height="30">'
             lb.set_text(html)
 
-        xshow("b", d[True], self.lb_capt_white, xvpz if xvpz > 0 else 0)
+        xshow("b", d[True], self.lb_capt_white, max(0, xvpz))
         xshow("w", d[False], self.lb_capt_black, -xvpz if xvpz < 0 else 0)
         if self.lb_capt_white.isVisible():
             self.lb_capt_white.show()

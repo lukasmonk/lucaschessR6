@@ -1,9 +1,9 @@
 import sqlite3
 
-from Code.Z import Util
 from Code.Databases import DBgames
 from Code.Openings import OpeningsStd
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class DBgamesMov:
@@ -34,8 +34,7 @@ class DBgamesMov:
 
             for rowid, fen, pos, pv in self.dbgames.yield_allfens():
                 if rowid != rowid_prev:
-                    if rowid > last_rowid:
-                        last_rowid = rowid
+                    last_rowid = max(last_rowid, rowid)
                     pos_reg += 1
                     if pos_reg % 100 == 0:
                         ws.pon(pos_reg)
@@ -88,8 +87,7 @@ class DBgamesMov:
         pos_reg = 0
         for rowid, fen, pos, pv in self.dbgames.yield_allfens(last_rowid):
             if rowid != rowid_prev:
-                if rowid > last_rowid:
-                    last_rowid = rowid
+                last_rowid = max(last_rowid, rowid)
                 rowid_prev = rowid
                 pos_reg += 1
                 ws.pon(pos_reg)

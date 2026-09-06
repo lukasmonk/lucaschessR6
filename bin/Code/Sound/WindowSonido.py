@@ -4,7 +4,6 @@ import time
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Board import BoardElements, BoardTypes
 from Code.QT import (
     Colocacion,
@@ -21,6 +20,7 @@ from Code.QT import (
 )
 from Code.Sound import Sound
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class MesaSonido(QtWidgets.QGraphicsView):
@@ -329,12 +329,12 @@ class WEdicionSonido(LCDialog.LCDialog):
 
         self.taller.mic_start()
 
-        ini_time = time.time()
+        ini_time = time.monotonic()
 
         while self.siGrabando:
             self.taller.mic_record()
             QTUtils.refresh_gui()
-            t = time.time() - ini_time
+            t = time.monotonic() - ini_time
             self.mesa.set_hundreds_of_second(t * 100)
             if t > self.max_time:
                 break

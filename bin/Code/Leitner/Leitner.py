@@ -4,7 +4,6 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List
 
 import Code
 from Code import Util
@@ -81,7 +80,7 @@ class LeitnerReg:
     last_session: int = 0
     right: int = 0
     wrong: int = 0
-    date_win: Optional[datetime.datetime] = None
+    date_win: datetime.datetime | None = None
 
     def save(self):
         dic = {
@@ -116,7 +115,7 @@ class Leitner:
     def __init__(self, elems_session: int = 30, min_elems_session: int = 10):
         self.huella = Util.huella()
         self.reference = ""
-        self.source_files: List[FNSFileTraining] = []
+        self.source_files: list[FNSFileTraining] = []
         self.elems_session = elems_session
         self.min_elems_session = min_elems_session
         self.random_order = True
@@ -356,7 +355,7 @@ class LeitnerDB(UtilSQL.ListSQL):
         super().__init__(db_path, is_reversed=True)
         self.cache2 = {}
 
-    def get_leitner(self, pos: int) -> Optional[Leitner]:
+    def get_leitner(self, pos: int) -> Leitner | None:
         if pos in self.cache2:
             return self.cache2[pos]
         dic = self.__getitem__(pos)

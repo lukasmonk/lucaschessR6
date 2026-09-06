@@ -3,6 +3,7 @@ import time
 from PySide6 import QtCore
 from PySide6.QtCore import Qt
 
+from Code.Base import Game
 from Code.Base.Constantes import (
     GT_TACTICS,
     ST_ENDGAME,
@@ -16,11 +17,10 @@ from Code.Base.Constantes import (
     TB_UTILITIES,
 )
 from Code.CompetitionWithTutor import WCompetitionWithTutor
+from Code.Main import WindowSolve
 from Code.ManagerBase import Manager
 from Code.QT import Iconos, QTMessages, QTUtils
 from Code.Tactics import Tactics, WindowTactics
-from Code.Base import Game
-from Code.Main import WindowSolve
 
 
 class ManagerTactics(Manager.Manager):
@@ -111,7 +111,7 @@ class ManagerTactics(Manager.Manager):
         if self.tactic.advanced:
             self.board.show_coordinates(False)
 
-            self.ini_clock = time.time()
+            self.ini_clock = time.monotonic()
             self.wsolve = self.main_window.base.wsolve
             self.wsolve.set_game(self.game_obj, self.advanced_return)
 
@@ -119,7 +119,7 @@ class ManagerTactics(Manager.Manager):
             QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def advanced_return(self, solved):
-        self.tactic.mas_segundos(time.time() - self.ini_clock)
+        self.tactic.mas_segundos(time.monotonic() - self.ini_clock)
         self.wsolve.hide()
         self.board.show_coordinates(True)
         more_errors = self.wsolve.errors
@@ -289,7 +289,7 @@ class ManagerTactics(Manager.Manager):
         else:
             self.human_is_playing = True
             self.activate_side(is_white)
-            self.ini_clock = time.time()
+            self.ini_clock = time.monotonic()
 
     def end_line(self):
         self.state = ST_ENDGAME
@@ -343,7 +343,7 @@ class ManagerTactics(Manager.Manager):
             self.continue_human()
             return False
 
-        seconds = time.time() - self.ini_clock
+        seconds = time.monotonic() - self.ini_clock
         self.tactic.mas_segundos(seconds)
 
         self.add_move(move, True)

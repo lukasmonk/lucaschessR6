@@ -6,7 +6,7 @@ from Code.Board import BoardBlocks
 class SVGSC(BoardBlocks.BloqueEspSC):
     def __init__(self, escena, block_imgsvg, routine_if_pressed=None, is_editing=False):
 
-        super(SVGSC, self).__init__(escena, block_imgsvg)
+        super().__init__(escena, block_imgsvg)
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None

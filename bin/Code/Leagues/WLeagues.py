@@ -3,9 +3,9 @@ import shutil
 import time
 
 import Code
-from Code.Z import Util
 from Code.Leagues import Leagues, WLeague, WLeagueConfig
 from Code.QT import Colocacion, Columnas, Grid, Iconos, LCDialog, QTDialogs, QTMessages
+from Code.Z import Util
 
 
 class WLeagues(LCDialog.LCDialog):

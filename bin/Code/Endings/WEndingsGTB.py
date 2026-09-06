@@ -1,6 +1,6 @@
-from typing import Callable
 import random
 import time
+from collections.abc import Callable
 
 import FasterCode
 from PySide6 import QtCore, QtWidgets
@@ -208,7 +208,7 @@ class WEndingsGTB(LCDialog.LCDialog):
     def startup_control(self):
         if self.playing:
             if self.timer == 0:
-                self.timer = time.time()
+                self.timer = time.monotonic()
 
     def reset(self):
         row = self.grid.recno()
@@ -554,13 +554,13 @@ class WEndingsGTB(LCDialog.LCDialog):
                 self.board.move_piece(movim[1], movim[2])
             elif movim[0] == "c":
                 self.board.change_piece(movim[1], movim[2])
-        self.timer = time.time()
+        self.timer = time.monotonic()
         self.board.set_raw_last_position(self.game.last_position)
         self.continue_human()
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         if self.timer > 0:
-            self.ms += int((time.time() - self.timer) * 1000)
+            self.ms += int((time.monotonic() - self.timer) * 1000)
         self.moves += 1
         self.timer = 0
 

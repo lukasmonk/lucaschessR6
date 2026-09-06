@@ -1,6 +1,6 @@
 import random
 import time
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import Code
 from Code.Z import Util
@@ -52,7 +52,7 @@ class EngineResponse:
 
         self.sinInicializar: bool = True
 
-    def save(self) -> List[Any]:
+    def save(self) -> list[Any]:
         li = [
             self.mate,
             self.puntos,
@@ -64,10 +64,13 @@ class EngineResponse:
             self.nodes,
             self.nps,
             self.seldepth,
+            self.time,
         ]
         return li
 
-    def restore(self, li: List[Any]) -> None:
+    def restore(self, li: list[Any]) -> None:
+        if len(li) == 10:  # error hasta la version 6.0.4, time siempre 0 porque no se guardaba
+            li.append(0)
         (
             self.mate,
             self.puntos,
@@ -79,6 +82,7 @@ class EngineResponse:
             self.nodes,
             self.nps,
             self.seldepth,
+            self.time,
         ) = li
         self.sinInicializar = False
 
@@ -90,7 +94,7 @@ class EngineResponse:
             return self.movimiento()
         return self.pv.strip().lower()
 
-    def change_side(self, position_before: Optional[Any] = None, mv_insert: Optional[str] = None) -> None:
+    def change_side(self, position_before: Any | None = None, mv_insert: str | None = None) -> None:
         # Se usa en tutor para analizar las num_moves siguientes a la del usuario
         # Si no encuentra ninguna move y la move previa es jaque, pasa a mate en 1
         if position_before and self.without_movements:
@@ -160,6 +164,20 @@ class EngineResponse:
 
         return puntos
 
+    def _orden_key(self) -> tuple:
+        if self.mate > 0:
+            return (2, -self.mate)
+        if self.mate < 0:
+            return (0, -self.mate)
+        return (1, self.puntos)
+
+    @staticmethod
+    def cp_label(score):
+        if Code.configuration.x_analyses_decimals == 2:
+            return f"{score / 100.0:+0.2f}"
+        else:
+            return f"{score / 100.0:+0.1f}"
+
     def texto_rival(self) -> str:
         if self.mate:
             t = self.is_white if self.mate > 0 else not self.is_white
@@ -204,7 +222,7 @@ class EngineResponse:
             pt = self.puntos
             if not self.is_white:
                 pt = -pt
-            cp = f"{pt / 100.0:+0.2f}"
+            cp = self.cp_label(pt)
             return f"{cp} {_('pawns')}"
 
     def abbrev_text(self) -> str:
@@ -221,40 +239,25 @@ class EngineResponse:
             c += f'/{self.time / 1000.0:0.01f}"'
         return c
 
+    def _mate_abbrev(self) -> str:
+        mt = self.mate
+        if mt == 1:
+            return ""
+        if not self.is_white:
+            mt = -mt
+        if (mt > 1) and self.is_white:
+            mt -= 1
+        elif (mt < -1) and not self.is_white:
+            mt += 1
+        return f"M{mt:+d}"
+
     def abbrev_text_base(self) -> str:
         if self.mate != 0:
-            mt = self.mate
-            if mt == 1:
-                return ""
-            if not self.is_white:
-                mt = -mt
-            if (mt > 1) and self.is_white:
-                mt -= 1
-            elif (mt < -1) and not self.is_white:
-                mt += 1
-
-            return f"M{mt:+d}"
-        else:
-            pts = self.puntos
-            if not self.is_white:
-                pts = -pts
-            return f"{pts / 100.0:+0.2f}"
-
-    def abbrev_text_base1(self) -> str:
-        is_black = not self.is_white
-        if self.mate != 0:
-            mt = self.mate
-            if is_black:
-                mt = -mt
-            return f"M{mt:+d}"
-        else:
-            pts = self.puntos
-            if is_black:
-                pts = -pts
-            if abs(pts) < 1000:
-                return f"{pts / 100.0:+0.1f}"
-            else:
-                return f"{pts // 100:+d}"
+            return self._mate_abbrev()
+        pts = self.puntos
+        if not self.is_white:
+            pts = -pts
+        return self.cp_label(pts)
 
     def copia(self) -> "EngineResponse":
         rm = EngineResponse(self.name, self.is_white)
@@ -279,6 +282,7 @@ st_uci_claves = {
     "string",
     "refutation",
     "currline",
+    "wdl",
 }
 
 
@@ -294,12 +298,9 @@ class MultiEngineResponse:
     dicDepth: dict
     dicMultiPV: dict
     li_rm: list
-    saveLines: bool
-    lines: list
     _init_time_working: float
     cache_bound: dict
     game: "Game.Game"
-    fen_base: str
 
     def __init__(self, name, is_white):
         self.name = name
@@ -307,7 +308,7 @@ class MultiEngineResponse:
         self.li_rm = []
 
         self.reset()
-        self._init_time_working = time.time()
+        self._init_time_working = time.monotonic()
 
     def reset(self):
         self.vtime = 0
@@ -321,14 +322,9 @@ class MultiEngineResponse:
         self.dicMultiPV = {}
         self.li_rm = []
 
-        self.saveLines = False
-        self.lines = []
-        self._init_time_working = time.time()
+        self._init_time_working = time.monotonic()
 
         self.cache_bound = {}
-
-    def time_used(self):
-        return time.time() - self._init_time_working
 
     def save(self):
         self.ordena()
@@ -341,6 +337,8 @@ class MultiEngineResponse:
             "max_depth": self.max_depth,
             "nodes": self.nodes,
             "li_rm": [rm.save() for rm in self.li_rm],
+            "dicDepth": self.dicDepth,
+            "cache_bound": self.cache_bound,
         }
         return dic
 
@@ -357,6 +355,8 @@ class MultiEngineResponse:
             rm.restore(sv)
             self.dicMultiPV[str(num + 1)] = rm
             self.li_rm.append(rm)
+        self.dicDepth = {int(k): v for k, v in dic.get("dicDepth", {}).items()}
+        self.cache_bound = dict(dic.get("cache_bound", {}))
 
     def clone(self):
         other_mrm = MultiEngineResponse(self.name, self.is_white)
@@ -365,10 +365,6 @@ class MultiEngineResponse:
 
     def get_current_depth(self):
         return max(self.dicDepth.keys()) if self.dicDepth else 0
-
-    def save_lines(self):
-        self.saveLines = True
-        self.lines = []
 
     def set_time_depth(self, max_time, max_depth):
         self.max_time = max_time
@@ -384,17 +380,12 @@ class MultiEngineResponse:
                 return
             is_bound = True
 
-        if linea.startswith("info ") and " pv " in linea:
-            self.check_pv(linea[5:], is_bound)
+        if linea.startswith("info "):
+            self.check_info(linea[5:], is_bound)
 
         elif linea.startswith("bestmove"):
             self.check_best_move(linea)
-
-        elif linea.startswith("info ") and " score " in linea:
-            self.check_score(linea[5:])
-
-        if self.saveLines:
-            self.lines.append(linea)
+            self.vtime = int((time.monotonic() - self._init_time_working) * 1000)
 
     def ordena(self):
         li = []
@@ -411,7 +402,7 @@ class MultiEngineResponse:
             if mov not in set_ya and mov:
                 set_ya.add(mov)
                 li.append(rm)
-        self.li_rm = sorted(li, key=lambda xrm: -xrm.centipawns_abs())  # de mayor a menor
+        self.li_rm = sorted(li, key=lambda xrm: xrm._orden_key(), reverse=True)  # de mayor a menor
 
     def __len__(self):
         return len(self.li_rm)
@@ -421,22 +412,26 @@ class MultiEngineResponse:
             return self.li_rm[0].time
         return 0
 
-    def check_pv(self, pv_base, is_bound):
+    def check_info(self, pv_base, is_bound):
         d_claves = self.check_claves(pv_base, st_uci_claves)
 
-        if "pv" in d_claves:
+        score = ""
+        if "score" in d_claves:
+            score = d_claves["score"].strip()
+            li_score = score.split()
+            if li_score and li_score[0] == "mate" and len(li_score) >= 2 and li_score[1] in ("0", "-0", "+0"):
+                return  # mate 0: posicion ya terminada, se ignora la linea
+
+        has_pv = "pv" in d_claves
+        if has_pv:
             pv = d_claves["pv"].strip()
             if not pv:
                 return
         else:
-            return
+            pv = ""
 
         if "nodes" in d_claves:  # Toga en multipv, envia 0 si no tiene nada que contar
             if (d_claves["nodes"] == "0") and "mate" not in pv_base:
-                return
-
-        if "score" in d_claves:
-            if "mate 0 " in pv_base or "mate -0 " in pv_base or "mate +0 " in pv_base:
                 return
 
         if "multipv" in d_claves:
@@ -453,6 +448,7 @@ class MultiEngineResponse:
         rm = self.dicMultiPV[k_multi]
         rm.sinInicializar = False
 
+        depth = 0
         if "depth" in d_claves:
             try:
                 depth = int(d_claves["depth"].strip())
@@ -461,12 +457,9 @@ class MultiEngineResponse:
                         if (depth > self.max_depth) and (depth > rm.depth):
                             return
                 rm.depth = depth
-                if depth > self.depth:
-                    self.depth = depth
+                self.depth = max(self.depth, depth)
             except (ValueError, AttributeError):
                 depth = 0
-        else:
-            depth = 0
 
         if "time" in d_claves:
             try:
@@ -496,9 +489,8 @@ class MultiEngineResponse:
             except (ValueError, AttributeError):
                 pass  # Keep previous seldepth value
 
-        if "score" in d_claves:
+        if score:
             try:
-                score = d_claves["score"].strip()
                 if score.startswith("cp "):
                     rm.puntos = int(score.split(" ")[1])
                     rm.mate = 0
@@ -510,7 +502,9 @@ class MultiEngineResponse:
             except (ValueError, IndexError, AttributeError):
                 pass  # Keep previous score values
 
-        pv = d_claves["pv"].strip()
+        if not has_pv:
+            return
+
         x = pv.find(" ")
         pv1 = pv[:x] if x >= 0 else pv
         rm.pv = pv
@@ -531,56 +525,6 @@ class MultiEngineResponse:
                 self.dicDepth[depth] = {}
             self.dicDepth[depth][rm.movimiento()] = rm.score_abs5()
 
-    def check_score(self, pv_base):
-        d_claves = self.check_claves(pv_base, st_uci_claves)
-
-        if "multipv" in d_claves:
-            k_multi = d_claves["multipv"]
-            if k_multi not in self.dicMultiPV:
-                self.dicMultiPV[k_multi] = EngineResponse(self.name, self.is_white)
-        else:
-            if len(self.dicMultiPV) == 0:
-                k_multi = "1"
-                self.dicMultiPV[k_multi] = EngineResponse(self.name, self.is_white)
-            else:
-                k_multi = list(self.dicMultiPV.keys())[0]
-
-        rm = self.dicMultiPV[k_multi]
-        rm.sinInicializar = False
-
-        if "depth" in d_claves:
-            depth = d_claves["depth"].strip()
-            if depth.isdigit():
-                depth = int(depth)
-                if self.max_depth:
-                    if rm.from_sq:  # Es decir que ya tenemos datos (rm.pv al principio = a1a1
-                        if (depth > self.max_depth) and (depth > rm.depth):
-                            return
-                rm.depth = depth
-
-        if "time" in d_claves:
-            try:
-                tm = d_claves["time"].strip()
-                if tm.isdigit():
-                    rm.time = int(tm)
-            except (ValueError, AttributeError):
-                pass  # Keep previous time value
-
-        if "score" in d_claves:
-            try:
-                score = d_claves["score"].strip()
-                if score.startswith("cp "):
-                    rm.puntos = int(score.split(" ")[1])
-                    rm.mate = 0
-                    rm.without_movements = False
-                elif score.startswith("mate "):
-                    rm.puntos = 0
-                    rm.mate = int(score.split(" ")[1])
-                    if not rm.mate:  # stockfish mate 0
-                        rm.mate = -1
-            except (ValueError, IndexError, AttributeError):
-                pass  # Keep previous score values
-
     def add_rm(self, rm):
         # Para los analysis MultiPV donde no han considerado una move
         max_depth = 0
@@ -590,8 +534,7 @@ class MultiEngineResponse:
             if rm.movimiento() == rm1.movimiento():
                 included = True
                 break
-            if int(cdepth) > max_depth:
-                max_depth = int(cdepth)
+            max_depth = max(max_depth, int(cdepth))
         if not included:
             self.dicMultiPV[str(max_depth + 1)] = rm
         self.ordena()
@@ -640,61 +583,19 @@ class MultiEngineResponse:
             rm.without_movements = True
 
     @staticmethod
-    def check_claves(mensaje, st_claves):
-        d_claves = {}
-        key = ""
-        dato = ""
-        for palabra in mensaje.split(" "):
-            if palabra in st_claves:
-                if key:
-                    d_claves[key] = dato.strip()
-                key = palabra
-                dato = ""
-            else:
-                dato += f" {palabra}"
-        if key:
-            d_claves[key] = dato.strip()
-        return d_claves
+    def check_claves(mensaje: str, st_claves: set[str]) -> dict[str, str]:
+        tokens = mensaje.split()
+        d_claves: dict[str, list[str]] = {}
+        current_key = None
 
-    def is_stable(self, centipawns, num_depths):
-        li_depths = list(self.dicDepth.keys())
-        if len(li_depths) > 40:
-            return True
-        if len(li_depths) <= num_depths:
-            return False
-        li_depths.sort(reverse=True)
+        for token in tokens:
+            if token in st_claves:
+                current_key = token
+                d_claves[current_key] = []
+            elif current_key is not None:
+                d_claves[current_key].append(token)
 
-        def best(npos):
-            dic = self.dicDepth[li_depths[npos]]
-            li_best = []
-            pmax = -999999
-            for mov, pts in dic.items():
-                if pts > pmax:
-                    li_best = [mov]
-                    pmax = pts
-                elif pts == pmax:
-                    li_best.append(mov)
-            return li_best, pmax
-
-        def equal(li_best0, li_best1):
-            li_mov0, pts0 = li_best0
-            li_mov1, pts1 = li_best1
-            if len(li_mov0) != len(li_mov1):
-                return False
-            if abs(pts0 - pts1) > centipawns:
-                return False
-
-            for mov0 in li_mov0:
-                if mov0 not in li_mov1:
-                    return False
-            return True
-
-        l_d = [best(pos) for pos in range(num_depths)]
-        l_0 = l_d[0]
-        for pos in range(1, num_depths):
-            if not equal(l_d[pos], l_0):
-                return False
-        return True
+        return {k: " ".join(v) for k, v in d_claves.items()}
 
     def search_rm(self, movimiento):
         movimiento = movimiento.lower()
@@ -732,15 +633,7 @@ class MultiEngineResponse:
         return x
 
     def rm_best(self):
-        num = len(self.li_rm)
-        if num == 0:
-            return None
-        rm = self.li_rm[0]
-        for x in range(1, num):
-            rm1 = self.li_rm[x]
-            if rm1.is_better_than(rm):
-                rm = rm1
-        return rm
+        return self.li_rm[0] if self.li_rm else None
 
     def dif_points_best(self, movimiento):
         rmbest = self.rm_best()
@@ -817,7 +710,7 @@ class MultiEngineResponse:
                 if hasattr(move, "puntosABS_3"):  # se graban en mejormovajustado
                     puntos_previos = move.puntosABS_3
             difpuntos = (
-                    rm0.centipawns_abs() - puntos_previos
+                rm0.centipawns_abs() - puntos_previos
             )  # son puntos ganados por el engine y perdidos por el player
             if difpuntos > mindifpuntos:
                 if fdbg:
@@ -825,12 +718,12 @@ class MultiEngineResponse:
                 return True
         return False
 
-    def adjust_personality(self, una):
+    def adjust_personality(self, una, fen_base):
         def x(key, default=0):
             return una.get(key, default)
 
         cp = Position.Position()
-        cp.read_fen(self.fen_base)
+        cp.read_fen(fen_base)
 
         dbg = una.get("DEBUG")
         fdbg = None
@@ -838,7 +731,7 @@ class MultiEngineResponse:
             try:
                 fdbg = open(dbg, "at", encoding="utf-8", errors="ignore")
                 fdbg.write(f"\n{cp.pr_board()}\n")
-            except (IOError, OSError):
+            except OSError:
                 # If debug file cannot be opened, continue without debug logging
                 fdbg = None
                 dbg = None
@@ -976,17 +869,7 @@ class MultiEngineResponse:
                     n = not n
 
         # Ordenamos
-        li = []
-        for rm in self.li_rm:
-            elpeor = True
-            for n, rm1 in enumerate(li):
-                if rm.is_better_than(rm1, 0, 0):
-                    li.insert(n, rm)
-                    elpeor = False
-                    break
-            if elpeor:
-                li.append(rm)
-        self.li_rm = li
+        self.li_rm = sorted(self.li_rm, key=lambda xrm: xrm._orden_key(), reverse=True)
 
         if dbg:
             fdbg.write("Result:\n")
@@ -1177,7 +1060,7 @@ class MultiEngineResponse:
             pts_ant = pts
         return rm_sel
 
-    def best_adjusted_move(self, n_tipo):
+    def best_adjusted_move(self, n_tipo, fen_base):
         mindifpuntos = maxmate = 0
         if self.li_rm:
             rm_sel = None
@@ -1187,7 +1070,7 @@ class MultiEngineResponse:
             if si_personalidad:
                 li_personalities = Code.configuration.li_personalities
                 n_tipo, mindifpuntos, maxmate, dbg, aterrizaje = self.adjust_personality(
-                    li_personalities[n_tipo - 1000]
+                    li_personalities[n_tipo - 1000], fen_base
                 )
 
             if n_tipo == ADJUST_BETTER:
@@ -1208,16 +1091,16 @@ class MultiEngineResponse:
                                 break
 
             elif n_tipo in (
-                    ADJUST_HIGH_LEVEL,
-                    ADJUST_LOW_LEVEL,
-                    ADJUST_INTERMEDIATE_LEVEL,
+                ADJUST_HIGH_LEVEL,
+                ADJUST_LOW_LEVEL,
+                ADJUST_INTERMEDIATE_LEVEL,
             ):
                 n_tipo = self.bestmov_adjusted_level(n_tipo)  # Se corta el if para que se calcule el nTipo
 
             if n_tipo in (
-                    ADJUST_SOMEWHAT_BETTER,
-                    ADJUST_SOMEWHAT_BETTER_MORE_MORE,
-                    ADJUST_SOMEWHAT_BETTER_MORE,
+                ADJUST_SOMEWHAT_BETTER,
+                ADJUST_SOMEWHAT_BETTER_MORE_MORE,
+                ADJUST_SOMEWHAT_BETTER_MORE,
             ):
                 nivel = {
                     ADJUST_SOMEWHAT_BETTER: 1,
@@ -1234,9 +1117,9 @@ class MultiEngineResponse:
                 rm_sel = self.bestmov_adjusted_similar(mindifpuntos, maxmate, aterrizaje)
 
             elif n_tipo in (
-                    ADJUST_WORSE,
-                    ADJUST_SOMEWHAT_WORSE_LESS,
-                    ADJUST_SOMEWHAT_WORSE_LESS_LESS,
+                ADJUST_WORSE,
+                ADJUST_SOMEWHAT_WORSE_LESS,
+                ADJUST_SOMEWHAT_WORSE_LESS_LESS,
             ):
                 nivel = {
                     ADJUST_WORSE: 1,

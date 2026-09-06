@@ -2,9 +2,9 @@ import random
 import time
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.QT import Controles, Iconos, QTDialogs, QTMessages
+from Code.Z import Util
 
 
 class ManagerChallenge101:
@@ -67,7 +67,7 @@ class ManagerChallenge101:
 
         self.intentos = 0
         self.max_intentos = (self.difficult + 1) // 2 + 4
-        self.iniTime = time.time()
+        self.iniTime = time.monotonic()
 
     def lee_results(self):
         dic = self.configuration.read_variables(self.cod_variables)
@@ -182,7 +182,7 @@ class ManagerChallenge101:
         self.save_position()  # Solo cuando ha hecho un intento
         self.puntos_ultimo = 0
         if from_sq + to_sq == self.result:  # No hay promotiones
-            tm = time.time() - self.iniTime
+            tm = time.monotonic() - self.iniTime
             self.board.disable_all()
             self.cp.play(from_sq, to_sq, promotion)
             self.board.set_position(self.cp)

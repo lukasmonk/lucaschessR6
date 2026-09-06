@@ -1,5 +1,3 @@
-from typing import Optional
-
 import os
 
 import FasterCode
@@ -8,9 +6,9 @@ from PySide6 import QtWidgets
 from Code.Base import Game, Position
 from Code.Books import Books, WBooks
 from Code.Databases import DBgames, DBgamesST, WDB_Games, WDB_Summary
+from Code.Engines import EngineManagerAnalysis
 from Code.Openings import POLAnalisisTree
 from Code.QT import Colocacion, Columnas, Controles, Delegados, FormLayout, Grid, Iconos, QTDialogs
-from Code.Engines import EngineManagerAnalysis
 
 
 class TabEngine(QtWidgets.QWidget):
@@ -22,7 +20,7 @@ class TabEngine(QtWidgets.QWidget):
         self.analyzing = False
         self.position = None
         self.li_analysis = []
-        self.engine_manager: Optional[EngineManagerAnalysis.EngineManagerAnalysis] = None
+        self.engine_manager: EngineManagerAnalysis.EngineManagerAnalysis | None = None
         self.current_mrm = None
         self.pv = None
 

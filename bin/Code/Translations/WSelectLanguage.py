@@ -4,8 +4,7 @@ from PySide6 import QtWidgets
 
 import Code
 from Code.Base.Constantes import ExitProgram
-from Code.QT import Colocacion, Iconos, QTDialogs
-from Code.QT import Controles, LCDialog, ScreenUtils, QTUtils
+from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTUtils, ScreenUtils
 
 
 class WSelectLanguage(LCDialog.LCDialog):

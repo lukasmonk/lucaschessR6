@@ -3,14 +3,14 @@ import sys
 from PySide6 import QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Config import Configuration
 from Code.Main import InitApp
 from Code.Openings import OpeningsStd
-from Code.QT import Piezas, Iconos
+from Code.QT import Iconos, Piezas
 from Code.Swiss import Swiss, SwissWork
 from Code.Workers import RunWorker, Worker
+from Code.Z import Util
 
 
 class SwissWorker(RunWorker.RunWorker):

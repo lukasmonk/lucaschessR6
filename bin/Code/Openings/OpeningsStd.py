@@ -16,7 +16,7 @@ fen_fenm2 = FasterCode.fen_fenm2
 
 
 class Opening:
-    __slots__ = ("name", "parent_fm2", "children_fm2", "a1h8", "pgn", "eco", "is_basic", "fm2")
+    __slots__ = ("a1h8", "children_fm2", "eco", "fm2", "is_basic", "name", "parent_fm2", "pgn")
 
     def __init__(self, key: str):
         self.name: str = key
@@ -130,7 +130,7 @@ class ListaOpeningsStd:
 
                 li_moves = a1h8.split(" ")
                 for pos, move in enumerate(li_moves):
-                    pv = " ".join(li_moves[: pos])
+                    pv = " ".join(li_moves[:pos])
                     fen64 = Util.fen_fen64(li_fen[pos])
                     if pv not in dd[fen64]:
                         dd[fen64].append(pv)

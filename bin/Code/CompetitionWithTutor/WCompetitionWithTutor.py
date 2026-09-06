@@ -136,7 +136,7 @@ def dame_categoria(w_parent):
 
 class WDatos(QtWidgets.QDialog):
     def __init__(self, w_parent, rival, categorias, categoria):
-        super(WDatos, self).__init__(w_parent)
+        super().__init__(w_parent)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -259,7 +259,7 @@ class WNumEntrenamiento(QtWidgets.QDialog):
     number: int
 
     def __init__(self, w_parent, titulo, to_sq, etiqueta=None, pos=None, additional_message=None):
-        super(WNumEntrenamiento, self).__init__(w_parent)
+        super().__init__(w_parent)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 

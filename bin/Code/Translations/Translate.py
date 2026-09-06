@@ -45,7 +45,7 @@ class Translations:
 
                 def lmp(msg):
                     if "||" in msg:
-                        msg = msg[msg.index("||")+2:].strip()
+                        msg = msg[msg.index("||") + 2 :].strip()
                     return msg
 
                 dicn = {entry.msgid: lmp(entry.msgstr) for entry in pomofile}
@@ -163,7 +163,7 @@ class Translations:
 def install(lang):
     do_install = Code.translations is None
     if not do_install:
-        builtins_trans = getattr(builtins, "_")
+        builtins_trans = builtins._
         do_install = builtins_trans is None or builtins_trans != Code.translations.translate
         if not do_install:
             do_install = Code.translations.lang != lang

@@ -1,7 +1,5 @@
 import os
 
-import OSEngines  # in OS folder
-
 import Code
 from Code.Base.Constantes import (
     ENG_ELO,
@@ -14,7 +12,6 @@ from Code.Base.Constantes import (
     ENG_RODENT,
     ENG_WICKER,
 )
-from Code.Competitions import ManagerElo
 from Code.Engines import Engines, EnginesMicElo, EnginesWicker
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.Z import Util
@@ -146,8 +143,9 @@ def gen_engines_irina():
 
 
 def gen_engines_elo():
-    d = OSEngines.read_engines(Code.folder_engines)
+    d = Code.configuration.engines.dic_engines_internal()
     li = []
+    from Code.Competitions import ManagerElo
     for elo, key, depth in ManagerElo.list_engines_play_elo():
         if key in d:
             cm = d[key].clone()

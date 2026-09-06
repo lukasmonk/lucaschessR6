@@ -1,7 +1,6 @@
 import gc
 import threading
 import time
-from typing import Optional, List
 
 from PySide6 import QtCore
 
@@ -11,7 +10,7 @@ class GarbageCollector(QtCore.QObject):
     A class that runs garbage collection periodically in a separate thread.
     """
 
-    def __init__(self, parent: Optional[QtCore.QObject] = None, interval_seconds: int = 30, use_threading: bool = True):
+    def __init__(self, parent: QtCore.QObject | None = None, interval_seconds: int = 30, use_threading: bool = True):
         """
         Initialize the GarbageCollector.
 
@@ -29,7 +28,7 @@ class GarbageCollector(QtCore.QObject):
         self._timer.timeout.connect(self._on_timeout)
         self._running: bool = False
         self._lock = threading.Lock()
-        self._worker_threads: List[threading.Thread] = []
+        self._worker_threads: list[threading.Thread] = []
         self._is_collecting: bool = False
 
     @QtCore.Slot()
@@ -90,11 +89,11 @@ class GarbageCollector(QtCore.QObject):
 
         if self.use_threading:
             # Wait for threads outside the lock to avoid deadlocks
-            deadline = time.time() + wait_workers_seconds
+            deadline = time.monotonic() + wait_workers_seconds
             for t in list(self._worker_threads):
                 if not t.is_alive():
                     continue
-                remaining = deadline - time.time()
+                remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     break
                 t.join(timeout=remaining)

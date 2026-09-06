@@ -7,7 +7,7 @@ from Code.QT import Colocacion, Controles, Iconos, QTDialogs, QTMessages
 
 class WAnalisisVariations(QtWidgets.QDialog):
     def __init__(self, o_base, ventana, segundos_pensando, is_white, c_puntos):
-        super(WAnalisisVariations, self).__init__(ventana)
+        super().__init__(ventana)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -75,7 +75,7 @@ class WAnalisisVariations(QtWidgets.QDialog):
         self.lbPuntuacionNueva.set_text(pts)
 
     def process_toolbar(self):
-        self.oBase.process_toolbar(getattr(self.sender(), "key"))
+        self.oBase.process_toolbar(self.sender().key)
 
     def start_clock(self, funcion):
         if self.timer is None:

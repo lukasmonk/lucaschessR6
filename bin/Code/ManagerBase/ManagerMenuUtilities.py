@@ -1,6 +1,5 @@
 import os
 
-from Code.Z import Util
 from Code.Analysis import AI
 from Code.Base import Game
 from Code.Base.Constantes import (
@@ -20,8 +19,9 @@ from Code.QT import (
     QTUtils,
     SelectFiles,
 )
-from Code.ZQT import WindowSavePGN
 from Code.Themes import AssignThemes
+from Code.Z import Util
+from Code.ZQT import WindowSavePGN
 
 
 class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
@@ -174,7 +174,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
                     return resp
 
         if resp == "play_instead_of_me":
-            getattr(self.manager, "play_instead_of_me")()
+            self.manager.play_instead_of_me()
             return None
 
         elif resp == "help_to_move":
@@ -332,7 +332,7 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
 
     def save_lcsb(self):
         if self.manager.game_type in (GT_ALONE, GT_GAME, GT_VARIATIONS) and hasattr(self, "grabarComo"):
-            return getattr(self, "grabarComo")()
+            return self.grabarComo()
 
         dic = dict(GAME=self.game.save(True))
 
@@ -342,6 +342,8 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
             file = SelectFiles.save_file(self.main_window, _("File to save"), file, extension, False)
             if file:
                 file = str(file)
+                if not file.endswith(".lcsb"):
+                    file += ".lcsb"
                 if os.path.isfile(file):
                     yn = QTMessages.question_withcancel(
                         self.main_window,

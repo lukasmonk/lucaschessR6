@@ -1,5 +1,5 @@
-from Code.Z import Util
 from Code.Odt import XML
+from Code.Z import Util
 
 
 class Settings(XML.XML):

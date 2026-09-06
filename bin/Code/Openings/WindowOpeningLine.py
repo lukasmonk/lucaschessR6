@@ -18,7 +18,7 @@ from Code.Base.Constantes import (
 )
 from Code.Books import Books, Polyglot, WBooks
 from Code.Databases import DBgames
-from Code.Engines import EnginesBunch, Priorities, Engines
+from Code.Engines import Engines, EnginesBunch, Priorities
 from Code.Openings import (
     OpeningLines,
     OpeningsStd,
@@ -215,8 +215,8 @@ class WLines(LCDialog.LCDialog):
         if resp:
             if isinstance(resp, str):
                 if QTMessages.pregunta(
-                        self,
-                        _("Are you sure you want to restore backup %s ?") % f"\n{resp}",
+                    self,
+                    _("Are you sure you want to restore backup %s ?") % f"\n{resp}",
                 ):
                     um = QTMessages.working(self)
                     self.dbop.recovering_history(resp)
@@ -337,7 +337,9 @@ class WLines(LCDialog.LCDialog):
 
             engine = self.configuration.engines.search(clave_motor).clone()
             engine.set_multipv_var(multi_pv)
-            xmanager = self.procesador.create_manager_analyzer_var(engine, ms, depth, 0, engine.multiPV, priority=priority)
+            xmanager = self.procesador.create_manager_analyzer_var(
+                engine, ms, depth, 0, engine.multiPV, priority=priority
+            )
 
         mensaje = f"{_('Move')}  %d/{len(stfen)!s}"
         tmp_bp = QTMessages.ProgressBarSimple(self, _("Mass analysis"), "", len(stfen))
@@ -1455,8 +1457,7 @@ class WLines(LCDialog.LCDialog):
                     best_num = 0
                     for a1h8, lines in dic_a1h8.items():
                         num = len(lines)
-                        if num > best_num:
-                            best_num = num
+                        best_num = max(best_num, num)
                     if best_num:
                         for a1h8 in st_a1h8:
                             num = len(dic_a1h8[a1h8])
@@ -1521,8 +1522,8 @@ class WLines(LCDialog.LCDialog):
 
     def remove_pv(self, pgn, a1h8):
         if QTMessages.pregunta(
-                self,
-                _("Do you want to remove all lines beginning with %s?").replace("%s", pgn),
+            self,
+            _("Do you want to remove all lines beginning with %s?").replace("%s", pgn),
         ):
             um = QTMessages.working(self)
             self.dbop.remove_pv(pgn, a1h8)

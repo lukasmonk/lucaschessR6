@@ -1,4 +1,5 @@
 import FasterCode
+
 from Code.Z import Util
 from Code.Base.Constantes import ENG_INTERNAL
 from Code.Engines import Engines
@@ -380,7 +381,7 @@ def read_engines(folder_engines):
     )
     cm.name = "Gambit-fruit"
 
-    is_bmi2 = FasterCode.bmi2() == 1
+    is_bmi2 = FasterCode.is_bmi2()
 
     try:
         mas("patricia", "Adam Kulju", "4 v2", "https://github.com/Adam-Kulju/Patricia", "patricia_4_v2.exe", 3500)
@@ -439,9 +440,9 @@ def read_engines(folder_engines):
     cm = mas(
         "stockfish",
         "T. Romstad, M. Costalba, J. Kiiski, G. Linscott",
-        "18 64",
+        "19",
         "https://stockfishchess.org/",
-        "Stockfish-18-64.exe",
+        "stockfish-windows-x86-64-universal.exe",
         3700,
         nodes_compatible=True,
     )

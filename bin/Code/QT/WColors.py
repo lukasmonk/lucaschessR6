@@ -1,8 +1,8 @@
 from PySide6 import QtCore, QtGui
 
 import Code
-from Code.Z import Util
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, ScreenUtils
+from Code.Z import Util
 
 
 class WColors(LCDialog.LCDialog):

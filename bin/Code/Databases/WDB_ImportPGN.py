@@ -5,7 +5,7 @@ from PySide6 import QtWidgets
 
 import Code
 from Code.Databases import WDB_Filters, WDB_RemComVariations
-from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils, SelectFiles, ScreenUtils
+from Code.QT import Colocacion, Controles, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils, ScreenUtils, SelectFiles
 from Code.Z import Util
 
 
@@ -270,12 +270,12 @@ class WImportPGN(LCDialog.LCDialog):
 
             max_time = 5.0
             min_time = 1.0
-            ini_time = time.time()
+            ini_time = time.monotonic()
 
             dic_tags_complete = {}
             with QTMessages.one_moment_please(self, _("Working...")):
                 for file in self.files:
-                    elapsed = time.time() - ini_time
+                    elapsed = time.monotonic() - ini_time
                     max_time -= elapsed
                     file_time = max(max_time, min_time)
                     st, dic_tags = self.scan_pgn_tags(file, file_time)
@@ -284,11 +284,7 @@ class WImportPGN(LCDialog.LCDialog):
                         st_tags.setdefault(tag, set()).update(vals)
 
             if st_tags:
-                w_filter = WDB_Filters.WFiltrarPGN(
-                    self,
-                    st_tags,
-                    dic_tags_complete
-                )
+                w_filter = WDB_Filters.WFiltrarPGN(self, st_tags, dic_tags_complete)
                 if w_filter.exec():
                     self.filter_func = WDB_Filters.make_filter_func(w_filter.li_filter)
                 else:
@@ -333,15 +329,15 @@ class WImportPGN(LCDialog.LCDialog):
         dic_tags = {}
         tags_saturated = set()
 
-        start_time = time.time()
-        # Frecuencia de control de tiempo (cada 500 líneas) para no saturar con time.time()
+        start_time = time.monotonic()
+        # Frecuencia de control de tiempo (cada 500 líneas) para no saturar con time.monotonic()
         check_interval = 500
 
         try:
             with Util.OpenCodec(file, "rt") as fh:
                 for i, line in enumerate(fh):
                     # Solo comprobamos el tiempo cada X líneas para ahorrar ciclos de CPU
-                    if i % check_interval == 0 and (time.time() - start_time) > max_time:
+                    if i % check_interval == 0 and (time.monotonic() - start_time) > max_time:
                         break
 
                     if not line.startswith("["):

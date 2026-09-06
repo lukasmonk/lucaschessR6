@@ -105,7 +105,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
         self.lb_active_score_k.set_text(f"{_('Active score')}:")
         self.current_score = 0
         self.working = True
-        self.time_ini = time.time()
+        self.time_ini = time.monotonic()
         QtCore.QTimer.singleShot(1000, self.comprueba_time)
 
     def show_data(self):
@@ -150,7 +150,7 @@ class WRunCoordinatesBlocks(LCDialog.LCDialog):
 
     def comprueba_time(self):
         if self.working:
-            dif_time = time.time() - self.time_ini
+            dif_time = time.monotonic() - self.time_ini
             if dif_time >= 30.0:
                 self.end_block()
             else:

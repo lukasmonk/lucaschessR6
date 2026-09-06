@@ -2,10 +2,10 @@ import webbrowser
 
 import Code
 import Code.Nags.Nags
-from Code.Z import Util
 from Code.Base import Game
 from Code.QT import Colocacion, Columnas, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 SEPARADOR_KEY = "||"
 
@@ -175,8 +175,7 @@ class WPrompts(LCDialog.LCDialog):
         for key in self.li_keys:
             order, name, xid = key.split(SEPARADOR_KEY)
             order = int(order)
-            if order > x:
-                x = order
+            x = max(x, order)
         return x + 1
 
     def refresh_all(self):

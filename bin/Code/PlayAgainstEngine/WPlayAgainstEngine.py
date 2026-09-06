@@ -1,5 +1,5 @@
 import os
-from typing import Optional, List, Any
+from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
@@ -22,13 +22,17 @@ from Code.Base.Constantes import (
     ENG_WICKER,
     FEN_INITIAL,
     SELECTED_BY_PLAYER,
-    TIMEMODE_FISCHER, TIMEMODE_BRONSTEIN, TIMEMODE_DELAY_SIMPLE,
-    TIMEMODE_SUDDEN_DEATH, TIMEMODE_HOURGLASS, TIMEMODE_MOVES_IN_TIME
+    TIMEMODE_BRONSTEIN,
+    TIMEMODE_DELAY_SIMPLE,
+    TIMEMODE_FISCHER,
+    TIMEMODE_HOURGLASS,
+    TIMEMODE_MOVES_IN_TIME,
+    TIMEMODE_SUDDEN_DEATH,
 )
 from Code.Books import Books, WBooks
-from Code.Engines import SelectEngines, WConfEngines, WExternalEngines, Engines
+from Code.Engines import Engines, SelectEngines, WConfEngines, WExternalEngines
 from Code.Openings import OpeningsStd, WindowOpeningLines, WindowOpenings
-from Code.PlayAgainstEngine import Chess2880, Personalities, ConfigurationsPAE
+from Code.PlayAgainstEngine import Chess2880, ConfigurationsPAE, Personalities
 from Code.QT import (
     Colocacion,
     Columnas,
@@ -50,14 +54,14 @@ from Code.Z import Util
 class WPlayAgainstEngine(LCDialog.LCDialog):
     # Fields in table in Advanced, to manage various types
     me_control: str
-    me_key: Optional[str]
+    me_key: str | None
 
     rival: Engines.Engine
 
     fen: str
 
-    opening_block: Optional[OpeningsStd.Opening]
-    opening_line: Optional[dict]
+    opening_block: OpeningsStd.Opening | None
+    opening_line: dict | None
 
     dic_saved: dict
 
@@ -78,7 +82,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         self.list_books = Books.ListBooks()
 
-        self.tb: Optional[QTDialogs.LCTB] = None
+        self.tb: QTDialogs.LCTB | None = None
         self._init_toolbar()
 
         # Tab
@@ -346,9 +350,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         ]
         lb_mode = Controles.LB2P(self, _("Mode")).set_font(font)
         self.cb_time_mode = (
-            Controles.CB(self, li_modes, TIMEMODE_FISCHER)
-            .set_font(font)
-            .capture_changes(self._on_time_mode_changed)
+            Controles.CB(self, li_modes, TIMEMODE_FISCHER).set_font(font).capture_changes(self._on_time_mode_changed)
         )
         ly_mode = Colocacion.H().control(lb_mode).control(self.cb_time_mode).relleno()
 
@@ -368,7 +370,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         )
 
         # -- Extra minutes for the player
-        self.lbMinExtra = Controles.LB(self, f"{_("Extra minutes for the player")}:").set_font(font)
+        self.lbMinExtra = Controles.LB(self, f"{_('Extra minutes for the player')}:").set_font(font)
         self.edMinExtra = Controles.ED(self).type_float(0.0).set_font(font).relative_width(40)
 
         # -- Disable user time
@@ -776,7 +778,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                 valor = op.default
             else:
                 valor = op.valor
-                for xnombre, xvalor in self.rival.liUCI:
+                for xnombre, xvalor in self.rival.li_changed_options:
                     if xnombre == op.name:
                         valor = xvalor
                         break
@@ -791,7 +793,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         opcion = self.rival.li_uci_options_editable()[recno]
         key = opcion.name
         value = opcion.valor
-        for xkey, xvalue in self.rival.liUCI:
+        for xkey, xvalue in self.rival.li_changed_options:
             if xkey == key:
                 value = xvalue
                 break
@@ -831,15 +833,15 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
     def set_uci_default(self):
         if QTMessages.pregunta(self, _("Are you sure you want to set the default configuration?")):
             for opcion in self.rival.li_uci_options_editable():
-                if opcion.valor != opcion.default:
-                    self.rival.set_uci_option(opcion.name, opcion.default)
+                opcion.valor = opcion.default
+            self.rival.li_changed_options = []
             self.grid_uci.refresh()
 
     def grid_bold(self, _grid, row, _obj_column):
         op = self.rival.li_uci_options_editable()[row]
         name = op.name
         valor = op.valor
-        for xnombre, xvalor in self.rival.liUCI:
+        for xnombre, xvalor in self.rival.li_changed_options:
             if xnombre == name:
                 valor = xvalor
                 break
@@ -930,12 +932,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         def time_depth(show):
             for obj in (
-                    self.lb_depth,
-                    self.ed_rdepth,
-                    self.bt_cancel_rdepth,
-                    self.lb_rtime,
-                    self.ed_rtime,
-                    self.bt_cancel_rtime,
+                self.lb_depth,
+                self.ed_rdepth,
+                self.bt_cancel_rdepth,
+                self.lb_rtime,
+                self.ed_rtime,
+                self.bt_cancel_rtime,
             ):
                 obj.setVisible(show)
             if not show:
@@ -981,10 +983,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             self.ed_rdepth.set_integer(self.rival.max_depth)
             hide_time_depth = True
 
-        elif self.rival.type == ENG_MICGM:
-            hide_time_depth = True
-
-        elif self.rival.type in (ENG_MICPER, ENG_WICKER):
+        elif self.rival.type == ENG_MICGM or self.rival.type in (ENG_MICPER, ENG_WICKER):
             hide_time_depth = True
 
         elif self.rival.type == ENG_INTERNAL:
@@ -1093,10 +1092,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def test_unlimited(self):
         visible = (
-                self.ed_rdepth.text_to_integer() == 0
-                and self.ed_rtime.text_to_float() == 0
-                and self.ed_nodes.text_to_integer() == 0
-                and not self.gb_time.isChecked()
+            self.ed_rdepth.text_to_integer() == 0
+            and self.ed_rtime.text_to_float() == 0
+            and self.ed_nodes.text_to_integer() == 0
+            and not self.gb_time.isChecked()
         )
         self.lb_unlimited.setVisible(visible)
         self.cb_unlimited.setVisible(visible)
@@ -1138,26 +1137,26 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         chess18 = menu.submenu(tr_chess("18"), rondo_main.otro())
         for pos, uno in enumerate(
-                (
-                        "rbbqknnr",
-                        "rqbbknnr",
-                        "rbbnkqnr",
-                        "rnbbkqnr",
-                        "rbbnknqr",
-                        "rnbbknqr",
-                        "rqbnkbnr",
-                        "rnbnkbqr",
-                        "rnnbkqbr",
-                        "rbnnkqbr",
-                        "rqnbknbr",
-                        "rnqbknbr",
-                        "rbqnknbr",
-                        "rbnqknbr",
-                        "rnnqkbbr",
-                        "rnqnkbbr",
-                        "rqnnkbbr",
-                ),
-                1,
+            (
+                "rbbqknnr",
+                "rqbbknnr",
+                "rbbnkqnr",
+                "rnbbkqnr",
+                "rbbnknqr",
+                "rnbbknqr",
+                "rqbnkbnr",
+                "rnbnkbqr",
+                "rnnbkqbr",
+                "rbnnkqbr",
+                "rqnbknbr",
+                "rnqbknbr",
+                "rbqnknbr",
+                "rbnqknbr",
+                "rnnqkbbr",
+                "rnqnkbbr",
+                "rqnnkbbr",
+            ),
+            1,
         ):
             fen = f"{uno}/pppppppp/8/8/8/8/PPPPPPPP/{uno.upper()} w KQkq - 0 1"
             chess18.opcion(fen, f"{pos}. {uno}", rondo.otro())
@@ -1377,11 +1376,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             elif menu.is_right:
                 pos, opening_block = resp
                 if QTMessages.pregunta(
-                        self,
-                        _X(
-                            _("Do you want to delete the opening %1 from the list of favourite openings?"),
-                            opening_block.tr_name,
-                        ),
+                    self,
+                    _X(
+                        _("Do you want to delete the opening %1 from the list of favourite openings?"),
+                        opening_block.tr_name,
+                    ),
                 ):
                     del self.li_preferred_openings[pos]
 
@@ -1447,7 +1446,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             for uci_option in self.rival.li_uci_options_editable():
                 name = uci_option.name
                 valor = uci_option.valor
-                for xnombre, xvalor in self.rival.liUCI:
+                for xnombre, xvalor in self.rival.li_changed_options:
                     if xnombre == name:
                         valor = xvalor
                         break
@@ -1456,10 +1455,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                 else:
                     valor = str(valor)
                 valor = valor.strip()
-                if valor != uci_option.default:
+                if valor != str(uci_option.default):
                     li_uci.append((name, valor))
         else:
-            li_uci = self.rival.liUCI
+            li_uci = self.rival.li_changed_options
 
         return li_uci
 
@@ -1572,7 +1571,7 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         alias = dr.get("ALIAS", None)
         self.rival = self.select_engines.busca(tipo, engine, alias=alias)
         if dr.get("LIUCI"):
-            self.rival.liUCI = dr.get("LIUCI")
+            self.rival.li_changed_options = dr.get("LIUCI")
         self.show_rival()
 
         tm_s = float(dr.get("ENGINE_TIME", 0)) / 10.0
@@ -1768,7 +1767,7 @@ def play_position(procesador, titulo, is_white):
 
 class WCambioRival(QtWidgets.QDialog):
     def __init__(self, w_parent, configuration, dic, si_manager_solo):
-        super(WCambioRival, self).__init__(w_parent)
+        super().__init__(w_parent)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
@@ -1959,7 +1958,7 @@ def change_rival(parent, configuration, dic, is_create_own_game=False):
 
 
 def get_extra_minutes(main_window):
-    li_gen: List[(Any, Any)] = [(None, None)]
+    li_gen: list[(Any, Any)] = [(None, None)]
 
     config = FormLayout.Spinbox(_("Extra minutes for the player"), 1, 99, 50)
     li_gen.append((config, 5))

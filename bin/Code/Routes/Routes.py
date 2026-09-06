@@ -2,9 +2,9 @@ import datetime
 import random
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class Reg:
@@ -467,11 +467,9 @@ class Transsiberian:
 
     def error_tactic(self, nMoves):
         q = int(round(KM_TACTIC * 1.0 / nMoves))
-        if q < 1:
-            q = 1
+        q = max(q, 1)
         self._km_tactic -= q
-        if self._km_tactic < 1:
-            self._km_tactic = 1
+        self._km_tactic = max(self._km_tactic, 1)
         self.write_current()
 
     def end_tactic(self):

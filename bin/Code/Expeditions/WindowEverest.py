@@ -7,7 +7,6 @@ from PySide6 import QtCore
 from PySide6.QtSvgWidgets import QSvgWidget
 
 import Code
-from Code.Z import Util
 from Code.Databases import DBgames
 from Code.Expeditions import Everest
 from Code.QT import (
@@ -23,6 +22,7 @@ from Code.QT import (
     ScreenUtils,
     SelectFiles,
 )
+from Code.Z import Util
 
 
 class WNewExpedition(LCDialog.LCDialog):
@@ -303,7 +303,7 @@ class WExpedition(LCDialog.LCDialog):
         for x in range(12):
             xc = li_distribution[x]
             d = {"ROUTE": f"{li_p[x][4]} - {li_p[x + 1][4]}", "GAMES": str(xc)}
-            done = xgame if xc >= xgame else xc
+            done = min(xgame, xc)
             xgame -= xc
             if xcurrent is None and xgame < 0:
                 xcurrent = x

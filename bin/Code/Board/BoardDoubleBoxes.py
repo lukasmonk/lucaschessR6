@@ -1,14 +1,14 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Base.Constantes import HIGHLIGHT_STYLE_NONE, HIGHLIGHT_STYLE_FILL
+from Code.Base.Constantes import HIGHLIGHT_STYLE_FILL, HIGHLIGHT_STYLE_NONE
 from Code.Board import BoardBlocks, BoardTypes
 
 
 class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
     def __init__(self, escena, bloque_flecha, routine_if_pressed=None):
 
-        super(DoubleBoxesSC, self).__init__(escena, bloque_flecha)
+        super().__init__(escena, bloque_flecha)
 
         self.style = Code.configuration.x_move_highlight_style
 
@@ -175,8 +175,8 @@ class DoubleBoxesSC(BoardBlocks.BloqueEspSC):
         dx_to = physical_pos.x - 1
         dy_to = physical_pos.y - 1
 
-        dx = dx_from if dx_from < dx_to else dx_to
-        dy = dy_from if dy_from < dy_to else dy_to
+        dx = min(dx_to, dx_from)
+        dy = min(dy_to, dy_from)
         ancho = abs(dx_from - dx_to) + physical_pos.ancho
         alto = abs(dy_from - dy_to) + physical_pos.alto
         self.rect = QtCore.QRectF(dx, dy, ancho, alto)

@@ -5,7 +5,7 @@ from Code.Board import BoardBlocks
 
 class MarkerSC(BoardBlocks.BloqueEspSC):
     def __init__(self, escena, block_marker, routine_if_pressed=None, is_editing=False):
-        super(MarkerSC, self).__init__(escena, block_marker)
+        super().__init__(escena, block_marker)
 
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None

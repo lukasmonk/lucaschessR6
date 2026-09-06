@@ -2,8 +2,8 @@ import os
 import shutil
 
 import Code
-from Code.Z import Util
 from Code.Odt import Content, Others, Settings, Styles
+from Code.Z import Util
 
 
 class ODT:

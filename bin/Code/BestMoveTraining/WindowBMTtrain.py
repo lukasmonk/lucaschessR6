@@ -3,7 +3,6 @@ from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
-from Code.Z import ControlPGN, Util
 from Code.Analysis import Analysis
 from Code.Base import Game, Position
 from Code.Base.Constantes import (
@@ -16,8 +15,20 @@ from Code.Base.Constantes import (
     GT_BMT,
 )
 from Code.Board import Board
-from Code.QT import Colocacion, Columnas, Controles, Delegados
-from Code.QT import FormLayout, Grid, Iconos, LCDialog, QTMessages, QTUtils, QTDialogs
+from Code.QT import (
+    Colocacion,
+    Columnas,
+    Controles,
+    Delegados,
+    FormLayout,
+    Grid,
+    Iconos,
+    LCDialog,
+    QTDialogs,
+    QTMessages,
+    QTUtils,
+)
+from Code.Z import ControlPGN, Util
 
 
 class WTrainBMT(LCDialog.LCDialog):
@@ -582,7 +593,7 @@ class WTrainBMT(LCDialog.LCDialog):
     def set_time_seconds(self):
         seconds = self.bmt_uno.seconds
         if self.initial_time:
-            seconds += int(time.time() - self.initial_time)
+            seconds += int(time.monotonic() - self.initial_time)
         minutos = seconds // 60
         seconds -= minutos * 60
 
@@ -860,13 +871,13 @@ class WTrainBMT(LCDialog.LCDialog):
         self.pgn.refresh()
 
     def init_time(self):
-        self.initial_time = time.time()
+        self.initial_time = time.monotonic()
         if not self.timer:
             self.set_clock()
 
     def end_time(self):
         if self.initial_time:
-            vtime = time.time() - self.initial_time
+            vtime = time.monotonic() - self.initial_time
             self.bmt_uno.seconds += int(vtime)
         self.initial_time = None
         self.remove_clock()

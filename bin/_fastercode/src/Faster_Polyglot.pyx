@@ -1,3 +1,4 @@
+
 DEF_TXT = "".join([chr(x) for x in range(33, 124)])
 DEF_TXT_LEN = len(DEF_TXT)
 
@@ -28,21 +29,25 @@ def str_keymove(txt):
 
 
 def hash_polyglot(bfen):
-    return hash_from_fen(bfen)
+    with _engine_lock:
+        return hash_from_fen(bfen)
 
 
 def hash_polyglot8(fen):
-    return hash_from_fen(fen.encode())
+    with _engine_lock:
+        return hash_from_fen(fen.encode())
 
 
 def movepolyglot_string(nmove):
     cdef char move_s[6];
-    move_to_string(move_s, nmove)
-    return move_s.decode()
+    with _engine_lock:
+        move_to_string(move_s, nmove)
+        return move_s.decode()
 
 
 def string_movepolyglot(cmove):
-    return move_from_string(cmove.encode())
+    with _engine_lock:
+        return move_from_string(cmove.encode())
 
 
 class Entry:
@@ -230,7 +235,8 @@ class BinMove:
         self.entry = Entry()
 
     def imove(self):
-        return move_from_string(self.info_move.bmove())
+        with _engine_lock:
+            return move_from_string(self.info_move.bmove())
 
     def move(self):
         return self.info_move.move()
@@ -253,16 +259,19 @@ class BinMove:
 
 class PolyglotWriter:
     def __init__(self, path_bin):
-        open_poly_w(path_bin.encode())
+        with _engine_lock:
+            open_poly_w(path_bin.encode())
 
     def write(self, entry):
-        write_integer(8, entry.key)
-        write_integer(2, entry.move)
-        write_integer(2, entry.weight)
-        write_integer(2, entry.score)
-        write_integer(1, entry.depth)
-        write_integer(1, entry.learn)
+        with _engine_lock:
+            write_integer(8, entry.key)
+            write_integer(2, entry.move)
+            write_integer(2, entry.weight)
+            write_integer(2, entry.score)
+            write_integer(1, entry.depth)
+            write_integer(1, entry.learn)
 
     def close(self):
-        close_poly()
+        with _engine_lock:
+            close_poly()
 

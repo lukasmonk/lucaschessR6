@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from PySide6 import QtCore, QtGui
 
@@ -22,12 +22,12 @@ class Columna:
         ancho: int = 100,
         align_center: bool = False,
         align_right: bool = False,
-        rgb_foreground: Optional[int] = None,
-        rgb_background: Optional[int] = None,
+        rgb_foreground: int | None = None,
+        rgb_background: int | None = None,
         is_ordered: bool = True,
         state_ordered: int = 0,
-        edicion: Optional[object] = None,
-        is_editable: Optional[bool] = None,
+        edicion: object | None = None,
+        is_editable: bool | None = None,
         must_show: bool = True,
         is_checked: bool = False,
     ):
@@ -120,7 +120,7 @@ class Columna:
         return qtalin
 
     @staticmethod
-    def set_qt_color_foreground(rgb: int) -> Optional[QtGui.QColor]:
+    def set_qt_color_foreground(rgb: int) -> QtGui.QColor | None:
         """
         Convierte un parametro de color del texto para que sea usable por QT
         """
@@ -130,7 +130,7 @@ class Columna:
             return QtGui.QColor(rgb)
 
     @staticmethod
-    def set_qt_color_background(rgb: int) -> Optional[QtGui.QBrush]:
+    def set_qt_color_background(rgb: int) -> QtGui.QBrush | None:
         """
         Convierte un parametro de color del fondo para que sea usable por QT
         """
@@ -139,7 +139,7 @@ class Columna:
         else:
             return QtGui.QBrush(QtGui.QColor(rgb))
 
-    def save_configuration(self, dic: dict, grid: Optional[Grid.Grid]) -> None:
+    def save_configuration(self, dic: dict, grid: Grid.Grid | None) -> None:
         xid = grid.id if grid else None
 
         def x(c: str, v: str) -> None:
@@ -158,7 +158,7 @@ class Columna:
         x("POSICION", str(self.position))
         x("SIMOSTRAR", "S" if self.must_show else "N")
 
-    def restore_configuration(self, dic: dict, grid: Optional[Grid.Grid], with_cabeceras: bool = False) -> Columna:
+    def restore_configuration(self, dic: dict, grid: Grid.Grid | None, with_cabeceras: bool = False) -> Columna:
         xid = grid.id if grid else None
 
         def x(var_txt: str, var_int: str, tipo: str) -> None:
@@ -202,12 +202,12 @@ class ListaColumnas:
         ancho: int = 100,
         align_center: bool = False,
         align_right: bool = False,
-        rgb_foreground: Optional[int] = None,
-        rgb_background: Optional[int] = None,
+        rgb_foreground: int | None = None,
+        rgb_background: int | None = None,
         is_ordered: bool = True,
         state_ordered: int = 0,
-        edicion: Optional[object] = None,
-        is_editable: Optional[bool] = None,
+        edicion: object | None = None,
+        is_editable: bool | None = None,
         must_show: bool = True,
         is_checked: bool = False,
     ) -> Columna:
@@ -251,7 +251,7 @@ class ListaColumnas:
         self.li_columns.append(column)
         return column
 
-    def column(self, num_col: int) -> Optional[Columna]:
+    def column(self, num_col: int) -> Columna | None:
         if num_col >= len(self.li_columns):
             return None
         return self.li_columns[num_col]
@@ -276,7 +276,7 @@ class ListaColumnas:
         o_columnas_r.li_columns = cols
         return o_columnas_r
 
-    def locate_column(self, key: str) -> Optional[Columna]:
+    def locate_column(self, key: str) -> Columna | None:
         for col in self.li_columns:
             if col.key == key:
                 return col
@@ -304,12 +304,12 @@ class ListaColumnas:
             col_nueva.position = col.position
         return o_columnas_copy
 
-    def save_dic(self, grid: Optional[object]) -> dict:
+    def save_dic(self, grid: object | None) -> dict:
         dic_conf = {}
         for col in self.li_columns:
             col.save_configuration(dic_conf, grid)
         return dic_conf
 
-    def restore_dic(self, dic_conf: dict, grid: Optional[object]) -> None:
+    def restore_dic(self, dic_conf: dict, grid: object | None) -> None:
         for col in self.li_columns:
             col.restore_configuration(dic_conf, grid)

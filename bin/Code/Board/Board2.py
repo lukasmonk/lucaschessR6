@@ -14,7 +14,7 @@ class PosBoard(Board.Board):
     def keyPressEvent(self, event):
         k = event.key()
         if (96 > k > 64) and chr(k) in "PQKRNB":
-            getattr(self.parent(), "change_piece_if_content")(chr(k))
+            self.parent().change_piece_if_content(chr(k))
         else:
             Board.Board.keyPressEvent(self, event)
         event.ignore()
@@ -32,7 +32,7 @@ class PosBoard(Board.Board):
             if hasattr(self, "squares") and self.squares.get(a1h8):
                 self.parent().ultimaPieza = self.squares.get(a1h8)
                 if hasattr(self.parent(), "show_cursor"):
-                    getattr(self.parent(), "show_cursor")()
+                    self.parent().show_cursor()
                 if si_der:
                     if hasattr(self, "message_to_delete"):
                         self.message_to_delete(a1h8)

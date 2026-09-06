@@ -1,8 +1,8 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.QT import QTUtils
 from Code.Z import Util
+from Code.QT import QTUtils
 
 dAlineacion = {
     "i": QtCore.Qt.AlignmentFlag.AlignLeft,
@@ -93,12 +93,11 @@ def dic_monitores() -> dict[int, QtCore.QRect]:
 
 
 class EscondeWindow:
-    """Context manager to temporarily hide window off-screen or minimized."""
+    """Context manager para ocultar temporalmente la ventana de forma multiplataforma."""
 
     def __init__(self, window: QtWidgets.QWidget):
         self.window = window
         self.is_maximized = window.isMaximized()
-        self.was_minimized = False
 
     def __enter__(self):
         if Util.is_windows():
@@ -116,9 +115,10 @@ class EscondeWindow:
                 self.size.height(),
             )
         else:
-            self.was_minimized = True
-            self.window.showMinimized()
+            self.window.hide()
 
+        # Forzamos al Window Manager a procesar el cambio de estado inmediatamente
+        QtWidgets.QApplication.processEvents()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -136,10 +136,12 @@ class EscondeWindow:
     def finalize_restore(self):
         if self.is_maximized:
             self.window.showMaximized()
-        elif self.was_minimized:
+        else:
             self.window.showNormal()
+        self.window.activateWindow()
+        self.window.raise_()
 
-        QTUtils.refresh_gui()
+    QTUtils.refresh_gui()
 
 
 def primary_screen() -> QtGui.QScreen:

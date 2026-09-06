@@ -77,7 +77,7 @@ class ManagerNavigation:
     def move_according_key(self, tipo):
         game = self.manager.game
         if not len(game):
-            return None
+            return
         row, column = self.main_window.pgn_pos_actual()
 
         starts_with_black = game.starts_with_black
@@ -85,7 +85,7 @@ class ManagerNavigation:
         key = column.key
         if key == "NUMBER":
             self.mueve_number(tipo)
-            return None
+            return
         else:
             is_white = key != "BLACK"
 
@@ -104,7 +104,7 @@ class ManagerNavigation:
                 pos += 1
             if row < 0 or (row == 0 and pos == 0 and starts_with_black):
                 self.goto_firstposition()
-                return None
+                return
         elif tipo == GO_BACK2:
             row -= 1
         elif tipo == GO_FORWARD:
@@ -115,18 +115,18 @@ class ManagerNavigation:
             row += 1
         elif tipo == GO_START:
             self.goto_firstposition()
-            return None
+            return
         elif tipo == GO_END:
             row = ult_fila
             is_white = not game.last_position.is_white
 
         if row == ult_fila:
             if si_ult_blancas and not is_white:
-                return None
+                return
 
         if row < 0 or row > ult_fila:
             self.manager.refresh()
-            return None
+            return
         if row == 0 and is_white and starts_with_black:
             is_white = False
 
@@ -135,7 +135,7 @@ class ManagerNavigation:
         animate_forward = tipo in (GO_FORWARD, GO_FORWARD2)
         self.pgn_move(row, is_white, animate_forward=animate_forward)
 
-        return None
+        return
 
     def goto_firstposition(self):
         self.manager.set_position(self.manager.game.first_position)
@@ -185,7 +185,7 @@ class ManagerNavigation:
         else:
             self.manager.set_position(self.manager.game.first_position)
             self.manager.refresh_pgn()  # No se puede usar pgn_refresh,
-        self.manager.put_view()
+            self.manager.put_view()
 
     def goto_current(self):
         num_moves, nj, row, is_white = self.current_move()

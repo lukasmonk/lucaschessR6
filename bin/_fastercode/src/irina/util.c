@@ -1,73 +1,7 @@
-#include <sys/types.h>
-#include <sys/timeb.h>
 #include <string.h>
-#include <ctype.h>
 #include "defs.h"
 #include "protos.h"
 #include "globals.h"
-#include <time.h>
-
-
-#ifdef WIN32
-
-Bitmap get_ms() {
-    struct timeb buffer;
-
-    ftime(&buffer);
-    return (buffer.time * 1000) +buffer.millitm;
-}
-
-#include <stdint.h>
-#include <intrin.h>
-
-int is_bmi2(void)
-{
-    int info[4];
-
-    __cpuidex(info, 7, 0);
-    return (info[1] & (1 << 8)) != 0;   // EBX bit 8 = BMI2
-}
-
-#else
-
-#include <stdint.h>
-
-Bitmap get_ms(void) {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    return (Bitmap)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-}
-
-int is_bmi2()
-{
-    // change by: https://github.com/jlrdh
-    #ifdef __aarch64__
-        return 0;
-    #else
-        __builtin_cpu_init ();
-        return __builtin_cpu_supports("bmi2");
-    #endif
-}
-#endif
-
-unsigned int bit_count(Bitmap bitmap) {
-    // MIT HAKMEM algorithm, see http://graphics.stanford.edu/~seander/bithacks.html
-
-    static const Bitmap M1 = 0x5555555555555555; // 1 zero,  1 one ...
-    static const Bitmap M2 = 0x3333333333333333; // 2 zeros,  2 ones ...
-    static const Bitmap M4 = 0x0f0f0f0f0f0f0f0f; // 4 zeros,  4 ones ...
-    static const Bitmap M8 = 0x00ff00ff00ff00ff; // 8 zeros,  8 ones ...
-    static const Bitmap M16 = 0x0000ffff0000ffff; // 16 zeros, 16 ones ...
-    static const Bitmap M32 = 0x00000000ffffffff; // 32 zeros, 32 ones
-
-    bitmap = (bitmap & M1) + ((bitmap >> 1) & M1); //put count of each  2 bits into those  2 bits
-    bitmap = (bitmap & M2) + ((bitmap >> 2) & M2); //put count of each  4 bits into those  4 bits
-    bitmap = (bitmap & M4) + ((bitmap >> 4) & M4); //put count of each  8 bits into those  8 bits
-    bitmap = (bitmap & M8) + ((bitmap >> 8) & M8); //put count of each 16 bits into those 16 bits
-    bitmap = (bitmap & M16) + ((bitmap >> 16) & M16); //put count of each 32 bits into those 32 bits
-    bitmap = (bitmap & M32) + ((bitmap >> 32) & M32); //put count of each 64 bits into those 64 bits
-    return (int) bitmap;
-}
 
 /**
  * @author Kim Walisch (2012)
@@ -98,54 +32,6 @@ int ah_pos(char *ah) {
     }
     return (int) (ah[0] - 'a') + 8 * (int) (ah[1] - '1');
 }
-
-char *strip(char *txt) {
-    int tam;
-
-    for (tam = strlen(txt) - 1; tam && (txt[tam] == '\n' || txt[tam] == '\r'); tam--) {
-        txt[tam] = '\0';
-    }
-    return txt;
-}
-
-char *move2str(MoveBin move, char *str_dest) {
-    sprintf(str_dest, "%s%s", POS_AH[move.from], POS_AH[move.to]);
-    if (move.promotion) {
-        sprintf(str_dest + 4, "%c", tolower(NAMEPZ[move.promotion]));
-    }
-    return str_dest;
-}
-
-
-/*
- * From Beowulf, from Olithink () (via glaurung)
- */
-#ifndef _WIN32
-
-/* Linux */
-bool bioskey() {
-    fd_set readfds;
-    struct timeval timeout;
-
-    FD_ZERO(&readfds);
-    FD_SET(fileno(stdin), &readfds);
-    /* Set to timeout immediately */
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
-    select(16, &readfds, 0, 0, &timeout);
-
-    return (FD_ISSET(fileno(stdin), &readfds));
-}
-
-
-#else
-/* Windows */
-#include <conio.h>
-
-bool bioskey() {
-    return _kbhit();
-}
-#endif
 
 
 /**

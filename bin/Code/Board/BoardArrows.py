@@ -3,7 +3,7 @@ import copy
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Base.Constantes import INFINITE, HIGHLIGHT_STYLE_ARROW_CURVED
+from Code.Base.Constantes import HIGHLIGHT_STYLE_ARROW_CURVED, INFINITE
 from Code.Board import BoardBlocks
 
 
@@ -15,7 +15,7 @@ class ArrowSC(BoardBlocks.BloqueEspSC):
     exp_y: float
 
     def __init__(self, escena, block_arrow, routine_if_pressed=None):
-        super(ArrowSC, self).__init__(escena, block_arrow)
+        super().__init__(escena, block_arrow)
         self.routine_if_pressed = routine_if_pressed
         self.routine_if_pressed_argum = None
 
@@ -337,14 +337,20 @@ def paint_arrow(painter, bf, tf):
         ancho *= prc
         vuelo *= prc
 
-    xp = 1.0 - float(alto_cab) / curve_length
+    if curve_length > 0:
+        xp = 1.0 - float(alto_cab) / curve_length
+    else:
+        xp = 1.0
     pbc, l90 = _get_curve_info(linea, path, xp, ancho + vuelo * 2)
     p_ala1 = l90.pointAt(0.5)
     l90.translate(p_ala1 - l90.p2())
     p_ala2 = l90.p1()
 
-    xp = 1.0 - float(alto_cab - bf.descuelgue) / curve_length
-    p_basecab, _ = _get_curve_info(linea, path, xp, 1.0) 
+    if curve_length > 0:
+        xp = 1.0 - float(alto_cab - bf.descuelgue) / curve_length
+    else:
+        xp = 1.0
+    p_basecab, _ = _get_curve_info(linea, path, xp, 1.0)
 
     p_ini_base, l90_base = _get_curve_info(linea, path, 0.0, ancho)
     p_base1 = l90_base.pointAt(0.5)
@@ -417,7 +423,7 @@ def paint_arrow(painter, bf, tf):
             else:
                 lf = QtCore.QLineF(p_ini, p_basecab)
                 painter.drawLine(lf)
-                
+
             painter.drawPolygon(QtGui.QPolygonF([p_fin, p_ala1, p_basecab, p_ala2, p_fin]))
 
         elif forma in "123":
@@ -427,11 +433,11 @@ def paint_arrow(painter, bf, tf):
                 c_left_pt = l90_mid.pointAt(0.5)
                 l90_mid.translate(c_left_pt - l90_mid.p2())
                 c_right_pt = l90_mid.p1()
-                
+
                 mid_path = path.pointAtPercent(0.5)
                 offset_c_left = QtCore.QPointF(c_left_pt.x() - mid_path.x(), c_left_pt.y() - mid_path.y())
                 offset_c_right = QtCore.QPointF(c_right_pt.x() - mid_path.x(), c_right_pt.y() - mid_path.y())
-                
+
                 c_left = QtCore.QPointF(control.x() + offset_c_left.x(), control.y() + offset_c_left.y())
                 c_right = QtCore.QPointF(control.x() + offset_c_right.x(), control.y() + offset_c_right.y())
 
@@ -448,9 +454,7 @@ def paint_arrow(painter, bf, tf):
                     painter.drawPath(poly)
                 else:
                     painter.drawPolygon(
-                        QtGui.QPolygonF(
-                            [p_base1, p_cab1, p_ala1, p_fin, p_ala2, p_cab2, p_base2, p_base1]
-                        )
+                        QtGui.QPolygonF([p_base1, p_cab1, p_ala1, p_fin, p_ala2, p_cab2, p_base2, p_base1])
                     )
             elif forma == "2":
                 if path:
@@ -464,8 +468,9 @@ def paint_arrow(painter, bf, tf):
                     poly.closeSubpath()
                     painter.drawPath(poly)
                 else:
-                    painter.drawPolygon(QtGui.QPolygonF([p_ini_base, p_cab1, p_ala1, p_fin, p_ala2, p_cab2,
-                                                         p_ini_base]))
+                    painter.drawPolygon(
+                        QtGui.QPolygonF([p_ini_base, p_cab1, p_ala1, p_fin, p_ala2, p_cab2, p_ini_base])
+                    )
             elif forma == "3":
                 if path:
                     poly = QtGui.QPainterPath(p_base1)
@@ -479,9 +484,7 @@ def paint_arrow(painter, bf, tf):
                     painter.drawPath(poly)
                 else:
                     painter.drawPolygon(
-                        QtGui.QPolygonF(
-                            [p_base1, p_basecab, p_ala1, p_fin, p_ala2, p_basecab, p_base2, p_base1]
-                        )
+                        QtGui.QPolygonF([p_base1, p_basecab, p_ala1, p_fin, p_ala2, p_basecab, p_base2, p_base1])
                     )
 
     return poligono_size_bottom, poligono_move, poligono_size_top

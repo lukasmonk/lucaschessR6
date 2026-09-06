@@ -1,12 +1,10 @@
-from typing import Optional
-
 from Code.Leitner import Leitner, WEditLeitner, WShowLeitner
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTMessages
 from Code.Z import Util
 
 
 class WLeitner(LCDialog.LCDialog):
-    result_recno: Optional[int]
+    result_recno: int | None
 
     def __init__(self, main_window):
         title = _("Tactics with the Leitner method")

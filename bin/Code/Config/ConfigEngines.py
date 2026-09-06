@@ -3,11 +3,13 @@ import operator
 import OSEngines
 
 import Code
-from Code.Z import Util
 from Code.Base.Constantes import (
     ENG_FIXED,
 )
-from Code.Engines import CheckEngines, EnginesFixed
+from Code.Engines import EnginesFixed
+from Code.Z import Util
+
+global_dic_engines_internal = None
 
 
 class ConfigEngines:
@@ -27,7 +29,10 @@ class ConfigEngines:
         self._dic_engines.update(self._dic_engines_external)
 
     def _read_internal(self):
-        self._dic_engines_internal = OSEngines.read_engines(Code.folder_engines)
+        global global_dic_engines_internal
+        if global_dic_engines_internal is None:
+            global_dic_engines_internal = OSEngines.read_engines(Code.folder_engines)
+        self._dic_engines_internal = global_dic_engines_internal
 
     def _read_external(self):
         self._dic_engines_external = {}
@@ -50,6 +55,9 @@ class ConfigEngines:
 
     def dic_engines(self):
         return self._dic_engines
+
+    def dic_engines_internal(self):
+        return self._dic_engines_internal
 
     def search(self, alias, defecto=None):
         if alias in self._dic_engines:
@@ -79,13 +87,20 @@ class ConfigEngines:
         for key, cm in self._dic_engines.items():
             if cm.can_be_tutor_analyzer():
                 li.append((cm.nombre_ext(), key))
-        li.sort(key=operator.itemgetter(1))
+        li.sort(key=operator.itemgetter(0))
         return li
 
     def list_name_alias(self):
         li = []
         for key, cm in self._dic_engines.items():
             li.append((cm.nombre_ext(), key))
+        li.sort(key=lambda x: x[0].upper())
+        return li
+
+    def list_name_alias_elo(self):
+        li = []
+        for key, cm in self._dic_engines.items():
+            li.append((cm.nombre_ext(), key, cm.elo))
         li.sort(key=lambda x: x[0].upper())
         return li
 
@@ -155,7 +170,6 @@ class ConfigEngines:
                     eng.set_uci_option(key, value)
                 return eng
         self.configuration.x_tutor_clave = self.configuration.tutor_default
-        CheckEngines.check_stockfish(True)
         return self.engine_tutor()
 
     def engine_analyzer(self):
@@ -169,7 +183,6 @@ class ConfigEngines:
                     eng.set_uci_option(key, value)
                 return eng
         self.configuration.x_analyzer_clave = self.configuration.analyzer_default
-        CheckEngines.check_stockfish(True)
         return self.engine_analyzer()
 
     def set_logs(self, ok):

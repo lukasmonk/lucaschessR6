@@ -1,8 +1,8 @@
 import datetime
 
-from Code.Z import Util
 from Code.Base import Game
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class CountCapture:

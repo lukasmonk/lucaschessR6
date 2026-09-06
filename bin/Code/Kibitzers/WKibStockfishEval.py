@@ -1,5 +1,3 @@
-from typing import Optional
-
 from PySide6 import QtCore
 
 import Code
@@ -9,7 +7,7 @@ from Code.QT import Colocacion, Controles, Iconos, QTUtils
 
 
 class WStockfishEval(WKibCommon.WKibCommon):
-    engine_run: Optional[EngineRun.EngineRun]
+    engine_run: EngineRun.EngineRun | None
 
     def __init__(self, cpu):
         WKibCommon.WKibCommon.__init__(self, cpu, Iconos.Eval())
@@ -80,7 +78,7 @@ class WStockfishEval(WKibCommon.WKibCommon):
         run_param = EngineRun.StartEngineParams()
         run_param.name = self.kibitzer.name
         run_param.path_exe = self.kibitzer.path_exe
-        run_param.li_options_uci = self.kibitzer.liUCI
+        run_param.li_options_uci = self.kibitzer.get_changed_options()
         run_param.args = self.kibitzer.args
         run_param.num_multipv = 1
         self.engine_run = EngineRun.EngineRun(run_param)

@@ -26,7 +26,7 @@ void fen_board(char *fen) {
     board.fifty = 0;
     board.fullmove = 1;
 
-    sscanf(fen, "%s %s %s %s %d %d", xmoves, xcolor, xcastle, xep, &board.fifty, &board.fullmove);
+    sscanf(fen, "%255s %1s %4s %2s %d %d", xmoves, xcolor, xcastle, xep, &board.fifty, &board.fullmove);
 
     i = 0;
     f = 7;

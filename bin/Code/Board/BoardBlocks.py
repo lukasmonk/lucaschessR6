@@ -9,7 +9,7 @@ class BloqueEspSC(QtWidgets.QGraphicsItem):
 
     def __init__(self, escena, block_data):
 
-        super(BloqueEspSC, self).__init__()
+        super().__init__()
 
         self.block_data = block_data
 

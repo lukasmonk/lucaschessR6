@@ -1,16 +1,15 @@
 import os.path
 import time
-from typing import List
 
 import FasterCode
 from PySide6 import QtCore
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Board import Board
 from Code.QT import Colocacion, Columnas, Controles, FormLayout, Grid, Iconos, LCDialog, QTDialogs, QTMessages
 from Code.SQL import UtilSQL
+from Code.Z import Util
 
 
 class WControl(LCDialog.LCDialog):
@@ -139,7 +138,7 @@ class WControl(LCDialog.LCDialog):
 
         # # Site
         with open(self.path_bloque) as f:
-            li_data: List = [x.split("|") for x in f.read().split("\n")]
+            li_data: list = [x.split("|") for x in f.read().split("\n")]
 
         li_sites = []
         site_pre_num = -1
@@ -270,7 +269,7 @@ class WPlay(LCDialog.LCDialog):
         mas = "x" if self.intervalo_por_pieza else ""
         titulo = f"{site} ({mas}{self.intervalo})"
 
-        super(WPlay, self).__init__(owner, titulo, Iconos.Gafas(), "visualplay")
+        super().__init__(owner, titulo, Iconos.Gafas(), "visualplay")
 
         self.procesador = owner.procesador
         self.configuration = Code.configuration
@@ -407,7 +406,7 @@ class WPlay(LCDialog.LCDialog):
 
     def check_time(self):
         if self.ini_time:
-            t = int(time.time() - self.ini_time)
+            t = int(time.monotonic() - self.ini_time)
             self.ini_time = None
             self.dicdatos["TIME"] += t
 
@@ -481,10 +480,10 @@ class WPlay(LCDialog.LCDialog):
 
         self.activa_board()
         QtCore.QTimer.singleShot(1000, self.comprueba_tiempo)
-        self.ini_time = time.time()
+        self.ini_time = time.monotonic()
 
     def comprueba_tiempo(self):
-        t = round(time.time() - self.ini_time_board, 0)
+        t = round(time.monotonic() - self.ini_time_board, 0)
         r = self.intervalo_max - int(t)
 
         if r <= 0:
@@ -494,7 +493,7 @@ class WPlay(LCDialog.LCDialog):
             QtCore.QTimer.singleShot(1000, self.comprueba_tiempo)
 
     def activa_board(self):
-        self.ini_time_board = time.time()
+        self.ini_time_board = time.monotonic()
         self.gbSolucion.hide()
         self.btBoard.hide()
         self.btComprueba.hide()

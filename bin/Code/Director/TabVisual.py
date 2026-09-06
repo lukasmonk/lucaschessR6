@@ -1,13 +1,14 @@
 import copy
 import time
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 
 import Code
-from Code.Z import Util
 from Code.Base import Position
 from Code.Board import BoardTypes
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
+from Code.Z import Util
 
 
 class PFlecha(BoardTypes.Flecha):

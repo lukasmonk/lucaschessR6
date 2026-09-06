@@ -3,8 +3,8 @@ from PySide6 import QtCore, QtWidgets
 
 import Code
 from Code.Base import Game, Move
+from Code.Base.Constantes import GT_ALONE, GT_GAME, GT_VARIATIONS, ST_ENDGAME
 from Code.QT import Colocacion, Controles, Iconos, QTDialogs, QTMessages
-from Code.Base.Constantes import GT_VARIATIONS, GT_ALONE, GT_GAME, ST_ENDGAME
 
 
 class LBPGN(Controles.LB):

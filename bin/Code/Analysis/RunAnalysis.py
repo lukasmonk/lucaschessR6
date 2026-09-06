@@ -1,10 +1,8 @@
-import contextlib
 import copy
-import os
 import sys
 import time
 from collections import deque
-from typing import Any, Optional
+from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
@@ -20,12 +18,13 @@ from Code.Base.Constantes import (
     MISTAKE,
     MISTAKE_BLUNDER,
     RUNA_CONFIGURATION,
-    RUNA_GAME,
+    RUNA_GAME_DONE,
+    RUNA_GAME_ROWID,
     RUNA_HALT,
-    RUNA_TERMINATE,
     RUNA_PAUSE,
-    RUNA_RESUME,
     RUNA_PROGRESS,
+    RUNA_RESUME,
+    RUNA_TERMINATE,
 )
 from Code.BestMoveTraining import BMT
 from Code.Config import Configuration
@@ -48,10 +47,10 @@ class CPU:
         self.ipc_receive = UtilSQL.IPC(f"{filebase}_send.sqlite", False)
 
         # Estado del análisis
-        self.configuration: Optional[Configuration.Configuration] = None
-        self.engine_manager: Optional[EngineManager.EngineManager] = None
+        self.configuration: Configuration.Configuration | None = None
+        self.engine_manager: EngineManager.EngineManager | None = None
         self.queue_orders = deque()
-        self.timer: Optional[QtCore.QTimer] = None
+        self.timer: QtCore.QTimer | None = None
 
         # Flags de estado
         self.is_closed = False
@@ -59,9 +58,14 @@ class CPU:
         self.is_paused = False
 
         # Datos de análisis
-        self.alm: Optional[Any] = None
-        self.ag: Optional[AnalyzeGame] = None
-        self.huella: Optional[str] = None
+        self.alm: Any | None = None
+        self.ag: AnalyzeGame | None = None
+        self.huella: str | None = None
+
+        # Acceso a base de datos para leer partidas por rowid
+        self.path_db: str | None = None
+        self.db_games = None
+        self.current_num = 0
 
         # Throttling de progreso para evitar IPC en cada jugada
         self._last_progress_time = 0.0
@@ -103,8 +107,8 @@ class CPU:
 
         if key == RUNA_CONFIGURATION:
             self._process_configuration(orden)
-        elif key == RUNA_GAME:
-            self._process_game(orden)
+        elif key == RUNA_GAME_ROWID:
+            self._process_game_rowid(orden)
         elif key == RUNA_TERMINATE:
             self.close()
         elif key == RUNA_PAUSE:
@@ -113,7 +117,7 @@ class CPU:
             self.is_paused = False
         return True
 
-    def _process_control_orders(self) -> None:
+    def process_control_orders(self) -> None:
         """Procesa SOLO órdenes de control (PAUSE/RESUME/HALT/TERMINATE).
         Se usa dentro del bucle de espera de check_pause_close para no
         lanzar análisis de juegos de forma recursiva."""
@@ -131,7 +135,7 @@ class CPU:
                     self.close()
                     return
             else:
-                # Es un RUNA_GAME u otra orden de trabajo: no la procesamos aquí
+                # Es una orden de trabajo: no la procesamos aquí
                 break
 
     def _process_configuration(self, orden: RunAnalysisControl.Orden) -> None:
@@ -149,14 +153,55 @@ class CPU:
 
         self.huella = orden.dv["HUELLA"]
 
+        self.path_db = orden.dv.get("PATH_DB")
+        if self.path_db:
+            from Code.Databases.DBgames import DBgames
+
+            self.db_games = DBgames(self.path_db)
+
         self.launch_analysis()
         self._check_data()
 
-    def _process_game(self, orden: RunAnalysisControl.Orden) -> None:
-        """Procesa un juego para análisis"""
-        game = orden.dv["GAME"]
+    def _process_game_rowid(self, orden: RunAnalysisControl.Orden) -> None:
+        """Procesa un juego enviado como rowid - lee la partida de la base de datos"""
+        rowid = orden.dv["ROWID"]
         recno = orden.dv["RECNO"]
-        self.analyze(game, recno)
+        self.current_recno = recno
+        self.current_num = orden.dv.get("NUM") or (recno + 1)
+
+        self._send_progress_text(f"{_('Game')} {self.current_num} → {_('Reading the game')}")
+
+        game: Game.Game = self.db_games.read_game_rowid(rowid)
+
+        li_extra = self.analyze(game)
+        if self.is_closed:
+            return
+
+        if self.alm.accuracy_tags:
+            game.add_accuracy_tags()
+
+        self._send_progress_text(f"{_('Game')} {self.current_num} → {_('Saving...')}")
+
+        self.db_games.save_game_rowid(rowid, game)
+
+        orden = RunAnalysisControl.Orden()
+        orden.key = RUNA_GAME_DONE
+        orden.set("RECNO", recno)
+        orden.set("ROWID", rowid)
+        if li_extra:
+            orden.set("EXTRA", li_extra)
+
+        self.send(orden)
+
+    def _send_progress_text(self, text: str) -> None:
+        """Envía un mensaje de progreso con texto al proceso principal"""
+        orden = RunAnalysisControl.Orden()
+        orden.key = RUNA_PROGRESS
+        orden.set("HUELLA", self.huella)
+        orden.set("NUM", self.current_num)
+        orden.set("TEXT", text)
+        self.send(orden)
+        QTUtils.refresh_gui()
 
     def _check_data(self):
         # Guard de re-entrancia: si ya estamos analizando un juego, solo
@@ -164,7 +209,7 @@ class CPU:
         # (PAUSE/RESUME/HALT) pero no lanzamos un nuevo análisis.
         self.xreceive()
         if self.is_analyzing:
-            self._process_control_orders()
+            self.process_control_orders()
             return
         self.procesa()
 
@@ -193,6 +238,10 @@ class CPU:
         if hasattr(Code, "list_engine_managers"):
             Code.list_engine_managers.close_all()
 
+        if self.db_games is not None:
+            self.db_games.close()
+            self.db_games = None
+
         QtWidgets.QApplication.quit()
 
     def analyzer_clone(self, mstime: int, depth: int, nodes: int, multipv: int | None) -> EngineManagerAnalysis:
@@ -205,24 +254,16 @@ class CPU:
         engine.set_multipv_var(self.configuration.x_analyzer_multipv if multipv is None else multipv)
         return EngineManagerAnalysis(engine, run_engine_params)
 
-    def analyze(self, game: Game.Game, recno: int) -> None:
-        """Inicia el análisis de un juego"""
+    def analyze(self, game: Game.Game) -> list | None:
+        """Analiza un juego y devuelve los extras generados"""
         if self.is_closed:
-            return
+            return None
 
         self.is_analyzing = True
         self.ag.xprocesa(game)
         self.is_analyzing = False
 
-        orden = RunAnalysisControl.Orden()
-        orden.key = RUNA_GAME
-        orden.set("GAME", game)
-        orden.set("RECNO", recno)
-
-        if li_save_extra := self.ag.xsave_extra_get():
-            orden.set("EXTRA", li_save_extra)
-
-        self.send(orden)
+        return self.ag.xsave_extra_get()
 
     def progress(self, npos: int, n_moves: int) -> bool:
         """Envia orden para actualizar la barra de progreso.
@@ -235,13 +276,12 @@ class CPU:
         now = time.monotonic()
         should_send = False
 
-        if npos >= n_moves:
-            should_send = True
-        elif n_moves <= 20:
-            should_send = True
-        elif (npos - self._last_progress_npos) >= self._progress_delta:
-            should_send = True
-        elif (now - self._last_progress_time) >= self._progress_interval:
+        if (
+            npos >= n_moves
+            or n_moves <= 20
+            or (npos - self._last_progress_npos) >= self._progress_delta
+            or (now - self._last_progress_time) >= self._progress_interval
+        ):
             should_send = True
 
         if should_send:
@@ -250,6 +290,7 @@ class CPU:
             orden = RunAnalysisControl.Orden()
             orden.key = RUNA_PROGRESS
             orden.set("HUELLA", self.huella)
+            orden.set("NUM", self.current_num)
             orden.set("CURRENT", npos)
             orden.set("TOTAL", n_moves)
             self.send(orden)
@@ -349,9 +390,9 @@ class AnalyzeGame:
         )
 
         self.mate_save_folder = (
-            Util.opj(Code.configuration.paths.folder_personal_trainings(),
-                     Util.valid_filename(self.alm.mates_saved_name)
-                     )
+            Util.opj(
+                Code.configuration.paths.folder_personal_trainings(), Util.valid_filename(self.alm.mates_saved_name)
+            )
             if self.alm.mates_saved_name
             else None
         )
@@ -387,7 +428,7 @@ class AnalyzeGame:
         self.with_themes_tags = self.alm.themes_tags
         self.reset_themes = self.alm.themes_reset
 
-    def xsave_extra(self, tip, par1, par2, par3=None):
+    def xsave_extra(self, tip, par1, par2=None, par3=None):
         self.li_save_extra.append((tip, par1, par2, par3))
 
     def xsave_extra_get(self):
@@ -435,11 +476,11 @@ class AnalyzeGame:
             self.terminar_bmt(self.bmt_listaBlunders, self.bmtblunders)
             self.terminar_bmt(self.bmt_listaBrilliancies, self.bmtbrilliancies)
 
-    def save_brilliancies_fns(self, file, fen, mrm, game: Game.Game, njg):
+    def save_brilliancies_fns(self, fen, mrm, game: Game.Game, njg):
         """
-        Graba cada fen encontrado en el file "file"
+        Envia el fen encontrado
         """
-        if not file:
+        if not self.fnsbrilliancies:
             return
 
         cab = ""
@@ -453,44 +494,12 @@ class AnalyzeGame:
         rm = mrm.li_rm[0]
         p.read_pv(rm.pv)
         self.xsave_extra(
-            "file",
-            file,
-            f"{fen}||{p.pgn_base_raw()}|{cab} {game_raw.pgn_base_raw_copy(None, njg - 1)}",
+            "brilliancies_fns", f"{fen}||{p.pgn_base_raw()}|{cab} {game_raw.pgn_base_raw_copy(None, njg - 1)}\n"
         )
 
-    def graba_tactic(self, game, njg, mrm, pos_act):
+    def save_tactic(self, game, njg, mrm, pos_act):
         if not self.tacticblunders:
             return
-
-        # Esta creado el folder
-        before = f"{_('Avoid the blunder')}.fns"
-        after = f"{_('Take advantage of blunder')}.fns"
-
-        with contextlib.suppress(OSError):
-            if not os.path.isdir(self.tacticblunders):
-                dtactics = Util.opj(self.configuration.paths.folder_personal_trainings(), "../Tactics")
-                if not os.path.isdir(dtactics):
-                    Util.create_folder(dtactics)
-                Util.create_folder(self.tacticblunders)
-                with open(
-                        Util.opj(self.tacticblunders, "Config.ini"),
-                        "wt",
-                        encoding="utf-8",
-                        errors="ignore",
-                ) as f:
-                    f.write(
-                        f"""[COMMON]
-    ed_reference=20
-    REPEAT=0
-    SHOWTEXT=1
-    [TACTIC1]
-    MENU={_("Avoid the blunder")}
-    FILESW={before}:100
-    [TACTIC2]
-    MENU={_("Take advantage of blunder")}
-    FILESW={after}:100
-    """
-                    )
 
         cab = ""
         for k, v in game.dic_tags().items():
@@ -504,14 +513,13 @@ class AnalyzeGame:
         rm = mrm.li_rm[0]
         p.read_pv(rm.pv)
 
-        path = Util.opj(self.tacticblunders, before)
         texto = "%s||%s|%s%s\n" % (
             fen,
             p.pgn_base_raw(),
             cab,
             game.pgn_base_raw_copy(None, njg - 1),
         )
-        self.xsave_extra("file", path, texto)
+        self.xsave_extra("tactic before", texto)
 
         fen = move.position.fen()
         p = Game.Game(fen=fen)
@@ -519,9 +527,8 @@ class AnalyzeGame:
         li = rm.pv.split(" ")
         p.read_pv(" ".join(li[1:]))
 
-        path = Util.opj(self.tacticblunders, after)
         texto = f"{fen}||{p.pgn_base_raw()}|{cab}{game.pgn_base_raw_copy(None, njg)}\n"
-        self.xsave_extra("file", path, texto)
+        self.xsave_extra("tactic after", texto)
 
         self.si_tactic_blunders = True
 
@@ -582,7 +589,7 @@ class AnalyzeGame:
         cab += f'[Result "{result}"]\n'
 
         texto = f"{cab}\n{p.pgn_base()}{mas}\n\n"
-        self.xsave_extra("file", file, texto)
+        self.xsave_extra("pgn", file, texto)
 
         return True
 
@@ -631,7 +638,7 @@ class AnalyzeGame:
         tipo = "bmt_blunders" if si_blunder else "bmt_brilliancies"
         self.xsave_extra(tipo, bmt_uno, cl_game, txt_game)
 
-    def graba_mate(self, mate_save_folder, fen, mrm, game: Game.Game, njg):
+    def save_mate(self, fen, mrm, game: Game.Game, njg):
         """
         Graba los mates encontrados en archivos "Mate in N.fns"
         @param mate_save_folder: carpeta donde guardar los mates
@@ -640,44 +647,39 @@ class AnalyzeGame:
         @param game: partida
         @param njg: número de jugada de la partida
         """
-        if not mate_save_folder:
+        if not self.mate_save_folder:
             return
 
         rm = mrm.li_rm[0]
         if not rm.mate or rm.mate <= 0:
             return
 
-        with contextlib.suppress(OSError):
-            # Crear la carpeta si no existe
-            if not os.path.isdir(mate_save_folder):
-                Util.create_folder(mate_save_folder)
+        # Calcular el número de movimientos hasta el mate (convertir plies a movimientos)
+        elems = len(rm.pv.split(" "))
+        mate_moves = elems // 2 + 1
 
-            # Calcular el número de movimientos hasta el mate (convertir plies a movimientos)
-            elems = len(rm.pv.split(" "))
-            mate_moves = elems // 2 + 1
+        # Crear el nombre del archivo
+        mate_filename = f"Mate in {mate_moves}.fns"
+        path = Util.opj(self.mate_save_folder, mate_filename)
 
-            # Crear el nombre del archivo
-            mate_filename = f"Mate in {mate_moves}.fns"
-            path = Util.opj(mate_save_folder, mate_filename)
+        # Preparar cabecera con etiquetas del PGN
+        cab = ""
+        for k, v in game.dic_tags().items():
+            ku = k.upper()
+            if ku not in ("RESULT", "FEN"):
+                cab += f'[{k} "{v}"]'
 
-            # Preparar cabecera con etiquetas del PGN
-            cab = ""
-            for k, v in game.dic_tags().items():
-                ku = k.upper()
-                if ku not in ("RESULT", "FEN"):
-                    cab += f'[{k} "{v}"]'
+        # Crear un juego con el mate
+        p = Game.Game(fen=fen)
+        p.read_pv(rm.pv)
 
-            # Crear un juego con el mate
-            p = Game.Game(fen=fen)
-            p.read_pv(rm.pv)
+        # Obtener la partida sin variaciones
+        game_raw = Game.game_without_variations(game)
 
-            # Obtener la partida sin variaciones
-            game_raw = Game.game_without_variations(game)
-
-            # Grabar la línea usando xsave_extra
-            texto = f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg - 1)}\n"
-            self.xsave_extra("file", path, texto)
-            self.si_mate = True
+        # Grabar la línea usando xsave_extra
+        texto = f"{fen}||{p.pgn_base_raw()}|{cab}{game_raw.pgn_base_raw_copy(None, njg - 1)}\n"
+        self.xsave_extra("mate", path, texto)
+        self.si_mate = True
 
     def check_pause_close(self) -> bool:
         """Devuelve False si se ha dado orden de cierre.
@@ -685,7 +687,7 @@ class AnalyzeGame:
         directamente para no depender sólo del timer externo."""
         # Leer IPC y procesar órdenes de control ANTES de comprobar el flag
         self.cpu.xreceive()
-        self.cpu._process_control_orders()
+        self.cpu.process_control_orders()
         if self.cpu.is_closed:
             return False
         if not self.cpu.is_paused:
@@ -696,7 +698,7 @@ class AnalyzeGame:
         def check_paused():
             # Leer mensajes IPC pendientes y procesar sólo órdenes de control
             self.cpu.xreceive()
-            self.cpu._process_control_orders()
+            self.cpu.process_control_orders()
             if self.cpu.is_closed:
                 loop.quit()
                 return
@@ -893,25 +895,17 @@ class AnalyzeGame:
                     fen = move.position_before.fen()
 
                     if (
-                            self.with_variations
-                            and allow_add_variations
-                            and not move.analysis_to_variations(self.alm, self.delete_previous)
+                        self.with_variations
+                        and allow_add_variations
+                        and not move.analysis_to_variations(self.alm, self.delete_previous)
                     ):
                         move.remove_all_variations()
 
                     ok_blunder = nag in self.kblunders_condition_list
                     if ok_blunder:
-                        self.graba_tactic(game, pos_move, mrm, pos_act)
+                        self.save_tactic(game, pos_move, mrm, pos_act)
 
-                        if self.save_pgn(
-                                self.pgnblunders,
-                                mrm.name,
-                                game.dic_tags(),
-                                fen,
-                                move,
-                                rm,
-                                mj,
-                        ):
+                        if self.save_pgn(self.pgnblunders, mrm.name, game.dic_tags(), fen, move, rm, mj):
                             si_poner_pgn_original_blunders = True
 
                         if self.bmtblunders:
@@ -921,17 +915,9 @@ class AnalyzeGame:
 
                     if move.is_brilliant():
                         move.add_nag(NAG_3)
-                        self.save_brilliancies_fns(self.fnsbrilliancies, fen, mrm, game, pos_current_move)
+                        self.save_brilliancies_fns(fen, mrm, game, pos_current_move)
 
-                        if self.save_pgn(
-                                self.pgnbrilliancies,
-                                mrm.name,
-                                game.dic_tags(),
-                                fen,
-                                move,
-                                rm,
-                                None,
-                        ):
+                        if self.save_pgn(self.pgnbrilliancies, mrm.name, game.dic_tags(), fen, move, rm, None):
                             si_poner_pgn_original_brilliancies = True
 
                         if self.bmtbrilliancies:
@@ -943,15 +929,15 @@ class AnalyzeGame:
                         if mrm and mrm.li_rm:
                             rm_best = mrm.rm_best()
                             if rm_best and rm_best.mate > 0:
-                                self.graba_mate(self.mate_save_folder, fen, mrm, game, pos_current_move)
+                                self.save_mate(fen, mrm, game, pos_current_move)
                                 self.si_mates = True
 
         # Ponemos el texto original en la ultima
         if si_poner_pgn_original_blunders and self.oriblunders:
-            self.xsave_extra("file", self.pgnblunders, f"\n{game.pgn()}\n\n")
+            self.xsave_extra("pgn", self.pgnblunders, f"\n{game.pgn()}\n\n")
 
         if si_poner_pgn_original_brilliancies and self.oribrilliancies:
-            self.xsave_extra("file", self.pgnbrilliancies, f"\n{game.pgn()}\n\n")
+            self.xsave_extra("pgn", self.pgnbrilliancies, f"\n{game.pgn()}\n\n")
 
         if self.themes_assign:
             self.themes_assign.assign_game(game, self.with_themes_tags, self.reset_themes)

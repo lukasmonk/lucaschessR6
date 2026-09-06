@@ -4,9 +4,9 @@ import os
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.QT import Iconos, QTDialogs, QTUtils, SelectFiles
+from Code.Z import Util
 
 # Constantes
 SCORE_MIN = -30.0
@@ -140,7 +140,7 @@ class HPoint:
 
 class GraphPoint(QtWidgets.QGraphicsItem):
     def __init__(self, histogram, point, si_values):
-        super(GraphPoint, self).__init__()
+        super().__init__()
 
         self.histogram = histogram
         self.point = point
@@ -197,7 +197,7 @@ class GraphToolTip(QtWidgets.QGraphicsItem):
     xrect = None
 
     def __init__(self, graph):
-        super(GraphToolTip, self).__init__()
+        super().__init__()
 
         self.graph = graph
         self.texto = ""
@@ -247,7 +247,7 @@ class GraphToolTip(QtWidgets.QGraphicsItem):
 
 class Histogram(QtWidgets.QGraphicsView):
     def __init__(self, owner, hserie, grid, ancho, si_values, elo_medio=None):
-        super(Histogram, self).__init__()
+        super().__init__()
 
         self.hserie = hserie
 
@@ -443,7 +443,7 @@ class Histogram(QtWidgets.QGraphicsView):
             painter.drawLine(p.rx, int(bottom), p.rx, int(top))
 
     def mousePressEvent(self, event):
-        super(Histogram, self).mousePressEvent(event)
+        super().mousePressEvent(event)
         ep = self.mapToScene(event.pos())
 
         # Verificar click en barras de puntos perdidos
@@ -483,7 +483,7 @@ class Histogram(QtWidgets.QGraphicsView):
             configuration.set_save_folder(os.path.dirname(path))
 
     def mouseDoubleClickEvent(self, event):
-        super(Histogram, self).mouseDoubleClickEvent(event)
+        super().mouseDoubleClickEvent(event)
         ep = self.mapToScene(event.pos())
         for p in self.hserie.liPoints:
             if p.rlostp and hasattr(p, "rect_lost") and p.rect_lost.contains(ep):

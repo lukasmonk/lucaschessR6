@@ -5,7 +5,6 @@ from PySide6 import QtCore
 from PySide6.QtSvgWidgets import QSvgWidget
 
 import Code
-from Code.Z import Util
 from Code.Base import Game
 from Code.Databases import DBgames
 from Code.QT import (
@@ -19,8 +18,9 @@ from Code.QT import (
     QTDialogs,
     QTMessages,
 )
-from Code.ZQT import WindowSavePGN
 from Code.Washing import Washing
+from Code.Z import Util
+from Code.ZQT import WindowSavePGN
 
 
 class WWashing(LCDialog.LCDialog):

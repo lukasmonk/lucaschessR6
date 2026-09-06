@@ -375,7 +375,7 @@ class WPlayer(QtWidgets.QWidget):
         key = obj_column.key
         if key == "opening":
             data.sort(
-                key=lambda rx: rx['opening'],
+                key=lambda rx: rx["opening"],
                 reverse=False,
             )
         elif key == "games":
@@ -441,13 +441,13 @@ class WPlayer(QtWidgets.QWidget):
 
     def tw_changeplayer(self):
         if not self.test_players_in_db():
-            return None
+            return
         lp = self.list_of_players()
         if len(lp) == 0:
             self.reread_players()
             lp = self.list_of_players()
             if len(lp) == 0:
-                return None
+                return
 
         menu = QTDialogs.LCMenu(self)
         menu.opcion("change", _("Change"), Iconos.ModificarP())
@@ -461,7 +461,7 @@ class WPlayer(QtWidgets.QWidget):
         elif resp == "reread":
             self.reread_players()
 
-        return None
+        return
 
     def tw_rebuild(self):
         if not self.test_players_in_db():

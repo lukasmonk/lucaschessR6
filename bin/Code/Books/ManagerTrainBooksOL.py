@@ -106,7 +106,7 @@ class ManagerTrainBooksOL(Manager.Manager):
     def close_time(self):
         if not self.ini_time:
             return
-        tm = time.time() - self.ini_time
+        tm = time.monotonic() - self.ini_time
         self.time_used += tm
         self.ini_time = 0.0
 
@@ -222,7 +222,7 @@ class ManagerTrainBooksOL(Manager.Manager):
         else:
             self.activate_side(is_white)
             self.human_is_playing = True
-            self.ini_time = time.time()
+            self.ini_time = time.monotonic()
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         move_player: Move.Move = self.check_human_move(from_sq, to_sq, promotion)

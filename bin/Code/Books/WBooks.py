@@ -3,9 +3,9 @@ import os.path
 import time
 
 import Code
-from Code.Z import Util
 from Code.Books import Books
 from Code.QT import Colocacion, Columnas, Controles, Grid, Iconos, LCDialog, QTDialogs, QTMessages, QTUtils, SelectFiles
+from Code.Z import Util
 
 
 def select_move_books(main_window, li_moves, is_white):

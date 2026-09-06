@@ -1,12 +1,12 @@
 import Code
 from Code.Engines import WConfEngines, WExternalEngines
+from Code.Kibitzers import Kibitzers
 from Code.Leagues import WLeagues
 from Code.Menus import BaseMenu
 from Code.QT import Iconos
 from Code.STS import WindowSTS
 from Code.Swiss import WSwisses
 from Code.Tournaments import WTournaments
-from Code.Kibitzers import Kibitzers
 
 
 class EnginesMenu(BaseMenu.RootMenu):

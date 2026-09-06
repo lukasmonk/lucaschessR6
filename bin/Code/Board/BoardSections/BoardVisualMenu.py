@@ -1,14 +1,14 @@
 from PySide6 import QtCore, QtWidgets
 
 import Code
-import Code.Board.WBoardColors as WBoardColors
-from Code.Z import Util
+from Code.Board import WBoardColors
 from Code.QT import (
     Colocacion,
     Controles,
     Iconos,
     QTDialogs,
 )
+from Code.Z import Util
 
 
 class BoardVisualMenu:
