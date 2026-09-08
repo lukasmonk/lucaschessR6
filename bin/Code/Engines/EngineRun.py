@@ -125,8 +125,6 @@ class EngineRun(QtCore.QObject):
         # Atributos de instancia
         self.is_white = False
         self.last_depth_emit: int = 0
-        self.last_time_depth_emit: int = 0
-        self.time_interval_depth_emit: int = 500
         self.timerstop: Optional[QtCore.QTimer] = None
 
         self.log = None
@@ -489,8 +487,6 @@ class EngineRun(QtCore.QObject):
 
                     elif st == EngineState.THINKING:
                         emited_depth = False
-                        new_depth = 0
-                        current_time = int(time.monotonic() * 1000)
                         if self.mrm is not None:
                             try:
                                 self.mrm.dispatch(line)
@@ -500,14 +496,11 @@ class EngineRun(QtCore.QObject):
                             if new_depth > self.last_depth_emit:
                                 self.mrm.ordena()
                                 if self.emit_enabled:
-                                    if current_time - self.last_time_depth_emit >= self.time_interval_depth_emit:
-                                        self.last_depth_emit = new_depth
-                                        self.last_time_depth_emit = current_time
-                                        try:
-                                            self.depth_changed.emit()
-                                            emited_depth = True
-                                        except Exception:
-                                            self._log_exception("depth_changed emit failed")
+                                    try:
+                                        self.depth_changed.emit()
+                                        emited_depth = True
+                                    except Exception:
+                                        self._log_exception("depth_changed emit failed")
 
                         if line.startswith("bestmove"):
                             self.state = EngineState.OK
@@ -520,8 +513,8 @@ class EngineRun(QtCore.QObject):
                             if self.emit_enabled:
                                 try:
                                     if not emited_depth:  # si no se ha emitido el depth, lo emitimos
-                                        self.last_depth_emit = new_depth
-                                        self.last_time_depth_emit = current_time
+                                        # self.last_depth_emit = new_depth
+                                        # self.last_time_depth_emit = current_time
                                         self.depth_changed.emit()
                                     self.bestmove_found.emit(self.bestmove)
                                 except Exception:
@@ -829,8 +822,8 @@ class EngineRun(QtCore.QObject):
     def play(self, run_engine_params: RunEngineParams):
 
         def send_go(args: str):
-            self.last_depth_emit = 0
-            self.last_time_depth_emit = 0
+            # self.last_depth_emit = 0
+            # self.last_time_depth_emit = 0
 
             self.play_time_begin = time.monotonic()
             self.state = EngineState.THINKING

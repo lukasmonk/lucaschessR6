@@ -1,3 +1,5 @@
+from typing import Optional
+
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtWidgets import QProgressBar
 
@@ -19,22 +21,19 @@ class AnalysisBar(QtWidgets.QWidget):
         self.mrm = None
         self.activated = False
         self.value_objective = 0
-        self.acercando = False
         self.aeval = AnalysisEval.AnalysisEval()
         self.interval = Code.configuration.x_analyzer_mstime_refresh_ab
-        self.config_play: EngineRun.RunEngineParams | None = None
-
-        self._debounce_timer = QtCore.QTimer(self)
-        self._debounce_timer.setSingleShot(True)
-        self._debounce_timer.setInterval(300)
-        self._debounce_timer.timeout.connect(self._execute_set_game)
-        self._pending_game: Game.Game | None = None
+        self.config_play: Optional[EngineRun.RunEngineParams] = None
 
         self.progressbar = QProgressBar(self)
         self.progressbar.setOrientation(QtCore.Qt.Orientation.Vertical)
         self.progressbar.setRange(0, 10000)
         self.progressbar.setValue(5000)
         self.progressbar.setTextVisible(False)
+
+        self.value_timer = QtCore.QTimer(self)
+        self.value_timer.setInterval(16)  # ~60 fps, cadencia fija real
+        self.value_timer.timeout.connect(self._step_value)
 
         self.lb_value_up = Controles.LB(self).set_font_type(puntos=7).align_center()
         self.lb_value_down = Controles.LB(self).set_font_type(puntos=7).align_center()
@@ -53,10 +52,6 @@ class AnalysisBar(QtWidgets.QWidget):
         self.board.set_analysis_bar(self)
         self.previous_board = None
         self.set_board_position()
-
-        self.animation = QtCore.QPropertyAnimation(self.progressbar, b"value", self)
-        self.animation.setEasingCurve(QtCore.QEasingCurve.Type.OutCubic)
-        self.animation.finished.connect(self._animation_finished)
 
         layout = (
             Colocacion.V()
@@ -88,12 +83,12 @@ class AnalysisBar(QtWidgets.QWidget):
                     self.engine_manager.set_priority_very_low()
                 self.engine_manager.connect_depthchanged(self.control_state)
         else:
+            self.value_timer.stop()
             if self.engine_manager:
                 self.engine_manager.close()
                 self.engine_manager = None
 
     def end_think(self):
-        self._debounce_timer.stop()
         if self.engine_manager:
             self.engine_manager.stop()
 
@@ -112,20 +107,12 @@ class AnalysisBar(QtWidgets.QWidget):
                 self.config_play.infinite = True
         return self.config_play
 
-    def set_game(self, game: Game.Game):
+    def set_game(self, game):
         if self.engine_manager:
-            self._pending_game = game
-            self._debounce_timer.start()
-
-    def _execute_set_game(self):
-        game = self._pending_game
-        if game is None:
-            return
-        self._pending_game = None
-        self.game = game
-        self.xpv = game.xpv()
-        self.engine_manager.run_engine_params = self.get_config_play()
-        self.engine_manager.play_game(game)
+            self.game = game
+            self.xpv = game.xpv()
+            self.engine_manager.run_engine_params = self.get_config_play()
+            self.engine_manager.play_game(game)
 
     def show_score(self, txt):
         if self.isVisible():
@@ -153,12 +140,12 @@ class AnalysisBar(QtWidgets.QWidget):
                         cp = -cp
                     ev = int(self.aeval.lv(cp) * 100)
 
-                    self.show_score(rm.abbrev_text_base())
+                    self.show_score(rm.abbrev_text_base1())
                     self.update_value(ev)
 
                     if tooltip is None:
                         pgn = Game.pv_pgn(self.game.last_position.fen(), rm.pv)
-                        main = f"{rm.abbrev_text_base()} (^{rm.depth})"
+                        main = f"{rm.abbrev_text_base1()} (^{rm.depth})"
                         li = pgn.split(" ")
                         if len(li) > 0:
                             sli = []
@@ -209,8 +196,7 @@ class AnalysisBar(QtWidgets.QWidget):
             configuration.x_analyzer_mstime_ab *= 1000
             configuration.graba()
 
-        self._pending_game = self.game
-        self._execute_set_game()
+        self.set_game(self.game)
         self.set_board_position()
 
     def mousePressEvent(self, event):
@@ -226,22 +212,22 @@ class AnalysisBar(QtWidgets.QWidget):
         elif value < 0:
             value = 0
         self.value_objective = value
-        self.goto_objective()
+        if not self.value_timer.isActive():
+            self.value_timer.start()
 
-    def _animation_finished(self):
-        self.acercando = False
-
-    def goto_objective(self):
-        if not self.engine_manager or not self.activated:
-            self.acercando = False
+    def _step_value(self):
+        current = self.progressbar.value()
+        diff = self.value_objective - current
+        if diff == 0:
+            self.value_timer.stop()
             return
-        value = self.progressbar.value()
-        if value != self.value_objective:
-            self.acercando = True
-            self.animation.stop()
-            self.animation.setStartValue(value)
-            self.animation.setEndValue(self.value_objective)
-            self.animation.setDuration(max(120, min(800, abs(self.value_objective - value) // 10)))
-            self.animation.start()
-        else:
-            self.acercando = False
+        # Avanza una fracción de la distancia restante (ease-out), con un
+        # mínimo de 1 unidad para garantizar que siempre progresa y termina.
+        step = diff * 0.15
+        step = int(step) if abs(step) >= 1 else (1 if diff > 0 else -1)
+        new_value = current + step
+        if (step > 0 and new_value > self.value_objective) or (
+            step < 0 and new_value < self.value_objective
+        ):
+            new_value = self.value_objective
+        self.progressbar.setValue(new_value)

@@ -259,6 +259,22 @@ class EngineResponse:
             pts = -pts
         return self.cp_label(pts)
 
+    def abbrev_text_base1(self) -> str:
+        is_black = not self.is_white
+        if self.mate != 0:
+            mt = self.mate
+            if is_black:
+                mt = -mt
+            return f"M{mt:+d}"
+        else:
+            pts = self.puntos
+            if is_black:
+                pts = -pts
+            if abs(pts) < 1000:
+                return f"{pts / 100.0:+0.1f}"
+            else:
+                return f"{pts // 100:+d}"
+
     def copia(self) -> "EngineResponse":
         rm = EngineResponse(self.name, self.is_white)
         rm.restore(self.save())
