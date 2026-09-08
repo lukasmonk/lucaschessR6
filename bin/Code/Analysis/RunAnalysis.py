@@ -941,3 +941,6 @@ class AnalyzeGame:
 
         if self.themes_assign:
             self.themes_assign.assign_game(game, self.with_themes_tags, self.reset_themes)
+
+        if self.accuracy_tags:
+            game.add_accuracy_tags()

@@ -729,6 +729,7 @@ class Configuration:
             "x_style_icons",
             "x_style_mode",
             "x_tb_orientation_horizontal",
+            "x_director_icon"
         }
         for x, value in dic_previo.items():
             if dic_current[x] != value:

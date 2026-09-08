@@ -200,7 +200,7 @@ class WKibEngine(WKibCommon.WKibCommon):
 
     def refresh_data(self):
         self.need_refresh_data = False
-        mrm = self.engine_run.mrm
+        mrm = self.engine_run.mrm.clone()
         rm = mrm.rm_best()
         if rm is None:
             return

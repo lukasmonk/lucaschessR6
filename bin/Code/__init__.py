@@ -4,7 +4,7 @@ import sys
 
 from Code.Z import Util
 
-VERSION = "R 6.1.0"
+VERSION = "R 6.1.1"
 BASE_VERSION = "C"
 
 Util.randomize()
@@ -112,7 +112,6 @@ def relative_root(path):
 if __debug__:
     from Code.Z import Debug
 
-    Debug.prln("Debug Mode", color="green")
     if Debug.DEBUG_ENGINES:
         Debug.prln("Engine Debug", color="red")
     if Debug.DEBUG_ENGINES_SEND:

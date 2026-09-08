@@ -75,6 +75,7 @@ def read_engines(folder_engines):
         "https://stockfishchess.org/",
         "stockfish-linux-x86-64-universal",
         3700,
+        nodes_compatible=True
     )
     cm.set_uci_option("Hash", "64")
     cm.set_uci_option("Threads", "2")
