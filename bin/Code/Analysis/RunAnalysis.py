@@ -242,7 +242,7 @@ class CPU:
             self.db_games.close()
             self.db_games = None
 
-        QtWidgets.QApplication.quit()
+        QTUtils.close_app()
 
     def analyzer_clone(self, mstime: int, depth: int, nodes: int, multipv: int | None) -> EngineManagerAnalysis:
         engine = self.configuration.engines.engine_analyzer()

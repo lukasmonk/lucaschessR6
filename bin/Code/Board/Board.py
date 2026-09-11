@@ -152,12 +152,12 @@ class Board(QtWidgets.QGraphicsView):
     id_last_movable: int
 
     def __init__(
-        self,
-        parent,
-        config_board: Any,
-        with_menu_visual: bool = True,
-        with_director: bool = True,
-        allow_eboard: bool = False,
+            self,
+            parent,
+            config_board: Any,
+            with_menu_visual: bool = True,
+            with_director: bool = True,
+            allow_eboard: bool = False,
     ):
         super().__init__()
 
@@ -294,14 +294,14 @@ class Board(QtWidgets.QGraphicsView):
 
         if key == Qt.Key.Key_F12:
             if hasattr(self.main_window, "manager") and hasattr(
-                self.main_window.manager.main_window, "pressed_shortcut_f12"
+                    self.main_window.manager.main_window, "pressed_shortcut_f12"
             ):
                 self.main_window.manager.main_window.pressed_shortcut_f12()
             return
 
         if key == Qt.Key.Key_F11:
             if hasattr(self.main_window, "manager") and hasattr(
-                self.main_window.manager.main_window, "pressed_shortcut_f11"
+                    self.main_window.manager.main_window, "pressed_shortcut_f11"
             ):
                 self.main_window.manager.main_window.pressed_shortcut_f11()
             return
@@ -319,7 +319,7 @@ class Board(QtWidgets.QGraphicsView):
 
         if key == Qt.Key.Key_O and is_alt:
             if hasattr(self.main_window, "manager") and hasattr(
-                self.main_window.manager.main_window, "pressed_shortcut_alt_o"
+                    self.main_window.manager.main_window, "pressed_shortcut_alt_o"
             ):
                 self.main_window.manager.main_window.pressed_shortcut_alt_o()
             return True
@@ -351,9 +351,7 @@ class Board(QtWidgets.QGraphicsView):
             ap = self.config_board.width_piece()
             ap += 2 * (1 if key == Qt.Key.Key_Plus else -1)
             if ap >= 10:
-                self.config_board.width_piece(ap)
-                self.config_board.guardaEnDisco()
-                self.width_changed()
+                self.change_the_width(ap)
             return True
 
         if is_ctrl and key == Qt.Key.Key_T:
@@ -379,11 +377,11 @@ class Board(QtWidgets.QGraphicsView):
 
         if key == Qt.Key.Key_J:
             if path := SelectFiles.save_file(
-                self,
-                _("File to save"),
-                self.configuration.save_folder(),
-                "png",
-                False,
+                    self,
+                    _("File to save"),
+                    self.configuration.save_folder(),
+                    "png",
+                    False,
             ):
                 self.save_as_img(path, "png", is_ctrl=is_ctrl, is_alt=is_alt)
                 self.configuration.set_save_folder(os.path.dirname(path))
@@ -408,9 +406,9 @@ class Board(QtWidgets.QGraphicsView):
             return True
 
         if (
-            hasattr(self.main_window, "manager")
-            and self.main_window.manager
-            and key in (Qt.Key.Key_P, Qt.Key.Key_N, Qt.Key.Key_C, Qt.Key.Key_O)
+                hasattr(self.main_window, "manager")
+                and self.main_window.manager
+                and key in (Qt.Key.Key_P, Qt.Key.Key_N, Qt.Key.Key_C, Qt.Key.Key_O)
         ):
             if key == Qt.Key.Key_P and hasattr(self.main_window.manager, "information_pgn"):
                 self.main_window.manager.information_pgn()
@@ -449,10 +447,10 @@ class Board(QtWidgets.QGraphicsView):
                             elif san[0].upper() in self.dic_tr_keymoves:
                                 san = self.dic_tr_keymoves[san[0].upper()] + san[1:]
                         if (
-                            busca.endswith(san.lower())
-                            or busca.endswith(san.lower().replace("=", ""))
-                            or (san == "O-O-O" and busca.endswith("o3"))
-                            or (san == "O-O" and busca.endswith("o2"))
+                                busca.endswith(san.lower())
+                                or busca.endswith(san.lower().replace("=", ""))
+                                or (san == "O-O-O" and busca.endswith("o3"))
+                                or (san == "O-O" and busca.endswith("o2"))
                         ):
                             if exmove_ok:
                                 if len(san) > len(exmove_ok.san()):
@@ -509,21 +507,33 @@ class Board(QtWidgets.QGraphicsView):
 
     def maximize_size(self, activado_f11):
         self.siF11 = activado_f11
-        self.config_board.width_piece(1000)
-        self.config_board.guardaEnDisco()
-        self.width_changed()
+        self.change_the_width(1000)
 
     def normal_size(self, xancho_pieza):
         self.siF11 = False
-        self.config_board.width_piece(xancho_pieza)
-        self.config_board.guardaEnDisco()
-        self.width_changed()
+        self.change_the_width(xancho_pieza)
 
-    def width_changed(self):
+    def change_the_width(self, width_piece):
+        if width_piece is not None:
+            self.config_board.width_piece(width_piece)
+            self.config_board.guardaEnDisco()
+        if self.arrow_sc:
+            a1h8 = self.arrow_sc.block_data.a1h8
+        else:
+            a1h8 = None
+        pieces_are_active = self.pieces_are_active
+        side_pieces_active = self.side_pieces_active
         is_white_bottom = self.is_white_bottom
+        last_position = self.last_position
         self.set_width()
         if not is_white_bottom:
             self.try_to_rotate_the_board(None)
+        if last_position:
+            self.set_position(last_position)
+        if a1h8:
+            self.put_arrow_sc(a1h8[:2], a1h8[2:])
+        if pieces_are_active:
+            self.activate_side(side_pieces_active)
         if self.dispatch_size:
             self.dispatch_size()
 
@@ -538,7 +548,7 @@ class Board(QtWidgets.QGraphicsView):
             self.pieces = Code.all_pieces.selecciona(nom_pieces_ori)
         self.width_piece = self.config_board.width_piece()
         self.margin_pieces = (
-            Code.configuration.x_margin_pieces - 10
+                Code.configuration.x_margin_pieces - 10
         )  # -10 a +10 como valor real, de 0 a 20 en configuración parámetros
 
         self.colorBlancas = self.config_board.colorBlancas()
@@ -731,7 +741,7 @@ class Board(QtWidgets.QGraphicsView):
                 cajon = BoardTypes.Caja()
                 cajon.colorRelleno = self.colorExterior
         self.ancho = ancho = cajon.physical_pos.alto = cajon.physical_pos.ancho = (
-            self.width_square * 8 + self.margin_center * 2 + self.tamFrontera * 2
+                self.width_square * 8 + self.margin_center * 2 + self.tamFrontera * 2
         )
         cajon.physical_pos.orden = 1
         cajon.tipo = 0
@@ -766,7 +776,7 @@ class Board(QtWidgets.QGraphicsView):
         base_casillas_f.grosor = self.tamFrontera
         base_casillas_f.physical_pos.x = base_casillas_f.physical_pos.y = self.margin_center
         base_casillas_f.physical_pos.alto = base_casillas_f.physical_pos.ancho = (
-            self.width_square * 8 + self.tamFrontera
+                self.width_square * 8 + self.tamFrontera
         )
         base_casillas_f.physical_pos.orden = 3
         base_casillas_f.colorRelleno = -1
@@ -1360,10 +1370,10 @@ class Board(QtWidgets.QGraphicsView):
                     if n != last:
                         bd = item.block_data
                         if (
-                            hasattr(bd_last, "tpid")
-                            and hasattr(bd, "tpid")
-                            and bd_last.tpid == bd.tpid
-                            and bd_last.a1h8 in (bd.a1h8, bd.a1h8[2:] + bd.a1h8[:2])
+                                hasattr(bd_last, "tpid")
+                                and hasattr(bd, "tpid")
+                                and bd_last.tpid == bd.tpid
+                                and bd_last.a1h8 in (bd.a1h8, bd.a1h8[2:] + bd.a1h8[:2])
                         ):
                             st.add(self.current_graphlive)
                             st.add(item)
@@ -1456,10 +1466,9 @@ class Board(QtWidgets.QGraphicsView):
 
     def check_leds(self):
         if not hasattr(self, "dicXML"):
-
             def lee(fich):
                 with open(
-                    Code.path_resource("IntFiles", "Svg", f"{fich}.svg"), "rt", encoding="utf-8", errors="ignore"
+                        Code.path_resource("IntFiles", "Svg", f"{fich}.svg"), "rt", encoding="utf-8", errors="ignore"
                 ) as f:
                     resp = f.read()
                 return resp
@@ -1541,9 +1550,7 @@ class Board(QtWidgets.QGraphicsView):
                     ap = 64
                 ap += 2 * (+1 if salto else -1)
                 if ap >= self.minimum_size:
-                    self.config_board.width_piece(ap)
-                    self.config_board.guardaEnDisco()
-                    self.width_changed()
+                    self.change_the_width(ap)
                     return
 
         elif hasattr(self.main_window, "board_wheel_event"):
@@ -2035,8 +2042,8 @@ class Board(QtWidgets.QGraphicsView):
         bf = copy.deepcopy(self.config_board.fTransicion())
         bf.a1h8 = from_a1h8 + to_a1h8
         bf.opacity = max(factor, 0.20)
-        bf.ancho = max(bf.ancho * 2 * (factor**2.2), bf.ancho / 3)
-        bf.altocabeza = max(bf.altocabeza * (factor**2.2), bf.altocabeza / 3)
+        bf.ancho = max(bf.ancho * 2 * (factor ** 2.2), bf.ancho / 3)
+        bf.altocabeza = max(bf.altocabeza * (factor ** 2.2), bf.altocabeza / 3)
         bf.vuelo = bf.altocabeza / 3
         bf.grosor = 1
         bf.redondeos = True
@@ -2175,10 +2182,10 @@ class Board(QtWidgets.QGraphicsView):
                 return "Q" if is_white else "q"
         menu = QTDialogs.LCMenu(self)
         for txt, pieza in (
-            (_("Queen"), "Q"),
-            (_("Rook"), "R"),
-            (_("Bishop"), "B"),
-            (_("Knight"), "N"),
+                (_("Queen"), "Q"),
+                (_("Rook"), "R"),
+                (_("Bishop"), "B"),
+                (_("Knight"), "N"),
         ):
             if not is_white:
                 pieza = pieza.lower()
@@ -2543,9 +2550,9 @@ class Board(QtWidgets.QGraphicsView):
 
     def allow_takeback(self):
         return (
-            hasattr(self.main_window, "manager")
-            and hasattr(self.main_window.manager, "run_action")
-            and hasattr(self.main_window.manager, "takeback")
+                hasattr(self.main_window, "manager")
+                and hasattr(self.main_window.manager, "run_action")
+                and hasattr(self.main_window.manager, "takeback")
         )
 
     def set_tmp_position(self, position):

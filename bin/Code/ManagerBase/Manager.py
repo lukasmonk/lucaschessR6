@@ -174,10 +174,6 @@ class Manager:
                 self.must_be_autosaved = False
             self.closed = True
 
-    def disable_use_eboard(self):
-        if self.configuration.x_digital_board:
-            self.with_eboard = False
-
     def refresh_pgn(self):
         self.main_window.base.pgn_refresh()
 
@@ -1648,3 +1644,15 @@ class Manager:
                 _("This utility only works in the last position of the game and if it is not finished."),
             )
             return False
+
+    def disable_use_eboard(self):
+        if self.configuration.x_digital_board:
+            self.with_eboard = False
+
+    def ask_question(self, question: str) -> bool:
+        eboard_enabled = self.board.disable_eboard_here()
+        resp = QTMessages.pregunta(self.main_window, question)
+        if eboard_enabled:
+            self.board.enable_eboard_here()
+        return resp
+

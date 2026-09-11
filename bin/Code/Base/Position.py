@@ -46,6 +46,9 @@ class Position:
         self.num_moves = 0
         self.mov_pawn_capt = 0
 
+    def __str__(self):
+        return self.fen()
+
     def set_pos_initial(self):
         """
         Initialize the position to the standard starting position.

@@ -491,12 +491,14 @@ class LB(QtWidgets.QLabel):
     #     return self
 
     def set_fixed_lines(self, num_lines):
-        font_metrics = QtGui.QFontMetrics(self.font())
-        line_height = font_metrics.height()
-        required_height = line_height * num_lines
+        fm = QtGui.QFontMetrics(self.font())
+        line_spacing = fm.lineSpacing()
+        margins = self.contentsMargins()
+        extra = margins.top() + margins.bottom() + 2 * self.frameWidth()
+        extra += fm.descent()  # margen de seguridad para descendentes (g, y, p, q...)
+        required_height = line_spacing * num_lines + extra
         self.setFixedHeight(required_height)
         return self
-
 
 def LB2P(parent, texto):
     return LB(parent, f"{texto}: ")

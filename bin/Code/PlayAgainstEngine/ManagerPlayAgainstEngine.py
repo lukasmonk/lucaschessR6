@@ -602,8 +602,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
             if tc.time_is_consumed():
                 t = time.monotonic()
-                if is_player and QTMessages.pregunta(
-                    self.main_window,
+                if is_player and self.ask_question(
                     f"{_X(_('%1 has won on time.'), self.rival_name)}\n\n{_('Add time and keep playing?')}",
                 ):
                     min_x = WPlayAgainstEngine.get_extra_minutes(self.main_window)
@@ -768,7 +767,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         if self.state == ST_ENDGAME and self.play_while_win:
             si_pregunta = False
         if si_pregunta:
-            if not QTMessages.pregunta(self.main_window, _("Restart the game?")):
+            if not self.ask_question(_("Restart the game?")):
                 return
         self.crash_adjourn_end()
         if self.timed:
@@ -797,7 +796,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         self.start(self.reinicio)
 
     def adjourn(self):
-        if QTMessages.pregunta(self.main_window, _("Do you want to adjourn the game?")):
+        if self.ask_question(_("Do you want to adjourn the game?")):
             self.crash_adjourn_end()
             dic = self.save_state()
 
@@ -914,7 +913,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             self.board.remove_movables()
 
         if len(self.game) > 0:
-            if not QTMessages.pregunta(self.main_window, _("End game?")):
+            if not self.ask_question(_("End game?")):
                 return False  # no abandona
 
             close_comun()
@@ -937,7 +936,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             return True
         if len(self.game) > 0 or self.play_while_win:
             if with_question:
-                if not QTMessages.pregunta(self.main_window, _("Do you want to resign?")):
+                if not self.ask_question(_("Do you want to resign?")):
                     return False  # no abandona
             if self.timed:
                 self.main_window.stop_clock()

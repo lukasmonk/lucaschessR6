@@ -850,7 +850,7 @@ class WindowArbol(LCDialog.LCDialog):
 
     def new_analysis(self, lm):
         fen = lm.gameBase.last_position.fen()
-        ap = WindowAnalysisParam.analysis_parameters(self, False, True, False, False)
+        ap = WindowAnalysisParam.analysis_parameters(self, False, True)
         if ap is None:
             return
         if ap.engine == "default":

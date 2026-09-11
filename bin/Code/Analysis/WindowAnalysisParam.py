@@ -282,7 +282,7 @@ def _form_engine(analysis_params, all_engines):
     return li_engine
 
 
-def _form_general_options(analysis_params, multiple_selected, is_massive):
+def _form_general_options(analysis_params, is_massive, num_selected_massive=0):
     li_gen = [SEPARADOR]
 
     li_j = [(_("White"), "WHITE"), (_("Black"), "BLACK"), (_("White & Black"), "BOTH")]
@@ -322,9 +322,9 @@ def _form_general_options(analysis_params, multiple_selected, is_massive):
     li_gen.append((f"{_('Start from the end of the game')}:", analysis_params.from_last_move))
     li_gen.append((f"{_('Show graphics')}:", analysis_params.show_graphs))
 
-    if multiple_selected:
+    if is_massive:
         li_gen.append(SEPARADOR)
-        li_gen.append((f"{_('Only selected games')}:", multiple_selected))
+        li_gen.append((f"{_('Only selected games')} ({num_selected_massive}):", num_selected_massive > 1))
 
     if is_massive:
         cores = 999
@@ -356,10 +356,10 @@ def _create_dispatch():
                     reg.cb_add_variations.setChecked(False)
         else:
             if (
-                reg.cb_variations
-                and reg.cb_add_variations
-                and reg.cb_variations.isChecked()
-                and reg.cb_add_variations.isChecked()
+                    reg.cb_variations
+                    and reg.cb_add_variations
+                    and reg.cb_variations.isChecked()
+                    and reg.cb_add_variations.isChecked()
             ):
                 if reg.cb_variations_checked:
                     reg.cb_variations.setChecked(False)
@@ -394,7 +394,7 @@ def _apply_engine_params(analysis_params, li_engine):
     analysis_params.priority = li_engine[5]
 
 
-def _apply_general_params(analysis_params, li_gen, multiple_selected=None):
+def _apply_general_params(analysis_params, li_gen, with_workers=False):
     color = li_gen[0]
     _set_color_selection(analysis_params, color)
     cjug = li_gen[1].strip()
@@ -407,14 +407,9 @@ def _apply_general_params(analysis_params, li_gen, multiple_selected=None):
     analysis_params.delete_previous = li_gen[6]
     analysis_params.from_last_move = li_gen[7]
     analysis_params.show_graphs = li_gen[8]
-    if multiple_selected is not None:
-        if multiple_selected:
-            analysis_params.multiple_selected = li_gen[9]
-            pos_workers = 10
-        else:
-            analysis_params.multiple_selected = False
-            pos_workers = 9
-        analysis_params.workers = li_gen[pos_workers]
+    if with_workers:
+        analysis_params.multiple_selected = li_gen[9]
+        analysis_params.workers = li_gen[10]
 
 
 def _apply_variation_params(analysis_params, li_var):
@@ -459,14 +454,14 @@ def _apply_mates_params(analysis_params, li_mates):
     analysis_params.mates_saved_name, analysis_params.mates_keep_settings = li_mates
 
 
-def analysis_parameters(parent, extended_mode, all_engines, multiple_selected, is_massive):
+def analysis_parameters(parent, extended_mode, all_engines):
     analysis_params = read_dic_params()
     configuration = Code.configuration
 
     li_engine = _form_engine(analysis_params, all_engines)
 
     if extended_mode:
-        li_gen = _form_general_options(analysis_params, multiple_selected, is_massive)
+        li_gen = _form_general_options(analysis_params, False)
         li_var = _form_variations(analysis_params)
         li_blunders, li_brilliancies = _form_blunders_brilliancies(analysis_params, configuration)
         li_themes = _form_themes(analysis_params)
@@ -519,10 +514,10 @@ def analysis_parameters(parent, extended_mode, all_engines, multiple_selected, i
     return None
 
 
-def massive_analysis_parameters(parent, configuration, multiple_selected, is_database=False):
+def massive_analysis_parameters(parent, configuration, num_selected, is_database=False):
     analysis_params = read_dic_params()
 
-    li_gen = _form_general_options(analysis_params, multiple_selected, True)
+    li_gen = _form_general_options(analysis_params, True, num_selected)
     li_engine = _form_engine(analysis_params, False)
     li_var = _form_variations(analysis_params)
     li_blunders, li_brilliancies = _form_blunders_brilliancies(analysis_params, configuration)
@@ -556,7 +551,7 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
 
         li_gen, li_engine, li_var, li_blunders, li_brilliancies, li_mates, li_themes = li_resp
 
-        _apply_general_params(analysis_params, li_gen, multiple_selected)
+        _apply_general_params(analysis_params, li_gen, True)
         _apply_engine_params(analysis_params, li_engine)
         _apply_variation_params(analysis_params, li_var)
         _apply_blunders_params(analysis_params, li_blunders)
@@ -567,13 +562,13 @@ def massive_analysis_parameters(parent, configuration, multiple_selected, is_dat
         _save_analysis_params(analysis_params)
 
         if not (
-            analysis_params.tacticblunders
-            or analysis_params.pgnblunders
-            or analysis_params.bmtblunders
-            or analysis_params.fnsbrilliancies
-            or analysis_params.pgnbrilliancies
-            or analysis_params.bmtbrilliancies
-            or is_database
+                analysis_params.tacticblunders
+                or analysis_params.pgnblunders
+                or analysis_params.bmtblunders
+                or analysis_params.fnsbrilliancies
+                or analysis_params.pgnbrilliancies
+                or analysis_params.bmtbrilliancies
+                or is_database
         ):
             QTMessages.message_error(parent, _("No file was specified where to save results"))
             return None

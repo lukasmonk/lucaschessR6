@@ -174,7 +174,7 @@ class Worker(QtWidgets.QWidget):
         f = Controles.FontType(puntos=configuration.x_pgn_fontpoints)
         self.lb_rotulo2 = Controles.LB(self).set_wrap()
         self.lb_rotulo2.setStyleSheet("border: 1px solid gray;")
-        self.lb_rotulo3 = Controles.LB(self).set_wrap().set_fixed_lines(2).set_font(f).align(top=True)
+        self.lb_rotulo3 = Controles.LB(self).set_wrap().set_font(f).set_fixed_lines(2).align(top=True)
         self.lb_rotulo2.set_text("")
         self.lb_rotulo2.hide()
 

@@ -1441,7 +1441,7 @@ class WGames(QtWidgets.QWidget):
         n_seleccionadas = len(li_seleccionadas)
 
         alm = WindowAnalysisParam.massive_analysis_parameters(
-            self, self.configuration, n_seleccionadas > 1, is_database=True
+            self, self.configuration, n_seleccionadas, is_database=True
         )
         if not alm:
             return

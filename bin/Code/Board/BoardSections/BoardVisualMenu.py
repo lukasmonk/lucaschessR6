@@ -228,10 +228,7 @@ class WTamBoard(QtWidgets.QDialog):
         self.close()
 
     def change_width(self):
-        is_white_bottom = self.board.is_white_bottom
-        self.board.width_changed()
-        if not is_white_bottom:
-            self.board.try_to_rotate_the_board(None)
+        self.board.change_the_width()
 
     def dispatch(self):
         t = self.board

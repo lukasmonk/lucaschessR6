@@ -9,7 +9,7 @@ def analysis_game(manager):
     game = manager.game
     main_window = manager.main_window
 
-    analysis_params = WindowAnalysisParam.analysis_parameters(main_window, True, False, 0, False)
+    analysis_params = WindowAnalysisParam.analysis_parameters(main_window, True, False)
 
     if analysis_params is None:
         return

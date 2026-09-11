@@ -224,8 +224,8 @@ class MainWindow(LCDialog.LCDialog):
         nue = ScreenUtils.EstadoWindow(self.windowState())
         ant = ScreenUtils.EstadoWindow(event.oldState())
 
-        if getattr(self.manager, "in_the_presentation", False):
-            self.manager.presentacion(False)
+        # jjjjjjjjjjjjjj        if getattr(self.manager, "in_the_presentation", False):
+        #             self.manager.presentacion(False)
 
         if nue.fullscreen:
             self.previous_f11_maximized = ant.maximizado

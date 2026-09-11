@@ -501,7 +501,7 @@ class WAnalisis(LCDialog.LCDialog):
     # -- New analysis / play from board ----------------------------------------
 
     def new_analysis(self):
-        alm = WindowAnalysisParam.analysis_parameters(self, False, True, False, False)
+        alm = WindowAnalysisParam.analysis_parameters(self, False, True)
         if alm is not None:
             tab_analysis = self.tb_analysis.create_show(self, alm)
             if tab_analysis is not None:

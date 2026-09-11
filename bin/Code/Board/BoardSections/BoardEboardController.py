@@ -82,12 +82,14 @@ class BoardEboardController:
 
     def disable_eboard_here(self):
         board = self._board
+        previous = board.allow_eboard
         board.allow_eboard = False
+        return previous
 
     def enable_eboard_here(self):
         board = self._board
         board.allow_eboard = True
-        if Code.eboard and Code.eboard.driver:
+        if board.allow_eboard and Code.eboard and Code.eboard.driver:
             Code.eboard.set_position(board.last_position)
 
     def eboard_arrow(self, a1, h8, prom):
