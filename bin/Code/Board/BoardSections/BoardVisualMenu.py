@@ -228,7 +228,7 @@ class WTamBoard(QtWidgets.QDialog):
         self.close()
 
     def change_width(self):
-        self.board.change_the_width()
+        self.board.change_the_width(self.sb.valor())
 
     def dispatch(self):
         t = self.board
@@ -249,16 +249,14 @@ class WTamBoard(QtWidgets.QDialog):
             tpz = self.antes
             ct.width_piece(tpz)
             self.cb.set_value(self.width_for_cb(tpz))
-            self.change_width()
         elif tam == -2:
             self.cb.set_value(self.width_for_cb(ct.ponDefAnchoPieza()))
-            self.change_width()
         else:
             ct.width_piece(tam)
-            self.change_width()
 
-        self.sb.set_value(self.board.width_piece)
-        self.sl.set_value(self.board.width_piece)
+        self.sb.set_value(self.config_board.width_piece())
+        self.sl.set_value(self.config_board.width_piece())
+        self.change_width()
         self.siOcupado = False
         self.dispatch()
 

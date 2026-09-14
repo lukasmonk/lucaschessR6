@@ -76,6 +76,8 @@ class ManagerWashingReplay(Manager.Manager):
         self.show_side_indicator(True)
 
         self.game_obj = self.dbwashing.restoreGame(self.engine)
+        if not self.game_obj:
+            return
         self.numJugadasObj = self.game_obj.num_moves()
         self.pos_move_obj = 0
 

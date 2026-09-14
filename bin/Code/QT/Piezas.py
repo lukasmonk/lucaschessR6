@@ -59,9 +59,12 @@ class ConjuntoPiezas:
         paint() call, which is the main bottleneck during animation.
         """
         key = (pieza, size)
-        cached = self._pixmap_cache.get(key)
-        if cached is not None:
-            return cached
+        if self._pixmap_cache:
+            cached = self._pixmap_cache.get(key)
+            if cached is not None:
+                return cached
+        else:
+            self._pixmap_cache = {}
         renderer = QtSvg.QSvgRenderer(self.dic_pieces[pieza])
         pm = QtGui.QPixmap(size, size)
         pm.fill(QtCore.Qt.GlobalColor.transparent)
@@ -272,6 +275,7 @@ class Blindfold(ConjuntoPiezas):
         self.carpetaPZ = Code.path_resource("IntFiles")
         self.tipo = tipo
         self.reset(nom_pieces_ori)
+        super().__init__(nom_pieces_ori)
 
     def read_pieces(self, name=None):  # name usado por compatibilidad
         dic = {}

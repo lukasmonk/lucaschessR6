@@ -187,12 +187,12 @@ class WorkMap:
                 self.info,
                 data,
             ) = raw
-            self.restore(data)
-            self.reset_list_grid()
-        else:
-            self.nuevo()
-            self.data_activo()
-            return
+            if self.restore(data):
+                self.reset_list_grid()
+                return
+        self.nuevo()
+        self.data_activo()
+        return
 
     def nuevo(self, tipo="mate", model="basic"):
         self.tipo = tipo
@@ -233,17 +233,19 @@ class WorkMap:
         dic_w = {"CURRENT": self.current, "DIC": {iso: reg.save() for iso, reg in self.dic.items()}}
         return Util.var2zip(dic_w)
 
-    def restore(self, xbin):
+    def restore(self, xbin) -> bool:
         dic_w = Util.zip2var(xbin)
-        self.current = dic_w["CURRENT"]
-        d = {}
-        for iso, v in dic_w["DIC"].items():
-            reg = Countries.RegWorkMap()
-            reg.restore(v)
-            d[iso] = reg
-        self.dic = d
-
-        self.reset_list_grid()
+        if dic_w:
+            self.current = dic_w["CURRENT"]
+            d = {}
+            for iso, v in dic_w["DIC"].items():
+                reg = Countries.RegWorkMap()
+                reg.restore(v)
+                d[iso] = reg
+            self.dic = d
+            return True
+        else:
+            return False
 
     def reset_list_grid(self):
         if self.current:

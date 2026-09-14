@@ -33,7 +33,7 @@ class BoardBlindfold:
     def blindfold_reset(self):
         board = self._board
         ap, apc = board.pieces_are_active, board.side_pieces_active
-        is_arrow = board.arrow_sc is not None
+        arrow_sc_a1h8 = board.get_arrow_sc_a1h8()
 
         is_white_bottom = board.is_white_bottom
 
@@ -47,8 +47,8 @@ class BoardBlindfold:
             board.activate_side(apc)
             board.set_side_indicator(apc)
 
-        if is_arrow:
-            board.reset_arrow_sc()
+        if arrow_sc_a1h8:
+            board.put_arrow_sc(arrow_sc_a1h8[0], arrow_sc_a1h8[1])
 
         board.atajos_raton = atajos_raton
         board.init_kb_buffer()

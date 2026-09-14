@@ -368,7 +368,7 @@ def zip2var(blob: bytes | None) -> Any:
         return None
 
 
-def zip2var_change_import(blob: bytes | None, li_replace: list[tuple[str, str]]) -> Any:
+def zip2var_change_import(blob: bytes | None, li_replace: list[tuple[bytes, bytes]]) -> Any:
     if blob is None:
         return None
     try:

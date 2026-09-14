@@ -1964,6 +1964,13 @@ class Board(QtWidgets.QGraphicsView):
             a1h8 = self.arrow_sc.block_data.a1h8
             self.put_arrow_sc(a1h8[:2], a1h8[2:])
 
+    def get_arrow_sc_a1h8(self):
+        if self.arrow_sc:
+            a1h8 = self.arrow_sc.block_data.a1h8
+            return a1h8[:2], a1h8[2:]
+        else:
+            return None
+
     def show_arrow_sc(self):
         if self.arrow_sc:
             self.arrow_sc.show()
