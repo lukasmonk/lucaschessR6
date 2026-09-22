@@ -20,7 +20,7 @@ from Code.Base.Constantes import (
 )
 from Code.Competitions import ManagerMaia
 from Code.QT import FormLayout, Iconos, IconosBase, QTMessages
-from Code.Z import Util
+from Code.Board import Eboard
 
 
 def options(parent, configuration):
@@ -188,26 +188,6 @@ def options(parent, configuration):
     )
     form.separador()
 
-    li_db = [
-        (_("None"), ""),
-        (_("Certabo"), "Certabo"),
-        (_("Chessnut"), "Chessnut"),
-        (_("Chessnut Evo"), "Chessnut Evo"),
-        (_("Chessnut Move"), "Chessnut Move"),
-        (_("DGT (Alternative)"), "DGT-gon"),
-        (_("DGT Pegasus"), "Pegasus"),
-        (_("HOS Sensory"), "HOS Sensory"),
-        (_("iChessOne"), "iChessOne"),
-        (_("Millennium"), "Millennium"),
-        (_("Novag Citrine"), "Citrine"),
-        (_("Novag UCB"), "Novag UCB"),
-        (_("Saitek"), "Saitek"),
-        (_("Square Off Pro"), "Square Off"),
-        (_("Tabutronic"), "Tabutronic"),
-    ]
-    if Util.is_windows():
-        li_db.insert(10, (_("Manya Cynus"), "Cynus"))
-
     li_gr = [
         (_("Show nothing"), None),
         (_("Show icon"), True),
@@ -220,7 +200,7 @@ def options(parent, configuration):
 
     form.separador()
     form.line()
-    form.combobox(_("Digital board"), li_db, configuration.x_digital_board)
+    form.combobox(_("Digital board"), Eboard.Eboard().combo(), configuration.x_digital_board)
     espacios = " " * 30
     form.apart_simple_np(
         f"{espacios}{_('Drivers developed by')} Graham O'Neill "
@@ -393,30 +373,18 @@ def options(parent, configuration):
 
         if configuration.x_digital_board != dboard:
             if dboard:
-                if dboard == "DGT":
-                    if not QTMessages.pregunta(
-                        parent,
-                        "%s<br><br>%s %s"
-                        % (
-                            _("Are you sure %s is the correct driver ?") % dboard,
-                            _("WARNING: selecting the wrong driver might cause damage to your board."),
-                            _("Proceed at your own risk."),
-                        ),
-                    ):
-                        dboard = ""
-                else:
-                    if not QTMessages.pregunta(
-                        parent,
-                        "%s<br><br>%s %s<br><br>%s<br>%s"
-                        % (
-                            _("Are you sure %s is the correct driver ?") % dboard,
-                            _("WARNING: selecting the wrong driver might cause damage to your board."),
-                            _("Proceed at your own risk."),
-                            _("Please read the driver's user manual at:"),
-                            '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
-                        ),
-                    ):
-                        dboard = ""
+                if not QTMessages.pregunta(
+                    parent,
+                    "%s<br><br>%s %s<br><br>%s<br>%s"
+                    % (
+                        _("Are you sure %s is the correct driver ?") % dboard,
+                        _("WARNING: selecting the wrong driver might cause damage to your board."),
+                        _("Proceed at your own risk."),
+                        _("Please read the driver's user manual at:"),
+                        '<a href="https://goneill.co.nz/chess#eboard">https://goneill.co.nz/chess#eboard</a>',
+                    ),
+                ):
+                    dboard = ""
             configuration.x_digital_board = dboard
 
         # Appearance 1 ###############################################################################################

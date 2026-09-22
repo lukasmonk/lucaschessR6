@@ -42,7 +42,7 @@ def average_hash(img, hash_size=16):
     pixels = list(image.getdata())
     avg = sum(pixels) // len(pixels)
     bits = "".join("1" if p > avg else "0" for p in pixels)
-    return int(bits, 2).__format__(f"0{hash_size**2 // 4}x")
+    return int(bits, 2).__format__(f"0{hash_size ** 2 // 4}x")
 
 
 def composite_hash(img, hash_size=16):
@@ -60,6 +60,12 @@ def empty_variance(im):
 
 
 class WPosicion(QtWidgets.QWidget):
+    n_scan_last_added: int
+    n_scan_last_save: int
+    dicscan_pos_hash: dict
+    dic_pos_color: dict
+    squares: dict
+
     def __init__(self, wparent, is_game, game, is_white_bottom):
         self.game = game
         self.position = game.first_position
@@ -239,29 +245,53 @@ class WPosicion(QtWidgets.QWidget):
         if Code.eboard.driver:
             Code.eboard.deactivate()
         else:
-            Code.eboard.activate(self.eboard_dispatch)
+            self.message_info()
+            if Code.eboard.activate(self.eboard_dispatch):
+                Code.eboard.set_position(self.board.last_position)
+
+    def message_info(self):
+        key = "Voyager-Eboard"
+        show_help = Code.configuration.show_help(key)
+        if not show_help:
+            return
+        header = _("How to set up a position")
+        mess_1 = f'1. {_("Press Skip on the first board that appears")}'
+        mess_2 = f'2. {_("Pick up both kings")}'
+        mess_3 = f'3. {_("Set up the position you want")}'
+        mess_4 = f'4. {_("Place the kings back on the board")}'
+        mess_5 = f'{_("The last king you place will be the side to play")}'
+        mess = f"{mess_1}.\n{mess_2}.\n{mess_3}.\n{mess_4}.\n{mess_5}."
+        show_help = QTMessages.message_help(self, header, mess)
+        if not show_help:
+            Code.configuration.remove_help(key)
 
     def eboard_dispatch(self, quien, fen):
-        self.position.read_fen(fen)
-        self.actPosicion()
-        self.reset_position(False)
-        if fen.count("K") == 1 and fen.count("k") == 1:
-            self.save()
-        elif fen.count("k") == 1:
-            self.rbWhite.activate(True)
-        elif fen.count("K") == 1:
-            self.rbBlack.activate(True)
+        if quien in ("stopSetupWTM", "stopSetupBTM"):
+            side = "w" if "W" in quien else "b"
+
+            fen_previo = self.position.fen()
+            side_previo = " w " if "w" in fen_previo else " b "
+            resto = fen_previo.split(side_previo)[1]
+
+            fen = f"{fen} {side} {resto}"
+            position = Position.Position()
+            position.read_fen(fen)
+            position.legal()
+            self.set_position(position)
+
+        return 1
 
     def closeEvent(self, event):
+        self.disable_eboard()
         self.scanner_write()
 
     def change_side(self):
         self.board.set_side_indicator(self.rbWhite.isChecked())
-        self.actPosicion()
+        self.act_position()
         self.reset_position(reset_all=False)
 
     def save(self):
-        self.actPosicion()
+        self.act_position()
         si_kw = False
         si_kb = False
         si_p1 = False
@@ -291,19 +321,24 @@ class WPosicion(QtWidgets.QWidget):
         self.position.is_white = not self.position.is_white
         self.wparent.set_position(self.position)
         self.scanner_write()
+        self.disable_eboard()
         if self.is_game:
-            self.wparent.ponModo(MODO_PARTIDA)
+            self.wparent.set_mode(MODO_PARTIDA)
         else:
             self.wparent.save()
 
     def cancelar(self):
-        if Code.eboard:
-            Code.eboard.deactivate()
+        self.disable_eboard()
         self.scanner_write()
         if self.is_game:
-            self.wparent.ponModo(MODO_PARTIDA)
+            self.wparent.set_mode(MODO_PARTIDA)
         else:
             self.wparent.cancelar()
+
+    @staticmethod
+    def disable_eboard():
+        if Code.eboard.driver:
+            Code.eboard.deactivate()
 
     def show_cursor(self):
         cursor = self.pieces.cursor(self.ultimaPieza)
@@ -416,7 +451,7 @@ class WPosicion(QtWidgets.QWidget):
 
         self.show_cursor()
 
-    def leeDatos(self):
+    def read_data(self):
         is_white = self.rbWhite.isChecked()
         en_passant = self.edEnPassant.texto().strip()
         if not en_passant:
@@ -426,10 +461,10 @@ class WPosicion(QtWidgets.QWidget):
 
         castles = ""
         for cont, pieza in (
-            (self.cbWoo, "K"),
-            (self.cbWooo, "Q"),
-            (self.cbBoo, "k"),
-            (self.cbBooo, "q"),
+                (self.cbWoo, "K"),
+                (self.cbWooo, "Q"),
+                (self.cbBoo, "k"),
+                (self.cbBooo, "q"),
         ):
             if cont.isChecked():
                 castles += pieza
@@ -437,14 +472,14 @@ class WPosicion(QtWidgets.QWidget):
             castles = "-"
         return is_white, en_passant, num_moves, mov_pawn_capt, castles
 
-    def actPosicion(self):
+    def act_position(self):
         (
             self.position.is_white,
             self.position.en_passant,
             self.position.num_moves,
             self.position.mov_pawn_capt,
             self.position.castles,
-        ) = self.leeDatos()
+        ) = self.read_data()
         castles = self.position.castles
         self.cbWoo.set_value("K" in castles)
         self.cbWooo.set_value("Q" in castles)
@@ -490,7 +525,7 @@ class WPosicion(QtWidgets.QWidget):
                 self.setFocus()
 
     def copiar(self):
-        self.actPosicion()
+        self.act_position()
         QTUtils.set_clipboard(self.position.fen())
         QTDialogs.fen_is_in_clipboard(self)
 
@@ -530,11 +565,11 @@ class WPosicion(QtWidgets.QWidget):
         screen = ScreenUtils.get_screen(self)
         with ScreenUtils.EscondeWindow(self.wparent):
             if self.chb_scanner_ask.valor() and not QTMessages.pregunta(
-                None,
-                _("Bring the window to scan to front"),
-                label_yes=_("Accept"),
-                label_no=_("Cancel"),
-                si_top=True,
+                    None,
+                    _("Bring the window to scan to front"),
+                    label_yes=_("Accept"),
+                    label_no=_("Cancel"),
+                    si_top=True,
             ):
                 return
 
@@ -614,8 +649,7 @@ class WPosicion(QtWidgets.QWidget):
         self.dic_pos_color = dic_color
         self.dic_pos_empty = dic_empty
         self.empty_variance_threshold = 80.0
-        is_white_bottom = self.board.is_white_bottom
-        if (is_white_bottom and flipped) or ((not is_white_bottom) and (not flipped)):
+        if self.board.is_white_bottom == flipped:
             self.board.rotate_board()
 
     def scanner_flip(self):
@@ -653,12 +687,12 @@ class WPosicion(QtWidgets.QWidget):
         return dic
 
     def scanner_deduce(self):
-        self.actPosicion()
+        self.act_position()
         fen = "8/8/8/8/8/8/8/8 w KQkq - 0 1"
         if not self.position.is_white:
             fen = fen.replace("w", "b")
         self.position.read_fen(fen)
-        self.actPosicion()
+        self.act_position()
         self.reset_position(reset_all=False)
         dic = self.scanner_deduce_base(False)
         for pos, pz in dic.items():
@@ -909,7 +943,7 @@ class WPGN(QtWidgets.QWidget):
             self.play_next_move()
 
     def inicial(self):
-        self.wparent.ponModo(MODO_POSICION)
+        self.wparent.set_mode(MODO_POSICION)
 
     def play_next_move(self):
         self.tb.set_action_visible(self.inicial, len(self.game) == 0)
@@ -936,7 +970,7 @@ class WPGN(QtWidgets.QWidget):
         else:
             return False
 
-    def grid_num_datos(self, grid):
+    def grid_num_datos(self, _grid):
         n = len(self.game)
         if not n:
             return 0
@@ -946,7 +980,7 @@ class WPGN(QtWidgets.QWidget):
             n += 1
         return n // 2
 
-    def grid_dato(self, grid, row, obj_column):
+    def grid_dato(self, _grid, row, obj_column):
         col = obj_column.key
         if col == "NUMBER":
             return str(self.game.first_position.num_moves + row)
@@ -979,12 +1013,15 @@ class WPGN(QtWidgets.QWidget):
 
 
 class Voyager(LCDialog.LCDialog):
+    modo: int
+
     def __init__(self, owner, is_game, game):
         titulo = _("Voyager 2") if is_game else _("Start position")
         icono = Iconos.Voyager() if is_game else Iconos.Datos()
         LCDialog.LCDialog.__init__(self, None, titulo, icono, "voyager")
         self.setWindowFlags(
-            QtCore.Qt.WindowType.WindowCloseButtonHint | QtCore.Qt.Window | QtCore.Qt.WindowType.WindowStaysOnTopHint
+            QtCore.Qt.WindowType.WindowCloseButtonHint | QtCore.Qt.WindowType.Window
+            | QtCore.Qt.WindowType.WindowStaysOnTopHint
         )
 
         self.is_game = is_game
@@ -1000,14 +1037,14 @@ class Voyager(LCDialog.LCDialog):
         ly = Colocacion.V().control(self.wPos).control(self.wPGN).margen(0)
         self.setLayout(ly)
 
-        self.ponModo(MODO_PARTIDA if self.is_game else MODO_POSICION)
+        self.set_mode(MODO_PARTIDA if self.is_game else MODO_POSICION)
 
         self.restore_video(with_tam=False)
 
     def is_white_bottom(self):
         return self.wPos.board.is_white_bottom
 
-    def ponModo(self, modo):
+    def set_mode(self, modo):
         self.modo = modo
         if modo == MODO_POSICION:
             self.wPos.set_position(self.game.first_position)

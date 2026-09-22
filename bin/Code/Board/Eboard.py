@@ -21,6 +21,7 @@ class Eboard:
         self.working_time = None
         self.side_takeback = None
         self._callbacks = []
+        self._dll_directory = None
 
     def is_working(self):
         return self.working_time is not None and 1.0 > (time.monotonic() - self.working_time)
@@ -61,6 +62,7 @@ class Eboard:
     def registerStartSetupFunc(self):
         # assert prln("registerStartSetupFunc")
         self.setup = True
+        self.fen_eboard = None
         return 1
 
     def registerStableBoardFunc(self, dato):
@@ -72,15 +74,19 @@ class Eboard:
 
     def registerStopSetupWTMFunc(self, dato):
         # assert prln("registerStopSetupWTMFunc", dato)
+        fen_eboard = self.dgt2fen(dato)
+        self.fen_eboard = fen_eboard
         if self.setup:
-            self.envia("stopSetupWTM", self.dgt2fen(dato))
+            self.envia("stopSetupWTM", fen_eboard)
             self.setup = False
         return 1
 
     def registerStopSetupBTMFunc(self, dato):
         # assert prln("registerStopSetupBTMFunc", dato)
+        fen_eboard = self.dgt2fen(dato)
+        self.fen_eboard = fen_eboard
         if self.setup:
-            self.envia("stopSetupBTM", self.dgt2fen(dato))
+            self.envia("stopSetupBTM", fen_eboard)
             self.setup = False
         return 1
 
@@ -123,33 +129,37 @@ class Eboard:
         self.dispatch = dispatch
 
         path_eboards = Util.opj(Code.folder_os, "DigitalBoards")
-        os.chdir(path_eboards)
 
         if Util.is_linux():
             functype = ctypes.CFUNCTYPE
 
-            board_so_prefixes = {
-                "DGT-gon": "dgt",
-                "Certabo": "cer",
-                "Chessnut": "nut",
-                "Pegasus": "peg",
-                "Millennium": "mcl",
-                "Citrine": "cit",
-                "Saitek": "osa",
-                "Square Off": "sop",
-                "Tabutronic": "tab",
-                "iChessOne": "ico",
-                "Chessnut Evo": "evo",
-                "HOS Sensory": "hos",
-                "Chessnut Move": "mov",
-            }
-            prefijo = board_so_prefixes.get(self.name, "ucb")
-            path_so = Util.opj(path_eboards, f"lib{prefijo}.so")
+            if self.name == "Development":
+                path_so = self.path_dll_development()
+            else:
+                board_so_prefixes = {
+                    "DGT-gon": "dgt",
+                    "Certabo": "cer",
+                    "Chessnut": "nut",
+                    "Pegasus": "peg",
+                    "Millennium": "mcl",
+                    "Citrine": "cit",
+                    "Saitek": "osa",
+                    "Square Off": "sop",
+                    "Tabutronic": "tab",
+                    "iChessOne": "ico",
+                    "Chessnut Evo": "evo",
+                    "HOS Sensory": "hos",
+                    "Chessnut Move": "mov",
+                }
+                prefijo = board_so_prefixes.get(self.name, "ucb")
+                path_so = Util.opj(path_eboards, f"lib{prefijo}.so")
 
             if os.path.isfile(path_so):
                 try:
-                    ctypes.CDLL(Util.opj(path_eboards, "libQt6PrintSupport.so.6"), mode=ctypes.RTLD_GLOBAL)
-                    ctypes.CDLL(Util.opj(path_eboards, "libQt6Pas.so.6"), mode=ctypes.RTLD_GLOBAL)
+                    for lib_name in ("libQt6PrintSupport.so.6", "libQt6Pas.so.6"):
+                        lib_path = Util.opj(path_eboards, lib_name)
+                        if os.path.isfile(lib_path):
+                            ctypes.CDLL(lib_path, mode=ctypes.RTLD_GLOBAL)
                     driver = ctypes.CDLL(path_so)
                 except Exception as e:
                     driver = None
@@ -157,36 +167,39 @@ class Eboard:
 
         else:
             functype = ctypes.WINFUNCTYPE
-            path_eboards = Util.opj(Code.folder_os, "DigitalBoards")
 
-            board_dll_suffixes = {
-                "Certabo": "CER64",
-                "Chessnut": "NUT64",
-                "DGT-gon": "DGT64",
-                "Pegasus": "PEG64",
-                "Millennium": "MCL64",
-                "Citrine": "CIT64",
-                "Saitek": "OSA64",
-                "Square Off": "SOP64",
-                "Tabutronic": "TAB64",
-                "iChessOne": "ICO64",
-                "Cynus": "CYN64",
-                "Chessnut Evo": "EVO64",
-                "HOS Sensory": "HOS64",
-                "Chessnut Move": "MOV64",
-            }
-            sufijo = board_dll_suffixes.get(self.name, "UCB64")
-            path_dll = Util.opj(path_eboards, f"gon-{sufijo}.dll")
+            if self.name == "Development":
+                path_dll = self.path_dll_development()
+            else:
+                board_dll_suffixes = {
+                    "Certabo": "CER64",
+                    "Chessnut": "NUT64",
+                    "DGT-gon": "DGT64",
+                    "Pegasus": "PEG64",
+                    "Millennium": "MCL64",
+                    "Citrine": "CIT64",
+                    "Saitek": "OSA64",
+                    "Square Off": "SOP64",
+                    "Tabutronic": "TAB64",
+                    "iChessOne": "ICO64",
+                    "Cynus": "CYN64",
+                    "Chessnut Evo": "EVO64",
+                    "HOS Sensory": "HOS64",
+                    "Chessnut Move": "MOV64",
+                }
+                sufijo = board_dll_suffixes.get(self.name, "UCB64")
+                path_dll = Util.opj(path_eboards, f"gon-{sufijo}.dll")
+
             if os.path.isfile(path_dll):
                 try:
+                    self._dll_directory = os.add_dll_directory(path_eboards)
                     # if __debug__:
                     #     path_dll = r"H:\lucaschessR6\_work\gon-ZZZ64.dll"
                     driver = ctypes.WinDLL(path_dll)
-                except:
+                except Exception:
                     pass
 
         if driver is None:
-            os.chdir(Code.current_dir)
             return False
 
         cmpfunc = functype(ctypes.c_int, ctypes.c_char_p)
@@ -288,7 +301,6 @@ class Eboard:
 
         driver._DGTDLL_ShowDialog(ctypes.c_int(1))
 
-        os.chdir(Code.current_dir)
         self.driver = driver
         return True
 
@@ -297,13 +309,15 @@ class Eboard:
         if self.driver:
             self.driver._DGTDLL_HideDialog(ctypes.c_int(1))
             self.setup = False
-            if Util.is_windows():
-                from ctypes import wintypes
+            # Problema windows con FreeLibrary:
+            # _DGTDLL_HideDialog(1) le indica al DLL que se detenga, pero el hilo interno del DLL no se detiene
+            # de forma síncrona. Si llamamos FreeLibrary descarga el código del DLL de memoria mientras su hilo
+            # sigue activo → Access Violation cuando processEvents() procesa eventos pendientes.
+            # Se omite la eliminacion manual. El overhead de memoria de mantener un DLL cargado es despreciable.
 
-                kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-                kernel32.FreeLibrary.argtypes = [wintypes.HMODULE]
-                kernel32.FreeLibrary.restype = wintypes.BOOL
-                kernel32.FreeLibrary(self.driver._handle)
+            if self._dll_directory is not None:
+                self._dll_directory.close()
+                self._dll_directory = None
 
             self.driver = None
             self._callbacks = []
@@ -326,7 +340,7 @@ class Eboard:
             # log( "Enviado a la DGT" + cposicion )
             self.driver._DGTDLL_WritePosition(cposicion.encode())
             self.fen_eboard = cposicion
-            self.envia("stableBoard", cposicion.encode())
+            self.envia("stableBoard", cposicion)
             Code.eboard.allowHumanTB = False
 
     def writeClocks(self, wclock, bclock):
@@ -399,8 +413,39 @@ class Eboard:
             "Saitek": Iconos.Saitek,
             "Square Off": Iconos.SquareOff,
             "Tabutronic": Iconos.Tabutronic,
+            "Development": Iconos.AI
         }
         return mapping.get(self.name, Iconos.Novag)()
+
+    @staticmethod
+    def path_dll_development() -> str:
+        driver = "gon-DEV64.dll" if Util.is_windows() else "libdev.so"
+        return os.path.join(Code.folder_root, ".dev_eboards", driver)
+
+    def combo(self):
+        li_db = [
+            (_("None"), ""),
+            (_("Certabo"), "Certabo"),
+            (_("Chessnut"), "Chessnut"),
+            (_("Chessnut Evo"), "Chessnut Evo"),
+            (_("Chessnut Move"), "Chessnut Move"),
+            (_("DGT (Alternative)"), "DGT-gon"),
+            (_("DGT Pegasus"), "Pegasus"),
+            (_("HOS Sensory"), "HOS Sensory"),
+            (_("iChessOne"), "iChessOne"),
+            (_("Millennium"), "Millennium"),
+            (_("Novag Citrine"), "Citrine"),
+            (_("Novag UCB"), "Novag UCB"),
+            (_("Saitek"), "Saitek"),
+            (_("Square Off Pro"), "Square Off"),
+            (_("Tabutronic"), "Tabutronic"),
+        ]
+        if Util.is_windows():
+            li_db.insert(10, (_("Manya Cynus"), "Cynus"))
+
+        if Util.exist_file(self.path_dll_development()):
+            li_db.append(("Development", "Development"))
+        return li_db
 
 
 def version():

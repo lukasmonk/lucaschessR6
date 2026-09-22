@@ -244,7 +244,7 @@ def read_engines(folder_engines):
     mas("gull", "Vadim Demichev", "3 32bit", "https://sourceforge.net/projects/gullchess/", "Gull 3 w32 XP.exe", 3125)
     # cm.set_multipv(10, 64) Da problemas
 
-    mas("irina", "Lucas Monge", "0.23", "https://github.com/lukasmonk/irina", "irina.exe", 1600)
+    mas("irina", "Lucas Monge", "0.24", "https://github.com/lukasmonk/irina", "irina.exe", 1600)
     
     mas(
         "rodentii",

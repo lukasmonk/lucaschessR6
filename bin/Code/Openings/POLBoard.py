@@ -210,6 +210,9 @@ class BoardLines(QtWidgets.QWidget):
     def adjust_width(self):
         self.setFixedWidth(self.board.ancho + 20)
         self.lbPGN.relative_width(self.board.ancho)
+        lb = self.lbPGN
+        lb.ensurePolished()  # necesario: sin polish el QSS aún no está aplicado
+        lb.relative_width(self.board.ancho - 2 * lb.frameWidth())
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
         cp_actual = self.game.move(self.pos_move).position if self.pos_move >= 0 else self.game.first_position

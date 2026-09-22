@@ -105,7 +105,7 @@ class WLines(LCDialog.LCDialog):
         self.glines.font_type(puntos=self.configuration.x_pgn_fontpoints)
         self.glines.set_height_row(self.configuration.x_pgn_rowheight)
 
-        self.tabsanalisis = POLAnalisis.TabsAnalisis(self, self.procesador, self.configuration)
+        self.tabs_analysis = POLAnalisis.TabsAnalysis(self, self.procesador, self.configuration)
 
         widget = QtWidgets.QWidget()
         widget.setStyleSheet("background-color:lightgray;")
@@ -117,7 +117,7 @@ class WLines(LCDialog.LCDialog):
         splitter = QtWidgets.QSplitter(self)
         splitter.setOrientation(QtCore.Qt.Orientation.Vertical)
         splitter.addWidget(widget)
-        splitter.addWidget(self.tabsanalisis)
+        splitter.addWidget(self.tabs_analysis)
         sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         splitter.setSizePolicy(sp)
         self.register_splitter(splitter, "SPLITTER")
@@ -1016,7 +1016,7 @@ class WLines(LCDialog.LCDialog):
     def set_jugada(self, njug):
         """Recibimos informacion del panel del board"""
         if njug >= 0:
-            self.tabsanalisis.set_position(self.game, njug)
+            self.tabs_analysis.set_position(self.game, njug)
 
     def grid_dato(self, _grid, row, obj_column):
         col = obj_column.key
@@ -1555,7 +1555,7 @@ class WLines(LCDialog.LCDialog):
             if is_comments or is_ratings or is_analysis or is_unused:
                 QTUtils.refresh_gui()
                 um = QTMessages.working(self)
-                self.tabsanalisis.tabengine.current_mrm = None
+                self.tabs_analysis.tabengine.current_mrm = None
                 self.dbop.remove_info(is_comments, is_ratings, is_analysis, is_unused)
                 self.refresh_lines()
                 self.glines.gotop()
@@ -1637,7 +1637,7 @@ class WLines(LCDialog.LCDialog):
         board = self.pboard.board
         board.dbVisual.save_movables_board(board)
         self.dbop.setconfig("WHITEBOTTOM", board.is_white_bottom)
-        self.tabsanalisis.save_config()
+        self.tabs_analysis.save_config()
         self.dbop.close()
         self.save_video()
         self.procesador.close_engines()

@@ -5,16 +5,16 @@ from PySide6 import QtWidgets
 
 from Code.Base import Game, Position
 from Code.Books import Books, WBooks
-from Code.Databases import DBgames, DBgamesST, WDB_Games, WDB_Summary
+from Code.Databases import DBgamesST, WDB_Summary
 from Code.Engines import EngineManagerAnalysis
-from Code.Openings import POLAnalisisTree
-from Code.QT import Colocacion, Columnas, Controles, Delegados, FormLayout, Grid, Iconos, QTDialogs
+from Code.Openings import POLAnalisisTree, POLDatabases
+from Code.QT import Colocacion, Columnas, Controles, Delegados, FormLayout, Grid, Iconos, QTDialogs, QTMessages
 
 
 class TabEngine(QtWidgets.QWidget):
     current_posicion: Position.Position | None
 
-    def __init__(self, tabs_analisis, procesador, configuration):
+    def __init__(self, tabs_analysis, procesador, configuration):
         QtWidgets.QWidget.__init__(self)
 
         self.analyzing = False
@@ -24,14 +24,14 @@ class TabEngine(QtWidgets.QWidget):
         self.current_mrm = None
         self.pv = None
 
-        self.dbop = tabs_analisis.dbop
+        self.dbop = tabs_analysis.dbop
 
         self.procesador = procesador
         self.configuration = configuration
 
         self.with_figurines = configuration.x_pgn_withfigurines
 
-        self.tabsAnalisis = tabs_analisis
+        self.tabs_analysis = tabs_analysis
         self.bt_start = Controles.PB(self, "", self.start).set_icono(Iconos.Pelicula_Seguir(), 32)
         self.bt_stop = Controles.PB(self, "", self.stop).set_icono(Iconos.Pelicula_Pausa(), 32)
         self.bt_stop.hide()
@@ -51,8 +51,8 @@ class TabEngine(QtWidgets.QWidget):
         self.chb_show_analysis = Controles.CHB(self, _("Show the analysis"), self.dbop.getconfig("SHOW_ANALYSIS", True))
         self.chb_show_analysis.capture_changes(self.check_show_analysis)
 
-        self.lb_analisis = Controles.LB(self, "").set_font_type(puntos=configuration.x_pgn_fontpoints).set_wrap()
-        self.configuration.set_property(self.lb_analisis, "pgn")
+        # self.lb_analisis = Controles.LB(self, "").set_font_type(puntos=configuration.x_pgn_fontpoints).set_wrap()
+        # self.configuration.set_property(self.lb_analisis, "pgn")
 
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("PDT", "", 120, align_center=True)
@@ -68,7 +68,8 @@ class TabEngine(QtWidgets.QWidget):
         ly_lin1 = Colocacion.H().control(self.bt_start).control(self.bt_stop).control(self.lb_engine)
         ly_lin1.control(self.cb_engine)
         ly_lin1.espacio(50).control(lb_multipv).control(self.sb_multipv).relleno().control(self.chb_show_analysis)
-        ly = Colocacion.V().otro(ly_lin1).control(self.lb_analisis).control(self.grid_analysis).margen(3)
+        # ly = Colocacion.V().otro(ly_lin1).control(self.lb_analisis).control(self.grid_analysis).margen(3)
+        ly = Colocacion.V().otro(ly_lin1).control(self.grid_analysis).margen(3)
 
         self.setLayout(ly)
 
@@ -77,7 +78,7 @@ class TabEngine(QtWidgets.QWidget):
     def check_show_analysis(self):
         ok = self.chb_show_analysis.valor()
         self.dbop.setconfig("SHOW_ANALYSIS", ok)
-        self.tabsAnalisis.wlines.check_show_analysis()
+        self.tabs_analysis.wlines.check_show_analysis()
 
     def save_current(self):
         if self.current_mrm:
@@ -90,11 +91,11 @@ class TabEngine(QtWidgets.QWidget):
             dic["ANALISIS"] = self.current_mrm
             self.dbop.setfenvalue(fenm2, dic)
 
-    def set_data(self, label, position, pv):
+    def set_data(self, _label, position, pv):
         self.save_current()
         self.position = position
         self.pv = pv
-        self.lb_analisis.set_text(label)
+        # self.lb_analisis.set_text(label)
         if self.analyzing:
             self.analyzing = False
             self.engine_manager.stop()
@@ -173,7 +174,7 @@ class TabEngine(QtWidgets.QWidget):
         self.show_start()
         if self.engine_manager:
             self.engine_manager.stop()
-        self.tabsAnalisis.refresh_lines()
+        self.tabs_analysis.refresh_lines()
 
     def reset_engine(self):
         self.save_current()
@@ -239,7 +240,7 @@ class TabEngine(QtWidgets.QWidget):
             if resp is None:
                 return
 
-            x, li_gen = resp
+            _x, li_gen = resp
             tp, plies = li_gen
             dic = {"TYPE": tp, "PLIES": plies}
             self.configuration.write_variables("OL_ENGINE_VAR", dic)
@@ -252,8 +253,8 @@ class TabEngine(QtWidgets.QWidget):
             lst_rows = list(range(row))
 
         refresh = False
-        for row in lst_rows:
-            g = self.li_analysis[row]
+        for _row in lst_rows:
+            g = self.li_analysis[_row]
             if len(g) > 0:
                 pv = self.pv
                 if plies == 0:
@@ -265,7 +266,7 @@ class TabEngine(QtWidgets.QWidget):
                     refresh = True
 
         if refresh:
-            self.tabsAnalisis.refresh_lines()
+            self.tabs_analysis.refresh_lines()
 
     def save_config(self):
         self.dbop.setconfig("ENGINE", self.cb_engine.valor())
@@ -273,15 +274,15 @@ class TabEngine(QtWidgets.QWidget):
 
 
 class TabBook(QtWidgets.QWidget):
-    def __init__(self, tabs_analisis, book, configuration):
+    def __init__(self, tabs_analysis, book, configuration):
         QtWidgets.QWidget.__init__(self)
 
-        self.tabsAnalisis = tabs_analisis
+        self.tabs_analysis = tabs_analysis
         self.position = None
         self.leido = False
         self.pv = None
 
-        self.dbop = tabs_analisis.dbop
+        self.dbop = tabs_analysis.dbop
 
         self.book = book
         book.polyglot()
@@ -382,10 +383,10 @@ class TabBook(QtWidgets.QWidget):
             lst_rows = [row]
 
         refresh = False
-        for row in lst_rows:
-            pv = self.li_moves[row].pv
-            lv = self.li_moves[row].num_level
-            for r in range(row - 1, -1, -1):
+        for _row in lst_rows:
+            pv = self.li_moves[_row].pv
+            lv = self.li_moves[_row].num_level
+            for r in range(_row - 1, -1, -1):
                 alm = self.li_moves[r]
                 if alm.num_level < lv:
                     pv = f"{alm.pv} {pv}"
@@ -395,7 +396,7 @@ class TabBook(QtWidgets.QWidget):
                 refresh = True
 
         if refresh:
-            self.tabsAnalisis.refresh_lines()
+            self.tabs_analysis.refresh_lines()
 
     def set_data(self, position, pv):
         self.position = position
@@ -426,17 +427,17 @@ class TabBook(QtWidgets.QWidget):
 
     def lee_subnivel(self, row):
         alm_base = self.li_moves[row]
-        if alm_base.nivel >= 17:
+        if alm_base.num_level >= 17:
             return
         FasterCode.set_fen(alm_base.fen)
         if FasterCode.move_pv(alm_base.from_sq, alm_base.to_sq, alm_base.promotion):
             fen = FasterCode.get_fen()
             for alm in self.book.alm_list_moves(fen):
-                nv = alm.num_level = alm_base.nivel + 1
+                nv = alm.num_level = alm_base.num_level + 1
                 alm.dato = [""] * 20
                 alm.dato[nv] = alm.pgn
                 alm.dato[nv + 1] = alm.porc
-                alm.dato[nv + 2] = "%d" % alm.weight
+                alm.dato[nv + 2] = f"{alm.weight}"
                 row += 1
                 self.li_moves.insert(row, alm)
 
@@ -449,7 +450,7 @@ class TabBook(QtWidgets.QWidget):
                 alm.dato = [""] * 20
                 alm.dato[0] = alm.pgn
                 alm.dato[1] = alm.porc
-                alm.dato[2] = "%d" % alm.weight
+                alm.dato[2] = f"{alm.weight}"
             self.leido = True
 
     def start(self):
@@ -464,16 +465,18 @@ class TabBook(QtWidgets.QWidget):
 class TabDatabaseSummary(QtWidgets.QWidget):
     position: Position.Position
 
-    def __init__(self, tabs_analisis, procesador, dbstat):
+    def __init__(self, tabs_analysis, procesador, dbstat):
         QtWidgets.QWidget.__init__(self)
 
-        self.tabsAnalisis = tabs_analisis
+        self.tabs_analysis = tabs_analysis
+        self.dbop = tabs_analysis.dbop
 
         self.pv = None
-
         self.dbstat = dbstat
 
         self.wsummary = WDB_Summary.WSummaryBase(procesador, dbstat)
+        self.wsummary.grid_doble_click = self.grid_doble_click
+        self.wsummary.grid_right_button = self.grid_right_button
 
         layout = Colocacion.H().control(self.wsummary)
         self.setLayout(layout)
@@ -489,59 +492,31 @@ class TabDatabaseSummary(QtWidgets.QWidget):
     def stop(self):
         self.dbstat.close()
 
+    def exist_pv(self, pv):
+        return self.dbop.exist_pv(pv)
 
-class InfoMoveReplace:
-    def __init__(self, owner):
-        self.tab_database = owner
-        self.board = self.tab_database.tabsAnalisis.wlines.pboard.board
+    def grid_doble_click(self, _grid, row, _col):
+        if row < len(self.wsummary.liMoves):
+            dic = self.wsummary.liMoves[row]
+            pv = dic["pv"]
+            if not self.exist_pv(pv):
+                if QTMessages.pregunta(self, _("Shall we add this line?")):
+                    self.dbop.append_pv(pv)
+                else:
+                    return
+            pboard = self.tabs_analysis.wlines.pboard
+            pboard._suppress_set_jugada = True
+            self.tabs_analysis.wlines.goto_next_lipv(pv.split(" "), [])
+            pboard._suppress_set_jugada = False
 
-    @staticmethod
-    def game_mode(_x, _y):
-        return True
-
-
-class TabDatabase(QtWidgets.QWidget):
-    position: Position.Position
-
-    def __init__(self, tabs_analisis, db):
-        QtWidgets.QWidget.__init__(self)
-
-        self.tabsAnalisis = tabs_analisis
-        self.is_temporary = False
-
-        self.pv = None
-
-        self.db = db
-
-        self.wgames = WDB_Games.WGames(self, db, None, False)
-        self.wgames.tbWork.hide()
-        self.wgames.status.hide()
-        self.wgames.infoMove = InfoMoveReplace(self)
-
-        layout = Colocacion.H().control(self.wgames)
-        self.setLayout(layout)
-
-    def tw_terminar(self):
-        return
-
-    def set_data(self, position, pv):
-        self.position = position
-        self.set_pv(pv)
-
-    def set_pv(self, pv):
-        self.pv = pv
-        self.db.filter_pv(pv)
-        self.wgames.grid.refresh()
-        self.wgames.grid.gotop()
-
-    def start(self):
-        self.set_pv(self.pv)
-
-    def stop(self):
-        self.db.close()
+    def grid_right_button(self, _grid, row, _column, _modificadores):
+        dic = self.wsummary.liMoves[row]
+        li_pv = dic.get("pv", "").split(" ")
+        if len(li_pv) > 2:
+            self.wsummary.update_pv(" ".join(li_pv[:-2]))
 
 
-class TabsAnalisis(QtWidgets.QWidget):
+class TabsAnalysis(QtWidgets.QWidget):
     def __init__(self, wlines, procesador, configuration):
         QtWidgets.QWidget.__init__(self)
 
@@ -578,7 +553,7 @@ class TabsAnalisis(QtWidgets.QWidget):
         self.cb_nextmove = Controles.CB(self, li, True).capture_changes(self.changed_next_move)
 
         corner_widget = QtWidgets.QWidget(self)
-        ly_corner = Colocacion.H().control(self.cb_nextmove).control(tab_button).margen(0)
+        ly_corner = Colocacion.H().control(self.cb_nextmove).control(tab_button).margen(3)
         corner_widget.setLayout(ly_corner)
 
         self.tabs.setCornerWidget(corner_widget)
@@ -599,11 +574,11 @@ class TabsAnalisis(QtWidgets.QWidget):
     def tab_changed(self, ntab):
         self.tabActive = ntab
         if ntab > 0:
-            tipo, wtab = self.li_tabs[ntab]
+            _tipo, wtab = self.li_tabs[ntab]
             wtab.start()
 
     def tab_close_requested(self, ntab):
-        tipo, wtab = self.li_tabs[ntab]
+        _tipo, wtab = self.li_tabs[ntab]
         wtab.stop()
         if ntab > 1:
             del self.li_tabs[ntab]
@@ -644,11 +619,10 @@ class TabsAnalisis(QtWidgets.QWidget):
         elif resp == "database":
             nomfichgames = QTDialogs.select_db(self, self.configuration, True, False)
             if nomfichgames:
-                db = DBgames.DBgames(nomfichgames)
-                tabdb = TabDatabase(self, db)
+                tabdb = POLDatabases.TabDatabase(self, nomfichgames)
                 self.li_tabs.append((resp, tabdb))
                 pos = len(self.li_tabs) - 1
-                self.set_position(self.game, self.njg, pos)
+                # self.set_position(self.game, self.njg, pos)
                 name = os.path.basename(nomfichgames)[:-5]
                 self.tabs.new_tab(tabdb, name, pos)
                 self.tabs.setTabIcon(pos, Iconos.Databases())

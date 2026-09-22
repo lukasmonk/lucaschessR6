@@ -435,7 +435,7 @@ class WSummaryBase(QtWidgets.QWidget):
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("number", _("N."), 35, align_center=True)
         self.delegadoMove = Delegados.EtiquetaPGN(True if self.with_figurines else None)
-        o_columns.nueva("move", _("Move"), 60, edicion=self.delegadoMove)
+        o_columns.nueva("move", _("Move"), 80, edicion=self.delegadoMove)
         o_columns.nueva("games", _("Games"), 70, align_right=True)
         o_columns.nueva("pgames", f"% {_('Games')}", 70, align_right=True, align_center=True)
         o_columns.nueva("win", _("Win"), 70, align_right=True)

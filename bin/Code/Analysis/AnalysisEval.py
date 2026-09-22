@@ -79,9 +79,9 @@ class AnalysisEval:
         mn = self.conf.x_eval_min_elo
         bl2 = self.conf.x_eval_blunder * 1.5
         if dif > bl2:
-            return mn
+            return int(mn)
         elif dif == 0:
-            return mx
+            return int(mx)
         elif dif >= self.conf.x_eval_blunder:
             mx *= 0.1
         elif dif >= self.conf.x_eval_mistake:

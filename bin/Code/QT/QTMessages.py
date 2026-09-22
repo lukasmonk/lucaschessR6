@@ -967,3 +967,22 @@ def message_with_links(title: str, text: str, detailed_text: str, type_icon: str
     msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok)
 
     msg.exec()
+
+
+def message_help(parent: QtWidgets.QWidget, header: str, information: str) -> bool:
+
+    box = QtWidgets.QMessageBox(parent)
+    box.setIcon(QtWidgets.QMessageBox.Icon.Information)
+    box.setWindowTitle(_("Help"))
+    box.setText(header)
+    box.setInformativeText(information)
+
+    ok_button = box.addButton(_("Continue"), QtWidgets.QMessageBox.ButtonRole.AcceptRole)
+    box.setDefaultButton(ok_button)
+
+    checkbox = QtWidgets.QCheckBox(_("Don't show this again"))
+    box.setCheckBox(checkbox)
+
+    box.exec()
+
+    return checkbox.isChecked()

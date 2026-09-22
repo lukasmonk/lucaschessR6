@@ -21,6 +21,8 @@ TERMINAR = "T"
 
 
 class RunSound:
+    MAX_PENDING_SOUNDS = 64
+
     def __init__(self):
         Code.runSound = self
         self.replay = None
@@ -28,22 +30,34 @@ class RunSound:
         self.replayError = None
         self.dic_sounds = {}
 
-        self.queue = queue.Queue()
+        self.queue = queue.Queue(maxsize=self.MAX_PENDING_SOUNDS)
         self.current = None
+        self.timer = QtCore.QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.siguiente)
 
         self.working = False
 
+    def _schedule_next(self, mseconds):
+        if not self.timer.isActive():
+            self.timer.start(max(0, int(mseconds)))
+
     def siguiente(self):
+        if self.queue.empty():
+            self.working = False
+            return
+        if self.current and self.current.isPlaying():
+            if self.timer.isActive():
+                self.timer.stop()
+            self.timer.start(50)
+            return
+        if self.timer.isActive():
+            self.timer.stop()
+        key = self.queue.get()
+        self.current, mseconds = self.dic_sounds[key]
+        self.current.play()
         if not self.queue.empty():
-            if self.current and self.current.isPlaying():
-                QtCore.QTimer.singleShot(50, self.siguiente)
-                return
-            key = self.queue.get()
-            self.current, mseconds = self.dic_sounds[key]
-            self.current.play()
-            if not self.queue.empty():
-                QtCore.QTimer.singleShot(mseconds, self.siguiente)
-                return
+            self._schedule_next(mseconds)
 
     def play_key(self, key, start=True):
         played = False
@@ -65,7 +79,10 @@ class RunSound:
             seconds = self.dic_sounds[key][1]
 
         if seconds > 0:
-            self.queue.put(key)
+            try:
+                self.queue.put_nowait(key)
+            except queue.Full:
+                return False
             if start:
                 self.siguiente()
         return played
@@ -110,9 +127,11 @@ class RunSound:
 
     def close(self):
         self.working = False
+        self.timer.stop()
         if self.current:
             self.current.stop()
-        self.queue = queue.Queue()
+        self.current = None
+        self.queue = queue.Queue(maxsize=self.MAX_PENDING_SOUNDS)
 
     def play_list(self, li):
         for key in li:

@@ -239,7 +239,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
     def grid_doble_click(self, grid, row, _column):
         move = self.dicLiJG[grid.id][row]
-        mrm, pos = move.analysis
+        _mrm, pos = move.analysis
         Analysis.show_analysis(
             None,
             move,
@@ -305,10 +305,10 @@ class WAnalisisGraph(LCDialog.LCDialog):
             return self._grid_dato_dif(move)
 
         elif column == "PORC":
-            return "%3d%%" % move.porcentaje
+            return f"{move.porcentaje:3.0f}%"
 
         elif column == "ELO":
-            return "%3d" % move.elo if move.elo else ""
+            return f"{int(move.elo)}" if move.elo else ""
 
         elif column == "PHASE":
             return self.dic_phases.get(move.phase, "")
@@ -361,9 +361,9 @@ class WAnalisisGraph(LCDialog.LCDialog):
         rm1 = mrm.li_rm[pos]
         if rm0.mate:
             if rm1.mate:
-                return "" if rm0.mate == rm1.mate else "M↓%d" % (-rm0.mate + rm1.mate,)
+                return "" if rm0.mate == rm1.mate else f"M↓{-rm0.mate + rm1.mate}"
             else:
-                return "M↓%d" % rm0.mate
+                return f"M↓{rm0.mate}"
         elif rm1.mate:
             return "⨠M"
 

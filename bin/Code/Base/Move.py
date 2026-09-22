@@ -557,7 +557,7 @@ class Move:
 
         mrm, pos = self.analysis
         rm = mrm.li_rm[pos]
-        nag, color = mrm.set_nag_color(rm)
+        nag, _color = mrm.set_nag_color(rm)
         self.add_nag(nag)
         for game in self.variations.list_games():
             for move in game.li_moves:

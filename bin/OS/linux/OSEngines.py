@@ -294,7 +294,7 @@ def read_engines(folder_engines):
         nodes_compatible=True,
     )
 
-    mas("irina", "Lucas Monge", "0.23", "https://github.com/lukasmonk/irina", "irina", 1600)
+    mas("irina", "Lucas Monge", "0.24", "https://github.com/lukasmonk/irina", "irina", 1600)
 
     mas("jabba", "Richard Allbert", "1.0", "https://jabbachess.blogspot.com/", "Jabba-1.0", 2078)
 

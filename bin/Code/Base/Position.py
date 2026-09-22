@@ -279,7 +279,7 @@ class Position:
         td = "KQRBNPkqrbnp"
         key = ""
         for pz in td:
-            for k, c in self.squares.items():
+            for c in self.squares.values():
                 if c == pz:
                     key += c
         return key
@@ -732,7 +732,7 @@ class Position:
                     elif pz == "N":
                         add(FasterCode.li_n(npos))
                     elif pz == "P":
-                        lim, lix = FasterCode.li_p(npos, self.is_white)
+                        _lim, lix = FasterCode.li_p(npos, self.is_white)
                         add(lix)
         return lista
 

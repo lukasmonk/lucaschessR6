@@ -52,27 +52,33 @@ class ConjuntoPiezas:
     def render(self, pieza):
         return QtSvg.QSvgRenderer(self.dic_pieces[pieza])
 
-    def render_pixmap(self, pieza, size):
-        """Return a pre-rendered QPixmap cached by (pieza, size).
+    def render_pixmap(self, pieza, size, dpr):
+        key = (pieza, size, dpr)
+        cached = self._pixmap_cache.get(key)
+        if cached is not None:
+            return cached
 
-        This avoids re-rasterizing the SVG from vector data on every
-        paint() call, which is the main bottleneck during animation.
-        """
-        key = (pieza, size)
-        if self._pixmap_cache:
-            cached = self._pixmap_cache.get(key)
-            if cached is not None:
-                return cached
-        else:
-            self._pixmap_cache = {}
-        renderer = QtSvg.QSvgRenderer(self.dic_pieces[pieza])
-        pm = QtGui.QPixmap(size, size)
-        pm.fill(QtCore.Qt.GlobalColor.transparent)
-        painter = QtGui.QPainter(pm)
+        supersample = 8
+        physical = int(size * dpr)
+        big_size = physical * supersample
+
+        big = QtGui.QImage(big_size, big_size, QtGui.QImage.Format.Format_ARGB32_Premultiplied)
+        big.fill(QtCore.Qt.GlobalColor.transparent)
+
+        renderer = self.render(pieza)
+        painter = QtGui.QPainter(big)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
         renderer.render(painter)
         painter.end()
-        self._pixmap_cache[key] = pm
-        return pm
+
+        # Escalar a el tamaño físico final
+        pixmap = QtGui.QPixmap.fromImage(big)
+        pixmap = pixmap.scaled(physical, physical, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                               QtCore.Qt.TransformationMode.SmoothTransformation)
+
+        self._pixmap_cache[key] = pixmap
+        return pixmap
 
     def clear_cache(self):
         """Invalidate all cached pixmaps. Call when piece size changes."""
@@ -84,14 +90,25 @@ class ConjuntoPiezas:
         return w
 
     def pixmap(self, pieza, tam=24):
-        pm = QtGui.QPixmap(tam, tam)
-        pm.fill(QtCore.Qt.GlobalColor.transparent)
+        supersample = 8
+        big_size = tam * supersample
+
+        big_img = QtGui.QImage(big_size, big_size, QtGui.QImage.Format.Format_ARGB32_Premultiplied)
+        big_img.fill(QtCore.Qt.GlobalColor.transparent)
+
         render = self.render(pieza)
-        painter = QtGui.QPainter()
-        painter.begin(pm)
+        painter = QtGui.QPainter(big_img)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
         render.render(painter)
         painter.end()
-        return pm
+
+        scaled_img = big_img.scaled(
+            tam, tam,
+            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+            QtCore.Qt.TransformationMode.SmoothTransformation
+        )
+        return QtGui.QPixmap.fromImage(scaled_img)
 
     def label(self, owner, pieza, tam):
         pm = self.pixmap(pieza, tam)
@@ -140,38 +157,45 @@ class AllPieces:
     @staticmethod
     def pixmap(pieza, name, width):
         fich = Code.path_resource("Pieces", name, f"{'w' if pieza.isupper() else 'b'}{pieza.lower()}.svg")
-        pm = QtGui.QPixmap(width, width)
-        pm.fill(QtCore.Qt.GlobalColor.transparent)
+
+        img = QtGui.QImage(width, width, QtGui.QImage.Format.Format_ARGB32_Premultiplied)
+        img.fill(QtCore.Qt.GlobalColor.transparent)
+
         render = QtSvg.QSvgRenderer(fich)
-        painter = QtGui.QPainter()
-        painter.begin(pm)
+        painter = QtGui.QPainter(img)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
         render.render(painter)
         painter.end()
-        return pm
 
-    def default_icon(self, pieza, width=32):
-        return self.icono(pieza, DEFAULT_PIECES, width)
-
-    def default_pixmap(self, pieza, width):
-        return self.pixmap(pieza, DEFAULT_PIECES, width)
+        return QtGui.QPixmap.fromImage(img)
 
     @staticmethod
     def save_all_png(name, px):
         if is_only_board(name):
             name = DEFAULT_PIECES
         folder_to_save = Code.configuration.paths.folder_pieces_png()
-
         for pieza, color in itertools.product("pnbrqk", "wb"):
             path_file = Code.path_resource("Pieces", name, f"{color}{pieza}.svg")
             render = QtSvg.QSvgRenderer(path_file)
-            painter = QtGui.QPainter()
-            pm = QtGui.QPixmap(px, px)
-            pm.fill(QtCore.Qt.GlobalColor.transparent)
-            painter.begin(pm)
+
+            img = QtGui.QImage(px, px, QtGui.QImage.Format.Format_ARGB32_Premultiplied)
+            img.fill(QtCore.Qt.GlobalColor.transparent)
+
+            painter = QtGui.QPainter(img)
+            painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+            painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
             render.render(painter)
             painter.end()
+
             path = Util.opj(folder_to_save, f"{color}{pieza}.png")
-            pm.save(path, "PNG")
+            img.save(path, "PNG")
+
+    def default_icon(self, pieza, width=32):
+        return self.icono(pieza, DEFAULT_PIECES, width)
+
+    def default_pixmap(self, pieza, width):
+        return self.pixmap(pieza, DEFAULT_PIECES, width)
 
 
 HIDE, GREY, CHECKER, SHOW, TRANSPARENT_2, TRANSPARENT_5, TRANSPARENT_10, TRANSPARENT_30, TRANSPARENT_50 = range(9)
@@ -204,7 +228,7 @@ def save_svg_with_opacity(source_file, dest_file, opacity):
             )
         else:
             header = f'{header} opacity="{opacity}"'
-        svg = svg[: match.start(1)] + header + ">" + svg[match.end() :]
+        svg = svg[: match.start(1)] + header + ">" + svg[match.end():]
         with open(dest_file, "wt", encoding="utf-8") as f:
             f.write(svg)
     except Exception:

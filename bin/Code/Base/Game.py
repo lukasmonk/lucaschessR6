@@ -347,7 +347,7 @@ class Game:
             self.set_tag("FEN", self.first_position.fen())
 
         if self.num_moves():
-            self.set_tag("PlyCount", "%d" % self.num_moves())
+            self.set_tag("PlyCount", str(self.num_moves()))
 
     def sort_tags(self) -> None:
         """
@@ -631,7 +631,7 @@ class Game:
         """
         Add a move specified by long algebraic coordinates (e.g. a2a4).
         """
-        ok, error, move = Move.get_game_move(self, self.last_position, a1h8[:2], a1h8[2:4], a1h8[4:])
+        ok, _error, move = Move.get_game_move(self, self.last_position, a1h8[:2], a1h8[2:4], a1h8[4:])
         if ok:
             self.add_move(move)
 
@@ -723,7 +723,7 @@ class Game:
                     promotion = promotion.upper()
             else:
                 promotion = ""
-            ok, mens, move = Move.get_game_move(self, position, from_sq, to_sq, promotion)
+            ok, _mens, move = Move.get_game_move(self, position, from_sq, to_sq, promotion)
             if ok:
                 self.li_moves.append(move)
                 position = move.position
@@ -1356,7 +1356,7 @@ def pgn_game(pgn):
 
 def fen_game(fen, variation):
     pgn = f'[FEN "{fen}"]\n\n{variation}'
-    ok, p = pgn_game(pgn)
+    _ok, p = pgn_game(pgn)
     return p
 
 
@@ -1446,7 +1446,7 @@ class PGNtoGame:
         """
         if isinstance(pgn, bytes):
             try:
-                pgn, _ = Util.bytes_str_codec(pgn)
+                pgn, _codec = Util.bytes_str_codec(pgn)
             except UnicodeDecodeError:
                 pgn = pgn.decode("utf-8", errors="ignore")
         return pgn
@@ -1621,7 +1621,7 @@ def read_games(pgnfile):
             lineas.append(linea)
             last_line = linea.strip()
         if lineas:
-            ok, p = pgn_game("".join(lineas))
+            _ok, p = pgn_game("".join(lineas))
             yield nbytes, p
 
 

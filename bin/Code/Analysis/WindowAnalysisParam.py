@@ -292,8 +292,10 @@ def _form_general_options(analysis_params, is_massive, num_selected_massive=0):
     cjug = ";".join(analysis_params.li_players) if analysis_params.li_players else ""
     li_gen.append(
         (
-            f'<div align="right">{_("Only the following players")}:<br>'
-            f"{_('(You can add multiple aliases separated by ; and wildcards with *)')}</div>",
+            (
+                f'<div align="right">{_("Only the following players")}:<br>'
+                f"{_('(You can add multiple aliases separated by ; and wildcards with *)')}</div>"
+            ),
             cjug,
         )
     )
@@ -495,7 +497,7 @@ def analysis_parameters(parent, extended_mode, all_engines):
     )
 
     if resultado:
-        accion, li_resp = resultado
+        _accion, li_resp = resultado
 
         if extended_mode:
             li_gen, li_engine, li_var, li_blunders, li_brilliancies, li_mates, li_themes = li_resp
@@ -547,7 +549,7 @@ def massive_analysis_parameters(parent, configuration, num_selected, is_database
     )
 
     if resultado:
-        accion, li_resp = resultado
+        _accion, li_resp = resultado
 
         li_gen, li_engine, li_var, li_blunders, li_brilliancies, li_mates, li_themes = li_resp
 

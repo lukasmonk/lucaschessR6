@@ -79,7 +79,7 @@ QPushButton::pressed
 /* LABEL ---------------------------------------------------------------------------------*/
 QLabel[type="pgn"]
 {
-    border-style: groove;
+    border-style: solid;
     border-width: 2px;
     border-color: #778899;
     padding: 4px 24px 6px 4px;

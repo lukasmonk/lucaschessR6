@@ -17,27 +17,31 @@ class BoardEboardController:
         board = self._board
         if not board.allow_eboard:
             return 1
-        if Code.eboard.fen_eboard == board.last_position.fen():
+        if not board.allow_takeback():
             return 0
-        if board.allow_takeback():
-            against_engine = getattr(board.main_window.manager, "manager_rival", None) is not None
-            if against_engine and hasattr(board.main_window.manager, "play_against_engine"):
-                against_engine = board.main_window.manager.play_against_engine
 
-            if against_engine:
-                allow_human_takeback = Code.eboard.allowHumanTB and board.last_position.is_white == side
+        fen_eboard = Code.eboard.fen_eboard
+        if fen_eboard is not None and fen_eboard == board.last_position.fen():
+            return 0
+
+        against_engine = getattr(board.main_window.manager, "manager_rival", None) is not None
+        if against_engine and hasattr(board.main_window.manager, "play_against_engine"):
+            against_engine = board.main_window.manager.play_against_engine
+
+        if against_engine:
+            allow_human_takeback = Code.eboard.allowHumanTB and board.last_position.is_white == side
+        else:
+            allow_human_takeback = True
+
+        if allow_human_takeback:
+            Code.eboard.allowHumanTB = False
+            if board.main_window.manager.in_end_of_line():
+                board.exec_kb_buffer(Qt.Key.Key_Backspace, 0)
             else:
-                allow_human_takeback = True
+                board.main_window.key_pressed("T", QtCore.Qt.Key.Key_Left)
+            return 1
 
-            if allow_human_takeback:
-                Code.eboard.allowHumanTB = False
-                if board.main_window.manager.in_end_of_line():
-                    board.exec_kb_buffer(Qt.Key.Key_Backspace, 0)
-                else:
-                    board.main_window.key_pressed("T", QtCore.Qt.Key.Key_Left)
-                return 1
-
-            Code.eboard.allowHumanTB = True
+        Code.eboard.allowHumanTB = True
         return 0
 
     def dispatch_eboard(self, quien, a1h8):

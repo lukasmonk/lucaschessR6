@@ -928,7 +928,7 @@ class WPanelDirector(LCDialog.LCDialog):
                         pos = 0
                 lb_sel = self.selectBanda.get_pos(pos)
             if lb_sel and lb_sel.id:
-                nada, tp, nid = lb_sel.id.split("_")
+                nada, tp, nid = lb_sel.id.split("_", 2)
                 if nid.isdigit():
                     nid = int(nid)
                 # if tp == TabVisual.TP_FLECHA:
@@ -965,7 +965,7 @@ class WPanelDirector(LCDialog.LCDialog):
                     lb = self.selectBanda.get_pos(pos)
                     if not lb.id:
                         return
-                    nada, tp, nid = lb.id.split("_")
+                    nada, tp, nid = lb.id.split("_", 2)
                     nid = int(nid)
                     self.datos_new = self.create_task(tp, nid, a1 + a1, -1)
                     self.tp_new = tp

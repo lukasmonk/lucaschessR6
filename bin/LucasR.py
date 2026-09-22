@@ -11,6 +11,8 @@ import warnings
 
 warnings.simplefilter("ignore")
 
+import faulthandler
+faulthandler.enable()
 n_args = len(sys.argv)
 
 if n_args == 1:

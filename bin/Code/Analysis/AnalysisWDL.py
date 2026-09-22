@@ -56,8 +56,8 @@ def cp_to_wdl(cp: int, mate: int, fen: str) -> tuple[int, int, int]:
 #         (19, -122, (0, 296, 704)), (20, -125, (0, 270, 730)),
 #     ]
 #
-#     print(f"{'depth':>5} {'cp':>5} | {'SF (W D L)':^16} | {'función (W D L)':^18} | max_diff")
+#     pri  nt(f"{'depth':>5} {'cp':>5} | {'SF (W D L)':^16} | {'función (W D L)':^18} | max_diff")
 #     for depth, cp, sf in datos:
 #         w, d, l = cp_to_wdl(cp, 0, fen_tras_a2a3)
 #         diff = max(abs(w - sf[0]), abs(d - sf[1]), abs(l - sf[2]))
-#         print(f"{depth:>5} {cp:>5} | {str(sf):^16} | {str((w, d, l)):^18} | {diff}")
+#         prin t(f"{depth:>5} {cp:>5} | {str(sf):^16} | {str((w, d, l)):^18} | {diff}")

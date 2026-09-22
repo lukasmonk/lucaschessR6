@@ -1613,6 +1613,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             move = self.cache[fen_ultimo]
             self.move_the_pieces(move.list_piece_moves, True)
             self.add_move(move)
+            self.beep_extended(False)
             if self.timed:
                 self.tc_rival.restore(move.cacheTime)
                 self.show_clocks()
@@ -2054,6 +2055,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         move.set_clock_ms(last_move.clock_ms)
         fen_ultimo = self.last_fen()
         self.add_move(move)
+        self.beep_extended(False)
         self.move_the_pieces(move.list_piece_moves, True)
         if hasattr(last_move, "cacheTime"):
             move.cacheTime = last_move.cacheTime

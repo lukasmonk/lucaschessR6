@@ -173,7 +173,7 @@ class WPrompts(LCDialog.LCDialog):
     def next_order(self):
         x = -1
         for key in self.li_keys:
-            order, name, xid = key.split(SEPARADOR_KEY)
+            order, _name, _xid = key.split(SEPARADOR_KEY)
             order = int(order)
             x = max(x, order)
         return x + 1
@@ -222,7 +222,7 @@ class WPrompts(LCDialog.LCDialog):
             if resultado is None:
                 return False
 
-            accion, li_resp = resultado
+            _accion, li_resp = resultado
             name, prompt, web = li_resp
             web = web.strip()
             if not name:

@@ -7,6 +7,7 @@ import random
 import shutil
 import sqlite3
 import time
+from bisect import bisect_left
 from pathlib import Path
 
 import FasterCode
@@ -886,6 +887,12 @@ class Opening:
     def __len__(self):
         return len(self.li_xpv)
 
+    def exist_pv(self, pv):
+        xpv = FasterCode.pv_xpv(pv)
+        li = self.li_xpv
+        i = bisect_left(li, xpv)
+        return i < len(li) and li[i].startswith(xpv)
+
     def get_all_games(self):
         li_games = []
         for xpv in self.li_xpv:
@@ -1582,7 +1589,7 @@ class Opening:
                     s0.add(fenm2)
                     dir_prev[fenm2].add(" ".join(lipv[: pos + 1]))
                     if pos < len(lipv) - 1:
-                        dir_post[fenm2].add(" ".join(lipv[pos + 1 :]))
+                        dir_post[fenm2].add(" ".join(lipv[pos + 1:]))
             st_pv = set()
             for fenm2, li_pv_prev in dir_prev.items():
                 for pv_prev in li_pv_prev:

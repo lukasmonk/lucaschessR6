@@ -48,6 +48,13 @@ def prln(*x, color=None):
         sys.stdout.write(COLORS["reset"])
 
     sys.stdout.write("\n")
+    pr("=" * 10)
+    sys.stdout.write("\n")
+    for line in traceback.format_stack()[:-1][-4:-2]:
+        pr(line.strip())
+        sys.stdout.write("\n")
+    pr("=" * 10)
+    sys.stdout.write("\n")
     return True
 
 

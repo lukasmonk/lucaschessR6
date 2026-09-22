@@ -297,7 +297,7 @@ class WAnalisis(LCDialog.LCDialog):
 
         self._setup_board(config_board, is_white)
         self._setup_shared_labels(configuration)
-        ly_left, lytb = self._build_left_column(must_save)
+        ly_left, _lytb = self._build_left_column(must_save)
 
         # First analysis panel (appears to the right of the board column)
         first_panel = OneAnalysis(self, tab_analysis_init)

@@ -83,6 +83,10 @@ class Replay:
 
         self.manager.set_routine_default(self.process_toolbar)
 
+        self.check_changed_manager = self.manager.check_changed
+
+        self.manager.check_changed = self.check_changed
+
         self.show_pause(True, False)
 
         self.num_moves, self.jugInicial, self.filaInicial, self.is_white = self.manager.current_move()
@@ -102,13 +106,12 @@ class Replay:
         move = self.li_moves[self.current_position]
         self.board.set_position(move.position_before)
 
-        if self.seconds_before > 0.0:
-            if self.li_moves:
-                move = self.li_moves[self.current_position]
-                self.board.set_position(move.position_before)
-                if not self.sleep_refresh(self.seconds_before):
-                    return
-                self._initial_waited = True
+        if self.seconds_before > 0.0 and self.li_moves:
+            move = self.li_moves[self.current_position]
+            self.board.set_position(move.position_before)
+            if not self.sleep_refresh(self.seconds_before):
+                return
+            self._initial_waited = True
 
         self.show_current()
 
@@ -250,10 +253,11 @@ class Replay:
         self.main_window.pon_toolbar(self.antAcciones)
         self.manager.set_routine_default(None)
         self.manager.xpelicula = None
+        self.manager.check_changed = self.check_changed_manager
         for animation in self._active_animations:
             try:
                 animation.stop()
-            except Exception:
+            except:
                 pass
         self._active_animations = []
         if self.previous_visible_capturas:
@@ -276,7 +280,7 @@ class Replay:
         if self.current_position >= self.num_moves:
             self.repetir()
             return
-        num_moves, self.current_position, filaInicial, is_white = self.manager.current_move()
+        _num_moves, self.current_position, _fila_inicial, _is_white = self.manager.current_move()
         self.current_position += 1
         self.stopped = False
         self.show_pause(True, False)
@@ -307,23 +311,31 @@ class Replay:
             return
         self.current_position += 1
         if self.current_position >= self.num_moves:
-            if self.next_game:
-                if self.next_game():
-                    self.jugInicial = 0
-                    self.current_position = 0
-                    self.initial_position = 0
-                    self.if_start = True
-                    self.antAcciones = self.main_window.get_toolbar()
-                    self.main_window.pon_toolbar(self.li_acciones, separator=False)
-                    self.li_moves = self.manager.game.li_moves
-                    self.num_moves = len(self.li_moves)
-                    if self.seconds_before > 0.0:
-                        move = self.li_moves[self.current_position]
-                        self.board.set_position(move.position_before)
-                        if not self.sleep_refresh(self.seconds_before):
-                            return
-                    self.show_current()
-                    return
+            if self.next_game and self.next_game():
+                self.jugInicial = 0
+                self.current_position = 0
+                self.initial_position = 0
+                self.if_start = True
+                self.antAcciones = self.main_window.get_toolbar()
+                self.main_window.pon_toolbar(self.li_acciones, separator=False)
+                self.li_moves = self.manager.game.li_moves
+                self.num_moves = len(self.li_moves)
+                if self.seconds_before > 0.0:
+                    move = self.li_moves[self.current_position]
+                    self.board.set_position(move.position_before)
+                    if not self.sleep_refresh(self.seconds_before):
+                        return
+                self.show_current()
+                return
             self.pausa()
         else:
             self.show_current()
+
+    def check_changed(self):
+        if self.stopped:
+            if self.if_custom_sounds:
+                _num_moves, current_position, _fila_inicial, _is_white = self.manager.current_move()
+                move = self.li_moves[current_position]
+                Code.runSound.play_list_seconds(move.sounds_list())
+            if self.if_beep:
+                Code.runSound.play_beep()

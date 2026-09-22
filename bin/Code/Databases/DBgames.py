@@ -80,7 +80,6 @@ class DBgames:
         self.li_row_ids = []
 
         self.rowidReader = None
-        self._old_readers = []  # Mantener referencias a readers antiguos hasta que terminen
 
         self.with_plycount = "PLYCOUNT" in self.read_config("dcabs", {})
 
@@ -97,16 +96,9 @@ class DBgames:
             where: Condición WHERE para filtrar
             order: Cláusula ORDER BY
         """
-        # Limpiar readers antiguos que ya terminaron
-        self._old_readers = [r for r in self._old_readers if not r.terminado()]
-
         # Mover el reader actual a la lista de antiguos (se limpiará cuando termine)
         if self.rowidReader:
-            # Usar close() en lugar de stopnow() para desconectar señales
             self.rowidReader.close()
-            # Solo agregar a _old_readers si todavía está corriendo
-            if not self.rowidReader.terminado():
-                self._old_readers.append(self.rowidReader)
             self.rowidReader = None
 
         # Crear nueva lista de rowids
@@ -258,6 +250,8 @@ class DBgames:
         return self.li_row_ids[nfila]
 
     def field(self, nfila, name):
+        if nfila < 0 or nfila >= len(self.li_row_ids):
+            return ""
         rowid = self.li_row_ids[nfila]
         if rowid not in self.cache:
             # Use self.select which is already quoted, but use rowid as parameter
@@ -310,8 +304,8 @@ class DBgames:
         n = self.rowidReader.reccount()
         # Si es cero y no ha terminado de leer, se le da vtime para que devuelva algo
         while n == 0 and not self.rowidReader.terminado():
-            QtCore.QThread.msleep(50)
-            QtCore.QCoreApplication.processEvents()
+            QtCore.QThread.msleep(10)
+            # QtCore.QCoreApplication.processEvents()  # Provoca crash en opening lines
             n = self.rowidReader.reccount()
         return n
 
@@ -343,13 +337,6 @@ class DBgames:
         if self.rowidReader:
             self.rowidReader.close()
             self.rowidReader = None
-        # Limpiar todos los readers antiguos
-        for reader in self._old_readers:
-            try:
-                reader.close()
-            except Exception:
-                pass
-        self._old_readers.clear()
 
     def label(self):
         if Util.same_path(self.path_file, self.link_file):

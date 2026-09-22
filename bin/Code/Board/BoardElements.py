@@ -190,10 +190,10 @@ class PiezaSC(BloqueSC):
 
         self.block_data = self.bloquePieza = block_pieza
 
-        self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIgnoresTransformations, True)
-
         pz = block_pieza.pieza
-        self.pixmap = board.pieces.render_pixmap(pz, physical_pos.ancho)
+        dpr = self.escena.views()[0].devicePixelRatioF()
+        self.pixmap = board.pieces.render_pixmap(pz, physical_pos.ancho, dpr)
+        self.renderer = board.pieces.render(pz)
 
         self.ini_pos = None
 
@@ -209,13 +209,14 @@ class PiezaSC(BloqueSC):
 
         self.dispatch_move = None
 
-        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
+        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.NoCache)
 
         if Code.configuration.x_shadows_board:
             shadow_scale = max(2, int(ancho * 0.1))
             self.shadow = QtWidgets.QGraphicsDropShadowEffect()
             self.shadow.setBlurRadius(shadow_scale)
-            self.shadow.setOffset(max(1, shadow_scale // 2), max(1, shadow_scale // 2))
+            self.offset_shadow = max(1, shadow_scale // 2)
+            self.shadow.setOffset(self.offset_shadow, self.offset_shadow)
             self.shadow.setColor(QtGui.QColor(0, 0, 0, 120))
             self.setGraphicsEffect(self.shadow)
 
@@ -225,7 +226,9 @@ class PiezaSC(BloqueSC):
         self.update()
 
     def paint(self, painter, option, widget=None):
-        painter.drawPixmap(0, 0, self.pixmap)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
+        self.renderer.render(painter, self.rect)
 
     def hoverMoveEvent(self, event):
         if self.is_active:
@@ -233,7 +236,8 @@ class PiezaSC(BloqueSC):
             x = pos.x()
             y = pos.y()
             self.dragable = (self.limL <= x <= self.limH) and (self.limL <= y <= self.limH)
-            self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor if self.dragable else QtCore.Qt.CursorShape.ArrowCursor)
+            self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor
+                           if self.dragable else QtCore.Qt.CursorShape.ArrowCursor)
             self.setFocus()
         else:
             self.dragable = False
@@ -244,10 +248,13 @@ class PiezaSC(BloqueSC):
 
     def mousePressEvent(self, event):
         if self.dragable:
-            self.ini_pos = event.scenePos()
+            if Code.configuration.x_shadows_board:
+                self.shadow.setOffset(self.offset_shadow*2, self.offset_shadow*2)
+            self.setScale(1.08)
             self.setZValue(ZVALUE_PIECE_MOVING)
-            self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
-            QtWidgets.QGraphicsItem.mousePressEvent(self, event)
+            self.ini_pos = event.scenePos()
+            self.setCursor(QtCore.Qt.CursorShape.BlankCursor)
+            super().mousePressEvent(event)
             if self.dispatch_move:
                 self.dispatch_move()
         else:
@@ -273,6 +280,9 @@ class PiezaSC(BloqueSC):
     def mouseReleaseEvent(self, event):
         QtWidgets.QGraphicsItem.mouseReleaseEvent(self, event)
         if self.dragable:
+            if Code.configuration.x_shadows_board:
+                self.shadow.setOffset(self.offset_shadow, self.offset_shadow)
+            self.setScale(1.0)
             self.setZValue(ZVALUE_PIECE)
             if event.button() == QtCore.Qt.MouseButton.LeftButton:
                 self.board.try_to_move(self, event.scenePos())
@@ -286,7 +296,8 @@ class PiezaSC(BloqueSC):
         self.setFlag(QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsMovable, activate)
         self.is_active = activate
         if activate:
-            self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
+            # self.setCursor(QtCore.Qt.CursorShape.OpenHandCursor)
+            self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
             self.setFocus()
         else:
             self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
@@ -298,9 +309,10 @@ class PiezaSC(BloqueSC):
         """
         pz = self.bloquePieza.pieza
 
-        self.pixmap = self.board.pieces.render_pixmap(pz, self.bloquePieza.physical_pos.ancho)
+        dpr = self.escena.views()[0].devicePixelRatioF()
+        self.pixmap = self.board.pieces.render_pixmap(pz, self.bloquePieza.physical_pos.ancho, dpr)
 
-        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.DeviceCoordinateCache)
+        self.setCacheMode(QtWidgets.QGraphicsItem.CacheMode.ItemCoordinateCache)
 
         self.update()
 

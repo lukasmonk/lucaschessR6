@@ -535,7 +535,7 @@ def old_way0(
     color = '<b><span style="color:%s">%s</span></b>'
     plantilla_e = (
         '<tr><td><b><span style="color:%s">%s</span></b></td>'
-        + '<td align="center">%s</td>' % color
+        + f'<td align="center">{color}</td>'
         + resto % (color, color, color)
     )
 
@@ -622,7 +622,7 @@ def old_way(
 ) -> str:
     """Genera una tabla HTML con estadísticas de movimientos de ajedrez"""
 
-    def get_color(xnag_code: int = None) -> str:
+    def get_color(xnag_code: int | None = None) -> str:
         """Obtiene color para un tipo de movimiento"""
         if xnag_code is None:
             return Code.dic_colors["FOREGROUND"]

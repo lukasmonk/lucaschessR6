@@ -139,12 +139,12 @@ class TreeMoves(QtWidgets.QTreeWidget):
 
 
 class TabTree(QtWidgets.QWidget):
-    def __init__(self, tabs_analisis, configuration):
+    def __init__(self, tabs_analysis, configuration):
         QtWidgets.QWidget.__init__(self)
 
-        self.tabsAnalisis = tabs_analisis
+        self.tabs_analysis = tabs_analysis
 
-        self.wlines = tabs_analisis.wlines
+        self.wlines = tabs_analysis.wlines
         self.tree = TreeMoves(self)
 
         self.tree_data = None
@@ -185,7 +185,7 @@ class TabTree(QtWidgets.QWidget):
         bt_act = Controles.PB(self, _("Update"), self.bt_update, plano=False).set_icono(Iconos.Actualiza(), 16)
         bt_act.relative_width(ScreenUtils.get_width_text(bt_act, f" {_('Update')}") + 50)
 
-        gamebase = self.tabsAnalisis.dbop.getgamebase()
+        gamebase = self.tabs_analysis.dbop.getgamebase()
         if Code.configuration.x_pgn_withfigurines:
             d = Move.dicHTMLFigs
             lc = []
@@ -220,14 +220,14 @@ class TabTree(QtWidgets.QWidget):
             self.lb_analisis.set_text(data_item.game_figurines())
             lipv = data_item.list_pv()
             li_moves_childs = [xchild.move for xchild in data_item.dicHijos.values()]
-            self.tabsAnalisis.wlines.goto_next_lipv(lipv, li_moves_childs)
+            self.tabs_analysis.wlines.goto_next_lipv(lipv, li_moves_childs)
 
     def bt_update(self):
         self.wlines.active_tb(False)
         with QTMessages.one_moment_please(self, with_cancel=True) as um:
             self.tree.clear()
 
-            dbop = self.tabsAnalisis.dbop
+            dbop = self.tabs_analysis.dbop
             levelbase = len(dbop.basePV.split(" "))
 
             def haz(trdata, iparent, nivel):
@@ -247,7 +247,7 @@ class TabTree(QtWidgets.QWidget):
                         return False
                 return True
 
-            self.tree_data = self.tabsAnalisis.dbop.totree(um)
+            self.tree_data = self.tabs_analysis.dbop.totree(um)
 
             tr = self.tree_data
             if dbop.basePV:
@@ -414,7 +414,7 @@ class TabTree(QtWidgets.QWidget):
             QTMessages.message_error(self, f"{_('This file already exists')}\n{f'{filename}.opk'}")
             return
         with QTMessages.one_moment_please(self):
-            dbop_current: OpeningLines.Opening = self.tabsAnalisis.dbop
+            dbop_current: OpeningLines.Opening = self.tabs_analysis.dbop
             dbop_new = OpeningLines.Opening(path_opening)
             game = Game.pv_game(None, a1h8)
             dbop_new.import_other(dbop_current.path_file, game)

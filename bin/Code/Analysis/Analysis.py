@@ -91,7 +91,7 @@ class ControlAnalysis:
         style_moves = f"color:{Code.dic_colors['PGN_MOVES']};"
         li_pgn = []
         if self.game.starts_with_black:
-            li_pgn.append('<span style="%s">%d...</span>' % (style_number, num_mov))
+            li_pgn.append(f'<span style="{style_number}">{num_mov}...</span>')
             num_mov += 1
             salta = 1
         else:

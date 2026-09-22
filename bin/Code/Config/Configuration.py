@@ -223,8 +223,8 @@ class Configuration:
         self.x_eval_good_depth = 5
         self.x_eval_speculative_depth = 3
 
-        self.x_eval_max_elo = 3300.0
-        self.x_eval_min_elo = 200.0
+        self.x_eval_max_elo = 3300
+        self.x_eval_min_elo = 200
 
         self.x_eval_elo_blunder_factor = 12
         self.x_eval_elo_mistake_factor = 6
@@ -708,6 +708,16 @@ class Configuration:
         dic = self.read_variables("AUTO_ROTATE")
         dic[key] = auto_rotate
         self.write_variables("AUTO_ROTATE", dic)
+
+    def show_help(self, key: str) -> bool:
+        dic = self.read_variables("SHOW_HELP")
+        return dic.get(key, True)
+
+    def remove_help(self, key: str):
+        dic = self.read_variables("SHOW_HELP")
+        if key in dic:
+            del dic[key]
+            self.write_variables("SHOW_HELP", dic)
 
     def wheel_board(self, forward):
         return forward if self.x_wheel_board == GO_FORWARD else not forward

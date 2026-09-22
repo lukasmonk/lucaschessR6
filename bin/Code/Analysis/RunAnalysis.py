@@ -513,12 +513,7 @@ class AnalyzeGame:
         rm = mrm.li_rm[0]
         p.read_pv(rm.pv)
 
-        texto = "%s||%s|%s%s\n" % (
-            fen,
-            p.pgn_base_raw(),
-            cab,
-            game.pgn_base_raw_copy(None, njg - 1),
-        )
+        texto = f"{fen}||{p.pgn_base_raw()}|{cab}{game.pgn_base_raw_copy(None, njg - 1)}\n"
         self.xsave_extra("tactic before", texto)
 
         fen = move.position.fen()
@@ -886,7 +881,7 @@ class AnalyzeGame:
                 move.exchangetendency = AnalysisIndexes.calc_exchangetendency(cp, mrm)
 
                 rm = mrm.li_rm[pos_act]
-                nag, color = mrm.set_nag_color(rm)
+                nag, _color = mrm.set_nag_color(rm)
                 move.add_nag(nag)
 
                 if si_blunders or si_brilliancies or si_mates or self.with_variations:
