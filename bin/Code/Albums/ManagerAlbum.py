@@ -202,22 +202,10 @@ class ManagerAlbum(Manager.Manager):
         if not move:
             return False
 
-        self.move_the_pieces(move.list_piece_moves)
-
-        self.add_move(move, True)
+        self.add_move_base(move, True, True)
         self.error = ""
         self.play_next_move()
         return True
-
-    def add_move(self, move, is_player_move):
-        self.game.add_move(move)
-        self.check_boards_setposition()
-
-        self.put_arrow_sc(move.from_sq, move.to_sq)
-        self.beep_extended(is_player_move)
-
-        self.pgn_refresh(self.game.last_position.is_white)
-        self.refresh()
 
     def rival_has_moved(self, engine_response):
         from_sq = engine_response.from_sq
@@ -227,8 +215,7 @@ class ManagerAlbum(Manager.Manager):
 
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
-            self.add_move(move, False)
-            self.move_the_pieces(move.list_piece_moves, True)
+            self.add_move_base(move, False, True)
 
             self.error = ""
 
@@ -254,7 +241,7 @@ class ManagerAlbum(Manager.Manager):
                 mensaje += f"\n\n{_('You have finished this album.')}"
                 nuevo = self.album.siguiente
                 if nuevo:
-                    mensaje += "\n\n%s" % _X(_("Now you can play with album %1"), _F(nuevo))
+                    mensaje += f'\n\n{_X(_("Now you can play with album %1"), _F(nuevo))}'
 
         self.mensaje(mensaje)
         self.set_end_game()

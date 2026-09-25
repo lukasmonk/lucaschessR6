@@ -337,7 +337,7 @@ class WPosicion(QtWidgets.QWidget):
 
     @staticmethod
     def disable_eboard():
-        if Code.eboard.driver:
+        if Code.eboard and Code.eboard.driver:
             Code.eboard.deactivate()
 
     def show_cursor(self):

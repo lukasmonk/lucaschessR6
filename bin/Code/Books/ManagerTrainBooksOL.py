@@ -264,8 +264,8 @@ class ManagerTrainBooksOL(Manager.Manager):
         return True
 
     def rival_has_moved(self, move: Move.Move):
-        self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
+        self.add_move(move, False)
         return True
 
     def add_move(self, move: Move.Move, is_player: bool):

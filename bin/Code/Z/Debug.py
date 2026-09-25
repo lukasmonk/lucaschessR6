@@ -38,8 +38,8 @@ def prln(*x, color=None):
         sys.stdout.write(COLORS[color])
 
     dt = datetime.fromtimestamp(time.time())
-    decimas = dt.microsecond // 100000
-    resultado = f"{dt.strftime('%H:%M:%S')}.{decimas} "
+    decimas = dt.microsecond // 1000
+    resultado = f"{dt.strftime('%H:%M:%S')}.{decimas:03} "
     pr(resultado)
 
     pr(*x)
@@ -47,13 +47,6 @@ def prln(*x, color=None):
     if color and color in COLORS:
         sys.stdout.write(COLORS["reset"])
 
-    sys.stdout.write("\n")
-    pr("=" * 10)
-    sys.stdout.write("\n")
-    for line in traceback.format_stack()[:-1][-4:-2]:
-        pr(line.strip())
-        sys.stdout.write("\n")
-    pr("=" * 10)
     sys.stdout.write("\n")
     return True
 

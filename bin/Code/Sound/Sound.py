@@ -60,32 +60,31 @@ class RunSound:
             self._schedule_next(mseconds)
 
     def play_key(self, key, start=True):
-        played = False
         if key not in self.dic_sounds:
             name_wav = f"{self.relations[key]['WAV_KEY']}.wav"
             path_wav = Util.opj(Code.configuration.paths.folder_sounds(), name_wav)
             if os.path.isfile(path_wav):
                 wf = wave.open(path_wav)
-                seconds = 1000.0 * wf.getnframes() / wf.getframerate()
+                mseconds = 1000.0 * wf.getnframes() / wf.getframerate()
                 wf.close()
                 qsound = QtMultimedia.QSoundEffect()
                 qsound.setSource(QtCore.QUrl.fromLocalFile(path_wav))
-                self.dic_sounds[key] = (qsound, seconds)
-                played = True
+                self.dic_sounds[key] = (qsound, mseconds)
             else:
                 self.dic_sounds[key] = (None, 0)
                 return False
         else:
-            seconds = self.dic_sounds[key][1]
+            mseconds = self.dic_sounds[key][1]
 
-        if seconds > 0:
+        if mseconds > 0:
             try:
                 self.queue.put_nowait(key)
             except queue.Full:
                 return False
             if start:
                 self.siguiente()
-        return played
+            return True
+        return False
 
     def write_sounds(self):
         configuration = Code.configuration
@@ -339,14 +338,12 @@ class TallerSonido:
         return sample if sign else -sample
 
     def mic_record(self):
-        self.datos.append(self.io_device.readAll())
+        self.datos.append(bytes(self.io_device.readAll()))
 
     def mic_end(self):
         self.audio_input.stop()
 
-        resp = b"".join(self.datos)
-        tx = self.lin2alaw(resp, 2)
-        frames = self.alaw2lin(tx, 2)
+        frames = b"".join(self.datos)
         io = BytesIO()
         wf = wave.open(io, "wb")
         wf.setnchannels(self.CHANNELS)

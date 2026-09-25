@@ -540,8 +540,8 @@ class ManagerSwiss(Manager.Manager):
         if ok:
             move.set_time_ms(int(time_s * 1000))
             move.set_clock_ms(self.tc_rival.pending_time * 1000)
-            self.add_move(move, False)
             self.move_the_pieces(move.list_piece_moves, True)
+            self.add_move(move, False)
             self.beep_extended(False)
             QtCore.QTimer.singleShot(0, self.play_next_move)
             return True
@@ -576,8 +576,8 @@ class ManagerSwiss(Manager.Manager):
         move.set_time_ms(time_s * 1000)
         move.set_clock_ms(self.tc_player.pending_time * 1000)
 
-        self.add_move(move, True)
         self.move_the_pieces(move.list_piece_moves, False)
+        self.add_move(move, True)
         self.beep_extended(True)
 
         self.error = ""

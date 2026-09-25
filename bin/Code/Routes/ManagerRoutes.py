@@ -35,12 +35,10 @@ class GREngine:
         self._label = f"{_('Engine')} - {TrListas.level(nlevel)}"
         self.configuration = Code.configuration
         self.level = nlevel
-        self.manager = None
-        self.manager_irina = None
         if nlevel == 0:
             self._name = self._label
-            irina = Code.configuration.engines.search("irina")
-            self.manager_irina = procesador.create_manager_engine(irina, 0, 1, 0)
+            eguzkilore = Code.configuration.engines.search("eguzkilore")
+            self.manager_engine = procesador.create_manager_engine(eguzkilore, 0, 1, 0)
         else:
             d_engines = self.elos()
             x = +1 if nlevel < 6 else -1
@@ -54,17 +52,14 @@ class GREngine:
                     if nlevel > 6:
                         nlevel = 1
             rival = self.configuration.engines.search(engine_name)
-            self.manager = procesador.create_manager_engine(rival, 0, depth, 0)
+            self.manager_engine = procesador.create_manager_engine(rival, 0, depth, 0)
             self._name = "%s %s %d" % (rival.name, _("Depth"), depth)
             self._label += "\n%s\n%s: %d" % (self._name, _("Estimated elo"), elo)
 
     def close(self):
-        if self.manager and self.manager != self:
-            self.manager.close()
-            self.manager = None
-        if self.manager_irina:
-            self.manager_irina.close()
-            self.manager_irina = None
+        if self.manager_engine:
+            self.manager_engine.close()
+            self.manager_engine = None
 
     @property
     def label(self):
@@ -75,12 +70,8 @@ class GREngine:
         return self._name
 
     def play(self, fen):
-        if self.manager:
-            mrm = self.manager.analyze_fen(fen)
-            return mrm.rm_best().movimiento()
-        else:
-            mrm = self.manager_irina.analyze_fen(fen)
-            return mrm.rm_best().movimiento()
+        rm = self.manager_engine.play_fen(fen)
+        return rm.movimiento()
 
     def elos(self):
 
@@ -297,8 +288,8 @@ class ManagerRoutesPlay(ManagerRoutes):
         self.thinking(True)
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, pv[:2], pv[2:4], pv[4:])
         self.thinking(False)
-        self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
+        self.add_move(move, False)
         QtCore.QTimer.singleShot(0, self.play_next_move)
 
     def player_has_moved_dispatcher(self, from_sq, to_sq, promotion=""):
@@ -576,8 +567,8 @@ class ManagerRoutesEndings(ManagerRoutes):
 
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
-        self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
+        self.add_move(move, False)
         return True
 
     def get_help(self, is_warning=True):
@@ -764,8 +755,8 @@ class ManagerRoutesTactics(ManagerRoutes):
 
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
-        self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
+        self.add_move(move, False)
         return True
 
     def get_help(self, remove_points=True):

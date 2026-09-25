@@ -4,7 +4,7 @@ import sys
 
 from Code.Z import Util
 
-VERSION = "R 6.1.5"
+VERSION = "R 6.1.6"
 BASE_VERSION = "C"
 
 Util.randomize()

@@ -59,7 +59,7 @@ class WAbout(QtWidgets.QDialog):
 
         for k, titulo in self.ib.dic.items():
             if "-" in k:
-                base, num = k.split("-")
+                _base, num = k.split("-")
                 if num == "1":
                     self.sub_tab = Controles.Tab()
                     self.sub_tab.set_font(self.f)

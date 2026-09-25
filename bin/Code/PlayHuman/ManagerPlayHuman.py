@@ -423,8 +423,8 @@ class ManagerPlayHuman(Manager.Manager):
 
         move.set_time_ms(time_s * 1000)
         move.set_clock_ms(tc.pending_time * 1000)
-        self.add_move(move)
         self.move_the_pieces(move.list_piece_moves, False)
+        self.add_move(move)
         self.beep_extended(True)
 
         self.enable_toolbar()

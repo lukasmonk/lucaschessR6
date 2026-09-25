@@ -265,9 +265,9 @@ class ManagerLeitner(Manager.Manager):
         move = move_obj.clone(self.game)
         self.game.add_move(move)
 
-        self.beep_extended(is_our_move)
         if not is_our_move:
             self.move_the_pieces(move.list_piece_moves, True)
+        self.beep_extended(is_our_move)
         self.board.set_position(move.position)
         self.main_window.base.pgn.refresh()
         self.main_window.base.pgn.gobottom(1 if move.is_white() else 2)

@@ -265,25 +265,13 @@ class ManagerGame(Manager.Manager):
         if not move:
             return False
 
-        self.move_the_pieces(move.list_piece_moves)
-
-        self.add_move(move, True)
+        self.add_move_base(move, True, True)
 
         self.state = ST_PLAYING if self.game.is_possible_add_moves() else ST_ENDGAME
 
         self.play_next_move()
         self.set_changed(True)
         return True
-
-    def add_move(self, move, is_player_move):
-        self.game.add_move(move)
-        self.check_boards_setposition()
-
-        self.put_arrow_sc(move.from_sq, move.to_sq)
-        self.beep_extended(is_player_move)
-
-        self.pgn_refresh(self.game.last_position.is_white)
-        self.refresh()
 
     def informacion(self):
         is_fen_possible = not self.is_complete

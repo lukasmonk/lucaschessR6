@@ -30,7 +30,7 @@ class ThanksTo:
         li = Code.configuration.engines.list_about()
         li.sort(key=lambda xt: xt[0])
         for n, x in enumerate(li, 1):
-            x[0] = "%d. %s" % (n, x[0])
+            x[0] = f"{n}. {x[0]}"
         nli = len(li)
         x = nli // 5
         bl = [x, x, x, x, x]
@@ -83,13 +83,17 @@ class ThanksTo:
             ("Eric", "Main betatester."),
             (
                 '<a href="https://goneill.co.nz/index.php">Graham O\'Neill</a>',
-                "Author of the drivers for the use of the electronic boards."
-                "<br>Also co-operator in the development of the interface code with the electronic boards.",
+                (
+                    "Author of the drivers for the use of the electronic boards."
+                    "<br>Also co-operator in the development of the interface code with the electronic boards."
+                ),
             ),
             (
                 "Laudecir Daniel",
-                "Main promoter of the Linux version, he did the selection and compilation of engines,"
-                "<br>as well as the establishment of the working Linux version.",
+                (
+                    "Main promoter of the Linux version, he did the selection and compilation of engines,"
+                    "<br>as well as the establishment of the working Linux version."
+                ),
             ),
             (
                 "Michele Tumbarello",
@@ -97,8 +101,10 @@ class ThanksTo:
             ),
             (
                 "Alfonso Solbes",
-                "His work was an essential help (saved many hours) in the transition "
-                "from Python 2.7 (version 11) to Python 3 (version R).",
+                (
+                    "His work was an essential help (saved many hours) in the transition "
+                    "from Python 2.7 (version 11) to Python 3 (version R)."
+                ),
             ),
             (
                 "Johannes Bolzano",
@@ -636,9 +642,11 @@ class ThanksTo:
             (_("Endgames by Victor Perez"), "", _("Permission of author")),
             (
                 _("Tactics by UNED chess school"),
-                '<a href="https://www.uned.es/universidad/inicio/unidad/'
-                'cultura-deporte/escuela-de-ajedrez/descargas.html10">'
-                "escuela-de-ajedrez/descargas</a>",
+                (
+                    '<a href="https://www.uned.es/universidad/inicio/unidad/'
+                    'cultura-deporte/escuela-de-ajedrez/descargas.html10">'
+                    "escuela-de-ajedrez/descargas</a>"
+                ),
                 _("Permission of author"),
             ),
         )
@@ -748,8 +756,10 @@ class ThanksTo:
             ),
             (
                 "cython",
-                "Stefan Behnel, Robert Bradshaw, Lisandro Dalcín,"
-                "<br>Mark Florisson, Vitja Makarov, Dag Sverre Seljebotn",
+                (
+                    "Stefan Behnel, Robert Bradshaw, Lisandro Dalcín,"
+                    "<br>Mark Florisson, Vitja Makarov, Dag Sverre Seljebotn"
+                ),
                 "https://cython.org/",
                 "Apache Software License 2.0",
             ),

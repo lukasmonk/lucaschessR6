@@ -339,8 +339,8 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
             self.continue_human()
             return False
 
-        self.add_move(move, True)
         self.move_the_pieces(move.list_piece_moves)
+        self.add_move(move, True)
 
         QtCore.QTimer.singleShot(0, self.play_next_move)
         return True
@@ -353,8 +353,8 @@ class ManagerOpeningLinesStatic(ManagerOPL.ManagerOpeningLines):
 
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
-            self.add_move(move, False)
             self.move_the_pieces(move.list_piece_moves, True)
+            self.add_move(move, False)
 
             self.error = ""
 

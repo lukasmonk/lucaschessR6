@@ -274,8 +274,8 @@ class ManagerWashingReplay(Manager.Manager):
 
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
-        self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
+        self.add_move(move, False)
 
     def finalize(self):
         self.procesador.start()
@@ -481,8 +481,8 @@ class ManagerWashingTactics(Manager.Manager):
 
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
-        self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
+        self.add_move(move, False)
 
     def get_help(self):
         self.set_label1(self.line.label)
@@ -683,8 +683,8 @@ class ManagerWashingCreate(Manager.Manager):
             move.set_time_ms(time_s * 1000)
             move.set_clock_ms(self.tc_rival.pending_time * 1000)
 
-            self.add_move(move, False)
             self.move_the_pieces(move.list_piece_moves, True)
+            self.add_move(move, False)
             return True
         else:
             return False

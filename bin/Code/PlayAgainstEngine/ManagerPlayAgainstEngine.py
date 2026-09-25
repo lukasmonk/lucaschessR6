@@ -1448,6 +1448,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
     def player_has_moved(self, move: Move.Move) -> bool:
         a1h8 = move.movimiento()
         si_analisis = False
+        is_tutor_move_selected = False
         fen_base = self.last_fen()
         fen_basem2 = FasterCode.fen_fenm2(fen_base)
         # self.pon_toolbar(ToolbarState.HUMAN_PLAYING)
@@ -1554,6 +1555,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                                     )
                                     if ok:
                                         move = jg_tutor
+                                        is_tutor_move_selected = True
                                         self.set_summary("SELECTTUTOR", True)
                             if self.configuration.x_save_tutor_variations:
                                 tutor.add_variations_to_move(move, 1 + len(self.game) / 2)
@@ -1561,6 +1563,14 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                             del tutor
 
         # --------------------------------------------------------------------------------------------------------------
+        if is_tutor_move_selected:
+            self.board.set_base_position(self.game.last_position)
+            QtCore.QTimer.singleShot(0, lambda: self._finish_player_move(move, si_analisis))
+            return True
+
+        return self._finish_player_move(move, si_analisis)
+
+    def _finish_player_move(self, move: Move.Move, si_analisis: bool) -> bool:
         self.main_window.pensando_tutor(False)
         if self.timed:
             self.show_clocks()
@@ -1577,8 +1587,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 nag, color = self.mrm_tutor.set_nag_color(rm)
                 move.add_nag(nag)
 
-        self.add_move(move)
         self.move_the_pieces(move.list_piece_moves, False)
+        self.add_move(move)
         self.beep_extended(True)
 
         if self.game_over_message_pww:
@@ -1767,8 +1777,8 @@ class ManagerPlayAgainstEngine(Manager.Manager):
             fen_ultimo = self.last_fen()
             move.set_time_ms(int(time_s * 1000))
             move.set_clock_ms(int(self.tc_rival.pending_time * 1000))
-            self.add_move(move)
             self.move_the_pieces(move.list_piece_moves, True)
+            self.add_move(move)
             self.beep_extended(False)
             if with_cache:
                 if self.timed:
@@ -2054,9 +2064,9 @@ class ManagerPlayAgainstEngine(Manager.Manager):
         move.set_time_ms(last_move.time_ms)
         move.set_clock_ms(last_move.clock_ms)
         fen_ultimo = self.last_fen()
+        self.move_the_pieces(move.list_piece_moves, True)
         self.add_move(move)
         self.beep_extended(False)
-        self.move_the_pieces(move.list_piece_moves, True)
         if hasattr(last_move, "cacheTime"):
             move.cacheTime = last_move.cacheTime
         self.cache[fen_ultimo] = move

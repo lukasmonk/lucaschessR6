@@ -534,8 +534,8 @@ class Worker(QtWidgets.QWidget):
             move.set_time_ms(time_seconds * 1000.0)
         if clock_seconds:
             move.set_clock_ms(clock_seconds * 1000.0)
-        self.add_move(move)
         self.move_the_pieces(move.list_piece_moves)
+        self.add_move(move)
         self.sound(move)
 
         return True

@@ -408,17 +408,17 @@ class Game:
         resp = ""
         if movenum is None:
             if self.first_comment:
-                resp = "{%s} " % self.first_comment
+                resp = "{" + self.first_comment + "} "
             movenum = self.first_num_move()
         if self.starts_with_black:
-            resp += "%d... " % movenum
+            resp += f"{movenum}... "
             movenum += 1
             salta = 1
         else:
             salta = 0
         for n, move in enumerate(self.li_moves):
             if n % 2 == salta:
-                resp += " %d." % movenum
+                resp += f" {movenum}."
                 movenum += 1
             resp += f"{move.pgn_translated_extend()} " if translated else f"{move.pgn_english()} "
         resp = resp.replace("\r\n", " ").replace("\n", " ").replace("\r", " ").strip()
@@ -448,11 +448,11 @@ class Game:
         """
         Return the move text in the translated (localized) PGN format.
         """
-        resp = "{%s} " % self.first_comment if self.first_comment else ""
+        resp = "{" + self.first_comment + "} " if self.first_comment else ""
         if movenum is None:
             movenum = self.first_num_move()
         if self.starts_with_black:
-            resp += "%d..." % movenum
+            resp += f"{movenum}..."
             movenum += 1
             salta = 1
         else:
@@ -461,7 +461,7 @@ class Game:
             if n > until_move:
                 break
             if n % 2 == salta:
-                resp += "%d." % movenum
+                resp += f"{movenum}."
                 movenum += 1
 
             pgn = move.pgn_translated_extend()
@@ -1365,18 +1365,6 @@ class PGNtoGame:
     Represents a chess game and provides PGN import capabilities.
     """
 
-    NAG_SYMBOLS: dict[str, int] = {
-        "!": NAG_1,
-        "?": NAG_2,
-        "!!": NAG_3,
-        "‼": NAG_3,
-        "??": NAG_4,
-        "⁇": NAG_4,
-        "!?": NAG_5,
-        "⁉": NAG_5,
-        "?!": NAG_6,
-        "⁈": NAG_6,
-    }
     _last_position: Position.Position
     _active_move: object
     _fen_detected: bool
@@ -1394,6 +1382,19 @@ class PGNtoGame:
         """
         self.pgn = pgn
         self.game = Game() if game is None else game
+
+        self.nag_symbols: dict[str, int] = {
+            "!": NAG_1,
+            "?": NAG_2,
+            "!!": NAG_3,
+            "‼": NAG_3,
+            "??": NAG_4,
+            "⁇": NAG_4,
+            "!?": NAG_5,
+            "⁉": NAG_5,
+            "?!": NAG_6,
+            "⁈": NAG_6,
+        }
 
     def read(self):
         normalized_pgn: str = self._normalize_pgn(self.pgn)
@@ -1422,7 +1423,7 @@ class PGNtoGame:
             key: str = token[0] if token else ""
             if handler := handlers.get(key):
                 handler(token)
-            elif token in self.NAG_SYMBOLS:
+            elif token in self.nag_symbols:
                 self._handle_symbolic_nag(token)
 
         if self._fen_detected:
@@ -1534,7 +1535,7 @@ class PGNtoGame:
             token: Symbolic NAG token.
         """
         if self._active_move:
-            self._active_move.add_nag(self.NAG_SYMBOLS[token])
+            self._active_move.add_nag(self.nag_symbols[token])
 
     def _handle_comment(self, token: str) -> None:
         """
@@ -1614,7 +1615,7 @@ def read_games(pgnfile):
                 if ln.endswith("]"):
                     ln = ln[:-1]
                     if ln.endswith('"') and ln.count('"') > 1:
-                        ok, p = pgn_game("".join(lineas))
+                        _ok, p = pgn_game("".join(lineas))
                         yield nbytes, p
                         lineas = []
                         si_b_cab = True

@@ -1656,3 +1656,14 @@ class Manager:
             self.board.enable_eboard_here()
         return resp
 
+    def add_move_base(self, move: Move.Move, is_player_move: bool, check_boards: bool):
+        self.move_the_pieces(move.list_piece_moves, not is_player_move)
+        self.game.add_move(move)
+        if check_boards:
+            self.check_boards_setposition()
+
+        self.put_arrow_sc(move.from_sq, move.to_sq)
+        self.beep_extended(is_player_move)
+
+        self.pgn_refresh(self.game.last_position.is_white)
+        self.refresh()

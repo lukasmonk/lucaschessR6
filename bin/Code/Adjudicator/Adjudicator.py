@@ -162,7 +162,7 @@ class Adjudicator:
     def ensure_moves(self):
         for move in (self.user_move, self.obj_move):
             a1h8 = move.movimiento()
-            rm, pos = self.mrm.search_rm(a1h8)
+            rm, _pos = self.mrm.search_rm(a1h8)
             if rm is None:
                 self.analyze_end()
                 self.state = AdjudicatorState.active

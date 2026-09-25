@@ -456,9 +456,8 @@ class ManagerCompeticion(Manager.Manager):
                 nag, color = self.mrm_tutor.set_nag_color(rm)
                 move.add_nag(nag)
 
-        self.add_move(move, True)
         self.move_the_pieces(move.list_piece_moves, False)
-        self.beep_extended(True)
+        self.add_move(move, True)
 
         self.play_next_move()
         return True
@@ -484,8 +483,8 @@ class ManagerCompeticion(Manager.Manager):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
         if ok:
             self.error = ""
-            self.add_move(move, False)
             self.move_the_pieces(move.list_piece_moves, True)
+            self.add_move(move, False)
 
             return True
         else:

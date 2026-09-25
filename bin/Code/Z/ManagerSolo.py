@@ -213,8 +213,7 @@ class ManagerSolo(Manager.Manager):
         if not move:
             return False
 
-        self.add_move(move, True)
-        self.move_the_pieces(move.list_piece_moves)
+        self.add_move_base(move, True, True)
 
         if self.play_against_engine and not self.game.is_finished():
             self.play_against_engine = False
@@ -224,16 +223,6 @@ class ManagerSolo(Manager.Manager):
 
         self.play_next_move()
         return True
-
-    def add_move(self, move, is_player_move):
-        self.game.add_move(move)
-        self.check_boards_setposition()
-
-        self.put_arrow_sc(move.from_sq, move.to_sq)
-        self.beep_extended(is_player_move)
-
-        self.pgn_refresh(self.game.last_position.is_white)
-        self.refresh()
 
     def show_result(self):
         self.state = ST_ENDGAME

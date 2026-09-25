@@ -36,7 +36,7 @@ class Eboard:
     def set_position(self, position):
         # assert prln("set position", position.fen())
         if self.driver:
-            if (self.name == "DGT") or (self.name == "Novag UCB" and Code.configuration.x_digital_board_version == 0):
+            if self.name == "Novag UCB" and Code.configuration.x_digital_board_version == 0:
                 self.write_position(position.fen_dgt())
             else:
                 self.write_position(position.fen())

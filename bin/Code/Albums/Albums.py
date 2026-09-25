@@ -250,13 +250,11 @@ class Albums:
                 dig[cromo.key] = cromo
             album = Album(key_db, alias)
             li = []
-            pos = 0
-            for k, v in dic.items():
+            for pos, (k, v) in enumerate(dic.items()):
                 cromo = dig[k]
                 cromo.hecho = v
                 cromo.pos = pos
                 cromo.is_white = pos % 2 == 0
-                pos += 1
                 li.append(cromo)
             album.liCromos = li
         else:

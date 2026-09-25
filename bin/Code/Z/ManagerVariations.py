@@ -221,8 +221,6 @@ class ManagerVariations(Manager.Manager):
         move = self.check_human_move(from_sq, to_sq, promotion)
         if not move:
             return False
-        self.move_the_pieces(move.list_piece_moves)
-
         self.add_move(move)
         if self.play_against_engine:
             self.play_against_engine = False
@@ -234,16 +232,8 @@ class ManagerVariations(Manager.Manager):
         return True
 
     def add_move(self, move):
-        self.game.add_move(move)
-
-        self.beep_extended(True)
-
+        self.add_move_base(move, True, False)
         self.changed = True
-
-        self.put_arrow_sc(move.from_sq, move.to_sq)
-
-        self.pgn_refresh(self.game.last_position.is_white)
-        self.refresh()
 
     def reiniciar(self):
         self.main_window.active_information_pgn(False)
@@ -298,7 +288,6 @@ class ManagerVariations(Manager.Manager):
                     rm.to_sq,
                     rm.promotion,
                 )
-                self.move_the_pieces(move.list_piece_moves)
                 self.add_move(move)
             self.thinking(False)
 

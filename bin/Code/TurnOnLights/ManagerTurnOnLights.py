@@ -351,8 +351,8 @@ class ManagerTurnOnLights(Manager.Manager):
 
     def rival_has_moved(self, from_sq, to_sq, promotion):
         ok, mens, move = Move.get_game_move(self.game, self.game.last_position, from_sq, to_sq, promotion)
-        self.add_move(move, False)
         self.move_the_pieces(move.list_piece_moves, True)
+        self.add_move(move, False)
         self.error = ""
 
     def get_help(self):

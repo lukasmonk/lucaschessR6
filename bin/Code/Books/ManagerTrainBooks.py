@@ -263,8 +263,6 @@ class ManagerTrainBooks(Manager.Manager):
 
         self.set_label3(f"<b>{self.txt_matches()}</b>")
 
-        self.move_the_pieces(jg.list_piece_moves)
-
         self.add_move(jg, True)
         self.error = ""
         self.sumar_aciertos = True
@@ -291,28 +289,20 @@ class ManagerTrainBooks(Manager.Manager):
 
         self.sumar_aciertos = False
 
-    def add_move(self, jg, is_player_move):
+    def add_move(self, move, is_player_move):
 
         # Para facilitar el salto a variantes
-        jg.aciertos = self.aciertos
-        jg.movimientos = self.movimientos
-        jg.numpos = len(self.game)
+        move.aciertos = self.aciertos
+        move.movimientos = self.movimientos
+        move.numpos = len(self.game)
 
-        self.set_variations(is_player_move, jg)
+        self.set_variations(is_player_move, move)
         # Preguntamos al motor si hay movimiento
         if self.is_finished():
-            jg.siJaqueMate = jg.siJaque
-            jg.siAhogado = not jg.siJaque
+            move.siJaqueMate = move.siJaque
+            move.siAhogado = not move.siJaque
 
-        self.game.add_move(jg)
-
-        self.put_arrow_sc(jg.from_sq, jg.to_sq)
-        self.beep_extended(is_player_move)
-
-        self.check_boards_setposition()
-
-        self.pgn_refresh(self.game.last_position.is_white)
-        self.refresh()
+        self.add_move_base(move, is_player_move, True)
 
     def takeback(self):
         if len(self.game) and self.in_end_of_line():
@@ -358,7 +348,6 @@ class ManagerTrainBooks(Manager.Manager):
             self.set_variations(False, jg)
 
             self.add_move(jg, False)
-            self.move_the_pieces(jg.list_piece_moves, True)
 
             self.error = ""
 
