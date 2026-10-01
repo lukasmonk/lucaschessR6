@@ -21,7 +21,7 @@ def init():
     main_procesador.set_version(Code.VERSION)
     run_sound = Sound.RunSound()
     resp = LucasChessGui.run_gui(main_procesador)
-    run_sound.close()
+    run_sound.reset()
 
     if resp == ExitProgram.REINIT.value:
         XRun.run_lucas()

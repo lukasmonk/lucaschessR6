@@ -8,6 +8,7 @@ from Code.Base.Constantes import (
 from Code.Engines import WConfEngines, WExternalEngines
 from Code.ManagerBase import ManagerMenu
 from Code.QT import FormLayout, Iconos, QTDialogs
+from Code.Sound import Sound
 
 
 class ManagerMenuConfig(ManagerMenu.ManagerMenu):
@@ -129,7 +130,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
                 self.manager.exec_menu_vista(resp)
 
             elif resp == "sonido":
-                self.config_sonido()
+                Sound.config_sonido(self.main_window)
 
             elif resp == "engines":
                 self.conf_engines()

@@ -399,22 +399,13 @@ def edit_sonido(owner, titulo, wav):
         return None
 
 
-def db_sounds_coherent():
-    rs = Code.runSound
-    with UtilSQL.DictSQL(Code.configuration.paths.file_sounds(), "general") as db:
-        for key in db.keys():
-            path_wav = rs.path_wav(key)
-            if not Util.exist_file(path_wav):
-                Code.runSound.save_wav(key, db[key])
-
-
 class WSonidos(LCDialog.LCDialog):
     def __init__(self, procesador):
 
         self.procesador = procesador
-        db_sounds_coherent()
 
         self.db = UtilSQL.DictSQL(Code.configuration.paths.file_sounds(), "general")
+        self.sounds_synced = False
         self.li_sounds = self.create_soundslist()
 
         titulo = _("Custom sounds")
@@ -423,14 +414,11 @@ class WSonidos(LCDialog.LCDialog):
         LCDialog.LCDialog.__init__(self, procesador.main_window, titulo, icono, extparam)
 
         # Toolbar
-        li_acciones = (
-            (_("Close"), Iconos.MainMenu(), self.finalize),
-            None,
-            (_("Modify"), Iconos.Modificar(), self.modificar),
-            None,
-            (_("Listen"), Iconos.S_Play(), self.play),
-        )
-        tb = QTDialogs.LCTB(self, li_acciones)
+        tb = QTDialogs.LCTB(self)
+        tb.new(_("Close"), Iconos.MainMenu(), self.finalize)
+        tb.new(_("Modify"), Iconos.Modificar(), self.modificar)
+        tb.new(_("Listen"), Iconos.S_Play(), self.play)
+        tb.new(_("Config"), Iconos.Configurar(), self.config)
 
         # Lista
         o_columns = Columnas.ListaColumnas()
@@ -460,11 +448,20 @@ class WSonidos(LCDialog.LCDialog):
 
     def closeEvent(self, event):
         self.save_video()
+        self.sync_sounds()
+
+    def sync_sounds(self):
+        if self.sounds_synced:
+            return
+        if not self.db.is_closed():
+            self.db.close()
+        Code.runSound.sync_wavs_with_database()
+        self.sounds_synced = True
 
     def finalize(self):
         self.save_video()
+        self.sync_sounds()
         self.accept()
-        self.db.close()
 
     def modificar(self):
         self.grid_doble_click(None, self.grid.recno(), None)
@@ -566,3 +563,6 @@ class WSonidos(LCDialog.LCDialog):
             xadd(c)
 
         return li_sounds
+
+    def config(self):
+        Sound.config_sonido(self)

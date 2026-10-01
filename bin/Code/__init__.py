@@ -4,7 +4,7 @@ import sys
 
 from Code.Z import Util
 
-VERSION = "R 6.1.6"
+VERSION = "R 6.1.7"
 BASE_VERSION = "C"
 
 Util.randomize()
@@ -75,6 +75,7 @@ dic_colors: dict | None = None
 dic_qcolors: dict | None = None
 
 dic_markers: dict = {}
+alternate_color_tableview = None
 
 themes = None
 

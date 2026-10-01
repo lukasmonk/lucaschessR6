@@ -1,5 +1,6 @@
 import random
 import time
+from functools import wraps
 
 import FasterCode
 
@@ -56,6 +57,24 @@ from Code.QT import Iconos, QTDialogs, QTMessages, QTUtils
 from Code.Replay import WReplay
 from Code.Z import Adjournments, ControlPGN, TimeControl, Util, XRun
 from Code.ZQT import WindowArbol, WindowArbolBook
+
+
+def prevent_concurrent_execution(method):
+    """Garantiza que ningún método decorado se ejecute concurrentemente."""
+
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if self.is_working():
+            return None
+        self.set_working(True)
+        try:
+            QTUtils.clear_qt_keyboard_queue()
+            return method(self, *args, **kwargs)
+        finally:
+            QTUtils.clear_qt_keyboard_queue()
+            self.set_working(False)
+
+    return wrapper
 
 
 class Manager:
@@ -160,6 +179,10 @@ class Manager:
 
         self.next_test_resign = 999
 
+        self._working: bool = False
+
+        self.is_manual_move = False
+
         self.manager_menu_config = ManagerMenuConfig.ManagerMenuConfig(self)
         self.manager_menu_utilities = ManagerMenuUtilities.ManagerMenuUtilities(self)
         self.manager_menu_vista = ManagerMenuVista.ManagerMenuVista(self)
@@ -185,7 +208,7 @@ class Manager:
 
     def set_end_game(self, with_takeback=False):
         self.main_window.thinking(False)
-        self.runSound.close()
+        self.runSound.reset()
         self.state = ST_ENDGAME
         self.disable_all()
         li_options = [TB_CLOSE]
@@ -346,7 +369,7 @@ class Manager:
 
         def mueve():
             self.board.move_piece_temp(self.atajosRatonOrigen, self.atajosRatonDestino)
-            if (not self.board.mensajero(self.atajosRatonOrigen, self.atajosRatonDestino)) and self.atajosRatonOrigen:
+            if (not self.board.dispatcher(self.atajosRatonOrigen, self.atajosRatonDestino)) and self.atajosRatonOrigen:
                 self.board.set_piece_again(self.atajosRatonOrigen)
             self.reset_shortcuts_mouse()
 
@@ -480,11 +503,11 @@ class Manager:
                 self.board.show_lichess_graphics(move.comment)
 
         if (
-            self.main_window.siCapturas
-            or self.main_window.siInformacionPGN
-            or self.kibitzers_manager.some_working()
-            or self.configuration.x_show_bestmove
-            or self.configuration.x_show_rating
+                self.main_window.siCapturas
+                or self.main_window.siInformacionPGN
+                or self.kibitzers_manager.some_working()
+                or self.configuration.x_show_bestmove
+                or self.configuration.x_show_rating
         ):
             if move and (self.configuration.x_show_bestmove or self.configuration.x_show_rating):
                 move_check = move
@@ -1122,16 +1145,18 @@ class Manager:
 
     def can_be_analysed(self):
         return len(self.game) > 0 and not (
-            self.game_type in (GT_ELO, GT_MICELO, GT_WICKER, GT_GRID)
-            and self.is_competitive
-            and self.state == ST_PLAYING
+                self.game_type in (GT_ELO, GT_MICELO, GT_WICKER, GT_GRID)
+                and self.is_competitive
+                and self.state == ST_PLAYING
         )
 
+    @prevent_concurrent_execution
     def check_help_to_move(self):
         if self.active_help_to_move():
             if hasattr(self, "help_to_move"):
                 self.help_to_move()
 
+    @prevent_concurrent_execution
     def play_instead_of_me(self):
         if self.is_in_last_move():
             rm = self.bestmove_from_analysis_bar()
@@ -1389,15 +1414,15 @@ class Manager:
         gm.set_tag("Site", f"{Code.lucas_chess} {Code.VERSION}")
         gm.set_tag("Event", _("Play current position"))
         for previous in (
-            "Event",
-            "Site",
-            "Date",
-            "Round",
-            "White",
-            "Black",
-            "Result",
-            "WhiteElo",
-            "BlackElo",
+                "Event",
+                "Site",
+                "Date",
+                "Round",
+                "White",
+                "Black",
+                "Result",
+                "WhiteElo",
+                "BlackElo",
         ):
             ori = self.game.get_tag(previous)
             if ori:
@@ -1444,8 +1469,10 @@ class Manager:
 
         # 3. Ejecutamos la acción correspondiente
         if is_variation:
-            return self.mueve_variation(from_sq, to_sq, promotion)
-
+            self.is_manual_move = True
+            resp = self.mueve_variation(from_sq, to_sq, promotion)
+            self.is_manual_move = False
+            return resp
         return self.messenger(from_sq, to_sq, promotion)
 
     def mueve_variation(self, from_sq, to_sq, promotion=""):
@@ -1667,3 +1694,9 @@ class Manager:
 
         self.pgn_refresh(self.game.last_position.is_white)
         self.refresh()
+
+    def is_working(self) -> bool:
+        return self._working
+
+    def set_working(self, state: bool) -> None:
+        self._working = state

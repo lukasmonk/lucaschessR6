@@ -79,7 +79,7 @@ class Replay:
         )
 
         self.antAcciones = self.main_window.get_toolbar()
-        self.main_window.pon_toolbar(self.li_acciones, separator=True)
+        self.main_window.pon_toolbar(self.li_acciones)
 
         self.manager.set_routine_default(self.process_toolbar)
 
@@ -222,8 +222,12 @@ class Replay:
             self.sleep_refresh(wait_seconds / 1000 + 0.2)
 
     def show_pause(self, si_pausa, si_continue):
-        self.main_window.show_option_toolbar(TB_PAUSE_REPLAY, si_pausa)
-        self.main_window.show_option_toolbar(TB_CONTINUE_REPLAY, si_continue)
+        li_actions: list = list(self.li_acciones)
+        if not si_pausa:
+            li_actions.remove(TB_PAUSE_REPLAY)
+        if not si_continue:
+            li_actions.remove(TB_CONTINUE_REPLAY)
+        self.main_window.pon_toolbar(li_actions)
 
     def process_toolbar(self, key):
         if key == TB_END_REPLAY:

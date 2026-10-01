@@ -2,7 +2,7 @@ import FasterCode
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import Code
-from Code.Analysis import AnalysisIndexes
+from Code.Analysis.AnalysisShow import AnalysisIndexes
 from Code.Base import Game
 from Code.Board import Board
 from Code.Engines import EngineRun
@@ -51,7 +51,7 @@ class WKibIndex(QtWidgets.QDialog):
         config_board = cpu.configuration.config_board(f"kib{cpu.kibitzer.huella}", 24)
         self.board = Board.Board(self, config_board)
         self.board.draw_window()
-        self.board.set_dispatcher(self.mensajero)
+        self.board.set_dispatcher(self.dispatcher)
 
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("titulo", "", 120, align_right=True)
@@ -382,7 +382,7 @@ class WKibIndex(QtWidgets.QDialog):
             self.game.shrink(nmoves - 2)
             self.orden_game(self.game)
 
-    def mensajero(self, from_sq, to_sq, promocion=""):
+    def dispatcher(self, from_sq, to_sq, promocion=""):
         FasterCode.set_fen(self.game.last_position.fen())
         if FasterCode.make_move(from_sq + to_sq + promocion):
             self.game.read_pv(from_sq + to_sq + promocion)

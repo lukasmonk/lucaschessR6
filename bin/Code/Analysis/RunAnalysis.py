@@ -7,7 +7,8 @@ from typing import Any
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Analysis import AnalysisIndexes, RunAnalysisControl
+from Code.Analysis import RunAnalysisControl
+from Code.Analysis.AnalysisShow import AnalysisIndexes
 from Code.Base import Game
 from Code.Base.Constantes import (
     BLUNDER,

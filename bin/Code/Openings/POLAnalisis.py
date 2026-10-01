@@ -500,7 +500,8 @@ class TabDatabaseSummary(QtWidgets.QWidget):
             dic = self.wsummary.liMoves[row]
             pv = dic["pv"]
             if not self.exist_pv(pv):
-                if QTMessages.pregunta(self, _("Shall we add this line?")):
+                if QTMessages.message_question(self, _("Opening lines"), _("Shall we add this line?"),
+                                               "OPENING_LINES_SUMMARY"):
                     self.dbop.append_pv(pv)
                 else:
                     return

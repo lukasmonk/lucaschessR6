@@ -200,6 +200,11 @@ class Move:
     def base_pgn(self):
         return self.position_before.pgn(self.from_sq, self.to_sq, self.promotion.lower())
 
+    def base_pgn_with_number(self):
+        number = self.position_before.num_moves
+        points = "." if self.is_white() else "..."
+        return f"{number}{points}{self.base_pgn()}"
+
     def add_nag(self, nag):
         """
         Add a NAG (numeric annotation glyph) to this move,

@@ -51,7 +51,11 @@ def init_app_style(app, configuration):
                     color = f"#{value.split('#')[1][:6]}"
                     key_gen = f"{current}|{key}"
                     if key_gen in Code.dic_colors:
-                        line = line.replace(color, Code.dic_colors[key_gen])
+                        new_color = Code.dic_colors[key_gen]
+                        line = line.replace(color, new_color)
+                        color = new_color
+                    if key_gen == "QTableView|alternate-background-color":
+                        Code.alternate_color_tableview = color
             li_lines.append(line)
 
         style_sheet = "\n".join(li_lines)

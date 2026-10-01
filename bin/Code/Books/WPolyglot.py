@@ -32,7 +32,7 @@ class WPolyglot(LCDialog.LCDialog):
         conf_board = configuration.config_board("WPOLYGLOT", 48)
         self.board = Board.Board(self, conf_board)
         self.board.draw_window()
-        self.board.set_dispatcher(self.mensajero)
+        self.board.set_dispatcher(self.dispatcher)
         self.with_figurines = configuration.x_pgn_withfigurines
 
         o_columnas = Columnas.ListaColumnas()
@@ -132,7 +132,7 @@ class WPolyglot(LCDialog.LCDialog):
             xfrom = bin_move.info_move.xfrom()
             xto = bin_move.info_move.xto()
             promotion = bin_move.info_move.promotion()
-            self.mensajero(xfrom, xto, promotion)
+            self.dispatcher(xfrom, xto, promotion)
 
     def grid_cambiado_registro(self, _grid, row, _obj_column):
         if -1 < row < len(self.li_moves):
@@ -212,7 +212,7 @@ class WPolyglot(LCDialog.LCDialog):
 
         grid.refresh()
 
-    def mensajero(self, from_sq, to_sq, promocion=""):
+    def dispatcher(self, from_sq, to_sq, promocion=""):
         FasterCode.set_fen(self.position.fen())
         if FasterCode.make_move(from_sq + to_sq + promocion):
             fen = FasterCode.get_fen()

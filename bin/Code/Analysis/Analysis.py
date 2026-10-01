@@ -1,5 +1,6 @@
 import Code
-from Code.Analysis import AnalysisIndexes, WindowAnalysis
+from Code.Analysis import WindowAnalysis
+from Code.Analysis.AnalysisShow import AnalysisIndexes
 from Code.Base import Game, Move
 from Code.Base.Constantes import TOP_RIGHT
 from Code.Engines import EngineManagerAnalysis, EngineResponse, Engines

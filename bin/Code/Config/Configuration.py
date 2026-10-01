@@ -32,11 +32,11 @@ def int_toolbutton(xint):
         (
             tbi
             for tbi in (
-                Qt.ToolButtonStyle.ToolButtonIconOnly,
-                Qt.ToolButtonStyle.ToolButtonTextOnly,
-                Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-                Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
-            )
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+        )
             if xint == tbi.value
         ),
         Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
@@ -45,10 +45,10 @@ def int_toolbutton(xint):
 
 def toolbutton_int(qt_tbi):
     if qt_tbi in (
-        Qt.ToolButtonStyle.ToolButtonIconOnly,
-        Qt.ToolButtonStyle.ToolButtonTextOnly,
-        Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
-        Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
+            Qt.ToolButtonStyle.ToolButtonIconOnly,
+            Qt.ToolButtonStyle.ToolButtonTextOnly,
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon,
+            Qt.ToolButtonStyle.ToolButtonTextUnderIcon,
     ):
         return qt_tbi.value
     return Qt.ToolButtonStyle.ToolButtonTextUnderIcon.value
@@ -613,8 +613,8 @@ class Configuration:
             self.dic_conf_boards_pk = db.as_dictionary()
             if "BASE" not in self.dic_conf_boards_pk:
                 with open(
-                    Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
-                    "rb",
+                        Code.path_resource("IntFiles", f"basepk{self.__theme_num}.board"),
+                        "rb",
                 ) as f:
                     var = pickle.loads(f.read())
                     alto = ScreenUtils.desktop_height()
@@ -709,16 +709,6 @@ class Configuration:
         dic[key] = auto_rotate
         self.write_variables("AUTO_ROTATE", dic)
 
-    def show_help(self, key: str) -> bool:
-        dic = self.read_variables("SHOW_HELP")
-        return dic.get(key, True)
-
-    def remove_help(self, key: str):
-        dic = self.read_variables("SHOW_HELP")
-        if key in dic:
-            del dic[key]
-            self.write_variables("SHOW_HELP", dic)
-
     def wheel_board(self, forward):
         return forward if self.x_wheel_board == GO_FORWARD else not forward
 
@@ -746,3 +736,7 @@ class Configuration:
                 if x in st_needs_reinit:
                     return True
         return False
+
+    def is_sounds_active(self) -> bool:
+        return bool(self.x_sound_beep or self.x_sound_tournements or self.x_sound_error or
+                    self.x_beep_replay or self.x_sound_move or self.x_sound_results or self.x_sound_our)

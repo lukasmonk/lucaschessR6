@@ -51,7 +51,7 @@ class WKibCommon(QtWidgets.QDialog):
         config_board = cpu.configuration.config_board(f"kib{cpu.kibitzer.huella}", 24)
         self.board = Board.Board(self, config_board)
         self.board.draw_window()
-        self.board.set_dispatcher(self.mensajero)
+        self.board.set_dispatcher(self.dispatcher)
         Delegados.genera_pm(self.board.pieces)
         if not self.show_board:
             self.board.hide()
@@ -125,7 +125,7 @@ class WKibCommon(QtWidgets.QDialog):
         self.board.setVisible(self.show_board)
         self.save_video()
 
-    def mensajero(self, from_sq, to_sq, promocion=""):
+    def dispatcher(self, from_sq, to_sq, promocion=""):
         if not promocion and self.game.last_position.pawn_can_promote(from_sq, to_sq):
             promocion = self.board.pawn_promoting(self.game.last_position.is_white)
             if promocion is None:

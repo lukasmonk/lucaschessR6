@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from PySide6 import QtCore
 
 import Code
-from Code.Analysis import AnalysisIndexes
+from Code.Analysis.AnalysisShow import AnalysisIndexes
 from Code.Analysis.AnalysisGame import AnalysisGameSaveTrainings
 from Code.Base import Game
 from Code.Base.Constantes import (

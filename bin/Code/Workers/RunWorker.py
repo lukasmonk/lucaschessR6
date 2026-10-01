@@ -43,14 +43,14 @@ class RunWorker:
 class ProcesadorBar:
     @staticmethod
     def analyzer_clone_new(mstime: int, depth: int, nodes: int, multipv: str | int):
-        from Code.Engines import EngineManagerPlay, EngineRun, Engines
+        from Code.Engines import EngineManagerRefresh, EngineRun, Engines
 
         engine: Engines.Engine = Code.configuration.engines.engine_analyzer()
         engine.set_multipv_var(multipv)
 
         run_engine_params = EngineRun.RunEngineParams()
         run_engine_params.update(engine, mstime, depth, nodes, engine.multiPV)
-        engine_manager = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
+        engine_manager = EngineManagerRefresh.EngineManagerRefresh(engine, run_engine_params)
         return engine_manager
 
     def analyzer_refresh_clone(self, mstime: int, depth: int, nodes: int, multipv: str | int):

@@ -1163,6 +1163,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         return None, None, None
 
+    @Manager.prevent_concurrent_execution
     def help_to_move(self):
         if self.is_in_last_move():
             mrm: EngineResponse.MultiEngineResponse
@@ -1182,6 +1183,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
                 self.hints -= 1
                 self.show_hints()
 
+    @Manager.prevent_concurrent_execution
     def help_current(self):
         xfrom, xto, xpromotion = self.current_bestmove()
         if xfrom is None:
@@ -1208,6 +1210,7 @@ class ManagerPlayAgainstEngine(Manager.Manager):
 
         self.show_hints()
 
+    @Manager.prevent_concurrent_execution
     def play_instead_of_me(self):
         xfrom, xto, xpromotion = self.current_bestmove()
         if xfrom is None:

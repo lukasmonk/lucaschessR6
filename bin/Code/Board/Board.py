@@ -116,7 +116,7 @@ class Board(QtWidgets.QGraphicsView):
     liCoordenadasHorizontales: list[Any]
     liCoordenadasVerticales: list[Any]
     margin_center: int
-    mensajero: Any
+    dispatcher: Any
     minimum_size: int
     nCoordenadas: int
     pendingRelease: list[Any] | None
@@ -216,7 +216,7 @@ class Board(QtWidgets.QGraphicsView):
         self.pendingRelease = None
 
         self.siPermitidoResizeExterno = True
-        self.mensajero: Callable | None = None
+        self.dispatcher: Callable | None = None
 
         self.si_borraMovibles = True
 
@@ -423,7 +423,7 @@ class Board(QtWidgets.QGraphicsView):
 
     def _try_parse_move(self, key: int):
         is_alt = False
-        if self.mensajero and self.pieces_are_active and not is_alt and self.last_position:
+        if self.dispatcher and self.pieces_are_active and not is_alt and self.last_position:
             if 32 < key < 128:
                 self.cad_buffer += chr(key)
             if len(self.cad_buffer) >= 2:
@@ -460,7 +460,7 @@ class Board(QtWidgets.QGraphicsView):
 
                 if exmove_ok:
                     self.init_kb_buffer()
-                    self.mensajero(exmove_ok.xfrom(), exmove_ok.xto(), exmove_ok.promotion())
+                    self.dispatcher(exmove_ok.xfrom(), exmove_ok.xto(), exmove_ok.promotion())
 
     def sizeHint(self):
         return QtCore.QSize(self.ancho + 6, self.ancho + 6)
@@ -1224,6 +1224,7 @@ class Board(QtWidgets.QGraphicsView):
         pac = self.pieces_are_active
         pac_sie = self.side_pieces_active
         self.draw_window()
+        self.set_position(self.last_position)
         if pac and pac_sie is not None:
             self.activate_side(pac_sie)
 
@@ -1556,10 +1557,10 @@ class Board(QtWidgets.QGraphicsView):
         elif hasattr(self.main_window, "board_wheel_event"):
             self.main_window.board_wheel_event(self, event.angleDelta().y() < 0)
 
-    def set_dispatcher(self, mensajero, atajos_raton=None):
+    def set_dispatcher(self, dispatcher, atajos_raton=None):
         if self.dirvisual:
-            self.dirvisual.mensajero_changed()
-        self.mensajero = mensajero
+            self.dirvisual.dispatcher_changed()
+        self.dispatcher = dispatcher
         if atajos_raton:
             self.atajos_raton = atajos_raton
         self.init_kb_buffer()
@@ -1899,7 +1900,7 @@ class Board(QtWidgets.QGraphicsView):
             if to_sq == from_sq:
                 return
 
-            resp = self.mensajero(from_sq, to_sq)
+            resp = self.dispatcher(from_sq, to_sq)
             if resp is None:
                 x, y = self.alg2num(to_sq)
                 pieza_sc.setPos(x, y)

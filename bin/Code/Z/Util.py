@@ -17,7 +17,7 @@ import uuid
 import zlib
 from pathlib import Path
 from shutil import which
-from typing import Any
+from typing import Any, Union
 
 import psutil
 from charset_normalizer import from_bytes
@@ -163,6 +163,44 @@ def norm_path(path: str | Path) -> Path:
     return Path(path).absolute()
 
 
+def is_folder_accessible(folder_path: Union[str, Path], check_writable: bool = True) -> bool:
+    """Verifica si una ruta corresponde a un directorio existente y comprueba
+
+    sus permisos de acceso.
+
+    :param folder_path: Ruta del directorio a comprobar (string o Path).
+    :param check_writable: Si es True, exige permisos de lectura y escritura.
+                           Si es False, solo exige permiso de lectura.
+    :return: True si es un directorio y cumple los permisos requeridos, False
+    en caso contrario.
+    """
+    path = Path(folder_path)
+
+    # 1. Comprobar que la ruta existe y es un directorio
+    if not path.is_dir():
+        return False
+
+    # 2. Definir los flags de permisos requeridos
+    flags = os.R_OK
+    if check_writable:
+        flags |= os.W_OK
+
+    # 3. Verificar los permisos efectivos del sistema de archivos
+    if not os.access(path, flags):
+        return False
+
+    # 4. Comprobación real de escritura (opcional pero recomendada para entornos Windows / SMB)
+    if check_writable:
+        test_file = path / ".perm_test_tmp"
+        try:
+            test_file.touch(exist_ok=True)
+            test_file.unlink(missing_ok=True)
+        except (PermissionError, OSError):
+            return False
+
+    return True
+
+
 def filesize(file: str | Path) -> int:
     try:
         return Path(file).stat().st_size
@@ -302,7 +340,7 @@ def ini_dic(file: str | Path) -> dict:
                     n = line.find("=")
                     if n:
                         key = line[:n].strip()
-                        value = line[n + 1 :].strip()
+                        value = line[n + 1:].strip()
                         dic[key] = value
     return dic
 
@@ -460,7 +498,7 @@ def ini2dic(file):
                         n = linea.find("=")
                         if n > 0:
                             clave1 = linea[:n].strip()
-                            valor = linea[n + 1 :].strip()
+                            valor = linea[n + 1:].strip()
                             dic[clave1] = valor
 
     return dic_base
@@ -486,7 +524,7 @@ def ini_base2dic(file, rfind_equal=False):
                     n = linea.rfind("=") if rfind_equal else linea.find("=")
                     if n:
                         key = linea[:n].strip()
-                        valor = linea[n + 1 :].strip()
+                        valor = linea[n + 1:].strip()
                         dic[key] = valor
 
     return dic
@@ -882,7 +920,7 @@ def div_list(xlist, max_group):
     xfrom = 0
     li_groups = []
     while xfrom < nlist:
-        li_groups.append(xlist[xfrom : xfrom + max_group])
+        li_groups.append(xlist[xfrom: xfrom + max_group])
         xfrom += max_group
     return li_groups
 

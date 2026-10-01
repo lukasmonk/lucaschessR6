@@ -26,7 +26,7 @@ QToolButton#qt_toolbar_ext_button
 QTableView
 {
     color: #323234;
-    background-color: #fafafa;
+    background-color: #ffffff;
     alternate-background-color: #fafafa;
 }
 

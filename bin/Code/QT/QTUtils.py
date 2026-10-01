@@ -72,6 +72,14 @@ def parse_keyboard_modifiers(flags):
     return is_shift, is_ctrl, is_alt
 
 
+def clear_qt_keyboard_queue():
+    """Descarta todos los eventos de teclado acumulados en la cola de Qt."""
+    # Procesa únicamente eventos de entrada que hayan quedado pendientes
+    QtCore.QCoreApplication.removePostedEvents(None, QtCore.QEvent.Type.KeyPress)
+    QtCore.QCoreApplication.removePostedEvents(None, QtCore.QEvent.Type.KeyRelease)
+    QtCore.QCoreApplication.processEvents()
+
+
 def is_control_pressed() -> bool:
     modifiers = QtWidgets.QApplication.keyboardModifiers()
     return (modifiers.value & QtCore.Qt.KeyboardModifier.ControlModifier.value) > 0

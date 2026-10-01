@@ -50,7 +50,7 @@ class ManagerNavigation:
                 self.manager.put_view()
                 return
             col = 1
-            animate_forward = True
+            animate_forward = not self.manager.is_manual_move
         elif tipo == GO_FORWARD2:
             row += 1
         elif tipo == GO_START:
@@ -133,7 +133,7 @@ class ManagerNavigation:
         self.main_window.place_on_pgn_table(row, is_white)
 
         animate_forward = tipo in (GO_FORWARD, GO_FORWARD2)
-        self.pgn_move(row, is_white, animate_forward=animate_forward)
+        self.pgn_move(row, is_white, animate_forward=animate_forward and not self.manager.is_manual_move)
 
         return
 

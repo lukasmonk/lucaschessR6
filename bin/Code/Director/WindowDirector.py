@@ -1008,7 +1008,7 @@ class Director:
         self.w.position_changed()
         self.guion.save_board()
 
-    def mensajero_changed(self):
+    def dispatcher_changed(self):
         self.w.check_if_save()
         self.w.finalize()
 

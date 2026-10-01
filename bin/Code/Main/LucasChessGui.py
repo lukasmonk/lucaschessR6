@@ -65,6 +65,9 @@ def run_gui(procesador):
     procesador.start_with_user(user)
     configuration = Code.configuration
 
+    if configuration.is_sounds_active():
+        Code.runSound.preload_move_sounds()
+
     nom_pieces_ori = configuration.dic_conf_boards_pk["BASE"]["o_base"]["x_nomPiezas"]
     Code.all_pieces.save_all_png(nom_pieces_ori, 30)
 

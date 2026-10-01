@@ -95,6 +95,7 @@ class WGames(QtWidgets.QWidget):
             heigh_row=self.configuration.x_databases_rowheight,
             select_multiple=True,
             xid="wgames",
+
         )
         self.grid.set_tooltip_header(
             _("For a numerical sort, press Ctrl (Alt or Shift) while double-clicking on the header.")
@@ -220,7 +221,7 @@ class WGames(QtWidgets.QWidget):
         o_columns.nueva("rowid", _("Row ID"), 60, align_center=True)
         return o_columns
 
-    def rehaz_columnas(self):
+    def rehaz_columnas(self) -> bool:
         li_tags = self.db_games.li_tags()
         o_columns = self.grid.o_columns
         si_cambios = False
@@ -256,6 +257,8 @@ class WGames(QtWidgets.QWidget):
         if si_cambios:
             self.db_games.reset_cache()
             self.grid.reread_columns()
+
+        return si_cambios
 
     def set_db_games(self, db_games):
         self.db_games = db_games
@@ -408,6 +411,8 @@ class WGames(QtWidgets.QWidget):
             self.tw_remove(False)
         elif is_alt and k == QtCore.Qt.Key.Key_C:
             self.tw_menu_columns()
+        elif is_alt and k == QtCore.Qt.Key.Key_A:
+            self.tw_massive_analysis()
 
         else:
             return True  # que siga con el resto de teclas
@@ -1217,7 +1222,7 @@ class WGames(QtWidgets.QWidget):
 
         menu = QTDialogs.LCMenu(self)
         if not is_empty:
-            menu.opcion(self.tw_massive_analysis, _("Mass analysis"), Iconos.Analizar())
+            menu.opcion(self.tw_massive_analysis, _("Mass analysis"), Iconos.Analizar(), shortcut="Alt+A")
             menu.separador()
             menu.opcion(
                 self.goto_registro,
@@ -1457,7 +1462,9 @@ class WGames(QtWidgets.QWidget):
         self.setDisabled(False)
 
         if alm.accuracy_tags or alm.themes_tags:
-            self.rehaz_columnas()
+            if not self.rehaz_columnas():
+                self.db_games.reset_cache()
+                self.grid.refresh()
 
     def tw_themes(self):
         with QTMessages.one_moment_please(self.wb_database, _("Analyzing tactical themes"), with_cancel=True) as um:

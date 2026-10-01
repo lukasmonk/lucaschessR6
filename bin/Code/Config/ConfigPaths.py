@@ -28,9 +28,9 @@ class ConfigPaths:
     def _get_userdata_folder(self):
         if os.path.isfile(self.LCFILEFOLDER):
             with open(self.LCFILEFOLDER, "rt", encoding="utf-8", errors="ignore") as f:
-                x = f.read()
-                if os.path.isdir(x):
-                    return x
+                folder_user_data = f.read()
+                if Util.is_folder_accessible(folder_user_data):
+                    return folder_user_data
         return self.LCBASEFOLDER
 
     def folder_userdata(self):

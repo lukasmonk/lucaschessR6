@@ -228,7 +228,16 @@ class Worker(QtWidgets.QWidget):
         engine_manager = EngineManagerPlay.EngineManagerPlay(engine, run_engine_params)
         return engine_manager
 
+    @staticmethod
+    def check_runsound():
+        if Code.configuration.x_sound_tournements:
+            if Code.runSound is None:
+                run_sound = Sound.RunSound()
+                run_sound.preload_move_sounds()
+
     def looking_for_work(self):
+        self.check_runsound()
+
         while not self.is_closed:
             try:
                 self.xmatch = self.run_worker.get_other_match()
@@ -542,10 +551,7 @@ class Worker(QtWidgets.QWidget):
 
     def sound(self, move):
         if self.configuration.x_sound_tournements:
-            if not Code.runSound:
-                run_sound = Sound.RunSound()
-            else:
-                run_sound = Code.runSound
+            run_sound = Code.runSound
             if self.configuration.x_sound_move:
                 run_sound.play_list(move.sounds_list())
             if self.configuration.x_sound_beep:

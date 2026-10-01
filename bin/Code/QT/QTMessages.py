@@ -1,6 +1,8 @@
 import time
+from typing import Callable, Any
 
 from PySide6 import QtCore, QtGui, QtWidgets
+from shiboken6 import isValid
 
 import Code
 from Code.Base.Constantes import (
@@ -32,20 +34,20 @@ def dic_keys():
 
 class WaitingMessage(QtWidgets.QWidget):
     def __init__(
-        self,
-        parent,
-        mensaje,
-        with_cancel=False,
-        opacity=0.91,
-        physical_pos="c",
-        fixed_size=None,
-        tit_cancel=None,
-        background=None,
-        pm_image=None,
-        puntos=None,
-        with_image=True,
-        if_parent_none=False,
-        with_progressbar=False,
+            self,
+            parent,
+            mensaje,
+            with_cancel=False,
+            opacity=0.91,
+            physical_pos="c",
+            fixed_size=None,
+            tit_cancel=None,
+            background=None,
+            pm_image=None,
+            puntos=None,
+            with_image=True,
+            if_parent_none=False,
+            with_progressbar=False,
     ):
         # No se indica parent cuando le afecta el disable general, cuando se analiza posicion por ejemplo
         super().__init__(None if if_parent_none else parent)
@@ -169,6 +171,8 @@ QPushButton:pressed {
         self.key_pressed = event.key()
 
     def label(self, nuevo):
+        if self.is_closed or not isValid(self.lb):
+            return
         self.lb.set_text(resalta(nuevo))
         self.lb.update()
         self.lb.repaint()
@@ -179,7 +183,7 @@ QPushButton:pressed {
             QtCore.QTimer.singleShot(10, self._linux_repaint)
 
     def _linux_repaint(self):
-        if not self.is_closed:
+        if not self.is_closed and isValid(self.lb):
             self.lb.repaint()
             self.repaint()
             QtCore.QCoreApplication.processEvents()
@@ -273,17 +277,17 @@ def analizando(owner, with_cancel=False):
 
 
 def temporary_message(
-    main_window,
-    mensaje,
-    seconds,
-    background=None,
-    pm_image=None,
-    physical_pos="c",
-    fixed_size=None,
-    with_cancel=None,
-    tit_cancel=None,
-    puntos=None,
-    with_image=True,
+        main_window,
+        mensaje,
+        seconds,
+        background=None,
+        pm_image=None,
+        physical_pos="c",
+        fixed_size=None,
+        with_cancel=None,
+        tit_cancel=None,
+        puntos=None,
+        with_image=True,
 ):
     if with_cancel is None:
         with_cancel = seconds > 3.0
@@ -642,15 +646,15 @@ def combobox_lb(parent, li_options, valor, etiqueta=None):
 
 
 def message(
-    owner,
-    texto,
-    explanation=None,
-    titulo=None,
-    pixmap=None,
-    px=None,
-    py=None,
-    si_bold=False,
-    delayed=False,
+        owner,
+        texto,
+        explanation=None,
+        titulo=None,
+        pixmap=None,
+        px=None,
+        py=None,
+        si_bold=False,
+        delayed=False,
 ):
     def send():
         msg = QtWidgets.QMessageBox(owner)
@@ -725,14 +729,14 @@ def message_result_win(window, txt):
 
 
 def pregunta(parent, mens, label_yes=None, label_no=None, si_top=False, px=None, py=None):
-    msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, _("Question"), resalta(mens), parent=parent)
+    msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Icon.Question, _("Question"), resalta(mens), parent=parent)
     if label_yes is None:
         label_yes = _("Yes")
     if label_no is None:
         label_no = _("No")
-    si_button = msg_box.addButton(label_yes, QtWidgets.QMessageBox.YesRole)
+    si_button = msg_box.addButton(label_yes, QtWidgets.QMessageBox.ButtonRole.YesRole)
     msg_box.setFont(Controles.FontType(puntos=Code.configuration.x_sizefont_messages))
-    msg_box.addButton(label_no, QtWidgets.QMessageBox.NoRole)
+    msg_box.addButton(label_no, QtWidgets.QMessageBox.ButtonRole.NoRole)
     if si_top:
         msg_box.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint)
     if px is not None:
@@ -747,10 +751,10 @@ def pregunta(parent, mens, label_yes=None, label_no=None, si_top=False, px=None,
 
 
 def question_withcancel(parent, mens, si, no, cancel=None):
-    msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, _("Question"), resalta(mens), parent=parent)
-    si_button = msg_box.addButton(si, QtWidgets.QMessageBox.YesRole)
-    no_button = msg_box.addButton(no, QtWidgets.QMessageBox.NoRole)
-    msg_box.addButton(_("Cancel") if cancel is None else cancel, QtWidgets.QMessageBox.RejectRole)
+    msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Icon.Question, _("Question"), resalta(mens), parent=parent)
+    si_button = msg_box.addButton(si, QtWidgets.QMessageBox.ButtonRole.YesRole)
+    no_button = msg_box.addButton(no, QtWidgets.QMessageBox.ButtonRole.NoRole)
+    msg_box.addButton(_("Cancel") if cancel is None else cancel, QtWidgets.QMessageBox.ButtonRole.RejectRole)
     msg_box.setFont(Controles.FontType(puntos=Code.configuration.x_sizefont_messages))
     msg_box.exec()
     cb = msg_box.clickedButton()
@@ -764,10 +768,10 @@ def question_withcancel(parent, mens, si, no, cancel=None):
 
 
 def question_withcancel_123(parent, title, mens, si, no, cancel):
-    msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, title, resalta(mens), parent=parent)
-    si_button = msg_box.addButton(si, QtWidgets.QMessageBox.YesRole)
-    no_button = msg_box.addButton(no, QtWidgets.QMessageBox.NoRole)
-    cancel_button = msg_box.addButton(cancel, QtWidgets.QMessageBox.RejectRole)
+    msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Icon.Question, title, resalta(mens), parent=parent)
+    si_button = msg_box.addButton(si, QtWidgets.QMessageBox.ButtonRole.YesRole)
+    no_button = msg_box.addButton(no, QtWidgets.QMessageBox.ButtonRole.NoRole)
+    cancel_button = msg_box.addButton(cancel, QtWidgets.QMessageBox.ButtonRole.RejectRole)
     msg_box.exec()
     cb = msg_box.clickedButton()
     if cb == si_button:
@@ -819,7 +823,7 @@ def message_menu(owner, main, the_message, delayed, zzpos=True, dont_show=False)
                 continue
             for i in range(tb.layout().lineCount()):
                 line = tb.layout().lineAt(i)
-                ret.append(block_text[line.textStart() : line.textStart() + line.textLength()])
+                ret.append(block_text[line.textStart(): line.textStart() + line.textLength()])
             tb = tb.next()
 
         for linea in ret:
@@ -849,6 +853,7 @@ def message_menu(owner, main, the_message, delayed, zzpos=True, dont_show=False)
 
     if delayed:
         QtCore.QTimer.singleShot(50, show)
+        return None
     else:
         return show()
 
@@ -909,14 +914,14 @@ class SimpleWindow(QtWidgets.QDialog):
 
 
 def read_simple(
-    owner,
-    title,
-    label,
-    value,
-    mas_info=None,
-    width=None,
-    in_cursor=False,
-    li_values=None,
+        owner,
+        title,
+        label,
+        value,
+        mas_info=None,
+        width=None,
+        in_cursor=False,
+        li_values=None,
 ):
     v = SimpleWindow(owner, title, label, value, mas_info, width, in_cursor, li_values)
     if v.exec():
@@ -969,20 +974,168 @@ def message_with_links(title: str, text: str, detailed_text: str, type_icon: str
     msg.exec()
 
 
-def message_help(parent: QtWidgets.QWidget, header: str, information: str) -> bool:
+def _show_persisted_dialog(
+        parent: QtWidgets.QWidget,
+        title: str,
+        header: str,
+        information: str,
+        key: str,
+        config_section: str,
+        icon_type: QtWidgets.QStyle.StandardPixmap,
+        buttons_builder: Callable[[QtWidgets.QDialog], list[tuple[str, bool, Callable[[], None]]]],
+        checkbox_text: str,
+        get_remembered_val: Callable[[dict], tuple[bool, Any]],
+        save_config_val: Callable[[bool, bool, dict], Any]
+) -> Any:
+    dic = Code.configuration.read_variables(config_section)
+    should_skip, default_value = get_remembered_val(dic)
 
-    box = QtWidgets.QMessageBox(parent)
-    box.setIcon(QtWidgets.QMessageBox.Icon.Information)
-    box.setWindowTitle(_("Help"))
-    box.setText(header)
-    box.setInformativeText(information)
+    if should_skip:
+        is_shift, is_ctrl, is_alt = QTUtils.keyboard_modifiers()
+        if not (is_shift or is_ctrl or is_alt):
+            return default_value
 
-    ok_button = box.addButton(_("Continue"), QtWidgets.QMessageBox.ButtonRole.AcceptRole)
-    box.setDefaultButton(ok_button)
+    hint_text = _("Hold Ctrl, Shift or Alt when performing this action to show this dialog again.")
 
-    checkbox = QtWidgets.QCheckBox(_("Don't show this again"))
-    box.setCheckBox(checkbox)
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setWindowTitle(title)
+    dialog.setWindowFlag(QtCore.Qt.WindowType.WindowContextHelpButtonHint, False)
+    dialog.setMinimumWidth(420)
 
-    box.exec()
+    # Icono + textos
+    icon = dialog.style().standardIcon(icon_type)
+    lb_icon = QtWidgets.QLabel()
+    lb_icon.setPixmap(icon.pixmap(48, 48))
+    lb_icon.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
 
-    return checkbox.isChecked()
+    lb_header = QtWidgets.QLabel(header)
+    lb_header.setWordWrap(True)
+    font = lb_header.font()
+    font.setBold(True)
+    lb_header.setFont(font)
+
+    ly_text = QtWidgets.QVBoxLayout()
+    ly_text.addWidget(lb_header)
+    if information:
+        lb_information = QtWidgets.QLabel(information)
+        lb_information.setWordWrap(True)
+        lb_information.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextSelectableByMouse)
+        ly_text.addWidget(lb_information)
+    ly_text.addStretch()
+
+    ly_top = QtWidgets.QHBoxLayout()
+    ly_top.setSpacing(16)
+    ly_top.addWidget(lb_icon)
+    ly_top.addLayout(ly_text, 1)
+
+    # Fila inferior: checkbox
+    remembered_val = dic.get(key)
+    checkbox = QtWidgets.QCheckBox(checkbox_text)
+    checkbox.setChecked(remembered_val is not None and config_section == "QUESTION_ANSWERS")
+    checkbox.setToolTip(hint_text)
+
+    lb_hint = QtWidgets.QLabel(hint_text)
+    lb_hint.setWordWrap(True)
+    lb_hint.setEnabled(False)
+    font = lb_hint.font()
+    font.setPointSizeF(font.pointSizeF() * 0.9)
+    lb_hint.setFont(font)
+
+    policy = lb_hint.sizePolicy()
+    policy.setRetainSizeWhenHidden(True)
+    lb_hint.setSizePolicy(policy)
+
+    lb_hint.setVisible(checkbox.isChecked())
+    checkbox.toggled.connect(lb_hint.setVisible)
+
+    ly_bottom = QtWidgets.QHBoxLayout()
+    ly_bottom.addWidget(checkbox)
+    ly_bottom.addStretch()
+
+    # Botones pasándole la instancia del dialog
+    default_btn = None
+    buttons = buttons_builder(dialog)
+    for btn_text, is_default, slot in buttons:
+        btn = QtWidgets.QPushButton(btn_text)
+        btn.clicked.connect(slot)
+        if is_default:
+            btn.setDefault(True)
+            default_btn = btn
+        ly_bottom.addWidget(btn)
+
+    layout = QtWidgets.QVBoxLayout(dialog)
+    layout.setContentsMargins(16, 16, 16, 12)
+    layout.setSpacing(16)
+    layout.addLayout(ly_top)
+    layout.addWidget(lb_hint)
+    layout.addLayout(ly_bottom)
+
+    if default_btn:
+        default_btn.setFocus()
+
+    dialog_result = dialog.exec() == QtWidgets.QDialog.DialogCode.Accepted
+
+    return save_config_val(checkbox.isChecked(), dialog_result, dic)
+
+
+def message_help(parent: QtWidgets.QWidget, header: str, information: str, key: str) -> bool:
+    def check_remembered(dic):
+        show_help = dic.get(key, True)
+        return not show_help, False
+
+    def save_config(checked, _result, dic):
+        show_help = dic.get(key, True)
+        if checked == show_help:
+            dic[key] = not checked
+            Code.configuration.write_variables("SHOW_HELP", dic)
+        return checked
+
+    return _show_persisted_dialog(
+        parent=parent,
+        title=_("Help"),
+        header=header,
+        information=information,
+        key=key,
+        config_section="SHOW_HELP",
+        icon_type=QtWidgets.QStyle.StandardPixmap.SP_MessageBoxInformation,
+        buttons_builder=lambda dlg: [(_("Continue"), True, dlg.accept)],
+        checkbox_text=_("Don't show this again"),
+        get_remembered_val=check_remembered,
+        save_config_val=save_config
+    )
+
+
+def message_question(parent: QtWidgets.QWidget, header: str, information: str, key: str) -> bool:
+    """Pregunta Sí/No (Sí por defecto). Devuelve True si la respuesta es Sí."""
+
+    def check_remembered(dic):
+        remembered = dic.get(key)
+        return remembered is not None, remembered
+
+    def save_config(checked, result, dic):
+        remembered = dic.get(key)
+        if checked:
+            if remembered != result:
+                dic[key] = result
+                Code.configuration.write_variables("QUESTION_ANSWERS", dic)
+        elif remembered is not None:
+            del dic[key]
+            Code.configuration.write_variables("QUESTION_ANSWERS", dic)
+        return result
+
+    return _show_persisted_dialog(
+        parent=parent,
+        title=_("Question"),
+        header=header,
+        information=information,
+        key=key,
+        config_section="QUESTION_ANSWERS",
+        icon_type=QtWidgets.QStyle.StandardPixmap.SP_MessageBoxQuestion,
+        buttons_builder=lambda dlg: [
+            (_("Yes"), True, dlg.accept),
+            (_("No"), False, dlg.reject)
+        ],
+        checkbox_text=_("Don't ask again"),
+        get_remembered_val=check_remembered,
+        save_config_val=save_config
+    )

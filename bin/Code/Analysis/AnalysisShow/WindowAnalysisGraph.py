@@ -1,7 +1,11 @@
+import FasterCode
 from PySide6 import QtCore, QtWidgets
 
 import Code
-from Code.Analysis import Analysis, Histogram
+from Code.Analysis import Analysis
+from Code.Analysis.AnalysisShow import AnalysisIndexes
+from Code.Analysis.AnalysisShow import GridSummary
+from Code.Analysis.AnalysisShow import Histogram
 from Code.Base.Constantes import ENDGAME, MIDDLEGAME, OPENING
 from Code.Board import Board
 from Code.Nags import Nags
@@ -13,7 +17,7 @@ class WAnalisisGraph(LCDialog.LCDialog):
     def __init__(self, wowner, manager, alm):
         titulo = _("Result of analysis")
         icono = Iconos.Estadisticas()
-        extparam = "estadisticasv4"
+        extparam = "estadisticasv6"
         LCDialog.LCDialog.__init__(self, wowner, titulo, icono, extparam)
         self.setWindowFlags(
             QtCore.Qt.WindowType.WindowCloseButtonHint
@@ -37,44 +41,46 @@ class WAnalisisGraph(LCDialog.LCDialog):
                 self.with_time = True
                 break
 
+        self.grid_summary = GridSummary.GridSummary(self, manager.game)
+
         def xcol():
-            o_columns = Columnas.ListaColumnas()
-            o_columns.nueva("PHASE", "", 26)
-            o_columns.nueva("NUM", _("N."), 50, align_center=True)
-            o_columns.nueva(
+            columns = Columnas.ListaColumnas()
+            columns.nueva("PHASE", "", 26)
+            columns.nueva("NUM", _("N."), 50, align_center=True)
+            columns.nueva(
                 "MOVE",
                 _("Move"),
                 120,
                 align_center=True,
                 edicion=Delegados.EtiquetaPGN(True if self.with_figurines else None),
             )
-            o_columns.nueva(
+            columns.nueva(
                 "BEST",
                 _("Best move"),
                 120,
                 align_center=True,
                 edicion=Delegados.EtiquetaPGN(True if self.with_figurines else None),
             )
-            o_columns.nueva("DIF", _("Difference"), 80, align_center=True)
+            columns.nueva("DIF", _("Difference"), 80, align_center=True)
             if self.with_time:
-                o_columns.nueva("TIME", _("Time"), 50, align_right=True)
-            o_columns.nueva("PORC", _("Accuracy"), 80, align_center=True)
-            o_columns.nueva("ELO", _("Elo"), 80, align_center=True)
+                columns.nueva("TIME", _("Time"), 50, align_right=True)
+            columns.nueva("PORC", _("Accuracy"), 80, align_center=True)
+            columns.nueva("ELO", _("Elo"), 80, align_center=True)
 
-            o_columns.nueva("pwin", f"% {_('Win')}", 80, align_center=True)
-            o_columns.nueva("pdraw", f"% {_('Draw')}", 80, align_center=True)
-            o_columns.nueva("ploss", f"% {_('Loss')}", 80, align_center=True)
+            columns.nueva("pwin", f"% {_('Win')}", 80, align_center=True)
+            columns.nueva("pdraw", f"% {_('Draw')}", 80, align_center=True)
+            columns.nueva("ploss", f"% {_('Loss')}", 80, align_center=True)
 
-            return o_columns
+            return columns
 
         self.dicLiJG = {"A": self.alm.lijg, "W": self.alm.lijgW, "B": self.alm.lijgB}
-        grid_all = Grid.Grid(self, xcol(), complete_row_select=True, xid="A", is_column_header_movable=False)
+        self.grid_all = grid_all = Grid.Grid(self, xcol(), complete_row_select=True, xid="A", is_column_header_movable=False)
         ancho_grid = grid_all.width_columns_displayables()
         self.register_grid(grid_all)
-        grid_w = Grid.Grid(self, xcol(), complete_row_select=True, xid="W", is_column_header_movable=False)
+        self.grid_w = grid_w = Grid.Grid(self, xcol(), complete_row_select=True, xid="W", is_column_header_movable=False)
         ancho_grid = max(grid_w.width_columns_displayables(), ancho_grid)
         self.register_grid(grid_w)
-        grid_b = Grid.Grid(self, xcol(), complete_row_select=True, xid="B", is_column_header_movable=False)
+        self.grid_b = grid_b = Grid.Grid(self, xcol(), complete_row_select=True, xid="B", is_column_header_movable=False)
         ancho_grid = max(grid_b.width_columns_displayables(), ancho_grid) + 24
         self.register_grid(grid_b)
 
@@ -93,24 +99,13 @@ class WAnalisisGraph(LCDialog.LCDialog):
         w_elo = QtWidgets.QWidget()
         w_elo.setLayout(ly)
 
-        self.em_moves = Controles.EM(self, alm.indexesHTMLmoves).read_only().set_font(font)
-        ly = Colocacion.V().control(self.em_moves)
-        w_moves = QtWidgets.QWidget()
-        w_moves.setLayout(ly)
-
-        self.em_moves_old = Controles.EM(self, alm.indexesHTMLold).read_only().set_font(font)
-        ly = Colocacion.V().control(self.em_moves_old)
-        w_moves_old = QtWidgets.QWidget()
-        w_moves_old.setLayout(ly)
-
         self.tab_grid = tab_grid = Controles.Tab()
         tab_grid.new_tab(grid_all, _("All moves"))
         tab_grid.new_tab(grid_w, _("White"))
         tab_grid.new_tab(grid_b, _("Black"))
         tab_grid.new_tab(w_idx, _("Indexes"))
         tab_grid.new_tab(w_elo, _("Elo"))
-        tab_grid.new_tab(w_moves, _("Moves analyzed"))
-        tab_grid.new_tab(w_moves_old, _("Summary"))
+        tab_grid.new_tab(self.grid_summary.get_widget(), _("Summary"))
         tab_grid.dispatch_change(self.tab_changed)
         self.tabActive = 0
 
@@ -216,28 +211,42 @@ class WAnalisisGraph(LCDialog.LCDialog):
         self.htotal[tab_vis].setVisible(True)
         self.tabActive = ntab
 
-    def grid_cambiado_registro(self, grid, row, column):
-        self.grid_left_button(grid, row, column)
-
     def save_indexes(self):
         self.manager.game.set_first_comment(self.alm.indexesRAW, False)
         QTMessages.temporary_message(self, _("Saved"), 0.8)
 
-    def grid_left_button(self, grid, row, _column):
-        self.board.remove_arrows()
-        move = self.dicLiJG[grid.id][row]
+    def grid_cambiado_registro(self, grid, row, column):
+        self.grid_left_button(grid, row, column)
+
+    def set_board(self, move, ta, row):
         self.board.set_position(move.position)
         mrm, pos = move.analysis
         rm = mrm.li_rm[pos]
         self.board.put_arrow_sc(rm.from_sq, rm.to_sq)
         rm = mrm.li_rm[0]
         self.board.create_arrow_multi(rm.movimiento(), False)
-        grid.setFocus()
-        ta = self.tabActive if self.tabActive < 3 else 0
         self.htotal[ta].set_point_active(row)
         self.htotal[ta + 3].set_point_active(row)
 
-    def grid_doble_click(self, grid, row, _column):
+    def grid_left_button(self, grid, row, obj_column):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_left_button(row, obj_column)
+        self.board.remove_arrows()
+        move = self.dicLiJG[grid.id][row]
+        grid.setFocus()
+        ta = self.tabActive if self.tabActive < 3 else 0
+        self.set_board(move, ta, row)
+        return None
+
+    def grid_right_button(self, grid, row, obj_column, modif):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_right_button(row, obj_column, modif)
+        return None
+
+    def grid_doble_click(self, grid, row, obj_column):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_doble_click(row, obj_column)
+
         move = self.dicLiJG[grid.id][row]
         _mrm, pos = move.analysis
         Analysis.show_analysis(
@@ -250,6 +259,9 @@ class WAnalisisGraph(LCDialog.LCDialog):
         )
 
     def grid_tecla_control(self, grid, k, _is_shift, _is_control, _is_alt):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_tecla_control(k)
+
         nrecno = grid.recno()
         if k in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
             self.grid_doble_click(grid, nrecno, None)
@@ -263,19 +275,31 @@ class WAnalisisGraph(LCDialog.LCDialog):
             return True  # que siga con el resto de teclas
         return False
 
+    def grid_color_fondo(self, grid, row, obj_column):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_color_fondo(row, obj_column)
+        return None
+
     def grid_color_texto(self, grid, row, obj_column):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_color_texto(row, obj_column)
         if grid.id == "A":
             move = self.alm.lijg[row]
         elif grid.id == "W":
             move = self.alm.lijgW[row]
-        else:  # if grid.id == "B":
+        elif grid.id == "B":
             move = self.alm.lijgB[row]
+        else:
+            return None
         if hasattr(move, "nag_color") and move.nag_color and len(move.nag_color) == 2:
             nagc = move.nag_color[1]
             return Nags.nag_qcolor(nagc)
         return None
 
     def grid_alineacion(self, grid, row, obj_column):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_alineacion(row, obj_column)
+
         if obj_column.key == "PHASE":
             return None
         if grid.id == "A":
@@ -284,10 +308,19 @@ class WAnalisisGraph(LCDialog.LCDialog):
                 return "i" if move.xsiW else "d"
         return None
 
+    def grid_bold(self, grid, row, obj_column):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_bold(row, obj_column)
+        return False
+
     def grid_num_datos(self, grid):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_num_datos()
         return len(self.dicLiJG[grid.id])
 
     def grid_dato(self, grid, row, obj_column):
+        if grid.id == "Summary":
+            return self.grid_summary.grid_dato(row, obj_column)
         column = obj_column.key
         move = self.dicLiJG[grid.id][row]
 
@@ -414,6 +447,20 @@ class WAnalisisGraph(LCDialog.LCDialog):
         self.hscale(1.0, 1.0)
 
 
-def show_graph(wowner, manager, alm):
+def show_graph(wowner, manager):
+    with QTMessages.one_moment_please(wowner):
+        game = manager.game
+        game.assign_phases()
+        elos = game.calc_elos()
+        alm = Histogram.gen_histograms(game)
+        (
+            alm.indexesHTML,
+            alm.indexesHTMLelo,
+            alm.indexesRAW,
+            alm.eloW,
+            alm.eloB,
+            alm.eloT,
+        ) = AnalysisIndexes.gen_indexes(game, elos, alm)
+        alm.is_white_bottom = manager.board.is_white_bottom
     w = WAnalisisGraph(wowner, manager, alm)
     w.exec()

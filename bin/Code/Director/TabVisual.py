@@ -568,8 +568,8 @@ class Guion:
 
         if self.win_director:
             if getattr(self, "board_mensajero", None) != self.win_director.move_piece:
-                self.board_mensajero = self.board.mensajero
-                self.board.mensajero = self.win_director.move_piece
+                self.board_mensajero = self.board.dispatcher
+                self.board.dispatcher = self.win_director.move_piece
 
         self.board_activasPiezas = (
             self.board.pieces_are_active,
@@ -583,7 +583,7 @@ class Guion:
             from_sq, to_sq = self.board_arrow_sc
             self.board.put_arrow_sc(from_sq, to_sq)
         if self.win_director:
-            self.board.mensajero = self.board_mensajero
+            self.board.dispatcher = self.board_mensajero
         if self.board_activasPiezas[0]:
             self.board.activate_side(self.board_activasPiezas[1])
         self.board.with_director = True

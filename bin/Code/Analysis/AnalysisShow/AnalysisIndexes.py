@@ -1,21 +1,16 @@
 import math
-from html import escape
 from typing import Any
 
 import FasterCode
 
 import Code
-from Code.Analysis import AnalysisIndexesShow
+from Code.Analysis.AnalysisShow import AnalysisIndexesShow
 from Code.Base import Game
 from Code.Base.Constantes import (
-    BLUNDER,
     GOOD_MOVE,
-    INACCURACY,
     INTERESTING_MOVE,
-    MISTAKE,
     VERY_GOOD_MOVE,
 )
-from Code.Nags import Nags
 
 # Constante global: valores de material por pieza
 PIECE_MATERIAL_VALUES = {"k": 3.0, "q": 9.9, "r": 5.5, "b": 3.5, "n": 3.1, "p": 1.0}
@@ -58,7 +53,7 @@ def _compute_gmo(mrm) -> float:
         elif diff < 101:
             gmo100 += 1
 
-    return float(gmo34) + (gmo68**0.8) + (gmo100**0.5)
+    return float(gmo34) + (gmo68 ** 0.8) + (gmo100 ** 0.5)
 
 
 def _compute_context_variables(cp, mrm, is_white: bool) -> dict[str, Any]:
@@ -302,18 +297,6 @@ def gen_indexes(game, elos, alm):
     piecesactivity = {True: 0.0, False: 0.0}
     exchangetendency = {True: 0.0, False: 0.0}
 
-    moves_best = {True: 0, False: 0}
-    moves_very_good = {True: 0, False: 0}
-    moves_good = {True: 0, False: 0}
-    moves_good_no = {True: 0, False: 0}
-    moves_interestings = {True: 0, False: 0}
-    moves_inaccuracies = {True: 0, False: 0}
-    moves_mistakes = {True: 0, False: 0}
-    moves_blunders = {True: 0, False: 0}
-    moves_book = {True: 0, False: 0}
-    moves_gray = {True: 0, False: 0}
-    moves_noanalyzed = {True: 0, False: 0}
-
     n = {True: 0, False: 0}
     nmoves_analyzed = {True: 0, False: 0}
     for move in game.li_moves:
@@ -322,7 +305,7 @@ def gen_indexes(game, elos, alm):
             mrm, pos = move.analysis
             rm = mrm.li_rm[pos]
             if (
-                not hasattr(mrm, "dic_depth") or len(mrm.dic_depth) == 0
+                    not hasattr(mrm, "dic_depth") or len(mrm.dic_depth) == 0
             ):  # Generación de gráficos sin un análisis previo con su depth
                 if INTERESTING_MOVE in move.li_nags:
                     nag_move, nag_color = INTERESTING_MOVE, INTERESTING_MOVE
@@ -359,30 +342,6 @@ def gen_indexes(game, elos, alm):
             piecesactivity[is_white] += move.piecesactivity
             n[is_white] += 1
             exchangetendency[is_white] += move.exchangetendency
-
-            if nag_color in (GOOD_MOVE, INTERESTING_MOVE):
-                moves_best[is_white] += 1
-            if nag_move == VERY_GOOD_MOVE:
-                moves_very_good[is_white] += 1
-            elif nag_color == GOOD_MOVE:
-                if nag_move == GOOD_MOVE:
-                    moves_good[is_white] += 1
-                else:
-                    moves_good_no[is_white] += 1
-            elif nag_move == INTERESTING_MOVE:
-                moves_interestings[is_white] += 1
-            elif nag_color == MISTAKE:
-                moves_mistakes[is_white] += 1
-            elif nag_color == BLUNDER:
-                moves_blunders[is_white] += 1
-            elif nag_color == INACCURACY:
-                moves_inaccuracies[is_white] += 1
-            else:
-                moves_gray[is_white] += 1
-        else:
-            moves_noanalyzed[is_white] += 1
-        if move.is_book_move():
-            moves_book[is_white] += 1
 
     t = n[True] + n[False]
     for color in (True, False):
@@ -473,250 +432,13 @@ def gen_indexes(game, elos, alm):
 
     sh = AnalysisIndexesShow.ShowHtml(nmoves_analyzed)
     txt_html_elo = sh.elo_html(elos)
-    txt_html_moves = sh.moves_html(
-        moves_very_good,
-        moves_good,
-        moves_good_no,
-        moves_interestings,
-        moves_gray,
-        moves_inaccuracies,
-        moves_mistakes,
-        moves_blunders,
-    )
     txt_indices = sh.indices_html(li_indices)
-
-    txt_old = old_way(
-        nmoves_analyzed,
-        moves_best,
-        moves_book,
-        moves_very_good,
-        moves_good,
-        moves_interestings,
-        moves_inaccuracies,
-        moves_mistakes,
-        moves_blunders,
-        moves_good_no,
-        moves_noanalyzed,
-        moves_gray,
-    )
 
     return (
         txt_indices,
         txt_html_elo,
-        txt_html_moves,
-        txt_old,
         txt_indices_raw,
         elos[True][Game.ALLGAME],
         elos[False][Game.ALLGAME],
         elos[None][Game.ALLGAME],
     )
-
-
-def old_way0(
-    nmoves_analyzed,
-    moves_best,
-    moves_book,
-    moves_very_good,
-    moves_good,
-    moves_interestings,
-    moves_inaccuracies,
-    moves_mistakes,
-    moves_blunders,
-    moves_good_no,
-    moves_noanalyzed,
-    moves_gray,
-):
-    cw = _("White")
-    cb = _("Black")
-    ct = _("Total")
-    start = '<td align="center">%s</td>'
-    resto = '<td align="center">%s</td><td align="center">%s</td><td align="center">%s</td></tr>'
-    plantilla_c = "<tr><td>%s</td>" + start + resto
-    color = '<b><span style="color:%s">%s</span></b>'
-    plantilla_e = (
-        '<tr><td><b><span style="color:%s">%s</span></b></td>'
-        + f'<td align="center">{color}</td>'
-        + resto % (color, color, color)
-    )
-
-    def xm(label, var, xcolor, nag):
-        return plantilla_e % (
-            xcolor,
-            nag,
-            xcolor,
-            label,
-            xcolor,
-            var[True],
-            xcolor,
-            var[False],
-            xcolor,
-            var[True] + var[False],
-        )
-
-    tmoves = nmoves_analyzed[True] + nmoves_analyzed[False]
-    if tmoves > 0:
-        w = f" {moves_best[True] * 100 / nmoves_analyzed[True]:.02f}%" if nmoves_analyzed[True] else ""
-        b = f" {moves_best[False] * 100 / nmoves_analyzed[False]:.02f}%" if nmoves_analyzed[False] else ""
-        t = f" {(moves_best[True] + moves_best[False]) * 100 / tmoves:.02f}%"
-        color = "black"
-        best_moves = plantilla_e % (
-            color,
-            "",
-            color,
-            f"{_('Best moves')} %",
-            color,
-            w,
-            color,
-            b,
-            color,
-            t,
-        )
-        w = str(moves_best[True]) if nmoves_analyzed[True] else ""
-        b = str(moves_best[False]) if nmoves_analyzed[False] else ""
-        t = str(moves_best[True] + moves_best[False])
-        color = "black"
-        best_moves += plantilla_e % (
-            color,
-            "",
-            color,
-            _("Best moves"),
-            color,
-            w,
-            color,
-            b,
-            color,
-            t,
-        )
-    else:
-        best_moves = ""
-    txt = best_moves
-    txt += xm(_("Opening"), moves_book, "black", "")
-    txt += xm(_("Brilliant moves"), moves_very_good, Nags.nag_color(VERY_GOOD_MOVE), "!!")
-    txt += xm(_("Good moves"), moves_good, Nags.nag_color(GOOD_MOVE), "!")
-    txt += xm(_("Other best moves"), moves_good_no, Nags.nag_color(GOOD_MOVE), "")
-    txt += xm(_("Interesting moves"), moves_interestings, Nags.nag_color(INTERESTING_MOVE), "!?")
-    txt += xm(_("Acceptable moves"), moves_gray, "#333333", "")
-    txt += xm(_("Dubious moves"), moves_inaccuracies, Nags.nag_color(INACCURACY), "?!")
-    txt += xm(_("Mistakes"), moves_mistakes, Nags.nag_color(MISTAKE), "?")
-    txt += xm(_("Blunders"), moves_blunders, Nags.nag_color(BLUNDER), "??")
-    txt += xm(_("Not analysed"), moves_noanalyzed, "lightgray", "")
-
-    cab = (plantilla_c % ("", "", cw, cb, ct)).replace("<td", "<th")
-    txt_html_moves = f'<table border="1" cellpadding="5" cellspacing="0" >{cab}{txt}</table>'
-    return txt_html_moves
-
-
-def old_way(
-    nmoves_analyzed: dict[bool, int],
-    moves_best: dict[bool, int],
-    moves_book: dict[bool, int],
-    moves_very_good: dict[bool, int],
-    moves_good: dict[bool, int],
-    moves_interestings: dict[bool, int],
-    moves_inaccuracies: dict[bool, int],
-    moves_mistakes: dict[bool, int],
-    moves_blunders: dict[bool, int],
-    moves_good_no: dict[bool, int],
-    moves_noanalyzed: dict[bool, int],
-    moves_gray: dict[bool, int],
-) -> str:
-    """Genera una tabla HTML con estadísticas de movimientos de ajedrez"""
-
-    def get_color(xnag_code: int | None = None) -> str:
-        """Obtiene color para un tipo de movimiento"""
-        if xnag_code is None:
-            return Code.dic_colors["FOREGROUND"]
-        return Nags.nag_color(xnag_code)
-
-    def get_opacity_style(is_not_analyzed: bool = False) -> str:
-        """Retorna estilo CSS para opacidad"""
-        if is_not_analyzed:
-            return ' style="opacity: 0.35; filter: alpha(opacity=35);"'
-        return ""
-
-    def format_percentage(value: int, total: int) -> str:
-        """Formatea porcentaje con 2 decimales (muestra 0% si total es 0)"""
-        if total == 0:
-            return " 0.00%"
-        return f" {value * 100 / total:.2f}%"
-
-    def create_row(
-        xlabel: str, xvar: dict[bool, int], xnag_code: int | None = None, xannotation: str = "", xis_faded: bool = False
-    ) -> str:
-        """Crea una fila de la tabla para un tipo de movimiento (siempre visible)"""
-        white = xvar.get(True, 0)
-        black = xvar.get(False, 0)
-        total = white + black
-        if xis_faded and total == 0:
-            return ""
-        color = get_color(xnag_code)
-        fade_style = get_opacity_style(xis_faded)
-
-        return f"""
-        <tr>{fade_style}
-            <td align="center"><b><span style="color:{color}">{xannotation}</span></b></td>
-            <td align="center"><b><span style="color:{color}">{escape(xlabel)}</span></b></td>
-            <td align="center"><span style="color:{color}">{white}</span></td>
-            <td align="center"><span style="color:{color}">{black}</span></td>
-            <td align="center"><span style="color:{color}">{total}</span></td>
-        </tr>"""
-
-    # Calcular totales
-    total_analyzed = nmoves_analyzed.get(True, 0) + nmoves_analyzed.get(False, 0)
-    white_analyzed = nmoves_analyzed.get(True, 0)
-    black_analyzed = nmoves_analyzed.get(False, 0)
-
-    rows = []
-
-    # Best moves con porcentajes (siempre visible)
-    best_total = moves_best.get(True, 0) + moves_best.get(False, 0)
-
-    # Fila de porcentajes (siempre visible)
-    rows.append(f"""
-    <tr>
-        <td align="center"></td>
-        <td align="center"><b>{_("Best moves")} %</b></td>
-        <td align="center">{format_percentage(moves_best.get(True, 0), white_analyzed)}</td>
-        <td align="center">{format_percentage(moves_best.get(False, 0), black_analyzed)}</td>
-        <td align="center">{format_percentage(best_total, total_analyzed)}</td>
-    </tr>""")
-
-    # Fila de valores absolutos (siempre visible)
-    rows.append(f"""
-    <tr>
-        <td align="center"></td>
-        <td align="center"><b>{_("Best moves")}</b></td>
-        <td align="center">{moves_best.get(True, 0)}</td>
-        <td align="center">{moves_best.get(False, 0)}</td>
-        <td align="center">{best_total}</td>
-    </tr>""")
-
-    # Definir tipos de movimientos (todos siempre visibles)
-    # Not analysed ahora tiene is_faded=True para que aparezca apagado
-    move_types = [
-        (_("Opening"), moves_book, None, "", False),
-        (_("Brilliant moves"), moves_very_good, VERY_GOOD_MOVE, "!!", False),
-        (_("Good moves"), moves_good, GOOD_MOVE, "!", False),
-        (_("Other best moves"), moves_good_no, GOOD_MOVE, "", False),
-        (_("Interesting moves"), moves_interestings, INTERESTING_MOVE, "!?", False),
-        (_("Acceptable moves"), moves_gray, None, "", False),
-        (_("Dubious moves"), moves_inaccuracies, INACCURACY, "?!", False),
-        (_("Mistakes"), moves_mistakes, MISTAKE, "?", False),
-        (_("Blunders"), moves_blunders, BLUNDER, "??", False),
-        (_("Not analysed"), moves_noanalyzed, None, "", True),  # ← Fila apagada
-    ]
-
-    # Generar todas las filas
-    for label, var, nag_code, annotation, is_faded in move_types:
-        rows.append(create_row(label, var, nag_code, annotation, is_faded))
-
-    # Construir cabecera
-    headers = ["", "Move Type", "White", "Black", "Total"]
-    header_html = "<tr>" + "".join(f"<th align='center'>{h}</th>" for h in headers) + "</tr>"
-
-    # Ensamblar tabla final con estilo adicional para filas apagadas
-    return f"""
-    <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
-        {header_html}
-        {"".join(rows)}
-    </table>"""

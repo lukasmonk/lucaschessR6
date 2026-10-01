@@ -250,10 +250,7 @@ class WPosicion(QtWidgets.QWidget):
                 Code.eboard.set_position(self.board.last_position)
 
     def message_info(self):
-        key = "Voyager-Eboard"
-        show_help = Code.configuration.show_help(key)
-        if not show_help:
-            return
+        key = "Help-Voyager-Eboard"
         header = _("How to set up a position")
         mess_1 = f'1. {_("Press Skip on the first board that appears")}'
         mess_2 = f'2. {_("Pick up both kings")}'
@@ -261,9 +258,7 @@ class WPosicion(QtWidgets.QWidget):
         mess_4 = f'4. {_("Place the kings back on the board")}'
         mess_5 = f'{_("The last king you place will be the side to play")}'
         mess = f"{mess_1}.\n{mess_2}.\n{mess_3}.\n{mess_4}.\n{mess_5}."
-        show_help = QTMessages.message_help(self, header, mess)
-        if not show_help:
-            Code.configuration.remove_help(key)
+        QTMessages.message_help(self, header, mess, key)
 
     def eboard_dispatch(self, quien, fen):
         if quien in ("stopSetupWTM", "stopSetupBTM"):

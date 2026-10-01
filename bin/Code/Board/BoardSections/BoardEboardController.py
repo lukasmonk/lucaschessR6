@@ -46,7 +46,7 @@ class BoardEboardController:
 
     def dispatch_eboard(self, quien, a1h8):
         board = self._board
-        if board.mensajero and board.pieces_are_active and board.allow_eboard:
+        if board.dispatcher and board.pieces_are_active and board.allow_eboard:
             if quien == "whiteMove":
                 Code.eboard.allowHumanTB = False
                 if not board.side_pieces_active:
@@ -80,8 +80,7 @@ class BoardEboardController:
 
             else:
                 return 1
-
-            return 1 if board.mensajero(a1h8[:2], a1h8[2:4], a1h8[4:]) else 0
+            return 1 if board.dispatcher(a1h8[:2], a1h8[2:4], a1h8[4:]) else 0
         return 1
 
     def disable_eboard_here(self):

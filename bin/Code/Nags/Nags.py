@@ -269,15 +269,17 @@ def nag_qcolor(num_nag):
     return None
 
 
+dic_htm_lnags_txt = {
+    NAG_1: "!",
+    NAG_2: "?",
+    NAG_3: "!!",
+    NAG_4: "??",
+    NAG_5: "!?",
+    NAG_6: "?!",
+}
+
+
 def html_nag_txt(nag):
-    dic_htm_lnags_txt = {
-        NAG_1: "!",
-        NAG_2: "?",
-        NAG_3: "!!",
-        NAG_4: "??",
-        NAG_5: "!?",
-        NAG_6: "?!",
-    }
     return dic_htm_lnags_txt.get(nag, "$%d" % nag)
 
 

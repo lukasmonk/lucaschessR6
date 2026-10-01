@@ -8,7 +8,7 @@ from PySide6 import QtCore, QtMultimedia, QtWidgets
 from PySide6.QtMultimedia import QAudioFormat, QAudioSource, QMediaDevices
 
 import Code
-from Code.QT import QTUtils
+from Code.QT import QTUtils, FormLayout, Iconos
 from Code.SQL import UtilSQL
 from Code.Translations import TrListas
 from Code.Z import Util
@@ -21,7 +21,15 @@ TERMINAR = "T"
 
 
 class RunSound:
+    """
+    Reproduce el modelo de reproducción de Lichess a nivel de arquitectura:
+    los WAV se cargan/preparan una vez, pero cada reproducción usa una nueva
+    instancia de QSoundEffect. Así, una instancia cuyo estado interno quede
+    atascado no puede bloquear futuras reproducciones del mismo sonido.
+    """
+
     MAX_PENDING_SOUNDS = 64
+    MAX_WATCHDOG_MS = 5000
 
     def __init__(self):
         Code.runSound = self
@@ -29,108 +37,227 @@ class RunSound:
         self.replayBeep = None
         self.replayError = None
         self.dic_sounds = {}
-
         self.queue = queue.Queue(maxsize=self.MAX_PENDING_SOUNDS)
         self.current = None
-        self.timer = QtCore.QTimer()
-        self.timer.setSingleShot(True)
-        self.timer.timeout.connect(self.siguiente)
-
+        self.current_started_at = None
+        self.playback_generation = 0
         self.working = False
+        self.move_sounds_preloaded = False
+        self._active_effects = set()
 
-    def _schedule_next(self, mseconds):
-        if not self.timer.isActive():
-            self.timer.start(max(0, int(mseconds)))
+    def preload_move_sounds(self):
+        if self.move_sounds_preloaded:
+            return
+        with UtilSQL.DictSQL(Code.configuration.paths.file_sounds(), "general") as db:
+            keys = "abcdefgh12345678KQRBNP"
+            keys += "x+#="
+            for key in keys:
+                self._load_sound(key, db)
+            for key in ("O-O", "O-O-O"):
+                self._load_sound(key, db)
+            self._load_sound("MC", db)
+        self.move_sounds_preloaded = True
+
+    def _load_sound(self, key, db=None):
+        if key in self.dic_sounds:
+            return self.dic_sounds[key]
+
+        if db is None:
+            with UtilSQL.DictSQL(Code.configuration.paths.file_sounds(), "general") as db:
+                wav = db.get(key)
+        else:
+            wav = db[key]
+
+        if not wav:
+            self.dic_sounds[key] = None, 0
+            return None, 0
+
+        with wave.open(BytesIO(wav)) as wf:
+            try:
+                mseconds = 1000.0 * wf.getnframes() / wf.getframerate()
+            except (ZeroDivisionError, wave.Error):
+                mseconds = 0
+
+        if mseconds <= 0:
+            self.dic_sounds[key] = None, 0
+            return None, 0
+
+        folder_sounds = Code.configuration.paths.folder_sounds()
+        Util.create_folder(folder_sounds)
+        path_wav = self.path_wav(key)
+        with open(path_wav, "wb") as q:
+            q.write(wav)
+
+        # Se conserva una instancia preparada como marcador/cache de que el
+        # sonido existe. No se reutiliza para reproducirlo: cada play crea una
+        # instancia independiente, como un AudioBufferSource de Web Audio.
+        template = QtMultimedia.QSoundEffect(self._qt_parent())
+        template.setSource(QtCore.QUrl.fromLocalFile(path_wav))
+        self.dic_sounds[key] = (template, mseconds)
+        return self.dic_sounds[key]
+
+    def _new_effect(self, key):
+        template, mseconds = self._load_sound(key)
+        if template is None or mseconds <= 0:
+            return None, 0
+
+        effect = QtMultimedia.QSoundEffect(self._qt_parent())
+        effect.setSource(template.source())
+        effect.setVolume(template.volume())
+        self._active_effects.add(effect)
+        return effect, mseconds
+
+    @staticmethod
+    def _qt_parent():
+        app = QtWidgets.QApplication.instance()
+        return app
+
+    def _finish_playback(self, effect, stop=False):
+        if effect is not self.current:
+            self._active_effects.discard(effect)
+            effect.deleteLater()
+            return
+
+        self.current = None
+        self.current_started_at = None
+        if stop:
+            try:
+                effect.stop()
+            except RuntimeError:
+                pass
+        self._active_effects.discard(effect)
+        effect.deleteLater()
+        self.siguiente()
+
+    def _sound_status_changed(self, key, effect):
+        if effect.status() == QtMultimedia.QSoundEffect.Status.Error:
+            self._finish_playback(effect, stop=True)
+
+    def _sound_playing_changed(self, key, effect):
+        if effect is self.current and not effect.isPlaying():
+            self._finish_playback(effect)
 
     def siguiente(self):
-        if self.queue.empty():
-            self.working = False
+        if self.current is not None:
             return
-        if self.current and self.current.isPlaying():
-            if self.timer.isActive():
-                self.timer.stop()
-            self.timer.start(50)
+
+        while True:
+            try:
+                key = self.queue.get_nowait()
+            except queue.Empty:
+                self.working = False
+                return
+
+            try:
+                effect, mseconds = self._new_effect(key)
+            except Exception:
+                continue
+
+            if effect is None or mseconds <= 0:
+                continue
+
+            self.current = effect
+            self.current_started_at = time.monotonic()
+            self.playback_generation += 1
+            generation = self.playback_generation
+            effect.statusChanged.connect(
+                lambda k=key, e=effect: self._sound_status_changed(k, e))
+            effect.playingChanged.connect(
+                lambda k=key, e=effect: self._sound_playing_changed(k, e))
+
+            try:
+                effect.play()
+            except Exception:
+                self._finish_playback(effect, stop=True)
+                return
+
+            timeout_ms = min(int(mseconds) + 1000, self.MAX_WATCHDOG_MS)
+            QtCore.QTimer.singleShot(
+                timeout_ms,
+                lambda e=effect, g=generation: self._watchdog(e, g))
             return
-        if self.timer.isActive():
-            self.timer.stop()
-        key = self.queue.get()
-        self.current, mseconds = self.dic_sounds[key]
-        self.current.play()
-        if not self.queue.empty():
-            self._schedule_next(mseconds)
+
+    def _watchdog(self, effect, generation):
+        if self.current is effect and self.playback_generation == generation:
+            # Detener también el efecto antiguo antes de liberar la cola.
+            # Aunque su señal de fin no llegue, la siguiente reproducción
+            # utiliza otra instancia y no hereda su estado.
+            self._finish_playback(effect, stop=True)
 
     def play_key(self, key, start=True):
-        if key not in self.dic_sounds:
-            name_wav = f"{self.relations[key]['WAV_KEY']}.wav"
-            path_wav = Util.opj(Code.configuration.paths.folder_sounds(), name_wav)
-            if os.path.isfile(path_wav):
-                wf = wave.open(path_wav)
-                mseconds = 1000.0 * wf.getnframes() / wf.getframerate()
-                wf.close()
-                qsound = QtMultimedia.QSoundEffect()
-                qsound.setSource(QtCore.QUrl.fromLocalFile(path_wav))
-                self.dic_sounds[key] = (qsound, mseconds)
-            else:
-                self.dic_sounds[key] = (None, 0)
-                return False
-        else:
-            mseconds = self.dic_sounds[key][1]
+        app = QtWidgets.QApplication.instance()
+        if app is not None and QtCore.QThread.currentThread() is not app.thread():
+            QtCore.QMetaObject.invokeMethod(
+                app,
+                lambda k=key, s=start: self.play_key(k, s),
+                QtCore.Qt.ConnectionType.QueuedConnection)
+            return True
 
-        if mseconds > 0:
+        effect, mseconds = self._load_sound(key)
+        if effect is not None and mseconds > 0:
             try:
                 self.queue.put_nowait(key)
             except queue.Full:
                 return False
             if start:
+                self.working = True
                 self.siguiente()
             return True
         return False
 
-    def write_sounds(self):
-        configuration = Code.configuration
-        folder_sounds = configuration.paths.folder_sounds()
-
-        Util.create_folder(folder_sounds)
-
-        for entry in os.scandir(folder_sounds):
-            os.remove(entry.path)
-
-        with UtilSQL.DictSQL(configuration.paths.file_sounds(), "general") as db:
-            for key in db.keys():
-                wav = f"{self.relations[key]['WAV_KEY']}.wav"
-                path_wav = Util.opj(folder_sounds, wav)
-                with open(path_wav, "wb") as q:
-                    q.write(db[key])
-
     def save_wav(self, key, wav):
+        self.dic_sounds.pop(key, None)
         folder_sounds = Code.configuration.paths.folder_sounds()
-        path_wav = Util.opj(folder_sounds, f"{self.relations[key]['WAV_KEY']}.wav")
+        Util.create_folder(folder_sounds)
+        path_wav = self.path_wav(key)
         with open(path_wav, "wb") as q:
             q.write(wav)
 
-    def remove_wav(self, key):
+    def sync_wavs_with_database(self):
         folder_sounds = Code.configuration.paths.folder_sounds()
-        path_wav = Util.opj(folder_sounds, f"{self.relations[key]['WAV_KEY']}.wav")
-        Util.remove_file(path_wav)
+        Util.create_folder(folder_sounds)
+        expected_files = set()
+
+        with UtilSQL.DictSQL(Code.configuration.paths.file_sounds(), "general") as db:
+            for key in db.keys():
+                wav = db[key]
+                if not wav:
+                    continue
+                path_wav = self.path_wav(key)
+                expected_files.add(os.path.basename(path_wav))
+                with open(path_wav, "wb") as q:
+                    q.write(wav)
+
+        for entry in os.scandir(folder_sounds):
+            if entry.is_file() and entry.name.lower().endswith(".wav") and entry.name not in expected_files:
+                os.remove(entry.path)
+
+    def remove_wav(self, key):
+        self.dic_sounds.pop(key, None)
+        Util.remove_file(self.path_wav(key))
 
     def path_wav(self, key):
         folder_sounds = Code.configuration.paths.folder_sounds()
         return Util.opj(folder_sounds, f"{self.relations[key]['WAV_KEY']}.wav")
 
-    def read_sounds(self):
-        configuration = Code.configuration
-        folder_sounds = configuration.paths.folder_sounds()
-
-        if not os.path.isdir(folder_sounds):
-            self.write_sounds()
-
-    def close(self):
+    def reset(self):
         self.working = False
-        self.timer.stop()
-        if self.current:
-            self.current.stop()
-        self.current = None
         self.queue = queue.Queue(maxsize=self.MAX_PENDING_SOUNDS)
+        effect = self.current
+        self.current = None
+        self.current_started_at = None
+        for active in list(self._active_effects):
+            try:
+                active.stop()
+            except RuntimeError:
+                pass
+            active.deleteLater()
+        self._active_effects.clear()
+        if effect:
+            try:
+                effect.stop()
+            except RuntimeError:
+                pass
 
     def play_list(self, li):
         for key in li:
@@ -145,7 +272,7 @@ class RunSound:
         secs = 0.0
         for key in li:
             self.play_key(key, False)
-            secs += self.dic_sounds[key][1]
+            secs += self.dic_sounds.get(key, (None, 0))[1]
         if not self.queue.empty():
             self.working = True
             self.siguiente()
@@ -157,12 +284,12 @@ class RunSound:
 
     def play_error(self):
         self.play_key("ERROR")
-        if self.dic_sounds["ERROR"][0] is None:
+        if self.dic_sounds.get("ERROR", (None, 0))[0] is None:
             QtWidgets.QApplication.beep()
 
     def play_beep(self):
         self.play_key("MC")
-        if self.dic_sounds["MC"][0] is None:
+        if self.dic_sounds.get("MC", (None, 0))[0] is None:
             QtWidgets.QApplication.beep()
 
     @property
@@ -175,7 +302,6 @@ class RunSound:
         add("MC", _("Beep after move"), "BEEP")
         add("ERROR", _("Error"), "ERROR")
         add("ZEITNOT", _("Zeitnot"), "ZEITNOT")
-
         add("GANAMOS", _("You win"), "WIN")
         add("GANARIVAL", _("Opponent wins"), "LOST")
         add("TABLAS", _("Stalemate"), "STALEMATE")
@@ -200,9 +326,7 @@ class RunSound:
         add("x", _("Capture"), "CAPTURE")
         add("+", _("Check"), "CHECK")
         add("#", _("Checkmate"), "CHECKMATE")
-
         return dic
-
 
 def msc(hundreds_of_second):
     t = hundreds_of_second
@@ -273,7 +397,7 @@ class TallerSonido:
             raise ValueError("Solo se soporta width=2 (16-bit PCM)")
         out = bytearray()
         for i in range(0, len(data), width):
-            sample = int.from_bytes(data[i : i + 2], "little", signed=True)
+            sample = int.from_bytes(data[i: i + 2], "little", signed=True)
             out.append(self._linear2alaw_sample(sample))
         return bytes(out)
 
@@ -427,3 +551,36 @@ class TallerSonido:
     def recorta(self, cent_desde, cent_hasta):
         self.wav = self.io_wav(cent_desde, cent_hasta)
         self.hundreds_of_second = cent_hasta - cent_desde
+
+
+def config_sonido(owner):
+    configuration = Code.configuration
+    form = FormLayout.FormLayout(owner, _("Configuration"), Iconos.S_Play(), minimum_width=440)
+    form.separador()
+    form.apart(_("After each opponent move"))
+    form.checkbox(_("Sound a beep"), configuration.x_sound_beep)
+    form.checkbox(_("Play customised sounds"), configuration.x_sound_move)
+    form.separador()
+    form.checkbox(_("The same for player moves"), configuration.x_sound_our)
+    form.separador()
+    form.checkbox(_("Tournaments between engines"), configuration.x_sound_tournements)
+    form.separador()
+    form.apart(_("When finishing the game"))
+    form.checkbox(_("Play customised sounds for the result"), configuration.x_sound_results)
+    form.separador()
+    form.separador()
+    form.apart(_("Others"))
+    form.checkbox(_("Play a beep when there is an error in tactic trainings"), configuration.x_sound_error)
+    form.separador()
+    form.add_tab(_("Sounds"))
+    resultado = form.run()
+    if resultado:
+        (
+            configuration.x_sound_beep,
+            configuration.x_sound_move,
+            configuration.x_sound_our,
+            configuration.x_sound_tournements,
+            configuration.x_sound_results,
+            configuration.x_sound_error,
+        ) = resultado[1][0]
+        configuration.graba()

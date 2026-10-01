@@ -1,8 +1,9 @@
 from types import SimpleNamespace
 
 import Code
-from Code.Analysis import Analysis, AnalysisIndexes, Histogram, WindowAnalysisConfig, WindowAnalysisGraph
+from Code.Analysis import Analysis, WindowAnalysisConfig
 from Code.Analysis.AnalysisGame import AnalysisGameLaunch
+from Code.Analysis.AnalysisShow import WindowAnalysisGraph
 from Code.Base.Constantes import (
     GT_AGAINST_ENGINE,
     GT_AGAINST_GM,
@@ -79,23 +80,23 @@ class ManagerAnalysis:
             return
         if self.manager.state != ST_ENDGAME:
             if not (
-                self.manager.game_type
-                in [
-                    GT_POSITIONS,
-                    GT_AGAINST_PGN,
-                    GT_AGAINST_ENGINE,
-                    GT_AGAINST_GM,
-                    GT_ALONE,
-                    GT_GAME,
-                    GT_VARIATIONS,
-                    GT_BOOK,
-                    GT_OPENINGS,
-                    GT_TACTICS,
-                ]
-                or (
-                    self.manager.game_type in [GT_ELO, GT_MICELO, GT_WICKER, GT_GRID]
-                    and not self.manager.is_competitive
-                )
+                    self.manager.game_type
+                    in [
+                        GT_POSITIONS,
+                        GT_AGAINST_PGN,
+                        GT_AGAINST_ENGINE,
+                        GT_AGAINST_GM,
+                        GT_ALONE,
+                        GT_GAME,
+                        GT_VARIATIONS,
+                        GT_BOOK,
+                        GT_OPENINGS,
+                        GT_TACTICS,
+                    ]
+                    or (
+                            self.manager.game_type in [GT_ELO, GT_MICELO, GT_WICKER, GT_GRID]
+                            and not self.manager.is_competitive
+                    )
             ):
                 if si_ultimo or self.manager.hints == 0:
                     return
@@ -151,26 +152,10 @@ class ManagerAnalysis:
         self.manager.check_changed()
 
     def show_analysis(self):
-        with QTMessages.one_moment_please(self.main_window):
-            self.manager.game.assign_phases()
-            elos = self.manager.game.calc_elos()
-            alm = Histogram.gen_histograms(self.manager.game)
-            (
-                alm.indexesHTML,
-                alm.indexesHTMLelo,
-                alm.indexesHTMLmoves,
-                alm.indexesHTMLold,
-                alm.indexesRAW,
-                alm.eloW,
-                alm.eloB,
-                alm.eloT,
-            ) = AnalysisIndexes.gen_indexes(self.manager.game, elos, alm)
-            alm.is_white_bottom = self.manager.board.is_white_bottom
-
-        if len(alm.lijg) == 0:
-            QTMessages.message(self.main_window, _("There are no analyzed moves."))
+        if self.manager.game.has_analisis():
+            WindowAnalysisGraph.show_graph(self.main_window, self.manager)
         else:
-            WindowAnalysisGraph.show_graph(self.main_window, self.manager, alm)
+            QTMessages.message(self.main_window, _("There are no analyzed moves."))
 
     def refresh_analysis(self):
         if not self.manager.game:

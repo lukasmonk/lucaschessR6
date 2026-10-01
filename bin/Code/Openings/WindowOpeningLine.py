@@ -1155,8 +1155,10 @@ class WLines(LCDialog.LCDialog):
                 with QTMessages.WaitingMessage(self, mens, with_cancel=True) as wmsg:
 
                     def dispatch(rm, ms):
+                        if wmsg.is_canceled() or wmsg.is_closed:
+                            return False
                         wmsg.label(f"{mens}<br><small>{_('Depth')}: {rm.depth} {_('Time')}: {ms / 1000:.01f}")
-                        return not wmsg.is_canceled()
+                        return True
 
                     mrm, pos = xanalyzer.analyze_move(game, len(game) - 1, dispatch)
                     if wmsg.is_canceled():

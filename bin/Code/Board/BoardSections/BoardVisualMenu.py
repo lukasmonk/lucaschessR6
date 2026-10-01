@@ -152,6 +152,7 @@ class BoardVisualMenu:
             pac = board.pieces_are_active
             pac_sie = board.side_pieces_active
             board.draw_window()
+            board.set_position(board.last_position)
             if pac and pac_sie is not None:
                 board.activate_side(pac_sie)
 

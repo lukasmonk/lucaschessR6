@@ -4,6 +4,7 @@ import sys
 import Code
 from Code.Albums import ManagerAlbum
 from Code.Base import Position
+from Code.Base.Constantes import ExitProgram
 from Code.Base.Constantes import (
     GT_AGAINST_CHILD_ENGINE,
     GT_AGAINST_ENGINE,
@@ -41,8 +42,8 @@ from Code.Books import (
     WBooksTrain,
     WBooksTrainOL,
 )
-from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerGrid, ManagerMicElo, ManagerWicker
 from Code.CompetitionWithTutor import ManagerCompeticion
+from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerGrid, ManagerMicElo, ManagerWicker
 from Code.Config import Configuration, WindowConfig, WindowUsuarios
 from Code.Databases import DBgames
 from Code.Engines import (
@@ -76,9 +77,10 @@ from Code.Openings import OpeningsStd
 from Code.PlayAgainstEngine import ManagerPerson, ManagerPlayAgainstEngine, WPlayAgainstEngine
 from Code.PlayHuman import ManagerPlayHuman
 from Code.QT import Iconos, Piezas, QTDialogs
+from Code.QT import QTUtils
 from Code.Routes import ManagerRoutes, Routes, WindowRoutes
-from Code.Shortcuts import Shortcuts
 from Code.SQL import UtilSQL
+from Code.Shortcuts import Shortcuts
 from Code.Swiss import ManagerSwiss
 from Code.Washing import ManagerWashing, WindowWashing
 from Code.WritingDown import ManagerWritingDown, WritingDown
@@ -124,7 +126,6 @@ class Procesador:
         self.configuration.start()
 
         Code.procesador = self
-        Code.runSound.read_sounds()
         OpeningsStd.ap.reset()
 
         if Code.configuration.x_digital_board:
@@ -259,7 +260,7 @@ class Procesador:
         self.main_window.current_height = self.main_window.height()
 
     def start(self):
-        Code.runSound.close()
+        Code.runSound.reset()
         if self.manager:
             self.manager.end_manager()
             del self.manager
@@ -351,7 +352,7 @@ class Procesador:
 
     @staticmethod
     def create_manager_analyzer_var(
-        engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
+            engine: Engines.Engine, mstime: int, depth: int, nodes: int, multipv: int | str, priority=None
     ):
         assert type(mstime) is int and mstime >= 0
         assert type(depth) is int and depth >= 0
@@ -367,7 +368,8 @@ class Procesador:
 
     @staticmethod
     def create_manager_engine(
-        engine: Engines.Engine, mstime: int, depth: int, nodes: int, has_multipv=False, priority=None, faster_mode=False
+            engine: Engines.Engine, mstime: int, depth: int, nodes: int, has_multipv=False, priority=None,
+            faster_mode=False
     ):
         assert type(mstime) is int and mstime >= 0
         assert type(depth) is int and depth >= 0
@@ -716,14 +718,14 @@ class Procesador:
         )
 
     def manager_game(
-        self,
-        window,
-        game,
-        is_complete,
-        only_consult,
-        father_board,
-        with_previous_next=None,
-        save_routine=None,
+            self,
+            window,
+            game,
+            is_complete,
+            only_consult,
+            father_board,
+            with_previous_next=None,
+            save_routine=None,
     ):
         if self.kibitzers_manager is None:
             self.kibitzers_manager = KibitzersManager.Manager(self)
@@ -794,6 +796,15 @@ class Procesador:
         tm = ToolsMenu.ToolsMenu(self)
         tmr = ToolsMenuRun.ToolsMenuRun(tm)
         return tmr.select_1_pgn(wparent)
+
+    def actualiza(self):
+        if Update.update(self.main_window):
+            self.reiniciar()
+
+    def reiniciar(self):
+        self.main_window.final_processes()
+        self.main_window.accept()
+        QTUtils.exit_application(ExitProgram.REINIT)
 
 
 class ProcesadorVariations(Procesador):
