@@ -44,7 +44,7 @@ class WKibEngine(WKibCommon.WKibCommon):
             o_columns,
             dic_video=self.dic_video,
             complete_row_select=True,
-            heigh_row=configuration.x_pgn_rowheight,
+            heigh_row=configuration.x_pgn_rowheight+2,  # Para que se vean las g
         )
         f = Controles.FontType(puntos=configuration.x_pgn_fontpoints)
         self.grid.set_font(f)

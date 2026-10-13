@@ -689,13 +689,13 @@ class ManagerRoutesTactics(ManagerRoutes):
             self.routine_default(key)
 
     def target_move(self):
-        return self.game_objetivo.move(self.game.num_moves())
+        return self.game_objetivo.move(self.game.num_movements())
 
     def play_next_move(self):
         if self.state == ST_ENDGAME:
             return
 
-        if len(self.game) == self.game_objetivo.num_moves():
+        if len(self.game) == self.game_objetivo.num_movements():
             self.line_ended()
             return
 
@@ -739,7 +739,7 @@ class ManagerRoutesTactics(ManagerRoutes):
                     self.continue_human()
                     return False
             QTMessages.temporary_message(self.main_window, _("Wrong move"), 0.8, physical_pos=TOP_RIGHT)
-            self.route.error_tactic(self.game_objetivo.num_moves())
+            self.route.error_tactic(self.game_objetivo.num_movements())
             self.set_label2(self.route.mens_tactic(False))
             self.continue_human()
             return False
@@ -767,7 +767,7 @@ class ManagerRoutesTactics(ManagerRoutes):
             li_movs.append((jg0.from_sq, jg0.to_sq, False))
         self.board.show_arrows_temp(li_movs)
         if remove_points:
-            self.route.error_tactic(self.game_objetivo.num_moves())
+            self.route.error_tactic(self.game_objetivo.num_movements())
             self.set_label2(self.route.mens_tactic(False))
 
     def line_ended(self):

@@ -552,19 +552,19 @@ class AnalyzeGame:
         else:
             game_blunder = None
 
-        p = Game.Game()
-        p.set_position(move.position_before)
+        obj_game = Game.Game()
+        obj_game.set_position(move.position_before)
         if mj:  # blunder
             rm = mj
-        p.read_pv(rm.pv)
-        if p.is_finished():
-            result = p.resultado()
+        obj_game.read_pv(rm.pv)
+        if obj_game.is_finished():
+            result = obj_game.resultado()
             mas = ""  # ya lo anade en la ultima move
         else:
             mas = " *"
             result = "*"
 
-        jg0 = p.move(0)
+        jg0 = obj_game.move(0)
         t = f"{float(self.vtime) / 1000.0:0.2f}"
         t = t.rstrip("0")
         if t[-1] == ".":
@@ -584,7 +584,7 @@ class AnalyzeGame:
         cab += f'[FEN "{fen}"]\n'
         cab += f'[Result "{result}"]\n'
 
-        texto = f"{cab}\n{p.pgn_base()}{mas}\n\n"
+        texto = f"{cab}\n{obj_game.pgn_base()}{mas}\n\n"
         self.xsave_extra("pgn", file, texto)
 
         return True
@@ -720,7 +720,7 @@ class AnalyzeGame:
             lni = Util.ListaNumerosImpresion(self.alm.num_moves)
             num_move = int(game.first_num_move())
             is_white = not game.starts_with_black
-            for nRaw in range(game.num_moves()):
+            for nRaw in range(game.num_movements()):
                 must_save = lni.if_in_list(num_move)
                 if must_save:
                     if is_white:

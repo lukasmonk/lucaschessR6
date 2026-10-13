@@ -64,7 +64,7 @@ class ManagerWicker(Manager.Manager):
     minutos: int
     seconds: int
     is_competitive: bool
-    resultado: int | None
+    result: int | None
     human_is_playing: bool
     state: int
     showed_result: bool
@@ -162,7 +162,7 @@ class ManagerWicker(Manager.Manager):
 
         self.is_competitive = True
 
-        self.resultado = None
+        self.result = None
         self.human_is_playing = False
         self.state = ST_PLAYING
         self.showed_result = False  # Problema doble asignacion de ptos Thomas
@@ -544,12 +544,15 @@ class ManagerWicker(Manager.Manager):
         relo = self.engine_rival.elo
         if player_win:
             difelo = self.engine_rival.points_win
+            self.result = RS_WIN_PLAYER
 
         elif self.game.is_draw():
             difelo = self.engine_rival.points_draw
+            self.result = RS_DRAW
 
         else:
             difelo = self.engine_rival.points_lose
+            self.result = RS_WIN_OPPONENT
 
         nelo = elo + difelo
         nelo = max(nelo, 0)
@@ -573,9 +576,13 @@ class ManagerWicker(Manager.Manager):
         dic = {
             "FECHA": datetime.datetime.now(),
             "RIVAL": self.engine_rival.name,
-            "RESULTADO": self.resultado,
+            "RELO": self.engine_rival.elo,
+            "RESULTADO": self.result,
             "AELO": elo,
             "NELO": nelo,
+            "GAME_SAVE": self.game.save(),
+            "SIDE": self.is_human_side_white,
+            "PLYCOUNT": len(self.game)
         }
 
         lik = UtilSQL.ListSQL(self.configuration.paths.file_estad_wicker_elo())

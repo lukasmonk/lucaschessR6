@@ -18,7 +18,7 @@ def analysis_game(manager):
     lni = Util.ListaNumerosImpresion(analysis_params.num_moves)
     num_move = int(game.first_num_move())
     is_white = not game.starts_with_black
-    for nRaw in range(game.num_moves()):
+    for nRaw in range(game.num_movements()):
         must_save = lni.if_in_list(num_move)
         if must_save:
             if is_white:

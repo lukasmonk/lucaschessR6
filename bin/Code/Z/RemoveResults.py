@@ -1,6 +1,7 @@
 import Code
 from Code.QT import Iconos, QTDialogs, QTMessages
 from Code.Z import Util
+from Code.Albums import Albums, ManagerAlbum, WindowAlbumes
 
 
 class RemoveResults:
@@ -9,16 +10,11 @@ class RemoveResults:
         self.configuration = Code.configuration
         self.list_results = [
             (_("Challenge 101"), Iconos.Wheel(), self.rem_101),
-            (
-                _("Check your memory on a chessboard"),
-                Iconos.Memoria(),
-                self.rem_check_your_memory,
-            ),
-            (
-                _("The Washing Machine"),
-                Iconos.WashingMachine(),
-                self.rem_washing_machine,
-            ),
+            (_("Check your memory on a chessboard"), Iconos.Memoria(), self.rem_check_your_memory),
+            (_("The Washing Machine"), Iconos.WashingMachine(), self.rem_washing_machine),
+            (_("Album of animals"), Iconos.Penguin(), self.rem_album_animals),
+            (_("Album of vehicles"), Iconos.Wheel(), self.rem_album_vehicles),
+
         ]
 
     def menu(self):
@@ -48,3 +44,11 @@ class RemoveResults:
 
     def rem_washing_machine(self):
         Util.remove_file(self.configuration.paths.file_washing_machine())
+
+    def rem_album_animals(self):
+        album = Albums.AlbumAnimales()
+        album.remove_all_data()
+
+    def rem_album_vehicles(self):
+        album = Albums.AlbumVehicles()
+        album.remove_all_data()

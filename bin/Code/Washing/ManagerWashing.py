@@ -78,7 +78,7 @@ class ManagerWashingReplay(Manager.Manager):
         self.game_obj = self.dbwashing.restoreGame(self.engine)
         if not self.game_obj:
             return
-        self.numJugadasObj = self.game_obj.num_moves()
+        self.numJugadasObj = self.game_obj.num_movements()
         self.pos_move_obj = 0
 
         li_options = [TB_CLOSE]
@@ -255,7 +255,7 @@ class ManagerWashingReplay(Manager.Manager):
         self.move_the_pieces(move.list_piece_moves)
         self.add_move(move, True)
         self.pos_move_obj += 1
-        if len(self.game) == self.game_obj.num_moves():
+        if len(self.game) == self.game_obj.num_movements():
             self.end_game()
 
         else:

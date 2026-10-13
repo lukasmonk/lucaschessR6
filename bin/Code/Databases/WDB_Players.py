@@ -3,6 +3,7 @@ from PySide6 import QtCore, QtWidgets
 
 import Code
 from Code.Base import Game
+from Code.Base.Constantes import WHITE, BLACK
 from Code.Openings import OpeningsStd
 from Code.QT import Colocacion, Columnas, Controles, Delegados, FormLayout, Grid, Iconos, QTDialogs, QTMessages
 
@@ -96,6 +97,7 @@ class WPlayer(QtWidgets.QWidget):
         self.lastFilterMoves = {"white": "", "black": ""}
         self.configuration = Code.configuration
         self.foreground = Code.dic_qcolors["SUMMARY_FOREGROUND"]
+        self.fila_tt = 0
 
         self.infoMove = None  # <-- set_info_move
 
@@ -108,6 +110,7 @@ class WPlayer(QtWidgets.QWidget):
         # GridOpening
         ancho = 54
         o_columns = Columnas.ListaColumnas()
+        o_columns.nueva("NUM", _("N."), 40, align_center=True)
         o_columns.nueva("opening", _("Opening"), 200)
         o_columns.nueva("games", _("Games"), ancho, align_right=True)
         o_columns.nueva("pgames", f"% {_('Games')}", 70, align_right=True)
@@ -190,6 +193,16 @@ class WPlayer(QtWidgets.QWidget):
 
         self.set_db_games(db_games)
         self.set_player(self.read_variable("PLAYER", ""))
+
+        self.dic_orders = {
+            OPENINGS_WHITE: {"opening": False, "games": True, "win": True, "draw": True, "lost": True},
+            OPENINGS_BLACK: {"opening": False, "games": True, "win": True, "draw": True, "lost": True},
+        }
+
+        self.dic_total = {
+            OPENINGS_WHITE: {"opening": _("Total"), "games": 0, "win": 0, "draw": 0, "lost": 0},
+            OPENINGS_BLACK: {"opening": _("Total"), "games": 0, "win": 0, "draw": 0, "lost": 0},
+        }
 
     def tab_changed(self, ntab):
         QtWidgets.QApplication.processEvents()
@@ -284,10 +297,12 @@ class WPlayer(QtWidgets.QWidget):
     def grid_num_datos(self, grid):
         if self.rebuilding:
             return 0
+
         if grid == self.gridOpeningWhite:
-            return len(self.data[OPENINGS_WHITE])
+            return len(self.data[OPENINGS_WHITE]) + self.fila_tt
         elif grid == self.gridOpeningBlack:
-            return len(self.data[OPENINGS_BLACK])
+            return len(self.data[OPENINGS_BLACK]) + self.fila_tt
+
         elif grid == self.gridMovesWhite:
             return len(self.movesWhite)
         elif grid == self.gridMovesBlack:
@@ -300,10 +315,18 @@ class WPlayer(QtWidgets.QWidget):
             return ""
         key = ocol.key
         dt = self.data_grid(grid)
-        if grid == self.gridMovesWhite:
-            nfila = self.movesWhite[nfila]
-        elif grid == self.gridMovesBlack:
-            nfila = self.movesBlack[nfila]
+
+        if grid == self.gridOpeningWhite:
+            if nfila == len(self.data[OPENINGS_WHITE]):
+                return self.dic_total[OPENINGS_WHITE].get(key, "")
+
+        elif grid == self.gridOpeningBlack:
+            if nfila == len(self.data[OPENINGS_BLACK]):
+                return self.dic_total[OPENINGS_BLACK].get(key, "")
+
+        if key == "NUM":
+            return str(nfila+1)
+
         return dt[nfila][key]
 
     def grid_cambiado_registro(self, grid, nfila, _ocol):
@@ -327,10 +350,14 @@ class WPlayer(QtWidgets.QWidget):
         dt = self.data_grid(grid)
         if not dt:
             return None
-        if grid == self.gridMovesWhite:
-            nfila = self.movesWhite[nfila]
-        elif grid == self.gridMovesBlack:
-            nfila = self.movesBlack[nfila]
+
+        if grid == self.gridOpeningWhite:
+            if nfila == len(self.data[OPENINGS_WHITE]):
+                return Code.dic_qcolors["SUMMARY_TOTAL"]
+        elif grid == self.gridOpeningBlack:
+            if nfila == len(self.data[OPENINGS_BLACK]):
+                return Code.dic_qcolors["SUMMARY_TOTAL"]
+
         key = f"{ocol.key}c"
         color = dt[nfila].get(key, 99)
         if color == 0:
@@ -340,6 +367,13 @@ class WPlayer(QtWidgets.QWidget):
         return None
 
     def grid_color_texto(self, grid, nfila, ocol):
+        if grid == self.gridOpeningWhite:
+            if nfila == len(self.data[OPENINGS_WHITE]):
+                return Code.dic_qcolors["SUMMARY_FOREGROUND"]
+        elif grid == self.gridOpeningBlack:
+            if nfila == len(self.data[OPENINGS_BLACK]):
+                return Code.dic_qcolors["SUMMARY_FOREGROUND"]
+
         dt = self.data_grid(grid)
         if dt and self.foreground:
             key = f"{ocol.key}c"
@@ -348,7 +382,7 @@ class WPlayer(QtWidgets.QWidget):
                 return self.foreground
         return None
 
-    def grid_tecla_control(self, grid, k, _is_shift, _is_control, _is_alt):
+    def grid_tecla_control(self, grid, k, _is_shift, is_control, _is_alt):
         if k in (QtCore.Qt.Key.Key_Left, QtCore.Qt.Key.Key_Right):
             self.infoMove.tecla_pulsada(k)
             row, col = grid.current_position_num()
@@ -363,28 +397,48 @@ class WPlayer(QtWidgets.QWidget):
             grid.gotop()
         elif k == QtCore.Qt.Key.Key_End:
             grid.gobottom()
+        elif k == QtCore.Qt.Key.Key_G and is_control and grid in (self.gridOpeningWhite, self.gridOpeningBlack):
+            self.goto_registro(grid)
+
         return True
+
+    def goto_registro(self, grid):
+        if grid == self.gridOpeningWhite:
+            total = len(self.data[OPENINGS_WHITE])
+        else:
+            total = len(self.data[OPENINGS_BLACK])
+
+        if total:
+            registro = QTMessages.read_simple(self, _("Go to the record"), _("Go to the record"), "")
+            if registro and registro.isdigit():
+                num_registro = min(max(int(registro) - 1, 0), total - 1)
+                grid.goto(num_registro, 0)
 
     def grid_doubleclick_header(self, grid, obj_column):
         if grid == self.gridOpeningWhite:
             data = self.data[OPENINGS_WHITE]
+            tab = WHITE
         elif grid == self.gridOpeningBlack:
             data = self.data[OPENINGS_BLACK]
+            tab = BLACK
         else:
             return
         key = obj_column.key
+        if key not in self.dic_orders[tab]:
+            return
+
+        reverse = self.dic_orders[tab][key]
         if key == "opening":
             data.sort(
-                key=lambda rx: rx["opening"],
-                reverse=False,
-            )
-        elif key == "games":
-            data.sort(
-                key=lambda rx: f"{99999 - rx['games']:5d}{rx['opening']}",
-                reverse=False,
+                key=lambda rx: rx[key],
+                reverse=reverse,
             )
         else:
-            return
+            data.sort(
+                key=lambda rx: f"{rx[key]:5d}{rx['opening']}",
+                reverse=reverse,
+            )
+        self.dic_orders[tab][key] = not reverse
         grid.refresh()
 
     def read_variable(self, var, default=None):
@@ -711,6 +765,21 @@ class WPlayer(QtWidgets.QWidget):
 
         self.rebuilding = False
         self.data = data
+
+        for tab in (OPENINGS_WHITE, OPENINGS_BLACK):
+            for col in ("games", "win", "draw", "lost"):
+                self.dic_total[tab][col] = sum(x[col] for x in data[tab])
+            total = self.dic_total[tab]["games"]
+            if total > 0:
+                self.dic_total[tab]["pwin"] = z(self.dic_total[tab]["win"]*100/total)
+                self.dic_total[tab]["pdraw"] = z(self.dic_total[tab]["draw"]*100/total)
+                self.dic_total[tab]["plost"] = z(self.dic_total[tab]["lost"]*100/total)
+
+                self.dic_total[tab]["pdrawwin"] = z((self.dic_total[tab]["draw"]+self.dic_total[tab]["win"])*100/total)
+                self.dic_total[tab]["pdrawlost"] = z((self.dic_total[tab]["draw"]+self.dic_total[tab]["lost"])*100/total)
+
+        self.fila_tt = 1
+
         self.gridOpeningWhite.refresh()
         self.gridOpeningBlack.refresh()
         self.gridMovesWhite.refresh()

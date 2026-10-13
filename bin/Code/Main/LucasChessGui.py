@@ -31,10 +31,13 @@ from Code.Z import Util, XRun
 
 
 def run_gui(procesador):
+    os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.multimedia.*=false"
 
     if Util.is_linux() and (os.environ.get("XDG_SESSION_TYPE") == "wayland" or os.environ.get("WAYLAND_DISPLAY")):
         os.environ["QT_QPA_PLATFORM"] = "xcb"
         # sudo apt install libxcb-cursor0  en Wayland
+    # elif Util.is_windows():
+        # os.environ["QT_MEDIA_BACKEND"] = "wmf"
 
     main_config = Configuration.Configuration("")
     main_config.lee()
@@ -45,6 +48,9 @@ def run_gui(procesador):
     QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
     app = QtWidgets.QApplication([])
+    from Code.Sound import Sound
+
+    Sound.RunSound()
     app.setEffectEnabled(QtCore.Qt.UIEffect.UI_FadeMenu, True)  # Agregar
 
     # filtro = GlobalFilter()

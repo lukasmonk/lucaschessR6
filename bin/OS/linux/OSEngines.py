@@ -112,6 +112,19 @@ def read_engines(folder_engines):
 
     mas("arasan", "Jon Dart", "22.2", "https://www.arasanchess.org/", "Arasan-22.2", 3259)
 
+    is_avx2 = "avx2" in FasterCode.get_cpu_flags()
+
+    if is_avx2:
+        cm = mas(
+            "arhanpassant",
+            "Arhan Canli",
+            "0.13.0",
+            "https://arhanpassant.com/engine",
+            "arhanpassant-linux-x86_64-avx2",
+            3500,
+            nodes_compatible=True,
+        )
+
     mas(
         "asymptote",
         "Maximilian Lupke",

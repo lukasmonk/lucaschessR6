@@ -1360,7 +1360,7 @@ class DBgames:
         li_fields.append("XPV")
         li_data.append(xpv_nue)
         li_fields.append("PLYCOUNT")
-        li_data.append(game_new.num_moves())
+        li_data.append(game_new.num_movements())
 
         result_nue = "*"
         for tag, valor_nue in game_new.li_tags:

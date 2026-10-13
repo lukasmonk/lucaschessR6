@@ -86,13 +86,12 @@ class ToolsMenuRun:
             Code.configuration.set_last_database(Util.relative_path(dbpath))
             w = WDatabase.WBDatabase(self.wparent, self.procesador, dbpath, is_temporary, False)
             if self.wparent:
-                with ScreenUtils.EscondeWindow(self.wparent):
-                    if path_pgn:
-                        w.show()
-                        w.wgames.tw_importar_pgn(path_pgn)
-                    if w.exec():
-                        if w.reiniciar:
-                            self.database("R", Code.configuration.get_last_database())
+                if path_pgn:
+                    w.show()
+                    w.wgames.tw_importar_pgn(path_pgn)
+                if w.exec():
+                    if w.reiniciar:
+                        self.database("R", Code.configuration.get_last_database())
             else:
                 Delegados.genera_pm(w.infoMove.board.pieces)
                 w.show()

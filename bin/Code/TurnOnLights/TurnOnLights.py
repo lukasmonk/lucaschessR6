@@ -83,7 +83,7 @@ class TolBlock:
     def av_seconds(self):
         return self.times[0][0] if self.times else None
 
-    def num_moves(self):
+    def num_movements(self):
         nm = 0
         for line in self.lines:
             nm += line.num_moves

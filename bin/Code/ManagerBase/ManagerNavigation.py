@@ -33,8 +33,9 @@ class ManagerNavigation:
         if tipo == GO_BACK:
             row -= 1
             if row < 0:
-                self.goto_firstposition()
                 return
+                # self.goto_firstposition()
+                # return
             col = 1
         elif tipo == GO_BACK2:
             if row == 0:
@@ -104,6 +105,7 @@ class ManagerNavigation:
                 pos += 1
             if row < 0 or (row == 0 and pos == 0 and starts_with_black):
                 self.goto_firstposition()
+                self.manager.set_position(self.manager.game.first_position, "-1")
                 return
         elif tipo == GO_BACK2:
             row -= 1
@@ -138,11 +140,15 @@ class ManagerNavigation:
         return
 
     def goto_firstposition(self):
-        self.manager.set_position(self.manager.game.first_position)
+        pieces_active = self.manager.board.pieces_are_active
+        position = self.manager.game.first_position
+        self.manager.set_position(position)
         self.main_window.base.pgn.goto(0, 0)
         self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados
         self.manager.put_view()
-        self.manager.board.set_last_position(self.manager.game.first_position)
+        self.manager.board.set_last_position(position)
+        if pieces_active:
+            self.manager.board.activate_side(position.is_white)
 
     def pgn_move(self, row, is_white, animate_forward=False):
         if animate_forward and Code.configuration.x_show_effects:

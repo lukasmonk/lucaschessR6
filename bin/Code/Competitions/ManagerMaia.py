@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import Code
@@ -21,6 +22,7 @@ from Code.Engines import EngineResponse, Engines
 from Code.ManagerBase import Manager
 from Code.Openings import Opening
 from Code.QT import QTMessages
+from Code.SQL import UtilSQL
 
 
 class MaiaState:
@@ -340,7 +342,24 @@ class ManagerMaia(Manager.Manager):
         else:
             result = RS_WIN_OPPONENT
 
+        player_elo = self.ladder_state.current_elo()
+        rival_name = self.ladder_state.label()
         ladder_resp = self.ladder_state.new_result(self.is_human_side_white, result)
+        new_player_elo = self.ladder_state.current_elo()
+        with UtilSQL.ListSQL(self.configuration.paths.file_estad_maia_elo()) as history:
+            history.append(
+                {
+                    "FECHA": datetime.datetime.now(),
+                    "RIVAL": rival_name,
+                    "RELO": player_elo,
+                    "RESULTADO": result,
+                    "AELO": player_elo,
+                    "NELO": new_player_elo,
+                    "SIDE": self.is_human_side_white,
+                    "PLYCOUNT": len(self.game),
+                    "GAME_SAVE": self.game.save(),
+                }
+            )
 
         if ladder_resp == MaiaState.MOVE_FORWARD:
             mensaje += "\n\n" + _("Congratulations! You move up to the next level.")

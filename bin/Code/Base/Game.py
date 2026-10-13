@@ -346,8 +346,8 @@ class Game:
         else:
             self.set_tag("FEN", self.first_position.fen())
 
-        if self.num_moves():
-            self.set_tag("PlyCount", str(self.num_moves()))
+        if self.num_movements():
+            self.set_tag("PlyCount", str(self.num_movements()))
 
     def sort_tags(self) -> None:
         """
@@ -601,7 +601,7 @@ class Game:
         move: Move.Move = self.move(-1)
         if not move:
             return
-        if move.position.is_finished():
+        if move.position.is_terminal():
             if move.is_check:
                 self.set_termination(
                     TERMINATION_MATE,
@@ -638,7 +638,7 @@ class Game:
     def is_fen_initial(self) -> bool:
         return self.first_position.fen() == FEN_INITIAL
 
-    def num_moves(self) -> int:
+    def num_movements(self) -> int:
         return len(self.li_moves)
 
     def __len__(self) -> int:
@@ -759,6 +759,13 @@ class Game:
         elif txt not in self.first_comment:
             self.first_comment = f"{self.first_comment.strip()}\n{txt}"
 
+    def is_terminal(self) -> bool:
+        if self.li_moves:
+            move = self.li_moves[-1]
+            if move.position.is_terminal():
+                return True
+        return False
+
     def is_finished(self) -> bool:
         """
         Return True if the game has a known result or the last position is terminal.
@@ -768,7 +775,7 @@ class Game:
             return True
         if self.li_moves:
             move = self.li_moves[-1]
-            if move.position.is_finished():
+            if move.position.is_terminal():
                 if move.is_check:
                     self.result = RESULT_WIN_WHITE if move.position_before.is_white else RESULT_WIN_BLACK
                     self.termination = TERMINATION_MATE
@@ -782,7 +789,7 @@ class Game:
     def is_possible_add_moves(self):
         if self.li_moves:
             move = self.li_moves[-1]
-            if move.position.is_finished():
+            if move.position.is_terminal():
                 return False
         return True
 
@@ -918,7 +925,7 @@ class Game:
         if until_move is not None:
             if until_move == -1:
                 game_copy.li_moves = []
-            elif until_move < (game_copy.num_moves() - 1):
+            elif until_move < (game_copy.num_movements() - 1):
                 game_copy.li_moves = [move.clone(game_copy) for move in game_copy.li_moves[: until_move + 1]]
             if len(game_copy) != len(self):
                 game_copy.set_unknown()

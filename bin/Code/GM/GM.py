@@ -115,12 +115,12 @@ class GM:
         li_games = []
         ok = False
         next_ply = self.ply + 1
-        for gmPartida in self.li_gm_games:
-            if gmPartida.is_valid_move(self.ply, move):
-                self.last_game = gmPartida  # - Siempre hay una ultima
+        for gm_game in self.li_gm_games:
+            if gm_game.is_valid_move(self.ply, move):
+                self.last_game = gm_game  # - Siempre hay una ultima
                 ok = True
-                if not gmPartida.is_finished(next_ply):
-                    li_games.append(gmPartida)
+                if not gm_game.is_finished(next_ply):
+                    li_games.append(gm_game)
 
         self.li_gm_games = li_games
         self.ply += 1
@@ -135,16 +135,16 @@ class GM:
         return False
 
     def is_finished(self):
-        for gmp in self.li_gm_games:
-            if not gmp.is_finished(self.ply):
+        for gm_game in self.li_gm_games:
+            if not gm_game.is_finished(self.ply):
                 return False
         return True
 
     def alternativas(self):
         # Usar un set para evitar duplicados y mejorar rendimiento O(n) en lugar de O(n²)
         moves_set = set()
-        for gmPartida in self.li_gm_games:
-            move = gmPartida.move(self.ply)
+        for gm_game in self.li_gm_games:
+            move = gm_game.move(self.ply)
             if move:
                 moves_set.add(move)
         return list(moves_set)

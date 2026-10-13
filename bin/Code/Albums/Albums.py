@@ -102,20 +102,20 @@ class ManagerMotorAlbum:
 
 class Cromo:
     def __init__(
-        self,
-        key,
-        name,
-        nivel,
-        bien,
-        aleatorio,
-        captura,
-        esquivo,
-        similar,
-        dif_puntos,
-        aterrizaje,
-        mate,
-        engine,
-        opening,
+            self,
+            key,
+            name,
+            nivel,
+            bien,
+            aleatorio,
+            captura,
+            esquivo,
+            similar,
+            dif_puntos,
+            aterrizaje,
+            mate,
+            engine,
+            opening,
     ):
         self.key = key
         self.name = name
@@ -294,6 +294,13 @@ class Albums:
             key = f"{self.preClave}_{uno}"
             dic[uno] = dic_db.get(key, False)
         return dic
+
+    def remove_all_data(self):
+        with UtilSQL.DictSQL(self.ficheroDB) as db:
+            for key in db.keys()[:]:
+                if key.startswith(self.preClave):
+                    del db[key]
+            db.pack()
 
 
 class AlbumAnimales(Albums):

@@ -198,7 +198,7 @@ class ManagerSolo(Manager.Manager):
         is_white = self.game.last_position.is_white
         self.is_human_side_white = is_white  # Compatibilidad, sino no funciona el cambio en pgn
 
-        if self.game.is_finished():
+        if self.game.is_terminal():
             self.show_result()
             return
 

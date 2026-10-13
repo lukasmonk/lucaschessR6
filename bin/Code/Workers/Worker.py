@@ -48,6 +48,9 @@ class Worker(QtWidgets.QWidget):
     dic_engine_managers: dict
     rejections_adjudicator: int
 
+    check_draw: bool = False
+    check_resign: bool = False
+
     def __init__(self, run_worker):
         QtWidgets.QWidget.__init__(self)
 
@@ -260,10 +263,13 @@ class Worker(QtWidgets.QWidget):
         else:
             self.manager_adjudicator = None
 
-        if self.run_worker.draw_range == 0 and self.run_worker.resign == 0:
-            self.next_control = INFINITE
-        else:
+        self.check_draw = self.run_worker.draw_range > 0
+        self.check_resign = self.run_worker.resign > 0
+
+        if self.check_draw or self.check_resign:
             self.next_control = 21
+        else:
+            self.next_control = INFINITE
 
         max_minute, self.seconds_per_move = self.run_worker.time_engine_engine
         self.max_seconds = max_minute * 60
@@ -460,7 +466,21 @@ class Worker(QtWidgets.QWidget):
             self.lb_rotulo2.hide()
 
         self.board.remove_movables()
+
+        li_moves = move.list_piece_moves
+        if self.run_worker.slow_pieces:
+            self.board.animate_move(li_moves)
+        else:
+            for movim in li_moves:
+                if movim[0] == "b":
+                    self.board.remove_piece(movim[1])
+                elif movim[0] == "m":
+                    self.board.move_piece(movim[1], movim[2])
+                elif movim[0] == "c":
+                    self.board.change_piece(movim[1], movim[2])
+        self.board.set_position(self.game.last_position)
         self.board.put_arrow_sc(move.from_sq, move.to_sq)
+
         self.grid_pgn.refresh()
         self.grid_pgn.gobottom(2 if self.game.last_position.is_white else 1)
 
@@ -543,7 +563,6 @@ class Worker(QtWidgets.QWidget):
             move.set_time_ms(time_seconds * 1000.0)
         if clock_seconds:
             move.set_clock_ms(clock_seconds * 1000.0)
-        self.move_the_pieces(move.list_piece_moves)
         self.add_move(move)
         self.sound(move)
 
@@ -671,17 +690,22 @@ class Worker(QtWidgets.QWidget):
             return -rm.centipawns_abs()
 
         # Draw
-        dr = self.run_worker.draw_range
-        dmp = self.run_worker.draw_min_ply
-        if dmp and dr > 0 and num_moves >= dmp and abs(p_ult) <= dr and abs(p_ant) <= dr:
-            p_tut = adjudicator_score() if self.manager_adjudicator else 0
-            if abs(p_tut) <= dr:
-                self.game.set_termination(TERMINATION_ADJUDICATION, RESULT_DRAW)
-                return True
-            return False
+        if self.check_draw:
+            dr = self.run_worker.draw_range
+            dmp = self.run_worker.draw_min_ply
+            if dmp and dr > 0 and num_moves >= dmp and abs(p_ult) <= dr and abs(p_ant) <= dr:
+                p_tut = adjudicator_score() if self.manager_adjudicator else 0
+                if abs(p_tut) <= dr:
+                    self.game.set_termination(TERMINATION_ADJUDICATION, RESULT_DRAW)
+                    return True
+                return False
 
         # Resign
+        if not self.check_resign:
+            return False
+
         rs = self.run_worker.resign
+
         if rs > p_ult:
             # si el motor piensa que no hemos llegado al límite nos vamos
             return False
@@ -703,23 +727,10 @@ class Worker(QtWidgets.QWidget):
         self.game.set_termination(TERMINATION_ADJUDICATION, result)
         return True
 
-    def move_the_pieces(self, li_moves):
-        if self.run_worker.slow_pieces:
-            self.board.animate_move(li_moves)
-
-        for movim in li_moves:
-            if movim[0] == "b":
-                self.board.remove_piece(movim[1])
-            elif movim[0] == "m":
-                self.board.move_piece(movim[1], movim[2])
-            elif movim[0] == "c":
-                self.board.change_piece(movim[1], movim[2])
-
     def changeEvent(self, event: QtCore.QEvent):
         QtWidgets.QWidget.changeEvent(self, event)
         if event.type() != QtCore.QEvent.Type.WindowStateChange:
             return
-
         nue = ScreenUtils.EstadoWindow(self.windowState())
         ant = ScreenUtils.EstadoWindow(event.oldState())
 
@@ -744,6 +755,7 @@ class Worker(QtWidgets.QWidget):
                     self.antiguoAnchoPieza = self.board.calc_width_mx_piece()
                 self.board.normal_size(self.antiguoAnchoPieza)
                 self.adjust_size()
+        self.board.set_position(self.game.last_position)
 
     def adjust_size(self):
         ScreenUtils.shrink(self)

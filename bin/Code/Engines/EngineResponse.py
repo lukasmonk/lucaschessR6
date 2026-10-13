@@ -713,7 +713,7 @@ class MultiEngineResponse:
                 return True
         if mindifpuntos:
             game_base: Game.Game = self.game  # asignada por el engine_manager
-            num_moves = game_base.num_moves()
+            num_moves = game_base.num_movements()
             if num_moves < 3 and not game_base.is_fen_initial():
                 return False
             puntos_previos = 0

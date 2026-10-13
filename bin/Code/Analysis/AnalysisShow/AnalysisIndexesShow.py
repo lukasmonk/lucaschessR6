@@ -92,48 +92,6 @@ class ShowHtml:
             </tr>"""
         )
 
-    def moves_html(
-        self,
-        moves_very_good,
-        moves_good,
-        moves_good_no,
-        moves_interestings,
-        moves_gray,
-        moves_inaccuracies,
-        moves_mistakes,
-        moves_blunders,
-    ):
-        if self.total_analyzed == 0:
-            return _("There are no analyzed moves.")
-
-        if self.add_group6(
-            _("Best moves"),
-            moves_very_good,
-            moves_good,
-            moves_interestings,
-            moves_good_no,
-        ):
-            self.add_label6("brilliant", _("Brilliant moves"), moves_very_good, "‼")
-            self.add_label6("good", _("Good moves"), moves_good, "!")
-            self.add_label6("interesting", _("Interesting moves"), moves_interestings, "⁉")
-            self.add_label6("easy-good", _("Other best moves"), moves_good_no)
-
-        self.add_group6(_("Acceptable moves"), moves_gray)
-
-        if self.add_group6(_("Bad moves"), moves_inaccuracies, moves_mistakes, moves_blunders):
-            self.add_label6("inaccuracy", _("Dubious moves"), moves_inaccuracies, "⁈")
-            self.add_label6("mistake", _("Mistakes"), moves_mistakes, "?")
-            self.add_label6("blunder", _("Blunders"), moves_blunders, "⁇")
-
-        self.add_total6()
-
-        resp = self.xhtml("".join(self.li_body), True)
-        sp = "&nbsp;" * (self.maxlabel6 // 2)
-        resp = resp.replace("|SP|", sp)
-
-        self.li_body = []
-        return resp
-
     def elo_html(self, elos_form):
         if self.total_analyzed == 0:
             return _("There are no analyzed moves.")
@@ -157,9 +115,9 @@ class ShowHtml:
 
         add_label("total", ALLGAME, _("Elo performance"))
         for std, tit in (
-            (OPENING, _("Opening")),
-            (MIDDLEGAME, _("Middlegame")),
-            (ENDGAME, _("Endgame")),
+                (OPENING, _("Opening")),
+                (MIDDLEGAME, _("Middlegame")),
+                (ENDGAME, _("Endgame")),
         ):
             add_label("normal", std, tit)
 

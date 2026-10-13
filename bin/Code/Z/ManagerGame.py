@@ -61,8 +61,20 @@ class ManagerGame(Manager.Manager):
         self.main_window.set_label2(None)
         self.set_dispatcher(self.player_has_moved_dispatcher)
         self.show_side_indicator(True)
-        self.put_pieces_bottom(game.is_white_top())
+
+        side_bottom = game.is_white_top()
+        if self.configuration.x_auto_orient:
+            black = game.get_tag("BLACK")
+            if self.configuration.is_player_alias(black):
+                side_bottom = False
+            elif side_bottom is False:
+                white = game.get_tag("WHITE")
+                if self.configuration.is_player_alias(white):
+                    side_bottom = True
+        self.put_pieces_bottom(side_bottom)
+
         self.show_info_extra()
+        self.board.pieces_are_active = True
         self.goto_firstposition()
 
         # self.check_boards_setposition()
@@ -419,7 +431,7 @@ class ManagerGame(Manager.Manager):
                 return False
             seconds_before1 = min(2.0, self.xpelicula.seconds_before)
             if not self.xpelicula.sleep_refresh(seconds_before1):
-                return
+                return False
 
             self.main_window.setWindowTitle(game1.window_title())
             self.start(

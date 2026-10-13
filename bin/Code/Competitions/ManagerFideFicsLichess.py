@@ -58,6 +58,7 @@ class ManagerFideFicsLichess(Manager.Manager):
     tag_result = None
     id_game = 0
     adjudicator: Adjudicator.Adjudicator
+    result: int | None
 
     def selecciona(self, type_play):
         self.game_type = type_play
@@ -128,7 +129,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         self.game_obj = Game.Game()
         self.game_obj.read_pv(pv)
         self.pos_move_obj = 0
-        self.numJugadasObj = self.game_obj.num_moves()
+        self.numJugadasObj = self.game_obj.num_movements()
 
         li = dbf.CABS.split("\n")
         for x in li:
@@ -147,7 +148,7 @@ class ManagerFideFicsLichess(Manager.Manager):
         self.play_next_move()
 
     def base_inicio(self, id_game):
-        self.resultado = None
+        self.result = None
         self.human_is_playing = False
         self.state = ST_PLAYING
         self.analysis = None
@@ -424,18 +425,18 @@ class ManagerFideFicsLichess(Manager.Manager):
 
         if self.puntos < -50:
             mensaje = _X(_("Unfortunately you have lost against %1."), self.name_obj)
-            quien = RS_WIN_OPPONENT
+            self.result = RS_WIN_OPPONENT
             difelo = self.plost
         elif self.puntos > 50:
             mensaje = _X(_("Congratulations you have won against %1."), self.name_obj)
-            quien = RS_WIN_PLAYER
+            self.result = RS_WIN_PLAYER
             difelo = self.pwin
         else:
             mensaje = _X(_("Draw against %1."), self.name_obj)
-            quien = RS_DRAW
+            self.result = RS_DRAW
             difelo = self.pdraw
 
-        self.beep_result_change(quien)
+        self.beep_result_change(self.result)
 
         nelo = self.eloUsu + difelo
         nelo = max(nelo, 0)
@@ -457,9 +458,14 @@ class ManagerFideFicsLichess(Manager.Manager):
         dic = {
             "FECHA": datetime.datetime.now(),
             "LEVEL": self.nivel,
-            "RESULTADO": self.resultado,
+            "RIVAL": self.game.get_tag("Black" if self.is_human_side_white else "White"),
+            "RELO": self.eloObj,
+            "RESULTADO": self.result,
             "AELO": elo,
             "NELO": nelo,
+            "SIDE": self.is_human_side_white,
+            "PLYCOUNT": len(self.game),
+            "GAME_SAVE": self.game.save(),
         }
 
         lik = UtilSQL.ListSQL(self._fichEstad)

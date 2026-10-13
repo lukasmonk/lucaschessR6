@@ -58,7 +58,7 @@ class ManagerEverest(Manager.Manager):
         self.is_engine_side_white = not self.expedition.is_white
         self.game_obj = self.expedition.game
         self.game.set_tags(self.game_obj.li_tags)
-        self.numJugadasObj = self.game_obj.num_moves()
+        self.numJugadasObj = self.game_obj.num_movements()
         self.pos_move_obj = 0
         self.name_obj = self.expedition.name
 

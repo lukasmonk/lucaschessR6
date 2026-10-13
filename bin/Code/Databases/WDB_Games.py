@@ -487,28 +487,28 @@ class WGames(QtWidgets.QWidget):
             self.grid.setFocus()
             fen, pv = self.db_games.get_pv(row)
             if fen:
-                p = Game.Game(fen=fen)
-                p.read_pv(pv)
-                p.is_finished()
+                obj_game = Game.Game(fen=fen)
+                obj_game.read_pv(pv)
+                obj_game.is_finished()
                 option = self.configuration.x_dbshow_positions
             else:
-                p = Game.Game()
-                p.read_pv(pv)
-                p.assign_opening()
-                p.is_finished()
+                obj_game = Game.Game()
+                obj_game.read_pv(pv)
+                obj_game.assign_opening()
+                obj_game.is_finished()
                 option = self.configuration.x_dbshow_completegames
 
             if option == DBSHOW_LAST_MOVE:
-                pos = len(p) - 1
+                pos = len(obj_game) - 1
             elif option == DBSHOW_INITIAL_POSITION:
                 pos = -1
             else:
                 pos = 0
 
             if fen:
-                self.infoMove.fen_mode(p, fen, pos)
+                self.infoMove.fen_mode(obj_game, fen, pos)
             else:
-                self.infoMove.game_mode(p, pos)
+                self.infoMove.game_mode(obj_game, pos)
 
     def tw_gobottom(self):
         self.grid.gobottom()

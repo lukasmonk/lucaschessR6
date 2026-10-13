@@ -1649,7 +1649,7 @@ class Board(QtWidgets.QGraphicsView):
         self.active_premove = False
         if self.dirvisual:
             self.dirvisual.changed_position_before()
-        elif self.dbVisual.save_always():
+        elif self.dbVisual and self.dbVisual.save_always():
             self.dbVisual.save_movables_board(self)
 
         if self.si_borraMovibles and remove_movables_now:

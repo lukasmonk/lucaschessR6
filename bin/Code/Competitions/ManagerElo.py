@@ -186,6 +186,7 @@ class ManagerElo(Manager.Manager):
     datos_motor: MotorElo
     opening: Opening.OpeningPol
     pte_tool_resigndraw: bool
+    result: int | None
 
     def valores(self):
         li = QTDialogs.list_irina()
@@ -258,7 +259,7 @@ class ManagerElo(Manager.Manager):
 
         self.is_competitive = True
 
-        self.resultado = None
+        self.result = None
         self.human_is_playing = False
         self.state = ST_PLAYING
 
@@ -497,12 +498,15 @@ class ManagerElo(Manager.Manager):
         elo = self.configuration.elo_current()
         if player_win:
             difelo = self.datos_motor.points_win
+            self.result = RS_WIN_PLAYER
 
         elif self.game.is_draw():
             difelo = self.datos_motor.points_draw
+            self.result = RS_DRAW
 
         else:
             difelo = self.datos_motor.points_lose
+            self.result = RS_WIN_OPPONENT
 
         nelo = elo + difelo
         nelo = max(nelo, 0)
@@ -573,9 +577,13 @@ class ManagerElo(Manager.Manager):
         dic = {
             "FECHA": datetime.datetime.now(),
             "RIVAL": self.datos_motor.label(),
-            "RESULTADO": self.resultado,
+            "RELO": self.datos_motor.elo,
+            "RESULTADO": self.result,
             "AELO": elo,
             "NELO": nelo,
+            "GAME_SAVE": self.game.save(),
+            "SIDE": self.is_human_side_white,
+            "PLYCOUNT": len(self.game)
         }
 
         lik = UtilSQL.ListSQL(self.configuration.paths.file_estad_elo())

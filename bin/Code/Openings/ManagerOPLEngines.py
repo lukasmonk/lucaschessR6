@@ -326,7 +326,7 @@ class ManagerOpeningEngines(Manager.Manager):
 
     def run_auto_analysis(self):
         list_num_moves = []
-        for num_move in range(self.game.num_moves()):
+        for num_move in range(self.game.num_movements()):
             move = self.game.move(num_move)
             if move.is_white() == self.is_human_side_white:
                 fenm2 = move.position.fenm2()

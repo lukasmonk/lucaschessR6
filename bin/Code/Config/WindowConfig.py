@@ -34,6 +34,12 @@ def options(parent, configuration):
     form.separador()
 
     form.edit(_("Player's name"), configuration.x_player)
+    form.edit(_("Alias"), configuration.x_alias)
+    form.apart_simple_np2(
+        "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<small>%s</small>"
+        % _("(You can add multiple aliases separated by ; and wildcards with *)")
+    )
+
     form.separador()
     form.combobox(_("Window style"), configuration.estilos(), configuration.x_style)
 
@@ -264,6 +270,7 @@ def options(parent, configuration):
         (_("Descriptive"), NOTATION_DESCRIPTIVE),
     )
     form.combobox(_("Notation Style"), li_notations, configuration.x_notation_style)
+    form.checkbox(_("Auto-orient board to my color in review"), configuration.x_auto_orient)
     form.separador()
 
     form.combobox(_("Scroll direction with the mouse wheel"), li_wheel, configuration.x_wheel_pgn)
@@ -329,6 +336,7 @@ def options(parent, configuration):
 
         (
             configuration.x_player,
+            configuration.x_alias,
             configuration.x_style,
             configuration.x_style_mode,
             configuration.x_style_icons,
@@ -430,6 +438,7 @@ def options(parent, configuration):
             configuration.x_pgn_english,
             configuration.x_pgn_withfigurines,
             configuration.x_notation_style,
+            configuration.x_auto_orient,
             configuration.x_wheel_pgn,
             configuration.x_captures_activate,
             configuration.x_info_activate,

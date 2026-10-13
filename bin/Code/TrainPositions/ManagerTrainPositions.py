@@ -375,7 +375,7 @@ class ManagerTrainPositions(Manager.Manager):
                 if self.is_analyzed_by_tutor:
                     mrm = self.mrm_tutor
                 else:
-                    mrm = self.manager_tutor.ac_estado()
+                    mrm = self.manager_tutor.get_current_mrm()
 
                 if mrm and mrm.li_rm:
                     mrm.ordena()

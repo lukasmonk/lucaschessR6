@@ -75,7 +75,7 @@ class ManagerPlayGame(Manager.Manager):
         self.is_analyzing = False
         self.is_human_side_white = is_white
         self.is_human_side_black = is_black
-        self.numJugadasObj = game_obj.num_moves()
+        self.numJugadasObj = game_obj.num_movements()
         self.game_obj = game_obj
         self.pos_move_obj = 0
 

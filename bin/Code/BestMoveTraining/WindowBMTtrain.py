@@ -804,8 +804,8 @@ class WTrainBMT(LCDialog.LCDialog):
     def original(self):
         self.siMostrarPGN = True
         self.lbJuegan.set_text(_("Actual game"))
-        txt_partida = self.bmt_lista.dic_games[self.bmt_uno.cl_game]
-        self.game.restore(txt_partida)
+        txt_game = self.bmt_lista.dic_games[self.bmt_uno.cl_game]
+        self.game.restore(txt_game)
 
         def tag(ctag):
             t = self.game.get_tag(ctag)

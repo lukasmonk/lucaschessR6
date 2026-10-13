@@ -27,9 +27,9 @@ def read_dic_params():
     file = configuration.paths.file_param_analysis()
     dic = Util.restore_pickle(file) or {}
     return SimpleNamespace(
-        engine=dic.get("engine", configuration.x_tutor_clave),
-        vtime=dic.get("vtime", configuration.x_tutor_mstime),
-        depth=dic.get("depth", configuration.x_tutor_depth),
+        engine=dic.get("engine", configuration.x_analyzer_clave),
+        vtime=dic.get("vtime", configuration.x_analyzer_mstime),
+        depth=dic.get("depth", configuration.x_analyzer_depth),
         nodes=dic.get("nodes", 0),
         kblunders_condition=dic.get("kblunders_condition", MISTAKE_BLUNDER),
         from_last_move=dic.get("from_last_move", False),
@@ -67,6 +67,7 @@ def read_dic_params():
         bmtbrilliancies=dic.get("bmtbrilliancies", ""),
         mates_saved_name=dic.get("mates_saved_name", ""),
         mates_keep_settings=dic.get("mates_keep_settings", False),
+        my_moves=dic.get("my_moves", False),
     )
 
 
@@ -289,16 +290,18 @@ def _form_general_options(analysis_params, is_massive, num_selected_massive=0):
     config = FormLayout.Combobox(_("Analyze color"), li_j)
     li_gen.append((config, _get_color_selection(analysis_params)))
 
+    li_gen.append(SEPARADOR)
     cjug = ";".join(analysis_params.li_players) if analysis_params.li_players else ""
+    li_gen.append((f'{_("Only the following players")}', cjug))
+    li_gen.append((None, f"€<small>{_('(You can add multiple aliases separated by ; and wildcards with *)')}</small>"))
+
+    alias = Code.configuration.nom_player()
+    if Code.configuration.x_alias:
+        alias += f";{Code.configuration.x_alias}"
+    li_gen.append((f'<big>+</big> {_("Player's name")}', analysis_params.my_moves))
     li_gen.append(
-        (
-            (
-                f'<div align="right">{_("Only the following players")}:<br>'
-                f"{_('(You can add multiple aliases separated by ; and wildcards with *)')}</div>"
-            ),
-            cjug,
-        )
-    )
+        (None, f"€{alias}"))
+    li_gen.append(SEPARADOR)
 
     config = FormLayout.Editbox(
         f'<div align="right">{_("Moves")}<br>{_("By example:")} -5,8-12,14,19-',
@@ -401,17 +404,18 @@ def _apply_general_params(analysis_params, li_gen, with_workers=False):
     _set_color_selection(analysis_params, color)
     cjug = li_gen[1].strip()
     analysis_params.li_players = cjug.split(";") if cjug else None
-    analysis_params.num_moves = li_gen[2]
-    analysis_params.book = li_gen[3]
+    analysis_params.my_moves = li_gen[2]
+    analysis_params.num_moves = li_gen[3]
+    analysis_params.book = li_gen[4]
     analysis_params.book_name = analysis_params.book.name if analysis_params.book else None
-    analysis_params.standard_openings = li_gen[4]
-    analysis_params.accuracy_tags = li_gen[5]
-    analysis_params.delete_previous = li_gen[6]
-    analysis_params.from_last_move = li_gen[7]
-    analysis_params.show_graphs = li_gen[8]
+    analysis_params.standard_openings = li_gen[5]
+    analysis_params.accuracy_tags = li_gen[6]
+    analysis_params.delete_previous = li_gen[7]
+    analysis_params.from_last_move = li_gen[8]
+    analysis_params.show_graphs = li_gen[9]
     if with_workers:
-        analysis_params.multiple_selected = li_gen[9]
-        analysis_params.workers = li_gen[10]
+        analysis_params.multiple_selected = li_gen[10]
+        analysis_params.workers = li_gen[11]
 
 
 def _apply_variation_params(analysis_params, li_var):
@@ -512,6 +516,18 @@ def analysis_parameters(parent, extended_mode, all_engines):
 
         _apply_engine_params(analysis_params, li_engine)
         _save_analysis_params(analysis_params)
+
+        if extended_mode:
+            if analysis_params.my_moves:
+                li_players = []
+                name = configuration.nom_player()
+                alias = configuration.x_alias
+                if name:
+                    li_players.append(name)
+                if alias:
+                    li_players.extend(alias.split(";"))
+                analysis_params.li_players = li_players
+
         return analysis_params
     return None
 

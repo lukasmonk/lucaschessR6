@@ -274,7 +274,7 @@ class TreeSTAT:
                 pv = dic["pv"]
                 p = Game.Game()
                 p.read_pv(pv)
-                if p.num_moves():
+                if p.num_movements():
                     move = p.last_jg()
                     num_moves = move.num_move()
                     pgn = move.pgn_figurines() if with_figurines else move.pgn_translated()

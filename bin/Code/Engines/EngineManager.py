@@ -157,6 +157,12 @@ class EngineManager:
 
         Code.list_engine_managers.append(self)
 
+        # MultiPV
+        # Se envía dos veces si se establece en las opciones del motor
+        for name, value in config_enginerun.li_options_uci:
+            if name == "MultiPV":
+                self.multipv = int(value)
+                break
         if self.multipv > 0:
             self.engine_run.set_multipv(self.multipv)
 

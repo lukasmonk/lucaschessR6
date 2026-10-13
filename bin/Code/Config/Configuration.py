@@ -95,10 +95,9 @@ class Configuration:
         self.x_save_folder = "UserData"
         self.x_save_pgn_folder = ""
         self.x_save_lcsb = ""
+        self.x_alias = ""
 
         self.x_translator = ""
-        self.x_translator_google = False
-        self.x_translator_google_openings = False
         self.x_translation_mode = False
         self.x_translation_local = True
 
@@ -153,6 +152,8 @@ class Configuration:
         self.x_pgn_rowheight = 24
         self.x_pgn_withfigurines = True
 
+        self.x_auto_orient = False
+
         self.x_databases_rowheight = 24
 
         self.x_pgn_english = False
@@ -191,7 +192,7 @@ class Configuration:
         self.x_analyzer_clave = self.analyzer_default
         self.x_analyzer_multipv = 10  # 0: maximo
         self.x_analyzer_mstime = 3000
-        self.x_analyzer_depth = 0
+        self.x_analyzer_depth = 12
         self.x_analyzer_priority = Priorities.priorities.low
 
         self.x_analyzer_depth_ab = 24
@@ -394,10 +395,8 @@ class Configuration:
     def set_translator(self, xtranslator):
         self.x_translator = xtranslator
 
-    def set_translation_values(self, lng, help_mode, use_local, google_labels, google_openings):
+    def set_translation_values(self, lng, help_mode, use_local):
         self.x_translator = lng
-        self.x_translator_google = google_labels
-        self.x_translator_google_openings = google_openings
         self.x_translation_mode = help_mode
         self.x_translation_local = use_local
 
@@ -740,3 +739,29 @@ class Configuration:
     def is_sounds_active(self) -> bool:
         return bool(self.x_sound_beep or self.x_sound_tournements or self.x_sound_error or
                     self.x_beep_replay or self.x_sound_move or self.x_sound_results or self.x_sound_our)
+
+    def is_player_alias(self, name: str) -> bool:
+        li_players = [self.x_player]
+        if self.x_alias:
+            li_players.extend(self.x_alias.split(";"))
+        name = name.upper().strip()
+        for raw_pattern in li_players:
+            pattern = raw_pattern.strip().upper()
+            starts_wild = pattern.startswith("*")
+            ends_wild = pattern.endswith("*")
+            core = pattern.replace("*", "").strip()
+
+            if starts_wild:
+                if name.endswith(core):
+                    return True
+                if ends_wild and core in name:
+                    return True
+            elif ends_wild:
+                if name.startswith(core):
+                    return True
+            elif name == core:
+                return True
+
+        return False
+
+

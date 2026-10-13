@@ -183,19 +183,19 @@ def save_pgn(file, name, dic_cab, fen, move, rm, mj):
     else:
         game_blunder = None
 
-    p = Game.Game()
-    p.set_position(move.position_before)
+    game = Game.Game()
+    game.set_position(move.position_before)
     if mj:  # blunder
         rm = mj
-    p.read_pv(rm.pv)
-    if p.is_finished():
-        result = p.resultado()
-        mas = ""  # ya lo anade en la ultima move
+    game.read_pv(rm.pv)
+    if game.is_finished():
+        result = game.resultado()
+        mas = ""  # ya lo añade en el ultimo move
     else:
         mas = " *"
         result = "*"
 
-    jg0 = p.move(0)
+    jg0 = game.move(0)
     # t = "%0.2f" % (float(self.params_play.fixed_ms) / 1000.0,)
     # t = t.rstrip("0")
     # if t[-1] == ".":
@@ -216,7 +216,7 @@ def save_pgn(file, name, dic_cab, fen, move, rm, mj):
     cab += f'[Result "{result}"]\n'
 
     with open(file, "at", encoding="utf-8", errors="ignore") as q:
-        texto = f"{cab}\n{p.pgn_base()}{mas}\n\n"
+        texto = f"{cab}\n{game.pgn_base()}{mas}\n\n"
         q.write(texto)
 
     return True

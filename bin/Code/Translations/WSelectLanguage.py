@@ -13,14 +13,10 @@ class WSelectLanguage(LCDialog.LCDialog):
     labels_group: QtWidgets.QGroupBox
     openings_group: QtWidgets.QGroupBox
     translators_group: QtWidgets.QGroupBox
-    chb_google_labels: Controles.CHB
-    chb_google_openings: Controles.CHB
     lb_current_translators: Controles.LB
     lb_previous_translators: Controles.LB
     chb_help_mode: Controles.CHB
     chb_use_local: Controles.CHB
-    lb_aviso: Controles.LB
-    lb_aviso_openings: Controles.LB
     desc_label: Controles.LB
 
     def __init__(self, parent):
@@ -133,14 +129,8 @@ QGroupBox::title {
         normal_layout = Colocacion.V()
         self.pbar_labels = QtWidgets.QProgressBar(self)
         self.pbar_labels.setFormat("%p%")
-        with_google = Code.configuration.x_translator_google
-        self.chb_google_labels = Controles.CHB(
-            self, _("Use Google translation (offline) to complete missing translations"), with_google
-        )
-        self.lb_aviso = Controles.LB(self, _("Please note that Google translations may be inaccurate"))
-        self.lb_aviso.set_foreground("red").set_font(font_avisos)
 
-        normal_layout.control(self.pbar_labels).espacio(8).control(self.chb_google_labels).control(self.lb_aviso)
+        normal_layout.control(self.pbar_labels).espacio(8)
         normal_layout.margen(12)
         self.labels_group.setLayout(normal_layout)
         layout.control(self.labels_group)
@@ -150,15 +140,8 @@ QGroupBox::title {
         openings_layout = Colocacion.V()
         self.pbar_openings = QtWidgets.QProgressBar(self)
         self.pbar_openings.setFormat("%p%")
-        with_google = Code.configuration.x_translator_google_openings
-        self.chb_google_openings = Controles.CHB(
-            self, _("Use Google translation (offline) to complete missing translations"), with_google
-        )
-        self.lb_aviso_openings = Controles.LB(self, _("Please note that Google translations may be inaccurate"))
-        self.lb_aviso_openings.set_foreground("red").set_font(font_avisos)
 
-        openings_layout.control(self.pbar_openings).espacio(8).control(self.chb_google_openings)
-        openings_layout.control(self.lb_aviso_openings)
+        openings_layout.control(self.pbar_openings)
         openings_layout.margen(12)
         self.openings_group.setLayout(openings_layout)
         layout.control(self.openings_group)
@@ -248,11 +231,6 @@ QGroupBox::title {
         self.pbar_labels.setValue(porc_labels)
         self.pbar_openings.setValue(porc_openings)
 
-        self.chb_google_labels.setVisible(porc_labels < 100)
-        self.lb_aviso.setVisible(porc_labels < 100)
-        self.chb_google_openings.setVisible(porc_openings < 100)
-        self.lb_aviso_openings.setVisible(porc_openings < 100)
-
         # Toolbar
         self.tb.clear()
         self.tb.new(_("Accept"), Iconos.Aceptar(), self.accept_selection)
@@ -267,13 +245,9 @@ QGroupBox::title {
 
         # Openings group
         self.openings_group.setTitle(_("Openings"))
-        self.chb_google_openings.setText(_("Use Google translation (offline) to complete missing translations"))
-        self.lb_aviso_openings.setText(_("Please note that Google translations may be inaccurate"))
 
         # Labels group
         self.labels_group.setTitle(_("Standard Labels"))
-        self.chb_google_labels.setText(_("Use Google translation (offline) to complete missing translations"))
-        self.lb_aviso.setText(_("Please note that Google translations may be inaccurate"))
 
         # Translators Group
         self.translators_group.setTitle(_("Translators"))
@@ -301,9 +275,7 @@ QGroupBox::title {
         lng = self.lng_current
         activate_help_mode = self.chb_help_mode.valor()
         use_local = self.chb_use_local.valor()
-        google_labels = self.chb_google_labels.valor()
-        google_openings = self.chb_google_openings.valor()
-        configuration.set_translation_values(lng, activate_help_mode, use_local, google_labels, google_openings)
+        configuration.set_translation_values(lng, activate_help_mode, use_local)
         configuration.graba()
         self.accept()
         self.parent.final_processes()

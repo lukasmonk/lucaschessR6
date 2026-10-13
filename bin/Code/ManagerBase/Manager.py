@@ -875,8 +875,8 @@ class Manager:
     def board_right_mouse(self, _is_control, _is_alt):
         self.board.launch_director()
 
-    def grid_right_mouse(self, _is_shift, _is_control, is_alt):
-        if is_alt:
+    def grid_right_mouse(self, _row, _obj_column, modificadores):
+        if modificadores.is_alt:
             self.arbol()
         else:
             menu = QTDialogs.LCMenu(self.main_window)
@@ -1150,11 +1150,13 @@ class Manager:
                 and self.state == ST_PLAYING
         )
 
-    @prevent_concurrent_execution
+    def help_to_move(self):
+        pass
+
     def check_help_to_move(self):
         if self.active_help_to_move():
-            if hasattr(self, "help_to_move"):
-                self.help_to_move()
+            self.help_to_move()
+
 
     @prevent_concurrent_execution
     def play_instead_of_me(self):

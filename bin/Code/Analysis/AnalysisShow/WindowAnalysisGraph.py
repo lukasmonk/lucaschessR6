@@ -185,6 +185,8 @@ class WAnalisisGraph(LCDialog.LCDialog):
 
         self.scale_init()
 
+        grid_all.setFocus()
+
     def show_lost_points_value(self):
         # Llamada from_sq histogram
         return self.chbShowLostPoints.valor()
@@ -216,7 +218,8 @@ class WAnalisisGraph(LCDialog.LCDialog):
         QTMessages.temporary_message(self, _("Saved"), 0.8)
 
     def grid_cambiado_registro(self, grid, row, column):
-        self.grid_left_button(grid, row, column)
+        if grid.id != "Summary":
+            self.grid_left_button(grid, row, column)
 
     def set_board(self, move, ta, row):
         self.board.set_position(move.position)
@@ -233,9 +236,9 @@ class WAnalisisGraph(LCDialog.LCDialog):
             return self.grid_summary.grid_left_button(row, obj_column)
         self.board.remove_arrows()
         move = self.dicLiJG[grid.id][row]
-        grid.setFocus()
         ta = self.tabActive if self.tabActive < 3 else 0
         self.set_board(move, ta, row)
+        grid.setFocus()
         return None
 
     def grid_right_button(self, grid, row, obj_column, modif):
@@ -265,15 +268,15 @@ class WAnalisisGraph(LCDialog.LCDialog):
         nrecno = grid.recno()
         if k in (QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return):
             self.grid_doble_click(grid, nrecno, None)
-        elif k == QtCore.Qt.Key.Key_Right:
+        elif k in (QtCore.Qt.Key.Key_Right,):
             if nrecno + 1 < self.grid_num_datos(grid):
                 grid.goto(nrecno + 1, 0)
-        elif k == QtCore.Qt.Key.Key_Left:
+        elif k in (QtCore.Qt.Key.Key_Left, ):
             if nrecno > 0:
                 grid.goto(nrecno - 1, 0)
         else:
             return True  # que siga con el resto de teclas
-        return False
+        return True
 
     def grid_color_fondo(self, grid, row, obj_column):
         if grid.id == "Summary":

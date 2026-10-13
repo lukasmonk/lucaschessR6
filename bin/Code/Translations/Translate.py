@@ -58,9 +58,6 @@ class Translations:
         dic = {}
         self.update_dic(dic, path_mo, is_mo=True)
         if not Code.configuration.x_translation_mode:
-            if Code.configuration.x_translator_google:
-                path_mo = self.get_path_google_translate(self.lang)
-                self.update_dic(dic, path_mo, is_mo=True)
             if Code.configuration.x_translation_local:
                 path_po = Util.opj(Code.configuration.paths.folder_userdata(), "Translations", f"{self.lang}.po")
                 self.update_dic(dic, path_po, is_mo=False)
@@ -73,9 +70,6 @@ class Translations:
         dic = {}
         self.update_dic(dic, path_mo, is_mo=True)
         if not Code.configuration.x_translation_mode:
-            if Code.configuration.x_translator_google_openings:
-                path_mo = self.get_path_google_translate_openings(self.lang)
-                self.update_dic(dic, path_mo, is_mo=True)
             if Code.configuration.x_translation_local:
                 path_po = Util.opj(
                     Code.configuration.paths.folder_userdata(), "Translations", f"openings_{self.lang}.po"
@@ -105,16 +99,6 @@ class Translations:
     def get_path(lang):
         path_locale = Code.path_resource("Locale")
         return f"{path_locale}/{lang}/LC_MESSAGES/lucaschess.mo"
-
-    @staticmethod
-    def get_path_google_translate(lang):
-        path_locale = Code.path_resource("Locale")
-        return f"{path_locale}/{lang}/LC_MESSAGES/g_lucaschess.mo"
-
-    @staticmethod
-    def get_path_google_translate_openings(lang):
-        path_locale = Code.path_resource("Locale")
-        return f"{path_locale}/{lang}/LC_MESSAGES/g_lcopenings.mo"
 
     @staticmethod
     def get_path_openings(lang):

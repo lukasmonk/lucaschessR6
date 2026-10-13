@@ -30,11 +30,6 @@ class CompeteMenu(BaseMenu.RootMenu):
             f"{_('The Wicker Park Tourney')} ({configuration.x_wicker})",
             Iconos.Park(),
         )
-        submenu_elo.new(
-            "thegrid",
-            _("The Grid"),
-            Iconos.Parrilla(),
-        )
 
         rp = QTDialogs.rondo_puntos()
 
@@ -73,6 +68,9 @@ class CompeteMenu(BaseMenu.RootMenu):
         else:
             mens = f"{maia_state.current_elo()}"
         submenu_elo.new("maialadder", f"{_('Maia Ladder')} ({mens})", Iconos.MaiaLadder())
+
+        submenu_elo.new("elochart", _("Elo Progress Charts"), Iconos.DailyTest())
+        submenu_elo.new("thegrid", _("The Grid"), Iconos.Parrilla())
 
         submenu_singular_moves = self.new_submenu(_("Singular moves"), Iconos.Singular())
         submenu_singular_moves.new("strenght101", _("Calculate your strength"), Iconos.Strength())
@@ -166,6 +164,11 @@ class CompeteMenu(BaseMenu.RootMenu):
 
     def thegrid(self):
         WindowGrid.play_grid(self.procesador)
+
+    def elochart(self):
+        from Code.Competitions.EloChart import EloChartDialog
+
+        EloChartDialog(self.wparent).exec()
 
     def ficselo(self, nivel):
         manager = ManagerFideFicsLichess.ManagerFideFicsLichess(self.procesador)

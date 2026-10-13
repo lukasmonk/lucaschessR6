@@ -205,6 +205,9 @@ class FormLayout:
     def apart_simple_np(self, title):
         self.li_gen.append((None, f"${title}"))
 
+    def apart_simple_np2(self, title):
+        self.li_gen.append((None, f"€{title}"))
+
     def apart_nothtml_np(self, title):
         self.li_gen.append((None, f"@|{title}"))
 
@@ -730,6 +733,16 @@ class FormWidget(QtWidgets.QWidget):
             # Separador
             elif label is None and value is None:
                 self.formlayout.addRow(QtWidgets.QLabel(" ", self), QtWidgets.QLabel(" ", self))
+                self.widgets.append(None)
+                self.labels.append(None)
+
+            # Comentario en data
+            elif label is None and value.startswith("€"):
+                lb0 = Controles.LB(self, " ")
+                lb1 = Controles.LB(self, value[1:])
+                lb0.setContentsMargins(0, -6, 0, 3)
+                lb1.setContentsMargins(0, -6, 0, 3)
+                self.formlayout.addRow(lb0, lb1)
                 self.widgets.append(None)
                 self.labels.append(None)
 

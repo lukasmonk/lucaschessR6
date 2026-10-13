@@ -636,6 +636,8 @@ class EngineRun(QtCore.QObject):
         for opcion, valor in li_options_uci:
             if isinstance(valor, bool):
                 valor = str(valor).lower()
+            if opcion == "MultiPV":
+                self.set_multipv(valor)
             self._set_option(opcion, valor)
 
     def _ucinewgame(self):

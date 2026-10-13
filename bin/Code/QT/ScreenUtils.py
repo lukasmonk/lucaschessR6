@@ -117,7 +117,7 @@ class EscondeWindow:
         else:
             self.window.hide()
 
-        # Forzamos al Window Manager a procesar el cambio de estado inmediatamente
+        #Forzamos al Window Manager a procesar el cambio de estado inmediatamente
         QtWidgets.QApplication.processEvents()
         return self
 

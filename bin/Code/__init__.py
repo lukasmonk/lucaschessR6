@@ -4,7 +4,7 @@ import sys
 
 from Code.Z import Util
 
-VERSION = "R 6.1.7"
+VERSION = "R 6.2.0"
 BASE_VERSION = "C"
 
 Util.randomize()
@@ -73,9 +73,9 @@ eboard = None
 
 dic_colors: dict | None = None
 dic_qcolors: dict | None = None
+dic_keycolors: dict | None = None
 
 dic_markers: dict = {}
-alternate_color_tableview = None
 
 themes = None
 
@@ -85,7 +85,7 @@ garbage_collector = None
 
 web = "https://lucaschess.pythonanywhere.com"
 blog = "https://lucaschess.blogspot.com"
-github = "https://github.com/lukasmonk/lucaschessR2"
+github = "https://github.com/lukasmonk/lucaschessR6"
 
 
 def get_themes():

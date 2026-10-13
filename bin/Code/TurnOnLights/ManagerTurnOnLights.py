@@ -233,7 +233,7 @@ class ManagerTurnOnLights(Manager.Manager):
             ant_cat_level, nada = self.tol.cat_num_level()
             ant_cat_global = self.tol.cat_global()
 
-            num_moves = self.block.num_moves()
+            num_moves = self.block.num_movements()
             ta = self.total_time_used + self.errores * self.penaltyError + self.hints * self.penaltyHelp
             tm = ta / num_moves
             self.block.new_result(tm, self.total_time_used, self.errores, self.hints)

@@ -1252,7 +1252,7 @@ class Opening:
         sql_update = "UPDATE LINES SET XPV=? WHERE XPV=?"
         cursor = self._conexion.cursor()
         for game in li_games:
-            if min_movements <= len(game) > gamebase.num_moves():
+            if min_movements <= len(game) > gamebase.num_movements():
                 xpv = FasterCode.pv_xpv(game.pv())
                 if xpv not in self.li_xpv:
                     updated = False
@@ -1313,7 +1313,7 @@ class Opening:
         pv_base = gamebase.pv()
         len_gamebase = len(gamebase)
 
-        li_partidas = []
+        li_games = []
 
         def haz_pv(lipv_ant):
             if bp.is_canceled():
@@ -1328,9 +1328,9 @@ class Opening:
                 game = Game.Game()
                 game.read_lipv(lipv_ant)
                 if len(game) > len_gamebase and len(game) >= min_moves:
-                    li_partidas.append(game)
-                    bp.set_total(len(li_partidas))
-                    bp.pon(len(li_partidas))
+                    li_games.append(game)
+                    bp.set_total(len(li_games))
+                    bp.pon(len(li_games))
                 return
 
             if si_white1 == si_white:
@@ -1355,7 +1355,7 @@ class Opening:
         bp.put_label(_("Writing..."))
         self.save_games(
             f"{_('Database opening explorer')},{os.path.basename(fichero_summary)}",
-            li_partidas,
+            li_games,
         )
         self.pack_database()
         bp.cerrar()

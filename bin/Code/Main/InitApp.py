@@ -35,6 +35,7 @@ def init_app_style(app, configuration):
     with open(path_qss) as f:
         current = None
         li_lines = []
+        dic_keycolors = {}
         for line in f:
             line = line.strip()
             if line and not line.startswith("/"):
@@ -54,10 +55,9 @@ def init_app_style(app, configuration):
                         new_color = Code.dic_colors[key_gen]
                         line = line.replace(color, new_color)
                         color = new_color
-                    if key_gen == "QTableView|alternate-background-color":
-                        Code.alternate_color_tableview = color
+                    dic_keycolors[key_gen] = color
             li_lines.append(line)
-
+        Code.dic_keycolors = dic_keycolors
         style_sheet = "\n".join(li_lines)
         default = """*{
 background-color: %s;

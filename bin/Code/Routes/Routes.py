@@ -231,9 +231,9 @@ class Transsiberian:
             self.initialize(nlevel)
 
     def read_current(self):
-        # self._km = 59
+        # self._km = 240
         # self._state = PLAYING
-        # self._level = 5
+        # self._level = 1
         # self._is_miles = True
         # self.write_current()
         dic = self.configuration.read_variables("TRANSSIBERIAN")

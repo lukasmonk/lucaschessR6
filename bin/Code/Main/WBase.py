@@ -537,7 +537,7 @@ class WBase(QtWidgets.QWidget):
         self.manager.goto_pgn_base(row, obj_column.key)
 
     def grid_right_button(self, _grid, row, obj_column, modificadores):
-        self.manager.grid_right_mouse(modificadores.is_shift, modificadores.is_control, modificadores.is_alt)
+        self.manager.grid_right_mouse(row, obj_column, modificadores)
         self.manager.goto_pgn_base(row, obj_column.key)
 
     def board_right_mouse(self, is_shift, is_control, is_alt):

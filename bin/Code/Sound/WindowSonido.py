@@ -1,7 +1,8 @@
 import os
 import time
 
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtWidgets
+from PySide6 import QtGui
 
 import Code
 from Code.Board import BoardElements, BoardTypes
@@ -10,16 +11,15 @@ from Code.QT import (
     Columnas,
     Controles,
     Grid,
-    Iconos,
     LCDialog,
     QTDialogs,
     QTMessages,
-    QTUtils,
     ScreenUtils,
     SelectFiles,
 )
-from Code.Sound import Sound
+from Code.QT import QTUtils, FormLayout, Iconos
 from Code.SQL import UtilSQL
+from Code.Sound import Sound, TallerSonido
 from Code.Z import Util
 
 
@@ -195,7 +195,7 @@ class WEdicionSonido(LCDialog.LCDialog):
 
         # MesaSonido
         self.mesa = MesaSonido(self)
-        self.taller = Sound.TallerSonido(self, wav)
+        self.taller = TallerSonido.TallerSonido(self, wav)
 
         self.mesa.set_hundreds_of_second(self.taller.hundreds_of_second)
 
@@ -504,9 +504,19 @@ class WSonidos(LCDialog.LCDialog):
                     if wav is None:
                         t = 0
                     else:
-                        ts = Sound.TallerSonido(self, wav)
+                        ts = TallerSonido.TallerSonido(self, wav)
                         t = ts.hundreds_of_second
-                return "%02d:%02d:%02d" % Sound.msc(t)
+
+                def msc(hundreds_of_second):
+                    tt = hundreds_of_second
+                    cent = tt % 100
+                    tt //= 100
+                    mins = tt // 60
+                    tt -= mins * 60
+                    seg = tt
+                    return mins, seg, cent
+
+                return "%02d:%02d:%02d" % msc(t)
 
         else:
             return li[1]
@@ -565,4 +575,37 @@ class WSonidos(LCDialog.LCDialog):
         return li_sounds
 
     def config(self):
-        Sound.config_sonido(self)
+        config_sonido(self)
+
+
+def config_sonido(owner):
+    configuration = Code.configuration
+    form = FormLayout.FormLayout(owner, _("Configuration"), Iconos.S_Play(), minimum_width=440)
+    form.separador()
+    form.apart(_("After each opponent move"))
+    form.checkbox(_("Sound a beep"), configuration.x_sound_beep)
+    form.checkbox(_("Play customised sounds"), configuration.x_sound_move)
+    form.separador()
+    form.checkbox(_("The same for player moves"), configuration.x_sound_our)
+    form.separador()
+    form.checkbox(_("Tournaments between engines"), configuration.x_sound_tournements)
+    form.separador()
+    form.apart(_("When finishing the game"))
+    form.checkbox(_("Play customised sounds for the result"), configuration.x_sound_results)
+    form.separador()
+    form.separador()
+    form.apart(_("Others"))
+    form.checkbox(_("Play a beep when there is an error in tactic trainings"), configuration.x_sound_error)
+    form.separador()
+    form.add_tab(_("Sounds"))
+    resultado = form.run()
+    if resultado:
+        (
+            configuration.x_sound_beep,
+            configuration.x_sound_move,
+            configuration.x_sound_our,
+            configuration.x_sound_tournements,
+            configuration.x_sound_results,
+            configuration.x_sound_error,
+        ) = resultado[1][0]
+        configuration.graba()

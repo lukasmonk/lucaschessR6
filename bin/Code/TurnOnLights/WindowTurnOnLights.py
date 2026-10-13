@@ -149,7 +149,7 @@ class WTurnOnLights(LCDialog.LCDialog):
             if not litimes and not block.reinits:
                 continue
             lt += len(litimes)
-            nm += block.num_moves()
+            nm += block.num_movements()
             if litimes:
                 for segs, fecha, time_used, errores, hints in litimes:
                     tt += time_used
@@ -177,7 +177,7 @@ class WTurnOnLights(LCDialog.LCDialog):
     def right_button_block(self, num_theme, num_block):
         block = self.tol.get_block(num_theme, num_block)
         litimes = block.times
-        nmoves = block.num_moves()
+        nmoves = block.num_movements()
         if not litimes and not block.reinits:
             return
         menu = QTDialogs.LCMenu(self)

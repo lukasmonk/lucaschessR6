@@ -33,7 +33,7 @@ class Nag:
 
 def dic_nags():
     lista = (
-        Nag(NAG_1, _("Good move"), "!"),
+        Nag(NAG_1, _("Great move"), "!"),
         Nag(NAG_2, _("Mistake"), "?"),
         Nag(NAG_3, _("Brilliant move"), "‼"),
         Nag(NAG_4, _("Blunder"), "⁇"),

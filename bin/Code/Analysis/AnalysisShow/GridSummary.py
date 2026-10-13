@@ -14,7 +14,6 @@ from Code.Base.Constantes import (
 from Code.Base.Constantes import ENDGAME, MIDDLEGAME, OPENING
 from Code.Nags import Nags
 from Code.QT import Colocacion, Columnas, Controles, Grid, ScreenUtils, QTDialogs
-from Code.QT.QTDialogs import rondo_puntos
 
 
 class GridSummary:
@@ -27,7 +26,8 @@ class GridSummary:
         self._game = game
 
         self.grid = None
-        self._color_background_groups = ScreenUtils.qt_color(Code.alternate_color_tableview)
+        self._color_background_groups = ScreenUtils.qt_color("#a0a0a0")
+        self._color_foreground_groups = ScreenUtils.qt_color("#0a0a0a")
 
         self.key_var = "GRIDSUMMARY"
         dic_vars = self.read_vars()
@@ -67,7 +67,7 @@ class GridSummary:
 
     def get_widget(self):
         o_columns = Columnas.ListaColumnas()
-        o_columns.nueva("MOVETYPE", _("Move type"), 200)
+        o_columns.nueva("MOVETYPE", "", 200)
         o_columns.nueva("WHITE", _("White"), 80, align_center=True)
         o_columns.nueva("BLACK", _("Black"), 80, align_center=True)
         o_columns.nueva("TOTAL", _("Total"), 80, align_center=True)
@@ -86,6 +86,7 @@ class GridSummary:
 
         layout = Colocacion.V().control(self.grid).otro(ly)
         self.qwidget.setLayout(layout)
+        self.reset()
         return self.qwidget
 
     def ancho_grid(self):
@@ -127,7 +128,8 @@ class GridSummary:
         moves_opening = reg(False)
         moves_noanalyzed = reg(False)
 
-        nmoves_analyzed = reg(True)
+        total_moves_analyzed = reg(True)
+        moves_analyzed = reg(True)
 
         move: Move.Move
 
@@ -135,15 +137,17 @@ class GridSummary:
             is_white = move.is_white()
             if move.analysis:
 
-                move.ta_general = nmoves_analyzed[True] + nmoves_analyzed[False]
-                move.ta_white = nmoves_analyzed[True]
-                move.ta_black = nmoves_analyzed[False]
+                move.ta_general = total_moves_analyzed[True] + total_moves_analyzed[False]
+                move.ta_white = total_moves_analyzed[True]
+                move.ta_black = total_moves_analyzed[False]
 
-                nmoves_analyzed[is_white] += 1
+                total_moves_analyzed[is_white] += 1
 
                 # Hay que controlarlo aqquí para que se actualice la posicion
                 if move.phase not in st_phases:
                     continue
+
+                moves_analyzed[is_white] += 1
 
                 mrm, pos = move.analysis
                 rm = mrm.li_rm[pos]
@@ -215,9 +219,9 @@ class GridSummary:
             white = len(data[True]["MOVES"]) if is_elem else data[True]
             black = len(data[False]["MOVES"]) if is_elem else data[False]
             total = white + black
-            whitep = white / nmoves_analyzed[True] if white else 0
-            blackp = black / nmoves_analyzed[False] if black else 0
-            totalp = total / (nmoves_analyzed[True] + nmoves_analyzed[False]) if total else 0
+            whitep = white / total_moves_analyzed[True] if white else 0
+            blackp = black / total_moves_analyzed[False] if black else 0
+            totalp = total / (total_moves_analyzed[True] + total_moves_analyzed[False]) if total else 0
             if total == 0 and not show_empty:
                 return
 
@@ -240,17 +244,17 @@ class GridSummary:
 
         add_row(group_moves_best, _("Good moves"), is_group=True, is_elem=False)
         add_row(moves_brilliant, _("Brilliant moves"), nag="!!", num_nag=Nags.NAG_3)
-        add_row(moves_good, _("Best moves"), nag="!", num_nag=Nags.NAG_1)
-        add_row(moves_good_no, _("Other best moves"), num_nag=Nags.NAG_1)
+        add_row(moves_good, _("Great moves"), nag="!", num_nag=Nags.NAG_1)
+        add_row(moves_good_no, _("Best moves"), num_nag=Nags.NAG_1)
         add_row(moves_interestings, _("Interesting moves"), nag="!?", num_nag=Nags.NAG_5)
-        add_row(moves_acceptable, _("Acceptable moves"))
+        add_row(moves_acceptable, _("Playable moves"))
 
         add_row(group_moves_bad, _("Bad moves"), is_group=True, is_elem=False)
         add_row(moves_inaccuracies, _("Dubious moves"), nag="?!", num_nag=Nags.NAG_6)
         add_row(moves_mistakes, _("Mistakes"), nag="?", num_nag=Nags.NAG_2)
         add_row(moves_blunders, _("Blunders"), nag="??", num_nag=Nags.NAG_4)
 
-        add_row(nmoves_analyzed, _("Total"), is_group=True, is_elem=False)
+        add_row(moves_analyzed, _("Total"), is_group=True, is_elem=False)
 
         if show_noanalysed:
             add_row(group_moves_other, _("Not analysed"), is_group=True, is_elem=False, show_porc=False)
@@ -282,15 +286,15 @@ class GridSummary:
         if move.is_white():
             row = move.ta_white
             if row:
-                self.wowner.grid_b.goto(row-1, 0)
+                self.wowner.grid_b.goto(row - 1, 0)
             self.wowner.grid_w.goto(row, 0)
         else:
             row = move.ta_black
             if row:
-                self.wowner.grid_w.goto(row-1, 0)
+                self.wowner.grid_w.goto(row - 1, 0)
             self.wowner.grid_b.goto(row, 0)
 
-    def grid_right_button(self, row, obj_column, modif):
+    def grid_right_button(self, row, obj_column, _modif):
         key_col = obj_column.key
         if key_col not in ("WHITE", "BLACK"):
             return
@@ -317,29 +321,25 @@ class GridSummary:
         if move.is_white():
             row = move.ta_white
             if row:
-                self.wowner.grid_b.goto(row-1, 0)
+                self.wowner.grid_b.goto(row - 1, 0)
             self.wowner.grid_w.goto(row, 0)
         else:
             row = move.ta_black
             if row:
-                self.wowner.grid_w.goto(row-1, 0)
+                self.wowner.grid_w.goto(row - 1, 0)
             self.wowner.grid_b.goto(row, 0)
         row = move.ta_general
         self.wowner.grid_all.goto(row, 0)
-
-
-
-
 
     def grid_doble_click(self, row, obj_column):
         pass
 
     def grid_tecla_control(self, k):
-        pass
+        return True
 
     def grid_color_texto(self, row, _obj_column):
         dic_row: dict = self.li_data[row]
-        return dic_row["qcolor"]
+        return self._color_foreground_groups if dic_row["is_group"] else dic_row["qcolor"]
 
     def grid_color_fondo(self, row, _obj_column):
         dic_row: dict = self.li_data[row]

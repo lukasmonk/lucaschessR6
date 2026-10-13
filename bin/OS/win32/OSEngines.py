@@ -412,6 +412,8 @@ def read_engines(folder_engines):
     cm.set_uci_option("Threads", "2")
     cm.set_multipv(10, 218)
 
+    is_avx2 = "avx2" in FasterCode.get_cpu_flags()
+
     if is_bmi2:
         cm = mas(
             "lc0",
@@ -423,7 +425,7 @@ def read_engines(folder_engines):
             nodes_compatible=True,
             emulate_movetime=True,
         )
-    else:
+    elif is_avx2:
         cm = mas(
             "lc0",
             "The LCZero Authors",
@@ -450,6 +452,17 @@ def read_engines(folder_engines):
     cm.set_uci_option("Threads", "2")
     cm.set_uci_option("Hash", "64")
     cm.set_multipv(10, 256)
+
+    if is_avx2:
+        cm = mas(
+            "arhanpassant",
+            "Arhan Canli",
+            "0.13.0",
+            "https://arhanpassant.com/engine",
+            "arhanpassant-windows-x86_64-avx2.exe",
+            3500,
+            nodes_compatible=True,
+        )
 
     levels = list(range(1100, 2000, 100)) + [2200]
     for level in levels:

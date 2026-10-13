@@ -56,7 +56,7 @@ class WLines(LCDialog.LCDialog):
         self.gamebase = self.dbop.getgamebase()
         if len(self.gamebase) > 0:
             self.title += f" ({self.gamebase.pgn_translated()})"
-        self.num_jg_inicial = self.gamebase.num_moves()
+        self.num_jg_inicial = self.gamebase.num_movements()
         self.num_jg_actual = None
         self.game = None
         self.show_analysis = self.dbop.getconfig("SHOW_ANALYSIS", True)
@@ -89,7 +89,7 @@ class WLines(LCDialog.LCDialog):
 
         o_columns = Columnas.ListaColumnas()
         o_columns.nueva("LINE", _("Line"), 65, edicion=Delegados.EtiquetaPOS(False, True))
-        start = self.gamebase.num_moves() // 2 + 1
+        start = self.gamebase.num_movements() // 2 + 1
         # ancho_col = int(((self.configuration.x_pgn_width - 35 - 20) / 2) * 80 / 100)
         ancho_col = (self.configuration.x_pgn_width - 52 - 25) // 2
         # width_each_color = (width_pgn - 52 - 25) // 2

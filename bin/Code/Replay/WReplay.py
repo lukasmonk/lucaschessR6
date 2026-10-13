@@ -97,6 +97,7 @@ class Replay:
         self._initial_waited = self.seconds_before <= 0.0
         self._skip_id = 0
         self._active_animations = []
+        self._sleep_loop: QtCore.QEventLoop | None = None
 
         self.stopped = False
 
@@ -124,13 +125,36 @@ class Replay:
         self.with_pgn = dic_var["PGN"]
 
     def sleep_refresh(self, seconds):
-        ini_time = time.monotonic()
-        while (time.monotonic() - ini_time) < seconds:
-            QTUtils.refresh_gui()
-            if self.stopped:
-                return False
-            QTUtils.delay(10)
-        return True
+        if self.stopped:
+            return False
+        if seconds <= 0:
+            return True
+
+        loop = QtCore.QEventLoop()
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+
+        self._sleep_loop = loop
+        end_time = time.monotonic() + seconds
+        try:
+            while not self.stopped:
+                remaining = end_time - time.monotonic()
+                if remaining <= 0:
+                    break
+                timer.start(max(1, int(remaining * 1000 + 0.999)))
+                loop.exec()
+        finally:
+            timer.stop()
+            if self._sleep_loop is loop:
+                self._sleep_loop = None
+        return not self.stopped
+
+    def _cancel_sleep(self):
+        loop = self._sleep_loop
+        if loop is not None and loop.isRunning():
+            Code.runSound.reset()
+            loop.quit()
 
     def show_information(self):
         if self.with_pgn:
@@ -219,7 +243,7 @@ class Replay:
         if self.stopped:
             return
         if wait_seconds:
-            self.sleep_refresh(wait_seconds / 1000 + 0.2)
+            self.sleep_refresh(wait_seconds)
 
     def show_pause(self, si_pausa, si_continue):
         li_actions: list = list(self.li_acciones)
@@ -253,7 +277,9 @@ class Replay:
                 self.show_information()
 
     def finalize(self):
+        Code.runSound.reset()
         self.stopped = True
+        self._cancel_sleep()
         self.main_window.pon_toolbar(self.antAcciones)
         self.manager.set_routine_default(None)
         self.manager.xpelicula = None
@@ -278,6 +304,7 @@ class Replay:
 
     def pausa(self):
         self.stopped = True
+        self._cancel_sleep()
         self.show_pause(False, True)
 
     def seguir(self):

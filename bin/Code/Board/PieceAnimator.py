@@ -13,6 +13,7 @@ Usage:
 """
 
 from PySide6 import QtCore, QtWidgets
+from shiboken6 import isValid
 
 import Code
 from Code.Base.Constantes import ZVALUE_PIECE, ZVALUE_PIECE_MOVING
@@ -88,12 +89,16 @@ class PieceAnimator(QtCore.QObject):
             anim.setEasingCurve(self._get_easing_curve())
 
             def _on_value(value, p=pieza_sc):
+                if not isValid(p):
+                    return
                 p.setPos(value)
                 bp = p.bloquePieza
                 bp.physical_pos.x = value.x()
                 bp.physical_pos.y = value.y()
 
             def _on_finished(p=pieza_sc):
+                if not isValid(p):
+                    return
                 p.setZValue(ZVALUE_PIECE)
 
             anim.valueChanged.connect(_on_value)

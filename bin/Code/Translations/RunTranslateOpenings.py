@@ -1,7 +1,6 @@
 import os
 
 import polib
-from deep_translator import GoogleTranslator
 from PySide6 import QtCore, QtWidgets
 
 import Code
@@ -22,7 +21,6 @@ from Code.Z import Util
 
 
 class WTranslateOpenings(LCDialog.LCDialog):
-    dic_google: dict | None
 
     def __init__(self, owner):
         icono = Iconos.Book()
@@ -43,16 +41,12 @@ class WTranslateOpenings(LCDialog.LCDialog):
         self.read_po_openings()
         self.li_labels = list(self.dic_translate.keys())
 
-        self.dic_google = None
-
         self.color_new = ScreenUtils.qt_color("#840C24")
 
         li_acciones = [
             ("Close", Iconos.FinPartida(), self.cerrar),
             None,
             ("Utilities", Iconos.Utilidades(), self.utilities),
-            None,
-            ("Google", Iconos.GoogleTranslator(), self.google_translate),
             None,
         ]
 
@@ -101,41 +95,6 @@ class WTranslateOpenings(LCDialog.LCDialog):
 
         self.orders = {"BASE": 0, "CURRENT": 0}
         self.order_by_type("BASE")
-
-    def read_google(self):
-        path_mo = Code.path_resource("Locale", self.tr_actual, "LC_MESSAGES", "g_lcopenings.mo")
-        if Util.exist_file(path_mo):
-            mofile = polib.mofile(path_mo)
-            self.dic_google = {entry.msgid: entry.msgstr for entry in mofile}
-        else:
-            self.dic_google = {}
-
-    def google_translate(self):
-        if self.dic_google is None:
-            self.read_google()
-        row = self.grid.recno()
-        label = self.li_labels[row]
-        current = self.dic_translate[label]
-        if not (current["TRANS"].strip() or current["NEW"].strip()):
-            target = Code.configuration.x_translator
-            if target == "zh":
-                target = "zh-CN"
-            elif target == "gr":
-                target = "el"
-            elif target == "br":
-                target = "pt"
-            elif target == "si":
-                target = "sl"
-            if label in self.dic_google:
-                google = self.dic_google[label]
-            else:
-                google = GoogleTranslator(source="en", target=target).translate(label)
-            if google:
-                self.grid_setvalue(None, row, None, google)
-                self.grid.refresh()
-                self.grid.goto(row + 1, 0)
-            else:
-                QTMessages.temporary_message(self, "No translation", 0.7, background="white")
 
     @staticmethod
     def read_openings_std():

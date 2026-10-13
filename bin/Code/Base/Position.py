@@ -455,6 +455,9 @@ class Position:
     def is_finished(self):
         return self.set_lce() == 0
 
+    def is_terminal(self):
+        return self.set_lce() == 0
+
     def is_mate(self):
         n = self.set_lce()
         return n == 0 if FasterCode.ischeck() else False

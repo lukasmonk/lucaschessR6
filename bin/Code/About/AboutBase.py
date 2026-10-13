@@ -783,12 +783,6 @@ class ThanksTo:
                 "MIT License",
             ),
             (
-                "deep_translator",
-                "Nidhal Baccouri",
-                "https://github.com/nidhaloff/deep-translator",
-                "MIT License",
-            ),
-            (
                 "requests",
                 "Kenneth Reitz",
                 "https://requests.readthedocs.io/en/latest",

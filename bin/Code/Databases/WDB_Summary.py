@@ -380,11 +380,11 @@ class WSummary(QtWidgets.QWidget):
         row = self.grid.recno()
         if row >= 0 and self.isnt_row_with_totals(row):
             pv = self.liMoves[row]["pv"]
-            p = Game.Game()
-            p.read_pv(pv)
-            p.is_finished()
-            p.assign_opening()
-            self.infoMove.game_mode(p, 9999)
+            obj_game = Game.Game()
+            obj_game.read_pv(pv)
+            obj_game.is_finished()
+            obj_game.assign_opening()
+            self.infoMove.game_mode(obj_game, 9999)
             self.setFocus()
             self.grid.setFocus()
 
