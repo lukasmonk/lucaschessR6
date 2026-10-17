@@ -22,7 +22,7 @@ from Code.QT import (
     ScreenUtils,
     SelectFiles,
 )
-from Code.Translations import RunTranslateOpenings, WorkTranslate
+from Code.Translations import RunTranslateOpenings, Translate, WorkTranslate
 from Code.Z import Util
 
 
@@ -644,7 +644,11 @@ class WTranslate(LCDialog.LCDialog):
             path_mo = os.path.abspath(path_mo)
             folder = os.path.dirname(path_mo)
             self.configuration.write_variables("PATH_MO", folder)
-            path_mo_ori = Code.path_resource("Locale", self.tr_actual, "LC_MESSAGES", "lucaschess.mo")
+            path_mo_ori = Code.writable_path(
+                Code.path_resource("Locale", self.tr_actual, "LC_MESSAGES", "lucaschess.mo"),
+                Util.opj("Locale", Code.VERSION, self.tr_actual, "LC_MESSAGES", "lucaschess.mo"),
+            )
+            os.makedirs(os.path.dirname(path_mo_ori), exist_ok=True)
             shutil.copy(path_mo, path_mo_ori)
             self.dic_translate = self.work_translate.read_dic()
             for key, dic in self.dic_translate.items():
@@ -674,7 +678,7 @@ class WTranslate(LCDialog.LCDialog):
     def read_language(self, lng):
         if lng in self.dic_languages:
             return
-        path_mo = Code.path_resource("Locale", lng, "LC_MESSAGES", "lucaschess.mo")
+        path_mo = Translate.Translations.get_path(lng)
         mofile = polib.mofile(path_mo)
         self.dic_languages[lng] = {entry.msgid: entry.msgstr for entry in mofile}
 
@@ -724,7 +728,7 @@ class WTranslate(LCDialog.LCDialog):
 
 def run_wtranslation(path_db):
     if not __debug__:
-        sys.stderr = Util.Log("./bug.wtranslation")
+        sys.stderr = Util.Log(Code.writable_path("./bug.wtranslation", "bug.wtranslation"))
     configuration = Code.configuration = Configuration.Configuration("")
     configuration.lee()
 

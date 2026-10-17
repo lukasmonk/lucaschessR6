@@ -97,6 +97,10 @@ class Translations:
 
     @staticmethod
     def get_path(lang):
+        # Prefer a catalog imported with the translation tool in this version
+        imported = Code.writable_path("", Util.opj("Locale", Code.VERSION, lang, "LC_MESSAGES", "lucaschess.mo"))
+        if imported and os.path.isfile(imported):
+            return imported
         path_locale = Code.path_resource("Locale")
         return f"{path_locale}/{lang}/LC_MESSAGES/lucaschess.mo"
 

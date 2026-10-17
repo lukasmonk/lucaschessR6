@@ -284,19 +284,39 @@ class Engine:
         stat = os.stat(self.path_exe)
         return f"{os.path.basename(self.path_exe)}_{stat.st_size}_{stat.st_mtime}"
 
+    def bundled_uci_options(self):
+        # The cache shipped in the program folder describes the engines shipped there
+        path_uci_options = os.path.join(Code.folder_os, self.uci_options_sqlite)
+        folder_os = os.path.realpath(Code.folder_os) + os.sep
+        if not os.path.isfile(path_uci_options) or not os.path.realpath(self.path_exe).startswith(folder_os):
+            return None
+        with UtilSQL.DictTextSQL(path_uci_options) as dbuci:
+            key = self.key_engine()
+            return dbuci[key].split("\n") if key in dbuci else None
+
     def read_uci_options(self):
         if self.type == ENG_EXTERNAL:
             path_uci_options = os.path.join(Code.configuration.paths.folder_config(), self.uci_options_sqlite)
         else:
-            path_uci_options = os.path.join(Code.folder_os, self.uci_options_sqlite)
+            path_uci_options = Code.writable_path(
+                os.path.join(Code.folder_os, self.uci_options_sqlite), self.uci_options_sqlite
+            )
 
+        in_home = self.type != ENG_EXTERNAL and Code.folder_home
         with UtilSQL.DictTextSQL(path_uci_options) as dbuci:
             key = self.key_engine()
+            if in_home:
+                # Invalidate when the engine executable changes
+                real_exe = os.path.realpath(self.path_exe)
+                st = os.stat(real_exe)
+                key = f"{real_exe}_{st.st_size}_{st.st_mtime}"
             if key in dbuci:
                 clines = dbuci[key]
                 lines = clines.split("\n")
             else:
-                lines = get_uci_options(self.path_exe)
+                lines = self.bundled_uci_options() if in_home else None
+                if lines is None:
+                    lines = get_uci_options(self.path_exe)
                 if lines:
                     try:
                         dbuci[key] = "\n".join(lines)

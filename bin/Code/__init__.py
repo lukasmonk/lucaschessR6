@@ -10,8 +10,21 @@ BASE_VERSION = "C"
 Util.randomize()
 
 current_dir = os.path.abspath(os.path.realpath(os.path.dirname(sys.argv[0])))
+
+# Where to write user data, logs and caches instead of the program folder, which may be read-only
+folder_home: str | None = None
+if os.environ.get("LUCASCHESS_HOME"):
+    folder_home = os.path.realpath(os.path.expanduser(os.environ["LUCASCHESS_HOME"]))
+    os.makedirs(folder_home, exist_ok=True)
+    os.environ["LUCASCHESS_HOME"] = folder_home  # for the helper processes, which start from bin/
+
 if current_dir:
     os.chdir(current_dir)
+
+
+def writable_path(default: str, name: str) -> str:
+    return Util.opj(folder_home, name) if folder_home else default
+
 
 lucas_chess: str | None = None  # asignado en Translate
 

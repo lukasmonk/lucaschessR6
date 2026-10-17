@@ -233,7 +233,7 @@ class CPU:
 
 def run(fdb):
     if not __debug__:
-        sys.stderr = Util.Log("./bug.kibitzers")
+        sys.stderr = Util.Log(Code.writable_path("./bug.kibitzers", "bug.kibitzers"))
 
     cpu = CPU(fdb)
     cpu.run()

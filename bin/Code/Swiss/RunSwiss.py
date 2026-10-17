@@ -69,7 +69,7 @@ class SwissWorker(RunWorker.RunWorker):
 
 def run(user, file_swiss_work):
     if not __debug__:
-        sys.stderr = Util.Log("./bug.swiss")
+        sys.stderr = Util.Log(Code.writable_path("./bug.swiss", "bug.swiss"))
 
     app = QtWidgets.QApplication([])
 

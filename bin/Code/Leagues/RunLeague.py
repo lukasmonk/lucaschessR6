@@ -70,7 +70,7 @@ class LeagueWorker(RunWorker.RunWorker):
 
 def run(user, file_league_work):
     if not __debug__:
-        sys.stderr = Util.Log("./bug.league")
+        sys.stderr = Util.Log(Code.writable_path("./bug.league", "bug.league"))
 
     app = QtWidgets.QApplication([])
 
