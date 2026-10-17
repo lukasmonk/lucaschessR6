@@ -79,7 +79,7 @@ class TournamentWorker(RunWorker.RunWorker):
 
 def run(user, file_tournament):
     if not __debug__:
-        sys.stderr = Util.Log("./bug.tournaments")
+        sys.stderr = Util.Log(Code.writable_path("./bug.tournaments", "bug.tournaments"))
 
     app = QtWidgets.QApplication([])
 

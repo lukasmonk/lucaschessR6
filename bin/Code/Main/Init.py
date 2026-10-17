@@ -12,9 +12,9 @@ def init():
     if __debug__:
         from Code.Z import Debug
 
-        sys.stderr = Debug.LogDebug("bug.log")
+        sys.stderr = Debug.LogDebug(Code.writable_path("bug.log", "bug.log"))
     else:
-        sys.stderr = Util.Log("bug.log")
+        sys.stderr = Util.Log(Code.writable_path("bug.log", "bug.log"))
 
     main_procesador = Procesador.Procesador()
     main_procesador.set_version(Code.VERSION)

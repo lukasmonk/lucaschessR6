@@ -5,8 +5,8 @@ from Code.Z import Util
 
 
 class ConfigPaths:
-    LCFILEFOLDER: str = os.path.realpath("../lc.folder")
-    LCBASEFOLDER: str = os.path.realpath("../UserData")
+    LCFILEFOLDER: str = os.path.realpath(Code.writable_path("../lc.folder", "lc.folder"))
+    LCBASEFOLDER: str = os.path.realpath(Code.writable_path("../UserData", "UserData"))
 
     def __init__(self, configuration, user):
         self.configuration = configuration
