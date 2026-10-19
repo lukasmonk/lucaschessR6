@@ -1,5 +1,4 @@
 import os
-from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
@@ -251,6 +250,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             (_("Very fast"), 0.2),
             (_("Slow"), 1.5),
             (_("Very slow"), 2),
+            (f'{_("Very slow")} x2', 4),
+            (f'{_("Very slow")} x4', 8),
         )
         self.cb_humanize = Controles.CB(self, li_humanize, 0).set_font(font)
         lb_humanize = Controles.LB(self, _("To humanize the time it takes for the engine to respond")).set_font(font)
@@ -921,8 +922,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
         if resp:
             cm = resp
             self.rival = cm
-            if self.rival.type == ENG_RODENT:
-                self.rival.name = self.rival.menu
+            # if self.rival.type == ENG_RODENT:
+            #     self.rival.name = self.rival.menu
             self.show_rival()
 
     def show_rival(self):
@@ -932,12 +933,12 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         def time_depth(show):
             for obj in (
-                self.lb_depth,
-                self.ed_rdepth,
-                self.bt_cancel_rdepth,
-                self.lb_rtime,
-                self.ed_rtime,
-                self.bt_cancel_rtime,
+                    self.lb_depth,
+                    self.ed_rdepth,
+                    self.bt_cancel_rdepth,
+                    self.lb_rtime,
+                    self.ed_rtime,
+                    self.bt_cancel_rtime,
             ):
                 obj.setVisible(show)
             if not show:
@@ -961,6 +962,8 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
                 self.rival.elo,
                 self.rival.id_info.replace("\n", ", "),
             )
+        elif self.rival.type == ENG_RODENT:
+            name = self.rival.menu
         else:
             name = self.rival.name
         if len(name) > 70:
@@ -1092,10 +1095,10 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
     def test_unlimited(self):
         visible = (
-            self.ed_rdepth.text_to_integer() == 0
-            and self.ed_rtime.text_to_float() == 0
-            and self.ed_nodes.text_to_integer() == 0
-            and not self.gb_time.isChecked()
+                self.ed_rdepth.text_to_integer() == 0
+                and self.ed_rtime.text_to_float() == 0
+                and self.ed_nodes.text_to_integer() == 0
+                and not self.gb_time.isChecked()
         )
         self.lb_unlimited.setVisible(visible)
         self.cb_unlimited.setVisible(visible)
@@ -1137,26 +1140,26 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
 
         chess18 = menu.submenu(tr_chess("18"), rondo_main.otro())
         for pos, uno in enumerate(
-            (
-                "rbbqknnr",
-                "rqbbknnr",
-                "rbbnkqnr",
-                "rnbbkqnr",
-                "rbbnknqr",
-                "rnbbknqr",
-                "rqbnkbnr",
-                "rnbnkbqr",
-                "rnnbkqbr",
-                "rbnnkqbr",
-                "rqnbknbr",
-                "rnqbknbr",
-                "rbqnknbr",
-                "rbnqknbr",
-                "rnnqkbbr",
-                "rnqnkbbr",
-                "rqnnkbbr",
-            ),
-            1,
+                (
+                        "rbbqknnr",
+                        "rqbbknnr",
+                        "rbbnkqnr",
+                        "rnbbkqnr",
+                        "rbbnknqr",
+                        "rnbbknqr",
+                        "rqbnkbnr",
+                        "rnbnkbqr",
+                        "rnnbkqbr",
+                        "rbnnkqbr",
+                        "rqnbknbr",
+                        "rnqbknbr",
+                        "rbqnknbr",
+                        "rbnqknbr",
+                        "rnnqkbbr",
+                        "rnqnkbbr",
+                        "rqnnkbbr",
+                ),
+                1,
         ):
             fen = f"{uno}/pppppppp/8/8/8/8/PPPPPPPP/{uno.upper()} w KQkq - 0 1"
             chess18.opcion(fen, f"{pos}. {uno}", rondo.otro())
@@ -1376,11 +1379,11 @@ class WPlayAgainstEngine(LCDialog.LCDialog):
             elif menu.is_right:
                 pos, opening_block = resp
                 if QTMessages.pregunta(
-                    self,
-                    _X(
-                        _("Do you want to delete the opening %1 from the list of favourite openings?"),
-                        opening_block.tr_name,
-                    ),
+                        self,
+                        _X(
+                            _("Do you want to delete the opening %1 from the list of favourite openings?"),
+                            opening_block.tr_name,
+                        ),
                 ):
                     del self.li_preferred_openings[pos]
 
@@ -1958,7 +1961,7 @@ def change_rival(parent, configuration, dic, is_create_own_game=False):
 
 
 def get_extra_minutes(main_window):
-    li_gen: list[(Any, Any)] = [(None, None)]
+    li_gen: list = [(None, None)]
 
     config = FormLayout.Spinbox(_("Extra minutes for the player"), 1, 99, 50)
     li_gen.append((config, 5))

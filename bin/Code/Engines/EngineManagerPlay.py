@@ -69,9 +69,6 @@ class EngineManagerPlay(EngineManager.EngineManager):
         # Once this is done, it switches to None.
         self.wicker_ctrl: EnginesWicker.WickerCtrl | None = EnginesWicker.check_is_wicker(engine, self.engine_run)
 
-    def set_seconds_per_move(self, seconds_per_move: int):
-        self.run_engine_params.set_seconds_per_move(seconds_per_move)
-
     def check_previous(self, game: Game.Game | None = None, fen: str | None = None, dispatcher: Callable | None = None):
         if not self.check_engine():
             return None
@@ -262,13 +259,6 @@ class EngineManagerPlay(EngineManager.EngineManager):
         self.seconds_humanize = max(
             min(movetime_seconds * factor_humanize, 45), porc * random.randint(1000, 3000) / 100000
         )
-
-    # def play_nomodal(self, game: Optional[Game.Game]) -> bool:
-    #     if not self.check_engine():
-    #         return False
-    #     self.engine_run.set_game_position(game, None, False)
-    #     self.engine_run.play(self.run_engine_params)
-    #     return True
 
     def set_book(self, path: str, resp_type, max_tries: int, max_depth):
         self.playbook = PlayBook(path, resp_type, max_tries, max_depth)

@@ -111,7 +111,6 @@ def busca_engine(tipo, key, alias):
             for name, cm in dict_engs.items():
                 if cm.key == alias:
                     rival = cm.clone()
-                    rival.name = cm.menu
                     return rival
 
     return None
@@ -525,7 +524,6 @@ class SelectEngines:
                 for name, cm in dict_engs.items():
                     if cm.key == alias:
                         rival = cm.clone()
-                        rival.name = cm.menu
 
                 if rival:
                     break

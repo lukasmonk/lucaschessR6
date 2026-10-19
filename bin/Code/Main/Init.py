@@ -1,28 +1,22 @@
-import sys
-
 import Code
 from Code import Procesador
 from Code.Base.Constantes import ExitProgram
 from Code.Main import LucasChessGui
 from Code.QT import QTUtils
-from Code.Z import Util, XRun
+from Code.Z import XRun
 
 
 def init():
-    if __debug__:
-        from Code.Z import Debug
-
-        sys.stderr = Debug.LogDebug("bug.log")
-    else:
-        sys.stderr = Util.Log("bug.log")
-
     main_procesador = Procesador.Procesador()
     main_procesador.set_version(Code.VERSION)
     resp = LucasChessGui.run_gui(main_procesador)
     if Code.runSound:
         Code.runSound.reset()
 
-    if resp == ExitProgram.REINIT.value:
-        XRun.run_lucas()
+    Code.configuration.set_stderr("bug.log")
 
-    QTUtils.close_app()
+    if resp == ExitProgram.REINIT.value:
+        QTUtils.close_app(exit0=False)
+        XRun.run_lucas()
+    else:
+        QTUtils.close_app(exit0=True)

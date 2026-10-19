@@ -740,8 +740,8 @@ class FormWidget(QtWidgets.QWidget):
             elif label is None and value.startswith("€"):
                 lb0 = Controles.LB(self, " ")
                 lb1 = Controles.LB(self, value[1:])
-                lb0.setContentsMargins(0, -6, 0, 3)
-                lb1.setContentsMargins(0, -6, 0, 3)
+                lb0.setContentsMargins(0, -4, 0, 3)
+                lb1.setContentsMargins(0, -4, 0, 3)
                 self.formlayout.addRow(lb0, lb1)
                 self.widgets.append(None)
                 self.labels.append(None)
@@ -798,6 +798,7 @@ class FormWidget(QtWidgets.QWidget):
                             # field.currentIndexChanged.connect( dispatch )
                     elif tipo == FONTCOMBOBOX:
                         field = QtWidgets.QFontComboBox(self)
+                        field.setEditable(False)
                         if value:
                             font = Controles.FontType(value)
                             field.setCurrentFont(font)

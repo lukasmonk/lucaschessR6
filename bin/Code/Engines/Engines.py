@@ -5,6 +5,7 @@ import subprocess
 import threading
 
 import Code
+from Code import Engines
 from Code.Base.Constantes import BOOK_BEST_MOVE, ENG_EXTERNAL, MULTIPV_BYDEFAULT, MULTIPV_MAXIMIZE
 from Code.QT import QTDialogs
 from Code.SQL import UtilSQL
@@ -60,24 +61,24 @@ class Engine:
 
     def get_changed_options(self):
         self._clean_elo()
-        return self._li_changed_options
+        return self.li_changed_options
 
     def _clean_elo(self):
         pos_limit = -1
         pos_elo = -1
 
-        for pos, (name, value) in enumerate(self._li_changed_options):
+        for pos, (name, value) in enumerate(self.li_changed_options):
             if name == "UCI_LimitStrength" and value == "true":
                 pos_limit = pos
             elif name == "UCI_Elo":
                 pos_elo = pos
 
         if pos_limit == -1 and pos_elo > -1:
-            del self._li_changed_options[pos_elo]
+            del self.li_changed_options[pos_elo]
         elif pos_elo == -1 and pos_limit > -1:
             for op in self.li_uci_options():
                 if op.name == "UCI_Elo":
-                    self._li_changed_options.append(("UCI_Elo", op.default))
+                    self.li_changed_options.append(("UCI_Elo", op.default))
                     break
 
     def set_nodes_compatible(self, ok):
@@ -175,7 +176,7 @@ class Engine:
         li_uci_options = self.li_uci_options()
         for op in li_uci_options:
             op.valor = op.default
-        self._li_changed_options = []
+        self.li_changed_options = []
 
     def change_uci_default(self, name, default):
         li_uci_options = self.li_uci_options()
@@ -205,15 +206,15 @@ class Engine:
                 op.valor = valor
                 break
 
-        for pos, (xcomando, xvalor) in enumerate(self._li_changed_options):
+        for pos, (xcomando, xvalor) in enumerate(self.li_changed_options):
             if xcomando == name:
                 if is_changed:
-                    self._li_changed_options[pos] = (name, valor)
+                    self.li_changed_options[pos] = (name, valor)
                 else:
-                    del self._li_changed_options[pos]
+                    del self.li_changed_options[pos]
                 return
         if is_changed:
-            self._li_changed_options.append((name, valor))
+            self.li_changed_options.append((name, valor))
 
     def set_multipv(self, num, maximo):
         self.multiPV = int(num) if num else 1
@@ -225,7 +226,7 @@ class Engine:
         elif xmultipv == MULTIPV_BYDEFAULT:
             multi_pv = min(self.maxMultiPV, 10)
             multi_pv = next(
-                (int(valor) for comando, valor in self._li_changed_options if comando == "MultiPV"),
+                (int(valor) for comando, valor in self.li_changed_options if comando == "MultiPV"),
                 max(multi_pv, self.multiPV),
             )
             self.multiPV = multi_pv
@@ -274,7 +275,7 @@ class Engine:
 
     def remove_uci_options(self):
         if self.type == ENG_EXTERNAL:
-            path_uci_options = os.path.join(Code.configuration.paths.folder_config(), self.uci_options_sqlite)
+            path_uci_options = Code.configuration.paths.file_in_config(self.uci_options_sqlite)
             with UtilSQL.DictTextSQL(path_uci_options) as dbuci:
                 del dbuci[self.key_engine()]
 
@@ -285,59 +286,7 @@ class Engine:
         return f"{os.path.basename(self.path_exe)}_{stat.st_size}_{stat.st_mtime}"
 
     def read_uci_options(self):
-        if self.type == ENG_EXTERNAL:
-            path_uci_options = os.path.join(Code.configuration.paths.folder_config(), self.uci_options_sqlite)
-        else:
-            path_uci_options = os.path.join(Code.folder_os, self.uci_options_sqlite)
-
-        with UtilSQL.DictTextSQL(path_uci_options) as dbuci:
-            key = self.key_engine()
-            if key in dbuci:
-                clines = dbuci[key]
-                lines = clines.split("\n")
-            else:
-                lines = get_uci_options(self.path_exe)
-                if lines:
-                    try:
-                        dbuci[key] = "\n".join(lines)
-                    except sqlite3.IntegrityError:
-                        pass
-
-                else:
-                    # Cache engines that do not answer over a pipe, otherwise they
-                    # would be re-probed (subprocess) on every single startup.
-                    try:
-                        dbuci[key] = ""
-                    except sqlite3.IntegrityError:
-                        pass
-                    lines = []  # Ensure lines is always an iterable
-
-        self._li_uci_options = []
-        dc_op = {}
-
-        for line in lines:
-            line = line.strip()
-            if line.startswith("id name"):
-                self.id_name = line[8:]
-                if not self.name:
-                    self._name = self.id_name
-            elif line.startswith("id author"):
-                self.id_author = line[10:]
-            elif line.startswith("option name "):
-                op = OpcionUCI()
-                if op.lee(line):
-                    self._li_uci_options.append(op)
-                    dc_op[op.name] = op
-                    if op.name == "MultiPV":
-                        self.set_multipv(op.default, op.maximo)
-
-        for comando, valor in self._li_changed_options:
-            if comando in dc_op:
-                op = dc_op[comando]
-                op.valor = valor
-                if op.name == "MultiPV":
-                    self.set_multipv(valor, op.maximo)
-
+        self._li_uci_options = Code.uci.get_options(self)
         return self._li_uci_options
 
     def li_uci_options(self):
@@ -683,3 +632,78 @@ def list_depths_to_cb() -> list[tuple[str, str]]:
     return [(_("By default"), "PD"), (_("Maximum"), "MX")] + [
         (str(x), str(x)) for x in list(range(1, 16)) + [20, 30, 40, 50, 75, 100, 150, 200]
     ]
+
+
+class Uci:
+    uci_options_file = "uci_options_v2.sqlite"
+
+    def __init__(self):
+        self.dic_cache: dict = self._read_cache(self.path_internal())
+        self.dic_cache_others: dict = self._read_cache(self.path_others())
+
+    def path_internal(self):
+        return Util.opj(Code.folder_os, self.uci_options_file)
+
+    def path_others(self):
+        return Code.configuration.paths.file_in_config(self.uci_options_file)
+
+    @staticmethod
+    def _read_cache(path: str) -> dict:
+        with UtilSQL.DictTextSQL(path) as dbuci:
+            return dbuci.as_dictionary()
+
+    def save_others(self, key, buffer):
+        with UtilSQL.DictTextSQL(self.path_others()) as dbuci:
+            try:
+                dbuci[key] = buffer
+            except sqlite3.IntegrityError:
+                pass
+
+    def get_options_lines(self, engine: Engine) -> str:
+        if engine.type == ENG_EXTERNAL or engine.key not in self.dic_cache:
+            stat = os.stat(engine.path_exe)
+            if engine.type == ENG_EXTERNAL:
+                key = f"{engine.key}:{stat.st_size}:{stat.st_mtime_ns}"
+            else:
+                key = engine.key
+            if self.dic_cache_others.get(key) is None:
+                buffer = _run_uci_command(engine.path_exe)
+                self.dic_cache_others[key] = buffer
+                if buffer is not None:
+                    self.save_others(key, buffer)
+            return self.dic_cache_others[key]
+
+        else:
+            key = engine.key
+            return self.dic_cache[key]
+
+    def get_options(self, engine: Engine):
+        lines = self.get_options_lines(engine)
+        li_uci_options = []
+        dc_op = {}
+
+        for line in lines.splitlines():
+            line = line.strip()
+            if line.startswith("id name"):
+                engine.id_name = line[8:]
+                if not engine.name:
+                    engine._name = engine.id_name
+            elif line.startswith("id author"):
+                engine.id_author = line[10:]
+            elif line.startswith("option name "):
+                op = OpcionUCI()
+                if op.lee(line):
+                    li_uci_options.append(op)
+                    dc_op[op.name] = op
+                    if op.name == "MultiPV":
+                        engine.set_multipv(op.default, op.maximo)
+
+        for comando, valor in engine.li_changed_options:
+            if comando in dc_op:
+                op = dc_op[comando]
+                op.valor = valor
+                if op.name == "MultiPV":
+                    engine.set_multipv(valor, op.maximo)
+
+        return li_uci_options
+

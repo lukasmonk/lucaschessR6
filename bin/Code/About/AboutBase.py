@@ -154,6 +154,7 @@ class ThanksTo:
             '<a href="https://github.com/macalimlim">macalimlim</a>',
             '<a href="https://github.com/jpaverd">jpaverd</a>',
             '<a href="https://github.com/10Pastore">10Pastore</a>',
+            '<a href="https://github.com/Shahrad69">Shahrad69</a>',
             "tgett",
             "Baked-Cake1",
             "Yasmin",

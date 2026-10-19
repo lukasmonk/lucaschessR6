@@ -20,7 +20,7 @@ from Code.Base.Constantes import (
 )
 from Code.Board import ConfBoards
 from Code.Config import ConfigEngines, ConfigPaths
-from Code.Engines import Priorities
+from Code.Engines import Priorities, Engines
 from Code.QT import IconosBase, ScreenUtils
 from Code.SQL import UtilSQL
 from Code.Translations import Translate, TrListas
@@ -280,6 +280,7 @@ class Configuration:
 
         self.__theme_num = 1  # 1=red 2=old
 
+        Code.uci = Engines.Uci()
         self.engines: ConfigEngines.ConfigEngines = ConfigEngines.ConfigEngines(self)
         self.dic_conf_boards_pk = {}
 
@@ -764,4 +765,12 @@ class Configuration:
 
         return False
 
+    def set_stderr(self, name_file):
+        import sys
+        path_bug_log = self.paths.path_in_userdata(name_file)
+        if __debug__:
+            from Code.Z import Debug
 
+            sys.stderr = Debug.LogDebug(path_bug_log)
+        else:
+            sys.stderr = Util.Log(path_bug_log)

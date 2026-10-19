@@ -69,14 +69,14 @@ class LeagueWorker(RunWorker.RunWorker):
 
 
 def run(user, file_league_work):
-    if not __debug__:
-        sys.stderr = Util.Log("./bug.league")
-
     app = QtWidgets.QApplication([])
 
     configuration = Configuration.Configuration(user)
     configuration.start()
     configuration.load_translation()
+
+    configuration.set_stderr("bug.league")
+
     OpeningsStd.ap.reset()
     Code.all_pieces = Piezas.AllPieces()
 

@@ -219,9 +219,15 @@ class GridSummary:
             white = len(data[True]["MOVES"]) if is_elem else data[True]
             black = len(data[False]["MOVES"]) if is_elem else data[False]
             total = white + black
-            whitep = white / total_moves_analyzed[True] if white else 0
-            blackp = black / total_moves_analyzed[False] if black else 0
-            totalp = total / (total_moves_analyzed[True] + total_moves_analyzed[False]) if total else 0
+
+            def calc(num, tt):
+                if num == 0 or tt == 0:
+                    return 0
+                return num / tt
+
+            whitep = calc(white, total_moves_analyzed[True])
+            blackp = calc(black, total_moves_analyzed[False])
+            totalp = calc(total, total_moves_analyzed[True] + total_moves_analyzed[False])
             if total == 0 and not show_empty:
                 return
 
@@ -263,7 +269,7 @@ class GridSummary:
 
         return li_data
 
-    def grid_left_button(self, row, obj_column):
+    def grid_right_button(self, row, obj_column, _modif):
         key_col = obj_column.key
         if key_col not in ("WHITE", "BLACK"):
             return
@@ -294,7 +300,7 @@ class GridSummary:
                 self.wowner.grid_w.goto(row - 1, 0)
             self.wowner.grid_b.goto(row, 0)
 
-    def grid_right_button(self, row, obj_column, _modif):
+    def grid_left_button(self, row, obj_column):
         key_col = obj_column.key
         if key_col not in ("WHITE", "BLACK"):
             return

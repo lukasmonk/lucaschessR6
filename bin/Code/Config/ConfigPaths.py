@@ -18,7 +18,7 @@ class ConfigPaths:
             if not os.path.isdir(self.userdata_folder):
                 Util.check_folders(self.userdata_folder)
 
-        self.file = self._to_config("lk.pk2")
+        self.file = self.file_in_config("lk.pk2")
         self.is_first_time = not Util.exist_file(self.file)
 
         self._file_bmt = self._to_results("lucas.bmt")
@@ -26,11 +26,19 @@ class ConfigPaths:
         self.check_resources_sounds()
 
     def _get_userdata_folder(self):
+        # 1. Comprobar LCFILEFOLDER
         if os.path.isfile(self.LCFILEFOLDER):
             with open(self.LCFILEFOLDER, "rt", encoding="utf-8", errors="ignore") as f:
-                folder_user_data = f.read()
+                folder_user_data = f.read().strip()
                 if Util.is_folder_accessible(folder_user_data):
                     return folder_user_data
+
+        # 2. Comprobar la variable de entorno LUCASCHESS_HOME
+        env_home = os.environ.get("LUCASCHESS_HOME")
+        if env_home and Util.is_folder_accessible(env_home):
+            return env_home
+
+        # 3. Valor por defecto (LCBASEFOLDER)
         return self.LCBASEFOLDER
 
     def folder_userdata(self):
@@ -73,74 +81,74 @@ class ConfigPaths:
     def folder_config(self):
         return self.folder_from_userdata("__Config__")
 
-    def _to_config(self, file):
+    def file_in_config(self, file):
         return os.path.join(self.folder_config(), file)
 
     def file_external_engines(self):
-        return self._to_config("ExtEngines.pk")
+        return self.file_in_config("ExtEngines.pk")
 
     def file_kibitzers(self):
-        return self._to_config("kibitzers.pk")
+        return self.file_in_config("kibitzers.pk")
 
     def file_adjournments(self):
-        return self._to_config("Adjournments.ddb")
+        return self.file_in_config("Adjournments.ddb")
 
     def file_index_polyglots(self):
-        return self._to_config("index_polyglots.pk")
+        return self.file_in_config("index_polyglots.pk")
 
     def file_pers_openings(self):
-        return self._to_config("persaperturas.pkd")
+        return self.file_in_config("persaperturas.pkd")
 
     def file_video(self):
-        return self._to_config("confvid.pkd")
+        return self.file_in_config("confvid.pkd")
 
     def file_sounds(self):
-        return self._to_config("sounds.pkd")
+        return self.file_in_config("sounds.pkd")
 
     def file_param_analysis(self):
-        return self._to_config("paranalisis.pkd")
+        return self.file_in_config("paranalisis.pkd")
 
     def file_analysis(self):
-        return self._to_config("analisis.db")
+        return self.file_in_config("analisis.db")
 
     def file_prompts(self):
-        return self._to_config("Prompts.db")
+        return self.file_in_config("Prompts.db")
 
     def file_shortcuts(self):
-        return self._to_config("Shortcuts.pkd")
+        return self.file_in_config("Shortcuts.pkd")
 
     def file_colors(self):
-        return self._to_config("personal.colors")
+        return self.file_in_config("personal.colors")
 
     def file_gms(self):
-        return self._to_config("gm.pke")
+        return self.file_in_config("gm.pke")
 
     def file_books(self):
-        return self._to_config("books.lkv")
+        return self.file_in_config("books.lkv")
 
     def file_conf_play_engine(self):
-        return self._to_config("entmaquinaconf.pkd")
+        return self.file_in_config("entmaquinaconf.pkd")
 
     def file_direct_sounds(self):
-        return self._to_config("direc.pkv")
+        return self.file_in_config("direc.pkv")
 
     def file_themes(self):
-        return self._to_config("themes.pkd")
+        return self.file_in_config("themes.pkd")
 
     def file_resources(self):
-        return self._to_config("recursos.dbl")
+        return self.file_in_config("recursos.dbl")
 
     def file_writing_down(self):
-        return self._to_config("anotar.db")
+        return self.file_in_config("anotar.db")
 
     def file_filters_pgn(self):
-        return self._to_config("pgnFilters.db")
+        return self.file_in_config("pgnFilters.db")
 
     def file_vars(self):
-        return self._to_config("Variables.pk")
+        return self.file_in_config("Variables.pk")
 
     def file_conf_boards(self):
-        return self._to_config("confBoards.pk")
+        return self.file_in_config("confBoards.pk")
 
     # ------------------------------------------------------------------------------------- PERSONAL TRAINING
 
@@ -376,3 +384,6 @@ class ConfigPaths:
             self.configuration.x_save_lcsb = nuevo
             self.configuration.graba()
         return self.configuration.x_save_lcsb or self.folder_userdata()
+
+    def path_in_userdata(self, path: str) -> str:
+        return os.path.join(self.folder_userdata(), path)

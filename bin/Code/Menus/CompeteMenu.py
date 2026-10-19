@@ -1,12 +1,15 @@
 import Code
 from Code.Base.Constantes import GT_FICS, GT_FIDE, GT_LICHESS
-from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMaia, ManagerMicElo, ManagerWicker, WindowGrid
 from Code.CompetitionWithTutor import ManagerCompeticion, WCompetitionWithTutor
+from Code.Competitions import ManagerElo, ManagerFideFicsLichess, ManagerMaia, ManagerMicElo, ManagerWicker, WindowGrid
 from Code.Engines import WEngines
+from Code.Leagues import WLeagues
 from Code.Main import Presentacion
 from Code.Menus import BaseMenu
-from Code.QT import Iconos, QTDialogs, QTMessages
+from Code.QT import Iconos
+from Code.QT import QTDialogs, QTMessages
 from Code.SingularMoves import ManagerSingularM, WindowSingularM
+from Code.Swiss import WSwisses
 
 
 class CompeteMenu(BaseMenu.RootMenu):
@@ -75,6 +78,9 @@ class CompeteMenu(BaseMenu.RootMenu):
         submenu_singular_moves = self.new_submenu(_("Singular moves"), Iconos.Singular())
         submenu_singular_moves.new("strenght101", _("Calculate your strength"), Iconos.Strength())
         submenu_singular_moves.new("challenge101", _("Challenge 101"), Iconos.Wheel())
+
+        self.new("leagues", _("Chess leagues"), Iconos.League())
+        self.new("swiss", _("Swiss Tournaments"), Iconos.Swiss())
 
     def run_select(self, resp):
         if "_" in resp:
@@ -187,3 +193,9 @@ class CompeteMenu(BaseMenu.RootMenu):
         manager.selecciona(GT_LICHESS)
         xid = manager.elige_juego(nivel)
         manager.start(xid)
+
+    def leagues(self):
+        WLeagues.leagues(self.wparent)
+
+    def swiss(self):
+        WSwisses.swisses(self.wparent)

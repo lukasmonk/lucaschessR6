@@ -554,7 +554,9 @@ class Manager:
                 dic = self.board.last_position.capturas()
             self.main_window.put_captures(dic)
 
-    def show_nags(self, move_check):
+    def show_nags(self, move_check, board=None):
+        if board is None:
+            board = self.board
         nag = move_check.get_nag()
         color = NO_RATING
         if not nag:
@@ -584,10 +586,10 @@ class Manager:
             0 if (move_check.to_sq[0] < move_check.from_sq[0]) and (move_check.to_sq[1] < move_check.from_sq[1]) else 1
         )
         if nag != NO_RATING or (nag == NO_RATING and move_check.analysis):
-            self.board.put_rating(move_check.from_sq, move_check.to_sq, nag, poscelda)
+            board.put_rating(move_check.from_sq, move_check.to_sq, nag, poscelda)
         if nag != 1000 and move_check.in_the_opening:
             poscelda = 1 if poscelda == 0 else 0
-            self.board.put_rating(move_check.from_sq, move_check.to_sq, 1000, poscelda)
+            board.put_rating(move_check.from_sq, move_check.to_sq, 1000, poscelda)
 
     def show_bestmove(self, move_check):
         mrm, pos = move_check.analysis

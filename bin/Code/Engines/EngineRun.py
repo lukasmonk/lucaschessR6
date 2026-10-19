@@ -205,6 +205,10 @@ class EngineRun(QtCore.QObject):
             return
         self.state = EngineState.STARTED
 
+        if Util.is_windows():
+            from Code.Z import Windows
+            Windows.apply_power_throttling_fix(self.process)
+
         # set priority if requested
         if self.config.priority is not None:
             try:

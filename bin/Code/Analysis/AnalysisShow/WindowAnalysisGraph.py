@@ -230,6 +230,8 @@ class WAnalisisGraph(LCDialog.LCDialog):
         self.board.create_arrow_multi(rm.movimiento(), False)
         self.htotal[ta].set_point_active(row)
         self.htotal[ta + 3].set_point_active(row)
+        if self.configuration.x_show_rating:
+            self.manager.show_nags(move, self.board)
 
     def grid_left_button(self, grid, row, obj_column):
         if grid.id == "Summary":

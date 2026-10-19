@@ -13,11 +13,11 @@ global_dic_engines_internal = None
 
 
 class ConfigEngines:
-    _dic_engines_internal: dict
-    _dic_engines_external: dict
-    _dic_engines: dict
 
     def __init__(self, configuration):
+        self._dic_engines_internal: dict | None = None
+        self._dic_engines_external: dict | None = None
+        self._dic_engines: dict | None = None
         self.configuration = configuration
         self.reset()
 

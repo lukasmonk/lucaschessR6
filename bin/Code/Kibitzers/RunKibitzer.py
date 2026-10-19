@@ -126,6 +126,9 @@ class CPU:
             self.configuration.lee()
             self.configuration.read_conf_boards()
             self.configuration.engines.reset()
+
+            self.configuration.set_stderr("bug.kibitzers")
+
             OpeningsStd.ap.reset()
 
             kibitzers = Kibitzers.Kibitzers()
@@ -232,8 +235,5 @@ class CPU:
 
 
 def run(fdb):
-    if not __debug__:
-        sys.stderr = Util.Log("./bug.kibitzers")
-
     cpu = CPU(fdb)
     cpu.run()

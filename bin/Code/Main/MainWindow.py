@@ -186,9 +186,9 @@ class MainWindow(LCDialog.LCDialog):
     def muestra(self):
         flags = QtCore.Qt.WindowType.Dialog if self.owner else QtCore.Qt.WindowType.Widget
         flags |= (
-            QtCore.Qt.WindowType.WindowTitleHint
-            | QtCore.Qt.WindowType.WindowMinimizeButtonHint
-            | QtCore.Qt.WindowType.WindowMaximizeButtonHint
+                QtCore.Qt.WindowType.WindowTitleHint
+                | QtCore.Qt.WindowType.WindowMinimizeButtonHint
+                | QtCore.Qt.WindowType.WindowMaximizeButtonHint
         )
         if self.onTop:
             flags |= QtCore.Qt.WindowType.WindowStaysOnTopHint
@@ -224,9 +224,6 @@ class MainWindow(LCDialog.LCDialog):
         nue = ScreenUtils.EstadoWindow(self.windowState())
         ant = ScreenUtils.EstadoWindow(event.oldState())
 
-        # jjjjjjjjjjjjjj        if getattr(self.manager, "in_the_presentation", False):
-        #             self.manager.presentacion(False)
-
         if nue.fullscreen:
             self.previous_f11_maximized = ant.maximizado
             self.base.tb.hide()
@@ -249,24 +246,19 @@ class MainWindow(LCDialog.LCDialog):
 
     def show_variations(self, titulo):
         flags = (
-            QtCore.Qt.WindowType.Dialog
-            | QtCore.Qt.WindowType.WindowTitleHint
-            | QtCore.Qt.WindowType.WindowMinimizeButtonHint
-            | QtCore.Qt.WindowType.WindowMaximizeButtonHint
+                QtCore.Qt.WindowType.Dialog
+                | QtCore.Qt.WindowType.WindowTitleHint
+                | QtCore.Qt.WindowType.WindowMinimizeButtonHint
+                | QtCore.Qt.WindowType.WindowMaximizeButtonHint
         )
 
         self.setWindowFlags(QtCore.Qt.WindowType.WindowCloseButtonHint | flags)
 
         self.setWindowTitle(titulo if titulo else "-")
 
-        # self.restore_main_window()
         self.adjust_size()
 
         resp = self.exec()
-        # try:
-        #     self.save_video()
-        # except RuntimeError:
-        #     pass
         return resp
 
     def adjust_size(self):

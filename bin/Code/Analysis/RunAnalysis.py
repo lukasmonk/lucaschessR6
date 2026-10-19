@@ -302,8 +302,8 @@ class CPU:
 
 def run(filebase: str) -> None:
     """Función principal para iniciar el análisis"""
-    if not __debug__:
-        sys.stderr = Util.Log("./bug.analysis")
+
+    Code.configuration.set_stderr("bug.analysis")
 
     app = QtWidgets.QApplication([])
     cpu = CPU(filebase)

@@ -368,7 +368,7 @@ class WGames(QtWidgets.QWidget):
                 is_already = True
                 if tp == "ASC":
                     li_order[n] = (key, "DESC", is_numeric)
-                    col.head = f"{col.head.strip('+-')}-"
+                    col.head = f"{col.head.strip('🠕🠗')}🠗"
                     if n:
                         del li_order[n]
                         li_order.insert(0, (key, "DESC", is_numeric))
@@ -379,7 +379,7 @@ class WGames(QtWidgets.QWidget):
                 break
         if not is_already:
             li_order.insert(0, (key, "ASC", is_numeric))
-            col.head += "+"
+            col.head += "🠕"
         self.db_games.put_order(li_order)
         self.grid.refresh()
         self.grid.gotop()

@@ -78,14 +78,13 @@ class TournamentWorker(RunWorker.RunWorker):
 
 
 def run(user, file_tournament):
-    if not __debug__:
-        sys.stderr = Util.Log("./bug.tournaments")
-
     app = QtWidgets.QApplication([])
 
     configuration = Configuration.Configuration(user)
     configuration.start()
     configuration.load_translation()
+    configuration.set_stderr("bug.tournaments")
+
     OpeningsStd.ap.reset()
     Code.all_pieces = Piezas.AllPieces()
 

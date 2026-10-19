@@ -840,6 +840,7 @@ class WBoardColors(LCDialog.LCDialog):
 
     def update_board_m(self):
         ct = self.config_board
+        sender = self.sender()
 
         ct.ponCoordenadas(None if self.chbDefCoordenadas.valor() else self.cbCoordenadas.valor())
 
@@ -858,6 +859,8 @@ class WBoardColors(LCDialog.LCDialog):
         ct.ponTamFrontera(None if self.chbDefTamFrontera.valor() else self.sbTamFrontera.valor())
 
         self.update_board()
+        if sender:
+            sender.setFocus()
 
     def update_board(self):
         if hasattr(self, "board"):  # tras crear dial no se ha creado board
@@ -871,6 +874,7 @@ class WBoardColors(LCDialog.LCDialog):
             self.btTexto.set_color_foreground()
             self.btFrontera.set_color_foreground()
             self.lbTamBoard.set_text("%dpx" % self.board.width())
+            self.board.set_position(self.board.last_position)
 
     def read_own_themes(self):
         self.read_themes(self.configuration.paths.file_themes())

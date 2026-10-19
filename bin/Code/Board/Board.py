@@ -167,7 +167,8 @@ class Board(QtWidgets.QGraphicsView):
         self.setCacheMode(QtWidgets.QGraphicsView.CacheModeFlag.CacheBackground)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setDragMode(QtWidgets.QGraphicsView.DragMode.RubberBandDrag)
+        # self.setDragMode(QtWidgets.QGraphicsView.DragMode.RubberBandDrag)
+        self.setDragMode(QtWidgets.QGraphicsView.DragMode.NoDrag)
         self.setInteractive(True)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.ViewportAnchor.AnchorUnderMouse)
 
@@ -849,8 +850,8 @@ class Board(QtWidgets.QGraphicsView):
             return min(z, ancho - ancho_texto)
 
         hx = norm(p_casillas.x + gap_casilla)
-        hy_s = norm(p_frontera.y + p_frontera.alto + sep)
-        hy_n = norm(p_frontera.y - ancho_texto - sep)
+        hy_s = norm(p_frontera.y + p_frontera.alto + sep) + 3
+        hy_n = norm(p_frontera.y - ancho_texto - sep) - 3
         vy = norm(p_casillas.y + gap_casilla)
         vx_e = norm(p_frontera.x + p_frontera.ancho + sep)
         vx_o = norm(p_frontera.x - ancho_texto - sep)

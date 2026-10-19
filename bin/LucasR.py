@@ -6,6 +6,7 @@
 # Licence : GPL 3.0
 # ==============================================================================
 import sys
+import os
 
 import warnings
 
@@ -20,7 +21,13 @@ if n_args == 1:
 
 elif n_args >= 2:
     arg = sys.argv[1].lower()
-    if arg.endswith((".pgn", ".lcdb", ".lcsb", ".bmt", ".shortcut")) or arg in ("-play", "-playagainst"):
+    if arg.endswith((".pgn", ".lcdb", ".lcsb", ".bmt", ".shortcut")):
+        sys.argv[1] = os.path.abspath(arg)
+        import Code.Main.Init
+
+        Code.Main.Init.init()
+
+    elif arg in ("-play", "-playagainst"):
         import Code.Main.Init
 
         Code.Main.Init.init()

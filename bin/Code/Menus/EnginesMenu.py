@@ -35,11 +35,7 @@ class EnginesMenu(BaseMenu.RootMenu):
         submenu_kibitzers.new("kibitzer_edit", _("Maintenance"), Iconos.ModificarP())
 
         self.new("sts", _("STS: Strategic Test Suite"), Iconos.STS())
-
-        submenu_competitions = self.new_submenu(_("Competitions"), Iconos.Engine2())
-        submenu_competitions.new("tournaments", _("Tournaments between engines"), Iconos.Torneos())
-        submenu_competitions.new("leagues", _("Chess leagues"), Iconos.League())
-        submenu_competitions.new("swiss", _("Swiss Tournaments"), Iconos.Swiss())
+        self.new("tournaments", _("Tournaments between engines"), Iconos.Torneos())
 
     def run_select(self, resp):
 
@@ -71,9 +67,3 @@ class EnginesMenu(BaseMenu.RootMenu):
 
         elif resp == "tournaments":
             WTournaments.tournaments(self.wparent)
-
-        elif resp == "leagues":
-            WLeagues.leagues(self.wparent)
-
-        elif resp == "swiss":
-            WSwisses.swisses(self.wparent)

@@ -298,9 +298,10 @@ def _form_general_options(analysis_params, is_massive, num_selected_massive=0):
     alias = Code.configuration.nom_player()
     if Code.configuration.x_alias:
         alias += f";{Code.configuration.x_alias}"
-    li_gen.append((f'<big>+</big> {_("Player's name")}', analysis_params.my_moves))
+        alias = alias.replace(";", ", ")
+    li_gen.append((f'<big>+</big> {_("Player")}', analysis_params.my_moves))
     li_gen.append(
-        (None, f"€{alias}"))
+        (None, f"€     {alias}"))
     li_gen.append(SEPARADOR)
 
     config = FormLayout.Editbox(

@@ -110,7 +110,7 @@ def deferred_call(mstime: int, called):
 #             pass
 
 
-def close_app():
+def close_app(exit0=True):
     app = QtWidgets.QApplication.instance()
     if app is not None:
         # 1. Detener todos los QTimers
@@ -148,7 +148,8 @@ def close_app():
     # (p.ej. los drivers .so de los eboards, que en Linux nunca se
     # descargan con dlclose), cuya finalización choca con la
     # limpieza de Qt/PySide6 y provoca el segfault al cerrar.
-    os._exit(0)
+    if exit0:
+        os._exit(0)
 
 
 def delay(ms: int):

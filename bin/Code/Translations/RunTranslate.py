@@ -723,10 +723,9 @@ class WTranslate(LCDialog.LCDialog):
 
 
 def run_wtranslation(path_db):
-    if not __debug__:
-        sys.stderr = Util.Log("./bug.wtranslation")
     configuration = Code.configuration = Configuration.Configuration("")
     configuration.lee()
+    configuration.set_stderr("bug.wtranslation")
 
     app = QtWidgets.QApplication([])
 
