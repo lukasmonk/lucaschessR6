@@ -433,10 +433,12 @@ class WPlayer(QtWidgets.QWidget):
                 reverse=reverse,
             )
         else:
-            data.sort(
-                key=lambda rx: f"{rx[key]:5d}{rx['win']:5d}{rx['opening']}",
-                reverse=reverse,
-            )
+            # 1. Orden secundario: siempre de la A a la Z (ascendente)
+            data.sort(key=lambda rx: rx['opening'])
+
+            # 2. Orden principal: usa las otras claves con el reverse indicado
+            data.sort(key=lambda rx: (rx[key], rx['win']), reverse=reverse)
+
         self.set_header(grid, obj_column, reverse)
         self.dic_orders[tab][key] = not reverse
         grid.refresh()

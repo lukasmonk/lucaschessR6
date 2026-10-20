@@ -269,6 +269,21 @@ class GridSummary:
 
         return li_data
 
+    def show_move(self, data, pos, move: Move.Move):
+        data["POS"] = pos + 1
+        if move.is_white():
+            row = move.ta_white
+            if row:
+                self.wowner.grid_b.goto(row - 1, 0)
+            self.wowner.grid_w.goto(row, 0)
+        else:
+            row = move.ta_black
+            if row:
+                self.wowner.grid_w.goto(row - 1, 0)
+            self.wowner.grid_b.goto(row, 0)
+        row = move.ta_general
+        self.wowner.grid_all.goto(row, 0)
+
     def grid_right_button(self, row, obj_column, _modif):
         key_col = obj_column.key
         if key_col not in ("WHITE", "BLACK"):
@@ -286,19 +301,22 @@ class GridSummary:
         if pos >= nmoves:
             pos = 0
         move: Move.Move = moves[pos]
-        data["POS"] = pos + 1
-        row = move.ta_general
-        self.wowner.grid_all.goto(row, 0)
-        if move.is_white():
-            row = move.ta_white
-            if row:
-                self.wowner.grid_b.goto(row - 1, 0)
-            self.wowner.grid_w.goto(row, 0)
-        else:
-            row = move.ta_black
-            if row:
-                self.wowner.grid_w.goto(row - 1, 0)
-            self.wowner.grid_b.goto(row, 0)
+
+        self.show_move(data, pos, move)
+
+        # data["POS"] = pos + 1
+        # row = move.ta_general
+        # self.wowner.grid_all.goto(row, 0)
+        # if move.is_white():
+        #     row = move.ta_white
+        #     if row:
+        #         self.wowner.grid_b.goto(row - 1, 0)
+        #     self.wowner.grid_w.goto(row, 0)
+        # else:
+        #     row = move.ta_black
+        #     if row:
+        #         self.wowner.grid_w.goto(row - 1, 0)
+        #     self.wowner.grid_b.goto(row, 0)
 
     def grid_left_button(self, row, obj_column):
         key_col = obj_column.key
@@ -323,19 +341,22 @@ class GridSummary:
         if resp is None:
             return
         pos, move = resp
-        data["POS"] = pos + 1
-        if move.is_white():
-            row = move.ta_white
-            if row:
-                self.wowner.grid_b.goto(row - 1, 0)
-            self.wowner.grid_w.goto(row, 0)
-        else:
-            row = move.ta_black
-            if row:
-                self.wowner.grid_w.goto(row - 1, 0)
-            self.wowner.grid_b.goto(row, 0)
-        row = move.ta_general
-        self.wowner.grid_all.goto(row, 0)
+
+        self.show_move(data, pos, move)
+
+        # data["POS"] = pos + 1
+        # if move.is_white():
+        #     row = move.ta_white
+        #     if row:
+        #         self.wowner.grid_b.goto(row - 1, 0)
+        #     self.wowner.grid_w.goto(row, 0)
+        # else:
+        #     row = move.ta_black
+        #     if row:
+        #         self.wowner.grid_w.goto(row - 1, 0)
+        #     self.wowner.grid_b.goto(row, 0)
+        # row = move.ta_general
+        # self.wowner.grid_all.goto(row, 0)
 
     def grid_doble_click(self, row, obj_column):
         pass

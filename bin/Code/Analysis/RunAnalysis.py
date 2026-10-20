@@ -147,6 +147,7 @@ class CPU:
         Code.list_engine_managers = ListEngineManagers.ListEngineManagers()
         self.configuration.engines.reset()
         Code.configuration = self.configuration
+        Code.configuration.set_stderr("bug.analysis")
         Code.procesador = self
         OpeningsStd.ap.reset()
 
@@ -302,8 +303,6 @@ class CPU:
 
 def run(filebase: str) -> None:
     """Función principal para iniciar el análisis"""
-
-    Code.configuration.set_stderr("bug.analysis")
 
     app = QtWidgets.QApplication([])
     cpu = CPU(filebase)
