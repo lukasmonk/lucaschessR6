@@ -45,7 +45,7 @@ class Eboard:
     def log(cad):
         import traceback
 
-        with open("dgt.log", "at", encoding="utf-8", errors="ignore") as q:
+        with open(Code.configuration.paths.path_in_userdata("dgt.log"), "at", encoding="utf-8", errors="ignore") as q:
             q.write(f"\n[{Util.today()}] {cad}\n")
             q.writelines(f"    {line.strip()}\n" for line in traceback.format_stack())
 

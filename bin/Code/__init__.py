@@ -10,6 +10,15 @@ BASE_VERSION = "C"
 Util.randomize()
 
 current_dir = os.path.abspath(os.path.realpath(os.path.dirname(sys.argv[0])))
+
+# File arguments are relative to the launch directory
+if len(sys.argv) > 1 and sys.argv[1].lower().endswith((".pgn", ".lcdb", ".lcsb", ".bmt")):
+    sys.argv[1] = os.path.abspath(sys.argv[1])
+
+# A relative LUCASCHESS_HOME is taken from the launch directory; helper processes inherit the absolute path
+if os.environ.get("LUCASCHESS_HOME"):
+    os.environ["LUCASCHESS_HOME"] = os.path.abspath(os.path.expanduser(os.environ["LUCASCHESS_HOME"]))
+
 if current_dir:
     os.chdir(current_dir)
 

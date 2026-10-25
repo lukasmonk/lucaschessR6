@@ -7,6 +7,7 @@ import traceback
 import polib
 
 import Code
+from Code.Translations import Translate
 from Code.Z import XRun
 
 
@@ -128,7 +129,7 @@ class WorkTranslate:
         path_po = Code.path_resource("Locale", "messages.pot")
         pofile = polib.pofile(path_po)
 
-        path_mo = Code.path_resource("Locale", self.tr_actual, "LC_MESSAGES", "lucaschess.mo")
+        path_mo = Translate.Translations.get_path(self.tr_actual)
         mofile = polib.mofile(path_mo)
         dmo = {entry.msgid: entry.msgstr for entry in mofile}
 

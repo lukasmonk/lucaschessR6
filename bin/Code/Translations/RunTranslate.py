@@ -22,7 +22,7 @@ from Code.QT import (
     ScreenUtils,
     SelectFiles,
 )
-from Code.Translations import RunTranslateOpenings, WorkTranslate
+from Code.Translations import RunTranslateOpenings, Translate, WorkTranslate
 from Code.Z import Util
 
 
@@ -644,7 +644,8 @@ class WTranslate(LCDialog.LCDialog):
             path_mo = os.path.abspath(path_mo)
             folder = os.path.dirname(path_mo)
             self.configuration.write_variables("PATH_MO", folder)
-            path_mo_ori = Code.path_resource("Locale", self.tr_actual, "LC_MESSAGES", "lucaschess.mo")
+            path_mo_ori = self.configuration.paths.file_imported_mo(self.tr_actual)
+            Util.check_folders_filepath(path_mo_ori)
             shutil.copy(path_mo, path_mo_ori)
             self.dic_translate = self.work_translate.read_dic()
             for key, dic in self.dic_translate.items():
@@ -674,7 +675,7 @@ class WTranslate(LCDialog.LCDialog):
     def read_language(self, lng):
         if lng in self.dic_languages:
             return
-        path_mo = Code.path_resource("Locale", lng, "LC_MESSAGES", "lucaschess.mo")
+        path_mo = Translate.Translations.get_path(lng)
         mofile = polib.mofile(path_mo)
         self.dic_languages[lng] = {entry.msgid: entry.msgstr for entry in mofile}
 

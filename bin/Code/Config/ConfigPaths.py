@@ -5,7 +5,10 @@ from Code.Z import Util
 
 
 class ConfigPaths:
-    LCFILEFOLDER: str = os.path.realpath("../lc.folder")
+    # With LUCASCHESS_HOME, the program folder may be read-only
+    LCFILEFOLDER: str = os.path.realpath(
+        Util.opj(os.environ["LUCASCHESS_HOME"], "lc.folder") if os.environ.get("LUCASCHESS_HOME") else "../lc.folder"
+    )
     LCBASEFOLDER: str = os.path.realpath("../UserData")
 
     def __init__(self, configuration, user):
@@ -35,6 +38,8 @@ class ConfigPaths:
 
         # 2. Comprobar la variable de entorno LUCASCHESS_HOME
         env_home = os.environ.get("LUCASCHESS_HOME")
+        if env_home:
+            Util.check_folders(env_home)
         if env_home and Util.is_folder_accessible(env_home):
             return env_home
 
@@ -75,6 +80,10 @@ class ConfigPaths:
         if not os.path.isdir(folder):
             Util.create_folder(folder)
         return folder
+
+    def file_imported_mo(self, lang):
+        # Imported with the translation tool; kept per version, like the bundled catalog it overrides
+        return Util.opj(self.folder_translations(), Code.VERSION, lang, "lucaschess.mo")
 
     # ------------------------------------------------------------------------------------- CONFIG
 

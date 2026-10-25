@@ -779,7 +779,7 @@ def importar_gm(owner_gm):
                 gm_display = f"{gm[0].upper()}{gm[1:].lower()}"
                 with QTMessages.WaitingMessage(owner_gm, _X(_("Import %1"), gm_display), opacity=1.0):
                     # Descargamos
-                    fzip = f"{gm}.zip"
+                    fzip = Code.configuration.temporary_file("zip")
                     si_bien = Util.urlretrieve(f"{web}/{gm}.zip", fzip)
 
                     if si_bien:

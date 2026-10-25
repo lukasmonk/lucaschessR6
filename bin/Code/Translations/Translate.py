@@ -97,6 +97,9 @@ class Translations:
 
     @staticmethod
     def get_path(lang):
+        imported = Code.configuration.paths.file_imported_mo(lang)
+        if os.path.isfile(imported):
+            return imported
         path_locale = Code.path_resource("Locale")
         return f"{path_locale}/{lang}/LC_MESSAGES/lucaschess.mo"
 
