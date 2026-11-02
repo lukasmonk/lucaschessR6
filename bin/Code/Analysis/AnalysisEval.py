@@ -54,6 +54,8 @@ class AnalysisEval:
                 self.conf.x_eval_mistake,
             )
 
+        elif (rm_best.mate > 0) != (rm_player.mate > 0):
+            return self.conf.x_eval_blunder
         else:
             dif_mate = abs(rm_best.mate - rm_player.mate)
             if dif_mate >= self.conf.x_eval_difmate_blunder:

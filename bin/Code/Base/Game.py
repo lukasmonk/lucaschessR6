@@ -1,3 +1,4 @@
+import re
 import textwrap
 from typing import Any
 
@@ -418,7 +419,7 @@ class Game:
             salta = 0
         for n, move in enumerate(self.li_moves):
             if n % 2 == salta:
-                resp += f" {movenum}."
+                resp += f" {movenum}. "
                 movenum += 1
             resp += f"{move.pgn_translated_extend()} " if translated else f"{move.pgn_english()} "
         resp = resp.replace("\r\n", " ").replace("\n", " ").replace("\r", " ").strip()
@@ -765,6 +766,11 @@ class Game:
             if move.position.is_terminal():
                 return True
         return False
+
+    def admit_moves(self):
+        if self.is_terminal():
+            return False
+        return self.termination == TERMINATION_UNKNOWN
 
     def is_finished(self) -> bool:
         """
@@ -1546,21 +1552,53 @@ class PGNtoGame:
 
     def _handle_comment(self, token: str) -> None:
         """
-        Handle PGN comments.
-
+        Handle PGN comments and elapsed/remaining time annotations.
         Args:
             token: Comment token.
         """
-        comment: str = token[1:-1].strip()
+        comment = token[1:-1].strip()
         if not comment:
             return
 
-        if self._active_move:
-            if self._active_move.comment:
-                self._active_move.comment += "\n"
-            self._active_move.comment += comment.replace("}", "]")
-        else:
+        if not self._active_move:
             self.game.set_first_comment(comment, False)
+            return
+
+        move = self._active_move
+
+        def time_to_ms(value: str) -> int:
+            parts = value.split(":")
+            if len(parts) != 3:
+                raise ValueError(f"Invalid PGN time: {value}")
+            hours, minutes, seconds = parts
+            return round(
+                (int(hours) * 3600 + int(minutes) * 60 + float(seconds))
+                * 1000
+            )
+
+        def store_time(match, setter):
+            try:
+                setter(time_to_ms(match.group(1)))
+            except (ValueError, OverflowError):
+                pass
+
+        comment = re.sub(
+            r"\[%emt\s+([0-9]+:[0-9]{2}:[0-9]+(?:\.[0-9]+)?)\]",
+            lambda m: (store_time(m, move.set_time_ms) or ""),
+            comment,
+            flags=re.IGNORECASE,
+        )
+
+        comment = re.sub(
+            r"\[%clk\s+([0-9]+:[0-9]{2}:[0-9]+(?:\.[0-9]+)?)\]",
+            lambda m: (store_time(m, move.set_clock_ms) or ""),
+            comment,
+            flags=re.IGNORECASE,
+        )
+
+        comment = comment.strip()
+        if comment:
+            move.add_comment(comment)
 
     def _handle_variation(self, token: str) -> None:
         """

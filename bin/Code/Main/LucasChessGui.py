@@ -40,6 +40,7 @@ def run_gui(procesador):
         # os.environ["QT_MEDIA_BACKEND"] = "wmf"
 
     main_config = Configuration.Configuration("")
+    main_config.set_stderr("bug.log")
     main_config.lee()
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)

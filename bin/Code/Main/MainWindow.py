@@ -184,17 +184,31 @@ class MainWindow(LCDialog.LCDialog):
         self.base.set_manager_active(manager)
 
     def muestra(self):
+        # Determinar los flags base según si tiene owner o no
         flags = QtCore.Qt.WindowType.Dialog if self.owner else QtCore.Qt.WindowType.Widget
         flags |= (
                 QtCore.Qt.WindowType.WindowTitleHint
                 | QtCore.Qt.WindowType.WindowMinimizeButtonHint
                 | QtCore.Qt.WindowType.WindowMaximizeButtonHint
+                | QtCore.Qt.WindowType.WindowCloseButtonHint
         )
         if self.onTop:
             flags |= QtCore.Qt.WindowType.WindowStaysOnTopHint
-        # flags &= ~QtCore.Qt.WindowType.WindowCloseButtonHint
-        self.setWindowFlags(flags)
-        self.setWindowFlags(QtCore.Qt.WindowType.WindowCloseButtonHint | flags)
+        else:
+            flags &= ~QtCore.Qt.WindowType.WindowStaysOnTopHint
+
+        # Capturar la pantalla actual antes de modificar los flags (vital para multi-pantalla en Linux)
+        current_screen = self.screen()
+
+        # Aplicar los flags solo si son diferentes para evitar destruir y recrear el handle nativo
+        if self.windowFlags() != flags:
+            self.setWindowFlags(flags)
+
+        # Si el cambio de flags desplazó la ventana a otra pantalla, la devolvemos a su monitor original
+        if current_screen and self.screen() != current_screen:
+            if self.windowHandle():
+                self.windowHandle().setScreen(current_screen)
+
         if self.board.is_maximized():
             self.showMaximized()
         else:

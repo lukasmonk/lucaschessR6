@@ -227,12 +227,12 @@ class CPU:
         """Cierra el proceso de análisis"""
         if self.is_closed:
             return
-        self.is_closed = True
-        self.timer.stop()
-
         orden = RunAnalysisControl.Orden()
         orden.key = RUNA_TERMINATE
         self.send(orden)
+
+        self.is_closed = True
+        self.timer.stop()
 
         self.ipc_send.close()
         self.ipc_receive.close()

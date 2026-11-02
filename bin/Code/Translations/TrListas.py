@@ -7,7 +7,6 @@ def level(num):
 
 def categoria(key):
     return {
-        "FUTUROPRINCIPIANTE": _("Future beginner"),
         "PRINCIPIANTE": _("Beginner"),
         "AFICIONADO": _("Amateur"),
         "CANDIDATOMAESTRO": _("Candidate Master"),

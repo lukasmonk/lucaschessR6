@@ -1,6 +1,9 @@
+import os
 import os.path
 import pickle
+import sys
 from datetime import date
+from pathlib import Path
 
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
@@ -768,9 +771,23 @@ class Configuration:
     def set_stderr(self, name_file):
         import sys
         path_bug_log = self.paths.path_in_userdata(name_file)
-        if __debug__:
-            from Code.Z import Debug
+        sys.stderr = Log(path_bug_log)
 
-            sys.stderr = Debug.LogDebug(path_bug_log)
-        else:
-            sys.stderr = Util.Log(path_bug_log)
+
+class Log:
+    def __init__(self, logname: str | Path):
+        self.logname = Path(logname).absolute()
+        if not self.logname.exists():
+            self.write("---------------------------\n")
+
+    def write(self, buf: str) -> None:
+        if buf.startswith("Traceback"):
+            import Code
+            buf = f"{Code.VERSION}-{Util.today()}\n{buf}"
+        with self.logname.open("at", encoding="utf-8") as ferr:
+            ferr.write(buf)
+        if __debug__:
+            sys.stdout.write(buf)
+
+    def flush(self) -> None:
+        pass  # To remove error 120 at exit

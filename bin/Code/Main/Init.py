@@ -13,8 +13,6 @@ def init():
     if Code.runSound:
         Code.runSound.reset()
 
-    Code.configuration.set_stderr("bug.log")
-
     if resp == ExitProgram.REINIT.value:
         QTUtils.close_app(exit0=False)
         XRun.run_lucas()

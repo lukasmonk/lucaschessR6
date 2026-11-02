@@ -1449,12 +1449,56 @@ class DBgames:
         self.rowidReader.start()
 
 
-def get_random_game():
+def get_random_game(min_pieces=None, min_moves=None):
     db = DBgames(Code.path_resource("IntFiles", "last_games.lcdb"))
-    recno = random.randint(0, db.all_reccount() - 1)
-    game = db.read_game_recno(recno)
-    db.close()
-    return game
+    try:
+        total_games = db.all_reccount()
+        if total_games == 0:
+            raise ValueError("The random-games database is empty.")
+
+        if min_pieces is None and min_moves is None:
+            return db.read_game_recno(random.randrange(total_games))
+
+        min_pieces = min_pieces or 0
+        min_moves = min_moves or 0
+        first_recno = random.randrange(total_games)
+        for offset in range(total_games):
+            recno = (first_recno + offset) % total_games
+            game = db.read_game_recno(recno)
+            last_start = len(game) - min_moves
+            if last_start < 0:
+                continue
+
+            li_starts = [
+                start
+                for start in range(last_start + 1)
+                if len(
+                    game.first_position.squares
+                    if start == 0
+                    else game.move(start - 1).position.squares
+                )
+                >= min_pieces
+            ]
+            if not li_starts:
+                continue
+
+            start = random.choice(li_starts)
+            challenge = game.copy_from_move(start).copia(min_moves - 1)
+            challenge.set_tags(
+                [
+                    (key, value)
+                    for key, value in game.li_tags
+                    if key.upper()
+                    in {"WHITE", "BLACK", "EVENT", "SITE", "DATE", "ROUND"}
+                ]
+            )
+            return challenge
+
+        raise ValueError(
+            f"No random game has {min_moves} moves after a position with at least {min_pieces} pieces."
+        )
+    finally:
+        db.close()
 
 
 def autosave(game: Game.Game):

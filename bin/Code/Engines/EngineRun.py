@@ -223,6 +223,8 @@ class EngineRun(QtCore.QObject):
         self.li_cache: List[str] = []
         self.uci_ok = False
 
+        self.li_cache_options = []
+
         # Iniciar lectura de UCI
         # self._read_uci()  # no hace falta, la lectura de uci se hace en otro lado
         # self.state = EngineState.READING_UCI
@@ -398,6 +400,13 @@ class EngineRun(QtCore.QObject):
                 return False
 
             if running:
+                if self.state == EngineState.READING_UCI:
+                    self.li_cache_options.append(command)
+                    return True
+
+                if command == "uci":
+                    self.state = EngineState.READING_UCI
+
                 try:
                     self.process.write(f"{command}\n".encode("utf-8"))
 
@@ -455,6 +464,10 @@ class EngineRun(QtCore.QObject):
                     if st == EngineState.READING_UCI:
                         if line == "uciok":
                             self.state = EngineState.OK
+                            if self.li_cache_options:
+                                for option in self.li_cache_options:
+                                    self._send_command(option)
+                                self.li_cache_options = []
                             if self.mode_timer_poll:
                                 # APAGAMOS POLLING
                                 self._stop_polling()
@@ -467,6 +480,10 @@ class EngineRun(QtCore.QObject):
                     elif st == EngineState.PENDING_READYOK:
                         if line == "readyok":
                             self.state = EngineState.OK
+                            if self.li_cache_options:
+                                for option in self.li_cache_options:
+                                    self._send_command(option)
+                                self.li_cache_options = []
                             if self.mode_timer_poll:
                                 # APAGAMOS POLLING
                                 self._stop_polling()

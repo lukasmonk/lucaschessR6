@@ -27,25 +27,6 @@ def md5_lc(x: str) -> int:
     return int.from_bytes(hashlib.md5(x.encode()).digest(), "big") & 0xFFFFFFFFFFFFFFF
 
 
-class Log:
-    def __init__(self, logname: str | Path):
-        self.logname = Path(logname).absolute()
-
-    def write(self, buf: str) -> None:
-        if buf.startswith("Traceback"):
-            import Code
-
-            buf = f"{Code.VERSION}-{today()}\n{buf}"
-        with self.logname.open("at", encoding="utf-8") as ferr:
-            ferr.write(buf)
-
-    def writeln(self, buf: str) -> None:
-        self.write(f"{buf}\n")
-
-    def flush(self) -> None:
-        pass  # To remove error 120 at exit
-
-
 def remove_file(file: str | Path) -> bool:
     try:
         Path(file).unlink(missing_ok=True)

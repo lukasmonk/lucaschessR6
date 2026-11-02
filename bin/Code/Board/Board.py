@@ -171,6 +171,7 @@ class Board(QtWidgets.QGraphicsView):
         self.setDragMode(QtWidgets.QGraphicsView.DragMode.NoDrag)
         self.setInteractive(True)
         self.setTransformationAnchor(QtWidgets.QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
         self.escena = QtWidgets.QGraphicsScene(self)
         self.escena.setItemIndexMethod(QtWidgets.QGraphicsScene.ItemIndexMethod.NoIndex)  # IMPORTANTE -> sino error

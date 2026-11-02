@@ -219,7 +219,7 @@ class GraphToolTip(QtWidgets.QGraphicsItem):
         self.x = x
         self.y = y
         rancho = self.metrics.horizontalAdvance(self.texto) + 10
-        ralto = self.metrics.height() + 12
+        ralto = self.metrics.height()*2 + 12
 
         rx = 10 if "e" in self.dr else -rancho
         ry = -ralto if "n" in self.dr else +ralto
@@ -323,7 +323,7 @@ class Histogram(QtWidgets.QGraphicsView):
 
         text_rect = QtCore.QRectF(left - 2, bottom + 4, width + 2, height)
         font = painter.font()
-        font.setPointSize(8)
+        font.setPointSize(9)
         painter.setFont(font)
         njg = self.steps + 1
         step = self.step
@@ -362,7 +362,7 @@ class Histogram(QtWidgets.QGraphicsView):
             plant = "%+0.1f"
             for d in coord:
                 y = escala_logaritmica(height, d) - height / 42
-                painter.drawText(int(x - 30), int(y), w + 10, h, align_right, plant % d)
+                painter.drawText(int(x - 30), int(y), w + 10, h+4, align_right, plant % d)
 
             # Linea de referencia en la mitad-horizontal
             painter.setPen(QtCore.Qt.GlobalColor.black)
@@ -548,9 +548,24 @@ def gen_histograms(game: Game.Game):
         move.xsiW = is_white
 
         label += move.pgn_translated()
-        tooltip = f"{label} {pts:+0.02f}"
+        tooltip = f"{label} {move.label_analysis()}"
         if lostp:
-            tooltip += f"  ↓{lostp:0.02f}"
+            mt0 = mrm.li_rm[0].mate
+            mt1 = mrm.li_rm[pos].mate
+            if mt0:
+                if mt1:
+                    if (mt0 > 0) == (mt1 > 0):
+                        more_info = f"M↓{-mt0 + mt1}"
+                    else:
+                        more_info = "⨠M"
+                else:
+                    more_info = "⨠M"
+            elif mt1:
+                more_info = "⨠M"
+            else:
+                more_info = f"↓{lostp:0.02f}"
+            if more_info:
+                tooltip += f"\n{more_info}"
 
         avg = getattr(move, "elo_avg", 0)
         hp = HPoint(nj, pts, lostp, lostp_abs, tooltip, avg)

@@ -299,9 +299,8 @@ def _form_general_options(analysis_params, is_massive, num_selected_massive=0):
     if Code.configuration.x_alias:
         alias += f";{Code.configuration.x_alias}"
         alias = alias.replace(";", ", ")
-    li_gen.append((f'<big>+</big> {_("Player")}', analysis_params.my_moves))
-    li_gen.append(
-        (None, f"€     {alias}"))
+    chb_player = FormLayout.Checkbox(f'<big>+</big> {_("Player")}', analysis_params.my_moves, f"  {alias}")
+    li_gen.append((chb_player, analysis_params.my_moves))
     li_gen.append(SEPARADOR)
 
     config = FormLayout.Editbox(

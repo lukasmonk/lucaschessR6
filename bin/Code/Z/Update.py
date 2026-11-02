@@ -147,6 +147,8 @@ def update(main_window):
                                 )
                             else:
                                 done_update = True
+                            if urlfichero.endswith("act_cut.zip"):
+                                break
 
         f.close()
     except urllib.error.URLError:

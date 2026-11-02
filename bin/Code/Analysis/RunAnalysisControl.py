@@ -1,4 +1,5 @@
 import collections
+import concurrent.futures
 import contextlib
 import os
 import threading
@@ -351,8 +352,10 @@ class AnalysisMassive(QtCore.QThread):
 
             self.msleep(30)
 
-        for worker in self.li_workers:
-            worker.close()
+        workers = list(self.li_workers)
+        if workers:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(workers)) as executor:
+                list(executor.map(Worker.close, workers))
 
         if not self._is_canceled:
             self.finished_successfully.emit()

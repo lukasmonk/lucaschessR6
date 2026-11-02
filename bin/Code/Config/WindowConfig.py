@@ -193,6 +193,9 @@ def options(parent, configuration):
         step=5,
     )
     form.separador()
+    form.checkbox(_("Auto-orient board to my color in review"), configuration.x_auto_orient)
+    form.separador()
+
 
     li_gr = [
         (_("Show nothing"), None),
@@ -270,7 +273,6 @@ def options(parent, configuration):
         (_("Descriptive"), NOTATION_DESCRIPTIVE),
     )
     form.combobox(_("Notation Style"), li_notations, configuration.x_notation_style)
-    form.checkbox(_("Auto-orient board to my color in review"), configuration.x_auto_orient)
     form.separador()
 
     form.combobox(_("Scroll direction with the mouse wheel"), li_wheel, configuration.x_wheel_pgn)
@@ -374,6 +376,7 @@ def options(parent, configuration):
             configuration.x_autopromotion_q,
             configuration.x_mouse_shortcuts,
             configuration.x_show_square_shortcut,
+            configuration.x_auto_orient,
             configuration.x_director_icon,
             configuration.x_direct_graphics,
             dboard,
@@ -438,7 +441,6 @@ def options(parent, configuration):
             configuration.x_pgn_english,
             configuration.x_pgn_withfigurines,
             configuration.x_notation_style,
-            configuration.x_auto_orient,
             configuration.x_wheel_pgn,
             configuration.x_captures_activate,
             configuration.x_info_activate,

@@ -89,6 +89,9 @@ class Worker(QtWidgets.QWidget):
         self.is_closed = False
         self.state = None
         self.current_side = WHITE
+        self.clock_timer = QtCore.QTimer(self)
+        self.clock_timer.setInterval(250)
+        self.clock_timer.timeout.connect(self.update_clock)
 
         ly_ab_board = Colocacion.H().control(self.analysis_bar).control(self.board)
         ly_tt = Colocacion.V().control(self.tb).otro(ly_ab_board)
@@ -419,6 +422,16 @@ class Worker(QtWidgets.QWidget):
         QTUtils.refresh_gui()
         return True
 
+    def update_clock(self):
+        if self.is_closed or self.state != ST_PLAYING or self.game_finished():
+            return
+        is_white = self.current_side == WHITE
+        tc = self.tc_white if is_white else self.tc_black
+        tc.set_labels()
+        if tc.time_is_consumed():
+            self.game.set_termination_time(is_white)
+            self.dic_engine_managers[is_white].stop()
+
     def start_clock(self, is_white):
         tc = self.tc_white if is_white else self.tc_black
         tc.start()
@@ -535,14 +548,19 @@ class Worker(QtWidgets.QWidget):
         )
 
         self.start_clock(is_white)
-        rm = engine_manager.play(game=self.game, dispatcher=self.gui_dispatch)
+        self.clock_timer.start()
+        try:
+            rm = engine_manager.play(game=self.game, dispatcher=self.gui_dispatch)
+        finally:
+            self.clock_timer.stop()
         if self.state == ST_PAUSE:
             self.board.remove_movables()
             return True
         time_seconds = self.stop_clock(is_white)
         clock_seconds = self.tc_white.pending_time if is_white else self.tc_black.pending_time
         if rm is None:
-            self.sudden_end(is_white)
+            if not self.game_finished():
+                self.sudden_end(is_white)
             return True
 
         from_sq = rm.from_sq

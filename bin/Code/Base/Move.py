@@ -175,6 +175,34 @@ class Move:
 
         return dif, None
 
+    def label_analysis(self) -> str:
+        if self.analysis is None:
+            return ""
+
+        mrm, pos = self.analysis
+        rm = mrm.li_rm[pos]
+        mate = rm.mate
+        is_white = self.is_white()
+        if mate:
+            if mate == 1:
+                info = "#"
+            else:
+                if not is_white:
+                    mate = -mate
+                if (mate > 1) and is_white:
+                    mate -= 1
+                elif (mate < -1) and not is_white:
+                    mate += 1
+
+                info = "M%+d" % mate
+        else:
+            pts = rm.puntos
+            if not is_white:
+                pts = -pts
+            info = rm.cp_label(pts)
+
+        return info
+
     @property
     def list_piece_moves(self):
         """

@@ -140,15 +140,21 @@ class ManagerNavigation:
         return
 
     def goto_firstposition(self):
-        pieces_active = self.manager.board.pieces_are_active
         position = self.manager.game.first_position
-        self.manager.set_position(position)
-        self.main_window.base.pgn.goto(0, 0)
-        self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados
-        self.manager.put_view()
-        self.manager.board.set_last_position(position)
-        if pieces_active:
-            self.manager.board.activate_side(position.is_white)
+        if self.manager.pgn.variations_mode:
+            self.manager.set_position(position, "-1")
+            self.main_window.base.pgn.goto(0, 0)
+            self.manager.refresh_pgn()  # No se puede usar pgn_refresh,
+            self.manager.put_view()
+        else:
+            pieces_active = self.manager.board.pieces_are_active
+            self.manager.set_position(position)
+            self.main_window.base.pgn.goto(0, 0)
+            self.manager.refresh_pgn()  # No se puede usar pgn_refresh, ya que se usa con gobottom en otros lados
+            self.manager.put_view()
+            self.manager.board.set_position(position)
+            if pieces_active:
+                self.manager.board.activate_side(position.is_white)
 
     def pgn_move(self, row, is_white, animate_forward=False):
         if animate_forward and Code.configuration.x_show_effects:

@@ -73,7 +73,6 @@ class ManagerSolo(Manager.Manager):
             self.game.set_position()
             self.game.read_pv(self.opening_block.a1h8)
             self.game.assign_opening()
-
         self.pon_toolbar()
 
         self.main_window.active_game(True, False)
@@ -99,7 +98,7 @@ class ManagerSolo(Manager.Manager):
         self.valor_inicial = self.dame_valor_actual()
 
         self.goto_end()
-        self.play_next_move()
+        self.play_next_move(show_result=False)
 
     def pon_rotulo(self):
         li = []
@@ -186,7 +185,7 @@ class ManagerSolo(Manager.Manager):
         self.end_game()
         return False
 
-    def play_next_move(self):
+    def play_next_move(self, show_result=True):
         if self.state == ST_ENDGAME:
             return
 
@@ -198,8 +197,9 @@ class ManagerSolo(Manager.Manager):
         is_white = self.game.last_position.is_white
         self.is_human_side_white = is_white  # Compatibilidad, sino no funciona el cambio en pgn
 
-        if self.game.is_terminal():
-            self.show_result()
+        if not self.game.admit_moves() :
+            if show_result:
+                self.show_result()
             return
 
         self.set_side_indicator(is_white)
@@ -227,6 +227,21 @@ class ManagerSolo(Manager.Manager):
     def show_result(self):
         self.state = ST_ENDGAME
         self.disable_all()
+        self.human_is_playing = False
+        if Code.eboard and Code.eboard.driver:
+            self.main_window.delay_routine(
+                300, self.muestra_resultado_delayed
+            )  # Para que eboard siga su proceso y no se pare por la pregunta
+        else:
+            self.muestra_resultado_delayed()
+
+    def muestra_resultado_delayed(self):
+        mensaje = self.game.label_termination()
+        if mensaje:
+            QTUtils.refresh_gui()
+            p0 = self.main_window.base.pgn.pos()
+            p = self.main_window.mapToGlobal(p0)
+            QTMessages.message(self.main_window, self.game.label_termination(), px=p.x(), py=p.y(), si_bold=True)
 
     def dame_valor_actual(self):
         dic = self.creaDic()

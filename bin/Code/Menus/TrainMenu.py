@@ -62,6 +62,8 @@ class TrainMenu(BaseMenu.RootMenu):
 
         submenu_games.new("counts", _("Count moves"), Iconos.Count())
 
+        submenu_games.new("unscramble_moves", _("Unscramble the moves"), Iconos.UnscrambleMoves())
+
         submenu_resistence = submenu_games.new_submenu(_("Resistance Test"), Iconos.Resistencia())
         nico = Util.Rondo(Iconos.Verde(), Iconos.Azul(), Iconos.Amarillo(), Iconos.Naranja())
         submenu_resistence.new("resistance", _("Normal"), nico.otro())

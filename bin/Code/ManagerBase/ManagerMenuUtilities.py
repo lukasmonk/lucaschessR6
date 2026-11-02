@@ -114,24 +114,25 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
             menu.opcion("replay", _("Replay game"), Iconos.Pelicula())
 
         # Juega por mi + help to move
-        if self.manager.active_play_instead_of_me() and hasattr(self.manager, "play_instead_of_me"):
-            menu.separador()
-            menu.opcion(
-                "play_instead_of_me",
-                _("Play instead of me"),
-                Iconos.JuegaPorMi(),
-                shortcut="Ctrl+1",
-            )
-
-        if self.manager.active_help_to_move():
-            if hasattr(self.manager, "help_to_move"):
+        if not self.manager.is_competing():
+            if self.manager.active_play_instead_of_me() and hasattr(self.manager, "play_instead_of_me"):
                 menu.separador()
                 menu.opcion(
-                    "help_to_move",
-                    _("Help to move"),
-                    Iconos.BotonAyuda(),
-                    shortcut="Ctrl+2",
+                    "play_instead_of_me",
+                    _("Play instead of me"),
+                    Iconos.JuegaPorMi(),
+                    shortcut="Ctrl+1",
                 )
+
+            if self.manager.active_help_to_move():
+                if hasattr(self.manager, "help_to_move"):
+                    menu.separador()
+                    menu.opcion(
+                        "help_to_move",
+                        _("Help to move"),
+                        Iconos.BotonAyuda(),
+                        shortcut="Ctrl+2",
+                    )
 
         # Arbol de movimientos
         if with_tree:
@@ -139,14 +140,15 @@ class ManagerMenuUtilities(ManagerMenu.ManagerMenu):
             menu.opcion("arbol", _("Moves tree"), Iconos.Arbol(), shortcut="Alt+M")
 
         menu.separador()
-        menu.opcion("play", _("Play current position"), Iconos.MoverJugar(), shortcut="Alt+X")
+        if not self.manager.is_competing():
+            menu.opcion("play", _("Play current position"), Iconos.MoverJugar(), shortcut="Alt+X")
 
         # Hints
         menu.separador()
         menu.opcion("forcing_moves", _("Find forcing moves"), Iconos.Thinking())
 
         # Learn this game
-        if len(self.game) > 0:
+        if len(self.game) > 0 and not self.manager.is_competing():
             menu.separador()
             menu.opcion(
                 "learn_mem",

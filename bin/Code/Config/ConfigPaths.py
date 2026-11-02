@@ -254,6 +254,12 @@ class ConfigPaths:
     def file_daily_test(self):
         return self._to_results("nivel.pkd")
 
+    def file_unscramble_moves(self):
+        return self._to_results("UnscrambleMoves.db")
+
+    def file_unscramble_moves_state(self):
+        return self._to_results("UnscrambleMoves.state")
+
     def file_power(self):
         return self._to_results("power.db")
 

@@ -123,6 +123,7 @@ class Procesador:
         ]  # Lo incluimos aqui porque sino no lo lee, en caso de aplazada
 
         self.configuration = Configuration.Configuration(user)
+        self.configuration.set_stderr("bug.log")
         self.configuration.start()
 
         Code.procesador = self

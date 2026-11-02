@@ -22,6 +22,7 @@ from Code.Resistance import ManagerResistance, Resistance, WindowResistance
 from Code.Tactics import ManagerTactics, Tactics, WindowTactics
 from Code.TrainPositions import TrainPositions
 from Code.TurnOnLights import ManagerTurnOnLights, TurnOnLights, WindowTurnOnLights
+from Code.UnscrambleMoves import WindowUnscrambleMoves
 from Code.ZQT import WindowDailyTest, WindowHorses, WindowPotencia, WindowPuente, WindowVisualiza
 
 
@@ -93,6 +94,9 @@ class TrainMenuRun:
 
         elif resp == "playGame":
             self.procesador.play_game()
+
+        elif resp == "unscramble_moves":
+            WindowUnscrambleMoves.start_training(self.parent)
 
         elif resp.startswith("map_"):
             nada, mapa = resp.split("_")

@@ -3449,3 +3449,15 @@ def pmNewFolder():
 
 def NewFolder():
     return iget("NewFolder")
+
+def pmUnscrambleMoves():
+    return iget("pmUnscrambleMoves")
+
+def UnscrambleMoves():
+    return iget("UnscrambleMoves")
+
+def pmPathTo2000():
+    return iget("pmPathTo2000")
+
+def PathTo2000():
+    return iget("PathTo2000")

@@ -1693,7 +1693,7 @@ class WGames(QtWidgets.QWidget):
                 continue
             li_fields.append((key, col.head))
 
-        with open(path_csv, mode="w", newline="") as file:
+        with open(path_csv, mode="w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
             li_data = []
             for key, head in li_fields:
@@ -1796,7 +1796,7 @@ class WGames(QtWidgets.QWidget):
                 continue
             li_fields.append((key, col.head))
 
-        with open(path_csv, mode="w", newline="") as file:
+        with open(path_csv, mode="w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
             li_data = []
             for key, head in li_fields:
@@ -1821,7 +1821,10 @@ class WGames(QtWidgets.QWidget):
             QTMessages.temporary_message(self, _("Saved"), 0.8)
             if not self.is_temporary:
                 self.changes = False
-        pb.close()
+        try:
+            pb.close()
+        except RuntimeError:
+            pass
         if not canceled:
             Util.startfile(path_csv)
 

@@ -102,23 +102,3 @@ def timeit(func):
 builtins.stack = stack
 builtins.stack0 = stack0
 builtins.prln = prln
-
-
-class LogDebug:
-    def __init__(self, logname):
-        self.logname = os.path.abspath(logname)
-
-    def write(self, buf):
-        if buf.startswith("Traceback"):
-            buf = f"{Util.today()}\n{buf}"
-        with open(self.logname, "at") as ferr:
-            ferr.write(buf)
-        pr(buf)
-
-    def writeln(self, buf):
-        with open(self.logname, "at") as ferr:
-            ferr.write(f"{buf}\n")
-        prln(buf)
-
-    def flush(self):
-        pass  # To remove error 120 at exit

@@ -597,8 +597,15 @@ class Manager:
             rm0 = mrm.best_rm_ordered()
             self.board.put_arrow_scvar([(rm0.from_sq, rm0.to_sq)])
 
+    def is_competing(self):
+        if self.game.is_finished():
+            return False
+        if self.state == ST_ENDGAME:
+            return False
+        return self.is_competitive
+
     def si_check_kibitzers(self):
-        return (self.state == ST_ENDGAME) or (not self.is_competitive)
+        return not self.is_competing()
 
     def show_bar_kibitzers_variation(self, game_run):
         if self.kibitzers_manager.some_working():
@@ -1506,7 +1513,7 @@ class Manager:
         if not promotion and var_move.position_before.pawn_can_promote(from_sq, to_sq):
             promotion = self.board.pawn_promoting(var_move.position_before.is_white)
             if promotion is None:
-                return
+                return False
         else:
             promotion = ""
 
@@ -1515,13 +1522,13 @@ class Manager:
         if is_in_main_move:
             if var_move.movimiento() == movimiento:
                 self.move_according_key(GO_FORWARD)
-                return
+                return True
             else:
                 position_before = var_move.position_before.copia()
                 game_var = Game.Game(first_position=position_before)
                 ok, mens, new_move = Move.get_game_move(game_var, position_before, from_sq, to_sq, promotion)
                 if not ok:
-                    return
+                    return False
 
                 game_var.add_move(new_move)
                 num_var = var_move.add_variation(game_var)
@@ -1544,13 +1551,13 @@ class Manager:
                 if var_move.movimiento() == movimiento:
                     link = "%s|%d" % (cvariation_move, (num_var_move + 1))
                     self.main_window.pgn_information.variantes.link_variation_pressed(link)
-                    return
+                    return True
 
                 position_before = var_move.position_before.copia()
                 game_var = Game.Game(first_position=position_before)
                 ok, mens, new_move = Move.get_game_move(game_var, position_before, from_sq, to_sq, promotion)
                 if not ok:
-                    return
+                    return False
 
                 game_var.add_move(new_move)
                 var_move.add_variation(game_var)
@@ -1570,12 +1577,13 @@ class Manager:
                 position_before = var_move.position.copia()
                 ok, mens, new_move = Move.get_game_move(variation, position_before, from_sq, to_sq, promotion)
                 if not ok:
-                    return
+                    return False
 
                 variation.add_move(new_move)
                 cvariation_move = "|".join([cnum for cnum in self.board.variation_history.split("|")][:-1])
                 link_variation_pressed("%s|%d" % (cvariation_move, (num_var_move + 1)))
                 self.kibitzers_manager.put_game(variation, self.board.is_white_bottom)
+        return True
 
     def keypressed_when_variations(self, nkey):
         if len(self.game) == 0:

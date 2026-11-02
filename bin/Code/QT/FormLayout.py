@@ -51,7 +51,8 @@ separador = (None, None)
     CARPETA,
     FONTCOMBOBOX,
     CHSPINBOX,
-) = range(10)
+    CHECKBOX
+) = range(11)
 
 
 class Line:
@@ -270,6 +271,15 @@ class FontCombobox:
     def __init__(self, label):
         self.tipo = FONTCOMBOBOX
         self.label = f"{label}:"
+
+
+class Checkbox:
+    def __init__(self, label: str, value: bool, text_post: str):
+        self.tipo = CHECKBOX
+        self.label = f"{label}:"
+        self.value = value
+        self.text_post = text_post
+
 
 
 class Colorbox:
@@ -774,6 +784,9 @@ class FormWidget(QtWidgets.QWidget):
                         field.setFixedWidth(Controles.calc_fixed_width(config.ancho))
                         if dispatch:
                             field.valueChanged.connect(dispatch)
+                    elif tipo == CHECKBOX:
+                        field = Controles.CHB(self, config.text_post, value)
+
                     elif tipo == COMBOBOX:
                         field = Controles.CB(self, config.lista, value, extend_seek=config.extend_seek)
                         if config.auto_width:
@@ -922,6 +935,8 @@ class FormWidget(QtWidgets.QWidget):
                 elif tipo == COMBOBOX:
                     n = field.currentIndex()
                     value = field.lista[n][1]
+                elif tipo == CHECKBOX:
+                    value = field.valor()
                 elif tipo == FONTCOMBOBOX:
                     value = field.currentFont().family()
                 elif tipo == COLORBOX or tipo == DIAL or tipo == SLIDER:
