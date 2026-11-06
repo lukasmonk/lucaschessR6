@@ -30,7 +30,7 @@ class ManagerMenuConfig(ManagerMenu.ManagerMenu):
                 tit = _("Enable")
             menu_cg.opcion("cg_change", tit, ico, shortcut="Alt+Y")
             menu_cg.separador()
-            menu_cg.opcion("cg_conf", _("Configuration"), Iconos.Opciones(), shortcut="CTRL+Y")
+            menu_cg.opcion("cg_conf", _("Configuration"), Iconos.Opciones(), shortcut="Ctrl+Y")
             menu_cg.separador()
             menu_cg.opcion(
                 "cg_pgn",

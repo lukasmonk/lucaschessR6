@@ -11,7 +11,7 @@ class WAbout(QtWidgets.QDialog):
         super().__init__(procesador.main_window)
 
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
-
+        
         # gen_web_bootstrap()
 
         self.setWindowTitle(_("About"))

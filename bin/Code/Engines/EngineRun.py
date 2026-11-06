@@ -984,11 +984,10 @@ class Ponder:
         li = line.split()
         if len(li) >= 4 and li[2] == "ponder":
             self.ponder = li[3]
-            if "fen" in self.last_position_sent and "moves" not in self.last_position_sent:
-                command = f'{self.last_position_sent} moves'
-            else:
-                command = self.last_position_sent
-            command_position = f'{command.strip()} {li[1]} {li[3]}'
+            command = self.last_position_sent.rstrip()
+            if "moves" not in command.split():
+                command += " moves"
+            command_position = f"{command} {li[1]} {li[3]}"
 
             li_go = self.last_go_sent.split()
             if "wtime" in self.last_go_sent:

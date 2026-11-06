@@ -141,7 +141,7 @@ class ManagerNavigation:
 
     def goto_firstposition(self):
         position = self.manager.game.first_position
-        if self.manager.pgn.variations_mode:
+        if self.manager.pgn.variations_mode and len(self.manager.game) > 0:
             self.manager.set_position(position, "-1")
             self.main_window.base.pgn.goto(0, 0)
             self.manager.refresh_pgn()  # No se puede usar pgn_refresh,

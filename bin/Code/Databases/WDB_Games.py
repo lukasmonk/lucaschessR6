@@ -134,8 +134,6 @@ class WGames(QtWidgets.QWidget):
             add_tb(_("Filter"), Iconos.Filtrar(), self.tw_filtrar)
             add_tb(_("First"), Iconos.Inicio(), self.tw_gotop)
             add_tb(_("Last"), Iconos.Final(), self.tw_gobottom)
-            add_tb(_("Up"), Iconos.Arriba(), self.tw_up)
-            add_tb(_("Down"), Iconos.Abajo(), self.tw_down)
             add_tb(_("Remove"), Iconos.Borrar(), self.tw_remove_tb)
             add_tb(_("Config"), Iconos.Configurar(), self.tw_configure)
             add_tb(_("Utilities"), Iconos.Utilidades(), self.tw_utilities)
@@ -195,6 +193,7 @@ class WGames(QtWidgets.QWidget):
     def tw_memorize(self):
         li = self.grid.list_selected_recnos()
         if li:
+            db_learn: WindowLearnGame.DBLearnGame
             with WindowLearnGame.DBLearnGame() as db_learn:
                 with QTMessages.one_moment_please(self.wb_database):
                     recno = li[0]
@@ -413,6 +412,10 @@ class WGames(QtWidgets.QWidget):
             self.tw_menu_columns()
         elif is_alt and k == QtCore.Qt.Key.Key_A:
             self.tw_massive_analysis()
+        elif is_alt and k == QtCore.Qt.Key.Key_Up:
+            self.tw_up()
+        elif is_alt and k == QtCore.Qt.Key.Key_Down:
+            self.tw_down()
 
         else:
             return True  # que siga con el resto de teclas
@@ -929,7 +932,7 @@ class WGames(QtWidgets.QWidget):
             self.tw_edit_columns,
             _("Configure the columns"),
             Iconos.EditColumns(),
-            shortcut="ALT+C",
+            shortcut="Alt+C",
         )
         menu.separador()
 
@@ -937,7 +940,7 @@ class WGames(QtWidgets.QWidget):
             self.tw_resize_columns,
             _("Resize all columns to contents"),
             Iconos.ResizeAll(),
-            shortcut="ALT+R",
+            shortcut="Alt+R",
         )
         menu.separador()
 
@@ -1226,8 +1229,9 @@ class WGames(QtWidgets.QWidget):
             menu.separador()
             menu.opcion(
                 self.goto_registro,
-                f"{_('Go to the record')} ({_('CTRL')}-G)",
+                _('Go to the record'),
                 Iconos.GoToNext(),
+                shortcut="Ctrl+G",
             )
             menu.separador()
             menu.opcion(self.tw_polyglot, _("Create a polyglot book"), Iconos.Book())
@@ -1266,6 +1270,11 @@ class WGames(QtWidgets.QWidget):
                 Iconos.Board(),
             )
             menu.separador()
+
+        menu.opcion(self.tw_up, _("Move the active record up"), Iconos.MoveUp(), shortcut="Alt+Up")
+        menu.separador()
+        menu.opcion(self.tw_down, _("Move the active record down"), Iconos.MoveDown(), shortcut="Alt+Down")
+        menu.separador()
 
         menu.opcion(self.tw_tags, _("Update tags"), Iconos.Tags())
         menu.separador()

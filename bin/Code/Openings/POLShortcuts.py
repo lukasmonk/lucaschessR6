@@ -59,7 +59,7 @@ class ShortCuts:
         for pos, dic_shortcut in enumerate(self.li_shortcuts):
             txt = dic_shortcut["NAME"]
             alt = dic_shortcut["ALT"]
-            shortcut = f"ALT+{alt}" if alt else None
+            shortcut = f"Alt+{alt}" if alt else None
             menu.opcion(str(pos), txt, rondo.otro(), shortcut=shortcut)
         menu.separador()
         menu_mant = menu.submenu(_("Maintenance"), Iconos.Configurar())
@@ -70,7 +70,7 @@ class ShortCuts:
         for pos, dic_shortcut in enumerate(self.li_shortcuts):
             txt = dic_shortcut["NAME"]
             alt = dic_shortcut["ALT"]
-            shortcut = f"ALT+{alt}" if alt else None
+            shortcut = f"Alt+{alt}" if alt else None
             menu_remove.opcion(f"rem_{pos}", txt, Iconos.Borrar(), shortcut=shortcut)
             menu_remove.separador()
 

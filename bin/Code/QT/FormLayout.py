@@ -65,14 +65,14 @@ class Line:
 
 class FormLayout:
     def __init__(
-        self,
-        parent,
-        title,
-        icon,
-        with_default=False,
-        minimum_width=None,
-        dispatch=None,
-        font_txt=None,
+            self,
+            parent,
+            title,
+            icon,
+            with_default=False,
+            minimum_width=None,
+            dispatch=None,
+            font_txt=None,
     ):
         self.parent = parent
         self.title = title
@@ -105,17 +105,17 @@ class FormLayout:
         self.eddefault(label, init_value)
 
     def editbox(
-        self,
-        label,
-        ancho=None,
-        rx=None,
-        tipo=None,
-        is_password=False,
-        alto=1,
-        decimales=1,
-        init_value=None,
-        negatives=False,
-        tooltip=None,
+            self,
+            label,
+            ancho=None,
+            rx=None,
+            tipo=None,
+            is_password=False,
+            alto=1,
+            decimales=1,
+            init_value=None,
+            negatives=False,
+            tooltip=None,
     ):
         self.li_gen.append(
             (
@@ -156,15 +156,15 @@ class FormLayout:
         self.li_gen.append((FontCombobox(label), init_value))
 
     def file(
-        self,
-        label,
-        extension,
-        si_save,
-        init_value,
-        is_relative=True,
-        minimum_width=None,
-        file_default="",
-        li_histo=None,
+            self,
+            label,
+            extension,
+            si_save,
+            init_value,
+            is_relative=True,
+            minimum_width=None,
+            file_default="",
+            li_histo=None,
     ):
         self.li_gen.append(
             (
@@ -281,7 +281,6 @@ class Checkbox:
         self.text_post = text_post
 
 
-
 class Colorbox:
     def __init__(self, label, ancho, alto, is_checked=False, is_str=False):
         self.tipo = COLORBOX
@@ -294,16 +293,16 @@ class Colorbox:
 
 class Editbox:
     def __init__(
-        self,
-        label,
-        ancho=None,
-        rx=None,
-        tipo=None,
-        is_password=False,
-        alto=1,
-        decimales=1,
-        negatives=False,
-        tooltip=None,
+            self,
+            label,
+            ancho=None,
+            rx=None,
+            tipo=None,
+            is_password=False,
+            alto=1,
+            decimales=1,
+            negatives=False,
+            tooltip=None,
     ):
         self.tipo = EDITBOX
         self.label = f"{label}:"
@@ -353,14 +352,14 @@ class Carpeta:
 
 class Fichero:
     def __init__(
-        self,
-        label,
-        extension,
-        is_save,
-        is_relative=True,
-        minimum_width=None,
-        file_default="",
-        li_histo=None,
+            self,
+            label,
+            extension,
+            is_save,
+            is_relative=True,
+            minimum_width=None,
+            file_default="",
+            li_histo=None,
     ):
         self.tipo = FICHERO
         self.extension = extension
@@ -458,8 +457,8 @@ class LBotonFichero(QtWidgets.QHBoxLayout):
                     self.boton.set_filepath(resp)
                 elif menu.is_right:
                     if QTMessages.pregunta(
-                        self.parent,
-                        _("Do you want to remove file %s from the list?") % resp,
+                            self.parent,
+                            _("Do you want to remove file %s from the list?") % resp,
                     ):
                         del self.li_histo[self.li_histo.index(resp)]
 
@@ -966,7 +965,7 @@ class FormWidget(QtWidgets.QWidget):
                     txt = txt.replace(",", ".")
                 while txt.count(".") > 1:
                     x = txt.index(".")
-                    txt = txt[:x] + txt[x + 1 :]
+                    txt = txt[:x] + txt[x + 1:]
                 try:
                     value = float(txt)
                 except ValueError:
@@ -1015,15 +1014,15 @@ class FormDialog(QtWidgets.QDialog):
     accion: str
 
     def __init__(
-        self,
-        data,
-        title="",
-        comment="",
-        icon=None,
-        parent=None,
-        if_default=True,
-        dispatch=None,
-        li_extra_options=None,
+            self,
+            data,
+            title="",
+            comment="",
+            icon=None,
+            parent=None,
+            if_default=True,
+            dispatch=None,
+            li_extra_options=None,
     ):
         super().__init__(parent, QtCore.Qt.WindowType.Dialog)
 
@@ -1085,16 +1084,16 @@ class FormDialog(QtWidgets.QDialog):
 
 
 def fedit(
-    data,
-    title="",
-    comment="",
-    icon=None,
-    parent=None,
-    if_default=False,
-    minimum_width=None,
-    dispatch=None,
-    font=None,
-    li_extra_options=None,
+        data,
+        title="",
+        comment="",
+        icon=None,
+        parent=None,
+        if_default=False,
+        minimum_width=None,
+        dispatch=None,
+        font=None,
+        li_extra_options=None,
 ):
     """
     Create form dialog and return result

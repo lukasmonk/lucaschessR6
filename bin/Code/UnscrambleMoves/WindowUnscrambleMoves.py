@@ -906,7 +906,7 @@ class WUnscrambleMoves(LCDialog.LCDialog):
 
     @staticmethod
     def help():
-        webbrowser.open("https://lucaschess.blogspot.com/2026/10/unscramble-the-moves.html")
+        webbrowser.open("https://lucaschess.blogspot.com/2026/10/unscramble-moves.html")
 
     def finalize(self):
         self.clear_results()

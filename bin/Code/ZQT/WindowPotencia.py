@@ -23,7 +23,7 @@ def lee_1_linea_mfn(linea):
     for x in cabs.split("|"):
         sp = x.index(" ")
         k = x[:sp]
-        v = x[sp + 1 :]
+        v = x[sp + 1:]
         dic[k] = v
         game.set_tag(k, v)
     game.read_pv(pv)
@@ -403,7 +403,7 @@ class WPotenciaBase(LCDialog.LCDialog):
 
         self.historico = PotenciaHistorico(self.configuration.paths.file_power())
 
-        self.engine, self.seconds, self.min_min, self.min_max = self.leeParametros()
+        self.engine, self.seconds, self.min_min, self.min_max = self.read_params()
 
         # Historico
         o_columns = Columnas.ListaColumnas()
@@ -430,7 +430,6 @@ class WPotenciaBase(LCDialog.LCDialog):
             None,
         )
         self.tb = QTDialogs.LCTB(self, li_acciones)
-        # self.pon_toolbar([self.finalize, self.empezar, self.repetir, self.configurar, self.borrar])
 
         # Colocamos
         ly_tb = Colocacion.H().control(self.tb).margen(0)
@@ -476,7 +475,7 @@ class WPotenciaBase(LCDialog.LCDialog):
             self.ghistorico.gotop()
             self.ghistorico.refresh()
 
-    def leeParametros(self):
+    def read_params(self):
         param = UtilSQL.DictSQL(self.configuration.paths.file_power(), tabla="parametros")
         engine = param.get("ENGINE", "stockfish")
         seconds = param.get("SEGUNDOS", 5)
@@ -581,7 +580,8 @@ class WPotenciaBase(LCDialog.LCDialog):
 class WPotencia(LCDialog.LCDialog):
     manager_analysis: EngineManagerAnalysis.EngineManagerAnalysis
 
-    def __init__(self, owner, name_engine, seconds, min_min, min_max, linea=None, ref=None):
+    def __init__(self, owner, name_engine, seconds, min_min, min_max,
+                 linea=None, ref=None):
 
         super().__init__(owner, _("Determine your calculating power"), Iconos.Potencia(), "potencia")
 

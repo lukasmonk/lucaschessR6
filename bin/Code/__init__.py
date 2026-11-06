@@ -4,7 +4,7 @@ import sys
 
 from Code.Z import Util
 
-VERSION = "R 6.2.3"
+VERSION = "R 6.2.4"
 BASE_VERSION = "C"  # HAY QUE CAMBIARLO CADA VEZ QUE SEA NECESARIO UNA INSTALACION COMPLETA
 
 Util.randomize()

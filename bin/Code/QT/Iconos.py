@@ -3461,3 +3461,15 @@ def pmPathTo2000():
 
 def PathTo2000():
     return iget("PathTo2000")
+
+def pmMoveUp():
+    return iget("pmMoveUp")
+
+def MoveUp():
+    return iget("MoveUp")
+
+def pmMoveDown():
+    return iget("pmMoveDown")
+
+def MoveDown():
+    return iget("MoveDown")

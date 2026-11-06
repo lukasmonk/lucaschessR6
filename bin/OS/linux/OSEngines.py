@@ -8,6 +8,11 @@ from Code.Engines import Engines
 from Code.Z import Util
 
 
+def get_glibc() -> str:
+    val = os.confstr("CS_GNU_LIBC_VERSION")
+    return val.replace("glibc ", "").strip()
+
+
 def read_engines(folder_engines):
     dic_engines = {}
 
@@ -113,9 +118,10 @@ def read_engines(folder_engines):
     mas("arasan", "Jon Dart", "22.2", "https://www.arasanchess.org/", "Arasan-22.2", 3259)
 
     is_avx2 = "avx2" in FasterCode.get_cpu_flags()
+    glibc = get_glibc()
 
-    if is_avx2:
-        cm = mas(
+    if is_avx2 and glibc >= "2.34":
+        mas(
             "arhanpassant",
             "Arhan Canli",
             "0.13.0",

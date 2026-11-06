@@ -202,6 +202,7 @@ class MainWindow(LCDialog.LCDialog):
 
         # Aplicar los flags solo si son diferentes para evitar destruir y recrear el handle nativo
         if self.windowFlags() != flags:
+            flags |= QtCore.Qt.WindowType.WindowCloseButtonHint
             self.setWindowFlags(flags)
 
         # Si el cambio de flags desplazó la ventana a otra pantalla, la devolvemos a su monitor original
